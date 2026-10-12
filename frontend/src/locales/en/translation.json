@@ -233,6 +233,7 @@
     "progress": "{{current}} of {{total}}",
     "play": "Play audio",
     "playAgain": "Play again",
+    "replay": "Replay",
     "playing": "Playing…",
     "record": "Record your answer",
     "recordAgain": "Record again",
@@ -324,10 +325,17 @@
     "loadError": "Couldn't load that right now. Please try again.",
     "saveAndNext": "Save and Next",
     "sectionLabel": "Section {{current}} of {{total}} — {{label}}",
+    "youHear": "You hear",
+    "youSay": "You say",
+    "playsRemaining": "{{count}} play left",
+    "playsRemaining_other": "{{count}} plays left",
     "scoreReport": {
       "title": "Test complete",
       "overall": "Overall score",
-      "sectionResults": "Section results"
+      "sectionResults": "Section results",
+      "testType": "Test",
+      "skippedNote": "{{count}} question was left blank or skipped, and won't count toward your level.",
+      "skippedNote_other": "{{count}} questions were left blank or skipped, and won't count toward your level."
     },
     "overview": {
       "title": "Before you begin",

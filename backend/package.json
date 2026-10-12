@@ -9,6 +9,8 @@
     "start": "node dist/index.js",
     "migrate": "node-pg-migrate",
     "generate-item-audio": "tsx scripts/generateItemAudio.ts",
+    "dedupe-content": "tsx scripts/dedupeContent.ts",
+    "author-skill-split": "tsx scripts/authorSkillSplitContent.ts",
     "analyze-voice-lab": "tsx scripts/analyzeVoiceLab.ts",
     "setup-voice-model": "bash scripts/download-speaker-model.sh",
     "lint": "oxlint"

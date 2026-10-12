@@ -25,6 +25,7 @@ export interface ExamCompleteResult {
   gradedCount: number;
   correctCount: number;
   pendingCount: number;
+  skippedCount: number;
   failedCount: number;
   overallPercent: number;
   partResults: { label: string; gradedCount: number; correctCount: number }[];

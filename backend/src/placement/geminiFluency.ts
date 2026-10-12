@@ -16,6 +16,11 @@ export interface GeminiFluencyResult {
   pronunciation: number;
   fluency: number;
   comment: string;
+  // Server-side transcript fallback — lets content grading run even when
+  // the browser's own speech-to-text (used first, see handleToggleRecord in
+  // the frontend) came back empty, instead of leaving the attempt "pending"
+  // forever with no way to ever grade it.
+  transcript: string;
 }
 
 const RESPONSE_SCHEMA = {
@@ -30,8 +35,12 @@ const RESPONSE_SCHEMA = {
       description: "0 to 1: how smooth and natural the delivery was — pace, hesitation, filler words.",
     },
     comment: { type: "string", description: "One short, specific sentence of feedback for the learner." },
+    transcript: {
+      type: "string",
+      description: "The exact words spoken, transcribed in English. Empty string if no speech was detected.",
+    },
   },
-  required: ["pronunciation", "fluency", "comment"],
+  required: ["pronunciation", "fluency", "comment", "transcript"],
 };
 
 export async function scoreAudioFluency(
@@ -48,19 +57,27 @@ export async function scoreAudioFluency(
   const prompt = `Listen carefully to the attached audio. First, determine: does this recording contain any actual audible human speech at all? If the recording is silent, contains only noise/static, or has no discernible spoken words, you must respond with pronunciation 0, fluency 0, and clearly state no speech was detected — do not guess or assume speech occurred. Only if you can actually hear real spoken words, judge the pronunciation and fluency of what you genuinely hear (a ${level}-level English learner's recording) — how it sounds, not the words' content. Score both pronunciation and fluency on a scale from 0 (worst) to 1 (excellent, native-like) — never use any other scale.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }, { inlineData: { mimeType: audioMimeType, data: audioBase64 } }],
+    // Same reasoning as aiGrading.ts's timeout: an unguarded audio-grading
+    // call (larger payload than text grading, so if anything is going to be
+    // slow enough to stall the request, this is it) could hang the whole
+    // attempt submission indefinitely. Capped so a slow call fails closed
+    // within a predictable bound instead.
+    const response = await Promise.race([
+      ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt }, { inlineData: { mimeType: audioMimeType, data: audioBase64 } }],
+          },
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseJsonSchema: RESPONSE_SCHEMA,
         },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseJsonSchema: RESPONSE_SCHEMA,
-      },
-    });
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("scoreAudioFluency: timed out")), 12_000)),
+    ]);
 
     const parsed = JSON.parse(response.text ?? "");
     const pronunciation = Number(parsed.pronunciation);
@@ -71,6 +88,7 @@ export async function scoreAudioFluency(
       pronunciation: Math.max(0, Math.min(1, pronunciation)),
       fluency: Math.max(0, Math.min(1, fluency)),
       comment: String(parsed.comment ?? ""),
+      transcript: String(parsed.transcript ?? ""),
     };
   } catch (err) {
     console.error("scoreAudioFluency: request failed:", err);

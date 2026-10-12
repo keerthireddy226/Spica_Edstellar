@@ -150,6 +150,16 @@ const CARD_TINT_ROTATION = [
 ];
 const CARD_STRIP_ROTATION = ["bg-navy", "bg-accent", "bg-warning", "bg-speaking", "bg-reading", "bg-writing", "bg-listening"];
 
+// Very faint full-card tint behind the running session — distinct from
+// SKILL_TINT_CLASSES (which is a stronger badge/icon tint), layered over
+// bg-surface rather than replacing it (keeps dark-mode elevation correct).
+const SKILL_WASH_CLASSES: Record<SkillTag, string> = {
+  listening: "bg-listening/[0.05]",
+  speaking: "bg-speaking/[0.05]",
+  reading: "bg-reading/[0.05]",
+  writing: "bg-writing/[0.05]",
+};
+
 // Colors the CEFR code in a unit name ("A1 - Beginner") as a difficulty ramp, reusing existing per-skill color tokens.
 const CEFR_TINT_CLASSES: Record<string, string> = {
   A1: "bg-listening/15 text-listening",
@@ -286,7 +296,7 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
               disabled={starting}
               className="group relative text-left bg-surface border border-rule rounded-card p-5 transition-all cursor-pointer flex flex-col gap-3 overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed hover:border-rule-strong hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.28)]"
             >
-              <span className={`absolute top-0 left-0 right-0 h-1 ${strip}`} />
+              <span className={`absolute top-0 left-0 right-0 h-1 pointer-events-none ${strip}`} />
               <span className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${tint}`}>
                 <TypeIcon size={22} strokeWidth={2} />
               </span>
@@ -502,7 +512,7 @@ export function Modules() {
     if (!pickerType) return;
     let cancelled = false;
     setLoadingUnits(true);
-    getUnits(pickerType.itemTypeId)
+    getUnits(pickerType.itemTypeId, pickerType.skill)
       .then((res) => {
         if (cancelled) return;
         if (res.units.length === 0) {
@@ -534,7 +544,7 @@ export function Modules() {
     if (!pickerUnit) return;
     let cancelled = false;
     setLoadingSets(true);
-    getSets(pickerUnit.unitId)
+    getSets(pickerUnit.unitId, pickerUnit.skill)
       .then((res) => {
         if (!cancelled) setSets(res.sets);
       })
@@ -559,7 +569,6 @@ export function Modules() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   // Set by a mid-session spoof detection — re-shows the gate, session stays intact.
   const [requireReverify, setRequireReverify] = useState(false);
-  usePeriodicFaceCheck(Boolean(sessionId) && !requireReverify, "practice", sessionId, () => setRequireReverify(true));
   const [items, setItems] = useState<TestItem[]>([]);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, CachedAnswer>>({});
@@ -642,6 +651,9 @@ export function Modules() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
+  // Stops once the score report shows — nothing left to verify identity
+  // against after the test is already complete.
+  usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice", sessionId, () => setRequireReverify(true));
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   // Gates the first question behind the type's real instruction_text (how
   // this task works) on a genuinely fresh start — not shown again when
@@ -1067,33 +1079,42 @@ export function Modules() {
   // submission entirely.
   const canSubmit = current.inputMethod === "mic" ? !recording && !!audioBlobUrl : answerText.trim() !== "";
   const progressPct = Math.round((index / items.length) * 100);
+  const primarySkill = (meta?.skills ?? current.skills)[0];
+  const TypeIcon = ITEM_TYPE_ICON[current.itemTypeId] ?? Headphones;
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col gap-3">
-      <div className="flex items-center justify-end px-1">
-        <span className="text-xs font-mono text-muted">
-          {t("placementTest.progress", { current: index + 1, total: items.length })}
-        </span>
-      </div>
-
-      {/* Fixed (not max-) height — the same for every question — so the
-          Back/Skip/Next footer always lands at the same place. Content is
-          centered inside this fixed box instead of pinned to its top, so a
-          short question's leftover space splits above and below it rather
-          than collecting in one visible gap. Only a genuinely long passage
-          scrolls, via the overflow-y-auto on the inner content div. */}
+    <div className="max-w-2xl mx-auto flex flex-col gap-3">
+      {/* Height follows the actual content, between a floor (so a one-line
+          item doesn't look like a tiny stub) and a ceiling (so the card
+          never forces the footer off-screen) — a single fixed number can't
+          fit both a Play-button-only item and a long passage+essay item
+          without either a dead gap or clipped content. Only content past
+          the ceiling scrolls internally. */}
       <div
         className="relative w-full bg-surface border border-rule rounded-card shadow-sm overflow-hidden flex flex-col"
-        style={{ height: "calc(100vh - 240px)" }}
+        style={{ minHeight: "420px", maxHeight: "min(780px, calc(100vh - 180px))" }}
       >
-        <div
-          className="absolute top-0 left-0 right-0 h-1.5"
-          style={{ backgroundColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-        />
-        <div className="flex-1 p-8 pt-8 flex flex-col justify-center gap-5 overflow-y-auto">
-          <div className="flex flex-col gap-2.5">
+        {/* A light skill-tinted wash across the whole card (not just an
+            icon badge) — distinct from Practice Tests' navy/cream
+            "You hear / You say" panels, giving Modules its own, friendlier
+            identity instead of reusing the same visual language. */}
+        <span className={`absolute inset-0 pointer-events-none ${SKILL_WASH_CLASSES[primarySkill]}`} />
+        <div className="relative flex-1 p-8 pt-6 flex flex-col justify-start gap-5 overflow-y-auto">
+          <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
+              <div className="flex items-center gap-3">
+                <ProgressRing percent={progressPct} size={48} strokeWidth={4} colorClass={SKILL_RING_COLOR[primarySkill]}>
+                  <span className={`h-8 w-8 rounded-xl flex items-center justify-center ${SKILL_TINT_CLASSES[primarySkill]}`}>
+                    <TypeIcon size={16} strokeWidth={2} />
+                  </span>
+                </ProgressRing>
+                <div className="flex flex-col">
+                  <span className="font-display font-bold text-sm text-ink leading-tight">{meta?.name}</span>
+                  <span className="text-[11px] font-mono text-muted">
+                    {t("placementTest.progress", { current: index + 1, total: items.length })}
+                  </span>
+                </div>
+              </div>
               {remainingSeconds !== null ? (
                 <span
                   className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
@@ -1115,86 +1136,124 @@ export function Modules() {
                 </span>
               ))}
             </div>
-            <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
-              <div className="h-full bg-navy rounded-pill transition-all" style={{ width: `${progressPct}%` }} />
-            </div>
           </div>
 
-          <h2 className="font-display font-bold text-lg text-ink text-center leading-snug">{current.questionInstruction}</h2>
+          {/* The real task explanation ("Listen to the conversation and
+              answer the question."), not the short per-item prompt — shown
+              as a proper heading every time, not just once in the one-time
+              type intro, so it's never just the vague "Answer the
+              question." with no context. */}
+          <h2 className="font-display font-bold text-base text-ink leading-snug">{current.instructionText}</h2>
 
       {current.inputMethod === "two-phase" ? (
-        twoPhaseStage === "idle" ? (
-          <div className="flex justify-center">
-            <Button variant="secondary" onClick={handleStartReading}>
-              {t("modules.startReading")}
-            </Button>
+        <>
+          {twoPhaseStage === "idle" ? (
+            <div className="flex justify-center">
+              <Button variant="secondary" onClick={handleStartReading}>
+                {t("modules.startReading")}
+              </Button>
+            </div>
+          ) : twoPhaseStage === "reading" ? (
+            <p
+              className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
+              style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
+            >
+              {getVisibleText(current)}
+            </p>
+          ) : (
+            <p className="text-sm text-muted italic text-center">{t("modules.passageHidden")}</p>
+          )}
+          {twoPhaseStage === "writing" && (
+            <textarea
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              onPaste={(e) => e.preventDefault()}
+              onDrop={(e) => e.preventDefault()}
+              placeholder={t("placementTest.answerPlaceholder")}
+              className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
+              rows={4}
+            />
+          )}
+        </>
+      ) : needsAudioFirst ? (
+        // Mic answers pair naturally side by side with Play (two small
+        // round controls). A typed/selected answer is a wide control, so
+        // forcing it next to a small round button looked cramped — that
+        // case stacks instead: Play centered above, full-width answer below.
+        <div className={current.inputMethod === "mic" ? "flex items-center justify-center gap-10" : "flex flex-col gap-4"}>
+          <div className={`flex flex-col items-center gap-2 ${current.inputMethod === "mic" ? "" : "self-center"}`}>
+            <button
+              onClick={handlePlay}
+              disabled={playing || recording}
+              className={`h-14 w-14 rounded-full bg-${primarySkill} text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed`}
+            >
+              <Volume2 size={22} />
+            </button>
+            <span className="text-xs text-muted">
+              {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
+            </span>
           </div>
-        ) : twoPhaseStage === "reading" ? (
+          <AnswerInputControl
+            item={current}
+            answerText={answerText}
+            onAnswerTextChange={setAnswerText}
+            recording={recording}
+            onToggleRecord={handleToggleRecord}
+            audioBlobUrl={audioBlobUrl}
+            needsAudioFirst={needsAudioFirst}
+            hasPlayed={hasPlayed}
+            playing={playing}
+            stopIconSize={18}
+            textareaRows={4}
+          />
+        </div>
+      ) : getPassageAndQuestion(current) ? (
+        <>
+          <div className="flex flex-col gap-2.5">
+            <p
+              className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
+              style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
+            >
+              {getPassageAndQuestion(current)!.passage}
+            </p>
+            <p className="text-sm font-semibold text-ink px-1">{getPassageAndQuestion(current)!.question}</p>
+          </div>
+          <AnswerInputControl
+            item={current}
+            answerText={answerText}
+            onAnswerTextChange={setAnswerText}
+            recording={recording}
+            onToggleRecord={handleToggleRecord}
+            audioBlobUrl={audioBlobUrl}
+            needsAudioFirst={needsAudioFirst}
+            hasPlayed={hasPlayed}
+            playing={playing}
+            stopIconSize={18}
+            textareaRows={4}
+          />
+        </>
+      ) : (
+        <>
           <p
             className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
             style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
           >
-            {getVisibleText(current)}
+            {visibleText}
           </p>
-        ) : (
-          <p className="text-sm text-muted italic text-center">{t("modules.passageHidden")}</p>
-        )
-      ) : needsAudioFirst ? (
-        <div className="flex flex-col items-center gap-2">
-          <button
-            onClick={handlePlay}
-            disabled={playing || recording}
-            className="h-14 w-14 rounded-full bg-navy text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
-          >
-            <Volume2 size={22} />
-          </button>
-          <span className="text-xs text-muted">
-            {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
-          </span>
-        </div>
-      ) : getPassageAndQuestion(current) ? (
-        <div className="flex flex-col gap-2.5">
-          <p
-            className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
-            style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-          >
-            {getPassageAndQuestion(current)!.passage}
-          </p>
-          <p className="text-sm font-semibold text-ink px-1">{getPassageAndQuestion(current)!.question}</p>
-        </div>
-      ) : (
-        <p
-          className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
-          style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-        >
-          {visibleText}
-        </p>
-      )}
-
-      {current.inputMethod === "two-phase" ? (
-        twoPhaseStage === "writing" && (
-          <textarea
-            value={answerText}
-            onChange={(e) => setAnswerText(e.target.value)}
-            placeholder={t("placementTest.answerPlaceholder")}
-            className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
-            rows={4}
+          <AnswerInputControl
+            item={current}
+            answerText={answerText}
+            onAnswerTextChange={setAnswerText}
+            recording={recording}
+            onToggleRecord={handleToggleRecord}
+            audioBlobUrl={audioBlobUrl}
+            needsAudioFirst={needsAudioFirst}
+            hasPlayed={hasPlayed}
+            playing={playing}
+            stopIconSize={18}
+            textareaRows={4}
           />
-        )
-      ) : (
-        <AnswerInputControl
-          item={current}
-          answerText={answerText}
-          onAnswerTextChange={setAnswerText}
-          recording={recording}
-          onToggleRecord={handleToggleRecord}
-          audioBlobUrl={audioBlobUrl}
-          needsAudioFirst={needsAudioFirst}
-          hasPlayed={hasPlayed}
-          playing={playing}
-          stopIconSize={18}
-          textareaRows={4}
-        />
+        </>
       )}
 
           {error && <p className="text-sm text-error text-center">{error}</p>}

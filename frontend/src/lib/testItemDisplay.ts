@@ -41,12 +41,21 @@ export const ITEM_TYPE_META: Record<string, { name: string; skills: ("listening"
   email_writing: { name: "E-Mail Writing", skills: ["writing"] },
 };
 
+// Authored dialogue content is literal "A: ... B: ..." — read aloud as-is
+// that's "A, colon" spoken awkwardly. Spelling out "Speaker A:"/"Speaker B:"
+// makes the turn-taking structure actually audible. KEEP IN SYNC with
+// formatSpeakers in backend/src/voice/spokenText.ts (used at TTS-generation
+// time) — same transform, same reason.
+export function formatSpeakers(dialogue: string): string {
+  return dialogue.replace(/\b([A-Z]):/g, "Speaker $1:");
+}
+
 export function getSpokenSegments(item: TestItem): string[] {
   const c = item.content as Record<string, unknown>;
   if (item.itemTypeId === "sentence_builds" && Array.isArray(c.groups)) return c.groups as string[];
   // Types with a heard passage/dialogue AND a follow-up question — both get
   // spoken, in order, not just whichever field a generic fallback finds first.
-  if (typeof c.dialogue === "string" && typeof c.question === "string") return [c.dialogue, c.question];
+  if (typeof c.dialogue === "string" && typeof c.question === "string") return [formatSpeakers(c.dialogue), c.question];
   if (typeof c.story === "string" && typeof c.question === "string") return [c.story, c.question];
   if (typeof c.text === "string") return [c.text];
   if (typeof c.question === "string") return [c.question];

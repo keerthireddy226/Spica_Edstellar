@@ -232,17 +232,33 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
 // or roadmap row — it's practice, not a certification (same rule as the
 // existing practice router's /session/:id/complete).
 practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req: AuthedRequest, res, next) => {
+  // Idempotent: a session already marked complete (e.g. the first /complete
+  // call actually succeeded server-side but the client never saw the
+  // response — the exact "stuck on the last question forever" bug this
+  // fixes) just gets its real score recomputed and returned again, instead
+  // of a 404 that leaves the learner with no way to see their result.
+  let sessionExists;
   try {
-    const sessionResult = await pool.query(
-      `UPDATE sessions SET completed_at = now()
-       WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest' AND completed_at IS NULL
-       RETURNING id`,
+    sessionExists = await pool.query(
+      `SELECT id FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
       [req.params.sessionId, req.user!.id],
     );
-    if (!sessionResult.rows[0]) return res.status(404).json({ error: "session_not_found_or_already_completed" });
+    if (sessionExists.rows[0]) {
+      await pool.query(`UPDATE sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`, [req.params.sessionId]);
+    }
+  } catch (err) {
+    return next(err);
+  }
+  if (!sessionExists.rows[0]) return res.status(404).json({ error: "session_not_found" });
 
+  // The session is now genuinely done — a crash computing the score
+  // breakdown below must never leave the learner stuck mid-test with an
+  // error and no way forward. Fall back to a minimal "you finished, score
+  // pending" response instead of failing the whole request.
+  try {
     const summaryResult = await pool.query(
-      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, i.cefr_level, ep.part_label
+      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, i.cefr_level, ep.part_label,
+         a.response_text, a.response_uri
        FROM attempts a
        JOIN scores sc ON sc.attempt_id = a.id
        JOIN items i ON i.id = a.item_id
@@ -256,7 +272,13 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     const rowCorrect = (r: (typeof rows)[number]) =>
       isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
     const correctCount = graded.filter(rowCorrect).length;
-    const pendingCount = rows.filter((r) => r.status === "pending").length;
+    // "Pending" splits into two very different things for the learner: a
+    // real answer that's still waiting on AI grading, vs. a question left
+    // blank (Skip, or never reached) — the latter will never grade itself,
+    // so lumping it into "still being reviewed" is misleading.
+    const pendingRows = rows.filter((r) => r.status === "pending");
+    const skippedCount = pendingRows.filter((r) => !r.response_text && !r.response_uri).length;
+    const pendingCount = pendingRows.length - skippedCount;
     const failedCount = rows.filter((r) => r.status === "failed").length;
 
     const partLabels = [...new Set(rows.map((r) => r.part_label))];
@@ -265,16 +287,25 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       return { label, gradedCount: partRows.length, correctCount: partRows.filter(rowCorrect).length };
     });
 
-    await checkAndAwardBadges(req.user!.id);
     res.json({
       gradedCount: graded.length,
       correctCount,
       pendingCount,
+      skippedCount,
       failedCount,
       overallPercent: graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : 0,
       partResults,
     });
   } catch (err) {
-    next(err);
+    console.error("practiceTests /complete: score summary failed, session still marked complete:", err);
+    res.json({ gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
+  }
+
+  // Badge-checking is best-effort and must never affect the response above
+  // (already sent) or retroactively fail a completion that already succeeded.
+  try {
+    await checkAndAwardBadges(req.user!.id);
+  } catch (err) {
+    console.error("practiceTests /complete: badge check failed (non-fatal):", err);
   }
 });

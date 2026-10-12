@@ -70,9 +70,31 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
     responseUri = `/uploads/attempts/${fileName}`;
   }
 
+  // Real pronunciation/fluency scoring from the recording itself — needs a recording + GEMINI_API_KEY, fails closed.
+  // Run before grading (not after, as it used to be) because its transcript
+  // is also the fallback content-grading text below.
+  const geminiScores =
+    item.input_method === "mic" && body.audioBase64
+      ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level)
+      : null;
+
+  // The browser's own speech-to-text (sent as body.responseText) is tried
+  // first; if it came back empty — mic permission hiccup, unsupported
+  // browser, learner's accent, network blip — fall back to Gemini's own
+  // transcript of the same recording instead of leaving the attempt
+  // "pending" forever with nothing that will ever grade it.
+  const effectiveResponseText = body.responseText || geminiScores?.transcript || undefined;
+
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
-  const grade = await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, body.responseText);
-  const responseText = body.responseText ?? null;
+  const grade = await gradeAttempt(
+    item.item_type_id,
+    item.answer_set,
+    item.content,
+    item.cefr_level,
+    item.min_words,
+    effectiveResponseText,
+  );
+  const responseText = effectiveResponseText ?? null;
 
   // Resubmitting the same item in a session replaces the old attempt instead
   // of stacking a second one — an UPSERT (backed by a unique index on
@@ -113,12 +135,6 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
 
   // Free fluency signals (rate, fillers) from transcript/duration alone — describes delivery, not correctness.
   const freeSignals = item.input_method === "mic" && responseText ? computeFluencySignals(responseText, body.durationMs) : null;
-
-  // Real pronunciation/fluency scoring from the recording itself — needs a recording + GEMINI_API_KEY, fails closed.
-  const geminiScores =
-    item.input_method === "mic" && body.audioBase64
-      ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level)
-      : null;
 
   const mannerScores = freeSignals || geminiScores ? { ...freeSignals, gemini: geminiScores ?? undefined } : null;
 

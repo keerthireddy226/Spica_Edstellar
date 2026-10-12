@@ -35,12 +35,12 @@ export function getAvailability(): Promise<{ availability: SkillAvailability[] }
   return api("/practice/availability");
 }
 
-export function getUnits(itemTypeId: string): Promise<{ units: PracticeUnit[] }> {
-  return api(`/practice/units?itemTypeId=${encodeURIComponent(itemTypeId)}`);
+export function getUnits(itemTypeId: string, skill: string): Promise<{ units: PracticeUnit[] }> {
+  return api(`/practice/units?itemTypeId=${encodeURIComponent(itemTypeId)}&skill=${encodeURIComponent(skill)}`);
 }
 
-export function getSets(unitId: string): Promise<{ sets: PracticeSet[] }> {
-  return api(`/practice/units/${unitId}/sets`);
+export function getSets(unitId: string, skill: string): Promise<{ sets: PracticeSet[] }> {
+  return api(`/practice/units/${unitId}/sets?skill=${encodeURIComponent(skill)}`);
 }
 
 // Finds whatever practice session was already running, if any — used after

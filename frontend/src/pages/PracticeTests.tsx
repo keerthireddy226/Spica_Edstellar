@@ -1,18 +1,31 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { ApiError } from "@/lib/api";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ClipboardCheck, Volume2, ArrowLeft, Clock, CheckCircle2, ChevronRight, Headphones, BookOpen, PenLine, Briefcase } from "lucide-react";
+import {
+  ClipboardCheck,
+  Volume2,
+  ArrowLeft,
+  Clock,
+  CheckCircle2,
+  ChevronRight,
+  Headphones,
+  BookOpen,
+  PenLine,
+  Briefcase,
+  RotateCcw,
+  MessageSquare,
+} from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import { SKILL_TINT_CLASSES } from "@/lib/skillTints";
 import {
-  getProducts,
   getExamsForProduct,
   startExamSession,
+  getExamSession,
   submitExamAttempt,
   completeExamSession,
-  type ExamProduct,
   type ExamSummary,
   type PartBoundary,
   type ExamCompleteResult,
@@ -20,6 +33,9 @@ import {
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
+import { getFaceEnrollmentStatus } from "@/api/faceCheck";
+import { FaceCheck } from "@/components/FaceCheck";
+import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -68,16 +84,31 @@ const PRODUCT_SOLID: Record<(typeof VERSANT_PRODUCTS)[number], string> = {
 export function PracticeTests() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [products, setProducts] = useState<ExamProduct[] | null>(null);
+  const [faceEnrolled, setFaceEnrolled] = useState<boolean | null>(null);
   useEffect(() => {
-    getProducts()
-      .then((res) => setProducts(res.products))
-      .catch(() => setProducts([]));
+    getFaceEnrollmentStatus()
+      .then((res) => setFaceEnrolled(res.enrolled))
+      .catch(() => setFaceEnrolled(true));
   }, []);
+  // Set when "Start"/"Retake" is clicked — gates the actual session start
+  // behind a face check, same pattern as Modules/Placement.
+  const [pendingExamId, setPendingExamId] = useState<string | null>(null);
+  useEffect(() => {
+    if (pendingExamId && faceEnrolled === false) {
+      navigate(ROUTES.FACE_ENROLLMENT, { state: { next: `${location.pathname}${location.search}` } });
+    }
+  }, [pendingExamId, faceEnrolled, navigate, location.pathname, location.search]);
+  // Set by a mid-session spoof detection — re-shows the gate, session stays intact.
+  const [requireReverify, setRequireReverify] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [exams, setExams] = useState<ExamSummary[] | null>(null);
+  // Which exam set a running/just-finished session belongs to — shown on
+  // the score report so a learner can tell which test they just took.
+  const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loadingExams, setLoadingExams] = useState(false);
 
   function openProduct(productId: string) {
@@ -88,6 +119,28 @@ export function PracticeTests() {
       .then((res) => setExams(res.exams))
       .catch(() => setExams([]))
       .finally(() => setLoadingExams(false));
+    // Tagged in the URL so a refresh on this screen restores the exam list
+    // instead of dropping back to the bare product picker.
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("product", productId);
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
+  function backToProducts() {
+    setSelectedProduct(null);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("product");
+        return params;
+      },
+      { replace: true },
+    );
   }
 
   function refreshExams() {
@@ -114,10 +167,18 @@ export function PracticeTests() {
   const [answerText, setAnswerText] = useState("");
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playing, setPlaying] = useState(false);
+  // Real exam rule: audio plays at most twice per question. Keyed by index
+  // (not just a single counter) so navigating Back to an earlier, already
+  // fully-used question doesn't hand it two fresh plays.
+  const playCountsRef = useRef<Record<number, number>>({});
+  const [playCount, setPlayCount] = useState(0);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<ExamCompleteResult | null>(null);
+  // Stops once the score report shows — nothing left to verify identity
+  // against after the test is already complete.
+  usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice_test", sessionId, () => setRequireReverify(true));
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
 
@@ -136,40 +197,80 @@ export function PracticeTests() {
   const [twoPhaseStage, setTwoPhaseStage] = useState<"idle" | "reading" | "writing">("idle");
   const twoPhaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Shared by a fresh start and a refresh-resume — both hand it the same
+  // { sessionId, partBoundaries, items } shape.
+  function applySessionData(res: { sessionId: string; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }) {
+    setSessionId(res.sessionId);
+    setActiveExamId(res.examId);
+    setPartBoundaries(res.partBoundaries);
+    setItems(res.items);
+    const firstUnattempted = res.items.findIndex((item) => !item.attempted);
+    const startIndex = firstUnattempted === -1 ? 0 : firstUnattempted;
+    setIndex(startIndex);
+    setAnswers(
+      Object.fromEntries(res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : []))),
+    );
+    setSummary(null);
+
+    const isFreshStart = res.items.every((item) => !item.attempted);
+    setShowExamOverview(isFreshStart);
+    // Resuming mid-section shouldn't re-interrupt with that section's
+    // intro — mark every part up to and including the resumed one as
+    // already seen; a fresh start leaves every part unseen, so the
+    // index-tracking effect below shows part 0's intro once the overview
+    // (if any) is dismissed.
+    shownPartsRef.current = isFreshStart
+      ? new Set()
+      : new Set(res.partBoundaries.filter((b) => b.startIndex <= startIndex).map((b) => b.partId));
+
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("session", res.sessionId);
+        return params;
+      },
+      { replace: true },
+    );
+  }
+
   async function handleStartExam(examId: string) {
     setStarting(true);
     setError(null);
     try {
       const res = await startExamSession(examId);
-      setSessionId(res.sessionId);
-      setPartBoundaries(res.partBoundaries);
-      setItems(res.items);
-      const firstUnattempted = res.items.findIndex((item) => !item.attempted);
-      const startIndex = firstUnattempted === -1 ? 0 : firstUnattempted;
-      setIndex(startIndex);
-      setAnswers(
-        Object.fromEntries(
-          res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : [])),
-        ),
-      );
-      setSummary(null);
-
-      const isFreshStart = res.items.every((item) => !item.attempted);
-      setShowExamOverview(isFreshStart);
-      // Resuming mid-section shouldn't re-interrupt with that section's
-      // intro — mark every part up to and including the resumed one as
-      // already seen; a fresh start leaves every part unseen, so the
-      // index-tracking effect below shows part 0's intro once the overview
-      // (if any) is dismissed.
-      shownPartsRef.current = isFreshStart
-        ? new Set()
-        : new Set(res.partBoundaries.filter((b) => b.startIndex <= startIndex).map((b) => b.partId));
+      applySessionData(res);
     } catch {
       setError(t("practiceTests.loadError"));
     } finally {
       setStarting(false);
     }
   }
+
+  // A page refresh wipes all React state — resume by the exact session id
+  // tagged in the URL (set by applySessionData above) instead of landing
+  // back on the product picker mid-test.
+  const [resumeChecked, setResumeChecked] = useState(false);
+  useEffect(() => {
+    // Restores the exam-picker list on a refresh even if there's no active
+    // session to resume (e.g. refreshing before starting one) — harmless to
+    // also do this when a session does resume below, since the running-
+    // session view takes render priority over selectedProduct either way.
+    const productParam = searchParams.get("product");
+    if (productParam) openProduct(productParam);
+
+    const sessionIdParam = searchParams.get("session");
+    if (!sessionIdParam) {
+      setResumeChecked(true);
+      return;
+    }
+    getExamSession(sessionIdParam)
+      .then((res) => {
+        if (!res.completed) applySessionData(res);
+      })
+      .catch(() => {})
+      .finally(() => setResumeChecked(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const current = items[index];
   const needsAudioFirst = current ? AUDIO_FIRST_TYPES.has(current.itemTypeId) : false;
@@ -204,6 +305,7 @@ export function PracticeTests() {
     setAudioBlobUrl(cached?.audioBlobUrl ?? null);
     setRecordingDurationMs(cached?.durationMs ?? null);
     setHasPlayed(!!cached);
+    setPlayCount(playCountsRef.current[index] ?? 0);
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
   }, [index]);
@@ -232,12 +334,17 @@ export function PracticeTests() {
     }, readSeconds * 1000);
   }
 
+  const MAX_PLAYS = 2;
+
   async function handlePlay() {
-    if (!current) return;
+    if (!current || playCount >= MAX_PLAYS) return;
     setPlaying(true);
     await playSpokenAudio(current, getSpokenSegments(current));
     setPlaying(false);
     setHasPlayed(true);
+    const next = (playCountsRef.current[index] ?? 0) + 1;
+    playCountsRef.current[index] = next;
+    setPlayCount(next);
   }
 
   async function handleToggleRecord() {
@@ -276,9 +383,41 @@ export function PracticeTests() {
   async function finishOrAdvance() {
     if (index + 1 < items.length) {
       setIndex(index + 1);
-    } else if (sessionId) {
+      return;
+    }
+    if (!sessionId) return;
+    // Every item was already submitted successfully by this point (this
+    // only runs after handleSubmit's own submitExamAttempt succeeded) — a
+    // network hiccup calling /complete shouldn't strand the learner on the
+    // question screen with a scary error when they've genuinely finished.
+    // Show a pending-score fallback instead; the session is marked complete
+    // server-side regardless (or will be on a retry from the score screen).
+    try {
       const result = await completeExamSession(sessionId);
       setSummary(result);
+    } catch {
+      setSummary({ gradedCount: 0, correctCount: 0, pendingCount: items.length, failedCount: 0, overallPercent: 0, partResults: [] });
+    }
+  }
+
+  // A prior submit on this same session can have actually succeeded
+  // server-side (e.g. a slow grading call made the client give up before
+  // the response arrived) while the page never got the memo and stayed on
+  // the question screen — every click since then correctly gets rejected
+  // as "already completed", which used to just repeat the generic error
+  // forever. /complete is idempotent (safe to call again), so on this
+  // specific error, fetch the real result instead of erroring again.
+  function isAlreadyCompletedError(err: unknown): boolean {
+    return err instanceof ApiError && (err.body as { error?: string } | undefined)?.error === "session_already_completed";
+  }
+
+  async function recoverAlreadyCompletedSession() {
+    if (!sessionId) return;
+    try {
+      const result = await completeExamSession(sessionId);
+      setSummary(result);
+    } catch {
+      setError(t("placementTest.submitError"));
     }
   }
 
@@ -297,8 +436,12 @@ export function PracticeTests() {
       });
       cacheCurrentAnswer();
       await finishOrAdvance();
-    } catch {
-      setError(t("placementTest.submitError"));
+    } catch (err) {
+      if (isAlreadyCompletedError(err)) {
+        await recoverAlreadyCompletedSession();
+      } else {
+        setError(t("placementTest.submitError"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -316,8 +459,12 @@ export function PracticeTests() {
         return next;
       });
       await finishOrAdvance();
-    } catch {
-      setError(t("placementTest.submitError"));
+    } catch (err) {
+      if (isAlreadyCompletedError(err)) {
+        await recoverAlreadyCompletedSession();
+      } else {
+        setError(t("placementTest.submitError"));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -334,7 +481,102 @@ export function PracticeTests() {
     setItems([]);
     setPartBoundaries([]);
     setSummary(null);
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.delete("session");
+        return params;
+      },
+      { replace: true },
+    );
     refreshExams();
+  }
+
+  if (!resumeChecked) return null;
+
+  if (requireReverify) {
+    return <FaceCheck mode="verify" purpose="practice_test" onComplete={() => setRequireReverify(false)} />;
+  }
+
+  // A Start/Retake was clicked — gate the actual session start behind a
+  // face check (same pattern as Modules/Placement), then clear it either way.
+  if (pendingExamId) {
+    if (faceEnrolled === null || faceEnrolled === false) return null; // enrollment redirect effect above handles the false case
+    return (
+      <FaceCheck
+        mode="verify"
+        purpose="practice_test"
+        onBack={() => setPendingExamId(null)}
+        onComplete={() => {
+          const examId = pendingExamId;
+          setPendingExamId(null);
+          handleStartExam(examId);
+        }}
+      />
+    );
+  }
+
+  // Takes priority over the running-session view below — completing a test
+  // never clears sessionId/items (Back-to-exams needs them to still be
+  // around momentarily), so without this check first, the running-session
+  // branch would always win and the score screen could never show at all.
+  if (summary) {
+    return (
+      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+        <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
+          <CheckCircle2 size={32} />
+        </div>
+        <h1 className="font-display font-bold text-2xl text-ink">{t("practiceTests.scoreReport.title")}</h1>
+        {selectedProduct && (
+          <p className="text-sm text-muted -mt-3">
+            {t("practiceTests.scoreReport.testType")}:{" "}
+            {exams?.find((e) => e.id === activeExamId)?.name || t(`practiceTests.versantProduct.${selectedProduct}`)}
+          </p>
+        )}
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-4xl font-display font-bold text-ink">{summary.overallPercent}%</span>
+          <span className="text-xs text-muted uppercase tracking-wide">{t("practiceTests.scoreReport.overall")}</span>
+        </div>
+
+        <div className="w-full flex flex-col gap-2.5 text-left">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{t("practiceTests.scoreReport.sectionResults")}</span>
+          {summary.partResults.map((part) => {
+            const pct = part.gradedCount > 0 ? Math.round((part.correctCount / part.gradedCount) * 100) : 0;
+            return (
+              <div key={part.label} className="flex flex-col gap-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-ink font-medium">{part.label}</span>
+                  <span className="text-muted font-mono text-xs">
+                    {part.correctCount}/{part.gradedCount}
+                  </span>
+                </div>
+                <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
+                  <div className="h-full bg-navy rounded-pill transition-all" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {summary.pendingCount > 0 && (
+          <p className="text-sm text-muted">{t("placementTest.pendingNote", { pending: summary.pendingCount })}</p>
+        )}
+        {summary.skippedCount > 0 && (
+          <p className="text-sm text-muted">{t("practiceTests.scoreReport.skippedNote", { count: summary.skippedCount })}</p>
+        )}
+        {summary.failedCount > 0 && (
+          <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
+        )}
+        <div className="flex items-center gap-3 w-full">
+          <Button variant="secondary" onClick={resetToExamList} className="flex-1">
+            {t("practiceTests.backToExams")}
+          </Button>
+          <Button onClick={() => navigate(ROUTES.DASHBOARD)} className="flex-1">
+            {t("modules.backToDashboard")}
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // --- Exam overview (Pearson-style Part/Task/Questions table), fresh starts only ---
@@ -368,6 +610,14 @@ export function PracticeTests() {
   if (sessionId && current && showSectionIntro && currentPart) {
     return (
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+        <div className="flex items-center gap-2">
+          <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
+            {String.fromCharCode(65 + currentPartIndex)}
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {t("practiceTests.sectionLabel", { current: currentPartIndex + 1, total: partBoundaries.length, label: currentPart.label })}
+          </span>
+        </div>
         <span className="h-14 w-14 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center">
           <ClipboardCheck size={26} strokeWidth={2} />
         </span>
@@ -387,27 +637,38 @@ export function PracticeTests() {
     const canSubmit = current.inputMethod === "mic" ? !recording && !!audioBlobUrl : answerText.trim() !== "";
     const progressPct = Math.round((index / items.length) * 100);
     return (
-      <div className="max-w-xl mx-auto flex flex-col gap-3">
+      <div className="max-w-4xl mx-auto flex flex-col gap-3">
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-semibold text-ink">
-            {currentPart
-              ? t("practiceTests.sectionLabel", { current: currentPartIndex + 1, total: partBoundaries.length, label: currentPart.label })
-              : null}
-          </span>
+          {currentPart ? (
+            <div className="flex items-center gap-2">
+              <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
+                {String.fromCharCode(65 + currentPartIndex)}
+              </span>
+              <span className="text-xs font-semibold text-ink">{currentPart.label}</span>
+            </div>
+          ) : (
+            <span />
+          )}
           <span className="text-xs font-mono text-muted">
             {t("placementTest.progress", { current: index + 1, total: items.length })}
           </span>
         </div>
 
+        {/* Height follows the actual content, between a floor (so a short
+            mic item doesn't look like a tiny stub) and a ceiling (so the
+            card never pushes the footer off-screen) — a fixed number can't
+            fit both a two-panel mic item and a long passage+essay item
+            (like Summary and Opinion) without either a dead gap or clipped
+            content. Only content past the ceiling scrolls internally. */}
         <div
           className="relative w-full bg-surface border border-rule rounded-card shadow-sm overflow-hidden flex flex-col"
-          style={{ height: "calc(100vh - 240px)" }}
+          style={{ minHeight: "420px", maxHeight: "min(780px, calc(100vh - 180px))" }}
         >
           <div
-            className="absolute top-0 left-0 right-0 h-1.5"
+            className="absolute top-0 left-0 right-0 h-1.5 pointer-events-none"
             style={{ backgroundColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
           />
-          <div className="flex-1 p-8 pt-8 flex flex-col justify-center gap-5 overflow-y-auto">
+          <div className="flex-1 p-8 pt-6 flex flex-col justify-start gap-5 overflow-y-auto">
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
@@ -439,79 +700,123 @@ export function PracticeTests() {
 
             <h2 className="font-display font-bold text-lg text-ink text-center leading-snug">{current.questionInstruction}</h2>
 
-            {current.inputMethod === "two-phase" ? (
-              twoPhaseStage === "idle" ? (
-                <div className="flex justify-center">
-                  <Button variant="secondary" onClick={handleStartReading}>
-                    {t("modules.startReading")}
-                  </Button>
+            {needsAudioFirst ? (
+              // Versant-style two-panel layout: a dark "You hear" box (audio
+              // prompt, no text shown — revealing the transcript would give
+              // the answer away, unlike Pearson's own public demo which
+              // shows it for visitors) paired with a "You say" box holding
+              // the actual answer control.
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="relative rounded-card bg-navy text-lime p-5 pt-8 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden">
+                  <span className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-wider text-lime/70">
+                    {t("practiceTests.youHear")}
+                  </span>
+                  <Headphones size={64} strokeWidth={1.5} className="absolute -right-3 -bottom-3 text-lime/10 pointer-events-none" />
+                  <button
+                    onClick={handlePlay}
+                    disabled={playing || recording || playCount >= MAX_PLAYS}
+                    className="h-14 w-14 rounded-full bg-lime text-navy flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <Volume2 size={22} />
+                  </button>
+                  <span className="text-xs text-lime/80">{playing ? t("placementTest.playing") : t("placementTest.play")}</span>
+                  {hasPlayed && (
+                    <button
+                      onClick={handlePlay}
+                      disabled={playing || recording || playCount >= MAX_PLAYS}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-lime hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw size={13} /> {t("placementTest.replay")}
+                    </button>
+                  )}
+                  <span className="text-[10px] text-lime/60">{t("practiceTests.playsRemaining", { count: Math.max(0, MAX_PLAYS - playCount) })}</span>
                 </div>
-              ) : twoPhaseStage === "reading" ? (
-                <p
-                  className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
-                  style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-                >
-                  {getVisibleText(current)}
-                </p>
-              ) : (
-                <p className="text-sm text-muted italic text-center">{t("modules.passageHidden")}</p>
-              )
-            ) : needsAudioFirst ? (
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={handlePlay}
-                  disabled={playing || recording}
-                  className="h-14 w-14 rounded-full bg-navy text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <Volume2 size={22} />
-                </button>
-                <span className="text-xs text-muted">
-                  {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
-                </span>
-              </div>
-            ) : getPassageAndQuestion(current) ? (
-              <div className="flex flex-col gap-2.5">
-                <p
-                  className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
-                  style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-                >
-                  {getPassageAndQuestion(current)!.passage}
-                </p>
-                <p className="text-sm font-semibold text-ink px-1">{getPassageAndQuestion(current)!.question}</p>
+                <div className="relative rounded-card bg-accent/10 border border-accent/25 p-5 pt-8 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden">
+                  <span className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-wider text-accent">
+                    {t("practiceTests.youSay")}
+                  </span>
+                  <MessageSquare size={64} strokeWidth={1.5} className="absolute -right-3 -bottom-3 text-accent/10 pointer-events-none" />
+                  <AnswerInputControl
+                    item={current}
+                    answerText={answerText}
+                    onAnswerTextChange={setAnswerText}
+                    recording={recording}
+                    onToggleRecord={handleToggleRecord}
+                    audioBlobUrl={audioBlobUrl}
+                    needsAudioFirst={needsAudioFirst}
+                    hasPlayed={hasPlayed}
+                    playing={playing}
+                    stopIconSize={18}
+                    textareaRows={4}
+                  />
+                </div>
               </div>
             ) : (
-              <p
-                className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
-                style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-              >
-                {visibleText}
-              </p>
-            )}
+              <>
+                {current.inputMethod === "two-phase" ? (
+                  twoPhaseStage === "idle" ? (
+                    <div className="flex justify-center">
+                      <Button variant="secondary" onClick={handleStartReading}>
+                        {t("modules.startReading")}
+                      </Button>
+                    </div>
+                  ) : twoPhaseStage === "reading" ? (
+                    <p
+                      className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
+                      style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
+                    >
+                      {getVisibleText(current)}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted italic text-center">{t("modules.passageHidden")}</p>
+                  )
+                ) : getPassageAndQuestion(current) ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p
+                      className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
+                      style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
+                    >
+                      {getPassageAndQuestion(current)!.passage}
+                    </p>
+                    <p className="text-sm font-semibold text-ink px-1">{getPassageAndQuestion(current)!.question}</p>
+                  </div>
+                ) : (
+                  <p
+                    className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
+                    style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
+                  >
+                    {visibleText}
+                  </p>
+                )}
 
-            {current.inputMethod === "two-phase" ? (
-              twoPhaseStage === "writing" && (
-                <textarea
-                  value={answerText}
-                  onChange={(e) => setAnswerText(e.target.value)}
-                  placeholder={t("placementTest.answerPlaceholder")}
-                  className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
-                  rows={4}
-                />
-              )
-            ) : (
-              <AnswerInputControl
-                item={current}
-                answerText={answerText}
-                onAnswerTextChange={setAnswerText}
-                recording={recording}
-                onToggleRecord={handleToggleRecord}
-                audioBlobUrl={audioBlobUrl}
-                needsAudioFirst={needsAudioFirst}
-                hasPlayed={hasPlayed}
-                playing={playing}
-                stopIconSize={18}
-                textareaRows={4}
-              />
+                {current.inputMethod === "two-phase" ? (
+                  twoPhaseStage === "writing" && (
+                    <textarea
+                      value={answerText}
+                      onChange={(e) => setAnswerText(e.target.value)}
+                      onPaste={(e) => e.preventDefault()}
+                      onDrop={(e) => e.preventDefault()}
+                      placeholder={t("placementTest.answerPlaceholder")}
+                      className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
+                      rows={4}
+                    />
+                  )
+                ) : (
+                  <AnswerInputControl
+                    item={current}
+                    answerText={answerText}
+                    onAnswerTextChange={setAnswerText}
+                    recording={recording}
+                    onToggleRecord={handleToggleRecord}
+                    audioBlobUrl={audioBlobUrl}
+                    needsAudioFirst={needsAudioFirst}
+                    hasPlayed={hasPlayed}
+                    playing={playing}
+                    stopIconSize={18}
+                    textareaRows={4}
+                  />
+                )}
+              </>
             )}
 
             {error && <p className="text-sm text-error text-center">{error}</p>}
@@ -545,61 +850,13 @@ export function PracticeTests() {
     return <p className="text-sm text-muted">{t("modules.starting")}</p>;
   }
 
-  // --- Score report ---
-  if (summary) {
-    return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
-        <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
-          <CheckCircle2 size={32} />
-        </div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("practiceTests.scoreReport.title")}</h1>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-4xl font-display font-bold text-ink">{summary.overallPercent}%</span>
-          <span className="text-xs text-muted uppercase tracking-wide">{t("practiceTests.scoreReport.overall")}</span>
-        </div>
-
-        <div className="w-full flex flex-col gap-2.5 text-left">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{t("practiceTests.scoreReport.sectionResults")}</span>
-          {summary.partResults.map((part) => {
-            const pct = part.gradedCount > 0 ? Math.round((part.correctCount / part.gradedCount) * 100) : 0;
-            return (
-              <div key={part.label} className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-ink font-medium">{part.label}</span>
-                  <span className="text-muted font-mono text-xs">
-                    {part.correctCount}/{part.gradedCount}
-                  </span>
-                </div>
-                <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
-                  <div className="h-full bg-navy rounded-pill transition-all" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {summary.failedCount > 0 && (
-          <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
-        )}
-        <div className="flex items-center gap-3 w-full">
-          <Button variant="secondary" onClick={resetToExamList} className="flex-1">
-            {t("practiceTests.backToExams")}
-          </Button>
-          <Button onClick={() => navigate(ROUTES.DASHBOARD)} className="flex-1">
-            {t("modules.backToDashboard")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // --- Exam (set) picker for the selected product ---
   if (selectedProduct) {
     const Icon = PRODUCT_ICON[selectedProduct as (typeof VERSANT_PRODUCTS)[number]];
     return (
       <div className="w-full flex flex-col gap-6">
         <button
-          onClick={() => setSelectedProduct(null)}
+          onClick={backToProducts}
           className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer self-start"
         >
           <ArrowLeft size={16} /> {t("practiceTests.backToProducts")}
@@ -636,7 +893,7 @@ export function PracticeTests() {
                     </span>
                   )}
                 </div>
-                <Button onClick={() => handleStartExam(exam.id)} className="w-full">
+                <Button onClick={() => setPendingExamId(exam.id)} className="w-full">
                   {exam.completed ? t("practiceTests.retake") : t("practiceTests.startExam")}
                 </Button>
               </div>
@@ -662,7 +919,6 @@ export function PracticeTests() {
 
       <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
         {VERSANT_PRODUCTS.map((id) => {
-          const product = products?.find((p) => p.id === id);
           const Icon = PRODUCT_ICON[id];
           const durationMatch = t(`practiceTests.versantProduct.${id}Desc`).match(/\d+\s*minutes/);
           return (
@@ -689,11 +945,6 @@ export function PracticeTests() {
                 <span className="text-sm text-muted leading-relaxed">{t(`practiceTests.versantProduct.${id}Desc`)}</span>
               </div>
               <div className="relative flex items-center gap-2 mt-auto">
-                {product && (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
-                    {t("practiceTests.setsCount", { count: product.setCount })}
-                  </span>
-                )}
                 {durationMatch && (
                   <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
                     <Clock size={11} /> {durationMatch[0]}

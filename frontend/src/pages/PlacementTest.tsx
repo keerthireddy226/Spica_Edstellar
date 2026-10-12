@@ -75,7 +75,9 @@ export function PlacementTest() {
   }, []);
 
   const readyToLoadSession = alreadyInProgress === true || faceChecked;
-  usePeriodicFaceCheck(readyToLoadSession && !requireReverify, "placement", sessionId, () => setRequireReverify(true));
+  // Stops once the score report shows — nothing left to verify identity
+  // against after the test is already complete.
+  usePeriodicFaceCheck(readyToLoadSession && !summary && !requireReverify, "placement", sessionId, () => setRequireReverify(true));
 
   useEffect(() => {
     if (alreadyInProgress === null || !readyToLoadSession) return;

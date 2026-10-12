@@ -45,6 +45,11 @@ async function selectPracticeItems(userId: string, skill: SkillTag, count: numbe
      FROM items i
      JOIN item_types it ON it.id = i.item_type_id
      WHERE i.status = 'approved' AND i.pool = 'practice' AND $2 = ANY(it.skills)
+       -- A multi-skill type (e.g. conversations: speaking+listening) has its
+       -- items partitioned by skill_tag so each skill draws its own
+       -- non-overlapping subset; NULL means this item's type isn't
+       -- partitioned (single-skill type), so it always matches.
+       AND (i.skill_tag IS NULL OR i.skill_tag = $2)
        AND ($3::text IS NULL OR i.item_type_id = $3)
      ORDER BY i.item_type_id, i.difficulty ASC`,
     [userId, skill, itemTypeId ?? null],
@@ -115,28 +120,38 @@ async function selectSetItems(setId: string) {
 practiceRouter.get("/units", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const itemTypeId = req.query.itemTypeId;
+    const skill = req.query.skill;
     if (typeof itemTypeId !== "string") return res.status(400).json({ error: "itemTypeId_required" });
+    if (typeof skill !== "string") return res.status(400).json({ error: "skill_required" });
     const result = await pool.query(
-      `SELECT u.id, u.name, u.order_index, count(s.id)::int AS set_count,
-         count(*) FILTER (
-           WHERE EXISTS (
-             SELECT 1 FROM sessions se
-             WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
-               AND se.composition->>'setId' = s.id::text
-               -- Every item answered with a real response, not skipped blank.
-               AND NOT EXISTS (
-                 SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL
-               )
-           )
+      `SELECT u.id, u.name, u.order_index,
+         count(DISTINCT s.id) FILTER (
+           WHERE EXISTS (SELECT 1 FROM items i WHERE i.set_id = s.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $3))
+         )::int AS set_count,
+         count(DISTINCT s.id) FILTER (
+           WHERE EXISTS (SELECT 1 FROM items i WHERE i.set_id = s.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $3))
+             AND EXISTS (
+               SELECT 1 FROM sessions se
+               WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
+                 AND se.composition->>'setId' = s.id::text
+                 -- Every item answered with a real response, not skipped blank.
+                 AND NOT EXISTS (
+                   SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL
+                 )
+             )
          )::int AS completed_count
        FROM units u LEFT JOIN sets s ON s.unit_id = u.id
        WHERE u.item_type_id = $1
        GROUP BY u.id
        ORDER BY u.order_index`,
-      [itemTypeId, req.user!.id],
+      [itemTypeId, req.user!.id, skill],
     );
     res.json({
-      units: result.rows.map((r) => ({ id: r.id, name: r.name, setCount: r.set_count, completedCount: r.completed_count })),
+      // A unit can end up with 0 matching sets for this skill (e.g. an
+      // uneven split) — filtered out rather than shown as an empty card.
+      units: result.rows
+        .filter((r) => r.set_count > 0)
+        .map((r) => ({ id: r.id, name: r.name, setCount: r.set_count, completedCount: r.completed_count })),
     });
   } catch (err) {
     next(err);
@@ -144,8 +159,12 @@ practiceRouter.get("/units", requireAuth, async (req: AuthedRequest, res, next) 
 });
 
 // Sets within one unit, each flagged completed or not (feeds SetPicker).
+// Filtered by skill_tag so a multi-skill type (e.g. conversations) shows a
+// different slice of sets per skill instead of the same ones for both.
 practiceRouter.get("/units/:unitId/sets", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    const skill = req.query.skill;
+    if (typeof skill !== "string") return res.status(400).json({ error: "skill_required" });
     const result = await pool.query(
       `SELECT s.id, s.name, s.order_index,
          EXISTS (
@@ -160,8 +179,9 @@ practiceRouter.get("/units/:unitId/sets", requireAuth, async (req: AuthedRequest
          ) AS completed
        FROM sets s
        WHERE s.unit_id = $1
+         AND EXISTS (SELECT 1 FROM items i WHERE i.set_id = s.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $3))
        ORDER BY s.order_index`,
-      [req.params.unitId, req.user!.id],
+      [req.params.unitId, req.user!.id, skill],
     );
     res.json({ sets: result.rows.map((r) => ({ id: r.id, name: r.name, completed: r.completed })) });
   } catch (err) {

@@ -106,11 +106,21 @@ export async function gradeWithAI(
 
   let parsed: { score?: unknown; reason?: unknown };
   try {
-    const response = await ai.models.generateContent({
-      model: GEMINI_GRADING_MODEL,
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { responseMimeType: "application/json", responseJsonSchema: GRADE_SCHEMA },
-    });
+    // No built-in timeout on this call — an occasional slow Gemini response
+    // used to stall the whole attempt-submission request indefinitely, long
+    // enough for the browser to give up and show a generic submit error
+    // while the server kept working and wrote the attempt successfully a
+    // few seconds later (confirmed: DB always showed success right after).
+    // Capped here so a slow call fails closed (same as any other grading
+    // failure) within a predictable bound instead of hanging the request.
+    const response = await Promise.race([
+      ai.models.generateContent({
+        model: GEMINI_GRADING_MODEL,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: { responseMimeType: "application/json", responseJsonSchema: GRADE_SCHEMA },
+      }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("gradeWithAI: timed out")), 10_000)),
+    ]);
     parsed = JSON.parse(response.text ?? "");
   } catch (err) {
     console.error("gradeWithAI: request failed:", err);

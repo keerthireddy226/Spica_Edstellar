@@ -114,6 +114,8 @@ export function AnswerInputControl({
       <textarea
         value={answerText}
         onChange={(e) => onAnswerTextChange(e.target.value)}
+        onPaste={(e) => e.preventDefault()}
+        onDrop={(e) => e.preventDefault()}
         placeholder={t("placementTest.answerPlaceholder")}
         className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
         rows={textareaRows}
@@ -126,6 +128,8 @@ export function AnswerInputControl({
       type="text"
       value={answerText}
       onChange={(e) => onAnswerTextChange(e.target.value)}
+      onPaste={(e) => e.preventDefault()}
+      onDrop={(e) => e.preventDefault()}
       placeholder={t("placementTest.answerPlaceholder")}
       className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
     />

@@ -7,7 +7,9 @@
 // manually after adding new content, or re-run with --force after a
 // content edit that changes an item's spoken text.
 //
-// Usage: npm run generate-item-audio [-- --force]
+// Usage: npm run generate-item-audio [-- --force] [-- --type=repeats] [-- --limit=5]
+// --type restricts the run to one item type, --limit caps how many items —
+// for trying a new voice/accent on a small sample before generating everything.
 import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -20,6 +22,10 @@ const UPLOADS_DIR = path.join(process.cwd(), "uploads", "item-audio");
 const ACCENT = "en-US";
 
 const force = process.argv.includes("--force");
+const typeArg = process.argv.find((a) => a.startsWith("--type="));
+const onlyType = typeArg?.slice("--type=".length);
+const limitArg = process.argv.find((a) => a.startsWith("--limit="));
+const limit = limitArg ? Number(limitArg.slice("--limit=".length)) : undefined;
 
 async function main() {
   if (!process.env.GOOGLE_TTS_API_KEY) {
@@ -27,12 +33,19 @@ async function main() {
     process.exit(1);
   }
 
-  const itemTypeIds = Array.from(AUDIO_FIRST_TYPES);
+  if (onlyType && !AUDIO_FIRST_TYPES.has(onlyType)) {
+    console.error(`--type=${onlyType} isn't one of the audio-first types: ${[...AUDIO_FIRST_TYPES].join(", ")}`);
+    process.exit(1);
+  }
+  const itemTypeIds = onlyType ? [onlyType] : Array.from(AUDIO_FIRST_TYPES);
   const itemsResult = await pool.query(
-    `SELECT id, item_type_id, content FROM items WHERE status = 'approved' AND item_type_id = ANY($1::text[])`,
-    [itemTypeIds],
+    `SELECT id, item_type_id, content FROM items WHERE status = 'approved' AND item_type_id = ANY($1::text[])
+     ORDER BY created_at LIMIT $2`,
+    [itemTypeIds, limit ?? null],
   );
-  console.log(`Found ${itemsResult.rows.length} approved items needing spoken audio.`);
+  console.log(
+    `Found ${itemsResult.rows.length} approved items needing spoken audio${onlyType ? ` (type=${onlyType})` : ""}${limit ? ` (limit=${limit})` : ""}.`,
+  );
 
   let generated = 0;
   let skipped = 0;
