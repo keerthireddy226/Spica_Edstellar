@@ -423,7 +423,7 @@ adminRouter.get("/admins/:id/activity", requireAuth, async (req: AuthedRequest, 
               m.email,
               (SELECT count(*)::int FROM users ml
                  JOIN batch_managers bm ON bm.batch_id = ml.batch_id
-                 WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS learner_count
+                 WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS "learnerCount"
             FROM users m
             WHERE m.tenant_id = t.id AND m.role = 'manager' AND m.deleted_at IS NULL
             ORDER BY m.created_at
@@ -554,7 +554,7 @@ adminRouter.get("/org-admins", requireAuth, async (req: AuthedRequest, res, next
             SELECT m.id, trim(coalesce(m.first_name, '') || ' ' || coalesce(m.last_name, '')) AS name,
               (SELECT count(*)::int FROM users ml
                  JOIN batch_managers bm ON bm.batch_id = ml.batch_id
-                 WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS learner_count
+                 WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS "learnerCount"
             FROM users m
             WHERE m.tenant_id = t.id AND m.role = 'manager' AND m.deleted_at IS NULL
             ORDER BY m.created_at
@@ -985,7 +985,7 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
                 m.email,
                 (SELECT count(*)::int FROM users ml
                    JOIN batch_managers bm ON bm.batch_id = ml.batch_id
-                   WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS learner_count
+                   WHERE bm.user_id = m.id AND ml.role = 'learner' AND ml.deleted_at IS NULL) AS "learnerCount"
               FROM users m
               WHERE m.tenant_id = t.id AND m.role = 'manager' AND m.deleted_at IS NULL
               ORDER BY m.created_at

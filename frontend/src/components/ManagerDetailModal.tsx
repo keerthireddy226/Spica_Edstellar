@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Layers } from "lucide-react";
-import { DetailModal } from "@/components/DetailModal";
+import { Layers, UserRound, Users } from "lucide-react";
+import { Badge, Pill, DetailModal, InfoGrid, ModalEmpty, ModalRow, ModalSection, personInitials } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
-import { cardGradient } from "@/lib/cardGradients";
 import { getManagerActivityDetail, type ManagerDetail, type ManagerOnboardedLearner } from "@/api/admin";
 
-function initials(firstName: string | null, lastName: string | null, email: string): string {
-  const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
-  return fromName || email.slice(0, 2).toUpperCase();
-}
 
 function categoryLabel(category: string | null): string {
   return category === "university" ? "University" : "Organization";
@@ -83,109 +78,86 @@ export function ManagerDetailModal({
 
   const name = [manager.firstName, manager.lastName].filter(Boolean).join(" ") || "Not named yet";
   const status = !manager.active ? "deactivated" : !manager.hasLoggedIn ? "pending" : "active";
+  const sessions = learners.reduce((n, l) => n + l.sessionCount, 0);
+  const activeLearners = learners.filter((l) => l.active).length;
+  const shown = selectedBatch ? (batchGroups.find((g) => g.batchName === selectedBatch)?.learners ?? []) : learners;
 
   return (
-    <DetailModal title={name} subtitle={`Manager at ${manager.tenantName}`} onClose={onClose} onBack={onBack} wide>
-      <div className="flex flex-col gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Manager details</p>
-          <div className="border border-rule rounded-input px-4 py-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-muted">Email</p>
-                <p className="text-sm text-ink">{manager.email}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Organization</p>
-                <p className="text-sm text-ink">
-                  {manager.tenantName} ({categoryLabel(manager.tenantCategory)})
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Batches</p>
-                <p className="text-sm text-ink">{manager.batchNames.length === 0 ? "None assigned" : manager.batchNames.join(", ")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Joined</p>
-                <p className="text-sm text-ink">{formatDate(manager.createdAt)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Status</p>
-                <span
-                  className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-pill mt-0.5 ${
-                    status === "active" ? "bg-success/15 text-success" : status === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                  }`}
-                >
-                  {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <DetailModal
+      title={name}
+      subtitle={`${manager.email} · Manager at ${manager.tenantName}`}
+      initials={personInitials(manager.firstName, manager.lastName, manager.email)}
+      badges={
+        <>
+          <Badge tone={status === "active" ? "good" : status === "pending" ? "warn" : "bad"}>
+            {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
+          </Badge>
+          <Badge>{categoryLabel(manager.tenantCategory)}</Badge>
+          <Badge>Joined {formatDate(manager.createdAt)}</Badge>
+        </>
+      }
+      stats={[
+        { label: "Batches", value: manager.batchNames.length },
+        { label: "Learners", value: learners.length, hint: `${activeLearners} active` },
+        { label: "Sessions completed", value: sessions },
+        { label: "Avg sessions per learner", value: learners.length ? (sessions / learners.length).toFixed(1) : "—" },
+      ]}
+      onClose={onClose}
+      onBack={onBack}
+      wide
+    >
+      <div className="flex flex-col gap-6">
+        <ModalSection title="Details" icon={UserRound}>
+          <InfoGrid
+            items={[
+              ["Email", manager.email],
+              ["Organization", `${manager.tenantName} (${categoryLabel(manager.tenantCategory)})`],
+              ["Batches", manager.batchNames.length === 0 ? "None assigned" : manager.batchNames.join(", ")],
+              ["Joined", formatDate(manager.createdAt)],
+            ]}
+          />
+        </ModalSection>
 
-        <div>
-          {selectedBatch === null ? (
-            <>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Batches</p>
-              {batchGroups.length === 0 ? (
-                <p className="text-sm text-muted">Hasn't onboarded any learners yet.</p>
-              ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {batchGroups.map((g, i) => (
-                    <button
-                      key={g.batchName}
-                      onClick={() => setSelectedBatch(g.batchName)}
-                      style={cardGradient(i)}
-                      className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4 text-left cursor-pointer"
-                    >
-                      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-                        <Layers size={22} strokeWidth={1.8} />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-display font-bold text-white truncate">{g.batchName}</p>
-                        <p className="text-xs text-white/80">
-                          {g.learners.length} learner{g.learners.length === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
+        <ModalSection title="Batches" icon={Layers}>
+          {batchGroups.length === 0 ? (
+            <ModalEmpty icon={Layers}>No learners in their batches yet.</ModalEmpty>
           ) : (
-            <>
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedBatch(null)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors cursor-pointer mb-2"
+                className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold border transition-colors cursor-pointer ${selectedBatch === null ? "bg-navy text-white border-navy" : "border-rule text-ink hover:bg-paper-warm"}`}
               >
-                <ArrowLeft size={14} /> All batches
+                All · {learners.length}
               </button>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">
-                Learners in {selectedBatch}
-              </p>
-              <div className="flex flex-col gap-2">
-                {(batchGroups.find((g) => g.batchName === selectedBatch)?.learners ?? []).map((l) => (
-                  <button
-                    key={l.id}
-                    onClick={() => setViewingLearnerId(l.id)}
-                    className="border border-rule rounded-input px-4 py-3 flex items-center gap-3 text-left hover:border-rule-strong hover:bg-paper-warm transition-colors cursor-pointer"
-                  >
-                    <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
-                      {initials(l.firstName, l.lastName, l.email)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
-                      <p className="text-xs text-muted">{l.sessionCount} session{l.sessionCount === 1 ? "" : "s"} completed</p>
-                    </div>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {l.active ? "Active" : "Deactivated"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
+              {batchGroups.map((g) => (
+                <button
+                  key={g.batchName}
+                  onClick={() => setSelectedBatch(g.batchName)}
+                  className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold border transition-colors cursor-pointer ${selectedBatch === g.batchName ? "bg-navy text-white border-navy" : "border-rule text-ink hover:bg-paper-warm"}`}
+                >
+                  {g.batchName} · {g.learners.length}
+                </button>
+              ))}
+            </div>
           )}
-        </div>
+        </ModalSection>
+
+        {learners.length > 0 && (
+          <ModalSection title={selectedBatch ? `Learners in ${selectedBatch}` : "Learners"} icon={Users}>
+            <div className="grid md:grid-cols-2 gap-2">
+              {shown.map((l) => (
+                <ModalRow
+                  key={l.id}
+                  initials={personInitials(l.firstName, l.lastName, l.email)}
+                  title={[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}
+                  subtitle={`${l.batchName ?? "No batch"} · ${l.sessionCount} session${l.sessionCount === 1 ? "" : "s"} completed`}
+                  right={<Pill tone={l.active ? "good" : "bad"}>{l.active ? "Active" : "Deactivated"}</Pill>}
+                  onClick={() => setViewingLearnerId(l.id)}
+                />
+              ))}
+            </div>
+          </ModalSection>
+        )}
       </div>
 
       {viewingLearnerId && (

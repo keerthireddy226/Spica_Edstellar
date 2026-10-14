@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { countryName } from "@/constants/demographics";
-import { DetailModal } from "@/components/DetailModal";
+import { Badge, DetailModal, personInitials } from "@/components/DetailModal";
 import { getLearnerProfile, type LearnerProfile } from "@/api/admin";
 import { EditLearnerDetailsModal } from "@/components/EditLearnerDetailsModal";
 import type { LearnerDetails } from "@/api/details";
@@ -17,10 +17,13 @@ function Section({ title, children, action }: { title: string; children: React.R
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{title}</p>
+        <p className="text-sm font-display font-bold text-ink flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-navy" />
+          {title}
+        </p>
         {action}
       </div>
-      <div className="border border-rule rounded-input px-4 py-3">{children}</div>
+      <div className="bg-surface border border-rule rounded-card shadow-sm px-5 py-4">{children}</div>
     </div>
   );
 }
@@ -96,7 +99,26 @@ export function LearnerProfileModal({
   return (
     <DetailModal
       title={name}
-      subtitle={`${learner.participantId ? `${learner.participantId} · ` : ""}${learner.email} · ${learner.tenantName ?? "Individual"}${learner.batchName ? ` · ${learner.batchName}` : ""}`}
+      subtitle={`${learner.participantId ? `${learner.participantId} · ` : ""}${learner.email}`}
+      initials={personInitials(learner.firstName, learner.lastName, learner.email)}
+      badges={
+        <>
+          <Badge tone={learner.active ? "good" : "bad"}>{learner.active ? "Active" : "Deactivated"}</Badge>
+          <Badge>{learner.tenantType === "cohort" ? (learner.tenantName ?? "Organization") : "Individual learner"}</Badge>
+          {learner.batchName && <Badge>{learner.batchName}</Badge>}
+          {employment?.department && <Badge>{employment.department}</Badge>}
+        </>
+      }
+      stats={[
+        { label: "Current level", value: placement?.cefrLevel ?? "Not placed", hint: placement ? `${placement.overallPercent}% on placement` : undefined },
+        { label: "Sessions completed", value: activity.genuinelyCompletedSessions, hint: `${activity.totalSessions} started` },
+        { label: "Day streak", value: progress?.streakDays ?? 0, hint: progress ? `${progress.practiceMinutes} minutes practised` : undefined },
+        {
+          label: "Accuracy",
+          value: progress && progress.accuracyGraded > 0 ? `${Math.round((progress.accuracyCorrect / progress.accuracyGraded) * 100)}%` : "—",
+          hint: activity.lastSessionAt ? `Last session ${formatDate(activity.lastSessionAt)}` : "No sessions yet",
+        },
+      ]}
       onClose={onClose}
       onBack={onBack}
       wide

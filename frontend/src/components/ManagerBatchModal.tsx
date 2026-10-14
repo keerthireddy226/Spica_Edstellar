@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Award, CheckCircle2, Copy, Pencil } from "lucide-react";
+import { Award, CheckCircle2, Copy, Layers, Pencil } from "lucide-react";
 import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchFormModal } from "@/components/BatchFormModal";
-import { DetailModal } from "@/components/DetailModal";
+import { Badge, DetailModal } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Button } from "@/components/Button";
@@ -87,6 +87,20 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
     <DetailModal
       title={b.name}
       subtitle={`${b.batchCode} · ${BATCH_STATUS_LABEL[b.status]}${b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${fmt(b.endDate)}` : ""}`}
+      icon={Layers}
+      badges={
+        <>
+          <Badge tone={b.status === "active" ? "good" : "neutral"}>{BATCH_STATUS_LABEL[b.status]}</Badge>
+          {(b.startCefr || b.targetCefr) && <Badge>{`${b.startCefr ?? "?"} → ${b.targetCefr ?? "?"}`}</Badge>}
+          {b.department && <Badge>{b.department}</Badge>}
+        </>
+      }
+      stats={[
+        { label: "Learners", value: b.capacity ? `${b.licenses.learners} / ${b.capacity}` : b.licenses.learners },
+        { label: "Licensed now", value: b.licenses.licensed, hint: `${b.licenses.unlicensed} without a license` },
+        { label: "Fixed licenses left", value: b.fixedLicenses == null ? "—" : Math.max(0, b.fixedLicenses - b.fixedLicensesUsed), hint: b.fixedLicenses == null ? "Uses your pool" : `of ${b.fixedLicenses}` },
+        { label: "Ending soon", value: b.licenses.endingSoon, hint: "Access ends within 14 days" },
+      ]}
       onClose={onClose}
       wide
       actions={

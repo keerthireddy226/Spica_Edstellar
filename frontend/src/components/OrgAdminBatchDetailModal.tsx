@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { DetailModal } from "@/components/DetailModal";
+import { Badge, DetailModal } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { BatchFixedLicenses } from "@/components/licenses/BatchFixedLicenses";
 import { BatchFormModal } from "@/components/BatchFormModal";
 import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
-import { Award, Pencil } from "lucide-react";
+import { Award, Layers, Pencil } from "lucide-react";
 import { issueCertificate, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
@@ -70,6 +70,20 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
       subtitle={`${batch.batchCode} · ${BATCH_STATUS_LABEL[batch.status]} · Created ${formatDate(batch.createdAt)}${
         batch.endDate ? ` · ${batch.status === "active" ? "Ends" : "Ended"} ${formatDate(batch.endDate)}` : ""
       }`}
+      icon={Layers}
+      badges={
+        <>
+          <Badge tone={batch.status === "active" ? "good" : "neutral"}>{BATCH_STATUS_LABEL[batch.status]}</Badge>
+          {(batch.startCefr || batch.targetCefr) && <Badge>{`${batch.startCefr ?? "?"} → ${batch.targetCefr ?? "?"}`}</Badge>}
+          {batch.managerNames.length > 0 && <Badge>{batch.managerNames.join(", ")}</Badge>}
+        </>
+      }
+      stats={[
+        { label: "Learners", value: batch.capacity ? `${learners.filter((l) => l.active).length} / ${batch.capacity}` : learners.filter((l) => l.active).length },
+        { label: "Licensed now", value: batch.licenses?.licensed ?? 0, hint: `${batch.licenses?.unlicensed ?? 0} without a license` },
+        { label: "Fixed licenses left", value: batch.fixedLicenses == null ? "—" : Math.max(0, batch.fixedLicenses - batch.fixedLicensesUsed), hint: batch.fixedLicenses == null ? "Uses Managers' pools" : `of ${batch.fixedLicenses}` },
+        { label: "Sessions completed", value: learners.reduce((n, l) => n + l.sessionCount, 0) },
+      ]}
       onClose={onClose}
       wide
       actions={

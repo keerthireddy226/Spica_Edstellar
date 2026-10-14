@@ -34,7 +34,7 @@ import {
   type BulkAdminResult,
   type AdminOnboardedOrg,
 } from "@/api/admin";
-import { DetailModal } from "@/components/DetailModal";
+import { Badge, DetailModal } from "@/components/DetailModal";
 import { AdminProfileFields, toAdminPayloadExtras, type AdminProfile } from "@/components/staff/AdminProfileFields";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
@@ -473,7 +473,30 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
   const name = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email;
 
   return (
-    <DetailModal title={`${name}'s activity`} subtitle="Organizations onboarded by this admin" onClose={onClose} wide>
+    <DetailModal
+      title={name}
+      subtitle={`${admin.email}${admin.department ? ` · ${admin.department}` : ""} · organizations they own`}
+      initials={initials(admin.firstName, admin.lastName, admin.email)}
+      badges={
+        <>
+          <Badge tone={!admin.active ? "bad" : admin.hasLoggedIn ? "good" : "warn"}>{!admin.active ? "Deactivated" : admin.hasLoggedIn ? "Active" : "Invite pending"}</Badge>
+          {admin.jobTitle && <Badge>{admin.jobTitle}</Badge>}
+          {admin.region && <Badge>{admin.region}</Badge>}
+        </>
+      }
+      stats={
+        organizations
+          ? [
+              { label: "Organizations", value: organizations.length },
+              { label: "Learners", value: organizations.reduce((n, o) => n + (o.learnerCount ?? 0), 0) },
+              { label: "Managers", value: organizations.reduce((n, o) => n + (o.managers?.length ?? 0), 0) },
+              { label: "Permissions", value: `${Object.values(admin.permissions).filter(Boolean).length} of ${Object.keys(PERMISSION_LABELS).length}` },
+            ]
+          : undefined
+      }
+      onClose={onClose}
+      wide
+    >
       {error && <p className="text-sm text-error">{error}</p>}
       {!organizations && !error && <p className="text-sm text-muted">Loading…</p>}
       {organizations?.length === 0 && <p className="text-sm text-muted">Hasn't onboarded any organizations yet.</p>}

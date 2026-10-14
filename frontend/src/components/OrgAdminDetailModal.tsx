@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { DetailModal } from "@/components/DetailModal";
+import { Badge, Pill, DetailModal, InfoGrid, ModalEmpty, ModalRow, ModalSection, personInitials } from "@/components/DetailModal";
+import { UserRound, Users } from "lucide-react";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
 import { getOrgAdminActivityDetail, type OrgAdminDetail, type OrgAdminOnboardedManager } from "@/api/admin";
 
-function initials(firstName: string | null, lastName: string | null, email: string): string {
-  const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
-  return fromName || email.slice(0, 2).toUpperCase();
-}
 
 function categoryLabel(category: string | null): string {
   return category === "university" ? "University" : "Organization";
@@ -59,78 +56,69 @@ export function OrgAdminDetailModal({
 
   const name = [orgAdmin.firstName, orgAdmin.lastName].filter(Boolean).join(" ") || "Not named yet";
   const status = !orgAdmin.active ? "deactivated" : !orgAdmin.hasLoggedIn ? "pending" : "active";
+  const learnerTotal = managers.reduce((n, m) => n + m.learnerCount, 0);
 
   return (
-    <DetailModal title={name} subtitle={`Org Admin at ${orgAdmin.tenantName}`} onClose={onClose} onBack={onBack} wide>
-      <div className="flex flex-col gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Org Admin details</p>
-          <div className="border border-rule rounded-input px-4 py-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-muted">Email</p>
-                <p className="text-sm text-ink">{orgAdmin.email}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Organization</p>
-                <p className="text-sm text-ink">
-                  {orgAdmin.tenantName} ({categoryLabel(orgAdmin.tenantCategory)})
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Joined</p>
-                <p className="text-sm text-ink">{formatDate(orgAdmin.createdAt)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Status</p>
-                <span
-                  className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-pill mt-0.5 ${
-                    status === "active" ? "bg-success/15 text-success" : status === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                  }`}
-                >
-                  {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+    <DetailModal
+      title={name}
+      subtitle={`${orgAdmin.email} · Org Admin at ${orgAdmin.tenantName}`}
+      initials={personInitials(orgAdmin.firstName, orgAdmin.lastName, orgAdmin.email)}
+      badges={
+        <>
+          <Badge tone={status === "active" ? "good" : status === "pending" ? "warn" : "bad"}>
+            {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
+          </Badge>
+          <Badge>{categoryLabel(orgAdmin.tenantCategory)}</Badge>
+          <Badge>Joined {formatDate(orgAdmin.createdAt)}</Badge>
+        </>
+      }
+      stats={[
+        { label: "Managers", value: managers.length, hint: `${managers.filter((m) => m.active && m.hasLoggedIn).length} active` },
+        { label: "Learners under their Managers", value: learnerTotal },
+        { label: "Batches with a Manager", value: new Set(managers.flatMap((m) => m.batchNames)).size },
+        { label: "Invites not accepted", value: managers.filter((m) => m.active && !m.hasLoggedIn).length },
+      ]}
+      onClose={onClose}
+      onBack={onBack}
+      wide
+    >
+      <div className="flex flex-col gap-6">
+        <ModalSection title="Details" icon={UserRound}>
+          <InfoGrid
+            items={[
+              ["Email", orgAdmin.email],
+              ["Organization", `${orgAdmin.tenantName} (${categoryLabel(orgAdmin.tenantCategory)})`],
+              ["Joined", formatDate(orgAdmin.createdAt)],
+              ["Signed in", orgAdmin.hasLoggedIn ? "Yes" : "Not yet"],
+            ]}
+          />
+        </ModalSection>
 
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Managers onboarded</p>
+        <ModalSection title={`Managers (${managers.length})`} icon={Users}>
           {managers.length === 0 ? (
-            <p className="text-sm text-muted">Hasn't onboarded any managers yet.</p>
+            <ModalEmpty icon={Users}>Hasn't onboarded any Managers yet.</ModalEmpty>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="grid md:grid-cols-2 gap-2">
               {managers.map((m) => {
                 const mStatus = !m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active";
                 return (
-                  <button
+                  <ModalRow
                     key={m.id}
+                    initials={personInitials(m.firstName, m.lastName, m.email)}
+                    title={[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}
+                    subtitle={`${m.batchNames.length === 0 ? "No batch" : m.batchNames.join(", ")} · ${m.learnerCount} learner${m.learnerCount === 1 ? "" : "s"}`}
+                    right={
+                      <Pill tone={mStatus === "active" ? "good" : mStatus === "pending" ? "warn" : "bad"}>
+                        {mStatus === "active" ? "Active" : mStatus === "pending" ? "Invite pending" : "Deactivated"}
+                      </Pill>
+                    }
                     onClick={() => setViewingManagerId(m.id)}
-                    className="border border-rule rounded-input px-4 py-3 flex items-center gap-3 text-left hover:border-rule-strong hover:bg-paper-warm transition-colors cursor-pointer"
-                  >
-                    <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
-                      {initials(m.firstName, m.lastName, m.email)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">{[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}</p>
-                      <p className="text-xs text-muted">
-                        {m.batchNames.length === 0 ? "No batch assigned" : m.batchNames.join(", ")} · {m.learnerCount} learner{m.learnerCount === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${
-                        mStatus === "active" ? "bg-success/15 text-success" : mStatus === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                      }`}
-                    >
-                      {mStatus === "active" ? "Active" : mStatus === "pending" ? "Invite pending" : "Deactivated"}
-                    </span>
-                  </button>
+                  />
                 );
               })}
             </div>
           )}
-        </div>
+        </ModalSection>
       </div>
 
       {viewingManagerId && (

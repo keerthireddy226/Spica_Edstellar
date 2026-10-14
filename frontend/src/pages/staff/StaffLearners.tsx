@@ -355,7 +355,11 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
               {shown.map((r) => {
                 const s = st(r);
                 return (
-                  <tr key={r.id} className="border-b border-rule last:border-0">
+                  <tr
+                    key={r.id}
+                    onClick={() => canView && setViewing(r.id)}
+                    className={`border-b border-rule last:border-0 ${canView ? "cursor-pointer hover:bg-paper-warm" : ""}`}
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
@@ -383,7 +387,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                         {s === "active" ? `Active · ${ago(r.lastActiveOn)}` : s === "pending" ? "Invite pending" : "Deactivated"}
                       </StatusPill>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-end">
                         {canView && (
                           <IconBtn title="View profile" onClick={() => setViewing(r.id)}>
