@@ -363,7 +363,8 @@
       "writingDesc": "Geschreven Engels — 35 minuten.",
       "professionalDesc": "Spreken, luisteren, lezen, schrijven — 60 minuten.",
       "placementDesc": "Spreken, luisteren, lezen, schrijven — 50 minuten."
-    }
+    },
+    "notEnabled": "Niet aangeboden door je organisatie"
   },
   "tutor": {
     "subtitle": "Een ontspannen oefengesprek met je AI-coach.",

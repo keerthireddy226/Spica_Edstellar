@@ -368,7 +368,8 @@
       "professionalDesc": "Sprechen, Hören, Lesen, Schreiben – 60 Minuten.",
       "placement": "English Placement Test",
       "placementDesc": "Sprechen, Hören, Lesen, Schreiben – 50 Minuten."
-    }
+    },
+    "notEnabled": "Von Ihrer Organisation nicht angeboten"
   },
   "tutor": {
     "subtitle": "Ein entspanntes Übungsgespräch mit deinem KI-Coach.",

@@ -363,7 +363,8 @@
       "writingDesc": "Skriftligt engelsk — 35 minutter.",
       "professionalDesc": "Tale, lytning, læsning, skrivning — 60 minutter.",
       "placementDesc": "Tale, lytning, læsning, skrivning — 50 minutter."
-    }
+    },
+    "notEnabled": "Tilbydes ikke af din organisation"
   },
   "tutor": {
     "subtitle": "En afslappet øvesamtale med din AI-coach.",

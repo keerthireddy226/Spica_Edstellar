@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -90,15 +91,17 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
 }
 
 // Set counts per product (feeds the ProductPicker's real "5 sets" copy).
-practiceTestsRouter.get("/products", requireAuth, async (_req: AuthedRequest, res, next) => {
+practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
     // Cheaper to fetch all active exam codes once and bucket in JS than run
     // 5 separate LIKE-prefix queries.
     const codesResult = await pool.query(`SELECT code FROM exams WHERE is_active`);
     const products = PRODUCT_IDS.map((id) => {
       const prefix = PRODUCT_CODE_PREFIX[id];
       const setCount = codesResult.rows.filter((r) => r.code.startsWith(`${prefix}-`)).length;
-      return { id, setCount };
+      // Products an organization switched off stay listed but closed.
+      return { id, setCount, allowed: !allowedTestProducts || allowedTestProducts.includes(id) };
     });
     res.json({ products });
   } catch (err) {
@@ -111,6 +114,10 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
   try {
     const prefix = PRODUCT_CODE_PREFIX[req.params.product as string];
     if (!prefix) return res.status(404).json({ error: "unknown_product" });
+    const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
+    if (allowedTestProducts && !allowedTestProducts.includes(req.params.product as string)) {
+      return res.status(403).json({ error: "product_not_enabled" });
+    }
 
     const result = await pool.query(
       `SELECT e.id, e.code, e.name,
@@ -144,6 +151,12 @@ const startSessionSchema = z.object({ examId: z.string().uuid() });
 practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = startSessionSchema.parse(req.body);
+    const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
+    if (allowedTestProducts) {
+      const code = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [body.examId])).rows[0]?.code ?? "";
+      const product = PRODUCT_IDS.find((id) => code.startsWith(`${PRODUCT_CODE_PREFIX[id]}-`));
+      if (!product || !allowedTestProducts.includes(product)) return res.status(403).json({ error: "product_not_enabled" });
+    }
 
     const existing = await pool.query(
       `SELECT id, composition FROM sessions

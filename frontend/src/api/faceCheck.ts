@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 export type FaceCheckPurpose = "placement" | "practice" | "practice_test";
 
-export function getFaceEnrollmentStatus(): Promise<{ enrolled: boolean }> {
+export function getFaceEnrollmentStatus(): Promise<{ enrolled: boolean; required?: boolean }> {
   return api("/face/enrollment/status");
 }
 

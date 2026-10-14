@@ -383,7 +383,8 @@
       "professionalDesc": "Speaking, listening, reading, writing — 60 minutes.",
       "placement": "English Placement Test",
       "placementDesc": "Speaking, listening, reading, writing — 50 minutes."
-    }
+    },
+    "notEnabled": "Not offered by your organization"
   },
   "tutor": {
     "subtitle": "A low-pressure practice conversation with your AI coach.",

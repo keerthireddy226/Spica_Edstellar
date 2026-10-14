@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { pool } from "../db.js";
 import { generateToken, hashToken } from "./tokens.js";
 import { sendAdminInviteEmail } from "./mailer.js";
+import { applyLearnerDefaults } from "../orgAdmin/settings.js";
 
 const BCRYPT_ROUNDS = 12;
 const INVITE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — same as the Admin/Org Admin invite, longer than a real password reset since an invite may sit unread a while
@@ -29,6 +30,8 @@ export async function createAndInviteUser(row: {
     [row.role, row.tenantId, row.batchId ?? null, row.email, placeholderHash, row.firstName, row.lastName],
   );
   const userId = inserted.rows[0].id;
+  // The organization's defaults for new learners (language, daily reminder).
+  if (row.role === "learner") await applyLearnerDefaults(row.tenantId, userId);
 
   const inviteToken = generateToken();
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [

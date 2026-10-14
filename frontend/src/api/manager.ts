@@ -9,7 +9,7 @@ export interface OnboardLearnerPayload {
 }
 
 export interface ManagerOverview {
-  batches: { id: string; name: string; learnerCount: number }[];
+  batches: { id: string; name: string; learnerCount: number; status?: "active" | "completed" | "archived" }[];
   totalLearners: number;
   sessionsCompletedToday: number;
 }

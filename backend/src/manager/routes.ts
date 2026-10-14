@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { assertWithinLimit } from "../plans/service.js";
+import { assertBatchActive } from "../batches/lifecycle.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -44,12 +45,12 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
     }
     const [batches, sessionsToday] = await Promise.all([
       pool.query(
-        `SELECT b.id, b.name, count(l.id)::int AS learner_count
+        `SELECT b.id, b.name, b.status, count(l.id)::int AS learner_count
          FROM batches b
          LEFT JOIN users l ON l.batch_id = b.id AND l.role = 'learner' AND l.deleted_at IS NULL
-         WHERE b.id = ANY($1::uuid[])
+         WHERE b.id = ANY($1::uuid[]) AND b.status <> 'archived'
          GROUP BY b.id
-         ORDER BY b.created_at DESC`,
+         ORDER BY b.status = 'active' DESC, b.created_at DESC`,
         [batchIds],
       ),
       pool.query(
@@ -59,7 +60,7 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
       ),
     ]);
     res.json({
-      batches: batches.rows.map((r) => ({ id: r.id, name: r.name, learnerCount: r.learner_count })),
+      batches: batches.rows.map((r) => ({ id: r.id, name: r.name, status: r.status, learnerCount: r.learner_count })),
       totalLearners: batches.rows.reduce((sum, r) => sum + r.learner_count, 0),
       sessionsCompletedToday: sessionsToday.rows[0].n,
     });
@@ -120,6 +121,7 @@ managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, nex
     if (!batchIds.includes(body.batchId)) {
       return res.status(403).json({ error: "not_your_batch" });
     }
+    await assertBatchActive(body.batchId);
     const { id } = await createAndInviteUser({
       role: "learner",
       tenantId: req.user!.tenantId!,
@@ -152,6 +154,7 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
     if (!batchIds.includes(body.batchId)) {
       return res.status(403).json({ error: "not_your_batch" });
     }
+    await assertBatchActive(body.batchId);
 
     const results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string }[] = [];
     for (const raw of body.rows) {
@@ -242,6 +245,20 @@ managerRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, next
     } finally {
       client.release();
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Before a bulk invite: which of these emails already have an account, so the
+// preview can flag them instead of the upload failing row by row.
+managerRouter.post("/learners/bulk/validate", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const body = z.object({ emails: z.array(z.string().max(320)).max(MAX_BULK_ROWS) }).parse(req.body);
+    const lower = body.emails.map((e) => e.trim().toLowerCase());
+    const r = await pool.query(`SELECT lower(email) AS email FROM users WHERE lower(email) = ANY($1::text[])`, [lower]);
+    res.json({ existing: r.rows.map((x) => x.email), maxRows: MAX_BULK_ROWS });
   } catch (err) {
     next(err);
   }

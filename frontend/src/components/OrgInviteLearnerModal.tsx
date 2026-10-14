@@ -1,24 +1,12 @@
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { X, Mail, Upload, FileText } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { X, Mail } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { LICENSE_ERROR_TEXT } from "@/api/licenses";
-import { inviteLearner, inviteLearnersBulk, type OrgBatch, type BulkLearnerRow, type BulkLearnerResult } from "@/api/orgAdmin";
+import { inviteLearner, inviteLearnersBulk, validateBulkEmails, type OrgBatch } from "@/api/orgAdmin";
+import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
 
 const LICENSE_CHOICES = [0, 1, 3, 6, 12];
-
-function parseLearnerCsv(text: string): BulkLearnerRow[] {
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length === 0) return [];
-  const startIdx = /^email\s*,/i.test(lines[0]) ? 1 : 0;
-  const rows: BulkLearnerRow[] = [];
-  for (let i = startIdx; i < lines.length; i++) {
-    const [email, firstName, lastName] = lines[i].split(",").map((c) => c.trim());
-    if (!email) continue;
-    rows.push({ email, firstName: firstName ?? "", lastName: lastName ?? "" });
-  }
-  return rows;
-}
 
 export function batchLabel(b: OrgBatch): string {
   return b.managerNames.length > 0 ? `${b.name} — ${b.managerNames.join(", ")}` : `${b.name} — no manager yet`;
@@ -44,15 +32,12 @@ export function OrgInviteLearnerModal({
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [rows, setRows] = useState<BulkLearnerRow[]>([]);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [results, setResults] = useState<(BulkLearnerResult & { licenseError?: string | null })[] | null>(null);
+  const [bulkCount, setBulkCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const options = { batchId: batchId || null, licenseMonths };
-  const needed = licenseMonths * (mode === "single" ? 1 : rows.length);
+  const needed = licenseMonths * (mode === "single" ? 1 : bulkCount);
   const shortOfLicenses = poolAvailable !== null && licenseMonths > 0 && needed > poolAvailable;
 
   async function submitSingle(e: FormEvent) {
@@ -73,31 +58,7 @@ export function OrgInviteLearnerModal({
     }
   }
 
-  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileName(file.name);
-    setResults(null);
-    const parsed = parseLearnerCsv(await file.text());
-    setError(parsed.length === 0 ? "Couldn't find any rows. Expected columns: email, firstName, lastName." : null);
-    setRows(parsed);
-  }
-
-  async function submitBulk() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      setResults((await inviteLearnersBulk(options, rows)).results);
-    } catch {
-      setError("Something went wrong uploading that file.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
-  const created = results?.filter((r) => r.status === "created").length ?? 0;
-  const unlicensed = results?.filter((r) => r.status === "created" && r.licenseError).length ?? 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
@@ -129,7 +90,7 @@ export function OrgInviteLearnerModal({
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batch</label>
             <select value={batchId} onChange={(e) => setBatchId(e.target.value)} className={`${inputClass} cursor-pointer`}>
               <option value="">No batch yet (assign later)</option>
-              {batches.map((b) => (
+              {batches.filter((b) => (b.status ?? "active") === "active").map((b) => (
                 <option key={b.id} value={b.id}>
                   {batchLabel(b)}
                 </option>
@@ -187,56 +148,20 @@ export function OrgInviteLearnerModal({
           </form>
         ) : (
           <div className="flex flex-col gap-4 px-8 py-6">
-            <p className="text-sm text-muted">
-              CSV columns, in order: <code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">email, firstName, lastName</code>. Header row optional.
-            </p>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex items-center justify-center gap-2 border-2 border-dashed border-rule rounded-card px-4 py-6 text-sm text-muted hover:border-navy hover:text-navy transition-colors cursor-pointer"
-            >
-              <Upload size={18} />
-              {fileName ? `Selected: ${fileName}` : "Choose a CSV file"}
-            </button>
-            <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
-            {error && <p className="text-sm text-error">{error}</p>}
-
-            {rows.length > 0 && !results && (
-              <Button onClick={submitBulk} disabled={submitting} className="self-start flex items-center gap-2">
-                <FileText size={16} /> {submitting ? "Uploading…" : `Send ${rows.length} invites`}
-              </Button>
-            )}
-
-            {results && (
-              <div className="flex flex-col gap-2">
-                <p className="text-sm text-success">
-                  {created} of {results.length} invited{unlicensed ? ` · ${unlicensed} without a license (pool ran out)` : ""}.
-                </p>
-                <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
-                  <table className="w-full text-xs">
-                    <tbody>
-                      {results.map((r, i) => (
-                        <tr key={i} className="border-b border-rule last:border-0">
-                          <td className="px-3 py-2 text-ink">{r.email}</td>
-                          <td className="px-3 py-2 text-muted">
-                            {r.status === "created"
-                              ? r.licenseError
-                                ? "Invited · no license"
-                                : "Invited"
-                              : r.status === "duplicate"
-                                ? "Already exists"
-                                : (r.message ?? "Invalid")}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <Button onClick={() => onDone(`${created} learner${created === 1 ? "" : "s"} invited.`)} className="self-start">
-                  Done
-                </Button>
-              </div>
-            )}
+            <BulkLearnerUpload
+              maxRows={200}
+              checkExisting={(emails) => validateBulkEmails("org-admin", emails).then((r) => r.existing)}
+              submit={async (rows) => (await inviteLearnersBulk(options, rows)).results}
+              extraNote={
+                licenseMonths
+                  ? shortOfLicenses
+                    ? `needs ${needed} licenses, only ${poolAvailable} available — some learners won't get one`
+                    : `${licenseMonths} month${licenseMonths === 1 ? "" : "s"} of access each`
+                  : null
+              }
+              onReadyChange={setBulkCount}
+              onDone={(created) => onDone(`${created} learner${created === 1 ? "" : "s"} invited.`)}
+            />
           </div>
         )}
       </div>

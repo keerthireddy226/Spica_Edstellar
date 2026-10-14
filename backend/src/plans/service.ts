@@ -62,7 +62,7 @@ async function usage(tenantId: string, executor: Executor = pool): Promise<Recor
   const r = await executor.query(
     `SELECT
        (SELECT count(*)::int FROM users WHERE tenant_id = $1 AND role = 'manager' AND deleted_at IS NULL) AS managers,
-       (SELECT count(*)::int FROM batches WHERE tenant_id = $1) AS batches`,
+       (SELECT count(*)::int FROM batches WHERE tenant_id = $1 AND status <> 'archived') AS batches`,
     [tenantId],
   );
   return { managers: r.rows[0].managers, batches: r.rows[0].batches };

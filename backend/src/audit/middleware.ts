@@ -112,6 +112,8 @@ export const ORG_ADMIN_AUDIT: Rule[] = [
   { method: "POST", path: "/learners/:id/resend-invite", action: "learner.invite_resent", targetType: "learner" },
   { method: "PATCH", path: "/organization", action: "organization.updated", targetType: "organization" },
   { method: "PATCH", path: "/settings", action: "organization.settings_updated", targetType: "settings" },
+  { method: "POST", path: "/settings/logo", action: "organization.logo_updated", targetType: "settings" },
+  { method: "DELETE", path: "/settings/logo", action: "organization.logo_removed", targetType: "settings" },
   { method: "POST", path: "/handover", action: "org_admin.handover", targetType: "org_admin" },
   { method: "POST", path: "/api-keys", action: "api_key.created", targetType: "api_key" },
   { method: "DELETE", path: "/api-keys/:id", action: "api_key.revoked", targetType: "api_key" },

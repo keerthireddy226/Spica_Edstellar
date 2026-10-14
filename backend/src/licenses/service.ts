@@ -444,7 +444,7 @@ async function withTenantLock<T>(tenantId: string, fn: (client: PoolClient) => P
   }
 }
 
-export async function setBatchBudget(args: { tenantId: string; batchId: string; budget: number | null; actorId: string }): Promise<boolean> {
+export async function setBatchBudget(args: { tenantId: string; batchId: string; budget: number | null; actorId: string | null }): Promise<boolean> {
   return withTenantLock(args.tenantId, async (client) => {
     const current = await client.query(
       `SELECT license_budget, (SELECT count(*)::int FROM license_assignments WHERE batch_id = $1 AND source = 'batch' AND reclaimed_at IS NULL) AS used

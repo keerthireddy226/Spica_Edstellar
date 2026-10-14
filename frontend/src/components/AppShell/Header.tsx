@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
+import { OrgBrandBadge, useBrandColor } from "@/components/AppShell/useBranding";
 
 function useTitleKey(pathname: string): string {
   if (pathname === ROUTES.ROADMAP) return "nav.roadmap";
@@ -43,6 +44,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.ORG_ADMIN_LICENSES]: "Licenses",
   [ROUTES.ORG_ADMIN_PLAN]: "Plan",
   [ROUTES.ORG_ADMIN_AUDIT]: "Audit log",
+  [ROUTES.ORG_ADMIN_SETTINGS]: "Settings",
   [ROUTES.ADMIN_ANALYTICS]: "Analytics",
   [ROUTES.ADMIN_CONSOLE_ANALYTICS]: "Analytics",
   [ROUTES.ORG_ADMIN_ANALYTICS]: "Analytics",
@@ -117,9 +119,13 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const titleKey = useTitleKey(location.pathname);
   // "Dashboard" alone didn't say which console this was.
   const title = CONSOLE_TITLE_BY_ROUTE[location.pathname] ?? t(titleKey);
+  const brandColor = useBrandColor();
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-rule bg-surface px-4 sm:px-6 py-3.5 shrink-0">
+    <header
+      className="flex items-center justify-between gap-4 border-b border-rule bg-surface px-4 sm:px-6 py-3.5 shrink-0"
+      style={brandColor ? { borderTop: `3px solid ${brandColor}` } : undefined}
+    >
       <div className="flex items-center gap-2 min-w-0">
         <button
           onClick={onMenuClick}
@@ -129,6 +135,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu size={24} />
         </button>
         <h1 className="font-display font-bold text-lg text-ink truncate">{title}</h1>
+        <OrgBrandBadge />
       </div>
 
       <div className="flex items-center gap-3 shrink-0">

@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
+import { validateBulkEmails } from "@/api/orgAdmin";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
-import { UserPlus, X, Mail, Upload, FileText, ArrowRightLeft } from "lucide-react";
+import { UserPlus, X, Mail, ArrowRightLeft } from "lucide-react";
 import { MoveLearnerModal } from "@/components/MoveLearnerModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { AssignLicenseModal } from "@/components/licenses/AssignLicenseModal";
@@ -15,129 +17,22 @@ import {
   managerOnboardLearnersBulk,
   managerMoveLearner,
 } from "@/api/manager";
-import type { OrgLearner, BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
+import type { OrgLearner } from "@/api/orgAdmin";
 
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
 }
 
-function parseLearnerCsv(text: string): BulkLearnerRow[] {
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length === 0) return [];
-  const startIdx = /^email\s*,/i.test(lines[0]) ? 1 : 0;
-  const rows: BulkLearnerRow[] = [];
-  for (let i = startIdx; i < lines.length; i++) {
-    const [email, firstName, lastName] = lines[i].split(",").map((c) => c.trim());
-    if (!email) continue;
-    rows.push({ email, firstName: firstName ?? "", lastName: lastName ?? "" });
-  }
-  return rows;
-}
-
 function BulkUploadForm({ batchId, onDone }: { batchId: string; onDone: () => void }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [rows, setRows] = useState<BulkLearnerRow[]>([]);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [results, setResults] = useState<BulkLearnerResult[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleFile(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setError(null);
-    setResults(null);
-    setFileName(file.name);
-    const text = await file.text();
-    const parsed = parseLearnerCsv(text);
-    if (parsed.length === 0) {
-      setError("Couldn't find any rows in that file. Expected columns: email, firstName, lastName.");
-    }
-    setRows(parsed);
-  }
-
-  async function handleUpload() {
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await managerOnboardLearnersBulk(batchId, rows);
-      setResults(res.results);
-    } catch {
-      setError("Something went wrong uploading that batch.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  const createdCount = results?.filter((r) => r.status === "created").length ?? 0;
-
   return (
-    <div className="flex flex-col gap-5 px-8 py-6">
-      <p className="text-sm text-muted">
-        CSV with columns, in order: <code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">email, firstName, lastName</code>. A header row is optional.
-      </p>
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex items-center justify-center gap-2 border-2 border-dashed border-rule rounded-card px-4 py-6 text-sm text-muted hover:border-navy hover:text-navy transition-colors cursor-pointer"
-      >
-        <Upload size={18} />
-        {fileName ? `Selected: ${fileName}` : "Choose a CSV file"}
-      </button>
-      <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
-
-      {error && <p className="text-sm text-error">{error}</p>}
-
-      {rows.length > 0 && !results && (
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{rows.length} rows found</p>
-          <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
-            <table className="w-full text-xs">
-              <tbody>
-                {rows.map((r, i) => (
-                  <tr key={i} className="border-b border-rule last:border-0">
-                    <td className="px-3 py-2 text-ink">{r.email}</td>
-                    <td className="px-3 py-2 text-muted">{[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Button onClick={handleUpload} disabled={submitting} className="self-start flex items-center gap-2">
-            <FileText size={16} /> {submitting ? "Uploading…" : `Send ${rows.length} invites`}
-          </Button>
-        </div>
-      )}
-
-      {results && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-success">{createdCount} of {results.length} invites sent.</p>
-          <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
-            <table className="w-full text-xs">
-              <tbody>
-                {results.map((r, i) => (
-                  <tr key={i} className="border-b border-rule last:border-0">
-                    <td className="px-3 py-2 text-ink">{r.email}</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${
-                          r.status === "created" ? "bg-success/15 text-success" : r.status === "duplicate" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                        }`}
-                      >
-                        {r.status === "created" ? "Invited" : r.status === "duplicate" ? "Already exists" : r.message ?? "Invalid"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Button onClick={onDone} className="self-start">
-            Done
-          </Button>
-        </div>
-      )}
+    <div className="px-8 py-6">
+      <BulkLearnerUpload
+        maxRows={200}
+        checkExisting={(emails) => validateBulkEmails("manager", emails).then((r) => r.existing)}
+        submit={async (rows) => (await managerOnboardLearnersBulk(batchId, rows)).results}
+        onDone={onDone}
+      />
     </div>
   );
 }
@@ -289,7 +184,8 @@ export function ManagerLearners() {
     getManagerLearners()
       .then((res) => setLearners(res.learners))
       .catch(() => setError("Could not load learners."));
-    getManagerOverview().then((res) => setBatches(res.batches));
+    // Learners can only be added to, or moved into, active batches.
+    getManagerOverview().then((res) => setBatches(res.batches.filter((b) => (b.status ?? "active") === "active")));
     getManagerLicenseOverview()
       .then((res) => {
         setBudgets(res.batches);

@@ -174,7 +174,7 @@ export function OrgAdminLearners() {
                     <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => setMovingLearner(l)}
-                        disabled={batches.filter((b) => b.id !== l.batchId).length === 0}
+                        disabled={batches.filter((b) => b.id !== l.batchId && b.status === "active").length === 0}
                         title={l.batchId ? "Move to another batch" : "Put in a batch"}
                         className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
@@ -216,7 +216,7 @@ export function OrgAdminLearners() {
           learnerName={[movingLearner.firstName, movingLearner.lastName].filter(Boolean).join(" ") || movingLearner.email}
           currentBatchId={movingLearner.batchId ?? null}
           currentBatchName={movingLearner.batchName}
-          batches={batches.map((b) => ({ id: b.id, name: b.name, label: batchLabel(b) }))}
+          batches={batches.filter((b) => b.status === "active").map((b) => ({ id: b.id, name: b.name, label: batchLabel(b) }))}
           onMove={(batchId, reason) => moveLearner(movingLearner.id, batchId, reason)}
           onClose={() => setMovingLearner(null)}
           onMoved={() => {

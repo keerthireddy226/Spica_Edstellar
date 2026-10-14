@@ -4,7 +4,8 @@ import { cardGradient } from "@/lib/cardGradients";
 import { Button } from "@/components/Button";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { OrgAdminBatchDetailModal } from "@/components/OrgAdminBatchDetailModal";
-import { getBatches, createBatch, deleteBatch, type OrgBatch, type CefrLevel } from "@/api/orgAdmin";
+import { getBatches, createBatch, deleteBatch, type OrgBatch, type CefrLevel, type BatchStatus } from "@/api/orgAdmin";
+import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { getOrgLicenseOverview, type BatchBudget } from "@/api/licenses";
 import { ApiError } from "@/lib/api";
 import { planErrorMessage } from "@/api/plans";
@@ -187,6 +188,7 @@ export function OrgAdminBatches() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [unreserved, setUnreserved] = useState<number | null>(null);
   const [fixed, setFixed] = useState<BatchBudget[]>([]);
+  const [statusFilter, setStatusFilter] = useState<BatchStatus>("active");
 
   function load() {
     getBatches()
@@ -233,11 +235,33 @@ export function OrgAdminBatches() {
 
       {error && <p className="text-sm text-error">{error}</p>}
       {!batches && !error && <p className="text-sm text-muted">Loading…</p>}
+      {batches && batches.length > 0 && (
+        <div className="flex items-center gap-1 border-b border-rule">
+          {(["active", "completed", "archived"] as BatchStatus[]).map((st) => {
+            const n = batches.filter((b) => b.status === st).length;
+            return (
+              <button
+                key={st}
+                onClick={() => setStatusFilter(st)}
+                className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+                  statusFilter === st ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
+                }`}
+              >
+                {BATCH_STATUS_LABEL[st]} ({n})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {batches?.length === 0 && <p className="text-sm text-muted">No batches yet — create your first one.</p>}
+      {batches && batches.length > 0 && batches.filter((b) => b.status === statusFilter).length === 0 && (
+        <p className="text-sm text-muted">No {BATCH_STATUS_LABEL[statusFilter].toLowerCase()} batches.</p>
+      )}
 
       {batches && batches.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {batches.map((b, i) => (
+          {batches.filter((b) => b.status === statusFilter).map((b, i) => (
             <button
               key={b.id}
               onClick={() => setViewingBatchId(b.id)}
@@ -275,7 +299,13 @@ export function OrgAdminBatches() {
                 <p className="text-xs text-white/70">
                   {b.durationMonths} month{b.durationMonths === 1 ? "" : "s"}
                   {b.startDate ? ` · starts ${new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                  {b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
                 </p>
+              )}
+              {b.status !== "active" && (
+                <span className="self-start text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 text-white uppercase tracking-wide">
+                  {BATCH_STATUS_LABEL[b.status]}
+                </span>
               )}
               <p className="text-xs text-white/70">
                 {b.managerNames.length === 0 ? "No manager assigned yet" : `Managed by ${b.managerNames.join(", ")}`}

@@ -377,7 +377,8 @@
       "writingDesc": "Angielski pisany — 35 minut.",
       "professionalDesc": "Mówienie, słuchanie, czytanie, pisanie — 60 minut.",
       "placementDesc": "Mówienie, słuchanie, czytanie, pisanie — 50 minut."
-    }
+    },
+    "notEnabled": "Niedostępne w Twojej organizacji"
   },
   "tutor": {
     "subtitle": "Swobodna rozmowa ćwiczeniowa z Twoim trenerem AI.",

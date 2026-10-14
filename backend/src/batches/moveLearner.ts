@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pool } from "../db.js";
+import { assertBatchActive } from "./lifecycle.js";
 
 export const moveLearnerSchema = z.object({
   batchId: z.string().uuid(),
@@ -18,6 +19,7 @@ export async function moveLearnerToBatch(args: {
   movedBy: string;
   reason?: string;
 }): Promise<MoveResult> {
+  await assertBatchActive(args.toBatchId);
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

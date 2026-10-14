@@ -363,7 +363,8 @@
       "writingDesc": "Inglese scritto — 35 minuti.",
       "professionalDesc": "Parlato, ascolto, lettura, scrittura — 60 minuti.",
       "placementDesc": "Parlato, ascolto, lettura, scrittura — 50 minuti."
-    }
+    },
+    "notEnabled": "Non offerto dalla tua organizzazione"
   },
   "tutor": {
     "subtitle": "Una conversazione di pratica rilassata con il tuo coach IA.",

@@ -363,7 +363,8 @@
       "writingDesc": "Skriftlig engelsk — 35 minutter.",
       "professionalDesc": "Muntlig, lytting, lesing, skriving — 60 minutter.",
       "placementDesc": "Muntlig, lytting, lesing, skriving — 50 minutter."
-    }
+    },
+    "notEnabled": "Tilbys ikke av organisasjonen din"
   },
   "tutor": {
     "subtitle": "En uformell øvingssamtale med AI-coachen din.",

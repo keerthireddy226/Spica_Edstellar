@@ -27,8 +27,10 @@ import { registerJobs } from "./queue/jobs.js";
 import { startScheduler } from "./queue/schedule.js";
 import { analyticsRouter } from "./analytics/routes.js";
 import { plansRouter } from "./plans/routes.js";
+import { brandingRouter } from "./orgAdmin/branding.js";
 import { MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
 import { PlanError } from "./plans/service.js";
+import { BatchStateError } from "./batches/lifecycle.js";
 import { requireAccess } from "./licenses/gate.js";
 
 // Railway's network has no IPv6 egress — without this, Node's dual-stack DNS
@@ -89,6 +91,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/reminders", remindersRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/plans", plansRouter);
+app.use("/api/branding", brandingRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {
@@ -97,6 +100,9 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   // Any route can hit a plan gate; the details let the UI say which plan unlocks it.
   if (err instanceof PlanError) {
     return res.status(403).json({ error: err.code, ...err.detail });
+  }
+  if (err instanceof BatchStateError) {
+    return res.status(err.code === "batch_not_found" ? 404 : 400).json({ error: err.code });
   }
   console.error(err);
   res.status(500).json({ error: "internal_server_error" });

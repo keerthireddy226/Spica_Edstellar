@@ -9,6 +9,8 @@ import { assertFeature, assertWithinLimit } from "../plans/service.js";
 import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
+import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
+import { BATCH_END_SQL, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit } from "../audit/service.js";
 import { SESSION_COOKIE } from "../auth/tokens.js";
 
@@ -254,6 +256,7 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
   try {
     const result = await pool.query(
       `SELECT b.id, b.name, b.batch_code, b.start_cefr, b.target_cefr, b.duration_months, b.start_date, b.target_cut_score, b.created_at,
+         b.status, b.completed_at, b.archived_at, CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
          count(DISTINCT l.id)::int AS learner_count,
          coalesce(array_agg(DISTINCT m.first_name || ' ' || m.last_name) FILTER (WHERE m.id IS NOT NULL), '{}') AS manager_names
        FROM batches b
@@ -278,6 +281,10 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
         learnerCount: r.learner_count,
         managerNames: r.manager_names,
         createdAt: r.created_at,
+        status: r.status,
+        endDate: r.end_date,
+        completedAt: r.completed_at,
+        archivedAt: r.archived_at,
       })),
     });
   } catch (err) {
@@ -346,7 +353,8 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
   try {
     const batch = await pool.query(
       `SELECT b.id, b.name, b.batch_code, b.start_cefr, b.target_cefr, b.duration_months, b.start_date, b.target_cut_score, b.created_at,
-         b.license_budget,
+         b.license_budget, b.status, b.completed_at, b.archived_at,
+         CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
          (SELECT count(*)::int FROM license_assignments a WHERE a.batch_id = b.id AND a.source = 'batch' AND a.reclaimed_at IS NULL) AS fixed_used,
          (SELECT json_build_object(
             'total', count(*),
@@ -395,6 +403,10 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
         fixedLicensesUsed: b.fixed_used,
         assignments: b.assignment_stats,
         createdAt: b.created_at,
+        status: b.status,
+        endDate: b.end_date,
+        completedAt: b.completed_at,
+        archivedAt: b.archived_at,
       },
       learners: learners.rows.map((r) => ({
         id: r.id,
@@ -794,6 +806,7 @@ orgAdminRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, ne
   try {
     const body = orgInviteLearnerSchema.parse(req.body);
     if (!(await batchBelongsTo(tenantId, body.batchId))) return res.status(400).json({ error: "invalid_batch" });
+    await assertBatchActive(body.batchId);
     const { id } = await createAndInviteUser({
       role: "learner",
       tenantId,
@@ -826,6 +839,7 @@ orgAdminRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, re
   try {
     const body = orgInviteOptionsSchema.extend({ rows: z.array(z.unknown()).max(MAX_BULK_ROWS) }).parse(req.body);
     if (!(await batchBelongsTo(tenantId, body.batchId))) return res.status(400).json({ error: "invalid_batch" });
+    await assertBatchActive(body.batchId);
 
     const results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string; licenseError?: string | null }[] = [];
     for (const raw of body.rows) {
@@ -1156,6 +1170,130 @@ orgAdminRouter.get("/audit/export.csv", requireAuth, async (req: AuthedRequest, 
     const q = auditQuerySchema.parse(req.query);
     const rows = await listAudit({ tenantId, ...q, limit: 1000 });
     res.type("text/csv").attachment(`audit-log-${new Date().toISOString().slice(0, 10)}.csv`).send(auditCsv(rows));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Before a bulk invite: which of these emails already have an account, so the
+// preview can flag them instead of the upload failing row by row.
+orgAdminRouter.post("/learners/bulk/validate", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  try {
+    const body = z.object({ emails: z.array(z.string().max(320)).max(MAX_BULK_ROWS) }).parse(req.body);
+    const lower = body.emails.map((e) => e.trim().toLowerCase());
+    const r = await pool.query(`SELECT lower(email) AS email FROM users WHERE lower(email) = ANY($1::text[])`, [lower]);
+    res.json({ existing: r.rows.map((x) => x.email), maxRows: MAX_BULK_ROWS });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Batch lifecycle ----
+
+orgAdminRouter.post("/batches/:id/complete", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const r = await completeBatch({ tenantId, batchId: String(req.params.id), actorId: req.user!.id });
+    res.json({ id: req.params.id, ...r });
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.post("/batches/:id/archive", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    // Archiving an active batch completes it first, so its licenses are released.
+    const cur = await pool.query(`SELECT status FROM batches WHERE id = $1 AND tenant_id = $2`, [String(req.params.id), tenantId]);
+    if (cur.rows[0]?.status === "active") await completeBatch({ tenantId, batchId: String(req.params.id), actorId: req.user!.id });
+    await archiveBatch(tenantId, String(req.params.id));
+    res.json({ id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.post("/batches/:id/reopen", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    await reopenBatch(tenantId, String(req.params.id));
+    res.json({ id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.post("/batches/:id/clone", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z
+      .object({ name: z.string().trim().min(1).max(200), startDate: z.string().optional(), copyManagers: z.boolean().default(true) })
+      .parse(req.body);
+    const id = await cloneBatch({ tenantId, batchId: String(req.params.id), name: body.name, startDate: body.startDate || null, copyManagers: body.copyManagers, actorId: req.user!.id });
+    res.status(201).json({ id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Organization settings ----
+
+orgAdminRouter.get("/settings", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    res.json(await getOrgSettings(tenantId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.patch("/settings", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    await updateOrgSettings(tenantId, settingsSchema.parse(req.body));
+    res.json(await getOrgSettings(tenantId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.post("/settings/logo", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z.object({ imageBase64: z.string().min(10).max(3_000_000) }).parse(req.body);
+    try {
+      await saveLogo(tenantId, body.imageBase64);
+    } catch {
+      return res.status(400).json({ error: "invalid_image" });
+    }
+    res.json(await getOrgSettings(tenantId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.delete("/settings/logo", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    await removeLogo(tenantId);
+    res.json(await getOrgSettings(tenantId));
   } catch (err) {
     next(err);
   }

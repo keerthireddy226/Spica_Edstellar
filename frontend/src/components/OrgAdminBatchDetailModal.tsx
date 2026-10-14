@@ -3,6 +3,7 @@ import { DetailModal } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { BatchFixedLicenses } from "@/components/licenses/BatchFixedLicenses";
 import { EditBatchModal } from "@/components/EditBatchModal";
+import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Pencil } from "lucide-react";
 import { getBatchDetail, getOrgLearnerDetail, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
@@ -25,6 +26,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   const [error, setError] = useState<string | null>(null);
   const [viewingLearnerId, setViewingLearnerId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function load() {
     getBatchDetail(batchId)
@@ -55,19 +57,36 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   return (
     <DetailModal
       title={batch.name}
-      subtitle={`${batch.batchCode} · Created ${formatDate(batch.createdAt)}`}
+      subtitle={`${batch.batchCode} · ${BATCH_STATUS_LABEL[batch.status]} · Created ${formatDate(batch.createdAt)}${
+        batch.endDate ? ` · ${batch.status === "active" ? "Ends" : "Ended"} ${formatDate(batch.endDate)}` : ""
+      }`}
       onClose={onClose}
       wide
       actions={
-        <button
-          onClick={() => setEditing(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer"
-        >
-          <Pencil size={14} /> Edit batch
-        </button>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {batch.status !== "archived" && (
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer"
+            >
+              <Pencil size={14} /> Edit
+            </button>
+          )}
+          <BatchLifecycleActions
+            batchId={batch.id}
+            batchName={batch.name}
+            status={batch.status}
+            onChanged={(msg) => {
+              setNotice(msg);
+              load();
+              onChanged?.();
+            }}
+          />
+        </div>
       }
     >
       <div className="flex flex-col gap-4">
+        {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-2.5">{notice}</p>}
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Batch details</p>
           <div className="border border-rule rounded-input px-4 py-3">

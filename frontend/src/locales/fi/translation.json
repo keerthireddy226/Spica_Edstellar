@@ -363,7 +363,8 @@
       "writingDesc": "Kirjallinen englanti — 35 minuuttia.",
       "professionalDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 60 minuuttia.",
       "placementDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 50 minuuttia."
-    }
+    },
+    "notEnabled": "Organisaatiosi ei tarjoa tätä"
   },
   "tutor": {
     "subtitle": "Rento harjoituskeskustelu tekoälyvalmentajasi kanssa.",

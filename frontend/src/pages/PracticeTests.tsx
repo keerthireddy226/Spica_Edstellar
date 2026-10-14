@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBranding } from "@/components/AppShell/useBranding";
 import { ApiError } from "@/lib/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -82,6 +83,7 @@ const PRODUCT_SOLID: Record<(typeof VERSANT_PRODUCTS)[number], string> = {
 
 export function PracticeTests() {
   const { t } = useTranslation();
+  const allowedProducts = useBranding()?.allowedTestProducts ?? null;
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -920,12 +922,24 @@ export function PracticeTests() {
         {VERSANT_PRODUCTS.map((id) => {
           const Icon = PRODUCT_ICON[id];
           const durationMatch = t(`practiceTests.versantProduct.${id}Desc`).match(/\d+\s*minutes/);
+          // Products the learner's organization switched off stay visible but closed.
+          const enabled = !allowedProducts || allowedProducts.includes(id);
           return (
             <button
               key={id}
-              onClick={() => openProduct(id)}
-              className="group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+              onClick={() => enabled && openProduct(id)}
+              disabled={!enabled}
+              className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
+                enabled
+                  ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                  : "opacity-55 cursor-not-allowed"
+              }`}
             >
+              {!enabled && (
+                <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2 py-1 rounded-pill">
+                  {t("practiceTests.notEnabled")}
+                </span>
+              )}
               {/* Oversized, very faint echo of the card's own icon — a
                   decorative watermark, not another color block, so it adds
                   presence without competing with the readable icon badge. */}

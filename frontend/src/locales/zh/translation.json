@@ -362,7 +362,8 @@
       "writingDesc": "英语写作——35 分钟。",
       "professionalDesc": "口语、听力、阅读、写作——60 分钟。",
       "placementDesc": "口语、听力、阅读、写作——50 分钟。"
-    }
+    },
+    "notEnabled": "你的组织未提供此项"
   },
   "tutor": {
     "subtitle": "与你的 AI 教练轻松进行对话练习。",

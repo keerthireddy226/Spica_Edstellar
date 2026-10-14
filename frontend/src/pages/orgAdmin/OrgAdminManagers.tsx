@@ -175,7 +175,7 @@ function ManagerFormModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {batches.map((b) => {
+                    {batches.filter((b) => b.status !== "archived").map((b) => {
                       const checked = batchIds.includes(b.id);
                       const fixed = budgets.find((x) => x.batchId === b.id);
                       const others = b.managerNames.filter((n) => n.trim() !== selfName);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useBranding } from "@/components/AppShell/useBranding";
 import { useTranslation } from "react-i18next";
 import { Camera, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useCamera } from "@/hooks/useCamera";
@@ -14,7 +15,20 @@ interface FaceCheckProps {
 
 // onComplete fires on a match or an OTP pass. No other fallback — an emailed
 // one-time code is the only path past a failed check.
-export function FaceCheck({ mode, purpose, onComplete, onBack }: FaceCheckProps) {
+// An organization can switch face checks off for its learners; then this
+// step completes on its own without opening the camera.
+export function FaceCheck(props: FaceCheckProps) {
+  const branding = useBranding();
+  const skip = branding?.faceCheckRequired === false;
+  const { onComplete } = props;
+  useEffect(() => {
+    if (skip) onComplete({});
+  }, [skip, onComplete]);
+  if (!branding || skip) return null;
+  return <FaceCheckInner {...props} />;
+}
+
+function FaceCheckInner({ mode, purpose, onComplete, onBack }: FaceCheckProps) {
   const { t } = useTranslation();
   const { active, videoRef, start, stop, capture } = useCamera();
   const [submitting, setSubmitting] = useState(false);

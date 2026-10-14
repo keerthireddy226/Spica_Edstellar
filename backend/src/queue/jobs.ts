@@ -3,6 +3,7 @@ import { every } from "./schedule.js";
 import { sendQueuedNotificationEmail } from "../notifications/service.js";
 import { runAllJobs } from "../notifications/jobs.js";
 import { refreshActivityRollup } from "../analytics/rollup.js";
+import { autoCompleteBatches } from "../batches/lifecycle.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -14,5 +15,8 @@ export function registerJobs() {
   });
   every(15, "analytics.rollup", async () => {
     await refreshActivityRollup(2);
+  });
+  every(60, "batches.lifecycle", async () => {
+    await autoCompleteBatches();
   });
 }

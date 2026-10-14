@@ -51,6 +51,7 @@ import { InvoiceView } from "@/pages/InvoiceView";
 import { OrgAdminLicenses } from "@/pages/orgAdmin/OrgAdminLicenses";
 import { OrgAdminPlan } from "@/pages/orgAdmin/OrgAdminPlan";
 import { OrgAdminAudit } from "@/pages/orgAdmin/OrgAdminAudit";
+import { OrgAdminSettings } from "@/pages/orgAdmin/OrgAdminSettings";
 import { OrgAdminLearners } from "@/pages/orgAdmin/OrgAdminLearners";
 import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
 import { ManagerLearners } from "@/pages/manager/ManagerLearners";
@@ -199,6 +200,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
           <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
           <Route path={ROUTES.ORG_ADMIN_AUDIT} element={<OrgAdminAudit />} />
+          <Route path={ROUTES.ORG_ADMIN_SETTINGS} element={<OrgAdminSettings />} />
           <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ORG_ADMIN_ANALYTICS} element={<AnalyticsPage />} />
         </Route>

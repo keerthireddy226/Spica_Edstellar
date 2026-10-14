@@ -385,7 +385,8 @@
       "professionalDesc": "Habla, escucha, lectura, escritura — 60 minutos.",
       "placement": "Examen de Nivelación de Inglés",
       "placementDesc": "Habla, escucha, lectura, escritura — 50 minutos."
-    }
+    },
+    "notEnabled": "Tu organización no lo ofrece"
   },
   "tutor": {
     "subtitle": "Una conversación de práctica sin presión con tu coach de IA.",

@@ -385,7 +385,8 @@
       "professionalDesc": "Expression orale, compréhension orale, lecture, écriture — 60 minutes.",
       "placement": "Test de positionnement en anglais",
       "placementDesc": "Expression orale, compréhension orale, lecture, écriture — 50 minutes."
-    }
+    },
+    "notEnabled": "Non proposé par votre organisation"
   },
   "tutor": {
     "subtitle": "Une conversation d'entraînement sans pression avec votre coach IA.",

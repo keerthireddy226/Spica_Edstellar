@@ -1,6 +1,7 @@
 // Enroll once, verify before every session. An emailed one-time code is the
 // only path past a failed check.
 import { randomUUID, randomInt } from "node:crypto";
+import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Router } from "express";
@@ -143,7 +144,9 @@ faceRouter.get("/enrollment/status", requireAuth, async (req: AuthedRequest, res
     const result = await pool.query(`SELECT status, embedding FROM face_enrollments WHERE user_id = $1`, [req.user!.id]);
     const row = result.rows[0];
     const enrolled = row?.status === "enrolled" && isCompatibleEmbedding(row.embedding);
-    res.json({ enrolled });
+    // An organization can turn face checks off for its learners.
+    const { faceCheckRequired } = await learnerOrgPolicy(req.user!.id);
+    res.json({ enrolled: enrolled || !faceCheckRequired, required: faceCheckRequired });
   } catch (err) {
     next(err);
   }

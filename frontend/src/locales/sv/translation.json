@@ -363,7 +363,8 @@
       "writingDesc": "Skriftlig engelska — 35 minuter.",
       "professionalDesc": "Tala, hörförståelse, läsa, skriva — 60 minuter.",
       "placementDesc": "Tala, hörförståelse, läsa, skriva — 50 minuter."
-    }
+    },
+    "notEnabled": "Erbjuds inte av din organisation"
   },
   "tutor": {
     "subtitle": "Ett avslappnat övningssamtal med din AI-coach.",

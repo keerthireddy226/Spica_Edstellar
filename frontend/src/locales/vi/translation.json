@@ -362,7 +362,8 @@
       "writingDesc": "Viết tiếng Anh — 35 phút.",
       "professionalDesc": "Nói, nghe, đọc, viết — 60 phút.",
       "placementDesc": "Nói, nghe, đọc, viết — 50 phút."
-    }
+    },
+    "notEnabled": "Tổ chức của bạn không cung cấp"
   },
   "tutor": {
     "subtitle": "Trò chuyện luyện tập thoải mái với huấn luyện viên AI.",

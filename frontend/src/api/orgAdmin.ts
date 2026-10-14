@@ -34,7 +34,13 @@ export interface OrgBatch {
   learnerCount: number;
   managerNames: string[];
   createdAt: string;
+  status: BatchStatus;
+  endDate: string | null;
+  completedAt: string | null;
+  archivedAt: string | null;
 }
+
+export type BatchStatus = "active" | "completed" | "archived";
 
 export function getBatches(): Promise<{ batches: OrgBatch[] }> {
   return api("/org-admin/batches");
@@ -68,6 +74,10 @@ export interface OrgBatchDetail {
   targetCutScore: number | null;
   managerNames: string[];
   createdAt: string;
+  status: BatchStatus;
+  endDate: string | null;
+  completedAt: string | null;
+  archivedAt: string | null;
 }
 
 export interface OrgBatchLearner {
@@ -315,4 +325,51 @@ export function getAuditLog(f: AuditFilters & { limit?: number }) {
 
 export function auditExportPath(f: AuditFilters): string {
   return `/org-admin/audit/export.csv?${auditQuery(f)}`;
+}
+
+export function validateBulkEmails(scope: "org-admin" | "manager", emails: string[]): Promise<{ existing: string[]; maxRows: number }> {
+  return api(`/${scope}/learners/bulk/validate`, { method: "POST", body: JSON.stringify({ emails }) });
+}
+
+export function completeBatch(id: string): Promise<{ id: string; releasedLicenses: number }> {
+  return api(`/org-admin/batches/${id}/complete`, { method: "POST" });
+}
+
+export function archiveBatch(id: string): Promise<{ id: string }> {
+  return api(`/org-admin/batches/${id}/archive`, { method: "POST" });
+}
+
+export function reopenBatch(id: string): Promise<{ id: string }> {
+  return api(`/org-admin/batches/${id}/reopen`, { method: "POST" });
+}
+
+export function cloneBatch(id: string, body: { name: string; startDate?: string; copyManagers: boolean }): Promise<{ id: string }> {
+  return api(`/org-admin/batches/${id}/clone`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export interface OrgSettings {
+  logoUrl: string | null;
+  brandColor: string | null;
+  defaultLanguage: string | null;
+  timezone: string;
+  reminderDefaultEnabled: boolean;
+  reminderDefaultTime: string;
+  faceCheckRequired: boolean;
+  allowedTestProducts: string[] | null;
+}
+
+export function getOrgSettings(): Promise<OrgSettings> {
+  return api("/org-admin/settings");
+}
+
+export function updateOrgSettings(body: Partial<Omit<OrgSettings, "logoUrl">>): Promise<OrgSettings> {
+  return api("/org-admin/settings", { method: "PATCH", body: JSON.stringify(body) });
+}
+
+export function uploadOrgLogo(imageBase64: string): Promise<OrgSettings> {
+  return api("/org-admin/settings/logo", { method: "POST", body: JSON.stringify({ imageBase64 }) });
+}
+
+export function removeOrgLogo(): Promise<OrgSettings> {
+  return api("/org-admin/settings/logo", { method: "DELETE" });
 }
