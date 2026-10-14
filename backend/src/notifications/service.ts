@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { enqueue } from "../queue/queue.js";
 import { pool } from "../db.js";
 import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
 
@@ -83,7 +84,7 @@ export interface NotifyArgs {
 
 // Creates the notification (skipped if dedupeKey already exists) and sends
 // the email if asked and allowed. Returns null when it was a duplicate.
-export async function notify(args: NotifyArgs): Promise<{ id: string; emailed: boolean } | null> {
+export async function notify(args: NotifyArgs): Promise<{ id: string; emailQueued: boolean } | null> {
   const inserted = await pool.query(
     `INSERT INTO notifications (user_id, kind, title, body, link, dedupe_key, sent_by, batch_id, meta)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -104,27 +105,19 @@ export async function notify(args: NotifyArgs): Promise<{ id: string; emailed: b
   if (inserted.rowCount === 0) return null;
   const id = inserted.rows[0].id as string;
 
-  let emailed = false;
+  // Email goes through the job queue: it retries if the mail server is down,
+  // and a slow SMTP never holds up the request that triggered it.
+  let emailQueued = false;
   if (args.email && notificationEmailsEnabled()) {
-    const underCap = !NUDGE_KINDS.includes(args.kind) || (await nudgeEmailsToday(args.userId)) < LEARNER_NUDGE_EMAILS_PER_DAY;
-    const user = (await pool.query(`SELECT email, deleted_at FROM users WHERE id = $1`, [args.userId])).rows[0];
-    if (underCap && user && !user.deleted_at) {
-      const link = args.link ? `${APP_URL}${args.link}` : null;
-      try {
-        await sendNotificationEmail({
-          to: user.email,
-          subject: `${args.emailSubject ?? args.title} — Spica`,
-          text: `${args.emailText ?? args.body}${link ? `\n\n${link}` : ""}`,
-          unsubscribeUrl: args.unsubscribable ? unsubscribeUrl(args.userId) : undefined,
-        });
-        await pool.query(`UPDATE notifications SET emailed_at = now() WHERE id = $1`, [id]);
-        emailed = true;
-      } catch (err) {
-        console.error(`notification email failed (${args.kind}):`, err);
-      }
-    }
+    await enqueue("email.notification", {
+      notificationId: id,
+      subject: args.emailSubject ?? null,
+      text: args.emailText ?? null,
+      unsubscribable: args.unsubscribable ?? false,
+    });
+    emailQueued = true;
   }
-  return { id, emailed };
+  return { id, emailQueued };
 }
 
 export async function listNotifications(userId: string, limit = 30) {
@@ -162,4 +155,26 @@ export async function batchManagerIds(batchId: string): Promise<string[]> {
     [batchId],
   );
   return r.rows.map((x) => x.id);
+}
+
+// Queue handler: sends one notification's email. Throws on a send failure so
+// the queue retries it; skips quietly when it no longer should go out.
+export async function sendQueuedNotificationEmail(payload: { notificationId: string; subject: string | null; text: string | null; unsubscribable: boolean }) {
+  const n = (
+    await pool.query(
+      `SELECT n.id, n.user_id, n.kind, n.title, n.body, n.link, n.emailed_at, u.email, u.deleted_at
+       FROM notifications n JOIN users u ON u.id = n.user_id WHERE n.id = $1`,
+      [payload.notificationId],
+    )
+  ).rows[0];
+  if (!n || n.emailed_at || n.deleted_at || !notificationEmailsEnabled()) return;
+  if (NUDGE_KINDS.includes(n.kind) && (await nudgeEmailsToday(n.user_id)) >= LEARNER_NUDGE_EMAILS_PER_DAY) return;
+  const link = n.link ? `${APP_URL}${n.link}` : null;
+  await sendNotificationEmail({
+    to: n.email,
+    subject: `${payload.subject ?? n.title} — Spica`,
+    text: `${payload.text ?? n.body}${link ? `\n\n${link}` : ""}`,
+    unsubscribeUrl: payload.unsubscribable ? unsubscribeUrl(n.user_id) : undefined,
+  });
+  await pool.query(`UPDATE notifications SET emailed_at = now() WHERE id = $1`, [n.id]);
 }

@@ -23,7 +23,8 @@ import { requireAuth } from "./auth/middleware.js";
 import { licensesRouter } from "./licenses/routes.js";
 import { paymentsRouter, stripeWebhookHandler } from "./payments/routes.js";
 import { notificationsRouter, remindersRouter } from "./notifications/routes.js";
-import { startJobRunner } from "./notifications/jobs.js";
+import { registerJobs } from "./queue/jobs.js";
+import { startScheduler } from "./queue/schedule.js";
 import { analyticsRouter } from "./analytics/routes.js";
 import { plansRouter } from "./plans/routes.js";
 import { MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
@@ -104,5 +105,6 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 const port = process.env.PORT ?? 4000;
 app.listen(port, () => {
   console.log(`Spica backend listening on :${port}`);
-  startJobRunner();
+  registerJobs();
+  startScheduler();
 });

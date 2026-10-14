@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { JobQueuePanel } from "@/components/JobQueuePanel";
 import { Link } from "react-router-dom";
 import { Users, Building2, GraduationCap, ShieldCheck, CheckCircle2, UserPlus, Activity, AlertTriangle, UserCheck2, Award } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -235,6 +236,8 @@ export function AdminDashboard() {
           <RecentSignupsTable data={activity.recentSignups} />
         </>
       )}
+
+      <JobQueuePanel />
     </div>
   );
 }

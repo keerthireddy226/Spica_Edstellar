@@ -82,11 +82,10 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
       `${cte}
        SELECT
          (SELECT count(*)::int FROM learners) AS learners,
-         (SELECT count(DISTINCT s.user_id)::int FROM sessions s JOIN learners l ON l.id = s.user_id WHERE s.completed_at > now() - interval '7 days' AND ${GENUINE}) AS active7,
-         (SELECT count(DISTINCT s.user_id)::int FROM sessions s JOIN learners l ON l.id = s.user_id WHERE s.completed_at > now() - interval '28 days' AND ${GENUINE}) AS active28,
-         (SELECT count(*)::int FROM sessions s JOIN learners l ON l.id = s.user_id WHERE s.completed_at > now() - interval '30 days' AND ${GENUINE}) AS sessions30,
-         (SELECT coalesce(sum(a.active_ms), 0)::bigint FROM attempts a JOIN sessions s ON s.id = a.session_id JOIN learners l ON l.id = s.user_id
-            WHERE a.created_at > now() - interval '28 days') AS active_ms28,
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id WHERE d.day > (now() AT TIME ZONE 'UTC')::date - 7 AND d.sessions > 0) AS active7,
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id WHERE d.day > (now() AT TIME ZONE 'UTC')::date - 28 AND d.sessions > 0) AS active28,
+         (SELECT coalesce(sum(d.sessions), 0)::int FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id WHERE d.day > (now() AT TIME ZONE 'UTC')::date - 30) AS sessions30,
+         (SELECT coalesce(sum(d.active_ms), 0)::bigint FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id WHERE d.day > (now() AT TIME ZONE 'UTC')::date - 28) AS active_ms28,
          (SELECT count(*)::int FROM learners l WHERE l.created_at > now() - interval '30 days') AS new30,
          (SELECT count(*)::int FROM learners l JOIN reminder_preferences rp ON rp.user_id = l.id AND rp.enabled) AS reminders_on,
          (SELECT count(*)::int FROM learners l WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id)) AS placed`,
@@ -102,11 +101,11 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
          SELECT generate_series(date_trunc('week', now()) - interval '11 weeks', date_trunc('week', now()), interval '1 week') AS wk
        )
        SELECT to_char(w.wk, 'YYYY-MM-DD') AS week,
-         (SELECT count(DISTINCT s.user_id)::int FROM sessions s JOIN learners l ON l.id = s.user_id
-            WHERE s.completed_at >= w.wk AND s.completed_at < w.wk + interval '1 week' AND ${GENUINE}) AS active,
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id
+            WHERE d.day >= w.wk::date AND d.day < (w.wk + interval '1 week')::date AND d.sessions > 0) AS active,
          (SELECT count(*)::int FROM learners l WHERE l.created_at >= w.wk AND l.created_at < w.wk + interval '1 week') AS signups,
-         (SELECT count(*)::int FROM sessions s JOIN learners l ON l.id = s.user_id
-            WHERE s.completed_at >= w.wk AND s.completed_at < w.wk + interval '1 week' AND ${GENUINE}) AS sessions
+         (SELECT coalesce(sum(d.sessions), 0)::int FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id
+            WHERE d.day >= w.wk::date AND d.day < (w.wk + interval '1 week')::date) AS sessions
        FROM weeks w ORDER BY w.wk`,
       trendParams,
     )
@@ -216,8 +215,8 @@ export async function batchAnalytics(tenantId: string, batchId: string) {
     pool.query(
       `WITH weeks AS (SELECT generate_series(date_trunc('week', now()) - interval '7 weeks', date_trunc('week', now()), interval '1 week') AS wk)
        SELECT to_char(w.wk, 'YYYY-MM-DD') AS week,
-         (SELECT count(DISTINCT s.user_id)::int FROM sessions s JOIN users u ON u.id = s.user_id
-            WHERE u.batch_id = $1 AND s.completed_at >= w.wk AND s.completed_at < w.wk + interval '1 week' AND ${GENUINE}) AS active
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN users u ON u.id = d.user_id
+            WHERE u.batch_id = $1 AND d.day >= w.wk::date AND d.day < (w.wk + interval '1 week')::date AND d.sessions > 0) AS active
        FROM weeks w ORDER BY w.wk`,
       [batchId],
     ),
@@ -229,10 +228,10 @@ export async function batchAnalytics(tenantId: string, batchId: string) {
     ),
     pool.query(
       `SELECT
-         (SELECT coalesce(sum(a.active_ms), 0)::bigint FROM attempts a JOIN sessions s ON s.id = a.session_id JOIN users u ON u.id = s.user_id
-            WHERE u.batch_id = $1 AND a.created_at > now() - interval '28 days') AS batch_ms,
-         (SELECT coalesce(sum(a.active_ms), 0)::bigint FROM attempts a JOIN sessions s ON s.id = a.session_id JOIN users u ON u.id = s.user_id
-            WHERE u.tenant_id = $2 AND u.role = 'learner' AND a.created_at > now() - interval '28 days') AS org_ms`,
+         (SELECT coalesce(sum(d.active_ms), 0)::bigint FROM learner_activity_daily d JOIN users u ON u.id = d.user_id
+            WHERE u.batch_id = $1 AND d.day > (now() AT TIME ZONE 'UTC')::date - 28) AS batch_ms,
+         (SELECT coalesce(sum(d.active_ms), 0)::bigint FROM learner_activity_daily d JOIN users u ON u.id = d.user_id
+            WHERE d.tenant_id = $2 AND u.role = 'learner' AND d.day > (now() AT TIME ZONE 'UTC')::date - 28) AS org_ms`,
       [batchId, tenantId],
     ),
     pool.query(

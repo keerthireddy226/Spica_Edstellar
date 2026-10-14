@@ -9,6 +9,7 @@ import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { createAndInviteUser, resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "../orgAdmin/handover.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
+import { queueStats, retryJob } from "../queue/queue.js";
 
 export const adminRouter = Router();
 
@@ -1324,6 +1325,28 @@ adminRouter.get("/organizations/:id/audit", requireAuth, async (req: AuthedReque
       return res.type("text/csv").attachment(`audit-${tenantId.slice(0, 8)}.csv`).send(auditCsv(rows));
     }
     res.json({ entries: rows, hasMore: rows.length === limit });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Background jobs (Super Admin) ----
+
+adminRouter.get("/jobs", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireSuperAdmin(req, res)) return;
+  try {
+    res.json(await queueStats());
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.post("/jobs/:id/retry", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireSuperAdmin(req, res)) return;
+  try {
+    const ok = await retryJob(Number(req.params.id));
+    if (!ok) return res.status(404).json({ error: "job_not_found" });
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

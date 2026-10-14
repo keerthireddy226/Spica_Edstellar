@@ -6,7 +6,6 @@ import { batchManagerIds, notify, orgAdminIds } from "./service.js";
 import { endPilot } from "../plans/service.js";
 
 const DAY = 86400000;
-const TICK_MS = 15 * 60 * 1000;
 const JOB_LOCK_ID = 917_004; // arbitrary, unique to this job runner
 
 function shortDate(d: Date | string | number): string {
@@ -389,14 +388,4 @@ export async function runAllJobs(): Promise<Record<string, number> | null> {
   } finally {
     client.release();
   }
-}
-
-export function startJobRunner() {
-  if (process.env.JOBS_ENABLED === "false") return;
-  const tick = () =>
-    runAllJobs()
-      .then((r) => r && Object.values(r).some((n) => n > 0) && console.log("notification jobs:", r))
-      .catch((err) => console.error("notification jobs failed:", err));
-  setTimeout(tick, 30_000);
-  setInterval(tick, TICK_MS);
 }

@@ -2,9 +2,12 @@ import { Router, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { assertFeature } from "../plans/service.js";
+import { TtlCache } from "../lib/ttlCache.js";
 import { batchAnalytics, batchCsv, batchesInScope, learnersCsv, overview, type Scope } from "./service.js";
 
 export const analyticsRouter = Router();
+
+const overviewCache = new TtlCache<Awaited<ReturnType<typeof overview>>>(60_000, 2000);
 
 // Who sees what:
 //  Super Admin — everyone, incl. individual learners
@@ -40,11 +43,14 @@ analyticsRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, ne
   try {
     const scope = await resolveScope(req, res);
     if (!scope) return;
+    // Heavy aggregate; a minute-old answer is fine for a dashboard.
     res.json(
-      await overview(scope, {
-        withCompanies: scope.role === "super_admin" || scope.role === "admin",
-        withRevenue: scope.role !== "manager",
-      }),
+      await overviewCache.getOrLoad(`${req.user!.role}:${req.user!.id}`, () =>
+        overview(scope, {
+          withCompanies: scope.role === "super_admin" || scope.role === "admin",
+          withRevenue: scope.role !== "manager",
+        }),
+      ),
     );
   } catch (err) {
     next(err);

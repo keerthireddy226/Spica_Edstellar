@@ -1,5 +1,6 @@
 import type { NextFunction, Response } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
+import { accessCache } from "./accessCache.js";
 import { freeTierUsage, learnerAccess, learnerKind } from "./service.js";
 
 export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
@@ -15,9 +16,13 @@ export function requireAccess(feature: GatedFeature) {
     if (req.method === "GET" || req.method === "HEAD") return next();
     requireAuth(req, res, async () => {
       try {
-        const kind = await learnerKind(req.user!.id);
-        if (kind === "other") return next();
-        const access = await learnerAccess(req.user!.id);
+        const cached = await accessCache.getOrLoad(req.user!.id, async () => {
+          const k = await learnerKind(req.user!.id);
+          return { kind: k, access: k === "other" ? null : await learnerAccess(req.user!.id) };
+        });
+        const { kind } = cached;
+        if (kind === "other" || !cached.access) return next();
+        const access = cached.access;
         const live = access.status === "active" || access.status === "grace";
         if (live) return next();
         if (kind === "org") {

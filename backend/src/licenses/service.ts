@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { assertFeature } from "../plans/service.js";
+import { invalidateAccess } from "./accessCache.js";
 import { pool } from "../db.js";
 
 export const LICENSE_PRICE_CENTS = 10000; // 100 USD per license-month
@@ -369,6 +370,7 @@ export async function assignMonths(args: {
       [args.userId],
     );
     await client.query("COMMIT");
+    invalidateAccess(args.userId);
     return { kind, accessEndsAt: new Date(end.rows[0].e).toISOString(), source };
   } catch (err) {
     await client.query("ROLLBACK");
@@ -406,6 +408,7 @@ export async function reclaimMonths(args: { tenantId: string; userId: string; mo
       [args.tenantId, rows.rowCount, args.userId, l.email, l.batch_id, l.batch_name, args.actorId, args.reason ?? null],
     );
     await client.query("COMMIT");
+    invalidateAccess(args.userId);
     return rows.rowCount ?? 0;
   } catch (err) {
     await client.query("ROLLBACK");

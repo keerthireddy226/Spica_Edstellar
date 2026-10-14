@@ -479,3 +479,18 @@ export function getOrgAudit(tenantId: string, before?: string): Promise<{ entrie
   if (before) p.set("before", before);
   return api(`/admin/organizations/${tenantId}/audit?${p}`);
 }
+
+export interface QueueStats {
+  counts: { queue: string; status: "queued" | "running" | "done" | "failed"; n: number }[];
+  recentFailures: { id: number; queue: string; attempts: number; last_error: string | null; finished_at: string }[];
+  readyBacklog: number;
+  oldestReady: string | null;
+}
+
+export function getQueueStats(): Promise<QueueStats> {
+  return api("/admin/jobs");
+}
+
+export function retryQueueJob(id: number): Promise<{ ok: true }> {
+  return api(`/admin/jobs/${id}/retry`, { method: "POST" });
+}
