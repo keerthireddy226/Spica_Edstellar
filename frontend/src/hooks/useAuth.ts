@@ -22,6 +22,8 @@ type AuthUser = {
   mfaEnabled?: boolean;
   // The organization requires two-step sign-in and it isn't set up yet.
   mfaSetupRequired?: boolean;
+  // Edstellar staff viewing this account read-only.
+  viewAs?: { impersonatorName: string } | null;
 };
 
 // With two-step sign-in on, the password step returns a challenge instead of a user.

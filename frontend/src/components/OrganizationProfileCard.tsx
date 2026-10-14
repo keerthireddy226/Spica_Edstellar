@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ApiError } from "@/lib/api";
 import { Building2, Pencil } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EMPLOYEE_COUNT_BANDS, countryName, employeeCountLabel, sortedCountries } from "@/constants/demographics";
@@ -174,8 +175,9 @@ export function OrganizationProfileCard() {
       setOrg(o);
       setContact(c);
       setDraft(null);
-    } catch {
-      setError("Couldn't save — check the email and number fields and try again.");
+    } catch (err) {
+      // A tax ID that doesn't match the country's format gets the reason back.
+      setError(err instanceof ApiError && err.message === "invalid_tax_id" ? ((err.body as { message?: string })?.message ?? "Check the tax ID.") : "Couldn't save — check the email and number fields and try again.");
     } finally {
       setSaving(false);
     }

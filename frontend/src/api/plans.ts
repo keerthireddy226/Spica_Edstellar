@@ -38,6 +38,8 @@ export interface PlanSummary {
   educationDiscountPercent: number;
   businessQualifyingQuantity: number;
   pilotEndsAt: string | null;
+  contract?: { start: string | null; end: string | null } | null;
+  accountManager?: { name: string; email: string } | null;
   limits: { key: PlanLimitKey; max: number | null; used: number }[];
   features: PlanFeature[];
   bands: { minQuantity: number; maxQuantity: number | null; unitPriceCents: number }[];

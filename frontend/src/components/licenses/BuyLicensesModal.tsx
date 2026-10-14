@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/Button";
-import { createPaymentOrder, formatAmount, getQuote, startCheckout, type Quote } from "@/api/payments";
+import { createPaymentOrder, formatAmount, getQuote, requestInvoiceOrder, startCheckout, type Quote } from "@/api/payments";
+import { useHasFeature } from "@/components/plans/usePlan";
+import { planErrorMessage } from "@/api/plans";
 
 // Org Admin self-serve purchase. The calculator mirrors how orgs think about
 // it ("20 learners for 3 months") and turns it into a license count.
@@ -14,6 +16,11 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Card checkout, or a proforma to pay by bank transfer against a PO.
+  const invoiceAllowed = useHasFeature("po_invoicing");
+  const [method, setMethod] = useState<"card" | "invoice">("card");
+  const [poNumber, setPoNumber] = useState("");
+  const [requested, setRequested] = useState<{ orderId: string; quoteNumber: string } | null>(null);
 
   useEffect(() => {
     const l = Math.max(0, Math.floor(Number(learners) || 0));
@@ -37,6 +44,16 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
   async function pay() {
     setPaying(true);
     setError(null);
+    if (method === "invoice") {
+      try {
+        setRequested(await requestInvoiceOrder(quantity, poNumber.trim() || undefined));
+      } catch (err) {
+        setError(planErrorMessage(err) ?? "Couldn't create the quote. Please try again.");
+      } finally {
+        setPaying(false);
+      }
+      return;
+    }
     try {
       await startCheckout(await createPaymentOrder(quantity), navigate);
     } catch {
@@ -112,11 +129,61 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
+          {invoiceAllowed && !requested && (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                {(
+                  [
+                    ["card", "Pay now by card"],
+                    ["invoice", "Pay by invoice (PO)"],
+                  ] as const
+                ).map(([m, label]) => (
+                  <button
+                    key={m}
+                    onClick={() => setMethod(m)}
+                    className={`flex-1 px-3 py-2 rounded-input text-sm font-semibold border transition-colors cursor-pointer ${
+                      method === m ? "border-navy bg-navy/5 text-navy" : "border-rule text-ink hover:bg-paper-warm"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {method === "invoice" && (
+                <>
+                  <input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Your PO number (optional)" className={inputClass} />
+                  <p className="text-xs text-muted">You'll get a proforma to pay by bank transfer within 30 days. Licenses are added when payment arrives.</p>
+                </>
+              )}
+            </div>
+          )}
+
+          {requested && (
+            <div className="text-sm bg-success/10 border border-success/25 rounded-input px-3.5 py-3 flex flex-col gap-1.5">
+              <p className="text-ink">
+                Proforma <span className="font-mono font-semibold">{requested.quoteNumber}</span> is ready. Your Edstellar contact has been notified.
+              </p>
+              <a href={`/quote/${requested.orderId}`} target="_blank" rel="noreferrer" className="text-navy font-semibold hover:underline self-start">
+                Open proforma to download or print
+              </a>
+            </div>
+          )}
+
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
-            <Button onClick={pay} disabled={paying || !quote} className="flex-1">
-              {paying ? "Opening checkout…" : quote ? `Pay ${formatAmount(quote.total, quote.currency)}` : "Pay"}
-            </Button>
+            {!requested && (
+              <Button onClick={pay} disabled={paying || !quote} className="flex-1">
+                {method === "invoice"
+                  ? paying
+                    ? "Creating proforma…"
+                    : "Get proforma invoice"
+                  : paying
+                    ? "Opening checkout…"
+                    : quote
+                      ? `Pay ${formatAmount(quote.total, quote.currency)}`
+                      : "Pay"}
+              </Button>
+            )}
             <Button variant="secondary" onClick={onClose}>
               Cancel
             </Button>

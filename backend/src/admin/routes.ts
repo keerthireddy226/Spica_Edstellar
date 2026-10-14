@@ -10,6 +10,8 @@ import { createAndInviteUser, resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "../orgAdmin/handover.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { queueStats, retryJob } from "../queue/queue.js";
+import { orgHealth } from "./health.js";
+import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
 
 export const adminRouter = Router();
 
@@ -894,6 +896,7 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
       ),
     ]);
     const activeOrgs = orgs.rows.filter((r) => !r.deactivated_at);
+    const health = await orgHealth(activeOrgs.map((r) => r.id));
     res.json({
       organizations: orgs.rows.map((r) => ({
         id: r.id,
@@ -908,6 +911,7 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
         managers: r.managers,
         planTier: r.plan_tier,
         pilotEndsAt: r.pilot_ends_at,
+        health: health.get(r.id) ?? null,
         customPriceCents: r.custom_price_cents,
         industry: r.industry,
         expectedLearnerCount: r.expected_learner_count,
@@ -996,6 +1000,9 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
   if (!requireAdminOnly(req, res)) return;
   try {
     const body = onboardOrgSchema.parse(req.body);
+    const taxProblem = taxIdProblem(body.country, body.taxId);
+    if (taxProblem) return res.status(400).json({ error: "invalid_tax_id", message: taxProblem });
+    if (body.taxId) body.taxId = normalizeTaxId(body.taxId);
     const tenant = await pool.query(
       `INSERT INTO tenants (name, type, category, managed_by, industry, expected_learner_count, country,
          billing_contact_name, billing_contact_email, tax_id)

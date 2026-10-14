@@ -94,8 +94,27 @@ export function InvoiceView() {
           </div>
         </div>
 
+        {invoice.creditNotes && invoice.creditNotes.length > 0 && (
+          <div className="flex flex-col gap-1.5 text-sm border-t border-[#ddd] pt-4">
+            <p className="text-xs uppercase tracking-wide text-[#666]">Credit notes</p>
+            {invoice.creditNotes.map((c) => (
+              <div key={c.creditNoteNumber} className="flex justify-between gap-4">
+                <span>
+                  <span className="font-mono">{c.creditNoteNumber}</span> · {new Date(c.issuedAt).toLocaleDateString()} · {c.reason}
+                  {c.licensesRemoved ? ` · ${c.licensesRemoved} licenses removed` : ""}
+                </span>
+                <span>−{money(c.amount)}</span>
+              </div>
+            ))}
+            <div className="flex justify-between font-semibold border-t border-[#eee] pt-1.5">
+              <span>Net after credits</span>
+              <span>{money(invoice.total - invoice.creditNotes.reduce((s, c) => s + c.amount, 0))}</span>
+            </div>
+          </div>
+        )}
+
         <p className="text-xs text-[#666]">
-          Paid via {invoice.provider === "test" ? "test checkout (no real charge)" : invoice.provider}
+          Paid via {invoice.provider === "test" ? "test checkout (no real charge)" : invoice.provider === "invoice" ? "bank transfer" : invoice.provider}
           {invoice.providerPaymentId ? ` · Ref ${invoice.providerPaymentId}` : ""}. 1 license = 1 learner's access for 1 month from the date it is
           assigned. Unassigned licenses are valid for 12 months from purchase.
         </p>

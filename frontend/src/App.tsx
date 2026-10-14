@@ -3,6 +3,7 @@ import { AuthContext, useAuth, useAuthState } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MfaSetup } from "@/pages/MfaSetup";
 import { CertificateView } from "@/pages/CertificateView";
+import { QuoteView } from "@/pages/QuoteView";
 import {
   ADMIN_CONSOLE_ONLY_ROLES,
   ADMIN_LOGIN_ALLOWED_ROLES,
@@ -100,6 +101,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CheckoutReturn />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.QUOTE}
+          element={
+            <ProtectedRoute>
+              <QuoteView />
             </ProtectedRoute>
           }
         />

@@ -220,6 +220,14 @@ export async function planSummary(tenantId: string) {
   if (!plan) return null;
   const used = await usage(tenantId);
   const limits = TIER_LIMITS[plan.tier];
+  const c = (
+    await pool.query(
+      `SELECT to_char(t.contract_start, 'YYYY-MM-DD') AS start, to_char(t.contract_end, 'YYYY-MM-DD') AS "end",
+         coalesce(nullif(concat_ws(' ', am.first_name, am.last_name), ''), am.email) AS am_name, am.email AS am_email
+       FROM tenants t LEFT JOIN users am ON am.id = t.account_manager_id WHERE t.id = $1`,
+      [tenantId],
+    )
+  ).rows[0];
   const bands = VOLUME_BANDS.map((b, i) => ({
     minQuantity: b.minQuantity,
     maxQuantity: VOLUME_BANDS[i + 1] ? VOLUME_BANDS[i + 1].minQuantity - 1 : null,
@@ -233,6 +241,8 @@ export async function planSummary(tenantId: string) {
     educationDiscountPercent: plan.category === "university" ? EDUCATION_DISCOUNT_PERCENT : 0,
     businessQualifyingQuantity: BUSINESS_QUALIFYING_QUANTITY,
     pilotEndsAt: plan.pilotEndsAt,
+    contract: c?.end || c?.start ? { start: c.start, end: c.end } : null,
+    accountManager: c?.am_email ? { name: c.am_name, email: c.am_email } : null,
     limits: (Object.keys(limits) as PlanLimit[]).map((key) => ({ key, max: limits[key], used: used[key] })),
     features: (Object.keys(FEATURES) as PlanFeature[]).map((key) => ({
       key,

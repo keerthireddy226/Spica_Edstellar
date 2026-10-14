@@ -10,6 +10,7 @@ import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js"
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
 import { ipAllowed, parseAllowlist } from "../auth/policy.js";
+import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
 import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
 import { BATCH_END_SQL, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit } from "../audit/service.js";
@@ -205,6 +206,12 @@ orgAdminRouter.patch("/organization", requireAuth, async (req: AuthedRequest, re
   if (!tenantId) return;
   try {
     const body = updateOrgSchema.parse(req.body);
+    if (body.taxId !== undefined || body.country !== undefined) {
+      const cur = (await pool.query(`SELECT country, tax_id FROM tenants WHERE id = $1`, [tenantId])).rows[0];
+      const problem = taxIdProblem(body.country ?? cur.country, body.taxId ?? cur.tax_id);
+      if (problem) return res.status(400).json({ error: "invalid_tax_id", message: problem });
+      if (body.taxId) body.taxId = normalizeTaxId(body.taxId);
+    }
     const sets: string[] = [];
     const values: unknown[] = [];
     for (const [key, column] of Object.entries(ORG_FIELD_COLUMNS)) {

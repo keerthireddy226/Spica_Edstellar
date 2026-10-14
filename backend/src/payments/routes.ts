@@ -22,6 +22,7 @@ import {
   quote,
   resolveBuyer,
 } from "./service.js";
+import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
 
 export const paymentsRouter = Router();
 
@@ -184,3 +185,47 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
     res.status(500).json({ error: "webhook_failed" });
   }
 }
+
+// ---- Pay by invoice (Business and up) ----
+
+paymentsRouter.post("/invoice-orders", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "org_licenses") return res.status(403).json({ error: "forbidden" });
+    const body = z.object({ quantity: z.coerce.number().int(), poNumber: z.string().trim().max(100).optional() }).parse(req.body);
+    res.status(201).json(await requestInvoiceOrder(buyer, body.quantity, body.poNumber || null));
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+paymentsRouter.get("/invoice-orders", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    if (req.user!.role !== "org_admin" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
+    res.json({ orders: await listInvoiceOrders(req.user!.tenantId) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+paymentsRouter.post("/invoice-orders/:id/cancel", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    if (req.user!.role !== "org_admin" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
+    const ok = await cancelInvoiceOrder(String(req.params.id), req.user!.tenantId);
+    if (!ok) return res.status(404).json({ error: "order_not_found" });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+paymentsRouter.get("/quotes/:id", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const staff = ["admin", "super_admin"].includes(req.user!.role);
+    const q = await getQuote(String(req.params.id), req.user!.tenantId, staff);
+    if (!q) return res.status(404).json({ error: "quote_not_found" });
+    res.json(q);
+  } catch (err) {
+    next(err);
+  }
+});

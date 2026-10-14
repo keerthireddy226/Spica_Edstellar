@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 // Payment provider adapters over plain REST (no SDK dependency). Each is
 // switched on only when its keys are present in the environment.
 
-export type ProviderName = "stripe" | "razorpay" | "test";
+export type ProviderName = "stripe" | "razorpay" | "test" | "invoice";
 
 export const PAYMENT_CONFIG = {
   priceUsdCents: 10000,

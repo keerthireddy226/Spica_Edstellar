@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ViewAsBanner } from "@/components/AppShell/ViewAsBanner";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { LANDING_ROUTE_BY_ROLE, LOGIN_ROUTE_BY_ROLE } from "@/constants/routes";
@@ -27,6 +28,7 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
       <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
+        <ViewAsBanner />
         <Header onMenuClick={() => setDrawerOpen(true)} />
         <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6">
           <Outlet />

@@ -54,6 +54,53 @@ export interface Invoice extends InvoiceSummary {
   taxRate: number;
   taxAmount: number;
   providerPaymentId: string | null;
+  creditNotes?: { creditNoteNumber: string; issuedAt: string; licensesRemoved: number; currency: string; amount: number; reason: string }[];
+}
+
+export interface InvoiceOrder {
+  id: string;
+  quoteNumber: string;
+  poNumber: string | null;
+  quantity: number;
+  currency: string;
+  total: number;
+  status: "created" | "paid" | "failed" | "cancelled";
+  dueDate: string | null;
+  createdAt: string;
+}
+
+export interface Proforma {
+  id: string;
+  quoteNumber: string;
+  status: InvoiceOrder["status"];
+  createdAt: string;
+  dueDate: string | null;
+  poNumber: string | null;
+  seller: { name: string; address: string; taxId: string; email: string };
+  billTo: Record<string, string | null>;
+  quantity: number;
+  currency: string;
+  unitAmount: number;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  total: number;
+}
+
+export function requestInvoiceOrder(quantity: number, poNumber?: string) {
+  return api<{ orderId: string; quoteNumber: string }>("/payments/invoice-orders", { method: "POST", body: JSON.stringify({ quantity, poNumber }) });
+}
+
+export function listInvoiceOrders() {
+  return api<{ orders: InvoiceOrder[] }>("/payments/invoice-orders");
+}
+
+export function cancelInvoiceOrder(id: string) {
+  return api<{ ok: true }>(`/payments/invoice-orders/${id}/cancel`, { method: "POST" });
+}
+
+export function getProforma(id: string) {
+  return api<Proforma>(`/payments/quotes/${id}`);
 }
 
 export function getQuote(quantity: number): Promise<Quote> {

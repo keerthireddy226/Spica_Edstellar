@@ -256,6 +256,7 @@ export interface AdminConsoleOrg {
   orgAdmin: { id: string; email: string; name: string; phone: string | null; jobTitle: string | null } | null;
   managers: { id: string; name: string; email: string; learnerCount: number }[];
   planTier: "starter" | "business" | "enterprise";
+  health?: OrgHealth | null;
   pilotEndsAt: string | null;
   customPriceCents: number | null;
   legalName: string | null;
@@ -508,4 +509,50 @@ export const mfaApi = {
   enable: (code: string) => api<{ recoveryCodes: string[] }>("/auth/mfa/enable", { method: "POST", body: JSON.stringify({ code }) }),
   disable: (password: string, code: string) => api<{ enabled: false }>("/auth/mfa/disable", { method: "POST", body: JSON.stringify({ password, code }) }),
   newRecoveryCodes: (code: string) => api<{ recoveryCodes: string[] }>("/auth/mfa/recovery-codes", { method: "POST", body: JSON.stringify({ code }) }),
+};
+
+export interface OrgHealth {
+  tenantId: string;
+  score: number;
+  band: "healthy" | "watch" | "at_risk";
+  flags: string[];
+  learners: number;
+  active7: number;
+  licenseUtilization: number | null;
+  orgAdminLastLoginAt: string | null;
+}
+
+export interface OrgCommercial {
+  contract: { start: string | null; end: string | null; valueCents: number | null; currency: string | null; notes: string | null };
+  accountManager: { id: string; name: string } | null;
+  accountManagerOptions: { id: string; name: string }[];
+  orders: {
+    id: string;
+    provider: string;
+    quoteNumber: string | null;
+    poNumber: string | null;
+    quantity: number;
+    currency: string;
+    total: number;
+    status: string;
+    dueDate: string | null;
+    createdAt: string;
+    invoiceId: string | null;
+    invoiceNumber: string | null;
+    credited: number;
+  }[];
+  health: OrgHealth | null;
+}
+
+export const commercialApi = {
+  get: (tenantId: string) => api<OrgCommercial>(`/admin/organizations/${tenantId}/commercial`),
+  update: (tenantId: string, body: Record<string, unknown>) =>
+    api<{ ok: true }>(`/admin/organizations/${tenantId}/commercial`, { method: "PATCH", body: JSON.stringify(body) }),
+  markPaid: (tenantId: string, orderId: string, reference: string) =>
+    api(`/admin/organizations/${tenantId}/orders/${orderId}/mark-paid`, { method: "POST", body: JSON.stringify({ reference }) }),
+  cancel: (tenantId: string, orderId: string) => api(`/admin/organizations/${tenantId}/orders/${orderId}/cancel`, { method: "POST" }),
+  creditNote: (tenantId: string, invoiceId: string, body: { amount: number; licensesToRemove: number; reason: string }) =>
+    api<{ creditNoteNumber: string }>(`/admin/organizations/${tenantId}/invoices/${invoiceId}/credit-notes`, { method: "POST", body: JSON.stringify(body) }),
+  viewAs: (tenantId: string) => api<{ ok: true }>(`/admin/organizations/${tenantId}/view-as`, { method: "POST" }),
+  health: () => api<{ organizations: (OrgHealth & { id: string; name: string })[] }>("/admin/health"),
 };

@@ -4,6 +4,7 @@ import { PAYMENT_CONFIG, chooseProvider, type ProviderName } from "./providers.j
 import { getTenantPlan, orgUnitPriceCents, purchaseUpgradesTo, setTier, type TenantPlan } from "../plans/service.js";
 import { TIER_LABELS, type PlanTier } from "../plans/config.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
+import { listCreditNotes } from "./invoiceOrders.js";
 
 export type OrderKind = "org_licenses" | "individual_plan";
 export const INDIVIDUAL_PLAN_MONTHS = [1, 3, 6] as const;
@@ -93,12 +94,16 @@ export async function resolveBuyer(user: { id: string; role: string; tenantId: s
   return null;
 }
 
-export function quote(buyer: Buyer, quantity: number): Quote {
+// `byInvoice`: paid by bank transfer, so no card provider is needed; India is
+// still invoiced in INR.
+export function quote(buyer: Buyer, quantity: number, opts: { byInvoice?: boolean } = {}): Quote {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) throw new PaymentError("invalid_quantity");
   if (buyer.kind === "individual_plan" && !INDIVIDUAL_PLAN_MONTHS.includes(quantity as 1 | 3 | 6)) {
     throw new PaymentError("invalid_quantity");
   }
-  const choice = chooseProvider(buyer.billingCountry);
+  const choice = opts.byInvoice
+    ? { provider: "invoice" as const, currency: (buyer.billingCountry === "IN" ? "INR" : "USD") as "INR" | "USD" }
+    : chooseProvider(buyer.billingCountry);
   if (!choice) throw new PaymentError("no_provider");
   const toCurrency = (usdCents: number) =>
     choice.currency === "INR" ? Math.round((usdCents / 100) * PAYMENT_CONFIG.inrPerUsd * 100) : usdCents;
@@ -163,11 +168,11 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
     const purchase = await client.query(
       `INSERT INTO license_purchases (tenant_id, quantity, unit_price_cents, currency, source, reference, note, created_by, pool_expires_at)
        VALUES ($1, $2, $3, $4, 'purchase', $5, $6, $7, now() + make_interval(months => $8)) RETURNING id`,
-      [order.tenant_id, order.quantity, order.unit_amount, order.currency, invoiceNumber, "Online checkout", order.buyer_id, POOL_VALIDITY_MONTHS],
+      [order.tenant_id, order.quantity, order.unit_amount, order.currency, invoiceNumber, order.provider === "invoice" ? "Paid by invoice" : "Online checkout", order.buyer_id, POOL_VALIDITY_MONTHS],
     );
     await client.query(
       `INSERT INTO license_events (tenant_id, kind, quantity, actor_id, note) VALUES ($1, 'purchase', $2, $3, $4)`,
-      [order.tenant_id, order.quantity, order.buyer_id, `${invoiceNumber} — online checkout`],
+      [order.tenant_id, order.quantity, order.buyer_id, `${invoiceNumber} — ${order.provider === "invoice" ? `paid by invoice${order.po_number ? `, PO ${order.po_number}` : ""}` : "online checkout"}`],
     );
 
     const description =
@@ -292,5 +297,6 @@ export async function getInvoice(invoiceId: string, tenantId: string | null, isP
     total: r.total,
     provider: r.provider,
     providerPaymentId: r.provider_payment_id,
+    creditNotes: await listCreditNotes(r.id),
   };
 }

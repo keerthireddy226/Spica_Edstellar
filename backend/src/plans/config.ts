@@ -106,12 +106,12 @@ export const FEATURES: Record<PlanFeature, FeatureInfo> = {
   },
   audit_log: { label: "Audit log", description: "Who changed what across the organization.", minTier: "business", available: true },
   scheduled_reports: { label: "Scheduled reports", description: "Progress reports emailed on a schedule.", minTier: "business", available: true },
-  po_invoicing: { label: "Purchase orders and invoicing", description: "Pay by invoice against a PO.", minTier: "business", available: false },
+  po_invoicing: { label: "Purchase orders and invoicing", description: "Pay by invoice against a PO.", minTier: "business", available: true },
   sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider.", minTier: "enterprise", available: false },
   api_access: { label: "API and webhooks", description: "Connect Spica to your LMS or HR system.", minTier: "enterprise", available: false },
   mfa_enforcement: { label: "Enforced two-factor sign-in", description: "Require MFA for every admin and manager.", minTier: "enterprise", available: true },
   data_governance: { label: "Data governance", description: "DPA, retention rules and data export.", minTier: "enterprise", available: false },
-  account_manager: { label: "Dedicated account manager", description: "A named contact and an SLA.", minTier: "enterprise", available: false },
+  account_manager: { label: "Dedicated account manager", description: "A named contact and an SLA.", minTier: "enterprise", available: true },
 };
 
 // null = unlimited.

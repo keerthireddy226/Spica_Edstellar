@@ -26,7 +26,10 @@ export type NotificationKind =
   | "plan_changed"
   | "org_admin_changed"
   | "batch_completed"
-  | "scheduled_report";
+  | "scheduled_report"
+  | "invoice_requested"
+  | "invoice_paid"
+  | "contract_renewal";
 
 const NUDGE_KINDS: NotificationKind[] = ["manager_reminder", "auto_reminder", "daily_reminder", "streak_alert"];
 

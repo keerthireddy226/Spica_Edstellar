@@ -8,6 +8,7 @@ import { OrgLicensesPanel } from "@/components/licenses/OrgLicensesPanel";
 import { OrgPlanAdminPanel } from "@/components/plans/OrgPlanAdminPanel";
 import { OrgAdminRecovery } from "@/components/OrgAdminRecovery";
 import { OrgAuditPanel } from "@/components/OrgAuditPanel";
+import { OrgCommercialPanel } from "@/components/OrgCommercialPanel";
 
 function categoryLabel(category: string | null): string {
   return category === "university" ? "University" : "Organization";
@@ -105,6 +106,8 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
             </div>
           </div>
         </div>
+
+        <OrgCommercialPanel tenantId={org.id} hasOrgAdmin={!!org.orgAdmin} />
 
         <OrgPlanAdminPanel tenantId={org.id} onTier={setPlanTier} />
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { TIER_LABELS } from "@/api/plans";
+import { HealthBadge } from "@/components/HealthBadge";
 import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
@@ -455,6 +456,7 @@ export function AdminOrganizations() {
               <th className="px-4 py-3">Organization</th>
               <th className="px-4 py-3">Type</th>
               <th className="px-4 py-3">Plan</th>
+              <th className="px-4 py-3">Health</th>
               <th className="px-4 py-3">Learners</th>
               <th className="px-4 py-3">Org Admin assigned</th>
               <th className="px-4 py-3">Status</th>
@@ -464,7 +466,7 @@ export function AdminOrganizations() {
           <tbody>
             {overview.organizations.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-muted">
+                <td colSpan={8} className="px-4 py-6 text-center text-muted">
                   No organizations yet.
                 </td>
               </tr>
@@ -492,6 +494,9 @@ export function AdminOrganizations() {
                 <td className="px-4 py-3">
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-navy/10 text-navy">{TIER_LABELS[org.planTier]}</span>
                   {org.pilotEndsAt && <span className="ml-1.5 text-xs font-semibold px-2 py-0.5 rounded-pill bg-warning/15 text-navy-deep">Pilot</span>}
+                </td>
+                <td className="px-4 py-3">
+                  <HealthBadge health={org.health} />
                 </td>
                 <td className="px-4 py-3 text-muted">{org.learnerCount}</td>
                 <td className="px-4 py-3">

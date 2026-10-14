@@ -13,7 +13,7 @@ import { PlanLockNote } from "@/components/plans/usePlan";
 import { planErrorMessage } from "@/api/plans";
 import { getOrgLicenseRequests, type LicenseRequest } from "@/api/licenses";
 import { useSearchParams } from "react-router-dom";
-import { getInvoices, formatAmount, type InvoiceSummary } from "@/api/payments";
+import { getInvoices, formatAmount, listInvoiceOrders, cancelInvoiceOrder, type InvoiceSummary, type InvoiceOrder } from "@/api/payments";
 import { Link } from "react-router-dom";
 import { getOrgOverview } from "@/api/orgAdmin";
 import {
@@ -151,6 +151,7 @@ export function OrgAdminLicenses() {
   const [contact, setContact] = useState<{ name: string; email: string } | null>(null);
   const [showBuy, setShowBuy] = useState(false);
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
+  const [invoiceOrders, setInvoiceOrders] = useState<InvoiceOrder[]>([]);
 
   function load() {
     getOrgLicenseOverview()
@@ -158,6 +159,9 @@ export function OrgAdminLicenses() {
       .catch(() => setError("Could not load licenses."));
     getInvoices()
       .then((r) => setInvoices(r.invoices))
+      .catch(() => {});
+    listInvoiceOrders()
+      .then((r) => setInvoiceOrders(r.orders))
       .catch(() => {});
     getOrgLicenseRequests()
       .then((r) => {
@@ -492,6 +496,38 @@ export function OrgAdminLicenses() {
         </div>
       )}
 
+      {tab === "invoices" && invoiceOrders.filter((o) => o.status === "created").length > 0 && (
+        <div className="bg-surface border border-warning/40 rounded-card shadow-sm overflow-hidden">
+          <p className="px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">Awaiting payment</p>
+          <table className="w-full text-sm">
+            <tbody>
+              {invoiceOrders
+                .filter((o) => o.status === "created")
+                .map((o) => (
+                  <tr key={o.id} className="border-b border-rule last:border-0">
+                    <td className="px-4 py-3 font-mono text-ink">{o.quoteNumber}</td>
+                    <td className="px-4 py-3 text-muted">{o.poNumber ? `PO ${o.poNumber}` : "—"}</td>
+                    <td className="px-4 py-3 text-muted">{o.quantity} licenses</td>
+                    <td className="px-4 py-3 text-ink">{formatAmount(o.total, o.currency)}</td>
+                    <td className="px-4 py-3 text-muted">{o.dueDate ? `due ${formatShortDate(o.dueDate)}` : ""}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <Link to={`/quote/${o.id}`} target="_blank" className="text-xs font-semibold text-navy hover:underline mr-3">
+                        Proforma
+                      </Link>
+                      <button
+                        onClick={() => cancelInvoiceOrder(o.id).then(load)}
+                        className="text-xs font-semibold text-muted hover:text-error cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {tab === "invoices" && (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
           <table className="w-full text-sm">
@@ -530,7 +566,14 @@ export function OrgAdminLicenses() {
         </div>
       )}
 
-      {showBuy && <BuyLicensesModal onClose={() => setShowBuy(false)} />}
+      {showBuy && (
+        <BuyLicensesModal
+          onClose={() => {
+            setShowBuy(false);
+            load();
+          }}
+        />
+      )}
 
       {tab === "activity" && (
         <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">

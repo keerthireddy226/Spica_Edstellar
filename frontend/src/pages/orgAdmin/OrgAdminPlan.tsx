@@ -121,6 +121,28 @@ export function OrgAdminPlan() {
           </div>
         </div>
 
+        {(plan.contract || plan.accountManager) && (
+          <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm rounded-input bg-paper-warm px-4 py-3">
+            {plan.contract?.end && (
+              <span>
+                <span className="text-muted">Contract</span>{" "}
+                <span className="text-ink font-medium">
+                  {plan.contract.start ? `${formatShortDate(plan.contract.start)} – ` : "until "}
+                  {formatShortDate(plan.contract.end)}
+                </span>
+              </span>
+            )}
+            {plan.accountManager && (
+              <span>
+                <span className="text-muted">Your account manager</span>{" "}
+                <a href={`mailto:${plan.accountManager.email}`} className="text-navy font-medium hover:underline">
+                  {plan.accountManager.name}
+                </a>
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {plan.limits.map((l) => {
             const pct = l.max === null ? 0 : Math.min(100, Math.round((l.used / l.max) * 100));

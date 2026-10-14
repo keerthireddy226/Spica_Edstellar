@@ -181,7 +181,7 @@ async function finishLogin(req: import("express").Request, res: import("express"
   // One active session per account — a second login while the first is still
   // open gets rejected instead of silently coexisting with it.
   const activeSession = await pool.query(
-    `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() LIMIT 1`,
+    `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() AND impersonator_id IS NULL LIMIT 1`,
     [userId],
   );
   if (activeSession.rows[0]) {
@@ -266,6 +266,7 @@ authRouter.get("/me", async (req, res, next) => {
       preferredLanguage: user.preferred_language,
       mfaEnabled: check.user.mfaEnabled,
       mfaSetupRequired: check.user.mfaSetupRequired,
+      viewAs: check.user.viewAs,
     });
   } catch (err) {
     next(err);
@@ -359,7 +360,7 @@ authRouter.get("/me/sessions", requireAuth, async (req: AuthedRequest, res, next
     const result = await pool.query(
       `SELECT id, session_token_hash, created_at, expires_at
        FROM auth_sessions
-       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() AND impersonator_id IS NULL
        ORDER BY created_at DESC`,
       [req.user!.id],
     );
@@ -573,6 +574,27 @@ authRouter.post("/mfa/recovery-codes", requireAuth, async (req: AuthedRequest, r
     const body = z.object({ code: z.string().trim().min(6).max(20) }).parse(req.body);
     if (!(await checkSecondFactor(req.user!.id, body.code))) return res.status(401).json({ error: "invalid_code" });
     res.json({ recoveryCodes: await regenerateRecoveryCodes(req.user!.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Leave a staff "view as" session and go back to the staff account.
+authRouter.post("/view-as/exit", async (req, res, next) => {
+  try {
+    const token = req.cookies?.[SESSION_COOKIE];
+    if (token) {
+      await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE session_token_hash = $1 AND impersonator_id IS NOT NULL`, [hashToken(token)]);
+    }
+    const back = req.cookies?.spica_return;
+    res.clearCookie("spica_return");
+    const check = await checkSession(back, req.ip);
+    if (back && check.user && ["admin", "super_admin"].includes(check.user.role)) {
+      setSessionCookie(res, back);
+      return res.json({ restored: true, role: check.user.role });
+    }
+    res.clearCookie(SESSION_COOKIE);
+    res.json({ restored: false });
   } catch (err) {
     next(err);
   }

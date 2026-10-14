@@ -5,6 +5,7 @@ import { runAllJobs } from "../notifications/jobs.js";
 import { refreshActivityRollup } from "../analytics/rollup.js";
 import { autoCompleteBatches } from "../batches/lifecycle.js";
 import { runScheduledReports } from "../reports/service.js";
+import { runContractRenewalAlerts } from "../admin/renewals.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -22,5 +23,8 @@ export function registerJobs() {
   });
   every(60, "reports.scheduled", async () => {
     await runScheduledReports();
+  });
+  every(60, "contracts.renewals", async () => {
+    await runContractRenewalAlerts();
   });
 }

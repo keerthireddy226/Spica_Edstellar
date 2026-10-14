@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { JobQueuePanel } from "@/components/JobQueuePanel";
+import { AtRiskOrganizations } from "@/components/AtRiskOrganizations";
 import { Link } from "react-router-dom";
 import { Users, Building2, GraduationCap, ShieldCheck, CheckCircle2, UserPlus, Activity, AlertTriangle, UserCheck2, Award } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -237,7 +238,10 @@ export function AdminDashboard() {
         </>
       )}
 
-      <JobQueuePanel />
+      <div className="grid lg:grid-cols-2 gap-4 items-start">
+        <AtRiskOrganizations />
+        <JobQueuePanel />
+      </div>
     </div>
   );
 }
