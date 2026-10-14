@@ -11,6 +11,8 @@ export interface PendingPlacement {
   id: string;
   user_id: string;
   email: string;
+  name?: string | null;
+  org_name?: string | null;
   taken_at: string;
   overall_percent: string;
   cefr_level: string;

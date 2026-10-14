@@ -73,6 +73,13 @@ export interface OrgAdminAccount {
   hasLoggedIn: boolean;
   managers: { id: string; name: string; learnerCount: number }[];
   createdAt: string;
+  phone?: string | null;
+  jobTitle?: string | null;
+  planTier?: "starter" | "business" | "enterprise";
+  orgActive?: boolean;
+  lastLoginAt?: string | null;
+  activeBatches?: number;
+  ownerName?: string | null;
 }
 
 export interface ManagerAccount {
@@ -87,6 +94,12 @@ export interface ManagerAccount {
   active: boolean;
   hasLoggedIn: boolean;
   createdAt: string;
+  tenantId?: string;
+  jobTitle?: string | null;
+  lastLoginAt?: string | null;
+  licensesAllotted?: number | null;
+  licensesUsed?: number;
+  activeLearners7d?: number;
 }
 
 export interface IndividualLearnerAccount {

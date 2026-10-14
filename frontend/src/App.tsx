@@ -33,16 +33,16 @@ import { PracticeTests } from "@/pages/PracticeTests";
 import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
-import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
-import { IndividualLearnersList } from "@/pages/admin/IndividualLearnersList";
 import { AdminProfile } from "@/pages/admin/AdminProfile";
-import { AdminConsoleDashboard } from "@/pages/admin/AdminConsoleDashboard";
+import { StaffDashboard } from "@/pages/staff/StaffDashboard";
+import { StaffLearners } from "@/pages/staff/StaffLearners";
+import { StaffBilling } from "@/pages/staff/StaffBilling";
+import { StaffAudit } from "@/pages/staff/StaffAudit";
+import { SystemPage } from "@/pages/staff/SystemPage";
 import { AdminOrganizations } from "@/pages/admin/AdminOrganizations";
-import { AdminUsers } from "@/pages/admin/AdminUsers";
-import { AdminManagersList } from "@/pages/admin/AdminManagersList";
 import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
 import { OrgAdminBatches } from "@/pages/orgAdmin/OrgAdminBatches";
 import { OrgAdminManagers } from "@/pages/orgAdmin/OrgAdminManagers";
@@ -184,11 +184,15 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<StaffDashboard />} />
+          <Route path={ROUTES.SUPER_ORGANIZATIONS} element={<AdminOrganizations />} />
+          <Route path={ROUTES.SUPER_BILLING} element={<StaffBilling />} />
+          <Route path={ROUTES.SUPER_AUDIT} element={<StaffAudit />} />
+          <Route path={ROUTES.SUPER_SYSTEM} element={<SystemPage />} />
           <Route path={ROUTES.ADMIN_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_ORG_ADMINS} element={<OrgAdminsList />} />
           <Route path={ROUTES.ADMIN_MANAGERS} element={<ManagersList />} />
-          <Route path={ROUTES.ADMIN_LEARNERS} element={<IndividualLearnersList />} />
+          <Route path={ROUTES.ADMIN_LEARNERS} element={<StaffLearners />} />
           <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ADMIN_ANALYTICS} element={<AnalyticsPage />} />
           <Route path={ROUTES.ADMIN_REVIEW} element={<AdminReview />} />
@@ -201,10 +205,14 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path={ROUTES.ADMIN_CONSOLE_DASHBOARD} element={<AdminConsoleDashboard />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_DASHBOARD} element={<StaffDashboard />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_ORG_ADMINS} element={<OrgAdminsList />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_BILLING} element={<StaffBilling />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_AUDIT} element={<StaffAudit />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_REVIEWS} element={<AdminReview />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} element={<AdminOrganizations />} />
-          <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<AdminManagersList />} />
-          <Route path={ROUTES.ADMIN_CONSOLE_USERS} element={<AdminUsers />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<ManagersList />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_USERS} element={<StaffLearners />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ANALYTICS} element={<AnalyticsPage />} />
         </Route>

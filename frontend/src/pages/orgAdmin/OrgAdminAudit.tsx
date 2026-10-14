@@ -3,6 +3,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/Button";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { downloadCsv } from "@/api/analytics";
+import { AUDIT_VERBS as VERBS } from "@/lib/auditVerbs";
 import { auditExportPath, getAuditLog, type AuditEntry, type AuditFilters } from "@/api/orgAdmin";
 
 const ACTION_GROUPS: [string, string][] = [
@@ -20,55 +21,6 @@ const ACTION_GROUPS: [string, string][] = [
   ["data.", "Data exports"],
 ];
 
-const VERBS: Record<string, string> = {
-  "batch.created": "created batch",
-  "batch.updated": "edited batch",
-  "batch.deleted": "deleted batch",
-  "batch.completed": "marked batch complete",
-  "batch.archived": "archived batch",
-  "batch.reopened": "reopened batch",
-  "batch.cloned": "cloned batch",
-  "manager.invited": "invited Manager",
-  "manager.updated": "edited Manager",
-  "manager.deleted": "deleted Manager",
-  "manager.deactivated": "deactivated Manager",
-  "manager.reactivated": "reactivated Manager",
-  "manager.invite_resent": "resent the invite to Manager",
-  "learner.invited": "invited learner",
-  "learner.bulk_invited": "invited learners in bulk",
-  "learner.deleted": "deleted learner",
-  "learner.deactivated": "deactivated learner",
-  "learner.reactivated": "reactivated learner",
-  "learner.moved": "moved learner",
-  "learner.details_updated": "updated the employee details of learner",
-  "learner.invite_resent": "resent the invite to learner",
-  "learner.erased": "erased the data of learner",
-  "organization.updated": "edited the organization profile",
-  "organization.settings_updated": "changed organization settings",
-  "org_admin.handover": "handed the Org Admin role to",
-  "org_admin.replaced": "replaced the Org Admin with",
-  "org_admin.invite_resent": "resent the Org Admin's invite to",
-  "license.assign": "assigned licenses to",
-  "license.extend": "extended licenses for",
-  "license.reclaim": "returned unused licenses from",
-  "license.purchase": "bought licenses",
-  "license.credit": "added licenses (credit)",
-  "license.comp": "added complimentary licenses",
-  "license.budget": "set fixed licenses for",
-  "license.manager_allotment": "set the license pool of",
-  "license.request": "decided a license request",
-  "plan.tier_change": "changed the plan",
-  "plan.price_change": "changed the negotiated price",
-  "plan.pilot_started": "started a pilot",
-  "plan.pilot_ended": "ended the pilot",
-  "plan.enterprise_inquiry": "asked about Enterprise",
-  "api_key.created": "created API key",
-  "api_key.revoked": "revoked API key",
-  "webhook.created": "added webhook",
-  "webhook.deleted": "removed webhook",
-  "sso.updated": "changed single sign-on settings",
-  "data.exported": "exported organization data",
-};
 
 function describe(e: AuditEntry): string {
   const verb = VERBS[e.action] ?? e.action.replace(/[._]/g, " ");

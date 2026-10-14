@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { getPendingReviewPlacements, reviewPlacement, type PendingPlacement } from "@/api/adminReview";
 import { ROUTES } from "@/constants/routes";
 
-const ADMIN_ROLES = ["org_admin", "admin", "super_admin"];
+const ADMIN_ROLES = ["admin", "super_admin"];
 
 export function AdminReview() {
   const { user } = useAuth();
@@ -41,7 +41,7 @@ export function AdminReview() {
   return (
     <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Identity review queue</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">Placement reviews</h1>
         <p className="text-sm text-muted mt-1">
           Placements flagged during a face check — not blocked for the learner, just awaiting a verdict here.
         </p>
@@ -57,7 +57,11 @@ export function AdminReview() {
         <div key={p.id} className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-semibold text-ink">{p.email}</p>
+              <p className="font-semibold text-ink">{p.name?.trim() || p.email}</p>
+              <p className="text-xs text-muted">
+                {p.email}
+                {p.org_name ? ` · ${p.org_name}` : " · Individual learner"}
+              </p>
               <p className="text-xs text-muted mt-0.5">
                 {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
               </p>

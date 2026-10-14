@@ -1,137 +1,133 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Building2, Users } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { cardGradient } from "@/lib/cardGradients";
+import { KeyRound, ShieldCheck, Users, UserX } from "lucide-react";
+import { getManagers as getManagerAccounts, type ManagerAccount } from "@/api/admin";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
-import { getManagers, type ManagerAccount } from "@/api/admin";
+import { ago, shortDate } from "@/api/staff";
+import { cardGradient } from "@/lib/cardGradients";
+import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, useStaffPermissions } from "@/components/staff/StaffKit";
 
-function initials(firstName: string | null, lastName: string | null, email: string): string {
-  const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
-  return fromName || email.slice(0, 2).toUpperCase();
-}
+type F = "all" | "active" | "pending" | "deactivated";
+const status = (m: ManagerAccount): Exclude<F, "all"> => (!m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active");
 
-function categoryLabel(category: string | null): string {
-  return category === "university" ? "University" : "Organization";
-}
-
-function ManagersSummary({ managers }: { managers: ManagerAccount[] }) {
-  const totalManagers = managers.length;
-  const orgsCovered = new Set(managers.map((m) => m.tenantName)).size;
-  const totalLearners = managers.reduce((sum, m) => sum + m.learnerCount, 0);
-
-  const cards: { label: string; value: number; icon: LucideIcon }[] = [
-    { label: "Managers", value: totalManagers, icon: ShieldCheck },
-    { label: "Organizations covered", value: orgsCovered, icon: Building2 },
-    { label: "Learners managed", value: totalLearners, icon: Users },
-  ];
-
-  return (
-    <div className="grid sm:grid-cols-3 gap-4">
-      {cards.map(({ label, value, icon: Icon }, i) => (
-        <div key={label} style={cardGradient(i)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4">
-          <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-            <Icon size={22} strokeWidth={1.8} />
-          </span>
-          <div>
-            <p className="text-2xl font-display font-bold text-white">{value}</p>
-            <p className="text-xs text-white/80">{label}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// No "onboard" action here, same reason as Org Admins — a Manager account is
-// created by an Org Admin from their own console, never directly by Super
-// Admin. This page exists so a Super Admin can still see every Manager on
-// the platform and who created each one's organization chain.
+// Every Manager in the organizations the viewer can see. Org Admins create
+// and manage them; staff look.
 export function ManagersList() {
-  const [managers, setManagers] = useState<ManagerAccount[] | null>(null);
+  const perms = useStaffPermissions();
+  const [rows, setRows] = useState<ManagerAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [viewingManagerId, setViewingManagerId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<F>("all");
+  const [org, setOrg] = useState("all");
 
   useEffect(() => {
-    getManagers()
-      .then((res) => setManagers(res.managers))
-      .catch(() => setError("Could not load managers."));
+    getManagerAccounts()
+      .then((r) => setRows(r.managers))
+      .catch(() => setError("Could not load Managers."));
   }, []);
+
+  if (error) return <p className="text-sm text-error">{error}</p>;
+  if (!rows) return <p className="text-sm text-muted">Loading…</p>;
+  const orgs = [...new Set(rows.map((m) => m.tenantName))].sort().map((n) => [n, n] as [string, string]);
+  const q = query.trim().toLowerCase();
+  const shown = rows.filter(
+    (m) =>
+      (filter === "all" || status(m) === filter) &&
+      (org === "all" || m.tenantName === org) &&
+      (!q || [m.firstName, m.lastName, m.email, m.tenantName, m.jobTitle, ...m.batchNames].some((v) => v?.toLowerCase().includes(q))),
+  );
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Managers</h1>
-        <p className="text-sm text-muted mt-1">Every Manager across every organization — each scoped to only their assigned batch(es).</p>
+      <PageHeader title="Managers" subtitle={`Managers run batches inside ${perms.isSuper ? "each" : "your"} organization${perms.isSuper ? "" : "s"}. Their Org Admin adds and manages them.`} />
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard index={0} icon={ShieldCheck} value={rows.filter((m) => status(m) === "active").length} label="Active Managers" />
+        <StatCard index={1} icon={UserX} value={rows.filter((m) => status(m) === "pending").length} label="Invite not accepted" />
+        <StatCard index={2} icon={Users} value={rows.reduce((n, m) => n + m.learnerCount, 0)} label="Learners in their batches" sub={`${rows.reduce((n, m) => n + (m.activeLearners7d ?? 0), 0)} practised this week`} />
+        <StatCard
+          index={3}
+          icon={KeyRound}
+          value={`${rows.reduce((n, m) => n + (m.licensesUsed ?? 0), 0)} / ${rows.reduce((n, m) => n + (m.licensesAllotted ?? 0), 0)}`}
+          label="Pool licenses used"
+        />
       </div>
-
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!managers && !error && <p className="text-sm text-muted">Loading…</p>}
-      {managers?.length === 0 && <p className="text-sm text-muted">No managers onboarded yet.</p>}
-
-      {managers && managers.length > 0 && (
-        <>
-          <ManagersSummary managers={managers} />
-          <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Manager</th>
-                  <th className="px-4 py-3">Organization</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Batches</th>
-                  <th className="px-4 py-3">Learners</th>
-                  <th className="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {managers.map((m) => {
-                  const status = !m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active";
-                  return (
-                    <tr key={m.id} className="border-b border-rule last:border-0">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => setViewingManagerId(m.id)}
-                            title="View details"
-                            className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer hover:ring-2 hover:ring-navy/40 transition-shadow"
-                          >
-                            {initials(m.firstName, m.lastName, m.email)}
-                          </button>
-                          <div className="min-w-0">
-                            <p className="text-ink font-medium truncate">
-                              {[m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet"}
-                            </p>
-                            <p className="text-muted text-xs truncate">{m.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-ink">{m.tenantName}</td>
-                      <td className="px-4 py-3 text-muted">{categoryLabel(m.tenantCategory)}</td>
-                      <td className="px-4 py-3 text-muted">{m.batchNames.length === 0 ? "—" : m.batchNames.join(", ")}</td>
-                      <td className="px-4 py-3 text-muted">{m.learnerCount}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${
-                            status === "active"
-                              ? "bg-success/15 text-success"
-                              : status === "pending"
-                                ? "bg-warning/15 text-navy-deep"
-                                : "bg-error/15 text-error"
-                          }`}
-                        >
-                          {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </>
+      <div className="flex items-center gap-3 flex-wrap">
+        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, organization or batch" />
+        <SelectFilter label="Organization" value={org} onChange={setOrg} options={[["all", "All organizations"], ...orgs]} />
+        <FilterPills<F>
+          value={filter}
+          onChange={setFilter}
+          options={[
+            ["all", "All", rows.length],
+            ["active", "Active", rows.filter((m) => status(m) === "active").length],
+            ["pending", "Invite pending", rows.filter((m) => status(m) === "pending").length],
+            ["deactivated", "Deactivated", rows.filter((m) => status(m) === "deactivated").length],
+          ]}
+        />
+      </div>
+      {shown.length === 0 ? (
+        <EmptyNote>No Managers match.</EmptyNote>
+      ) : (
+        <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {shown.map((m, i) => {
+            const s = status(m);
+            const left = m.licensesAllotted != null ? Math.max(0, m.licensesAllotted - (m.licensesUsed ?? 0)) : null;
+            return (
+              <div key={m.id} style={cardGradient(i)} className={`rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 text-white ${m.active ? "" : "opacity-60"}`}>
+                <div className="flex items-start gap-3">
+                  <span className="h-11 w-11 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold shrink-0">
+                    {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase() || m.email.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-display font-bold truncate">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 uppercase tracking-wide">
+                        {s === "active" ? "Active" : s === "pending" ? "Invite pending" : "Deactivated"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/80 truncate">
+                      {m.jobTitle ? `${m.jobTitle} · ` : ""}
+                      {m.email} · {m.tenantName}
+                    </p>
+                  </div>
+                  <button onClick={() => setViewing(m.id)} className="text-xs font-semibold hover:underline cursor-pointer shrink-0">
+                    View details
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {m.batchNames.length === 0 ? (
+                    <span className="text-xs text-white/75 italic">No batches yet</span>
+                  ) : (
+                    m.batchNames.map((b) => (
+                      <span key={b} className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20">
+                        {b}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
+                  <div>
+                    <p className="font-display font-bold text-xl">{m.learnerCount}</p>
+                    <p className="text-[11px] text-white/75">Learners</p>
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-xl">{m.activeLearners7d ?? 0}</p>
+                    <p className="text-[11px] text-white/75">Practised this week</p>
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-xl">{left ?? "—"}</p>
+                    <p className="text-[11px] text-white/75">{left === null ? "No license pool" : `Pool left of ${m.licensesAllotted}`}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-white/80">
+                  {s === "pending" ? "Hasn't signed in yet" : `Last signed in ${ago(m.lastLoginAt)}`} · Added {shortDate(m.createdAt)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       )}
-
-      {viewingManagerId && <ManagerDetailModal managerId={viewingManagerId} onClose={() => setViewingManagerId(null)} />}
+      {viewing && <ManagerDetailModal managerId={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }

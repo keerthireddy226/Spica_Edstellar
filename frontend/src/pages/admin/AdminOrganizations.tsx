@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { TIER_LABELS } from "@/api/plans";
-import { HealthBadge } from "@/components/HealthBadge";
-import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw, KeyRound } from "lucide-react";
+import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, useStaffPermissions } from "@/components/staff/StaffKit";
+import { ago, getOrgMetrics, getStaffAdmins, setOrgOwner, shortDate, type OrgMetrics } from "@/api/staff";
 import { cardGradient } from "@/lib/cardGradients";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
@@ -355,36 +355,90 @@ function DeactivateOrgModal({
   );
 }
 
-function StatCard({ label, value, icon: Icon, index }: { label: string; value: number; icon: LucideIcon; index: number }) {
+function OwnerModal({ org, current, onClose, onSaved }: { org: AdminConsoleOrg; current: string | null; onClose: () => void; onSaved: () => void }) {
+  const [admins, setAdmins] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [adminId, setAdminId] = useState(current ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    getStaffAdmins()
+      .then((r) => setAdmins(r.admins))
+      .catch(() => {});
+  }, []);
   return (
-    <div style={cardGradient(index)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4">
-      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div>
-        <p className="text-2xl font-display font-bold text-white">{value}</p>
-        <p className="text-xs text-white/80">{label}</p>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-bold text-lg text-ink">Owning Admin · {org.name}</h2>
+          <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer">
+            <X size={20} />
+          </button>
+        </div>
+        <p className="text-sm text-muted">The owning Admin sees and manages this organization in their console.</p>
+        <select value={adminId} onChange={(e) => setAdminId(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink cursor-pointer">
+          <option value="">Choose an Admin</option>
+          {admins.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} ({a.email})
+            </option>
+          ))}
+        </select>
+        {error && <p className="text-sm text-error">{error}</p>}
+        <div className="flex gap-3">
+          <Button
+            disabled={!adminId || saving || adminId === current}
+            className="flex-1"
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await setOrgOwner(org.id, adminId);
+                onSaved();
+              } catch {
+                setError("Couldn't change the owner.");
+                setSaving(false);
+              }
+            }}
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
+type OrgFilter = "active" | "pilot" | "at_risk" | "invite" | "deactivated" | "all";
+
 export function AdminOrganizations() {
+  const perms = useStaffPermissions();
+  const canManage = !perms.isSuper && perms.manageOrganizations;
   const [overview, setOverview] = useState<AdminConsoleOverview | null>(null);
+  const [metrics, setMetrics] = useState<Map<string, OrgMetrics>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [showOnboard, setShowOnboard] = useState(false);
-  const [justCreated, setJustCreated] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminConsoleOrg | null>(null);
   const [confirmingDeactivate, setConfirmingDeactivate] = useState<AdminConsoleOrg | null>(null);
   const [viewingOrg, setViewingOrg] = useState<AdminConsoleOrg | null>(null);
+  const [owning, setOwning] = useState<AdminConsoleOrg | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<OrgFilter>("active");
+  const [type, setType] = useState("all");
+  const [tier, setTier] = useState("all");
+  const [owner, setOwner] = useState("all");
 
   function load() {
     getAdminConsoleOverview()
       .then(setOverview)
       .catch(() => setError("Could not load organizations."));
+    getOrgMetrics()
+      .then((r) => setMetrics(new Map(r.metrics.map((m) => [m.id, m]))))
+      .catch(() => {});
   }
-
   useEffect(load, []);
 
   async function handleDeactivate(org: AdminConsoleOrg) {
@@ -412,147 +466,193 @@ export function AdminOrganizations() {
     }
   }
 
-  useEffect(() => {
-    if (!justCreated) return;
-    const timer = setTimeout(() => setJustCreated(null), 5000);
-    return () => clearTimeout(timer);
-  }, [justCreated]);
-
   if (error) return <p className="text-sm text-error">{error}</p>;
   if (!overview) return <p className="text-sm text-muted">Loading…</p>;
 
-  const universityCount = overview.organizations.filter((o) => o.category === "university").length;
-  const organizationCount = overview.organizations.filter((o) => o.category !== "university").length;
+  const orgs = overview.organizations;
+  const active = orgs.filter((o) => o.active);
+  const m = (id: string) => metrics.get(id);
+  const sum = (f: (x: OrgMetrics) => number) => active.reduce((n, o) => n + (m(o.id) ? f(m(o.id)!) : 0), 0);
+  const isPilot = (o: AdminConsoleOrg) => !!o.pilotEndsAt && new Date(o.pilotEndsAt).getTime() > Date.now();
+  const matches: Record<OrgFilter, (o: AdminConsoleOrg) => boolean> = {
+    active: (o) => o.active,
+    pilot: (o) => o.active && isPilot(o),
+    at_risk: (o) => o.active && o.health?.band === "at_risk",
+    invite: (o) => o.active && o.orgAdminStatus !== "active",
+    deactivated: (o) => !o.active,
+    all: () => true,
+  };
+  const owners = [...new Map([...metrics.values()].filter((x) => x.owner).map((x) => [x.owner!.id, x.owner!.name])).entries()];
+  const q = query.trim().toLowerCase();
+  const shown = orgs.filter(
+    (o) =>
+      matches[filter](o) &&
+      (type === "all" || (type === "university" ? o.category === "university" : o.category !== "university")) &&
+      (tier === "all" || o.planTier === tier) &&
+      (owner === "all" || m(o.id)?.owner?.id === owner) &&
+      (!q || [o.name, o.orgAdmin?.name, o.orgAdmin?.email, o.industry, m(o.id)?.owner?.name].some((v) => v?.toLowerCase().includes(q))),
+  );
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Organizations</h1>
-          <p className="text-sm text-muted mt-1">The organizations and universities you work with.</p>
-        </div>
-        <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-          <UserPlus size={18} /> Onboard Organization
-        </Button>
+      <PageHeader
+        title="Organizations"
+        subtitle={perms.isSuper ? "Every organization and university on Spica, and the Admin who owns each." : "The organizations and universities you look after."}
+        actions={
+          canManage && (
+            <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
+              <UserPlus size={18} /> Onboard Organization
+            </Button>
+          )
+        }
+      />
+
+      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          index={0}
+          icon={Building2}
+          value={active.length}
+          label="Active organizations"
+          sub={`${active.filter((o) => o.category !== "university").length} companies · ${active.filter((o) => o.category === "university").length} universities`}
+        />
+        <StatCard index={1} icon={Users} value={overview.totalLearners} label="Learners" sub={`${sum((x) => x.active7)} practised this week`} />
+        <StatCard
+          index={2}
+          icon={KeyRound}
+          value={`${sum((x) => x.licensesAssigned)} / ${sum((x) => x.licensesBought)}`}
+          label="Licenses assigned / bought"
+        />
+        <StatCard
+          index={3}
+          icon={Mail}
+          value={active.filter((o) => o.health?.band === "at_risk").length}
+          label="At risk"
+          sub={`${active.filter((o) => o.orgAdminStatus !== "active").length} Org Admin invites open · ${sum((x) => x.unpaidInvoices)} unpaid invoices`}
+        />
       </div>
 
-      {justCreated && (
-        <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
-          {justCreated} created — their org admin will receive an email to set up their account.
-        </p>
-      )}
-
-      <div className="grid sm:grid-cols-3 gap-4">
-        <StatCard label="Organizations" value={organizationCount} icon={Building2} index={0} />
-        <StatCard label="Universities" value={universityCount} icon={GraduationCap} index={1} />
-        <StatCard label="Learners across orgs" value={overview.totalLearners} icon={Users} index={2} />
+      <div className="flex items-center gap-3 flex-wrap">
+        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, Org Admin, industry or owner" />
+        <SelectFilter label="Type" value={type} onChange={setType} options={[["all", "All types"], ["company", "Companies"], ["university", "Universities"]]} />
+        <SelectFilter
+          label="Plan"
+          value={tier}
+          onChange={setTier}
+          options={[["all", "All plans"], ...(Object.entries(TIER_LABELS) as [string, string][])]}
+        />
+        {perms.isSuper && <SelectFilter label="Owner" value={owner} onChange={setOwner} options={[["all", "All Admins"], ...owners]} />}
       </div>
+      <FilterPills<OrgFilter>
+        value={filter}
+        onChange={setFilter}
+        options={[
+          ["active", "Active", active.length],
+          ["pilot", "On pilot", orgs.filter(matches.pilot).length],
+          ["at_risk", "At risk", orgs.filter(matches.at_risk).length],
+          ["invite", "Org Admin not active", orgs.filter(matches.invite).length],
+          ["deactivated", "Deactivated", orgs.filter(matches.deactivated).length],
+          ["all", "All", orgs.length],
+        ]}
+      />
 
+      {orgs.length === 0 && <EmptyNote>{canManage ? "No organizations yet — onboard your first one." : "No organizations yet."}</EmptyNote>}
+      {orgs.length > 0 && shown.length === 0 && <EmptyNote>No organizations match.</EmptyNote>}
 
-      <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-              <th className="px-4 py-3">Organization</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Plan</th>
-              <th className="px-4 py-3">Health</th>
-              <th className="px-4 py-3">Learners</th>
-              <th className="px-4 py-3">Org Admin assigned</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {overview.organizations.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-muted">
-                  No organizations yet.
-                </td>
-              </tr>
-            )}
-            {overview.organizations.map((org) => (
-              <tr key={org.id} className="border-b border-rule last:border-0">
-                <td className="px-4 py-3">
-                  <button
-                    onClick={() => setViewingOrg(org)}
-                    title="View details"
-                    className="flex items-center gap-2.5 text-ink font-medium hover:text-navy transition-colors cursor-pointer"
-                  >
-                    <span className="h-8 w-8 rounded-full bg-navy text-lime flex items-center justify-center shrink-0 hover:ring-2 hover:ring-navy/40 transition-shadow">
-                      {org.category === "university" ? <GraduationCap size={15} /> : <Briefcase size={15} />}
-                    </span>
+      <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+        {shown.map((org, i) => {
+          const x = m(org.id);
+          const util = x && x.licensesBought ? Math.min(100, (x.licensesAssigned / x.licensesBought) * 100) : 0;
+          return (
+            <div key={org.id} style={cardGradient(i)} className={`rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 text-white ${org.active ? "" : "opacity-60"}`}>
+              <div className="flex items-start gap-3">
+                <span className="h-11 w-11 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                  {org.category === "university" ? <GraduationCap size={20} /> : <Briefcase size={20} />}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <button onClick={() => setViewingOrg(org)} className="font-display font-bold text-lg text-white truncate hover:underline cursor-pointer text-left block max-w-full">
                     {org.name}
                   </button>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-pill bg-accent/10 text-accent capitalize">
-                    {org.category === "university" ? <GraduationCap size={13} /> : <Briefcase size={13} />}
-                    {org.category === "university" ? "University" : "Organization"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-navy/10 text-navy">{TIER_LABELS[org.planTier]}</span>
-                  {org.pilotEndsAt && <span className="ml-1.5 text-xs font-semibold px-2 py-0.5 rounded-pill bg-warning/15 text-navy-deep">Pilot</span>}
-                </td>
-                <td className="px-4 py-3">
-                  <HealthBadge health={org.health} />
-                </td>
-                <td className="px-4 py-3 text-muted">{org.learnerCount}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${
-                      org.orgAdminStatus === "active"
-                        ? "bg-success/15 text-success"
-                        : org.orgAdminStatus === "pending"
-                          ? "bg-warning/15 text-navy-deep"
-                          : "bg-warning/15 text-warning"
-                    }`}
-                  >
-                    {org.orgAdminStatus === "active" ? "Active" : org.orgAdminStatus === "pending" ? "Invite pending" : "Not yet"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${org.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                    {org.active ? "Active" : "Deactivated"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1 justify-end">
-                    {org.active ? (
-                      <>
-                        <button
-                          onClick={() => setEditing(org)}
-                          title="Edit"
-                          className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => setConfirmingDeactivate(org)}
-                          disabled={busyId === org.id}
-                          title="Deactivate"
-                          className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          <Ban size={16} />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleReactivate(org)}
-                        disabled={busyId === org.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold bg-success/10 text-success hover:bg-success/20 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        <RotateCcw size={14} />
-                        {busyId === org.id ? "Activating…" : "Activate"}
-                      </button>
+                  <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{TIER_LABELS[org.planTier]}</span>
+                    {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">Pilot to {shortDate(org.pilotEndsAt)}</span>}
+                    {org.health && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/15" title={org.health.flags.join("\n")}>
+                        Health {org.health.score} · {org.health.band === "at_risk" ? "At risk" : org.health.band === "watch" ? "Watch" : "Healthy"}
+                      </span>
                     )}
+                    {!org.active && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/25 uppercase">Deactivated</span>}
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+
+              <div className="text-xs text-white/85">
+                Org Admin:{" "}
+                {org.orgAdmin ? (
+                  <>
+                    <span className="font-semibold text-white">{org.orgAdmin.name || org.orgAdmin.email}</span>
+                    {org.orgAdminStatus === "pending" ? " · invite not accepted" : ""}
+                  </>
+                ) : (
+                  <span className="font-semibold">none yet</span>
+                )}
+                {org.industry ? ` · ${org.industry}` : ""}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
+                <div>
+                  <p className="font-display font-bold text-xl">{org.learnerCount}</p>
+                  <p className="text-[11px] text-white/75">Learners · {x?.active7 ?? 0} active</p>
+                </div>
+                <div>
+                  <p className="font-display font-bold text-xl">
+                    {x?.activeBatches ?? 0}
+                    <span className="text-xs font-normal text-white/75"> / {x?.managers ?? org.managers.length}</span>
+                  </p>
+                  <p className="text-[11px] text-white/75">Batches / Managers</p>
+                </div>
+                <div>
+                  <p className="font-display font-bold text-xl">
+                    {x?.licensesAssigned ?? 0}
+                    <span className="text-xs font-normal text-white/75"> / {x?.licensesBought ?? 0}</span>
+                  </p>
+                  <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
+                    <div className="h-full bg-white rounded-full" style={{ width: `${util}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-white/80">
+                {x?.contractEnd ? `Contract to ${shortDate(x.contractEnd)}` : "No contract dates"}
+                {x?.unpaidInvoices ? ` · ${x.unpaidInvoices} unpaid invoice${x.unpaidInvoices === 1 ? "" : "s"}` : ""}
+                {` · Last activity ${ago(x?.lastActivityAt)}`}
+                {perms.isSuper ? ` · Owner: ${x?.owner?.name ?? "none"}` : ""}
+              </p>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardButton onClick={() => setViewingOrg(org)}>View details</CardButton>
+                {perms.isSuper && <CardButton onClick={() => setOwning(org)}>Change owner</CardButton>}
+                {canManage && org.active && (
+                  <>
+                    <CardButton onClick={() => setEditing(org)}>
+                      <Pencil size={13} /> Edit
+                    </CardButton>
+                    <span className="flex-1" />
+                    <CardButton onClick={() => setConfirmingDeactivate(org)} disabled={busyId === org.id}>
+                      <Ban size={13} /> Deactivate
+                    </CardButton>
+                  </>
+                )}
+                {canManage && !org.active && (
+                  <CardButton onClick={() => handleReactivate(org)} disabled={busyId === org.id}>
+                    <RotateCcw size={13} /> {busyId === org.id ? "Activating…" : "Reactivate"}
+                  </CardButton>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {showOnboard && (
@@ -560,7 +660,7 @@ export function AdminOrganizations() {
           onClose={() => setShowOnboard(false)}
           onCreated={(name) => {
             setShowOnboard(false);
-            setJustCreated(name);
+            setNotice(`${name} created — their Org Admin will receive an email to set up their account.`);
             load();
           }}
         />
@@ -586,6 +686,19 @@ export function AdminOrganizations() {
         />
       )}
 
+      {owning && (
+        <OwnerModal
+          org={owning}
+          current={m(owning.id)?.owner?.id ?? null}
+          onClose={() => setOwning(null)}
+          onSaved={() => {
+            setNotice(`${owning.name} now belongs to its new Admin.`);
+            setOwning(null);
+            load();
+          }}
+        />
+      )}
+
       {viewingOrg && (
         <OrganizationDetailModal
           org={viewingOrg}
@@ -594,12 +707,24 @@ export function AdminOrganizations() {
             getAdminConsoleOverview()
               .then((o) => {
                 setOverview(o);
-                setViewingOrg(o.organizations.find((x) => x.id === viewingOrg.id) ?? null);
+                setViewingOrg(o.organizations.find((y) => y.id === viewingOrg.id) ?? null);
               })
               .catch(() => {})
           }
         />
       )}
     </div>
+  );
+}
+
+function CardButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill border border-white/35 text-xs font-semibold text-white hover:bg-white/20 transition-colors cursor-pointer disabled:opacity-50"
+    >
+      {children}
+    </button>
   );
 }

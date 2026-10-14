@@ -1,30 +1,42 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
+import type { StaffPermissions } from "@/api/staff";
 
 // Four genuinely different nav sets, one per non-learner role — each sees
 // strictly less than the role above it: Super Admin manages every org and
 // every Admin; an Admin only sees organizations assigned to them; an Org
 // Admin only their one organization (every batch, every Manager); a Manager
 // only the batch(es) assigned to them, never the whole organization.
-const SUPER_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
+type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions };
+
+const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
+  { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: "Organizations" },
   { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: "Admins" },
-  { to: ROUTES.ADMIN_ORG_ADMINS, icon: Building2, label: "Org Admins" },
+  { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
   { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: "Managers" },
-  { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: "Individual Learners" },
+  { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: "Learners" },
+  { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: "Billing" },
+  { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: "Placement reviews" },
+  { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: "Audit log" },
+  { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: "System" },
   { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.ADMIN_PROFILE, icon: User, label: "Profile" },
 ];
 
-const ADMIN_CONSOLE_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
+const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: "Organizations" },
+  { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: "Managers" },
-  { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: "Users" },
-  { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: "Analytics" },
+  { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: "Learners" },
+  { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: "Billing" },
+  { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: "Placement reviews", permission: "scoreReview" },
+  { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: "Audit log" },
+  { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: "Analytics", permission: "viewReports" },
   { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: "Profile" },
 ];
 
@@ -51,7 +63,7 @@ const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_PROFILE, icon: User, label: "Profile" },
 ];
 
-const NAV_ITEMS_BY_ROLE: Partial<Record<Role, { to: string; icon: LucideIcon; label: string }[]>> = {
+const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
   super_admin: SUPER_ADMIN_NAV_ITEMS,
   admin: ADMIN_CONSOLE_NAV_ITEMS,
   org_admin: ORG_ADMIN_NAV_ITEMS,
@@ -72,7 +84,11 @@ function navClasses(isActive: boolean) {
 export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const location = useLocation();
   const { user } = useAuth();
-  const navItems = (user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS;
+  const perms = (user?.permissions ?? {}) as Partial<StaffPermissions>;
+  // An Admin only sees pages their permissions allow.
+  const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS).filter(
+    (n) => !n.permission || user?.role !== "admin" || perms[n.permission],
+  );
 
   return (
     <>

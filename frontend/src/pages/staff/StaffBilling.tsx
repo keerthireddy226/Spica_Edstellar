@@ -1,0 +1,163 @@
+import { useEffect, useState } from "react";
+import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, FileText } from "lucide-react";
+import { TIER_LABELS } from "@/api/plans";
+import { getStaffBilling, money, shortDate, type BillingContract, type BillingOrder } from "@/api/staff";
+import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
+
+type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
+
+// Money across the organizations this person looks after, plus individual
+// learners' plan payments: what's paid, what's owed, and contracts ending.
+export function StaffBilling() {
+  const perms = useStaffPermissions();
+  const [data, setData] = useState<{ orders: BillingOrder[]; contracts: BillingContract[] } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<F>("unpaid");
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    getStaffBilling()
+      .then(setData)
+      .catch(() => setError("Could not load billing."));
+  }, []);
+  if (error) return <p className="text-sm text-error">{error}</p>;
+  if (!data) return <p className="text-sm text-muted">Loading…</p>;
+
+  const { orders, contracts } = data;
+  const cur = orders[0]?.currency ?? "USD";
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+  const paid = orders.filter((o) => o.status === "paid");
+  const unpaid = orders.filter((o) => o.status === "created" && o.provider === "invoice");
+  const total = (xs: BillingOrder[]) => xs.reduce((n, o) => n + o.total, 0);
+  const match: Record<F, (o: BillingOrder) => boolean> = {
+    unpaid: (o) => o.status === "created" && o.provider === "invoice",
+    overdue: (o) => o.overdue,
+    paid: (o) => o.status === "paid",
+    individual: (o) => o.kind === "individual_plan",
+    all: () => true,
+  };
+  const q = query.trim().toLowerCase();
+  const shown = orders.filter(
+    (o) => match[filter](o) && (!q || [o.orgName, o.buyerName, o.buyerEmail, o.invoiceNumber, o.quoteNumber, o.poNumber].some((v) => v?.toLowerCase().includes(q))),
+  );
+  const ending = contracts.filter((c) => new Date(c.contractEnd).getTime() - Date.now() < 90 * 86400000);
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <PageHeader
+        title="Billing"
+        subtitle={perms.isSuper ? "Payments, unpaid invoices and contracts across Spica." : "Payments, unpaid invoices and contracts for your organizations, and individual learners' plans."}
+      />
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard index={0} icon={CreditCard} value={money(total(paid.filter((o) => o.paidAt && new Date(o.paidAt).getTime() >= monthStart)), cur)} label="Paid this month" sub={`${money(total(paid), cur)} in total`} />
+        <StatCard index={1} icon={FileText} value={unpaid.length} label="Unpaid invoices" sub={money(total(unpaid), cur)} />
+        <StatCard index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label="Overdue" sub={money(total(unpaid.filter((o) => o.overdue)), cur)} />
+        <StatCard index={3} icon={CalendarClock} value={ending.length} label="Contracts ending in 90 days" sub={`${contracts.length} contracts in total`} />
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <SearchBox value={query} onChange={setQuery} placeholder="Search by organization, buyer, invoice, quote or PO" />
+          </div>
+          <FilterPills<F>
+            value={filter}
+            onChange={setFilter}
+            options={[
+              ["unpaid", "Unpaid", unpaid.length],
+              ["overdue", "Overdue", orders.filter(match.overdue).length],
+              ["paid", "Paid", paid.length],
+              ["individual", "Individual plans", orders.filter(match.individual).length],
+              ["all", "All", orders.length],
+            ]}
+          />
+          {shown.length === 0 ? (
+            <EmptyNote>Nothing here.</EmptyNote>
+          ) : (
+            <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+              <table className="w-full text-sm min-w-[720px]">
+                <thead>
+                  <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">For</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((o) => (
+                    <tr key={o.id} className="border-b border-rule last:border-0">
+                      <td className="px-4 py-3">
+                        <p className="text-ink font-medium">{o.orgName ?? o.buyerName ?? o.buyerEmail ?? "—"}</p>
+                        <p className="text-xs text-muted">{o.kind === "individual_plan" ? `Individual · ${o.buyerEmail ?? ""}` : (o.buyerName ?? "")}</p>
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {o.kind === "individual_plan" ? "Plan" : `${o.quantity} licenses`}
+                        {o.poNumber ? ` · PO ${o.poNumber}` : ""}
+                      </td>
+                      <td className="px-4 py-3 text-ink font-medium">{money(o.total, o.currency)}</td>
+                      <td className="px-4 py-3 text-muted">
+                        {o.status === "paid" ? `Paid ${shortDate(o.paidAt)}` : o.dueDate ? `Due ${shortDate(o.dueDate)}` : `Created ${shortDate(o.createdAt)}`}
+                      </td>
+                      <td className="px-4 py-3">
+                        {o.status === "paid" ? (
+                          <StatusPill tone="success">
+                            <span className="inline-flex items-center gap-1">
+                              <CheckCircle2 size={12} /> Paid
+                            </span>
+                          </StatusPill>
+                        ) : o.overdue ? (
+                          <StatusPill tone="error">Overdue</StatusPill>
+                        ) : o.provider === "invoice" ? (
+                          <StatusPill tone="warning">Awaiting payment</StatusPill>
+                        ) : (
+                          <StatusPill tone="muted">Checkout started</StatusPill>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {o.invoiceId ? (
+                          <a href={`/invoice/${o.invoiceId}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-navy hover:underline">
+                            {o.invoiceNumber ?? "Invoice"}
+                          </a>
+                        ) : o.quoteNumber ? (
+                          <span className="text-xs text-muted">{o.quoteNumber}</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="text-xs text-muted">Mark invoices paid, cancel them or issue credit notes from the organization's details on the Organizations page.</p>
+        </div>
+
+        <Panel title="Contracts">
+          {contracts.length === 0 ? (
+            <EmptyNote>No contract dates recorded yet. Add them from an organization's details.</EmptyNote>
+          ) : (
+            contracts.map((c) => {
+              const days = Math.ceil((new Date(c.contractEnd).getTime() - Date.now()) / 86400000);
+              return (
+                <div key={c.id} className="flex items-start justify-between gap-3 border-t border-rule pt-2.5 first:border-0 first:pt-0">
+                  <div className="min-w-0">
+                    <p className="text-sm text-ink font-medium truncate">{c.name}</p>
+                    <p className="text-xs text-muted">
+                      {TIER_LABELS[c.planTier]}
+                      {c.valueCents && c.currency ? ` · ${money(c.valueCents, c.currency)}` : ""}
+                      {perms.isSuper && c.ownerName ? ` · ${c.ownerName}` : ""}
+                    </p>
+                  </div>
+                  <StatusPill tone={days < 0 ? "error" : days <= 30 ? "error" : days <= 90 ? "warning" : "muted"}>
+                    {days < 0 ? `Ended ${shortDate(c.contractEnd)}` : `Ends ${shortDate(c.contractEnd)}`}
+                  </StatusPill>
+                </div>
+              );
+            })
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
