@@ -94,13 +94,14 @@ async function createAndInviteAdmin(row: {
   lastName: string;
   department?: string;
   permissions?: Record<string, boolean | undefined>;
+  invitedBy: string;
 }): Promise<{ id: string }> {
   const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
   const inserted = await pool.query(
-    `INSERT INTO users (role, email, password_hash, first_name, last_name, department, permissions, email_verified)
-     VALUES ('admin', $1, $2, $3, $4, $5, $6::jsonb, true)
+    `INSERT INTO users (role, email, password_hash, first_name, last_name, department, permissions, invited_by, email_verified)
+     VALUES ('admin', $1, $2, $3, $4, $5, $6::jsonb, $7, true)
      RETURNING id`,
-    [row.email, placeholderHash, row.firstName, row.lastName, row.department ?? null, JSON.stringify(row.permissions ?? {})],
+    [row.email, placeholderHash, row.firstName, row.lastName, row.department ?? null, JSON.stringify(row.permissions ?? {}), row.invitedBy],
   );
   const userId = inserted.rows[0].id;
 
@@ -295,7 +296,7 @@ adminRouter.post("/admins", requireAuth, async (req: AuthedRequest, res, next) =
   if (!requireSuperAdmin(req, res)) return;
   try {
     const body = onboardAdminSchema.parse(req.body);
-    const { id } = await createAndInviteAdmin(body);
+    const { id } = await createAndInviteAdmin({ ...body, invitedBy: req.user!.id });
     res.status(201).json({ id, email: body.email });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
@@ -324,7 +325,7 @@ adminRouter.post("/admins/bulk", requireAuth, async (req: AuthedRequest, res, ne
         continue;
       }
       try {
-        await createAndInviteAdmin(parsed.data);
+        await createAndInviteAdmin({ ...parsed.data, invitedBy: req.user!.id });
         results.push({ email: parsed.data.email, status: "created" });
       } catch (err) {
         if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
@@ -1023,10 +1024,10 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
 
     const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
     const user = await pool.query(
-      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, email_verified)
-       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, true)
+      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, invited_by, email_verified)
+       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, $7, true)
        RETURNING id`,
-      [tenantId, body.orgAdmin.email, placeholderHash, body.orgAdmin.firstName, body.orgAdmin.lastName, body.orgAdmin.phone ?? null],
+      [tenantId, body.orgAdmin.email, placeholderHash, body.orgAdmin.firstName, body.orgAdmin.lastName, body.orgAdmin.phone ?? null, req.user!.id],
     );
     const userId = user.rows[0].id;
 
@@ -1192,6 +1193,7 @@ adminRouter.post("/console/learners", requireAuth, async (req: AuthedRequest, re
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Learner",
+      invitedBy: req.user!.id,
     });
     res.status(201).json({ id, email: body.email });
   } catch (err) {
@@ -1237,6 +1239,7 @@ adminRouter.post("/console/learners/bulk", requireAuth, async (req: AuthedReques
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           roleLabel: "a Learner",
+          invitedBy: req.user!.id,
         });
         results.push({ email: parsed.data.email, status: "created" });
       } catch (err) {

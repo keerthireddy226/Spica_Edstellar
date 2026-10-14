@@ -1,4 +1,4 @@
-import { DELIVERY_MODE_LABEL, EXAM_FOCUS_LABEL, type DeliveryMode, type ExamFocus } from "@/api/details";
+import { EXAM_FOCUS_LABEL, type ExamFocus } from "@/api/details";
 
 function fmt(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -24,7 +24,6 @@ export function BatchDetailsGrid({
     description: string | null;
     department: string | null;
     location: string | null;
-    deliveryMode: DeliveryMode | null;
     examFocus: ExamFocus | null;
     startDate: string | null;
     durationMonths: number | null;
@@ -50,7 +49,6 @@ export function BatchDetailsGrid({
           <Item label="Learners" value={b.capacity ? `${learnerCount} of ${b.capacity}${learnerCount >= b.capacity ? " (full)" : ""}` : learnerCount} />
           <Item label="Department" value={b.department ?? "—"} />
           <Item label="Location" value={b.location ?? "—"} />
-          <Item label="Delivery" value={b.deliveryMode ? DELIVERY_MODE_LABEL[b.deliveryMode] : "—"} />
           <Item label="Exam or focus" value={b.examFocus ? EXAM_FOCUS_LABEL[b.examFocus] : "—"} />
           <Item label="Level goal" value={b.startCefr || b.targetCefr ? `${b.startCefr ?? "?"} → ${b.targetCefr ?? "?"}` : "—"} />
           <Item label="Target cut score" value={b.targetCutScore != null ? `${b.targetCutScore}%` : "—"} />

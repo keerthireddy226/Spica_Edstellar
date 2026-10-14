@@ -60,9 +60,9 @@ export async function replaceOrgAdmin(args: {
 
     try {
       const inserted = await client.query(
-        `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, job_title, email_verified)
-         VALUES ('org_admin', $1, $2, $3, $4, $5, $6, $7, true) RETURNING id`,
-        [args.tenantId, args.next.email, placeholderHash, args.next.firstName, args.next.lastName, args.next.phone ?? null, args.next.jobTitle ?? null],
+        `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, job_title, invited_by, email_verified)
+         VALUES ('org_admin', $1, $2, $3, $4, $5, $6, $7, $8, true) RETURNING id`,
+        [args.tenantId, args.next.email, placeholderHash, args.next.firstName, args.next.lastName, args.next.phone ?? null, args.next.jobTitle ?? null, args.actorId],
       );
       newId = inserted.rows[0].id;
     } catch (err) {

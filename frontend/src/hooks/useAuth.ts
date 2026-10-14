@@ -19,6 +19,7 @@ type AuthUser = {
   permissions?: Record<string, unknown>;
   participantId?: string | null;
   preferredLanguage?: string | null;
+  onboardedBy?: { id: string; email: string; name: string; role: string } | null;
   mfaEnabled?: boolean;
   // The organization requires two-step sign-in and it isn't set up yet.
   mfaSetupRequired?: boolean;

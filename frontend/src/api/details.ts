@@ -2,7 +2,6 @@ import type { AgeBand, Gender, JobRole } from "@/api/onboarding";
 import type { CefrLevel } from "@/api/orgAdmin";
 
 // What an Org Admin or Manager records about a batch, beyond its name.
-export type DeliveryMode = "self_paced" | "blended" | "instructor_led";
 export type ExamFocus =
   | "general"
   | "versant_four_skills"
@@ -14,12 +13,6 @@ export type ExamFocus =
   | "toefl"
   | "pte"
   | "cambridge";
-
-export const DELIVERY_MODE_LABEL: Record<DeliveryMode, string> = {
-  self_paced: "Self-paced",
-  blended: "Blended (self-paced + live sessions)",
-  instructor_led: "Instructor-led",
-};
 
 export const EXAM_FOCUS_LABEL: Record<ExamFocus, string> = {
   general: "General English",
@@ -39,7 +32,6 @@ export interface BatchDetails {
   description: string | null;
   department: string | null;
   location: string | null;
-  deliveryMode: DeliveryMode | null;
   examFocus: ExamFocus | null;
   startDate: string | null;
   durationMonths: number | null;

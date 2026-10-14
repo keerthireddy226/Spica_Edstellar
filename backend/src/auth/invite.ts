@@ -27,6 +27,8 @@ export async function createAndInviteUser(row: {
   roleLabel: string;
   // Employee details and demographics the organization records for a learner.
   details?: LearnerDetails;
+  // Who added them, shown as "Onboarded by".
+  invitedBy?: string | null;
 }): Promise<{ id: string }> {
   if (row.role === "learner") {
     await assertBatchCapacity(row.batchId);
@@ -37,10 +39,10 @@ export async function createAndInviteUser(row: {
   }
   const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
   const inserted = await pool.query(
-    `INSERT INTO users (role, tenant_id, batch_id, email, password_hash, first_name, last_name, email_verified)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+    `INSERT INTO users (role, tenant_id, batch_id, email, password_hash, first_name, last_name, invited_by, email_verified)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
      RETURNING id`,
-    [row.role, row.tenantId, row.batchId ?? null, row.email, placeholderHash, row.firstName, row.lastName],
+    [row.role, row.tenantId, row.batchId ?? null, row.email, placeholderHash, row.firstName, row.lastName, row.invitedBy ?? null],
   );
   const userId = inserted.rows[0].id;
   // The organization's defaults for new learners (language, daily reminder).

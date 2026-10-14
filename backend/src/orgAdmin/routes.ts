@@ -538,6 +538,7 @@ orgAdminRouter.post("/managers", requireAuth, async (req: AuthedRequest, res, ne
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Manager",
+      invitedBy: req.user!.id,
     });
     await pool.query(
       `INSERT INTO batch_managers (batch_id, user_id) SELECT unnest($1::uuid[]), $2`,
@@ -827,6 +828,7 @@ orgAdminRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, ne
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Learner",
+      invitedBy: req.user!.id,
       details: body.details,
     });
     const licenseError = await giveLicenses(tenantId, id, body.licenseMonths, req.user!.id);
@@ -872,6 +874,7 @@ orgAdminRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, re
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           roleLabel: "a Learner",
+          invitedBy: req.user!.id,
           details: pickLearnerDetails(parsed.data),
         });
         const licenseError = await giveLicenses(tenantId, id, body.licenseMonths, req.user!.id);

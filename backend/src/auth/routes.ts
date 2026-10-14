@@ -246,8 +246,10 @@ authRouter.get("/me", async (req, res, next) => {
     if (!check.user) return res.status(check.error === "ip_not_allowed" ? 403 : 401).json({ error: check.error });
     const result = await pool.query(
       `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name, u.created_at, u.department, u.permissions,
-         u.participant_id, u.preferred_language
-       FROM users u WHERE u.id = $1`,
+         u.participant_id, u.preferred_language,
+         ib.id AS ib_id, ib.email AS ib_email, ib.role AS ib_role, nullif(concat_ws(' ', ib.first_name, ib.last_name), '') AS ib_name
+       FROM users u LEFT JOIN users ib ON ib.id = u.invited_by
+       WHERE u.id = $1`,
       [check.user.id],
     );
     const user = result.rows[0];
@@ -272,6 +274,8 @@ authRouter.get("/me", async (req, res, next) => {
       permissions: user.permissions ?? {},
       participantId: user.participant_id,
       preferredLanguage: user.preferred_language,
+      // Who added this account (staff and organization roles).
+      onboardedBy: user.ib_id ? { id: user.ib_id, email: user.ib_email, name: user.ib_name ?? user.ib_email, role: user.ib_role } : null,
       mfaEnabled: check.user.mfaEnabled,
       mfaSetupRequired: check.user.mfaSetupRequired,
       viewAs: check.user.viewAs,

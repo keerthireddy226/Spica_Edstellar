@@ -195,6 +195,7 @@ managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, nex
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Learner",
+      invitedBy: req.user!.id,
       details: body.details,
     });
     const licenseError = await giveManagerLicenses(req.user!.tenantId!, id, months, req.user!.id);
@@ -243,6 +244,7 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           roleLabel: "a Learner",
+          invitedBy: req.user!.id,
           details: pickLearnerDetails(parsed.data),
         });
         const licenseError = await giveManagerLicenses(req.user!.tenantId!, id, months, req.user!.id);

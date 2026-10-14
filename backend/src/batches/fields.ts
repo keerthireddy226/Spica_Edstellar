@@ -6,7 +6,6 @@ import { BatchStateError } from "./lifecycle.js";
 type Executor = Pick<PoolClient, "query">;
 
 const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-export const DELIVERY_MODES = ["self_paced", "blended", "instructor_led"] as const;
 export const EXAM_FOCUS = [
   "general",
   "versant_four_skills",
@@ -36,7 +35,6 @@ export const batchDetailsBase = z.object({
     description: optText(1000),
     department: optText(120),
     location: optText(120),
-    deliveryMode: z.enum(DELIVERY_MODES).nullable().optional(),
     examFocus: z.enum(EXAM_FOCUS).nullable().optional(),
     startDate: z
       .string()
@@ -66,7 +64,6 @@ const COLUMNS: Record<Exclude<keyof BatchDetails, "name">, string> = {
   description: "description",
   department: "department",
   location: "location",
-  deliveryMode: "delivery_mode",
   examFocus: "exam_focus",
   startDate: "start_date",
   durationMonths: "duration_months",
@@ -120,7 +117,6 @@ export function batchDetailsJson(r: Record<string, any>) {
     description: r.description ?? null,
     department: r.department ?? null,
     location: r.location ?? null,
-    deliveryMode: r.delivery_mode ?? null,
     examFocus: r.exam_focus ?? null,
     weeklyMinutesGoal: r.weekly_minutes_goal ?? null,
     capacity: r.capacity ?? null,
@@ -142,7 +138,7 @@ export async function assertBatchCapacity(batchId: string | null | undefined, ad
 }
 
 // Detail columns of batches, for SELECTs that alias the table as b.
-export const BATCH_DETAIL_SQL = `b.description, b.department, b.location, b.delivery_mode, b.exam_focus,
+export const BATCH_DETAIL_SQL = `b.description, b.department, b.location, b.exam_focus,
   b.weekly_minutes_goal, b.capacity, b.default_license_months, b.auto_reminders`;
 
 // License picture of one batch (aliased b): where its learners' licenses

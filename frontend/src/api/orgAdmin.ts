@@ -1,14 +1,13 @@
 import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
-import type { BatchDetails, BatchLicenseStats, DeliveryMode, ExamFocus, LearnerDetails } from "@/api/details";
+import type { BatchDetails, BatchLicenseStats, ExamFocus, LearnerDetails } from "@/api/details";
 
 // Batch fields beyond the basics, as the API returns them.
 export interface BatchExtras {
   description: string | null;
   department: string | null;
   location: string | null;
-  deliveryMode: DeliveryMode | null;
   examFocus: ExamFocus | null;
   weeklyMinutesGoal: number | null;
   capacity: number | null;

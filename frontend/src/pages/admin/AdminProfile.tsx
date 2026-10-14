@@ -44,7 +44,7 @@ function SectionCard({ title, tint, children }: { title: string; tint: string; c
 
 function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, setLastName, saving, saved, onSave }: {
   user: ReturnType<typeof useAuth>["user"];
-  onboardedBy: { id: string; email: string; name: string } | null;
+  onboardedBy: { id: string; email: string; name: string; role?: string } | null;
   firstName: string;
   lastName: string;
   setFirstName: (v: string) => void;
@@ -121,7 +121,11 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
             <UserCog size={16} className="text-muted mt-0.5 shrink-0" />
             <div>
               <p className="text-xs text-muted">Onboarded by</p>
-              <p className="text-ink">{onboardedBy.name} ({onboardedBy.email})</p>
+              <p className="text-ink">
+                {onboardedBy.name}
+                {onboardedBy.role ? `, ${ROLE_LABEL[onboardedBy.role] ?? onboardedBy.role}` : ""}
+              </p>
+              {onboardedBy.name !== onboardedBy.email && <p className="text-xs text-muted">{onboardedBy.email}</p>}
             </div>
           </div>
         )}
@@ -343,7 +347,8 @@ export function AdminProfile() {
   const [lastName, setLastName] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [onboardedBy, setOnboardedBy] = useState<{ id: string; email: string; name: string } | null>(null);
+  // Whoever added this account: an Org Admin for Managers, an Admin for Org Admins.
+  const onboardedBy = user?.onboardedBy ?? null;
   const [organizationName, setOrganizationName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -355,7 +360,6 @@ export function AdminProfile() {
     if (user?.role !== "org_admin") return;
     getOrgOverview()
       .then((o) => {
-        setOnboardedBy(o.onboardedBy);
         setOrganizationName(o.organizationName);
       })
       .catch(() => {});

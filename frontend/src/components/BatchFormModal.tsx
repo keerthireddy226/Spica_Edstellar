@@ -4,7 +4,7 @@ import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { planErrorMessage } from "@/api/plans";
 import type { CefrLevel } from "@/api/orgAdmin";
-import { DELIVERY_MODE_LABEL, EXAM_FOCUS_LABEL, type BatchDetails, type DeliveryMode, type ExamFocus } from "@/api/details";
+import { EXAM_FOCUS_LABEL, type BatchDetails, type ExamFocus } from "@/api/details";
 
 const CEFR: CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -57,7 +57,6 @@ export function BatchFormModal({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [department, setDepartment] = useState(initial?.department ?? "");
   const [location, setLocation] = useState(initial?.location ?? "");
-  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode | "">(initial?.deliveryMode ?? "");
   const [examFocus, setExamFocus] = useState<ExamFocus | "">(initial?.examFocus ?? "");
   const [startDate, setStartDate] = useState(initial?.startDate ? initial.startDate.slice(0, 10) : "");
   const [durationMonths, setDurationMonths] = useState(str(initial?.durationMonths));
@@ -85,7 +84,6 @@ export function BatchFormModal({
         description: description.trim() || null,
         department: department.trim() || null,
         location: location.trim() || null,
-        deliveryMode: deliveryMode || null,
         examFocus: examFocus || null,
         startDate: startDate || null,
         durationMonths: num(durationMonths),
@@ -140,17 +138,7 @@ export function BatchFormModal({
             <Field label="Location or site">
               <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Hyderabad office" className={inputClass} />
             </Field>
-            <Field label="Delivery">
-              <select value={deliveryMode} onChange={(e) => setDeliveryMode(e.target.value as DeliveryMode | "")} className={`${inputClass} cursor-pointer`}>
-                <option value="">Not set</option>
-                {(Object.keys(DELIVERY_MODE_LABEL) as DeliveryMode[]).map((m) => (
-                  <option key={m} value={m}>
-                    {DELIVERY_MODE_LABEL[m]}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Exam or focus">
+            <Field label="Exam or focus" wide>
               <select value={examFocus} onChange={(e) => setExamFocus(e.target.value as ExamFocus | "")} className={`${inputClass} cursor-pointer`}>
                 <option value="">Not set</option>
                 {(Object.keys(EXAM_FOCUS_LABEL) as ExamFocus[]).map((m) => (
