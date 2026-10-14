@@ -117,7 +117,14 @@ export interface BillingContract {
   ownerName: string | null;
 }
 
-export const getStaffBilling = () => api<{ orders: BillingOrder[]; contracts: BillingContract[] }>("/admin/billing");
+export interface BillingMonth {
+  month: string;
+  orgs: number;
+  individuals: number;
+  licenses: number;
+}
+
+export const getStaffBilling = () => api<{ monthly: BillingMonth[]; orders: BillingOrder[]; contracts: BillingContract[] }>("/admin/billing");
 
 export interface StaffAuditEntry {
   id: string;

@@ -625,6 +625,45 @@ placementRouter.get("/admin/pending-review", requireAuth, async (req: AuthedRequ
   }
 });
 
+// Decided reviews and how the queue is doing, scoped like the queue itself.
+placementRouter.get("/admin/review-history", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "scoreReview"))) return;
+  try {
+    const scope = orgScope(req, "t", 1);
+    const where = `${scope.sql ? `AND (t.type <> 'cohort' OR (true ${scope.sql}))` : ""}`;
+    const [history, stats] = await Promise.all([
+      pool.query(
+        `SELECT p.id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name, CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
+           p.status, p.cefr_level, p.overall_percent, p.taken_at, p.reviewed_at, p.review_note,
+           concat_ws(' ', r.first_name, r.last_name) AS reviewer
+         FROM placements p JOIN users u ON u.id = p.user_id JOIN tenants t ON t.id = u.tenant_id
+         LEFT JOIN users r ON r.id = p.reviewed_by
+         WHERE p.status IN ('certified', 'fraud_confirmed') AND p.reviewed_at IS NOT NULL ${where}
+         ORDER BY p.reviewed_at DESC LIMIT 100`,
+        scope.params,
+      ),
+      pool.query(
+        `SELECT count(*) FILTER (WHERE p.status = 'pending_review')::int AS pending,
+           count(*) FILTER (WHERE p.reviewed_at >= date_trunc('month', now()))::int AS decided_month,
+           count(*) FILTER (WHERE p.status = 'fraud_confirmed')::int AS fraud,
+           count(*) FILTER (WHERE p.status = 'certified' AND p.reviewed_at IS NOT NULL)::int AS cleared,
+           count(*)::int AS placements_total,
+           coalesce(avg(extract(epoch FROM p.reviewed_at - p.taken_at) / 3600) FILTER (WHERE p.reviewed_at IS NOT NULL), 0)::float AS avg_hours
+         FROM placements p JOIN users u ON u.id = p.user_id JOIN tenants t ON t.id = u.tenant_id
+         WHERE true ${where}`,
+        scope.params,
+      ),
+    ]);
+    const st = stats.rows[0];
+    res.json({
+      stats: { pending: st.pending, decidedThisMonth: st.decided_month, fraud: st.fraud, cleared: st.cleared, placements: st.placements_total, avgHoursToDecide: Math.round(st.avg_hours) },
+      history: history.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 const placementReviewSchema = z.object({
   verdict: z.enum(["certified", "fraud_confirmed"]),
   note: z.string().optional(),

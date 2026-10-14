@@ -14,6 +14,7 @@ import { Button } from "@/components/Button";
 import { OrganizationProfileCard } from "@/components/OrganizationProfileCard";
 import { HandoverCard } from "@/components/HandoverCard";
 import { MfaCard } from "@/components/MfaCard";
+import { MyRecentActions, RoleSummary, WorkDetailsCard } from "@/components/profile/ProfileExtras";
 import { ManagerPreferencesCard } from "@/components/ManagerPreferencesCard";
 
 const ROLE_LABEL: Record<string, string> = {
@@ -177,7 +178,7 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
   );
 }
 
-function SecuritySection({ email }: { email: string | undefined }) {
+export function SecuritySection({ email }: { email: string | undefined }) {
   const { forgotPassword } = useAuth();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -212,7 +213,7 @@ function SecuritySection({ email }: { email: string | undefined }) {
   );
 }
 
-function LoginHistorySection() {
+export function LoginHistorySection() {
   const [logins, setLogins] = useState<LoginHistoryEntry[] | null>(null);
 
   useEffect(() => {
@@ -282,7 +283,7 @@ function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"]
   );
 }
 
-function ActiveSessionsSection() {
+export function ActiveSessionsSection() {
   const [sessions, setSessions] = useState<ActiveSession[] | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
 
@@ -383,7 +384,7 @@ export function AdminProfile() {
     <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">Profile</h1>
-        <p className="text-sm text-muted mt-1">Your account, security, and sign-in activity.</p>
+        <p className="text-sm text-muted mt-1">Your account, work details, what you look after, security and sign-in activity.</p>
       </div>
 
       <div
@@ -411,6 +412,8 @@ export function AdminProfile() {
         </button>
       </div>
 
+      <RoleSummary />
+
       <div className="grid lg:grid-cols-2 gap-4 items-start">
         <AccountDetails
           user={user}
@@ -427,6 +430,11 @@ export function AdminProfile() {
           <SecuritySection email={user?.email} />
           <PermissionsSection user={user} />
         </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-4 items-start">
+        <WorkDetailsCard showRegion={user?.role === "admin" || user?.role === "super_admin"} />
+        <MyRecentActions />
       </div>
 
       <MfaCard />

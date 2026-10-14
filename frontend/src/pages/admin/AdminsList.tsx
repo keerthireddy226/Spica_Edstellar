@@ -13,7 +13,7 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor } from "@/components/staff/StaffKit";
 import { ago, getPortfolio, shortDate } from "@/api/staff";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
@@ -682,6 +682,51 @@ export function AdminsList() {
             <StatCard variant="outline" palette="rose" index={3} icon={UserCheck} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label="Accounts at risk" sub={`${[...portfolio.values()].reduce((n, p) => n + p.learners, 0)} learners in their portfolios`} />
           </div>
 
+          {all.length > 0 && (
+            <div className="grid lg:grid-cols-3 gap-4 items-start">
+              <Panel className="lg:col-span-2" title="Portfolio comparison">
+                {(() => {
+                  const rows = all
+                    .filter((a) => a.active)
+                    .map((a) => ({ a, p: portfolio.get(a.id) }))
+                    .sort((x, y) => (y.p?.learners ?? 0) - (x.p?.learners ?? 0));
+                  const max = Math.max(1, ...rows.map((r) => r.p?.learners ?? 0));
+                  return rows.map(({ a, p }, i) => (
+                    <div key={a.id} className="flex items-center gap-3">
+                      <span className="w-36 text-sm text-ink truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || a.email}</span>
+                      <div className="flex-1 h-2.5 rounded-full bg-rule overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${((p?.learners ?? 0) / max) * 100}%`, background: paletteColor("rose", i), minWidth: p?.learners ? 6 : 0 }} />
+                      </div>
+                      <span className="text-xs text-muted w-48 text-right">
+                        {p?.organizations ?? a.managedOrgCount} orgs · {p?.learners ?? 0} learners{p?.atRisk ? ` · ${p.atRisk} at risk` : ""}
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </Panel>
+              <Panel title="By department">
+                {(() => {
+                  const by = new Map<string, number>();
+                  for (const a of all.filter((x) => x.active)) by.set(a.department || "Not set", (by.get(a.department || "Not set") ?? 0) + 1);
+                  const total = [...by.values()].reduce((n, v) => n + v, 0) || 1;
+                  return [...by.entries()]
+                    .sort((x, y) => y[1] - x[1])
+                    .map(([d, n], i) => (
+                      <div key={d} className="flex flex-col gap-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-ink">{d}</span>
+                          <span className="text-muted">{n}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-rule overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${(n / total) * 100}%`, background: paletteColor("terracotta", i) }} />
+                        </div>
+                      </div>
+                    ));
+                })()}
+              </Panel>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 flex-wrap">
             <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, department or organization" />
             {depts.length > 0 && <SelectFilter label="Department" value={dept} onChange={setDept} options={[["all", "All departments"], ...depts.map((d) => [d, d] as [string, string])]} />}
@@ -731,8 +776,10 @@ export function AdminsList() {
                         {isSameDay(a.createdAt, new Date()) && <StatusPill tone="navy">New</StatusPill>}
                       </div>
                       <p className="text-xs text-muted truncate">
-                        {a.department ?? "No department"} · {a.email}
-                        {a.phone ? ` · ${a.phone}` : ""}
+                        {[a.jobTitle, a.department ?? "No department", a.email, a.phone].filter(Boolean).join(" · ")}
+                      </p>
+                      <p className="text-xs text-muted truncate">
+                        {[a.region, a.city, a.country].filter(Boolean).join(", ") || "Location not set"}
                       </p>
                     </div>
                   </div>

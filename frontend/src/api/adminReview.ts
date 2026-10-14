@@ -29,3 +29,24 @@ export function reviewPlacement(id: string, verdict: "certified" | "fraud_confir
     body: JSON.stringify({ verdict, note }),
   });
 }
+
+export interface ReviewHistoryRow {
+  id: string;
+  email: string;
+  name: string | null;
+  org_name: string | null;
+  status: "certified" | "fraud_confirmed";
+  cefr_level: string;
+  overall_percent: string;
+  taken_at: string;
+  reviewed_at: string;
+  review_note: string | null;
+  reviewer: string | null;
+}
+
+export function getReviewHistory(): Promise<{
+  stats: { pending: number; decidedThisMonth: number; fraud: number; cleared: number; placements: number; avgHoursToDecide: number };
+  history: ReviewHistoryRow[];
+}> {
+  return api("/placement/admin/review-history");
+}

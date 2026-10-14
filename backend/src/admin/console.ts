@@ -314,6 +314,19 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
        LIMIT 300`,
       scope.params,
     );
+    // Twelve months of money in, split by organizations and individuals.
+    const monthly = await pool.query(
+      `SELECT to_char(m, 'YYYY-MM') AS month,
+         coalesce((SELECT sum(o.total) FROM payment_orders o JOIN tenants t ON t.id = o.tenant_id
+            WHERE o.status = 'paid' AND o.kind = 'org_licenses' AND o.paid_at >= m AND o.paid_at < m + interval '1 month' AND t.type = 'cohort' ${scope.sql}), 0)::bigint AS orgs,
+         coalesce((SELECT sum(o.total) FROM payment_orders o
+            WHERE o.status = 'paid' AND o.kind = 'individual_plan' AND o.paid_at >= m AND o.paid_at < m + interval '1 month'), 0)::bigint AS individuals,
+         coalesce((SELECT sum(o.quantity) FROM payment_orders o JOIN tenants t ON t.id = o.tenant_id
+            WHERE o.status = 'paid' AND o.kind = 'org_licenses' AND o.paid_at >= m AND o.paid_at < m + interval '1 month' AND t.type = 'cohort' ${scope.sql}), 0)::int AS licenses
+       FROM generate_series(date_trunc('month', now()) - interval '11 months', date_trunc('month', now()), interval '1 month') m
+       ORDER BY m`,
+      scope.params,
+    );
     const contracts = await pool.query(
       `SELECT t.id, t.name, t.contract_start, t.contract_end, t.contract_value_cents, t.contract_currency, t.plan_tier,
          (SELECT ${name("m")} FROM users m WHERE m.id = coalesce(t.account_manager_id, t.managed_by)) AS owner_name
@@ -322,6 +335,7 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
       scope.params,
     );
     res.json({
+      monthly: monthly.rows.map((m) => ({ month: m.month, orgs: Number(m.orgs), individuals: Number(m.individuals), licenses: m.licenses })),
       orders: orders.rows.map((o) => ({
         id: o.id,
         kind: o.kind,

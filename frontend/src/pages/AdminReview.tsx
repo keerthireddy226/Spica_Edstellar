@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { ShieldAlert, Check, X } from "lucide-react";
+import { ShieldAlert, Check, X, Clock, CheckCircle2, ShieldX, Timer } from "lucide-react";
+import { EmptyNote, FilterPills, StatCard, StatusPill } from "@/components/staff/StaffKit";
+import { shortDate } from "@/api/staff";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
-import { getPendingReviewPlacements, reviewPlacement, type PendingPlacement } from "@/api/adminReview";
+import { getPendingReviewPlacements, getReviewHistory, reviewPlacement, type PendingPlacement } from "@/api/adminReview";
 import { ROUTES } from "@/constants/routes";
 
 const ADMIN_ROLES = ["admin", "super_admin"];
@@ -13,12 +15,17 @@ export function AdminReview() {
   const [placements, setPlacements] = useState<PendingPlacement[] | null>(null);
   const [actingOn, setActingOn] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hist, setHist] = useState<Awaited<ReturnType<typeof getReviewHistory>> | null>(null);
+  const [verdict, setVerdict] = useState<"all" | "certified" | "fraud_confirmed">("all");
 
   useEffect(() => {
     load();
   }, []);
 
   function load() {
+    getReviewHistory()
+      .then(setHist)
+      .catch(() => {});
     getPendingReviewPlacements()
       .then((res) => setPlacements(res.placements))
       .catch(() => setError("Could not load pending reviews."));
@@ -29,6 +36,9 @@ export function AdminReview() {
     try {
       await reviewPlacement(id, verdict);
       setPlacements((prev) => prev?.filter((p) => p.id !== id) ?? null);
+      getReviewHistory()
+        .then(setHist)
+        .catch(() => {});
     } catch {
       setError("Something went wrong recording that verdict.");
     } finally {
@@ -39,7 +49,7 @@ export function AdminReview() {
   if (!user || !ADMIN_ROLES.includes(user.role)) return <Navigate to={ROUTES.DASHBOARD} replace />;
 
   return (
-    <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto">
+    <div className="flex flex-col gap-5 w-full">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">Placement reviews</h1>
         <p className="text-sm text-muted mt-1">
@@ -47,6 +57,18 @@ export function AdminReview() {
         </p>
       </div>
 
+      {hist && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatCard variant="split" palette="rose" index={0} icon={Clock} value={hist.stats.pending} label="Waiting for a verdict" />
+          <StatCard variant="split" palette="rose" index={1} icon={CheckCircle2} value={hist.stats.decidedThisMonth} label="Decided this month" sub={`${hist.stats.cleared} cleared in total`} />
+          <StatCard variant="split" palette="rose" index={2} icon={ShieldX} value={hist.stats.fraud} label="Confirmed not the learner" sub={hist.stats.cleared + hist.stats.fraud ? `${Math.round((hist.stats.fraud / (hist.stats.cleared + hist.stats.fraud)) * 100)}% of decisions` : undefined} />
+          <StatCard variant="split" palette="rose" index={3} icon={Timer} value={`${hist.stats.avgHoursToDecide} h`} label="Average time to decide" sub={`${hist.stats.placements} placement tests taken`} />
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <h2 className="font-display font-bold text-lg text-ink">Waiting for review</h2>
       {error && <p className="text-sm text-error">{error}</p>}
 
       {placements === null && !error && <p className="text-sm text-muted">Loading…</p>}
@@ -96,6 +118,73 @@ export function AdminReview() {
           </div>
         </div>
       ))}
+        </div>
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 text-sm">
+          <h2 className="font-display font-bold text-lg text-ink">How flagging works</h2>
+          <p className="text-muted">During the placement test Spica checks, a few times, that the person on camera matches the face the learner enrolled.</p>
+          <p className="text-muted">When a check doesn't match, the test isn't stopped. The result is held here as "pending review" until someone decides.</p>
+          <ul className="list-disc pl-5 text-muted flex flex-col gap-1">
+            <li><span className="text-ink font-medium">Confirm, it's them</span> — the result is certified and counts.</li>
+            <li><span className="text-ink font-medium">Not them</span> — the result is marked as fraud and won't count or appear on certificates.</li>
+          </ul>
+          <p className="text-xs text-muted">Open each flagged photo before deciding. Every verdict is recorded with your name.</p>
+        </div>
+      </div>
+
+      {hist && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-display font-bold text-lg text-ink">Past decisions</h2>
+            <FilterPills
+              value={verdict}
+              onChange={setVerdict}
+              options={[
+                ["all", "All", hist.history.length],
+                ["certified", "Cleared", hist.history.filter((h) => h.status === "certified").length],
+                ["fraud_confirmed", "Not the learner", hist.history.filter((h) => h.status === "fraud_confirmed").length],
+              ]}
+            />
+          </div>
+          {hist.history.length === 0 ? (
+            <EmptyNote>No decisions yet.</EmptyNote>
+          ) : (
+            <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+              <table className="w-full text-sm min-w-[720px]">
+                <thead>
+                  <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                    <th className="px-4 py-3">Learner</th>
+                    <th className="px-4 py-3">Result</th>
+                    <th className="px-4 py-3">Verdict</th>
+                    <th className="px-4 py-3">Decided by</th>
+                    <th className="px-4 py-3">When</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hist.history
+                    .filter((h) => verdict === "all" || h.status === verdict)
+                    .map((h) => (
+                      <tr key={h.id} className="border-b border-rule last:border-0">
+                        <td className="px-4 py-3">
+                          <p className="text-ink font-medium">{h.name?.trim() || h.email}</p>
+                          <p className="text-xs text-muted">{h.org_name ?? "Individual learner"}</p>
+                        </td>
+                        <td className="px-4 py-3 text-muted">
+                          {h.cefr_level} · {h.overall_percent}%
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusPill tone={h.status === "certified" ? "success" : "error"}>{h.status === "certified" ? "Cleared" : "Not the learner"}</StatusPill>
+                          {h.review_note && <p className="text-xs text-muted mt-1">{h.review_note}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-muted">{h.reviewer?.trim() || "—"}</td>
+                        <td className="px-4 py-3 text-muted">{shortDate(h.reviewed_at)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

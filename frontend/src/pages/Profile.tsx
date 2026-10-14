@@ -42,6 +42,9 @@ import { getRoadmap, type RoadmapData } from "@/api/roadmap";
 import { ROUTES } from "@/constants/routes";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { DailyReminderCard } from "@/components/DailyReminderCard";
+import { LearningGoals, MyOrganization, ProgressSnapshot, useMyLearning } from "@/components/profile/LearnerExtras";
+import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/pages/admin/AdminProfile";
+import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
 
 // Colored icon-in-squircle badge, reused as the visual anchor for every card header/row here.
@@ -204,7 +207,9 @@ function PersonalInformation() {
     }
   }
 
-  const accountType = user?.role === "learner" ? t("profile.account.individual") : user?.role;
+  const { data: learning } = useMyLearning();
+  const accountType =
+    user?.role === "learner" ? (learning?.organization ? `${learning.organization.name} learner` : t("profile.account.individual")) : user?.role;
 
   return (
     <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
@@ -567,10 +572,12 @@ export function Profile() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { data: learning, reload } = useMyLearning();
 
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "?";
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || t("profile.account.unnamed");
-  const accountType = user?.role === "learner" ? t("profile.account.individual") : user?.role;
+  const accountType =
+    user?.role === "learner" ? (learning?.organization ? `${learning.organization.name}${learning.batch ? ` · ${learning.batch.name}` : ""}` : t("profile.account.individual")) : user?.role;
 
   async function handleLogout() {
     await logout();
@@ -606,12 +613,15 @@ export function Profile() {
             </div>
           </div>
 
-          <PlanSection />
+          {learning && <ProgressSnapshot data={learning} />}
+          {learning && <MyOrganization data={learning} />}
+          {!learning?.organization && <PlanSection />}
           <AccessSection />
         </div>
 
         <div className="flex flex-col gap-6">
           <PersonalInformation />
+          {learning && <LearningGoals data={learning} onSaved={reload} />}
           <AboutYouSection />
           <DailyReminderCard />
           <MyCertificates />
@@ -631,6 +641,18 @@ export function Profile() {
       <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
         <SectionHeader icon={Globe} tint="bg-listening/15 text-listening" title={t("profile.language.title")} />
         <LanguageSwitcher />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <h2 className="font-display font-bold text-lg text-ink">Security and sign-in</h2>
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
+          <SecuritySection email={user?.email} />
+          <MfaCard />
+        </div>
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
+          <ActiveSessionsSection />
+          <LoginHistorySection />
+        </div>
       </div>
     </div>
   );

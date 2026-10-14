@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, FileText } from "lucide-react";
 import { TIER_LABELS } from "@/api/plans";
-import { getStaffBilling, money, shortDate, type BillingContract, type BillingOrder } from "@/api/staff";
+import { getStaffBilling, money, shortDate, type BillingContract, type BillingMonth, type BillingOrder } from "@/api/staff";
 import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 
 type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
@@ -10,7 +10,7 @@ type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
 // learners' plan payments: what's paid, what's owed, and contracts ending.
 export function StaffBilling() {
   const perms = useStaffPermissions();
-  const [data, setData] = useState<{ orders: BillingOrder[]; contracts: BillingContract[] } | null>(null);
+  const [data, setData] = useState<{ monthly: BillingMonth[]; orders: BillingOrder[]; contracts: BillingContract[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<F>("unpaid");
   const [query, setQuery] = useState("");
@@ -22,7 +22,7 @@ export function StaffBilling() {
   if (error) return <p className="text-sm text-error">{error}</p>;
   if (!data) return <p className="text-sm text-muted">Loading…</p>;
 
-  const { orders, contracts } = data;
+  const { orders, contracts, monthly } = data;
   const cur = orders[0]?.currency ?? "USD";
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
   const paid = orders.filter((o) => o.status === "paid");
@@ -52,6 +52,72 @@ export function StaffBilling() {
         <StatCard variant="ledger" palette="rose" index={1} icon={FileText} value={unpaid.length} label="Unpaid invoices" sub={money(total(unpaid), cur)} progress={orders.length ? unpaid.length / orders.length : 0} />
         <StatCard variant="ledger" palette="rose" index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label="Overdue" sub={money(total(unpaid.filter((o) => o.overdue)), cur)} progress={unpaid.length ? unpaid.filter((o) => o.overdue).length / unpaid.length : 0} />
         <StatCard variant="ledger" palette="rose" index={3} icon={CalendarClock} value={ending.length} label="Contracts ending in 90 days" sub={`${contracts.length} contracts in total`} progress={contracts.length ? ending.length / contracts.length : 0} />
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-4 items-start">
+        <Panel className="lg:col-span-2" title="Money in, last 12 months">
+          {(() => {
+            const max = Math.max(1, ...monthly.map((m) => m.orgs + m.individuals));
+            const yearTotal = monthly.reduce((n, m) => n + m.orgs + m.individuals, 0);
+            return (
+              <>
+                <div className="flex items-end gap-1.5 h-44">
+                  {monthly.map((m) => (
+                    <div key={m.month} className="flex-1 h-full flex flex-col justify-end" title={`${m.month}: ${money(m.orgs, cur)} organizations, ${money(m.individuals, cur)} individuals, ${m.licenses} licenses`}>
+                      <div style={{ height: `${(m.individuals / max) * 100}%`, background: "#7f9478" }} className="rounded-t-sm" />
+                      <div style={{ height: `${(m.orgs / max) * 100}%`, background: "var(--color-navy)", minHeight: m.orgs ? 3 : 0 }} className={m.individuals ? "" : "rounded-t-sm"} />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-1.5">
+                  {monthly.map((m) => (
+                    <span key={m.month} className="flex-1 text-center text-[10px] text-muted">
+                      {new Date(`${m.month}-01`).toLocaleDateString(undefined, { month: "short" })}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-muted flex-wrap">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--color-navy)" }} /> Organizations
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#7f9478" }} /> Individual plans
+                  </span>
+                  <span className="ml-auto">
+                    12 months: <span className="font-semibold text-ink">{money(yearTotal, cur)}</span> · {monthly.reduce((n, m) => n + m.licenses, 0)} licenses sold
+                  </span>
+                </div>
+              </>
+            );
+          })()}
+        </Panel>
+        <Panel title="Top customers">
+          {(() => {
+            const by = new Map<string, number>();
+            for (const o of paid) {
+              const k = o.orgName ?? o.buyerName ?? o.buyerEmail ?? "Unknown";
+              by.set(k, (by.get(k) ?? 0) + o.total);
+            }
+            const top = [...by.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const max = top[0]?.[1] ?? 1;
+            return top.length === 0 ? (
+              <EmptyNote>No payments yet.</EmptyNote>
+            ) : (
+              top.map(([name, amt]) => (
+                <div key={name} className="flex flex-col gap-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-ink truncate">{name}</span>
+                    <span className="text-muted">{money(amt, cur)}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-rule overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(amt / max) * 100}%`, background: "#c98a7a" }} />
+                  </div>
+                </div>
+              ))
+            );
+          })()}
+          {paid.length > 0 && <p className="text-xs text-muted">Average payment {money(Math.round(total(paid) / paid.length), cur)}</p>}
+        </Panel>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 items-start">
