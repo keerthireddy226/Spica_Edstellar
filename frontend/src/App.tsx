@@ -56,6 +56,7 @@ import { OrgAdminPlan } from "@/pages/orgAdmin/OrgAdminPlan";
 import { OrgAdminAudit } from "@/pages/orgAdmin/OrgAdminAudit";
 import { OrgAdminSettings } from "@/pages/orgAdmin/OrgAdminSettings";
 import { OrgAdminDevelopers } from "@/pages/orgAdmin/OrgAdminDevelopers";
+import { ManagerActivity } from "@/pages/manager/ManagerActivity";
 import { OrgAdminLearners } from "@/pages/orgAdmin/OrgAdminLearners";
 import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
 import { ManagerLearners } from "@/pages/manager/ManagerLearners";
@@ -236,6 +237,7 @@ function App() {
         >
           <Route path={ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
           <Route path={ROUTES.MANAGER_LEARNERS} element={<ManagerLearners />} />
+          <Route path={ROUTES.MANAGER_ACTIVITY} element={<ManagerActivity />} />
           <Route path={ROUTES.MANAGER_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.MANAGER_ANALYTICS} element={<AnalyticsPage />} />
         </Route>

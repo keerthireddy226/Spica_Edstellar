@@ -2,7 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
 import { validateBulkEmails } from "@/api/orgAdmin";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
-import { UserPlus, X, Mail, ArrowRightLeft } from "lucide-react";
+import { UserPlus, X, Mail, ArrowRightLeft, Ban, RotateCcw } from "lucide-react";
+import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { MoveLearnerModal } from "@/components/MoveLearnerModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { AssignLicenseModal } from "@/components/licenses/AssignLicenseModal";
@@ -16,6 +17,10 @@ import {
   managerOnboardLearner,
   managerOnboardLearnersBulk,
   managerMoveLearner,
+  managerResendInvite,
+  managerDeactivateLearner,
+  managerReactivateLearner,
+  getManagerLearnerDetail,
 } from "@/api/manager";
 import type { OrgLearner } from "@/api/orgAdmin";
 
@@ -177,6 +182,7 @@ export function ManagerLearners() {
   const [assigning, setAssigning] = useState<OrgLearner | null>(null);
   const [returning, setReturning] = useState<OrgLearner | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [viewingLearner, setViewingLearner] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<BatchBudget[]>([]);
   const [myPool, setMyPool] = useState<ManagerPool | undefined>(undefined);
 
@@ -247,7 +253,7 @@ export function ManagerLearners() {
             </thead>
             <tbody>
               {learners.map((l) => (
-                <tr key={l.id} className="border-b border-rule last:border-0">
+                <tr key={l.id} onClick={() => setViewingLearner(l.id)} className="border-b border-rule last:border-0 hover:bg-paper-warm cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
@@ -269,8 +275,21 @@ export function ManagerLearners() {
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
                       {l.active ? "Active" : "Deactivated"}
                     </span>
+                    {l.active && l.hasLoggedIn === false && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          managerResendInvite(l.id)
+                            .then((r) => setNotice(`A new invite link was sent to ${r.email}.`))
+                            .catch(() => setError("Could not resend the invite."));
+                        }}
+                        className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer"
+                      >
+                        Invite pending · resend
+                      </button>
+                    )}
                   </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <td className="px-4 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     {l.license && l.license.queuedMonths > 0 && (
                       <button
                         onClick={() => setReturning(l)}
@@ -288,6 +307,30 @@ export function ManagerLearners() {
                     >
                       {l.license && (l.license.status === "active" || l.license.status === "grace") ? "Extend" : "Assign"}
                     </Button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          if (l.active) {
+                            const r = await managerDeactivateLearner(l.id);
+                            setNotice(
+                              r.returnRequested
+                                ? `Deactivated. A request to return ${r.returnRequested} unused month${r.returnRequested === 1 ? "" : "s"} went to your Org Admin.`
+                                : "Deactivated.",
+                            );
+                          } else {
+                            await managerReactivateLearner(l.id);
+                            setNotice("Reactivated.");
+                          }
+                          load();
+                        } catch {
+                          setError("Couldn't change that learner's status.");
+                        }
+                      }}
+                      title={l.active ? "Deactivate" : "Reactivate"}
+                      className={`p-1.5 rounded-input transition-colors cursor-pointer ${l.active ? "text-muted hover:bg-error/10 hover:text-error" : "text-success hover:bg-success/10"}`}
+                    >
+                      {l.active ? <Ban size={16} /> : <RotateCcw size={16} />}
+                    </button>
                     <button
                       onClick={() => setMovingLearner(l)}
                       disabled={batches.length < 2}
@@ -349,6 +392,10 @@ export function ManagerLearners() {
             setNotice("Unassign request sent to your Org Admin.");
           }}
         />
+      )}
+
+      {viewingLearner && (
+        <LearnerProfileModal learnerId={viewingLearner} onClose={() => setViewingLearner(null)} fetcher={getManagerLearnerDetail} />
       )}
 
       {movingLearner && (

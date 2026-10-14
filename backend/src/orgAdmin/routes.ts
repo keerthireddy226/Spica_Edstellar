@@ -9,11 +9,14 @@ import { assertFeature, assertWithinLimit } from "../plans/service.js";
 import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
+import { buildLearnerProfile } from "../learners/profile.js";
 import { ipAllowed, parseAllowlist } from "../auth/policy.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
 import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
 import { BATCH_END_SQL, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
-import { auditCsv, listAudit } from "../audit/service.js";
+import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
+import { startViewAs } from "../auth/viewAs.js";
+import { notify } from "../notifications/service.js";
 import { SESSION_COOKIE } from "../auth/tokens.js";
 
 export const orgAdminRouter = Router();
@@ -888,125 +891,9 @@ orgAdminRouter.get("/learners/:id", requireAuth, async (req: AuthedRequest, res,
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
-    const learnerResult = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.participant_id,
-         t.name AS tenant_name, t.type AS tenant_type, t.category AS tenant_category, b.name AS batch_name
-       FROM users u
-       LEFT JOIN tenants t ON t.id = u.tenant_id
-       LEFT JOIN batches b ON b.id = u.batch_id
-       WHERE u.id = $1 AND u.tenant_id = $2 AND u.role = 'learner'`,
-      [req.params.id, tenantId],
-    );
-    if (learnerResult.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
-    const learner = learnerResult.rows[0];
-
-    const [onboarding, placement, roadmap, progress, skillStats, sessionTotals, sessionsByType, batchMoves] = await Promise.all([
-      pool.query(`SELECT * FROM participant_profiles WHERE user_id = $1`, [req.params.id]),
-      pool.query(`SELECT * FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [req.params.id]),
-      pool.query(`SELECT * FROM roadmaps WHERE user_id = $1 ORDER BY generated_at DESC LIMIT 1`, [req.params.id]),
-      pool.query(`SELECT * FROM progress_stats WHERE user_id = $1`, [req.params.id]),
-      pool.query(`SELECT skill, minutes, accuracy_correct, accuracy_graded FROM skill_stats WHERE user_id = $1 ORDER BY skill`, [req.params.id]),
-      pool.query(
-        `SELECT count(*)::int AS total,
-           count(*) FILTER (WHERE ${GENUINELY_COMPLETED})::int AS genuinely_completed,
-           max(completed_at) AS last_session_at
-         FROM sessions WHERE user_id = $1`,
-        [req.params.id],
-      ),
-      pool.query(
-        `SELECT session_type, count(*)::int AS n FROM sessions WHERE user_id = $1 GROUP BY session_type`,
-        [req.params.id],
-      ),
-      pool.query(
-        `SELECT bm.from_batch_name, bm.to_batch_name, bm.reason, bm.moved_at, concat_ws(' ', mu.first_name, mu.last_name) AS moved_by_name
-         FROM batch_moves bm LEFT JOIN users mu ON mu.id = bm.moved_by
-         WHERE bm.user_id = $1 ORDER BY bm.moved_at DESC`,
-        [req.params.id],
-      ),
-    ]);
-
-    const p = onboarding.rows[0];
-    const pl = placement.rows[0];
-    const r = roadmap.rows[0];
-    const prog = progress.rows[0];
-
-    res.json({
-      learner: {
-        id: learner.id,
-        participantId: learner.participant_id,
-        email: learner.email,
-        firstName: learner.first_name,
-        lastName: learner.last_name,
-        tenantName: learner.tenant_name,
-        tenantType: learner.tenant_type,
-        tenantCategory: learner.tenant_category,
-        batchName: learner.batch_name,
-        active: !learner.deleted_at,
-        createdAt: learner.created_at,
-      },
-      onboarding: p
-        ? {
-            complete: p.onboarding_complete,
-            examPreference: p.exam_preference,
-            goalLevel: p.goal_level,
-            scoreTarget: p.score_target,
-            examReason: p.exam_reason,
-            hasAppliedForExam: p.has_applied_for_exam,
-            examDate: p.exam_date,
-            targetPrepDays: p.target_prep_days,
-            pastAttemptsStatus: p.past_attempts_status,
-            prevScore: p.prev_score,
-            prevDate: p.prev_date,
-            dailyMinutesPreference: p.daily_minutes_preference,
-            country: p.country,
-            city: p.city,
-            jobRole: p.job_role,
-            gender: p.gender,
-            ageBand: p.age_band,
-          }
-        : null,
-      placement: pl
-        ? {
-            cefrLevel: pl.cefr_level,
-            overallPercent: pl.overall_percent,
-            status: pl.status,
-            takenAt: pl.taken_at,
-            skillPercents: pl.skill_percents,
-          }
-        : null,
-      roadmap: r ? { pace: r.pace, minutesPerDay: r.minutes_per_day, totalHoursEstimate: r.total_hours_estimate, generatedAt: r.generated_at } : null,
-      progress: prog
-        ? {
-            sessionsCount: prog.sessions_count,
-            questionsCompleted: prog.questions_completed,
-            practiceMinutes: prog.practice_minutes,
-            streakDays: prog.streak_days,
-            lastPracticeDate: prog.last_practice_date,
-            totalXp: prog.total_xp,
-            accuracyGraded: prog.item_accuracy_graded,
-            accuracyCorrect: prog.item_accuracy_correct,
-          }
-        : null,
-      skillStats: skillStats.rows.map((s) => ({
-        skill: s.skill,
-        minutes: s.minutes,
-        accuracyCorrect: s.accuracy_correct,
-        accuracyGraded: s.accuracy_graded,
-      })),
-      activity: {
-        totalSessions: sessionTotals.rows[0].total,
-        genuinelyCompletedSessions: sessionTotals.rows[0].genuinely_completed,
-        lastSessionAt: sessionTotals.rows[0].last_session_at,
-        sessionsByType: sessionsByType.rows.map((r2) => ({ type: r2.session_type, count: r2.n })),
-      },
-      batchHistory: batchMoves.rows.map((m) => ({
-        fromBatch: m.from_batch_name,
-        toBatch: m.to_batch_name,
-        reason: m.reason,
-        movedBy: m.moved_by_name || null,
-        movedAt: m.moved_at,
-      })),
-    });
+    const profile = await buildLearnerProfile(String(req.params.id), { tenantId, includeSensitive: true });
+    if (!profile) return res.status(404).json({ error: "learner_not_found" });
+    res.json(profile);
   } catch (err) {
     next(err);
   }
@@ -1320,6 +1207,89 @@ orgAdminRouter.delete("/settings/logo", requireAuth, async (req: AuthedRequest, 
   try {
     await removeLogo(tenantId);
     res.json(await getOrgSettings(tenantId));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- A Manager leaving: hand their batches (and unused pool) to another ----
+
+orgAdminRouter.post("/managers/:id/handover", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z.object({ toManagerId: z.string().uuid(), movePool: z.boolean().default(true), deactivate: z.boolean().default(false) }).parse(req.body);
+    const fromId = String(req.params.id);
+    if (fromId === body.toManagerId) return res.status(400).json({ error: "same_manager" });
+    const both = await pool.query(
+      `SELECT id, license_allotment, coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS name,
+         (SELECT count(*)::int FROM license_assignments WHERE source = 'manager' AND source_manager_id = users.id AND reclaimed_at IS NULL) AS used
+       FROM users WHERE id = ANY($1::uuid[]) AND tenant_id = $2 AND role = 'manager'`,
+      [[fromId, body.toManagerId], tenantId],
+    );
+    const from = both.rows.find((r) => r.id === fromId);
+    const to = both.rows.find((r) => r.id === body.toManagerId);
+    if (!from || !to) return res.status(404).json({ error: "manager_not_found" });
+
+    const moved = await pool.query(
+      `INSERT INTO batch_managers (batch_id, user_id) SELECT batch_id, $2 FROM batch_managers WHERE user_id = $1
+       ON CONFLICT (batch_id, user_id) DO NOTHING RETURNING batch_id`,
+      [fromId, body.toManagerId],
+    );
+    await pool.query(`DELETE FROM batch_managers WHERE user_id = $1`, [fromId]);
+
+    // The unused part of the leaver's pool moves across; what they already
+    // assigned stays counted against them.
+    let poolMoved = 0;
+    if (body.movePool && from.license_allotment !== null && from.license_allotment > from.used) {
+      poolMoved = from.license_allotment - from.used;
+      await setManagerAllotment({ tenantId, managerId: fromId, allotment: from.used === 0 ? null : from.used, actorId: req.user!.id });
+      await setManagerAllotment({ tenantId, managerId: body.toManagerId, allotment: (to.license_allotment ?? 0) + poolMoved, actorId: req.user!.id });
+    }
+    // Their open requests go to the Org Admin's queue under the new Manager.
+    await pool.query(`UPDATE license_requests SET requested_by = $2 WHERE requested_by = $1 AND status = 'pending'`, [fromId, body.toManagerId]);
+    if (body.deactivate) {
+      await pool.query(`UPDATE users SET deleted_at = now() WHERE id = $1`, [fromId]);
+      await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [fromId]);
+    }
+    await notify({
+      userId: body.toManagerId,
+      kind: "license_request_decided",
+      title: `You're now managing ${from.name}'s batches`,
+      body: `${moved.rowCount ?? 0} batch(es) moved to you${poolMoved ? `, with ${poolMoved} licenses added to your pool` : ""}.`,
+      link: "/manager/dashboard",
+      email: true,
+    });
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: "org_admin",
+      action: "manager.handover",
+      targetType: "manager",
+      targetId: fromId,
+      targetLabel: `${from.name} → ${to.name}`,
+      details: { batches: moved.rowCount ?? 0, poolMoved, deactivated: body.deactivate },
+      ip: req.ip ?? null,
+    });
+    res.json({ batchesMoved: moved.rowCount ?? 0, poolMoved });
+  } catch (err) {
+    if (err instanceof LicenseError) return res.status(400).json({ error: err.code });
+    next(err);
+  }
+});
+
+// Read-only look at a Manager's console, recorded in the audit log.
+orgAdminRouter.post("/managers/:id/view-as", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const m = (await pool.query(`SELECT id, email FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'manager' AND deleted_at IS NULL`, [String(req.params.id), tenantId])).rows[0];
+    if (!m) return res.status(404).json({ error: "manager_not_found" });
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: "org_admin", action: "manager.viewed_as", targetType: "manager", targetId: m.id, targetLabel: m.email, ip: req.ip ?? null });
+    await startViewAs(req, res, m.id, req.user!.id);
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

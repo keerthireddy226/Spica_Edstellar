@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Router, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
-import { generateToken, hashToken, SESSION_COOKIE } from "../auth/tokens.js";
+import { startViewAs } from "../auth/viewAs.js";
 import { recordAudit } from "../audit/service.js";
 import { PaymentError } from "../payments/service.js";
 import { CreditNoteError, cancelInvoiceOrder, issueCreditNote, listCreditNotes, markInvoiceOrderPaid } from "../payments/invoiceOrders.js";
@@ -250,9 +250,6 @@ commercialRouter.get("/health", requireAuth, async (req: AuthedRequest, res, nex
 
 // ---- Read-only "view as" the Org Admin ----
 
-const VIEW_AS_TTL_MS = 60 * 60 * 1000;
-export const RETURN_COOKIE = "spica_return";
-
 // Opens the organization's console exactly as its Org Admin sees it, but
 // read-only, for an hour, and recorded in the organization's audit log. The
 // staff member's own session is kept and restored on exit.
@@ -262,11 +259,6 @@ commercialRouter.post("/organizations/:id/view-as", requireAuth, async (req: Aut
     if (!tenantId) return;
     const oa = (await pool.query(`SELECT id, email FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [tenantId])).rows[0];
     if (!oa) return res.status(404).json({ error: "org_admin_not_found" });
-    const token = generateToken();
-    await pool.query(
-      `INSERT INTO auth_sessions (user_id, session_token_hash, expires_at, impersonator_id, read_only) VALUES ($1, $2, $3, $4, true)`,
-      [oa.id, hashToken(token), new Date(Date.now() + VIEW_AS_TTL_MS), req.user!.id],
-    );
     await recordAudit({
       tenantId,
       actorId: req.user!.id,
@@ -277,13 +269,7 @@ commercialRouter.post("/organizations/:id/view-as", requireAuth, async (req: Aut
       targetLabel: oa.email,
       ip: req.ip ?? null,
     });
-    const cookieOpts = {
-      httpOnly: true,
-      sameSite: (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none") ?? "lax",
-      secure: process.env.NODE_ENV === "production",
-    };
-    res.cookie(RETURN_COOKIE, req.cookies?.[SESSION_COOKIE], { ...cookieOpts, maxAge: VIEW_AS_TTL_MS * 2 });
-    res.cookie(SESSION_COOKIE, token, { ...cookieOpts, maxAge: VIEW_AS_TTL_MS });
+    await startViewAs(req, res, oa.id, req.user!.id);
     res.json({ ok: true });
   } catch (err) {
     next(err);

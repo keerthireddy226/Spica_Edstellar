@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ManagerBatchModal } from "@/components/ManagerBatchModal";
+import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
+import { getLearnerEngagement } from "@/api/notifications";
+import { ROUTES } from "@/constants/routes";
 import { PlanLimitHint } from "@/components/plans/usePlan";
 import { Layers, Users, CalendarCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -36,6 +41,8 @@ function StatCard({ label, value, icon: Icon, index }: { label: string; value: n
 }
 
 export function ManagerDashboard() {
+  const [viewingBatch, setViewingBatch] = useState<string | null>(null);
+  const [attention, setAttention] = useState<{ ending: number; grace: number; inactive: number; notStarted: number } | null>(null);
   const [overview, setOverview] = useState<ManagerOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [budgets, setBudgets] = useState<BatchBudget[]>([]);
@@ -52,7 +59,22 @@ export function ManagerDashboard() {
       .catch(() => {});
   }
 
+  function loadAttention() {
+    getLearnerEngagement()
+      .then((r) => {
+        const now = Date.now();
+        setAttention({
+          ending: r.learners.filter((l) => l.license.status === "active" && l.license.accessEndsAt && new Date(l.license.accessEndsAt).getTime() - now <= 7 * 86400000).length,
+          grace: r.learners.filter((l) => l.license.status === "grace").length,
+          inactive: r.learners.filter((l) => l.status === "inactive").length,
+          notStarted: r.learners.filter((l) => l.status === "not_started").length,
+        });
+      })
+      .catch(() => {});
+  }
+
   function load() {
+    loadAttention();
     loadRequests();
     getManagerOverview()
       .then(setOverview)
@@ -119,6 +141,33 @@ export function ManagerDashboard() {
         </button>
       </div>
 
+      {myPool?.allotment != null && (myPool.remaining ?? 0) <= 2 && (
+        <p className={`text-sm rounded-card px-4 py-3 border ${(myPool.remaining ?? 0) === 0 ? "bg-error/10 border-error/25 text-error" : "bg-warning/15 border-warning/30 text-navy-deep"}`}>
+          {(myPool.remaining ?? 0) === 0 ? "Your license pool is empty." : `Only ${myPool.remaining} license${myPool.remaining === 1 ? "" : "s"} left in your pool.`}{" "}
+          <button onClick={() => setRequestingFor("")} className="font-semibold underline cursor-pointer">
+            Request more
+          </button>
+        </p>
+      )}
+
+      {attention && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {(
+            [
+              ["Access ending in 7 days", attention.ending, "text-warning"],
+              ["In grace period", attention.grace, "text-error"],
+              ["Stopped practising", attention.inactive, "text-error"],
+              ["Haven't started", attention.notStarted, "text-muted"],
+            ] as const
+          ).map(([label, n, tone]) => (
+            <Link key={label} to={ROUTES.MANAGER_LEARNERS} className="bg-surface border border-rule rounded-card px-4 py-3 hover:border-rule-strong transition-colors">
+              <p className={`font-display font-bold text-2xl ${n ? tone : "text-ink"}`}>{n}</p>
+              <p className="text-xs text-muted">{label}</p>
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-3 gap-4">
         <StatCard label="Batches assigned to you" value={overview.batches.length} icon={Layers} index={0} />
         <StatCard label="Learners" value={overview.totalLearners} icon={Users} index={1} />
@@ -147,8 +196,13 @@ export function ManagerDashboard() {
                 const inBatch = licensed.filter((l) => l.batchId === b.id);
                 const live = inBatch.filter((l) => l.license.status === "active" || l.license.status === "grace").length;
                 return (
-                  <tr key={b.id} className="border-b border-rule last:border-0">
-                    <td className="px-4 py-3 text-ink font-medium">{b.name}</td>
+                  <tr key={b.id} onClick={() => setViewingBatch(b.id)} className="border-b border-rule last:border-0 hover:bg-paper-warm cursor-pointer">
+                    <td className="px-4 py-3 text-ink font-medium">
+                      {b.name}
+                      {b.status && b.status !== "active" && (
+                        <span className="ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-navy/10 text-navy">{BATCH_STATUS_LABEL[b.status]}</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted">{b.learnerCount}</td>
                     <td className="px-4 py-3 text-muted">
                       {live} / {inBatch.length}
@@ -170,7 +224,7 @@ export function ManagerDashboard() {
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       {budget?.budget != null && (
                       <button
                         onClick={() => setRequestingFor(b.id)}
@@ -216,6 +270,14 @@ export function ManagerDashboard() {
             </div>
           ))}
         </div>
+      )}
+
+      {viewingBatch && (
+        <ManagerBatchModal
+          batchId={viewingBatch}
+          onClose={() => setViewingBatch(null)}
+          onChanged={load}
+        />
       )}
 
       {showCreate && (

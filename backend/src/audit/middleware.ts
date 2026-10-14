@@ -130,6 +130,11 @@ export const ORG_ADMIN_AUDIT: Rule[] = [
 ];
 
 export const MANAGER_AUDIT: Rule[] = [
+  { method: "POST", path: "/learners/:id/deactivate", action: "learner.deactivated", targetType: "learner" },
+  { method: "POST", path: "/learners/:id/reactivate", action: "learner.reactivated", targetType: "learner" },
+  { method: "POST", path: "/learners/:id/resend-invite", action: "learner.invite_resent", targetType: "learner" },
+  { method: "POST", path: "/batches/:id/complete", action: "batch.completed", targetType: "batch" },
+  { method: "POST", path: "/batches/:id/clone", action: "batch.cloned", targetType: "batch" },
   { method: "POST", path: "/learners", action: "learner.invited", targetType: "learner" },
   { method: "POST", path: "/learners/bulk", action: "learner.bulk_invited", targetType: "learner" },
   { method: "POST", path: "/learners/:id/move", action: "learner.moved", targetType: "learner" },
@@ -139,4 +144,6 @@ export const MANAGER_AUDIT: Rule[] = [
 export const CERTIFICATE_AUDIT: Rule[] = [
   { method: "POST", path: "/org/issue", action: "certificate.issued", targetType: "certificate" },
   { method: "DELETE", path: "/org/:id", action: "certificate.revoked", targetType: "certificate" },
+  { method: "POST", path: "/manager/issue", action: "certificate.issued", targetType: "certificate" },
+  { method: "DELETE", path: "/manager/:id", action: "certificate.revoked", targetType: "certificate" },
 ];

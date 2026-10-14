@@ -597,7 +597,7 @@ authRouter.post("/view-as/exit", async (req, res, next) => {
     const back = req.cookies?.spica_return;
     res.clearCookie("spica_return");
     const check = await checkSession(back, req.ip);
-    if (back && check.user && ["admin", "super_admin"].includes(check.user.role)) {
+    if (back && check.user && ["admin", "super_admin", "org_admin"].includes(check.user.role)) {
       setSessionCookie(res, back);
       return res.json({ restored: true, role: check.user.role });
     }

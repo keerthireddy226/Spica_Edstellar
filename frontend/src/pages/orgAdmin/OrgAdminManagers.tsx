@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { UserPlus, X, Mail, Ban, RotateCcw, Trash2, Pencil } from "lucide-react";
+import { UserPlus, X, Mail, Ban, RotateCcw, Trash2, Pencil, Repeat, Eye } from "lucide-react";
+import { ManagerHandoverModal } from "@/components/ManagerHandoverModal";
 import { getOrgLicenseOverview, LICENSE_ERROR_TEXT, type BatchBudget } from "@/api/licenses";
 import { ApiError } from "@/lib/api";
 import { planErrorMessage } from "@/api/plans";
@@ -18,6 +19,7 @@ import {
   reactivateManager,
   updateManager,
   resendInvite,
+  viewAsManager,
   type OrgManager,
   type OrgBatch,
 } from "@/api/orgAdmin";
@@ -225,6 +227,7 @@ export function OrgAdminManagers() {
   const [showOnboard, setShowOnboard] = useState(false);
   const [editingManager, setEditingManager] = useState<OrgManager | null>(null);
   const [justInvited, setJustInvited] = useState<string | null>(null);
+  const [handingOver, setHandingOver] = useState<OrgManager | null>(null);
   const [budgets, setBudgets] = useState<BatchBudget[]>([]);
   const [poolAvailable, setPoolAvailable] = useState<number | null>(null);
   const [viewingManagerId, setViewingManagerId] = useState<string | null>(null);
@@ -392,6 +395,29 @@ export function OrgAdminManagers() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
                         <button
+                          onClick={() => setHandingOver(m)}
+                          title="Hand over batches to another Manager"
+                          className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
+                        >
+                          <Repeat size={16} />
+                        </button>
+                        {m.active && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                await viewAsManager(m.id);
+                                window.location.assign("/manager/dashboard");
+                              } catch {
+                                setError("Couldn't open their console.");
+                              }
+                            }}
+                            title="View their console (read-only, recorded in the audit log)"
+                            className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        )}
+                        <button
                           onClick={() => setEditingManager(m)}
                           title="Edit"
                           className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
@@ -465,6 +491,19 @@ export function OrgAdminManagers() {
           submitting={busyId === deletingManager.id}
           onClose={() => setDeletingManager(null)}
           onConfirm={() => handleDelete(deletingManager)}
+        />
+      )}
+      {handingOver && managers && (
+        <ManagerHandoverModal
+          from={handingOver}
+          managers={managers}
+          onClose={() => setHandingOver(null)}
+          onDone={(msg) => {
+            setHandingOver(null);
+            setJustInvited(msg);
+            load();
+            refreshPlan();
+          }}
         />
       )}
     </div>

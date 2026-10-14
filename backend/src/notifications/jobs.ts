@@ -1,6 +1,6 @@
 import { pool } from "../db.js";
 import { computeStreakDays } from "../gamification/stats.js";
-import { GRACE_DAYS, learnerAccessMap, poolSummary } from "../licenses/service.js";
+import { GRACE_DAYS, learnerAccessMap, managerPools, poolSummary } from "../licenses/service.js";
 import { learnerEngagement } from "./engagement.js";
 import { batchManagerIds, notify, orgAdminIds } from "./service.js";
 import { endPilot } from "../plans/service.js";
@@ -367,6 +367,75 @@ export async function runPilotAlerts(): Promise<number> {
   return sent;
 }
 
+// ---- 6. Managers: a daily digest of their batches, and their pool running out ----
+
+export async function runManagerAlerts(): Promise<number> {
+  let sent = 0;
+  const managers = await pool.query(
+    `SELECT u.id, u.tenant_id, coalesce(p.daily_digest, true) AS digest, coalesce(p.pool_alerts, true) AS pool_alerts
+     FROM users u JOIN tenants t ON t.id = u.tenant_id LEFT JOIN user_notification_prefs p ON p.user_id = u.id
+     WHERE u.role = 'manager' AND u.deleted_at IS NULL AND t.deactivated_at IS NULL`,
+  );
+  const now = Date.now();
+  const today = dayKey();
+  for (const m of managers.rows) {
+    const batchIds = (await pool.query(`SELECT batch_id FROM batch_managers bm JOIN batches b ON b.id = bm.batch_id WHERE bm.user_id = $1 AND b.status = 'active'`, [m.id])).rows.map((r) => r.batch_id);
+    if (batchIds.length === 0) continue;
+    const learners = await learnerEngagement({ tenantId: m.tenant_id, batchIds });
+    const name = (r: (typeof learners)[number]) => [r.firstName, r.lastName].filter(Boolean).join(" ") || r.email;
+
+    if (m.digest) {
+      const ending = learners.filter((l) => l.license.status === "active" && l.license.accessEndsAt && new Date(l.license.accessEndsAt).getTime() - now <= 7 * DAY);
+      const grace = learners.filter((l) => l.license.status === "grace");
+      const quiet = learners.filter((l) => l.status === "inactive");
+      const notStarted = learners.filter((l) => l.status === "not_started");
+      const lines = [
+        ending.length ? `Access ends within 7 days: ${ending.slice(0, 8).map(name).join(", ")}${ending.length > 8 ? "…" : ""}.` : "",
+        grace.length ? `In their 3-day grace period: ${grace.slice(0, 8).map(name).join(", ")}.` : "",
+        quiet.length ? `Stopped practising: ${quiet.slice(0, 8).map(name).join(", ")}${quiet.length > 8 ? "…" : ""}.` : "",
+        notStarted.length ? `Haven't started yet: ${notStarted.length}.` : "",
+      ].filter(Boolean);
+      if (lines.length) {
+        const r = await notify({
+          userId: m.id,
+          kind: "manager_digest",
+          title: `${ending.length + grace.length + quiet.length + notStarted.length} learner${ending.length + grace.length + quiet.length + notStarted.length === 1 ? "" : "s"} in your batches need a look`,
+          body: lines.join(" "),
+          link: "/manager/learners",
+          dedupeKey: `mgrdigest:${m.id}:${today}`,
+          email: true,
+        });
+        if (r) sent++;
+      }
+    }
+
+    if (m.pool_alerts) {
+      const pool_ = (await managerPools(m.tenant_id, [m.id]))[0];
+      if (pool_ && pool_.allotment !== null) {
+        const unlicensed = learners.filter((l) => l.license.status !== "active" && l.license.status !== "grace").length;
+        const state = pool_.remaining === 0 ? (unlicensed > 0 ? "empty" : null) : pool_.remaining !== null && pool_.remaining <= 2 ? "low" : null;
+        if (state) {
+          const week = dayKey(new Date(now - new Date().getUTCDay() * DAY));
+          const r = await notify({
+            userId: m.id,
+            kind: "manager_pool",
+            title: state === "empty" ? "Your license pool is empty" : `Only ${pool_.remaining} license${pool_.remaining === 1 ? "" : "s"} left in your pool`,
+            body:
+              state === "empty"
+                ? `${unlicensed} learner(s) in your batches have no active access. Request more licenses from your Org Admin.`
+                : "Request more from your Org Admin before you run out.",
+            link: "/manager/dashboard",
+            dedupeKey: `mgrpool:${m.id}:${state}:${week}`,
+            email: true,
+          });
+          if (r) sent++;
+        }
+      }
+    }
+  }
+  return sent;
+}
+
 // ---- Runner ----
 
 export async function runAllJobs(): Promise<Record<string, number> | null> {
@@ -381,6 +450,7 @@ export async function runAllJobs(): Promise<Record<string, number> | null> {
         auto: await runAutoReminders(),
         escalation: await runEscalations(),
         pilot: await runPilotAlerts(),
+        managers: await runManagerAlerts(),
       };
     } finally {
       await client.query(`SELECT pg_advisory_unlock($1)`, [JOB_LOCK_ID]);

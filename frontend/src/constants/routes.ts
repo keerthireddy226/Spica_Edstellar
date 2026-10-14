@@ -66,6 +66,7 @@ export const ROUTES = {
   MANAGER_LEARNERS: "/manager/learners",
   MANAGER_PROFILE: "/manager/profile",
   MANAGER_ANALYTICS: "/manager/analytics",
+  MANAGER_ACTIVITY: "/manager/activity",
 } as const;
 
 // These route groups are never shared — a role hitting another role's URL

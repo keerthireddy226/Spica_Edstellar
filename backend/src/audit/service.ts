@@ -132,3 +132,45 @@ export function auditCsv(rows: AuditRow[]): string {
   );
   return [header.join(","), ...lines].join("\n");
 }
+
+// A Manager's view: what happened to their batches and their learners, and
+// what they did themselves. No plan or billing history.
+export async function listScopedActivity(args: {
+  tenantId: string;
+  managerId: string;
+  batchIds: string[];
+  learnerIds: string[];
+  before?: string | null;
+  limit: number;
+}): Promise<AuditRow[]> {
+  const ids = [...args.batchIds, ...args.learnerIds];
+  const r = await pool.query(
+    `SELECT * FROM (
+       SELECT a.id, 'action' AS source, a.action, a.actor_label, a.actor_role, a.target_type, a.target_label, a.details, a.created_at
+       FROM audit_log a
+       WHERE a.tenant_id = $1 AND (a.actor_id = $2 OR a.target_id = ANY($3::uuid[]))
+       UNION ALL
+       SELECT e.id, 'license', 'license.' || e.kind,
+         coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email), u.role,
+         CASE WHEN e.user_email IS NOT NULL THEN 'learner' WHEN e.batch_name IS NOT NULL THEN 'batch' END,
+         coalesce(e.user_email, e.batch_name),
+         jsonb_build_object('quantity', e.quantity, 'note', e.note), e.created_at
+       FROM license_events e LEFT JOIN users u ON u.id = e.actor_id
+       WHERE e.tenant_id = $1 AND (e.actor_id = $2 OR e.user_id = ANY($4::uuid[]) OR e.batch_id = ANY($5::uuid[]))
+     ) t
+     WHERE ($6::timestamptz IS NULL OR created_at < $6)
+     ORDER BY created_at DESC LIMIT $7`,
+    [args.tenantId, args.managerId, ids, args.learnerIds, args.batchIds, args.before ?? null, args.limit],
+  );
+  return r.rows.map((x) => ({
+    id: x.id,
+    source: x.source,
+    action: x.action,
+    actorLabel: x.actor_label,
+    actorRole: x.actor_role,
+    targetType: x.target_type,
+    targetLabel: x.target_label,
+    details: x.details ?? {},
+    createdAt: x.created_at,
+  }));
+}

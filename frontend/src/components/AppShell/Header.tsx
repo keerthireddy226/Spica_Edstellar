@@ -52,6 +52,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.MANAGER_ANALYTICS]: "Analytics",
   [ROUTES.MANAGER_DASHBOARD]: "Manager Dashboard",
   [ROUTES.MANAGER_LEARNERS]: "Learners",
+  [ROUTES.MANAGER_ACTIVITY]: "Activity",
 };
 
 function initials(email: string | undefined) {

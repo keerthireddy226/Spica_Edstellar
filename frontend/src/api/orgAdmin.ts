@@ -378,3 +378,11 @@ export function uploadOrgLogo(imageBase64: string): Promise<OrgSettings> {
 export function removeOrgLogo(): Promise<OrgSettings> {
   return api("/org-admin/settings/logo", { method: "DELETE" });
 }
+
+export function handOverManager(id: string, body: { toManagerId: string; movePool: boolean; deactivate: boolean }) {
+  return api<{ batchesMoved: number; poolMoved: number }>(`/org-admin/managers/${id}/handover`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function viewAsManager(id: string) {
+  return api<{ ok: true }>(`/org-admin/managers/${id}/view-as`, { method: "POST" });
+}
