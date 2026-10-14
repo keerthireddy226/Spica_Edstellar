@@ -483,6 +483,13 @@
     "certificates": {
       "title": "Chứng chỉ",
       "view": "Xem và in"
+    },
+    "deleteAccount": {
+      "title": "Xóa tài khoản của tôi",
+      "body": "Thao tác này xóa vĩnh viễn tên, email, bản ghi âm, câu trả lời và dữ liệu khuôn mặt, giọng nói của bạn. Không thể hoàn tác.",
+      "password": "Mật khẩu của bạn",
+      "button": "Xóa vĩnh viễn",
+      "wrongPassword": "Mật khẩu không đúng."
     }
   },
   "heroTagline": {

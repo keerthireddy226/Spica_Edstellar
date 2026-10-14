@@ -746,7 +746,7 @@ orgAdminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, nex
        FROM users u
        LEFT JOIN batches b ON b.id = u.batch_id
        LEFT JOIN sessions s ON s.user_id = u.id
-       WHERE u.tenant_id = $1 AND u.role = 'learner'
+       WHERE u.tenant_id = $1 AND u.role = 'learner' AND u.erased_at IS NULL
        GROUP BY u.id, b.name
        ORDER BY u.created_at DESC`,
       [tenantId],

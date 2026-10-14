@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Certificati",
       "view": "Visualizza e stampa"
+    },
+    "deleteAccount": {
+      "title": "Elimina il mio account",
+      "body": "Rimuove definitivamente nome, email, registrazioni, risposte e dati di volto e voce. Non si può annullare.",
+      "password": "La tua password",
+      "button": "Elimina definitivamente",
+      "wrongPassword": "Password errata."
     }
   },
   "heroTagline": {

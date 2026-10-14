@@ -119,9 +119,11 @@ export const ORG_ADMIN_AUDIT: Rule[] = [
   { method: "DELETE", path: "/api-keys/:id", action: "api_key.revoked", targetType: "api_key" },
   { method: "POST", path: "/webhooks", action: "webhook.created", targetType: "webhook" },
   { method: "DELETE", path: "/webhooks/:id", action: "webhook.deleted", targetType: "webhook" },
+  { method: "PATCH", path: "/webhooks/:id", action: "webhook.updated", targetType: "webhook" },
   { method: "PATCH", path: "/sso", action: "sso.updated", targetType: "settings" },
   { method: "POST", path: "/data-export", action: "data.exported", targetType: "organization" },
-  { method: "POST", path: "/learners/:id/erase", action: "learner.erased", targetType: "learner" },
+  { method: "PATCH", path: "/data/retention", action: "data.retention_updated", targetType: "settings" },
+  { method: "POST", path: "/data/dpa/accept", action: "data.dpa_accepted", targetType: "organization" },
 ];
 
 export const MANAGER_AUDIT: Rule[] = [

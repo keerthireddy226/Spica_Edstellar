@@ -1,4 +1,6 @@
 import { registerHandler } from "./queue.js";
+import { deliverWebhook } from "../webhooks/service.js";
+import { buildExport, runRetention } from "../governance/service.js";
 import { every } from "./schedule.js";
 import { sendQueuedNotificationEmail } from "../notifications/service.js";
 import { runAllJobs } from "../notifications/jobs.js";
@@ -9,6 +11,8 @@ import { runContractRenewalAlerts } from "../admin/renewals.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
+  registerHandler("data.export", (p) => buildExport(p.exportId));
+  registerHandler("webhook.deliver", (p, job) => deliverWebhook(p.deliveryId, job.attempts));
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
   every(15, "notifications.run", async () => {
@@ -26,5 +30,9 @@ export function registerJobs() {
   });
   every(60, "contracts.renewals", async () => {
     await runContractRenewalAlerts();
+  });
+  every(24 * 60, "data.retention", async () => {
+    const r = await runRetention();
+    if (r.recordings || r.erased || r.expiredExports) console.log("retention:", r);
   });
 }

@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Todistukset",
       "view": "Näytä ja tulosta"
+    },
+    "deleteAccount": {
+      "title": "Poista tilini",
+      "body": "Tämä poistaa pysyvästi nimesi, sähköpostisi, tallenteet, vastaukset sekä kasvo- ja äänitiedot. Toimintoa ei voi perua.",
+      "password": "Salasanasi",
+      "button": "Poista pysyvästi",
+      "wrongPassword": "Salasana on väärä."
     }
   },
   "heroTagline": {

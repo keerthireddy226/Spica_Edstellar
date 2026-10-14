@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Certifikat",
       "view": "Visa och skriv ut"
+    },
+    "deleteAccount": {
+      "title": "Radera mitt konto",
+      "body": "Detta tar permanent bort ditt namn, din e-post, inspelningar, svar samt ansikts- och röstdata. Det går inte att ångra.",
+      "password": "Ditt lösenord",
+      "button": "Radera permanent",
+      "wrongPassword": "Fel lösenord."
     }
   },
   "heroTagline": {

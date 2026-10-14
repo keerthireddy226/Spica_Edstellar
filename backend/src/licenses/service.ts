@@ -1,6 +1,7 @@
 import type { PoolClient } from "pg";
 import { assertFeature } from "../plans/service.js";
 import { invalidateAccess } from "./accessCache.js";
+import { emitEvent } from "../webhooks/service.js";
 import { pool } from "../db.js";
 
 export const LICENSE_PRICE_CENTS = 10000; // 100 USD per license-month
@@ -371,7 +372,9 @@ export async function assignMonths(args: {
     );
     await client.query("COMMIT");
     invalidateAccess(args.userId);
-    return { kind, accessEndsAt: new Date(end.rows[0].e).toISOString(), source };
+    const accessEndsAt = new Date(end.rows[0].e).toISOString();
+    await emitEvent(args.tenantId, "license.assigned", { learnerId: args.userId, months: args.months, kind, accessEndsAt });
+    return { kind, accessEndsAt, source };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
@@ -409,6 +412,7 @@ export async function reclaimMonths(args: { tenantId: string; userId: string; mo
     );
     await client.query("COMMIT");
     invalidateAccess(args.userId);
+    await emitEvent(args.tenantId, "license.reclaimed", { learnerId: args.userId, months: rows.rowCount ?? 0, reason: args.reason ?? null });
     return rows.rowCount ?? 0;
   } catch (err) {
     await client.query("ROLLBACK");

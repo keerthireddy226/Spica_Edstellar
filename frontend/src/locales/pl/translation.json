@@ -501,6 +501,13 @@
     "certificates": {
       "title": "Certyfikaty",
       "view": "Zobacz i wydrukuj"
+    },
+    "deleteAccount": {
+      "title": "Usuń moje konto",
+      "body": "Trwale usuwa imię, e-mail, nagrania, odpowiedzi oraz dane twarzy i głosu. Tego nie można cofnąć.",
+      "password": "Twoje hasło",
+      "button": "Usuń na zawsze",
+      "wrongPassword": "Nieprawidłowe hasło."
     }
   },
   "heroTagline": {

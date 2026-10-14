@@ -507,6 +507,13 @@
     "certificates": {
       "title": "Certificados",
       "view": "Ver e imprimir"
+    },
+    "deleteAccount": {
+      "title": "Eliminar mi cuenta",
+      "body": "Esto elimina para siempre tu nombre, correo, grabaciones, respuestas y datos de rostro y voz. No se puede deshacer.",
+      "password": "Tu contraseña",
+      "button": "Eliminar para siempre",
+      "wrongPassword": "La contraseña no es correcta."
     }
   },
   "heroTagline": {

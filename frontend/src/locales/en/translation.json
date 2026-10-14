@@ -505,6 +505,13 @@
     "certificates": {
       "title": "Certificates",
       "view": "View and print"
+    },
+    "deleteAccount": {
+      "title": "Delete my account",
+      "body": "This permanently removes your name, email, recordings, answers, and face and voice data. It can't be undone.",
+      "password": "Your password",
+      "button": "Delete permanently",
+      "wrongPassword": "That password isn't right."
     }
   },
   "heroTagline": {

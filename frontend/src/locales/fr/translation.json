@@ -507,6 +507,13 @@
     "certificates": {
       "title": "Certificats",
       "view": "Voir et imprimer"
+    },
+    "deleteAccount": {
+      "title": "Supprimer mon compte",
+      "body": "Cela supprime définitivement votre nom, e-mail, enregistrements, réponses et données de visage et de voix. C'est irréversible.",
+      "password": "Votre mot de passe",
+      "button": "Supprimer définitivement",
+      "wrongPassword": "Mot de passe incorrect."
     }
   },
   "heroTagline": {

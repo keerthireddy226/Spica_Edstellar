@@ -1,9 +1,12 @@
 import { pool } from "../db.js";
+import { emitEvent, type WebhookEvent } from "../webhooks/service.js";
 
 export interface AuditEntry {
   tenantId: string | null;
   actorId: string | null;
   actorRole?: string | null;
+  // For actions without a person behind them, e.g. "API key: HR sync".
+  actorLabel?: string | null;
   action: string;
   targetType?: string | null;
   targetId?: string | null;
@@ -18,7 +21,7 @@ export async function recordAudit(e: AuditEntry): Promise<void> {
     await pool.query(
       `INSERT INTO audit_log (tenant_id, actor_id, actor_label, actor_role, action, target_type, target_id, target_label, details, ip)
        VALUES ($1, $2,
-         (SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) FROM users WHERE id = $2),
+         coalesce($10, (SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) FROM users WHERE id = $2)),
          $3, $4, $5, $6, $7, $8, $9)`,
       [
         e.tenantId,
@@ -30,12 +33,26 @@ export async function recordAudit(e: AuditEntry): Promise<void> {
         e.targetLabel ?? null,
         JSON.stringify(e.details ?? {}),
         e.ip ?? null,
+        e.actorLabel ?? null,
       ],
     );
   } catch (err) {
     console.error("audit log write failed:", err);
   }
+  // Learner changes also go out to the organization's webhooks.
+  const event = AUDIT_TO_WEBHOOK[e.action];
+  if (event && e.tenantId) {
+    await emitEvent(e.tenantId, event, { learnerId: e.targetId ?? null, learner: e.targetLabel ?? null, ...(e.action === "learner.moved" ? { toBatchId: e.details?.batchId ?? null } : {}) });
+  }
 }
+
+const AUDIT_TO_WEBHOOK: Record<string, WebhookEvent> = {
+  "learner.deactivated": "learner.deactivated",
+  "learner.reactivated": "learner.reactivated",
+  "learner.deleted": "learner.deleted",
+  "learner.erased": "learner.deleted",
+  "learner.moved": "learner.moved",
+};
 
 export interface AuditRow {
   id: string;

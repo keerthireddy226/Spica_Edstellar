@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { EraseLearnerModal } from "@/components/EraseLearnerModal";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
-import { Ban, RotateCcw, Trash2, ArrowRightLeft, UserPlus } from "lucide-react";
+import { Ban, RotateCcw, Trash2, Eraser, ArrowRightLeft, UserPlus } from "lucide-react";
 import { Button } from "@/components/Button";
 import { OrgInviteLearnerModal, batchLabel } from "@/components/OrgInviteLearnerModal";
 import { getOrgLicenseSummary } from "@/api/licenses";
@@ -40,6 +41,7 @@ export function OrgAdminLearners() {
   const [showInvite, setShowInvite] = useState(false);
   const [poolAvailable, setPoolAvailable] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [erasingLearner, setErasingLearner] = useState<OrgLearner | null>(null);
 
   function load() {
     getOrgLearners()
@@ -191,6 +193,13 @@ export function OrgAdminLearners() {
                         {l.active ? <Ban size={16} /> : <RotateCcw size={16} />}
                       </button>
                       <button
+                        onClick={() => setErasingLearner(l)}
+                        title="Erase personal data"
+                        className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer"
+                      >
+                        <Eraser size={16} />
+                      </button>
+                      <button
                         onClick={() => setDeletingLearner(l)}
                         disabled={busyId === l.id}
                         title="Delete"
@@ -234,6 +243,18 @@ export function OrgAdminLearners() {
           onDone={(message) => {
             setShowInvite(false);
             setNotice(message);
+            load();
+          }}
+        />
+      )}
+
+      {erasingLearner && (
+        <EraseLearnerModal
+          learner={{ id: erasingLearner.id, name: [erasingLearner.firstName, erasingLearner.lastName].filter(Boolean).join(" ") || erasingLearner.email }}
+          onClose={() => setErasingLearner(null)}
+          onErased={() => {
+            setErasingLearner(null);
+            setNotice("Personal data erased.");
             load();
           }}
         />

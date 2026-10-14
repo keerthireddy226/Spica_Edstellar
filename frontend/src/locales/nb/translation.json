@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Sertifikater",
       "view": "Vis og skriv ut"
+    },
+    "deleteAccount": {
+      "title": "Slett kontoen min",
+      "body": "Dette sletter navnet ditt, e-post, opptak, svar og ansikts- og stemmedata for godt. Det kan ikke angres.",
+      "password": "Passordet ditt",
+      "button": "Slett for godt",
+      "wrongPassword": "Feil passord."
     }
   },
   "heroTagline": {

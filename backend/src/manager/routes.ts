@@ -80,7 +80,7 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
        FROM users u
        LEFT JOIN batches b ON b.id = u.batch_id
        LEFT JOIN sessions s ON s.user_id = u.id
-       WHERE u.batch_id = ANY($1::uuid[]) AND u.role = 'learner'
+       WHERE u.batch_id = ANY($1::uuid[]) AND u.role = 'learner' AND u.erased_at IS NULL
        GROUP BY u.id, b.name
        ORDER BY u.created_at DESC`,
       [batchIds],

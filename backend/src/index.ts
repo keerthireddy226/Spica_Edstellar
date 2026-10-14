@@ -29,6 +29,9 @@ import { analyticsRouter } from "./analytics/routes.js";
 import { plansRouter } from "./plans/routes.js";
 import { brandingRouter } from "./orgAdmin/branding.js";
 import { commercialRouter } from "./admin/commercial.js";
+import { apiV1Router } from "./api/v1.js";
+import { developerRouter } from "./api/manage.js";
+import { governanceRouter, selfEraseRouter } from "./governance/routes.js";
 import { reportsRouter } from "./reports/routes.js";
 import { certificatesRouter } from "./certificates/routes.js";
 import { CERTIFICATE_AUDIT, MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
@@ -76,7 +79,7 @@ app.get("/api/health", async (_req, res, next) => {
   }
 });
 
-app.use("/api/auth", authRouter);
+app.use("/api/auth", authRouter, selfEraseRouter);
 app.use("/api/onboarding", onboardingRouter);
 app.use("/api/placement", requireAccess("placement"), placementRouter);
 app.use("/api/roadmap", roadmapRouter);
@@ -87,7 +90,8 @@ app.use("/api/coach", requireAccess("coach"), coachRouter);
 app.use("/api/face", faceRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/admin", commercialRouter);
-app.use("/api/org-admin", auditTrail(ORG_ADMIN_AUDIT), orgAdminRouter);
+app.use("/api/org-admin", auditTrail(ORG_ADMIN_AUDIT), orgAdminRouter, developerRouter, governanceRouter);
+app.use("/api/v1", apiV1Router);
 app.use("/api/manager", auditTrail(MANAGER_AUDIT), managerRouter);
 app.use("/api/licenses", licensesRouter);
 app.use("/api/payments", paymentsRouter);

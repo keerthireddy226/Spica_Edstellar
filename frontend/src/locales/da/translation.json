@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Certifikater",
       "view": "Se og udskriv"
+    },
+    "deleteAccount": {
+      "title": "Slet min konto",
+      "body": "Dette sletter permanent dit navn, din e-mail, optagelser, svar samt ansigts- og stemmedata. Det kan ikke fortrydes.",
+      "password": "Din adgangskode",
+      "button": "Slet permanent",
+      "wrongPassword": "Forkert adgangskode."
     }
   },
   "heroTagline": {

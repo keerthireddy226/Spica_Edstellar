@@ -490,6 +490,13 @@
     "certificates": {
       "title": "Zertifikate",
       "view": "Ansehen und drucken"
+    },
+    "deleteAccount": {
+      "title": "Mein Konto löschen",
+      "body": "Damit werden Ihr Name, Ihre E-Mail, Aufnahmen, Antworten sowie Gesichts- und Stimmdaten dauerhaft gelöscht. Das lässt sich nicht rückgängig machen.",
+      "password": "Ihr Passwort",
+      "button": "Endgültig löschen",
+      "wrongPassword": "Das Passwort ist falsch."
     }
   },
   "heroTagline": {

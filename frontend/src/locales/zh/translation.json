@@ -483,6 +483,13 @@
     "certificates": {
       "title": "证书",
       "view": "查看并打印"
+    },
+    "deleteAccount": {
+      "title": "删除我的账号",
+      "body": "这将永久删除你的姓名、邮箱、录音、答案以及人脸和声音数据，且无法撤销。",
+      "password": "你的密码",
+      "button": "永久删除",
+      "wrongPassword": "密码不正确。"
     }
   },
   "heroTagline": {

@@ -483,6 +483,13 @@
     "certificates": {
       "title": "修了証",
       "view": "表示して印刷"
+    },
+    "deleteAccount": {
+      "title": "アカウントを削除",
+      "body": "氏名、メールアドレス、録音、回答、顔と声のデータが完全に削除されます。元に戻すことはできません。",
+      "password": "パスワード",
+      "button": "完全に削除",
+      "wrongPassword": "パスワードが正しくありません。"
     }
   },
   "heroTagline": {

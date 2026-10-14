@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MyCertificates } from "@/components/MyCertificates";
+import { DeleteMyAccount } from "@/components/DeleteMyAccount";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -614,6 +615,7 @@ export function Profile() {
           <AboutYouSection />
           <DailyReminderCard />
           <MyCertificates />
+          <DeleteMyAccount />
           <PreferencesSection />
         </div>
       </div>

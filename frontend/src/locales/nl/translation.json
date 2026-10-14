@@ -485,6 +485,13 @@
     "certificates": {
       "title": "Certificaten",
       "view": "Bekijken en afdrukken"
+    },
+    "deleteAccount": {
+      "title": "Mijn account verwijderen",
+      "body": "Hiermee worden je naam, e-mail, opnames, antwoorden en gezichts- en stemgegevens definitief verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "password": "Je wachtwoord",
+      "button": "Definitief verwijderen",
+      "wrongPassword": "Dat wachtwoord klopt niet."
     }
   },
   "heroTagline": {

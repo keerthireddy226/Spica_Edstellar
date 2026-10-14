@@ -3,6 +3,7 @@ import { setBatchBudget } from "../licenses/service.js";
 import { assertWithinLimit } from "../plans/service.js";
 import { batchManagerIds, notify, orgAdminIds } from "../notifications/service.js";
 import { issueForBatch } from "../certificates/service.js";
+import { emitEvent } from "../webhooks/service.js";
 
 // A batch ends `duration_months` after it starts (its start date, or the day
 // it was created). Batches without a duration never end on their own.
@@ -74,6 +75,14 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
       batchId: args.batchId,
     });
   }
+  await emitEvent(args.tenantId, "batch.completed", {
+    batchId: args.batchId,
+    name: s.name,
+    learners: s.learners,
+    practised: s.practised,
+    reachedGoal: s.reached_goal,
+    automatic: !!args.automatic,
+  });
   return { releasedLicenses: released, certificatesIssued: certificates };
 }
 

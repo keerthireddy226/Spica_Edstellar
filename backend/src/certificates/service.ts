@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { pool } from "../db.js";
+import { emitEvent } from "../webhooks/service.js";
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I
 
@@ -65,7 +66,16 @@ export async function issueCertificate(args: { userId: string; batchId: string |
          RETURNING *`,
         [newCode(), u.id, u.tenant_id, args.batchId, u.name, u.participant_id, u.type === "cohort" ? u.org : null, u.batch, u.cefr, args.issuedBy],
       );
-      return toCert(r.rows[0]);
+      const cert = toCert(r.rows[0]);
+      await emitEvent(u.tenant_id, "certificate.issued", {
+        certificateId: cert.id,
+        code: cert.code,
+        learnerId: u.id,
+        participantId: cert.participantId,
+        batchName: cert.batchName,
+        cefrLevel: cert.cefrLevel,
+      });
+      return cert;
     } catch (err) {
       // A code collision is astronomically unlikely; just try another.
       if (!(err && typeof err === "object" && "constraint" in err && err.constraint === "certificates_code_key")) throw err;

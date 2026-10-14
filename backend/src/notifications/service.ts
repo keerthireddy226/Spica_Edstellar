@@ -29,7 +29,9 @@ export type NotificationKind =
   | "scheduled_report"
   | "invoice_requested"
   | "invoice_paid"
-  | "contract_renewal";
+  | "contract_renewal"
+  | "webhook_disabled"
+  | "data_export_ready";
 
 const NUDGE_KINDS: NotificationKind[] = ["manager_reminder", "auto_reminder", "daily_reminder", "streak_alert"];
 

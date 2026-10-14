@@ -5,6 +5,7 @@ import { generateToken, hashToken } from "./tokens.js";
 import { sendAdminInviteEmail } from "./mailer.js";
 import { applyLearnerDefaults } from "../orgAdmin/settings.js";
 import { inviteExpiryMs } from "./policy.js";
+import { emitEvent } from "../webhooks/service.js";
 
 const BCRYPT_ROUNDS = 12;
 // How long an invite link works is the organization's choice (24 hours by default).
@@ -32,7 +33,10 @@ export async function createAndInviteUser(row: {
   );
   const userId = inserted.rows[0].id;
   // The organization's defaults for new learners (language, daily reminder).
-  if (row.role === "learner") await applyLearnerDefaults(row.tenantId, userId);
+  if (row.role === "learner") {
+    await applyLearnerDefaults(row.tenantId, userId);
+    await emitEvent(row.tenantId, "learner.created", { learnerId: userId, email: row.email, firstName: row.firstName, lastName: row.lastName, batchId: row.batchId ?? null });
+  }
 
   const inviteToken = generateToken();
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
