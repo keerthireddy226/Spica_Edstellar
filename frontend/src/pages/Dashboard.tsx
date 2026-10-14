@@ -19,7 +19,8 @@ import {
   Layers,
   Award,
   Star,
-  Sparkles,
+  MessageCircle,
+  BarChart3,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -27,6 +28,7 @@ import { MotivationalBar } from "@/components/MotivationalBar";
 import { Mascot } from "@/components/Mascot";
 import { ProgressRing } from "@/components/ProgressRing";
 import { useAuth } from "@/hooks/useAuth";
+import { LearnerHero, LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import {
   getDashboard,
   type DashboardData,
@@ -37,7 +39,7 @@ import {
   type Badge,
 } from "@/api/dashboard";
 import { ApiError } from "@/lib/api";
-import { SKILL_TINT_CLASSES, SKILL_RING_COLOR } from "@/lib/skillTints";
+import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
 const SKILL_ICONS: Record<SkillTag, typeof Headphones> = {
@@ -53,45 +55,38 @@ const MODULE_STATUS_KEY: Record<ModuleStatus, string> = {
   completed: "dashboardHome.statusCompleted",
 };
 
-function StatTile({ icon: Icon, label, value, tint }: { icon: typeof Headphones; label: string; value: string; tint: string }) {
-  return (
-    <div className="bg-surface border border-rule rounded-card p-4 flex items-center gap-3">
-      <span className={`h-10 w-10 rounded-input flex items-center justify-center shrink-0 ${tint}`}>
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="font-display font-bold text-xl text-ink leading-tight">{value}</span>
-        <span className="text-xs text-muted truncate">{label}</span>
-      </div>
-    </div>
-  );
-}
-
-// One bordered list of rows, not four separate cards — distinct from Roadmap's ring-chart breakdown.
-function SkillProgressList({ modules }: { modules: DashboardModule[] }) {
+// Four tinted skill tiles, each in its own skill color with a progress bar.
+function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
-    <div className="bg-surface border border-rule rounded-card overflow-hidden">
-      {modules.map((m, i) => {
+    <div className="grid grid-cols-2 gap-3">
+      {modules.map((m) => {
         const Icon = SKILL_ICONS[m.skill];
+        const color = SKILL_COLOR[m.skill];
         return (
           <button
             key={m.skill}
             onClick={() => navigate(`${ROUTES.MODULES}?skill=${m.skill}`)}
-            className={`w-full flex items-center gap-3.5 px-5 py-4 text-left cursor-pointer hover:bg-paper-warm transition-colors ${
-              i > 0 ? "border-t border-rule" : ""
-            }`}
+            className="group text-left rounded-card p-4 flex flex-col gap-3 border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+            style={{ background: `color-mix(in srgb, ${color} 10%, var(--color-surface))`, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
           >
-            <ProgressRing percent={m.progressPercent} size={44} strokeWidth={4} colorClass={SKILL_RING_COLOR[m.skill]}>
-              <Icon size={20} strokeWidth={1.8} className={SKILL_RING_COLOR[m.skill]} />
-            </ProgressRing>
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-semibold text-ink">{t(`skills.${m.skill}`)}</span>
+            <div className="flex items-center justify-between">
+              <span className="h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: color }}>
+                <Icon size={20} strokeWidth={1.8} />
+              </span>
+              <span className="font-display font-bold text-xl" style={{ color: `color-mix(in srgb, ${color} 80%, black)` }}>
+                {m.progressPercent}%
+              </span>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-ink">{t(`skills.${m.skill}`)}</div>
               <div className="text-xs text-muted">{t(MODULE_STATUS_KEY[m.status])}</div>
             </div>
-            <span className={`text-sm font-bold shrink-0 ${SKILL_RING_COLOR[m.skill]}`}>{m.progressPercent}%</span>
+            <div className="h-2 rounded-full bg-white/70 overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${m.progressPercent}%`, background: color }} />
+            </div>
           </button>
         );
       })}
@@ -105,24 +100,28 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-surface border border-rule rounded-card overflow-hidden">
-      {tasks.map((task, i) => {
+    <div className="flex flex-col gap-2.5">
+      {tasks.map((task) => {
         const Icon = SKILL_ICONS[task.skill];
+        const color = SKILL_COLOR[task.skill];
+        const pct = task.itemTarget > 0 ? Math.min(100, Math.round((task.itemsCompletedToday / task.itemTarget) * 100)) : 0;
         return (
-          <div key={task.skill} className={`flex items-center gap-3 px-5 py-4 ${i > 0 ? "border-t border-rule" : ""}`}>
+          <div key={task.skill} className="flex items-center gap-3 rounded-input border border-rule px-4 py-3 bg-surface">
             <span
-              className={`h-9 w-9 rounded-input flex items-center justify-center shrink-0 ${
-                task.done ? "bg-success/15 text-success" : SKILL_TINT_CLASSES[task.skill]
-              }`}
+              className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
+              style={task.done ? { background: "var(--color-success)", color: "white" } : { background: `color-mix(in srgb, ${color} 16%, var(--color-surface))`, color }}
             >
-              {task.done ? <Check size={20} strokeWidth={2.2} /> : <Icon size={20} strokeWidth={1.8} />}
+              {task.done ? <Check size={18} strokeWidth={2.4} /> : <Icon size={18} strokeWidth={1.8} />}
             </span>
             <div className="flex-1 min-w-0">
-              <div className={`text-sm font-semibold truncate ${task.done ? "text-muted line-through" : "text-ink"}`}>
-                {t(`skills.${task.skill}`)}
-              </div>
-              <div className="text-xs text-muted truncate">
-                {t("dashboardHome.taskProgress", { done: Math.min(task.itemsCompletedToday, task.itemTarget), target: task.itemTarget })}
+              <div className={`text-sm font-semibold truncate ${task.done ? "text-muted line-through" : "text-ink"}`}>{t(`skills.${task.skill}`)}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="h-1.5 flex-1 rounded-full bg-rule overflow-hidden">
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: task.done ? "var(--color-success)" : color }} />
+                </div>
+                <span className="text-[11px] text-muted shrink-0">
+                  {t("dashboardHome.taskProgress", { done: Math.min(task.itemsCompletedToday, task.itemTarget), target: task.itemTarget })}
+                </span>
               </div>
             </div>
             {!task.done && (
@@ -149,23 +148,61 @@ function ContinuePracticeCard({ practice }: { practice: InProgressPractice }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const Icon = SKILL_ICONS[practice.skill];
+  const color = SKILL_COLOR[practice.skill];
+  const pct = practice.total > 0 ? Math.round((practice.answered / practice.total) * 100) : 0;
 
   return (
     <button
       onClick={() => navigate(`${ROUTES.MODULES}?skill=${practice.skill}`)}
-      className="w-full flex items-center gap-4 bg-surface border border-accent/30 rounded-card px-5 py-4 text-left cursor-pointer hover:border-accent/60 transition-colors"
+      className="group w-full flex items-center gap-4 rounded-card px-5 py-4 text-left cursor-pointer border shadow-sm hover:shadow-md transition-all"
+      style={{ background: `linear-gradient(100deg, color-mix(in srgb, ${color} 16%, var(--color-surface)), var(--color-surface) 70%)`, borderColor: `color-mix(in srgb, ${color} 35%, transparent)` }}
     >
-      <span className={`h-11 w-11 rounded-input flex items-center justify-center shrink-0 ${SKILL_TINT_CLASSES[practice.skill]}`}>
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
+      <ProgressRing percent={pct} size={52} strokeWidth={4} colorClass={SKILL_RING_COLOR[practice.skill]}>
+        <Icon size={22} strokeWidth={1.8} className={SKILL_RING_COLOR[practice.skill]} />
+      </ProgressRing>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-bold text-ink">{t("dashboardHome.continuePracticeTitle")}</div>
         <div className="text-xs text-muted">
           {t("dashboardHome.continuePracticeBody", { skill: t(`skills.${practice.skill}`), answered: practice.answered, total: practice.total })}
         </div>
       </div>
-      <ArrowRight size={20} strokeWidth={1.8} className="text-accent shrink-0" />
+      <span className="h-10 w-10 rounded-full flex items-center justify-center text-white shrink-0 transition-transform group-hover:translate-x-1" style={{ background: color }}>
+        <ArrowRight size={18} strokeWidth={2} />
+      </span>
     </button>
+  );
+}
+
+// Big colored shortcuts to the other learner pages.
+function QuickLinks() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const links = [
+    { to: ROUTES.MODULES, label: t("nav.modules"), hint: "Practise one skill at a time", icon: Layers, color: "#b5653f" },
+    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: "Full timed mock exams", icon: ClipboardCheck, color: "#c9965c" },
+    { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: "Chat in English with your coach", icon: MessageCircle, color: "#6e9660" },
+    { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: "Your skills, streaks and badges", icon: BarChart3, color: "#a8613f" },
+  ];
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {links.map((l) => (
+        <button
+          key={l.to}
+          onClick={() => navigate(l.to)}
+          className="group relative overflow-hidden text-left rounded-card p-5 text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+          style={{ background: `linear-gradient(135deg, ${l.color}, color-mix(in srgb, ${l.color} 65%, black))` }}
+        >
+          <span className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/12" style={{ background: "rgba(255,255,255,0.12)" }} />
+          <span className="relative h-11 w-11 rounded-2xl bg-white/20 flex items-center justify-center mb-3" style={{ background: "rgba(255,255,255,0.2)" }}>
+            <l.icon size={22} strokeWidth={1.8} />
+          </span>
+          <p className="relative font-display font-bold text-lg flex items-center gap-1.5">
+            {l.label} <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+          </p>
+          <p className="relative text-xs text-white/80">{l.hint}</p>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -186,24 +223,27 @@ const BADGE_ICONS: Record<Badge["icon"], typeof Trophy> = {
 function AchievementBadges({ badges }: { badges: Badge[] }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {badges.map((b) => {
+      {badges.map((b, i) => {
         const Icon = BADGE_ICONS[b.icon];
+        const color = ["#b5653f", "#c9965c", "#6e9660", "#a8613f"][i % 4];
         return (
           <div
             key={b.id}
-            className={`flex flex-col items-center text-center gap-2 rounded-card border p-4 ${
-              b.unlocked ? "bg-success/10 border-success/30" : "bg-surface border-rule"
-            }`}
+            className={`flex flex-col items-center text-center gap-2 rounded-card border p-4 ${b.unlocked ? "" : "bg-surface border-dashed border-rule-strong"}`}
+            style={b.unlocked ? { background: `color-mix(in srgb, ${color} 12%, var(--color-surface))`, borderColor: `color-mix(in srgb, ${color} 35%, transparent)` } : undefined}
           >
             <span
-              className={`h-11 w-11 rounded-full flex items-center justify-center ${
-                b.unlocked ? "bg-success/20 text-success" : "bg-paper-warm text-muted"
-              }`}
+              className={`h-12 w-12 rounded-full flex items-center justify-center ${b.unlocked ? "text-white shadow-sm" : "bg-paper-warm text-muted"}`}
+              style={b.unlocked ? { background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 65%, black))` } : undefined}
             >
               <Icon size={22} strokeWidth={1.8} />
             </span>
             <div className={`text-xs font-bold ${b.unlocked ? "text-ink" : "text-muted"}`}>{b.title}</div>
-            {!b.unlocked && <div className="text-[11px] text-muted leading-snug">{b.description}</div>}
+            {b.unlocked ? (
+              b.unlockedAt && <div className="text-[11px] text-muted">{new Date(b.unlockedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div>
+            ) : (
+              <div className="text-[11px] text-muted leading-snug">{b.description}</div>
+            )}
           </div>
         );
       })}
@@ -263,61 +303,84 @@ function LearnerDashboard() {
         : "dashboardHome.subtitleContinue";
   const showStartNudge = stats.sessions === 0 || remainingToday > 0;
 
+  const doneToday = todaysTasks.filter((task) => task.done).length;
+  const unlocked = badges.filter((b) => b.unlocked).length;
+
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-center justify-between gap-4 flex-wrap rounded-card p-5 relative overflow-hidden bg-gradient-to-r from-navy-soft/20 via-paper-warm to-paper border border-rule">
-        <div className="hidden sm:block absolute right-4 top-1/2 -translate-y-1/2 w-20 h-20 mascot-breathe opacity-90">
-          <Mascot variant="hero" size={80} />
-        </div>
-        <div className="relative z-10">
-          <h2 className="font-display font-bold text-xl text-ink">{t("dashboardHome.welcomeBack", { name: firstName ?? "" })}</h2>
-          <p className="text-sm text-muted mt-0.5">{t(heroSubtitleKey, { count: remainingToday })}</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 relative z-10 sm:mr-20">
-          <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)}>
-            <span className="flex items-center gap-1.5">
-              <Map size={18} strokeWidth={1.8} /> {t("dashboardHome.viewRoadmap")}
-            </span>
-          </Button>
-          <Button onClick={() => navigate(`${ROUTES.MODULES}?skill=${startSkill}`)}>
-            <span className="flex items-center gap-1.5">
-              {t("dashboardHome.startPractice")}
-              {showStartNudge && <ArrowRight size={18} strokeWidth={2.2} className="nudge-arrow" />}
-            </span>
-          </Button>
-        </div>
-      </div>
+      <LearnerHero
+        eyebrow={new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+        title={t("dashboardHome.welcomeBack", { name: firstName ?? "" })}
+        subtitle={t(heroSubtitleKey, { count: remainingToday })}
+        art={
+          <div className="w-24 h-24 mascot-breathe">
+            <Mascot variant="hero" size={96} />
+          </div>
+        }
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)}>
+              <span className="flex items-center gap-1.5">
+                <Map size={18} strokeWidth={1.8} /> {t("dashboardHome.viewRoadmap")}
+              </span>
+            </Button>
+            <Button onClick={() => navigate(`${ROUTES.MODULES}?skill=${startSkill}`)}>
+              <span className="flex items-center gap-1.5">
+                {t("dashboardHome.startPractice")}
+                {showStartNudge && <ArrowRight size={18} strokeWidth={2.2} className="nudge-arrow" />}
+              </span>
+            </Button>
+          </>
+        }
+        stats={[
+          { label: t("dashboardHome.statsSessions"), value: stats.sessions, icon: CalendarCheck },
+          { label: t("dashboardHome.statsQuestions"), value: stats.questionsCompleted, icon: ListChecks },
+          { label: t("dashboardHome.statsTime"), value: t("dashboardHome.statsTimeValue", { minutes: stats.practiceMinutes }), icon: Clock },
+          { label: t("dashboardHome.statsStreak"), value: t("dashboardHome.statsStreakValue", { count: stats.streakDays }), icon: Flame },
+        ]}
+      />
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatTile icon={CalendarCheck} label={t("dashboardHome.statsSessions")} value={String(stats.sessions)} tint="bg-listening/15 text-listening" />
-        <StatTile icon={ListChecks} label={t("dashboardHome.statsQuestions")} value={String(stats.questionsCompleted)} tint="bg-writing/15 text-writing" />
-        <StatTile icon={Clock} label={t("dashboardHome.statsTime")} value={t("dashboardHome.statsTimeValue", { minutes: stats.practiceMinutes })} tint="bg-warning/20 text-navy-deep" />
-        <StatTile icon={Flame} label={t("dashboardHome.statsStreak")} value={t("dashboardHome.statsStreakValue", { count: stats.streakDays })} tint="bg-error/12 text-error" />
-        <StatTile icon={Sparkles} label={t("dashboardHome.statsLevel")} value={t("dashboardHome.statsLevelValue", { level: stats.level, xp: stats.totalXp })} tint="bg-accent/15 text-accent" />
-      </div>
-
       <MotivationalBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="flex flex-col gap-3">
-          <h3 className="font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">{t("dashboardHome.overallProgressTitle")}</h3>
-          <SkillProgressList modules={modules} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h3 className="font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">
-            {t(remainingToday === 0 ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
-          </h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <LearnerCard
+          title={t(remainingToday === 0 ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
+          icon={CalendarCheck}
+          color="var(--color-accent)"
+          action={
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
+              {doneToday}/{todaysTasks.length} done
+            </span>
+          }
+        >
           <TodaysTasksList tasks={todaysTasks} />
-        </section>
+        </LearnerCard>
+
+        <LearnerCard
+          title={t("dashboardHome.overallProgressTitle")}
+          icon={Target}
+          action={
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-navy/10 text-navy-deep">
+              {t("dashboardHome.statsLevelValue", { level: stats.level, xp: stats.totalXp })}
+            </span>
+          }
+        >
+          <SkillProgressGrid modules={modules} />
+        </LearnerCard>
       </div>
 
-      <section className="flex flex-col gap-3">
-        <h3 className="font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">{t("dashboardHome.achievementsTitle")}</h3>
+      <QuickLinks />
+
+      <LearnerCard
+        title={t("dashboardHome.achievementsTitle")}
+        icon={Trophy}
+        color="#c9965c"
+        action={<span className="text-xs text-muted">{unlocked} of {badges.length} earned</span>}
+      >
         <AchievementBadges badges={badges} />
-      </section>
+      </LearnerCard>
     </div>
   );
 }

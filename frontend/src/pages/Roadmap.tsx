@@ -15,11 +15,15 @@ import {
   ListChecks,
   ArrowRight,
   ShieldAlert,
+  Flame,
+  Award,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { Mascot } from "@/components/Mascot";
 import { MotivationalBar } from "@/components/MotivationalBar";
+import { StatCard } from "@/components/staff/StaffKit";
+import { LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { getRoadmap, type RoadmapData, type RoadmapMilestone } from "@/api/roadmap";
 import { getDashboard, getDailyProgress } from "@/api/dashboard";
 import { meetsGoal, percentToCefr } from "@/lib/cefr";
@@ -44,6 +48,8 @@ function daysUntil(isoDate: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86_400_000);
 }
 
+const LADDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
 function Hero({
   firstName,
   currentLevel,
@@ -63,30 +69,50 @@ function Hero({
   const taglineKey = progressPercent >= 70 ? "heroTagline.high" : progressPercent >= 30 ? "heroTagline.mid" : "heroTagline.low";
 
   return (
-    <div className="rounded-card p-8 relative overflow-hidden bg-gradient-to-br from-navy-soft/35 to-warning/25">
+    <div className="rounded-card p-8 relative overflow-hidden shadow-sm border border-rule bg-gradient-to-br from-navy-soft/45 via-paper-warm to-warning/30">
+      <span className="pointer-events-none absolute -left-10 -bottom-16 h-48 w-48 rounded-full bg-white/25" />
       <div className="hidden md:block absolute right-8 top-1/2 -translate-y-1/2 w-40 h-40 mascot-breathe">
         <Mascot variant="hero" size={160} />
       </div>
-      <div className="relative z-10 max-w-lg">
+      <div className="relative z-10 max-w-2xl">
         <p className="font-mono text-[11px] uppercase tracking-widest text-navy-deep font-medium">{t("roadmap.welcomeBack")}</p>
         <h2 className="font-display font-bold text-3xl text-ink mt-1">{t("roadmap.greeting", { name: firstName || "" })}</h2>
         <p className="text-sm text-ink/70 mt-1">{t(taglineKey)}</p>
 
-        <div className="flex items-center gap-3 mt-5 flex-wrap">
-          <div className="bg-surface/70 rounded-2xl px-4 py-2.5 text-center min-w-[70px]">
-            <div className="text-[9px] font-mono uppercase text-muted">{t("roadmap.currentLevel")}</div>
-            <div className="font-display font-bold text-ink">{currentLevel}</div>
-          </div>
-          {!goalMet && (
-            <div className="bg-accent rounded-2xl px-4 py-2.5 text-center min-w-[70px] text-white">
-              <div className="text-[9px] font-mono uppercase opacity-80">{t("roadmap.goalLevel")}</div>
-              <div className="font-display font-bold">{goalLevel}</div>
-            </div>
-          )}
+        <div className="mt-6 flex items-end gap-1.5 sm:gap-2">
+          {LADDER.map((lvl, i) => {
+            const cur = LADDER.indexOf(currentLevel as (typeof LADDER)[number]);
+            const goal = LADDER.indexOf(goalLevel as (typeof LADDER)[number]);
+            const reached = i <= cur;
+            const isGoal = i === goal && !goalMet;
+            return (
+              <div key={lvl} className="flex flex-col items-center gap-1.5">
+                <span className={`text-[10px] font-semibold uppercase ${i === cur ? "text-navy-deep" : isGoal ? "text-accent" : "text-transparent"}`}>
+                  {i === cur ? t("roadmap.currentLevel") : isGoal ? t("roadmap.goalLevel") : "·"}
+                </span>
+                <span
+                  className={`h-11 w-12 sm:w-14 rounded-xl flex items-center justify-center font-display font-bold text-sm transition-all ${
+                    i === cur
+                      ? "bg-navy text-white shadow-md scale-110"
+                      : isGoal
+                        ? "bg-surface text-accent ring-2 ring-accent"
+                        : reached
+                          ? "bg-navy/35 text-white"
+                          : i < goal
+                            ? "bg-surface/80 text-navy-deep border border-dashed border-navy/40"
+                            : "bg-surface/50 text-muted"
+                  }`}
+                  style={{ height: `${2.25 + i * 0.35}rem` }}
+                >
+                  {lvl}
+                </span>
+              </div>
+            );
+          })}
           {daysAccessLeft !== null && (
-            <div className="bg-surface/70 rounded-2xl px-4 py-2.5 text-center min-w-[70px]">
+            <div className="ml-3 sm:ml-5 bg-surface/80 rounded-2xl px-4 py-2.5 text-center">
               <div className="text-[9px] font-mono uppercase text-muted">{t("roadmap.daysLeftLabel")}</div>
-              <div className="font-display font-bold text-ink">{daysAccessLeft}</div>
+              <div className="font-display font-bold text-xl text-ink">{daysAccessLeft}</div>
             </div>
           )}
         </div>
@@ -124,56 +150,27 @@ function StatsRow({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      <div className="bg-surface border border-rule rounded-card p-4">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{t("roadmap.goalProgress")}</span>
-          <ProgressRing percent={progressPercent} size={32} strokeWidth={2.5} colorClass="text-accent" />
-        </div>
-        <div className="font-display font-bold text-2xl text-accent">{progressPercent}%</div>
-        <div className="text-xs text-muted mt-0.5">{t("roadmap.ofYourRoadmap")}</div>
-      </div>
-
-      <div className="bg-surface border border-rule rounded-card p-4 flex items-center gap-3">
-        <svg viewBox="0 0 60 90" className="w-8 h-11 shrink-0">
-          <line x1="30" y1="88" x2="30" y2="62" stroke="var(--color-navy)" strokeWidth={3} strokeLinecap="round" />
-          <path d="M30 62 C16 54 14 34 30 24 C46 34 44 54 30 62 Z" fill="var(--color-navy)" />
-        </svg>
-        <div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-muted mb-1">{t("roadmap.streak")}</div>
-          <div className="font-display font-bold text-2xl text-navy-deep">{t("roadmap.streakDays", { count: streakDays })}</div>
-          <div className="text-xs text-muted mt-0.5 italic truncate">
-            {streakDays > 0 ? t("roadmap.keepStreakGoing") : t("roadmap.startStreakToday")}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-surface border border-rule rounded-card p-4">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{t("roadmap.today")}</span>
-          <Clock size={20} strokeWidth={1.8} className="text-navy-deep" />
-        </div>
-        <div className="font-display font-bold text-2xl text-ink">{todayMinutes}m</div>
-        <div className="text-xs text-muted mt-0.5">{t("roadmap.practicedSoFar")}</div>
-      </div>
-
-      <div className="bg-surface border border-rule rounded-card p-4">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">{t("roadmap.accuracy")}</span>
-          {accuracyPercent === null && <span className="text-sm leading-none">🔒</span>}
-        </div>
-        {accuracyPercent === null ? (
-          <>
-            <div className="font-display font-bold text-2xl text-muted">—</div>
-            <div className="text-xs text-muted mt-0.5">{t("roadmap.practiceToUnlock")}</div>
-          </>
-        ) : (
-          <>
-            <div className="font-display font-bold text-2xl text-ink">{accuracyPercent}%</div>
-            <div className="text-xs text-muted mt-0.5">{t("roadmap.practiceAccuracy")}</div>
-          </>
-        )}
-      </div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard index={0} variant="pastel" palette="terracotta" icon={Target} label={t("roadmap.goalProgress")} value={`${progressPercent}%`} sub={t("roadmap.ofYourRoadmap")} />
+      <StatCard
+        index={2}
+        variant="pastel"
+        palette="sand"
+        icon={Flame}
+        label={t("roadmap.streak")}
+        value={t("roadmap.streakDays", { count: streakDays })}
+        sub={streakDays > 0 ? t("roadmap.keepStreakGoing") : t("roadmap.startStreakToday")}
+      />
+      <StatCard index={0} variant="pastel" palette="moss" icon={Clock} label={t("roadmap.today")} value={`${todayMinutes}m`} sub={t("roadmap.practicedSoFar")} />
+      <StatCard
+        index={1}
+        variant="pastel"
+        palette="rose"
+        icon={Award}
+        label={t("roadmap.accuracy")}
+        value={accuracyPercent === null ? "—" : `${accuracyPercent}%`}
+        sub={accuracyPercent === null ? t("roadmap.practiceToUnlock") : t("roadmap.practiceAccuracy")}
+      />
     </div>
   );
 }
@@ -193,17 +190,18 @@ function SkillBreakdown({
   const strongest = tested.length > 0 ? tested.reduce((best, cur) => (cur[1] > best[1] ? cur : best))[0] : null;
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-4">
-      <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">
-        <Target size={16} className="text-accent" /> {t("roadmap.skillBreakdownTitle")}
-      </h3>
-      <div className="grid grid-cols-2 gap-4">
+    <LearnerCard title={t("roadmap.skillBreakdownTitle")} icon={Target} color="var(--color-accent)">
+      <div className="grid grid-cols-2 gap-3">
         {entries.map(([skill, pct]) => {
           const Icon = SKILL_ICONS[skill];
           const color = SKILL_RING_COLOR[skill];
           const entry = skillLevels?.[skill];
           return (
-            <div key={skill} className="flex flex-col items-center text-center">
+            <div
+              key={skill}
+              className="flex flex-col items-center text-center rounded-input py-3 px-2"
+              style={{ background: pct === null ? "var(--color-paper)" : `color-mix(in srgb, ${SKILL_COLOR[skill]} 10%, var(--color-surface))` }}
+            >
               <ProgressRing percent={pct ?? 0} size={56} strokeWidth={5} colorClass={pct === null ? "text-muted" : color}>
                 <Icon size={20} strokeWidth={2} className={pct === null ? "text-muted" : color} />
               </ProgressRing>
@@ -225,7 +223,7 @@ function SkillBreakdown({
           );
         })}
       </div>
-    </div>
+    </LearnerCard>
   );
 }
 
@@ -308,12 +306,9 @@ function RecommendedPractice({ practice, hasPracticed }: { practice: RoadmapData
   const navigate = useNavigate();
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-1">
-      <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted mb-1.5">
-        <ListChecks size={16} className="text-success" /> {t("recommendedPractice.title")}
-      </h3>
+    <LearnerCard title={t("recommendedPractice.title")} icon={ListChecks} color="var(--color-success)" className="!gap-2">
       {practice.items.map((item) => (
-        <div key={item.itemTypeId} className="flex items-center gap-2.5 px-2.5 py-2 rounded-input">
+        <div key={item.itemTypeId} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-input ${item.completed ? "bg-success/10" : "bg-paper/60"}`}>
           <span
             className={`h-5 w-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
               item.completed ? "bg-success border-success text-paper" : "border-rule-strong"
@@ -335,7 +330,7 @@ function RecommendedPractice({ practice, hasPracticed }: { practice: RoadmapData
           {!hasPracticed && <ArrowRight size={16} strokeWidth={2.2} className="nudge-arrow" />}
         </span>
       </Button>
-    </div>
+    </LearnerCard>
   );
 }
 
@@ -420,7 +415,8 @@ function DailyChallenge() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<"word" | "idiom" | "meaning">("word");
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
+    <div className="relative overflow-hidden bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
+      <span className="absolute inset-x-0 top-0 h-1.5" style={{ background: "linear-gradient(90deg, var(--color-navy), #c9965c, var(--color-success))" }} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-wider text-warning mb-1">{t("dailyChallenge.title")}</div>
@@ -449,7 +445,7 @@ function CoachModePromo() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (
-    <div className="rounded-card p-7 flex flex-col sm:flex-row items-center gap-6 bg-writing/12">
+    <div className="rounded-card p-7 flex flex-col sm:flex-row items-center gap-6 border border-writing/25 shadow-sm bg-gradient-to-r from-writing/20 via-writing/8 to-surface">
       <div className="w-16 h-16 shrink-0 mascot-breathe">
         <Mascot variant="coach" size={64} />
       </div>
@@ -545,7 +541,7 @@ export function Roadmap() {
   const progressPercent = roadmap.milestones.length > 0 ? Math.round((milestonesReached / roadmap.milestones.length) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-5 w-full">
       {placement.reviewStatus === "pending_review" && (
         <div className="flex items-center gap-2.5 bg-warning/15 border border-warning/40 rounded-card px-4 py-3 text-sm text-ink">
           <ShieldAlert size={18} className="text-warning shrink-0" />
@@ -568,15 +564,12 @@ export function Roadmap() {
 
       <MotivationalBar />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <SkillBreakdown skillPercents={placement.skillPercents} skillLevels={placement.skillLevels} />
 
-        <div className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3.5">
-          <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">
-            <Compass size={16} className="text-warning" /> {t("roadmap.timelineTitle")}
-          </h3>
+        <LearnerCard title={t("roadmap.timelineTitle")} icon={Compass} color="#c9965c">
           <RoadmapTimeline milestones={roadmap.milestones} daysSinceStart={daysSinceStart} />
-        </div>
+        </LearnerCard>
 
         <RecommendedPractice practice={recommendedPractice} hasPracticed={accuracyPercent !== null} />
       </div>

@@ -16,9 +16,13 @@ import {
   Briefcase,
   RotateCcw,
   MessageSquare,
+  ListChecks,
+  Layers,
+  Award,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
+import { LearnerHero } from "@/components/learner/LearnerHero";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import {
   getExamsForProduct,
@@ -856,23 +860,24 @@ export function PracticeTests() {
     const Icon = PRODUCT_ICON[selectedProduct as (typeof VERSANT_PRODUCTS)[number]];
     return (
       <div className="w-full flex flex-col gap-6">
-        <button
-          onClick={backToProducts}
-          className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer self-start"
-        >
-          <ArrowLeft size={16} /> {t("practiceTests.backToProducts")}
-        </button>
-        <div className="flex items-center gap-4">
-          <span
-            className={`h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 text-white shadow-sm ${PRODUCT_SOLID[selectedProduct as (typeof VERSANT_PRODUCTS)[number]]}`}
-          >
-            <Icon size={30} strokeWidth={2} />
-          </span>
-          <div>
-            <h1 className="font-display font-bold text-2xl text-ink">{t(`practiceTests.versantProduct.${selectedProduct}`)}</h1>
-            <p className="text-sm text-muted">{t(`practiceTests.versantProduct.${selectedProduct}Desc`)}</p>
-          </div>
-        </div>
+        <LearnerHero
+          onBack={backToProducts}
+          backLabel={t("practiceTests.backToProducts")}
+          eyebrow={t("nav.practiceTests")}
+          title={t(`practiceTests.versantProduct.${selectedProduct}`)}
+          subtitle={t(`practiceTests.versantProduct.${selectedProduct}Desc`)}
+          icon={Icon}
+          stats={
+            exams
+              ? [
+                  { label: "Sets", value: exams.length, icon: ClipboardCheck },
+                  { label: "Completed", value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
+                  { label: "Questions per set", value: exams[0]?.itemCount ?? "—", icon: ListChecks },
+                  { label: "Timing", value: t(`practiceTests.versantProduct.${selectedProduct}Desc`).match(/\d+\s*min/)?.[0] ?? "—", icon: Clock },
+                ]
+              : undefined
+          }
+        />
 
         {loadingExams ? (
           <p className="text-sm text-muted">{t("modules.starting")}</p>
@@ -881,17 +886,23 @@ export function PracticeTests() {
             {(exams ?? []).map((exam, i) => (
               <div
                 key={exam.id}
-                className="flex flex-col gap-4 bg-surface border border-rule rounded-card p-6"
+                className="relative overflow-hidden flex flex-col gap-4 bg-surface border border-rule rounded-card p-6 pt-7 shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex flex-col gap-1">
+                <span className={`absolute inset-x-0 top-0 h-1.5 ${PRODUCT_SOLID[selectedProduct as (typeof VERSANT_PRODUCTS)[number]]}`} />
+                <div className="flex items-start gap-4">
+                  <span
+                    className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 font-display font-bold text-lg ${
+                      exam.completed ? "bg-success text-white" : `${PRODUCT_SOLID[selectedProduct as (typeof VERSANT_PRODUCTS)[number]]} text-white`
+                    }`}
+                  >
+                    {exam.completed ? <CheckCircle2 size={22} /> : i + 1}
+                  </span>
+                  <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <span className="font-display font-bold text-base text-ink">{exam.name || `Set ${i + 1}`}</span>
                     <span className="text-sm text-muted">{t("practiceTests.questionsCount", { count: exam.itemCount })}</span>
                   </div>
                   {exam.completed && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-success shrink-0">
-                      <CheckCircle2 size={14} /> {t("practiceTests.completed")}
-                    </span>
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>
                   )}
                 </div>
                 <Button onClick={() => setPendingExamId(exam.id)} className="w-full">
@@ -908,15 +919,18 @@ export function PracticeTests() {
   // --- Product picker ---
   return (
     <div className="w-full flex flex-col gap-6">
-      <div className="flex items-center gap-4">
-        <span className="h-16 w-16 rounded-2xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
-          <ClipboardCheck size={30} strokeWidth={2} />
-        </span>
-        <div>
-          <h1 className="font-display font-bold text-2xl text-ink">{t("nav.practiceTests")}</h1>
-          <p className="text-sm text-muted">{t("practiceTests.subtitle")}</p>
-        </div>
-      </div>
+      <LearnerHero
+        eyebrow="Mock exams"
+        title={t("nav.practiceTests")}
+        subtitle={t("practiceTests.subtitle")}
+        icon={ClipboardCheck}
+        stats={[
+          { label: "Exam types", value: VERSANT_PRODUCTS.length, icon: Layers },
+          { label: "Full sets to take", value: VERSANT_PRODUCTS.length * 5, icon: ListChecks },
+          { label: "Length", value: "17–60 min", icon: Clock },
+          { label: "Scored by section", value: "Instant", icon: Award },
+        ]}
+      />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-5">
         {VERSANT_PRODUCTS.map((id, i) => {

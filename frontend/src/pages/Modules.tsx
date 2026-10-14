@@ -29,7 +29,13 @@ import {
   Type,
   Mail,
   Puzzle,
+  Layers,
+  Sparkles,
+  Target,
+  Trophy,
+  GraduationCap,
 } from "lucide-react";
+import { LearnerHero, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { ProgressRing } from "@/components/ProgressRing";
@@ -211,43 +217,73 @@ function SkillPicker({
 }) {
   const { t } = useTranslation();
 
+  const all = availability ?? [];
+  const total = all.reduce((n, a) => n + a.total, 0);
+  const left = all.reduce((n, a) => n + a.remaining, 0);
+
   return (
     <div className="w-full flex flex-col gap-6">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("modules.title")}</h1>
-        <p className="text-sm text-muted mt-1">{t("modules.subtitle")}</p>
-      </div>
+      <LearnerHero
+        eyebrow={t("nav.modules")}
+        title={t("modules.title")}
+        subtitle={t("modules.subtitle")}
+        icon={Layers}
+        stats={
+          all.length
+            ? [
+                { label: "Questions practised", value: total - left, icon: CheckCircle2 },
+                { label: "Still to try", value: left, icon: Sparkles },
+                { label: "Overall complete", value: `${total ? Math.round(((total - left) / total) * 100) : 0}%`, icon: Target },
+                { label: "Skills finished", value: `${all.filter((a) => a.remaining === 0).length}/${all.length}`, icon: Trophy },
+              ]
+            : undefined
+        }
+      />
 
       {loading ? (
         <p className="text-sm text-muted">{t("modules.loadingAvailability")}</p>
       ) : (
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {(availability ?? []).map(({ skill, remaining, total }) => {
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {all.map(({ skill, remaining, total }) => {
             const exhausted = remaining === 0;
             const percent = total > 0 ? Math.round(((total - remaining) / total) * 100) : 0;
+            const color = SKILL_COLOR[skill];
             return (
               <button
                 key={skill}
                 onClick={() => !exhausted && onStart(skill)}
                 disabled={starting || exhausted}
-                className="group text-left flex flex-col items-center text-center gap-3 bg-surface border border-rule rounded-card p-6 transition-all cursor-pointer hover:border-rule-strong hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.28)] disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                className="group text-left flex flex-col bg-surface border border-rule rounded-card overflow-hidden shadow-sm transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm"
               >
-                <ProgressRing percent={percent} size={72} strokeWidth={5} colorClass={SKILL_RING_COLOR[skill]}>
-                  <span
-                    className={`h-12 w-12 rounded-2xl flex items-center justify-center text-2xl transition-transform group-hover:scale-110 ${SKILL_TINT_CLASSES[skill]}`}
-                  >
+                <div
+                  className="relative h-28 flex items-center justify-center overflow-hidden"
+                  style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 62%, black))` }}
+                >
+                  <span className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full" style={{ background: "rgba(255,255,255,0.14)" }} />
+                  <span className="pointer-events-none absolute -left-4 -bottom-10 h-20 w-20 rounded-full" style={{ background: "rgba(255,255,255,0.08)" }} />
+                  <span className="relative h-16 w-16 rounded-2xl flex items-center justify-center text-3xl ring-2 ring-white/40 transition-transform group-hover:scale-110" style={{ background: "rgba(255,255,255,0.22)" }}>
                     {SKILL_EMOJI[skill]}
                   </span>
-                </ProgressRing>
-                <div>
-                  <div className="font-display font-bold text-lg text-ink">{t(`skills.${skill}`)}</div>
-                  <div className="text-xs text-muted mt-1">
-                    {exhausted ? t("modules.allDone") : t("modules.remainingItems", { count: remaining, total })}
+                </div>
+                <div className="p-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display font-bold text-lg text-ink">{t(`skills.${skill}`)}</span>
+                    <span className="font-display font-bold" style={{ color: `color-mix(in srgb, ${color} 80%, black)` }}>
+                      {percent}%
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-rule overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${percent}%`, background: color }} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted">
+                    <span>{exhausted ? t("modules.allDone") : t("modules.remainingItems", { count: remaining, total })}</span>
+                    {!exhausted && (
+                      <span className="flex items-center gap-0.5 font-semibold" style={{ color }}>
+                        Start <ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
+                      </span>
+                    )}
                   </div>
                 </div>
-                {!exhausted && (
-                  <ChevronRight size={18} className="text-muted shrink-0 transition-transform group-hover:translate-x-1" />
-                )}
               </button>
             );
           })}
@@ -265,22 +301,15 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
 
   return (
     <div className="w-full flex flex-col gap-6">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer self-start"
-      >
-        <ArrowLeft size={16} strokeWidth={1.8} /> {t("modules.backToSkills")}
-      </button>
-
-      <div className="flex items-center gap-4">
-        <span className={`h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 text-3xl ${SKILL_TINT_CLASSES[skill]}`}>
-          {SKILL_EMOJI[skill]}
-        </span>
-        <div>
-          <h1 className="font-display font-bold text-2xl text-ink">{t(`skills.${skill}`)} Practice</h1>
-          <p className="text-sm text-muted">{t("modules.pickTypeSubtitle")}</p>
-        </div>
-      </div>
+      <LearnerHero
+        onBack={onBack}
+        backLabel={t("modules.backToSkills")}
+        eyebrow={`${types.length} question types`}
+        title={`${t(`skills.${skill}`)} Practice`}
+        subtitle={t("modules.pickTypeSubtitle")}
+        icon={Icon}
+        compact
+      />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {types.map((typeId, i) => {
@@ -296,14 +325,20 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
               disabled={starting}
               className="group relative text-left bg-surface border border-rule rounded-card p-5 transition-all cursor-pointer flex flex-col gap-3 overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed hover:border-rule-strong hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.28)]"
             >
-              <span className={`absolute top-0 left-0 right-0 h-1 pointer-events-none ${strip}`} />
-              <span className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${tint}`}>
-                <TypeIcon size={22} strokeWidth={2} />
-              </span>
+              <span className={`absolute top-0 left-0 right-0 h-1.5 pointer-events-none ${strip}`} />
+              <div className="flex items-center justify-between">
+                <span className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${tint}`}>
+                  <TypeIcon size={22} strokeWidth={2} />
+                </span>
+                <span className="text-[11px] font-semibold text-muted bg-paper rounded-pill px-2.5 py-1">{String(i + 1).padStart(2, "0")}</span>
+              </div>
               <div className="flex flex-col gap-1">
                 <span className="font-display font-bold text-base text-ink leading-snug">{meta.name}</span>
                 <span className="text-xs text-muted leading-relaxed">{t(`modules.typeDesc.${typeId}`)}</span>
               </div>
+              <span className="mt-auto flex items-center gap-1 text-xs font-semibold text-navy-deep">
+                Practise <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
+              </span>
             </button>
           );
         })}
@@ -327,13 +362,24 @@ function UnitPicker({
   const { t } = useTranslation();
   return (
     <div className="w-full flex flex-col gap-6">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer self-start"
-      >
-        <ArrowLeft size={16} strokeWidth={1.8} /> {t("modules.backToTypes")}
-      </button>
-      <h1 className="font-display font-bold text-2xl text-ink">{t("modules.pickUnitTitle")}</h1>
+      <LearnerHero
+        onBack={onBack}
+        backLabel={t("modules.backToTypes")}
+        eyebrow={`${units.length} levels`}
+        title={t("modules.pickUnitTitle")}
+        icon={GraduationCap}
+        compact
+        stats={
+          units.length
+            ? [
+                { label: "Sets completed", value: units.reduce((n, u) => n + u.completedCount, 0), icon: CheckCircle2 },
+                { label: "Sets in total", value: units.reduce((n, u) => n + u.setCount, 0), icon: Layers },
+                { label: "Levels finished", value: units.filter((u) => u.setCount > 0 && u.completedCount === u.setCount).length, icon: Trophy },
+                { label: "Levels to go", value: units.filter((u) => !(u.setCount > 0 && u.completedCount === u.setCount)).length, icon: Target },
+              ]
+            : undefined
+        }
+      />
       {loading ? (
         <p className="text-sm text-muted">{t("modules.loadingAvailability")}</p>
       ) : (
@@ -387,13 +433,14 @@ function SetPicker({
   const { t } = useTranslation();
   return (
     <div className="w-full flex flex-col gap-6">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer self-start"
-      >
-        <ArrowLeft size={16} strokeWidth={1.8} /> {t("modules.backToUnits")}
-      </button>
-      <h1 className="font-display font-bold text-2xl text-ink">{unitName}</h1>
+      <LearnerHero
+        onBack={onBack}
+        backLabel={t("modules.backToUnits")}
+        eyebrow={`${sets.filter((x) => x.completed).length} of ${sets.length} sets done`}
+        title={unitName}
+        icon={ListChecks}
+        compact
+      />
       {loading ? (
         <p className="text-sm text-muted">{t("modules.loadingAvailability")}</p>
       ) : (
