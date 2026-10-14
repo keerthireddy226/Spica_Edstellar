@@ -100,6 +100,12 @@
       "tooShort": "Dùng ít nhất {{min}} ký tự.",
       "tooWeak": "Dùng cả chữ và số.",
       "tooCommon": "Mật khẩu này quá phổ biến. Hãy chọn mật khẩu khác."
+    },
+    "sso": {
+      "button": "Tiếp tục bằng đăng nhập một lần",
+      "required": "Tổ chức của bạn đăng nhập qua trang đăng nhập riêng.",
+      "failed": "Đăng nhập một lần chưa hoàn tất. Hãy thử lại hoặc liên hệ quản trị viên.",
+      "noAccount": "Bạn chưa có tài khoản Spica. Hãy nhờ quản trị viên thêm bạn."
     }
   },
   "onboarding": {

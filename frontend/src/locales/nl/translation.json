@@ -100,6 +100,12 @@
       "tooShort": "Gebruik minstens {{min}} tekens.",
       "tooWeak": "Gebruik letters en cijfers.",
       "tooCommon": "Dat wachtwoord is te gangbaar. Kies een ander."
+    },
+    "sso": {
+      "button": "Doorgaan met single sign-on",
+      "required": "Je organisatie logt in via een eigen inlogpagina.",
+      "failed": "Single sign-on is niet gelukt. Probeer het opnieuw of neem contact op met je beheerder.",
+      "noAccount": "Je hebt nog geen Spica-account. Vraag je beheerder om je toe te voegen."
     }
   },
   "onboarding": {

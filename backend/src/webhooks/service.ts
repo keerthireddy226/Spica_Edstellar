@@ -1,6 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { lookup } from "node:dns/promises";
-import { BlockList, isIP } from "node:net";
+import { assertPublicUrl } from "../lib/netGuard.js";
 import { pool } from "../db.js";
 import { enqueue } from "../queue/queue.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
@@ -53,27 +52,6 @@ export async function emitEvent(tenantId: string | null, event: WebhookEvent, da
   }
 }
 
-// ---- SSRF guard: never call into private networks ----
-
-const PRIVATE = new BlockList();
-for (const [net, bits] of [
-  ["10.0.0.0", 8],
-  ["172.16.0.0", 12],
-  ["192.168.0.0", 16],
-  ["127.0.0.0", 8],
-  ["169.254.0.0", 16],
-  ["100.64.0.0", 10],
-  ["0.0.0.0", 8],
-] as const)
-  PRIVATE.addSubnet(net, bits, "ipv4");
-for (const [net, bits] of [
-  ["::1", 128],
-  ["fc00::", 7],
-  ["fe80::", 10],
-  ["::", 128],
-] as const)
-  PRIVATE.addSubnet(net, bits, "ipv6");
-
 export function webhookUrlProblem(raw: string): string | null {
   let u: URL;
   try {
@@ -84,15 +62,6 @@ export function webhookUrlProblem(raw: string): string | null {
   if (u.protocol !== "https:" && !(u.protocol === "http:" && process.env.NODE_ENV !== "production")) return "Use an https:// URL.";
   if (u.username || u.password) return "Don't put credentials in the URL.";
   return null;
-}
-
-async function assertPublicHost(url: URL) {
-  if (process.env.WEBHOOK_ALLOW_PRIVATE === "true") return;
-  const host = url.hostname.replace(/^\[|\]$/g, "");
-  const addrs = isIP(host) ? [{ address: host, family: isIP(host) }] : await lookup(host, { all: true });
-  for (const a of addrs) {
-    if (PRIVATE.check(a.address, a.family === 6 ? "ipv6" : "ipv4")) throw new Error(`refusing to call private address ${a.address}`);
-  }
 }
 
 // Queue handler. Throws on failure so the queue retries with backoff; after
@@ -116,7 +85,7 @@ export async function deliverWebhook(deliveryId: string, attempt: number) {
   let error: string | null = null;
   try {
     const url = new URL(d.url);
-    await assertPublicHost(url);
+    await assertPublicUrl(url, "WEBHOOK_ALLOW_PRIVATE");
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {

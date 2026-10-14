@@ -1,4 +1,5 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { open, seal } from "../lib/secretBox.js";
 import QRCode from "qrcode";
 import { pool } from "../db.js";
 import { generateToken, hashToken } from "./tokens.js";
@@ -67,33 +68,12 @@ export function verifyTotp(secretB32: string, code: string, at = Date.now()): bo
   });
 }
 
-// ---- Secret at rest: AES-256-GCM with a key from the environment ----
-
-function key(): Buffer {
-  const raw = process.env.MFA_ENCRYPTION_KEY ?? process.env.NOTIFICATION_SECRET ?? "spica-dev-only-mfa-key";
-  return createHash("sha256").update(raw).digest();
-}
-
-function encrypt(plain: string): string {
-  const iv = randomBytes(12);
-  const c = createCipheriv("aes-256-gcm", key(), iv);
-  const enc = Buffer.concat([c.update(plain, "utf8"), c.final()]);
-  return [iv, c.getAuthTag(), enc].map((b) => b.toString("base64")).join(".");
-}
-
-function decrypt(stored: string): string {
-  const [iv, tag, enc] = stored.split(".").map((p) => Buffer.from(p, "base64"));
-  const d = createDecipheriv("aes-256-gcm", key(), iv);
-  d.setAuthTag(tag);
-  return Buffer.concat([d.update(enc), d.final()]).toString("utf8");
-}
-
 // ---- Enrolment ----
 
 // Step 1: a new secret, stored but not active until a code confirms it.
 export async function startMfaSetup(userId: string, email: string): Promise<{ secret: string; otpauthUrl: string; qrDataUrl: string }> {
   const secret = base32Encode(randomBytes(20));
-  await pool.query(`UPDATE users SET mfa_secret = $2 WHERE id = $1 AND mfa_enabled_at IS NULL`, [userId, encrypt(secret)]);
+  await pool.query(`UPDATE users SET mfa_secret = $2 WHERE id = $1 AND mfa_enabled_at IS NULL`, [userId, seal(secret)]);
   const otpauthUrl = `otpauth://totp/${encodeURIComponent(`${ISSUER}:${email}`)}?secret=${secret}&issuer=${ISSUER}&digits=${DIGITS}&period=${STEP_SECONDS}`;
   const qrDataUrl = await QRCode.toDataURL(otpauthUrl, { margin: 1, width: 220 });
   return { secret, otpauthUrl, qrDataUrl };
@@ -110,7 +90,7 @@ function newRecoveryCodes(): string[] {
 export async function confirmMfaSetup(userId: string, code: string): Promise<string[] | null> {
   const u = (await pool.query(`SELECT mfa_secret, mfa_enabled_at FROM users WHERE id = $1`, [userId])).rows[0];
   if (!u?.mfa_secret || u.mfa_enabled_at) return null;
-  if (!verifyTotp(decrypt(u.mfa_secret), code)) return null;
+  if (!verifyTotp(open(u.mfa_secret), code)) return null;
   const codes = newRecoveryCodes();
   await pool.query(`UPDATE users SET mfa_enabled_at = now(), mfa_recovery_hashes = $2 WHERE id = $1`, [userId, codes.map((c) => hashToken(c))]);
   return codes;
@@ -130,7 +110,7 @@ export async function regenerateRecoveryCodes(userId: string): Promise<string[]>
 export async function checkSecondFactor(userId: string, code: string): Promise<boolean> {
   const u = (await pool.query(`SELECT mfa_secret, mfa_recovery_hashes FROM users WHERE id = $1 AND mfa_enabled_at IS NOT NULL`, [userId])).rows[0];
   if (!u) return false;
-  if (verifyTotp(decrypt(u.mfa_secret), code)) return true;
+  if (verifyTotp(open(u.mfa_secret), code)) return true;
   const h = hashToken(code.trim().toUpperCase());
   if ((u.mfa_recovery_hashes ?? []).includes(h)) {
     await pool.query(`UPDATE users SET mfa_recovery_hashes = array_remove(mfa_recovery_hashes, $2) WHERE id = $1`, [userId, h]);

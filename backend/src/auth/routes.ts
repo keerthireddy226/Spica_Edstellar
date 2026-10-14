@@ -7,6 +7,7 @@ import { generateToken, hashToken, SESSION_COOKIE } from "./tokens.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { checkSession, requireAuth, type AuthedRequest } from "./middleware.js";
 import { ORG_CONSOLE_ROLES, ipAllowed, passwordMinLengthFor, passwordProblem } from "./policy.js";
+import { ssoForEmail } from "../sso/service.js";
 import { checkSecondFactor, confirmMfaSetup, createChallenge, disableMfa, redeemChallenge, regenerateRecoveryCodes, startMfaSetup } from "./mfa.js";
 import {
   forgotPasswordSchema,
@@ -44,7 +45,7 @@ const forgotPasswordLimiter = makeAuthLimiter();
 export const authRouter = Router();
 
 // Accepts an in-transaction client too — signup needs the session on the same connection as the uncommitted user row.
-async function createSession(executor: Pick<typeof pool, "query">, userId: string) {
+export async function createSession(executor: Pick<typeof pool, "query">, userId: string) {
   const token = generateToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
   await executor.query(
@@ -54,7 +55,7 @@ async function createSession(executor: Pick<typeof pool, "query">, userId: strin
   return { token, expiresAt };
 }
 
-function setSessionCookie(res: import("express").Response, token: string) {
+export function setSessionCookie(res: import("express").Response, token: string) {
   res.cookie(SESSION_COOKIE, token, {
     httpOnly: true,
     // Configurable because the right value depends on production topology
@@ -147,6 +148,13 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       return res.status(403).json({ error: "wrong_login_portal" });
     }
 
+    // Once an organization turns on "SSO only", its learners and Managers sign
+    // in through their identity provider. The Org Admin keeps a password as a
+    // way back in if the provider is down.
+    if (["learner", "manager"].includes(user.role)) {
+      const sso = await ssoForEmail(body.email);
+      if (sso?.enforce) return res.status(403).json({ error: "sso_required" });
+    }
     // Org Admins and Managers can be limited to the organization's networks.
     if (ORG_CONSOLE_ROLES.includes(user.role) && !ipAllowed(req.ip, user.ip_allowlist)) {
       return res.status(403).json({ error: "ip_not_allowed" });

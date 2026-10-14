@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, ShieldCheck } from "lucide-react";
 import { isMfaChallenge, useAuth, type Role } from "@/hooks/useAuth";
@@ -19,6 +19,24 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Whether this email's organization signs in through its own identity provider.
+  const [sso, setSso] = useState<{ sso: boolean; enforce: boolean } | null>(null);
+  const [params] = useSearchParams();
+  const ssoError = params.get("sso_error");
+
+  useEffect(() => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSso(null);
+      return;
+    }
+    const h = setTimeout(() => {
+      fetch(`/api/sso/discover?email=${encodeURIComponent(email)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then(setSso)
+        .catch(() => setSso(null));
+    }, 400);
+    return () => clearTimeout(h);
+  }, [email]);
 
   if (user) return <Navigate to={user.mfaSetupRequired ? ROUTES.MFA_SETUP : LANDING_ROUTE_BY_ROLE[user.role]} replace />;
 
@@ -65,6 +83,9 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
         setError(t("auth.login.errorAlreadyLoggedIn"));
       } else if (err instanceof Error && err.message === "organization_deactivated") {
         setError(t("auth.login.errorOrganizationDeactivated"));
+      } else if (err instanceof Error && err.message === "sso_required") {
+        setSso({ sso: true, enforce: true });
+        setError(t("auth.sso.required"));
       } else if (err instanceof Error && err.message === "ip_not_allowed") {
         setError(t("auth.login.errorIpNotAllowed"));
       } else if (err instanceof Error && err.message === "too_many_attempts") {
@@ -128,10 +149,22 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
           autoComplete="current-password"
           required
         />
-        {error && <p className="text-xs text-error">{error}</p>}
-        <Button type="submit" className="mt-0.5 w-full !py-2 !text-xs" disabled={submitting}>
-          {submitting ? t("auth.login.submitting") : t("auth.login.submit")}
-        </Button>
+        {(error || ssoError) && (
+          <p className="text-xs text-error">{error ?? (ssoError === "no_account" ? t("auth.sso.noAccount") : ssoError === "already_logged_in" ? t("auth.login.errorAlreadyLoggedIn") : t("auth.sso.failed"))}</p>
+        )}
+        {sso?.sso && (
+          <a href={`/api/sso/start?email=${encodeURIComponent(email)}`} className="block">
+            <Button type="button" className="w-full !py-2 !text-xs">
+              {t("auth.sso.button")}
+            </Button>
+          </a>
+        )}
+        {!sso?.enforce && (
+          <Button type="submit" variant={sso?.sso ? "secondary" : "primary"} className="mt-0.5 w-full !py-2 !text-xs" disabled={submitting}>
+            {submitting ? t("auth.login.submitting") : t("auth.login.submit")}
+          </Button>
+        )}
+        {sso?.enforce && <p className="text-[11px] text-muted">{t("auth.sso.required")}</p>}
       </form>
       <div className="flex flex-col gap-3 border-t border-rule pt-3.5">
         <div className="flex justify-between text-xs text-muted">

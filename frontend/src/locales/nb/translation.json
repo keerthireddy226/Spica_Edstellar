@@ -100,6 +100,12 @@
       "tooShort": "Bruk minst {{min}} tegn.",
       "tooWeak": "Bruk både bokstaver og tall.",
       "tooCommon": "Passordet er for vanlig. Velg et annet."
+    },
+    "sso": {
+      "button": "Fortsett med enkel pålogging",
+      "required": "Organisasjonen din logger inn via sin egen påloggingsside.",
+      "failed": "Enkel pålogging ble ikke fullført. Prøv igjen, eller kontakt administratoren.",
+      "noAccount": "Du har ikke en Spica-konto ennå. Be administratoren om å legge deg til."
     }
   },
   "onboarding": {

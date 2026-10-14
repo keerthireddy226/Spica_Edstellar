@@ -109,6 +109,12 @@
       "tooShort": "Utilisez au moins {{min}} caractères.",
       "tooWeak": "Utilisez des lettres et des chiffres.",
       "tooCommon": "Ce mot de passe est trop courant. Choisissez-en un autre."
+    },
+    "sso": {
+      "button": "Continuer avec l'authentification unique",
+      "required": "Votre organisation se connecte via sa propre page de connexion.",
+      "failed": "L'authentification unique n'a pas abouti. Réessayez ou contactez votre administrateur.",
+      "noAccount": "Vous n'avez pas encore de compte Spica. Demandez à votre administrateur de vous ajouter."
     }
   },
   "onboarding": {

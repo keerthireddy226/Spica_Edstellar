@@ -49,3 +49,26 @@ export const governanceApi = {
   requestExport: () => api<{ id: string }>("/org-admin/data-export", { method: "POST" }),
   eraseLearner: (id: string, reason: string) => api(`/org-admin/learners/${id}/erase`, { method: "POST", body: JSON.stringify({ confirm: true, reason }) }),
 };
+
+export interface SsoSettings {
+  issuer: string;
+  clientId: string;
+  hasClientSecret: boolean;
+  enabled: boolean;
+  enforce: boolean;
+  jitProvisioning: boolean;
+  redirectUri: string;
+  domains: { domain: string; verified: boolean; txtName: string; txtValue: string }[];
+  scim: { enabled: boolean; tokenPrefix: string | null; baseUrl: string };
+}
+
+export const ssoApi = {
+  get: () => api<SsoSettings>("/org-admin/sso"),
+  save: (body: { issuer: string; clientId: string; clientSecret?: string; enabled: boolean; enforce: boolean; jitProvisioning: boolean }) =>
+    api<SsoSettings>("/org-admin/sso", { method: "PATCH", body: JSON.stringify(body) }),
+  addDomain: (domain: string) => api<SsoSettings>("/org-admin/sso/domains", { method: "POST", body: JSON.stringify({ domain }) }),
+  verifyDomain: (domain: string) => api<SsoSettings>(`/org-admin/sso/domains/${encodeURIComponent(domain)}/verify`, { method: "POST" }),
+  removeDomain: (domain: string) => api<SsoSettings>(`/org-admin/sso/domains/${encodeURIComponent(domain)}`, { method: "DELETE" }),
+  newScimToken: () => api<{ token: string; baseUrl: string }>("/org-admin/scim-token", { method: "POST" }),
+  revokeScimToken: () => api("/org-admin/scim-token", { method: "DELETE" }),
+};

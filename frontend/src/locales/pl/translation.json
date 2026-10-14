@@ -100,6 +100,12 @@
       "tooShort": "Użyj co najmniej {{min}} znaków.",
       "tooWeak": "Użyj liter i cyfr.",
       "tooCommon": "To hasło jest zbyt popularne. Wybierz inne."
+    },
+    "sso": {
+      "button": "Kontynuuj z logowaniem jednokrotnym",
+      "required": "Twoja organizacja loguje się przez własną stronę logowania.",
+      "failed": "Logowanie jednokrotne nie powiodło się. Spróbuj ponownie lub skontaktuj się z administratorem.",
+      "noAccount": "Nie masz jeszcze konta Spica. Poproś administratora o dodanie."
     }
   },
   "onboarding": {

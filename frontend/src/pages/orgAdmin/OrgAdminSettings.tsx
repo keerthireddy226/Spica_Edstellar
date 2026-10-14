@@ -5,6 +5,7 @@ import { LANGUAGES } from "@/i18n";
 import { getOrgSettings, removeOrgLogo, updateOrgSettings, uploadOrgLogo, type OrgSettings } from "@/api/orgAdmin";
 import { refreshBranding } from "@/components/AppShell/useBranding";
 import { DataGovernanceSection } from "@/components/DataGovernanceSection";
+import { SsoSettingsSection } from "@/components/SsoSettingsSection";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { planErrorMessage } from "@/api/plans";
 import { ApiError } from "@/lib/api";
@@ -359,6 +360,8 @@ export function OrgAdminSettings() {
           </div>
         )}
       </Section>
+
+      <SsoSettingsSection />
 
       <DataGovernanceSection />
     </div>

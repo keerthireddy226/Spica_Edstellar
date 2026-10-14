@@ -100,6 +100,12 @@
       "tooShort": "Käytä vähintään {{min}} merkkiä.",
       "tooWeak": "Käytä sekä kirjaimia että numeroita.",
       "tooCommon": "Salasana on liian yleinen. Valitse toinen."
+    },
+    "sso": {
+      "button": "Jatka kertakirjautumisella",
+      "required": "Organisaatiosi kirjautuu omalla kirjautumissivullaan.",
+      "failed": "Kertakirjautuminen ei onnistunut. Yritä uudelleen tai ota yhteyttä ylläpitäjään.",
+      "noAccount": "Sinulla ei ole vielä Spica-tiliä. Pyydä ylläpitäjää lisäämään sinut."
     }
   },
   "onboarding": {

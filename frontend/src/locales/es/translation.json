@@ -109,6 +109,12 @@
       "tooShort": "Usa al menos {{min}} caracteres.",
       "tooWeak": "Usa letras y números.",
       "tooCommon": "Esa contraseña es demasiado común. Elige otra."
+    },
+    "sso": {
+      "button": "Continuar con inicio de sesión único",
+      "required": "Tu organización inicia sesión con su propia página de acceso.",
+      "failed": "El inicio de sesión único no se completó. Inténtalo de nuevo o contacta con el administrador.",
+      "noAccount": "Aún no tienes una cuenta de Spica. Pide al administrador que te añada."
     }
   },
   "onboarding": {

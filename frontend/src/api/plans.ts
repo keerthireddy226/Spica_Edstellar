@@ -100,6 +100,10 @@ const FEATURE_LABELS: Record<string, string> = {
   mfa_enforcement: "Enforced two-step sign-in",
   audit_log: "The audit log",
   scheduled_reports: "Scheduled reports",
+  sso: "Single sign-on",
+  api_access: "API and webhooks",
+  data_governance: "Data governance",
+  po_invoicing: "Paying by invoice",
 };
 const LIMIT_LABELS: Record<string, string> = { managers: "Managers", batches: "Batches" };
 

@@ -107,7 +107,7 @@ export const FEATURES: Record<PlanFeature, FeatureInfo> = {
   audit_log: { label: "Audit log", description: "Who changed what across the organization.", minTier: "business", available: true },
   scheduled_reports: { label: "Scheduled reports", description: "Progress reports emailed on a schedule.", minTier: "business", available: true },
   po_invoicing: { label: "Purchase orders and invoicing", description: "Pay by invoice against a PO.", minTier: "business", available: true },
-  sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider.", minTier: "enterprise", available: false },
+  sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider (OpenID Connect) and provision learners automatically.", minTier: "enterprise", available: true },
   api_access: { label: "API and webhooks", description: "Connect Spica to your LMS or HR system.", minTier: "enterprise", available: true },
   mfa_enforcement: { label: "Enforced two-factor sign-in", description: "Require MFA for every admin and manager.", minTier: "enterprise", available: true },
   data_governance: { label: "Data governance", description: "Retention rules and a full data export.", minTier: "enterprise", available: true },

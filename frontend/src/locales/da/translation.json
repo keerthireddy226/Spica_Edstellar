@@ -100,6 +100,12 @@
       "tooShort": "Brug mindst {{min}} tegn.",
       "tooWeak": "Brug både bogstaver og tal.",
       "tooCommon": "Den adgangskode er for almindelig. Vælg en anden."
+    },
+    "sso": {
+      "button": "Fortsæt med single sign-on",
+      "required": "Din organisation logger ind via sin egen login-side.",
+      "failed": "Single sign-on blev ikke gennemført. Prøv igen, eller kontakt din administrator.",
+      "noAccount": "Du har endnu ikke en Spica-konto. Bed din administrator om at tilføje dig."
     }
   },
   "onboarding": {

@@ -100,6 +100,12 @@
       "tooShort": "Använd minst {{min}} tecken.",
       "tooWeak": "Använd både bokstäver och siffror.",
       "tooCommon": "Lösenordet är för vanligt. Välj ett annat."
+    },
+    "sso": {
+      "button": "Fortsätt med enkel inloggning",
+      "required": "Din organisation loggar in via sin egen inloggningssida.",
+      "failed": "Enkel inloggning slutfördes inte. Försök igen eller kontakta din administratör.",
+      "noAccount": "Du har inget Spica-konto än. Be din administratör att lägga till dig."
     }
   },
   "onboarding": {
