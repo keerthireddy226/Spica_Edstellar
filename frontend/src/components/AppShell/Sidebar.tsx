@@ -164,7 +164,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             locked={locked}
             onClick={onClose}
           />
-          {myLicense?.individual && (
+          {myLicense?.individual && myLicense.status !== "active" && myLicense.status !== "grace" && (
             <NavEntry
               to={ROUTES.PLANS}
               icon={Sparkles}

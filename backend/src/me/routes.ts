@@ -3,6 +3,7 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { learnerAccess } from "../licenses/service.js";
+import { getLearnerStats } from "../gamification/stats.js";
 
 // The signed-in person's own profile extras: work details, what they've
 // done recently, a summary of their role, and (for learners) their
@@ -151,6 +152,8 @@ meRouter.get("/learning", requireAuth, async (req: AuthedRequest, res, next) => 
     ]);
     const x = u.rows[0];
     const p = prog.rows[0];
+    // Same numbers as the learner's Overview.
+    const st = await getLearnerStats(id);
     const pl = place.rows[0];
     res.json({
       participantId: x.participant_id,
@@ -182,12 +185,12 @@ meRouter.get("/learning", requireAuth, async (req: AuthedRequest, res, next) => 
         level: pl?.cefr_level ?? null,
         placementPercent: pl?.overall_percent ?? null,
         placedAt: pl?.taken_at ?? null,
-        sessions: p?.sessions_count ?? 0,
-        questions: p?.questions_completed ?? 0,
-        minutes: p?.practice_minutes ?? 0,
-        streak: p?.streak_days ?? 0,
-        xp: p?.total_xp ?? 0,
-        accuracy: p?.item_accuracy_graded ? Math.round((p.item_accuracy_correct / p.item_accuracy_graded) * 100) : null,
+        sessions: st.sessions,
+        questions: st.questionsCompleted,
+        minutes: st.practiceMinutes,
+        streak: st.streakDays,
+        xp: st.totalXp,
+        accuracy: st.accuracyPercent ?? null,
         lastPractice: p?.last_practice_date ?? null,
       },
       certificates: certs.rows.map((c) => ({ code: c.code, cefrLevel: c.cefr_level, batchName: c.batch_name, issuedAt: c.issued_at })),
@@ -225,6 +228,70 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
       [req.user!.id, b.examPreference ?? null, b.goalLevel ?? null, b.scoreTarget ?? null, b.examDate ?? null, b.dailyMinutes ?? null, b.examReason ?? null, b.examDate !== undefined],
     );
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Everything for a learner's Progress page in one call.
+meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
+  try {
+    const id = req.user!.id;
+    const [totals, skills, days, recent, achievements, placements] = await Promise.all([
+      pool.query(`SELECT * FROM progress_stats WHERE user_id = $1`, [id]),
+      pool.query(`SELECT skill, minutes, accuracy_correct, accuracy_graded FROM skill_stats WHERE user_id = $1 ORDER BY skill`, [id]),
+      pool.query(
+        `SELECT to_char(d, 'YYYY-MM-DD') AS day, coalesce(a.sessions, 0)::int AS sessions, coalesce(a.attempts, 0)::int AS attempts,
+           coalesce(round(a.active_ms / 60000.0), 0)::int AS minutes
+         FROM generate_series(current_date - 83, current_date, interval '1 day') d
+         LEFT JOIN learner_activity_daily a ON a.user_id = $1 AND a.day = d::date
+         ORDER BY d`,
+        [id],
+      ),
+      pool.query(
+        `SELECT s.id, s.session_type, s.mode, s.started_at, s.completed_at,
+           (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS answered
+         FROM sessions s WHERE s.user_id = $1 AND s.completed_at IS NOT NULL ORDER BY s.completed_at DESC LIMIT 12`,
+        [id],
+      ),
+      pool.query(
+        `SELECT a.id, a.title, a.description, a.icon, ua.unlocked_at
+         FROM achievements a LEFT JOIN user_achievements ua ON ua.achievement_id = a.id AND ua.user_id = $1
+         ORDER BY ua.unlocked_at DESC NULLS LAST, a.title`,
+        [id],
+      ),
+      pool.query(`SELECT cefr_level, overall_percent, status, taken_at FROM placements WHERE user_id = $1 ORDER BY taken_at`, [id]),
+    ]);
+    void totals;
+    const st = await getLearnerStats(id);
+    res.json({
+      totals: {
+        sessions: st.sessions,
+        questions: st.questionsCompleted,
+        minutes: st.practiceMinutes,
+        streak: st.streakDays,
+        xp: st.totalXp,
+        accuracy: st.accuracyPercent ?? null,
+      },
+      skills: (Object.entries(st.skillAccuracy) as [string, { correct: number; graded: number }][]).map(([skill, v]) => ({
+        skill,
+        minutes: skills.rows.find((r) => r.skill === skill)?.minutes ?? 0,
+        accuracy: v.graded ? Math.round((v.correct / v.graded) * 100) : null,
+        answered: v.graded,
+      })),
+      days: days.rows,
+      recent: recent.rows.map((r) => ({
+        id: r.id,
+        type: r.session_type,
+        mode: r.mode,
+        completedAt: r.completed_at,
+        minutes: r.started_at ? Math.max(1, Math.round((new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()) / 60000)) : null,
+        answered: r.answered,
+      })),
+      achievements: achievements.rows.map((a) => ({ id: a.id, title: a.title, description: a.description, icon: a.icon, unlockedAt: a.unlocked_at })),
+      placements: placements.rows.map((p) => ({ level: p.cefr_level, percent: p.overall_percent, status: p.status, takenAt: p.taken_at })),
+    });
   } catch (err) {
     next(err);
   }

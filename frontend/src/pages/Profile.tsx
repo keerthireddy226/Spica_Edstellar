@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MyCertificates } from "@/components/MyCertificates";
+import { ProgressExtras } from "@/components/progress/ProgressExtras";
 import { DeleteMyAccount } from "@/components/DeleteMyAccount";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -7,9 +8,7 @@ import {
   ShieldCheck,
   LogOut,
   GraduationCap,
-  ArrowRightLeft,
   CalendarDays,
-  CalendarClock,
   Pencil,
   X,
   Check,
@@ -23,6 +22,7 @@ import {
   MapPin,
   Briefcase,
   KeyRound,
+  CheckCircle2,
 } from "lucide-react";
 import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
@@ -38,11 +38,10 @@ import {
   type AgeBand,
 } from "@/api/onboarding";
 import { AGE_BANDS, GENDERS, JOB_ROLES, countryName, sortedCountries } from "@/constants/demographics";
-import { getRoadmap, type RoadmapData } from "@/api/roadmap";
 import { ROUTES } from "@/constants/routes";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { DailyReminderCard } from "@/components/DailyReminderCard";
-import { LearningGoals, MyOrganization, ProgressSnapshot, useMyLearning } from "@/components/profile/LearnerExtras";
+import { LearningGoals, MyOrganization, useMyLearning } from "@/components/profile/LearnerExtras";
 import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/pages/admin/AdminProfile";
 import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
@@ -68,85 +67,6 @@ function SectionHeader({ icon, tint, title }: { icon: typeof GraduationCap; tint
   );
 }
 
-function PlanRow({ icon, tint, label, value }: { icon: typeof GraduationCap; tint: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 py-2.5">
-      <IconBadge icon={icon} tint={tint} size={32} />
-      <span className="flex-1 text-sm text-ink min-w-0">{label}</span>
-      <span className="text-sm font-bold text-ink text-right shrink-0">{value}</span>
-    </div>
-  );
-}
-
-// Everything here is already collected elsewhere — reads the same endpoints Onboarding/Roadmap use.
-function PlanSection() {
-  const { t } = useTranslation();
-  const [profile, setProfile] = useState<OnboardingProfile | null>(null);
-  const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    Promise.allSettled([getOnboardingProfile(), getRoadmap()]).then(([p, r]) => {
-      if (p.status === "fulfilled") setProfile(p.value);
-      if (r.status === "fulfilled") setRoadmap(r.value);
-      setLoading(false);
-    });
-  }, []);
-
-  // Nothing real to show yet (no profile, no roadmap) — skip the whole card, not an empty shell.
-  if (!loading && !profile?.exam_preference && !roadmap) return null;
-  if (loading) {
-    return (
-      <div className="bg-surface border border-rule rounded-card p-6">
-        <p className="text-sm text-muted">{t("profile.plan.loading")}</p>
-      </div>
-    );
-  }
-
-  const notSet = t("profile.plan.notSet");
-  const examName = profile?.exam_preference ? t(`onboarding.wizard.examGoal.exam.${profile.exam_preference}`) : notSet;
-  const daysLeft = roadmap?.accessWindow
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(roadmap.accessWindow.startDate).getTime() +
-            roadmap.accessWindow.durationDays * 86_400_000 -
-            Date.now()) /
-            86_400_000,
-        ),
-      )
-    : null;
-
-  return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-1">
-      <SectionHeader icon={GraduationCap} tint="bg-accent/15 text-accent" title={t("profile.plan.title")} />
-      <div className="flex flex-col divide-y divide-rule mt-3">
-        <PlanRow icon={GraduationCap} tint="bg-accent/15 text-accent" label={t("profile.plan.exam")} value={examName} />
-        <PlanRow
-          icon={ArrowRightLeft}
-          tint="bg-listening/15 text-listening"
-          label={t("profile.plan.currentToGoal")}
-          value={roadmap ? `${roadmap.placement.cefrLevel} → ${roadmap.goalLevel}` : notSet}
-        />
-        <PlanRow
-          icon={CalendarDays}
-          tint="bg-reading/15 text-reading"
-          label={t("profile.plan.examDateLabel")}
-          value={profile?.exam_date ? new Date(profile.exam_date).toLocaleDateString() : notSet}
-        />
-        <PlanRow
-          icon={CalendarClock}
-          tint="bg-speaking/15 text-speaking"
-          label={t("profile.plan.accessDaysLeft")}
-          value={daysLeft !== null ? String(daysLeft) : notSet}
-        />
-      </div>
-    </div>
-  );
-}
-
-
-// Real editing — PATCH /auth/me updates the account. Email stays read-only (tied to login/verification).
 function AccessSection() {
   const { t } = useTranslation();
   const license = useMyLicense();
@@ -171,7 +91,15 @@ function AccessSection() {
       {license.queuedMonths > 0 && (
         <p className="text-xs text-muted">{t("profile.access.queued", { count: license.queuedMonths })}</p>
       )}
-      {license.individual ? (
+      {license.status === "active" || license.status === "grace" ? (
+        <div className="grid grid-cols-2 gap-2 mt-1">
+          {[t("nav.modules"), t("nav.practiceTests"), t("nav.tutor"), t("nav.progress")].map((label) => (
+            <span key={label} className="flex items-center gap-2 text-sm text-ink bg-success/10 rounded-input px-3 py-2">
+              <CheckCircle2 size={15} className="text-success shrink-0" /> {label}
+            </span>
+          ))}
+        </div>
+      ) : license.individual ? (
         <Link to={ROUTES.PLANS} className="self-start">
           <Button variant={onFreePlan ? "primary" : "secondary"}>{onFreePlan ? t("plans.upgrade") : t("plans.title")}</Button>
         </Link>
@@ -573,6 +501,7 @@ export function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { data: learning, reload } = useMyLearning();
+  const [tab, setTab] = useState("learning");
 
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "?";
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || t("profile.account.unnamed");
@@ -584,76 +513,120 @@ export function Profile() {
     navigate(ROUTES.LOGIN, { replace: true });
   }
 
+  const tabs: [string, string][] = [
+    ["learning", "Learning"],
+    ["account", "Account"],
+    ["settings", "Settings"],
+    ["security", "Security"],
+  ];
+  const p = learning?.progress;
+
   return (
-    <div className="max-w-5xl mx-auto flex flex-col gap-6">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-6 items-start">
-        <div className="flex flex-col gap-6">
-          <div className="relative bg-surface border border-rule rounded-card overflow-hidden">
-            <div className="h-16 bg-gradient-to-r from-navy-soft/30 via-accent/20 to-writing/20" />
-            <div className="flex flex-col items-center text-center gap-2 px-6 pb-6 -mt-10">
-              <span className="h-20 w-20 rounded-full bg-navy text-lime flex items-center justify-center shrink-0 font-display font-bold text-2xl ring-4 ring-surface shadow-sm">
-                {initials}
-              </span>
-              <h1 className="font-display font-bold text-lg text-ink">{fullName}</h1>
-              <p className="text-sm text-muted flex items-center gap-1.5">
-                <Mail size={13} strokeWidth={1.8} />
-                {user?.email}
-              </p>
-              {user?.participantId && (
-                <p className="text-xs text-muted font-mono">{user.participantId}</p>
+    <div className="max-w-6xl mx-auto flex flex-col gap-6">
+      <div
+        className="relative overflow-hidden rounded-card shadow-sm"
+        style={{ background: "linear-gradient(120deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 70%, black) 70%, color-mix(in srgb, #c9965c 60%, var(--color-navy)))" }}
+      >
+        <span className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
+        <span className="pointer-events-none absolute right-48 -bottom-28 h-56 w-56 rounded-full bg-white/5" />
+        <div className="relative flex items-center gap-5 px-6 sm:px-8 pt-7 pb-5 flex-wrap">
+          <span className="h-20 w-20 rounded-3xl bg-white/20 ring-2 ring-white/40 text-white flex items-center justify-center font-display font-bold text-2xl shrink-0">
+            {initials}
+          </span>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display font-bold text-2xl text-white truncate">{fullName}</h1>
+            <p className="text-sm text-white/80 flex items-center gap-1.5 truncate">
+              <Mail size={13} strokeWidth={1.8} />
+              {user?.email}
+              {user?.participantId ? ` · ${user.participantId}` : ""}
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap mt-2">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white text-navy-deep">{accountType}</span>
+              {learning?.access && (learning.access.status === "active" || learning.access.status === "grace") && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">Full access</span>
               )}
-              <span className="text-xs font-semibold text-accent bg-accent/15 px-2.5 py-1 rounded-pill">{accountType}</span>
-              <button
-                onClick={handleLogout}
-                className="mt-3 flex items-center gap-1.5 text-sm font-medium text-muted hover:text-error transition-colors cursor-pointer"
-              >
-                <LogOut size={15} strokeWidth={2} />
-                {t("onboarding.logout")}
-              </button>
+              {learning?.goals.examPreference && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
+                  Preparing for {learning.goals.examPreference.toUpperCase()}
+                  {learning.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? ` · goal ${learning.goals.goalLevel}` : ""}
+                </span>
+              )}
             </div>
           </div>
-
-          {learning && <ProgressSnapshot data={learning} />}
-          {learning && <MyOrganization data={learning} />}
-          {!learning?.organization && <PlanSection />}
-          <AccessSection />
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 rounded-pill bg-white/15 border border-white/30 text-white text-sm font-semibold hover:bg-white/25 transition-colors cursor-pointer"
+          >
+            <LogOut size={15} strokeWidth={2} />
+            {t("onboarding.logout")}
+          </button>
         </div>
-
-        <div className="flex flex-col gap-6">
-          <PersonalInformation />
-          {learning && <LearningGoals data={learning} onSaved={reload} />}
-          <AboutYouSection />
-          <DailyReminderCard />
-          <MyCertificates />
-          <DeleteMyAccount />
-          <PreferencesSection />
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6 items-stretch">
-        <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
-          <SectionHeader icon={Mic} tint="bg-speaking/15 text-speaking" title={t("profile.voice.title")} />
-          <VoiceSection hideTitle />
-        </div>
-
-      </div>
-
-      <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
-        <SectionHeader icon={Globe} tint="bg-listening/15 text-listening" title={t("profile.language.title")} />
-        <LanguageSwitcher />
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <h2 className="font-display font-bold text-lg text-ink">Security and sign-in</h2>
-        <div className="grid lg:grid-cols-2 gap-4 items-start">
-          <SecuritySection email={user?.email} />
-          <MfaCard />
-        </div>
-        <div className="grid lg:grid-cols-2 gap-4 items-start">
-          <ActiveSessionsSection />
-          <LoginHistorySection />
+        {p && (
+          <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 px-6 sm:px-8 pb-6">
+            {(
+              [
+                ["Current level", p.level ?? "Not placed", "var(--color-navy)"],
+                ["Day streak", p.streak, "var(--color-accent)"],
+                ["Sessions", p.sessions, "#c9965c"],
+                ["Minutes practised", p.minutes, "#b97a62"],
+              ] as const
+            ).map(([label, value, c]) => (
+              <div key={label} className="bg-surface rounded-input px-4 py-3 shadow-sm border-l-4" style={{ borderLeftColor: c }}>
+                <p className="font-display font-bold text-2xl" style={{ color: `color-mix(in srgb, ${c} 80%, black)` }}>
+                  {value}
+                </p>
+                <p className="text-xs text-muted">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="relative flex items-center gap-1 px-4 sm:px-6 bg-surface border-t border-rule overflow-x-auto">
+          {tabs.map(([k, l]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${tab === k ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"}`}
+            >
+              {l}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Two balanced columns per tab, so cards sit side by side without gaps. */}
+      {(() => {
+        const cols: Record<string, [React.ReactNode[], React.ReactNode[]]> = {
+          learning: [
+            [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <ProgressExtras key="s" part="skills" />],
+            [<AccessSection key="a" />, learning && <MyOrganization key="o" data={learning} />, <MyCertificates key="c" />],
+          ],
+          account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />]],
+          settings: [
+            [
+              <DailyReminderCard key="r" />,
+              <div key="l" className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+                <SectionHeader icon={Globe} tint="bg-listening/15 text-listening" title={t("profile.language.title")} />
+                <LanguageSwitcher />
+              </div>,
+            ],
+            [
+              <PreferencesSection key="pr" />,
+              <div key="v" className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+                <SectionHeader icon={Mic} tint="bg-speaking/15 text-speaking" title={t("profile.voice.title")} />
+                <VoiceSection hideTitle />
+              </div>,
+            ],
+          ],
+          security: [[<SecuritySection key="s" email={user?.email} />, <ActiveSessionsSection key="as" />], [<MfaCard key="m" />, <LoginHistorySection key="lh" />]],
+        };
+        const [left, right] = cols[tab];
+        return (
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            <div className="flex flex-col gap-6 min-w-0">{left}</div>
+            <div className="flex flex-col gap-6 min-w-0">{right}</div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

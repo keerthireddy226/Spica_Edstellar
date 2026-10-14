@@ -918,8 +918,8 @@ export function PracticeTests() {
         </div>
       </div>
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
-        {VERSANT_PRODUCTS.map((id) => {
+      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-5">
+        {VERSANT_PRODUCTS.map((id, i) => {
           const Icon = PRODUCT_ICON[id];
           const durationMatch = t(`practiceTests.versantProduct.${id}Desc`).match(/\d+\s*minutes/);
           // Products the learner's organization switched off stay visible but closed.
@@ -930,6 +930,9 @@ export function PracticeTests() {
               onClick={() => enabled && openProduct(id)}
               disabled={!enabled}
               className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
+                // Three across, then two wider ones, so no card sits alone.
+                i < 3 ? "lg:col-span-2" : i === VERSANT_PRODUCTS.length - 1 ? "sm:col-span-2 lg:col-span-3" : "lg:col-span-3"
+              } ${
                 enabled
                   ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
                   : "opacity-55 cursor-not-allowed"

@@ -4,6 +4,7 @@ import { TrendingUp, TrendingDown, Minus, Trophy } from "lucide-react";
 import { getDailyProgress, type DailyProgress, type DailyStat } from "@/api/dashboard";
 import { ApiError } from "@/lib/api";
 import { MotivationalBar } from "@/components/MotivationalBar";
+import { ProgressExtras } from "@/components/progress/ProgressExtras";
 
 function isToday(dateStr: string): boolean {
   return dateStr === new Date().toISOString().slice(0, 10);
@@ -188,10 +189,12 @@ export function Progress() {
         <p className="text-sm text-muted mt-0.5">{t("progressPage.subtitle")}</p>
       </div>
 
+      <ProgressExtras part="banner" />
       <MotivationalBar />
 
       <TodayReport days={data.days} isBestDay={isToday(data.bestDay.date) && data.bestDay.questionsCompleted > 0} />
       <DailyLineChart days={data.days} bestDay={data.bestDay} totalQuestions={data.totalQuestions} />
+      <ProgressExtras part="details" />
     </div>
   );
 }

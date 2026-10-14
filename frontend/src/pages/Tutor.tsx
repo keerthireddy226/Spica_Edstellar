@@ -64,7 +64,7 @@ export function Tutor() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-4">
+    <div className="max-w-4xl mx-auto flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <Mascot variant="coach" size={56} />
         <div className="flex-1 min-w-0">
