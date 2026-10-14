@@ -2,8 +2,8 @@
 
 /* Sage & Clay — "Sunlit Clay" (light) / "Kiln Dusk" (dark). Dark mode via [data-theme="dark"] or prefers-color-scheme. */
 @theme {
-  --font-display: "Outfit", sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-display: "Outfit", "Noto Sans JP", "Noto Sans SC", sans-serif;
+  --font-body: "Inter", "Noto Sans JP", "Noto Sans SC", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --font-sans: "Inter", sans-serif;
   /* The brand wordmark specifically ("Spica by Edstellar") — a serif, not
@@ -286,4 +286,24 @@ input:-webkit-autofill:focus {
 
 button {
   font-family: inherit;
+}
+
+/* Print / save-as-PDF: just the page content, no app chrome. */
+@media print {
+  aside,
+  header {
+    display: none !important;
+  }
+  main {
+    overflow: visible !important;
+  }
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+}
+
+/* Chinese text should use Simplified Chinese glyph shapes, not Japanese ones. */
+html:lang(zh) {
+  --font-display: "Outfit", "Noto Sans SC", sans-serif;
+  --font-body: "Inter", "Noto Sans SC", sans-serif;
 }

@@ -3,6 +3,10 @@ import { Layers, ShieldCheck, Users, CalendarCheck, Pencil, Check, X, UserPlus, 
 import type { LucideIcon } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { getOrgOverview, updateOrganizationName, type OrgAdminOverview } from "@/api/orgAdmin";
+import { getOrgLicenseSummary, formatShortDate, type PoolSummary } from "@/api/licenses";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+import { KeyRound } from "lucide-react";
 import type { ActivityKind } from "@/api/admin";
 
 const SESSION_TYPE_LABEL: Record<string, string> = {
@@ -133,12 +137,16 @@ function StatCard({ label, value, icon: Icon, index }: { label: string; value: n
 
 export function OrgAdminDashboard() {
   const [overview, setOverview] = useState<OrgAdminOverview | null>(null);
+  const [licenses, setLicenses] = useState<PoolSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getOrgOverview()
       .then(setOverview)
       .catch(() => setError("Could not load your organization."));
+    getOrgLicenseSummary()
+      .then(setLicenses)
+      .catch(() => {});
   }, []);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
@@ -167,6 +175,38 @@ export function OrgAdminDashboard() {
         <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
           No batches yet — create one from the Batches page, then invite learners into it.
         </p>
+      )}
+
+      {licenses && (
+        <Link
+          to={ROUTES.ORG_ADMIN_LICENSES}
+          className="bg-surface border border-rule rounded-card shadow-sm p-5 flex items-center gap-5 flex-wrap hover:border-rule-strong transition-colors"
+        >
+          <span className="h-11 w-11 rounded-2xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
+            <KeyRound size={22} strokeWidth={1.8} />
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-bold text-ink">Licenses</p>
+            <p className="text-xs text-muted">
+              {licenses.nextPoolExpiry
+                ? `${licenses.nextPoolExpiryQuantity} unassigned expire ${formatShortDate(licenses.nextPoolExpiry)}`
+                : "1 license = 1 learner-month"}
+            </p>
+          </div>
+          {(
+            [
+              ["Available", licenses.available, "text-ink"],
+              ["Active learners", licenses.activeLearners, "text-success"],
+              ["Ending ≤ 7 days", licenses.expiringSoonLearners, "text-navy-deep"],
+              ["No license", licenses.unlicensedLearners, "text-error"],
+            ] as const
+          ).map(([label, value, cls]) => (
+            <div key={label} className="text-center min-w-20">
+              <p className={`font-display font-bold text-xl ${cls}`}>{value}</p>
+              <p className="text-[11px] text-muted">{label}</p>
+            </div>
+          ))}
+        </Link>
       )}
 
       <RecentActivity data={overview.activityFeed} />

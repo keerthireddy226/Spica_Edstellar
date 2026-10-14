@@ -1,0 +1,742 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Oversigt",
+      "admins": "Administratorer",
+      "orgAdmins": "Organisationsadministratorer",
+      "learners": "Individuelle kursister"
+    }
+  },
+  "skills": {
+    "listening": "Lytning",
+    "speaking": "Tale",
+    "reading": "Læsning",
+    "writing": "Skrivning"
+  },
+  "auth": {
+    "login": {
+      "title": "Velkommen tilbage",
+      "subtitle": "Log ind for at fortsætte med at øve.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Adgangskode",
+      "submit": "Log ind",
+      "submitting": "Logger ind…",
+      "errorInvalidCredentials": "Forkert e-mail eller adgangskode.",
+      "errorEmailNotVerified": "Bekræft din e-mail, før du logger ind — tjek din indbakke for bekræftelseslinket.",
+      "errorWrongPortal": "Denne konto kan ikke logge ind via denne side.",
+      "errorAlreadyLoggedIn": "Denne konto er allerede logget ind på en anden enhed. Log ud der først.",
+      "errorOrganizationDeactivated": "Denne organisation er deaktiveret. Kontakt din administrator.",
+      "errorTooManyAttempts": "For mange loginforsøg. Vent et par minutter, og prøv igen.",
+      "errorGeneric": "Noget gik galt. Tjek din forbindelse, og prøv igen.",
+      "forgotPassword": "Glemt adgangskode?",
+      "createAccount": "Opret en konto"
+    },
+    "signup": {
+      "title": "Opret din konto",
+      "subtitle": "Kom i gang med at øve på få sekunder.",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Adgangskode",
+      "passwordPlaceholder": "Mindst 8 tegn",
+      "confirmPasswordLabel": "Bekræft adgangskode",
+      "confirmPasswordPlaceholder": "Indtast adgangskoden igen",
+      "passwordTooShort": "Adgangskoden skal være på mindst 8 tegn.",
+      "passwordMismatch": "Adgangskoderne er ikke ens.",
+      "submit": "Opret konto",
+      "submitting": "Opretter konto…",
+      "errorEmailTaken": "Der findes allerede en konto med denne e-mail.",
+      "errorGeneric": "Noget gik galt. Prøv igen.",
+      "alreadyHaveAccount": "Har du allerede en konto?",
+      "signIn": "Log ind",
+      "checkEmailTitle": "Tjek din e-mail",
+      "checkEmailBody": "Vi har sendt et bekræftelseslink til {{email}}. Log ind, når du har bekræftet, for at fortsætte.",
+      "signInButton": "Log ind"
+    },
+    "forgotPassword": {
+      "title": "Nulstil din adgangskode",
+      "subtitle": "Vi sender dig et link til at vælge en ny adgangskode.",
+      "submitted": "Hvis der findes en konto med den e-mail, er et nulstillingslink på vej.",
+      "emailLabel": "E-mail",
+      "submit": "Send nulstillingslink",
+      "submitting": "Sender…",
+      "backToSignIn": "Tilbage til login"
+    },
+    "resetPassword": {
+      "title": "Vælg en ny adgangskode",
+      "subtitle": "Mindst 8 tegn.",
+      "missingTokenTitle": "Nulstil adgangskode",
+      "missingTokenSubtitle": "Dette link mangler sin token.",
+      "requestNewLink": "Anmod om et nyt link",
+      "passwordLabel": "Ny adgangskode",
+      "passwordPlaceholder": "Mindst 8 tegn",
+      "confirmPasswordLabel": "Bekræft ny adgangskode",
+      "confirmPasswordPlaceholder": "Indtast adgangskoden igen",
+      "passwordTooShort": "Adgangskoden skal være på mindst 8 tegn.",
+      "passwordMismatch": "Adgangskoderne er ikke ens.",
+      "submit": "Nulstil adgangskode",
+      "submitting": "Gemmer…",
+      "error": "Dette link er ugyldigt eller udløbet."
+    },
+    "verifyEmail": {
+      "title": "Bekræftelse af e-mail",
+      "pending": "Bekræfter…",
+      "success": "Din e-mail er bekræftet. Log ind for at fortsætte.",
+      "signInButton": "Log ind",
+      "error": "Dette bekræftelseslink er ugyldigt eller udløbet."
+    }
+  },
+  "onboarding": {
+    "title": "Velkommen til opsætningen",
+    "logout": "Log ud",
+    "wizard": {
+      "stepLabel": "{{current}} af {{total}}",
+      "back": "Tilbage",
+      "next": "Næste",
+      "basics": {
+        "title": "Lad os lære dig at kende",
+        "subtitle": "Din e-mail er udfyldt fra dit login",
+        "firstNameLabel": "Fornavn",
+        "firstNamePlaceholder": "Indtast dit fornavn",
+        "lastNameLabel": "Efternavn",
+        "lastNamePlaceholder": "Indtast dit efternavn",
+        "emailLabel": "E-mail",
+        "emailNote": "Udfyldt fra din konto"
+      },
+      "examGoal": {
+        "examTitle": "Hvilken prøve forbereder du dig til?",
+        "examSubtitle": "Vi tilpasser din træning til prøvens format",
+        "goalTitle": "Hvilket niveau eller resultat sigter du efter?",
+        "goalSubtitle": "Dit mål for prøven",
+        "scoreTargetLabel": "Specifikt resultatmål (valgfrit)",
+        "scoreTargetPlaceholder": "f.eks. IELTS 7.0, Versant 69+, PTE 65",
+        "exam": {
+          "versantDesc": "Tale, skrivning, niveautest, professionel",
+          "ieltsDesc": "Academic eller General Training",
+          "toeflDesc": "Internetbaseret test",
+          "pteDesc": "Pearsons computerbaserede test",
+          "other": "Andet / Generelt",
+          "otherDesc": "Generel forbedring af engelsk"
+        },
+        "goal": {
+          "A1": "A1 – Begynder",
+          "A1Desc": "Enkle ord og hverdagsudtryk",
+          "A2": "A2 – Grundlæggende",
+          "A2Desc": "Enkle sætninger, nemme samtaler",
+          "B1": "B1 – Mellemniveau",
+          "B1Desc": "De fleste situationer på rejse og arbejde",
+          "B2": "B2 – Øvre mellemniveau",
+          "B2Desc": "Flydende samtale, detaljerede tekster",
+          "C1": "C1 – Avanceret",
+          "C1Desc": "Komplekse emner, underforståede betydninger",
+          "C2": "C2 – Kompetent",
+          "C2Desc": "Næsten modersmålspræcision og flydende sprog",
+          "unsure": "Ikke sikker endnu",
+          "unsureDesc": "Lad niveautesten hjælpe dig med at beslutte"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "Hvorfor tager du prøven?",
+        "reasonSubtitle": "Det hjælper os med at tilpasse indholdet til dine reelle behov",
+        "reason": {
+          "university": "Optagelse på universitet",
+          "job": "Krav fra arbejdsgiver",
+          "immigration": "Indvandring",
+          "promotion": "Forfremmelse eller karriere",
+          "personal": "Personligt mål"
+        },
+        "appliedTitle": "Har du allerede tilmeldt dig prøven?",
+        "appliedSubtitle": "Vi planlægger din træning efter din tidsfrist",
+        "appliedYes": "Ja, jeg har en bekræftet dato",
+        "appliedNo": "Nej, ikke endnu",
+        "examDateLabel": "Hvornår er din prøve?",
+        "prepDaysLabel": "Hvor mange dage vil du forberede dig?",
+        "prepDaysPlaceholder": "f.eks. 30",
+        "days": "dage"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "Har du taget prøven før?",
+        "attemptsSubtitle": "Det hjælper os med at forstå dit udgangspunkt",
+        "attempts": {
+          "first": "Nej, det er mit første forsøg",
+          "once": "Ja, én gang",
+          "multiple": "Ja, flere gange"
+        },
+        "prevScoreLabel": "Hvad var dit tidligere resultat?",
+        "prevScorePlaceholder": "f.eks. B1, 5.5, 58",
+        "prevDateLabel": "Hvornår tog du den sidst?",
+        "prevDatePlaceholder": "f.eks. marts 2026, for 6 måneder siden",
+        "timeTitle": "Hvor meget tid kan du bruge om dagen?",
+        "timeSubtitle": "Vær realistisk — stabilitet slår intensitet",
+        "time": {
+          "min15": "15 minutter",
+          "min15Desc": "Hurtig daglig træning",
+          "min30": "30 minutter",
+          "min30Desc": "Støt, jævn fremgang",
+          "min60": "1 time",
+          "min60Desc": "Seriøs forberedelse",
+          "min90": "90+ minutter",
+          "min90Desc": "Intensiv fordybelse"
+        }
+      },
+      "duration": {
+        "title": "Hvor længe vil du have adgang?",
+        "subtitle": "Vælg en plan, der passer til din tidsplan",
+        "oneMonth": "1 måned",
+        "oneMonthDesc": "Kort, intensiv spurt",
+        "threeMonths": "3 måneder",
+        "threeMonthsDesc": "Afbalanceret forberedelse",
+        "sixMonths": "6 måneder",
+        "sixMonthsDesc": "Grundig, stabil læring",
+        "untilExam": "Indtil min prøvedato",
+        "untilExamDesc": "Beregnet ud fra din prøvedato"
+      },
+      "consent": {
+        "title": "Før vi fortsætter",
+        "subtitle": "Din stemme optages under øvelser og test",
+        "body": "Vi optager dine mundtlige svar for at vurdere din tale og give dig feedback. Optagelserne gemmes i en begrænset periode og bruges kun til at vurdere og forbedre dine resultater. Du kan til enhver tid slette dine data under Indstillinger.",
+        "checkboxLabel": "Jeg forstår og accepterer, at min stemme optages under øvelser og test.",
+        "submit": "Fortsæt til test",
+        "submitting": "Gemmer…",
+        "error": "Noget gik galt, da dine svar skulle gemmes. Prøv igen."
+      },
+      "about": {
+        "title": "Om dig",
+        "subtitle": "Det hjælper os med at tilpasse træningen til din situation.",
+        "countryLabel": "Land",
+        "cityLabel": "By",
+        "cityPlaceholder": "f.eks. Aarhus",
+        "jobRoleLabel": "Jobfunktion",
+        "genderLabel": "Køn (valgfrit)",
+        "ageLabel": "Alder (valgfrit)",
+        "select": "Vælg…",
+        "skip": "Vil helst ikke oplyse",
+        "consent": "Jeg accepterer, at mit køn og min aldersgruppe gemmes og kun bruges i anonymiserede, samlede rapporter.",
+        "privacyNote": "Køn og alder er valgfrie. De vises aldrig for andre kursister og rapporteres kun i grupper på 5 eller flere."
+      }
+    }
+  },
+  "placement": {
+    "title": "Du er klar!",
+    "subtitle": "Opsætningen er færdig — nu er det tid til din niveautest.",
+    "scheduleLater": "Planlæg til senere",
+    "scheduling": "Sender…",
+    "scheduleSent": "Vi har sendt dig et link med en påmindelse.",
+    "scheduleLaterError": "Noget gik galt, da påmindelsen skulle sendes. Prøv igen.",
+    "info": {
+      "timing": "Tidsbegrænset — afsæt ca. 15–20 minutter",
+      "covers": "Dækker tale, lytning, læsning og skrivning",
+      "graded": "Testen bedømmes, og din stemme optages til vurdering — svar ærligt, alene og uden hjælp udefra.",
+      "equipment": "Hav høretelefoner og mikrofon klar"
+    },
+    "instructions": {
+      "checkboxLabel": "Jeg har læst instruktionerne og er klar.",
+      "begin": "Start test"
+    },
+    "resume": {
+      "title": "Fortsæt, hvor du slap",
+      "subtitle": "Du har allerede besvaret {{count}} spørgsmål i denne test — fortsæt, så beholder du fremskridtet.",
+      "continue": "Fortsæt test"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "Start",
+    "loading": "Indlæser test…",
+    "loadError": "Noget gik galt under indlæsning af testen. Prøv igen.",
+    "micError": "Vi har ikke adgang til din mikrofon. Tillad mikrofonadgang, og prøv igen.",
+    "progress": "{{current}} af {{total}}",
+    "play": "Afspil lyd",
+    "playAgain": "Afspil igen",
+    "replay": "Afspil igen",
+    "playing": "Afspiller…",
+    "record": "Optag svar",
+    "recordAgain": "Optag igen",
+    "audioSaved": "Optagelse gemt",
+    "stopRecording": "Stop optagelse",
+    "skip": "Spring over",
+    "exitConfirm": "Forlade testen nu? Dit fremskridt i dette spørgsmål gemmes ikke.",
+    "answerPlaceholder": "Skriv dit svar her…",
+    "submitting": "Sender…",
+    "next": "Næste",
+    "finish": "Afslut",
+    "submitError": "Noget gik galt, da dit svar skulle sendes. Prøv igen.",
+    "resultsTitle": "Test gennemført",
+    "resultsSummary": "Du svarede rigtigt på {{correct}} af {{graded}} automatisk bedømte spørgsmål. {{pending}} svar afventer stadig vurdering.",
+    "done": "Færdig",
+    "yourLevel": "Dit anslåede niveau: {{level}}",
+    "levelDisclaimer": "Dette er vores egen CEFR-baserede vurdering ud fra testen, ikke et officielt resultat.",
+    "pendingNote": "{{pending}} af dine svar skal stadig vurderes, før de tæller med i dit niveau.",
+    "goToRoadmap": "Gå til din læringsplan",
+    "notEnoughAnswered": "Ikke nok besvaret",
+    "gapCappedNote": "Nogle niveauer blev ikke testet — dit reelle niveau kan være højere.",
+    "failedNote": "{{failed}} af dine svar kunne ikke bedømmes på grund af et midlertidigt problem med vores bedømmelsestjeneste — det skyldes ikke dine svar. Prøv igen senere."
+  },
+  "roadmap": {
+    "loading": "Indlæser din læringsplan…",
+    "loadError": "Noget gik galt under indlæsning af din læringsplan. Prøv igen.",
+    "pendingReviewBanner": "Dit niveautestresultat gennemgås som en del af identitetstjekket. Du kan bruge alt nedenfor imens.",
+    "notReadyTitle": "Din læringsplan er ikke klar endnu",
+    "notReadyBody": "Tag niveautesten for at få en personlig plan.",
+    "notReadyBodyScheduled": "Du har planlagt niveautesten til {{date}}. Tag den, når du er klar — din læringsplan laves lige bagefter.",
+    "takeTestNow": "Tag niveautesten",
+    "greeting": "Hej, {{name}}",
+    "currentLevel": "Nuværende niveau",
+    "goalLevel": "Mål",
+    "daysLeftLabel": "Dage tilbage",
+    "skillBreakdownTitle": "Færdigheder i detaljer",
+    "timelineTitle": "Din læringsplan",
+    "milestoneReach": "Nå {{level}}",
+    "milestoneMaintain": "Hold dit niveau",
+    "dayOffset": "Dag {{day}}",
+    "focusOn": "Fokus: {{skill}}",
+    "welcomeBack": "Velkommen tilbage",
+    "goalProgress": "Fremskridt mod målet",
+    "ofYourRoadmap": "af din læringsplan",
+    "streak": "Stime",
+    "streakDays_one": "{{count}} dag",
+    "streakDays_other": "{{count}} dage",
+    "startStreakToday": "Start din stime i dag.",
+    "keepStreakGoing": "Hold den kørende!",
+    "today": "I dag",
+    "practicedSoFar": "øvet indtil nu",
+    "accuracy": "Præcision",
+    "practiceToUnlock": "Øv for at låse op",
+    "practiceAccuracy": "præcision i øvelser",
+    "strongest": "stærkest",
+    "notTested": "Ikke testet endnu",
+    "gapCappedNote": "Nogle niveauer blev ikke testet — dit reelle niveau kan være højere."
+  },
+  "dashboard": {
+    "welcome": "Velkommen, {{email}}",
+    "role": "Rolle: {{role}}",
+    "placeholder": "Dette er en midlertidig side — den rigtige oversigt (niveau, læringsplan, stime, badges) kommer i en senere fase."
+  },
+  "nav": {
+    "roadmap": "Læringsplan",
+    "overview": "Oversigt",
+    "progress": "Fremskridt",
+    "modules": "Moduler",
+    "practiceTests": "Prøvetest",
+    "tutor": "Tutor",
+    "profile": "Profil"
+  },
+  "shell": {
+    "openMenu": "Åbn menu",
+    "toggleTheme": "Skift tema"
+  },
+  "practiceTests": {
+    "subtitle": "Fulde, tidsbegrænsede prøvetest, der svarer til de rigtige Versant-prøver.",
+    "comingSoon": "Kommer snart",
+    "setsCount": "{{count}} sæt",
+    "setsCount_other": "{{count}} sæt",
+    "questionsCount": "{{count}} spørgsmål",
+    "questionsCount_other": "{{count}} spørgsmål",
+    "completed": "Gennemført",
+    "startExam": "Start",
+    "retake": "Tag igen",
+    "backToProducts": "Tilbage til test",
+    "backToExams": "Tilbage til sæt",
+    "loadError": "Kunne ikke indlæse lige nu. Prøv igen.",
+    "saveAndNext": "Gem og næste",
+    "sectionLabel": "Del {{current}} af {{total}} — {{label}}",
+    "youHear": "Du hører",
+    "youSay": "Du siger",
+    "playsRemaining": "{{count}} afspilning tilbage",
+    "playsRemaining_other": "{{count}} afspilninger tilbage",
+    "scoreReport": {
+      "title": "Test gennemført",
+      "overall": "Samlet resultat",
+      "sectionResults": "Resultater pr. del",
+      "testType": "Test",
+      "skippedNote": "{{count}} spørgsmål blev sprunget over eller ikke besvaret og påvirker ikke dit niveau.",
+      "skippedNote_other": "{{count}} spørgsmål blev sprunget over eller ikke besvaret og påvirker ikke dit niveau."
+    },
+    "overview": {
+      "title": "Før du starter",
+      "subtitle": "Denne test har flere dele. Hver del har sin egen opgavetype.",
+      "begin": "Start test",
+      "startSection": "Start {{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "Tale og lytning — 17 minutter.",
+      "fourSkillsDesc": "Tale, lytning, læsning, skrivning — 30 minutter.",
+      "writingDesc": "Skriftligt engelsk — 35 minutter.",
+      "professionalDesc": "Tale, lytning, læsning, skrivning — 60 minutter.",
+      "placementDesc": "Tale, lytning, læsning, skrivning — 50 minutter."
+    }
+  },
+  "tutor": {
+    "subtitle": "En afslappet øvesamtale med din AI-coach.",
+    "inputPlaceholder": "Skriv dit svar…",
+    "loading": "Starter samtale…",
+    "typing": "Skriver…",
+    "sendError": "Noget gik galt under afsendelse. Prøv igen.",
+    "newConversation": "Ny samtale",
+    "newConversationConfirm": "Starte en ny samtale? Den nuværende afsluttes."
+  },
+  "profile": {
+    "account": {
+      "unnamed": "Din konto",
+      "individual": "Individuel"
+    },
+    "language": {
+      "title": "Sprog"
+    },
+    "voice": {
+      "title": "Stemme",
+      "subtitle": "Vælg den stemme, der læser spørgsmål op i test og øvelser.",
+      "loading": "Indlæser stemmeindstilling…",
+      "female": "Kvindestemme",
+      "male": "Mandsstemme",
+      "preview": "Lyt til denne stemme",
+      "previewLine": "Sådan kommer dine spørgsmål til at lyde.",
+      "saved": "Gemt — denne stemme bruges fremover."
+    },
+    "plan": {
+      "title": "Prøvemål",
+      "loading": "Indlæser din plan…",
+      "notSet": "Ikke angivet",
+      "exam": "Prøve",
+      "currentToGoal": "Nu → Mål",
+      "examDateLabel": "Prøvedato",
+      "accessDaysLeft": "Dage med adgang tilbage"
+    },
+    "personalInfo": {
+      "title": "Personlige oplysninger",
+      "edit": "Rediger",
+      "firstName": "Fornavn",
+      "lastName": "Efternavn",
+      "email": "E-mailadresse",
+      "accountType": "Kontotype",
+      "save": "Gem",
+      "saving": "Gemmer…",
+      "cancel": "Annuller",
+      "participantId": "Deltager-id"
+    },
+    "preferences": {
+      "title": "Præferencer",
+      "spokenPrompts": {
+        "title": "Talte instruktioner",
+        "subtitle": "Læs lytteinstruktioner højt under øvelser."
+      },
+      "weeklyReports": {
+        "title": "Ugentlige fremskridtsrapporter",
+        "subtitle": "Få en e-mail med et overblik over din aktivitet."
+      },
+      "strictTimer": {
+        "title": "Streng tidstagning",
+        "subtitle": "Slå pause fra i tidsbegrænsede øvelser."
+      }
+    },
+    "about": {
+      "title": "Om dig",
+      "gender": "Køn",
+      "age": "Alder",
+      "notShared": "Ikke oplyst",
+      "error": "Kunne ikke gemme. Prøv igen."
+    },
+    "access": {
+      "title": "Din adgang",
+      "activeUntil": "Aktiv indtil {{date}}",
+      "grace": "Udløbet — henstandsperiode indtil {{date}}",
+      "expired": "Udløb {{date}}",
+      "none": "Ingen licens tildelt endnu",
+      "queued_one": "Inklusive {{count}} yderligere måned, der allerede er tildelt",
+      "queued_other": "Inklusive {{count}} yderligere måneder, der allerede er tildelt",
+      "help": "Din adgang administreres af din organisation. Spørg din administrator eller leder om forlængelse."
+    },
+    "reminder": {
+      "title": "Daglig øvepåmindelse",
+      "on": "Til",
+      "off": "Fra",
+      "subtitle": "Vi sender dig en e-mail på dette tidspunkt de valgte dage — springes automatisk over, hvis du allerede har øvet den dag.",
+      "time": "Tidspunkt",
+      "streakAlert": "Advar mig også kl. 22, hvis min stime (3+ dage) er ved at blive brudt",
+      "error": "Kunne ikke gemme. Prøv igen.",
+      "savedOn": "Gemt — påmindelse kl. {{time}}.",
+      "savedOff": "Gemt — påmindelser er slået fra.",
+      "days": {
+        "sun": "Sø",
+        "mon": "Ma",
+        "tue": "Ti",
+        "wed": "On",
+        "thu": "To",
+        "fri": "Fr",
+        "sat": "Lø"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "Enhver plan starter på 0 %. Du er allerede videre.",
+    "mid": "Du er ikke længere, hvor du startede. Bliv ved.",
+    "high": "Målstregen er næsten i sigte."
+  },
+  "motivational": {
+    "line1": "15 minutters træning om dagen slår 2 timer én gang om ugen.",
+    "line2": "At tale højt — selv for dig selv — er den hurtigste vej til flydende sprog.",
+    "line3": "Hver fejl i træningen er én fejl mindre til prøven.",
+    "line4": "Stabilitet slår intensitet — lidt hver dag bliver hurtigt til meget.",
+    "line5": "Du behøver ikke være perfekt. Du skal bare blive ved.",
+    "line6": "Enhver ekspert var engang en begynder, der ikke gav op.",
+    "line7": "Små skridt i dag, stor selvtillid i morgen.",
+    "line8": "Øv i dag, så prøvedagen føles som en helt almindelig dag.",
+    "line9": "Det bedste tidspunkt at øve var i går. Det næstbedste er nu."
+  },
+  "achievement": {
+    "goalSetterTitle": "Målsætter",
+    "goalSetterBody": "Fastlæg dit målniveau og din læringsplan."
+  },
+  "recommendedPractice": {
+    "title": "Udvalgt til dig",
+    "startPractice": "Start øvelse",
+    "estimatedMinutes": "~{{minutes}} min"
+  },
+  "dailyChallenge": {
+    "title": "Dagens udfordring",
+    "subtitle": "En lille bonus for i dag",
+    "wordTab": "Dagens ord",
+    "idiomTab": "Idiom",
+    "wordOfDay": "Dagens ord — tryk for at {{action}}",
+    "reveal": "vise",
+    "hide": "skjule",
+    "idiomOfDay": "Dagens idiom",
+    "meaningTab": "Vælg betydningen",
+    "pickClosestMeaning": "Vælg den nærmeste betydning",
+    "correctFeedback": "Flot! Det er helt rigtigt. 🎉",
+    "incorrectFeedback": "Ikke helt — det betyder \"{{answer}}\"."
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "I stand til hurtigt at komme sig over vanskeligheder.",
+      "articulate": "At udtrykke en tanke eller følelse klart og effektivt.",
+      "candid": "Ærlig og ligefrem; åben.",
+      "diligent": "Viser vedholdende, omhyggelig indsats i sit arbejde eller sine pligter."
+    },
+    "idioms": {
+      "hitTheBooks": "At gå i gang med at studere, ofte seriøst eller før en vigtig prøve.",
+      "breakTheIce": "At sige eller gøre noget, der løsner op i starten af en samtale.",
+      "sameSage": "At være enig eller forstå noget på samme måde som andre.",
+      "underWeather": "At føle sig lidt utilpas."
+    }
+  },
+  "coachPromo": {
+    "badge": "Ingen bedømmelse · intet pres",
+    "title": "Ved du ikke, hvor du skal starte? Lad os snakke.",
+    "body": "Coach-tilstand er en venlig opvarmningssamtale — ingen tidsgrænser, ingen bedømmelse.",
+    "cta": "Åbn coach-tilstand"
+  },
+  "dashboardHome": {
+    "welcomeBack": "Velkommen tilbage, {{name}}",
+    "subtitle": "Fortsæt med at øve engelsk, og opbyg selvtillid i alle fire færdigheder.",
+    "subtitleFirstTime": "Du er ikke begyndt at øve endnu — din første session tager kun få minutter. Kom i gang!",
+    "subtitleAllDoneToday": "Alt er klaret for i dag — flot arbejde! Kom tilbage i morgen for at holde din stime.",
+    "subtitleContinue_one": "{{count}} opgave tilbage i dag — kom i gang!",
+    "subtitleContinue_other": "{{count}} opgaver tilbage i dag — kom i gang!",
+    "viewRoadmap": "Læringsplan",
+    "startPractice": "Start øvelse",
+    "overallProgressTitle": "Samlet fremskridt i øvelser",
+    "todaysTasksTitle": "Dagens opgaver",
+    "todaysTasksTitleGo": "Dagens opgaver — kom i gang!",
+    "todaysTasksAllDone": "Dagens opgaver — alt klaret!",
+    "taskProgress": "{{done}}/{{target}} opgaver i dag",
+    "practiceAction": "Øv",
+    "statusNotStarted": "Ikke startet",
+    "statusInProgress": "I gang",
+    "statusCompleted": "Gennemført",
+    "statsSessions": "Øvesessioner",
+    "statsQuestions": "Besvarede spørgsmål",
+    "statsTime": "Øvetid",
+    "statsTimeValue": "{{minutes}} min",
+    "statsStreak": "Nuværende stime",
+    "statsStreakValue_one": "{{count}} dag",
+    "statsStreakValue_other": "{{count}} dage",
+    "statsLevel": "Niveau",
+    "statsLevelValue": "Niv. {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "Fortsæt, hvor du slap",
+    "continuePracticeBody": "{{skill}} — {{answered}} af {{total}} besvaret",
+    "achievementsTitle": "Præstationer"
+  },
+  "progressPage": {
+    "title": "Dit fremskridt",
+    "subtitle": "Sådan er din daglige træning gået i denne uge.",
+    "loading": "Indlæser dit fremskridt…",
+    "loadError": "Kunne ikke indlæse dit fremskridt. Prøv igen.",
+    "todaysReport": "Dagens rapport",
+    "questions": "Spørgsmål",
+    "accuracy": "Præcision",
+    "minutes": "Minutter",
+    "moreThanYesterday_one": "{{count}} spørgsmål mere end i går",
+    "moreThanYesterday_other": "{{count}} spørgsmål mere end i går",
+    "lessThanYesterday_one": "{{count}} spørgsmål færre end i går",
+    "lessThanYesterday_other": "{{count}} spørgsmål færre end i går",
+    "sameAsYesterday": "Det samme som i går — bliv ved",
+    "firstDayBack": "Godt at se dig øve igen i dag!",
+    "dailyChartTitle": "Seneste 7 dage",
+    "today": "I dag",
+    "questionsThisWeek_one": "{{count}} spørgsmål i denne uge",
+    "questionsThisWeek_other": "{{count}} spørgsmål i denne uge",
+    "bestDay": "Bedste dag: {{day}}",
+    "bestDayBadge": "Ugens bedste dag"
+  },
+  "modules": {
+    "title": "Øvemoduler",
+    "subtitle": "Vælg en færdighed at øve — indholdet tilpasser sig, så du ikke ser de samme opgaver igen, før du har lavet dem alle.",
+    "loadingAvailability": "Indlæser moduler…",
+    "remainingItems": "{{count}} af {{total}} opgaver tilbage",
+    "allDone": "Du har gennemført alt i denne del indtil videre — kom tilbage, når der kommer nyt indhold.",
+    "start": "Start",
+    "backToSkills": "Tilbage til færdigheder",
+    "pickTypeSubtitle": "Vælg en spørgsmålstype at øve.",
+    "starting": "Starter session…",
+    "startError": "Noget gik galt, da sessionen skulle startes. Prøv igen.",
+    "sessionComplete": "Godt gået!",
+    "practiceAgain": "Øv igen",
+    "backToDashboard": "Tilbage til oversigten",
+    "startReading": "Start læsning",
+    "passageHidden": "Teksten er nu skjult — skriv den med dine egne ord.",
+    "backToTypes": "Tilbage til spørgsmålstyper",
+    "pickUnitTitle": "Vælg en enhed at øve.",
+    "unitComplete": "Alle sæt gennemført",
+    "setsProgress": "{{done}} af {{total}} sæt gennemført",
+    "backToUnits": "Tilbage til enheder",
+    "setCompleted": "Gennemført",
+    "startPractice": "Start øvelse",
+    "typeDesc": {
+      "reading": "Læs en sætning højt, naturligt og tydeligt.",
+      "repeats": "Lyt én gang, og gentag derefter præcist.",
+      "sentence_builds": "Sæt ordene sammen til en korrekt sætning.",
+      "conversations": "Lyt til en dialog, og besvar spørgsmål.",
+      "reading_selective": "Læs, og find de vigtigste oplysninger.",
+      "short_answer": "Svar kort på et enkelt spørgsmål.",
+      "passage_comprehension": "Lyt til en tekst, og besvar spørgsmål.",
+      "speaking_situations": "Reager naturligt på en hverdagssituation.",
+      "story_retelling": "Lyt til en historie, og genfortæl den med dine egne ord.",
+      "open_questions": "Del din egen mening frit.",
+      "dictation": "Skriv præcis det, du hører.",
+      "response_selection": "Vælg det rigtige svar blandt mulighederne.",
+      "passage_reconstruction": "Læs, og genskab derefter teksten efter hukommelsen.",
+      "summary_and_opinion": "Opsummer en tekst, og giv din mening.",
+      "reading_comprehension": "Læs en tekst, og besvar spørgsmål.",
+      "sentence_completion": "Udfyld det manglende ord eller udtryk.",
+      "typing": "En kort opvarmning i at skrive på tastatur.",
+      "email_writing": "Skriv en kort, realistisk e-mail."
+    }
+  },
+  "faceCheck": {
+    "back": "Tilbage",
+    "enroll": {
+      "title": "Konfigurer ansigtsbekræftelse",
+      "success": "Ansigt registreret",
+      "proceed": "Fortsæt",
+      "subtitle": "Dette er en engangsopsætning. Vi bruger billedet til at bekræfte, at det er dig, før hver niveautest, hvert modul og hver prøvetest.",
+      "successSubtitle": "Opsætningen er færdig. Du ser instruktionerne, før din niveautest starter."
+    },
+    "verify": {
+      "title": "Hurtig ansigtsbekræftelse",
+      "success": "Ansigt bekræftet",
+      "proceed": "Fortsæt",
+      "mismatchError": "Ansigtet matcher ikke dit registrerede billede. Prøv igen.",
+      "subtitle": {
+        "placement": "Vi bekræfter, at det er dig, før niveautesten starter.",
+        "practice": "Vi bekræfter, at det er dig, før denne øvesession.",
+        "practice_test": "Vi bekræfter, at det er dig, før denne prøvetest."
+      },
+      "successSubtitle": "Identitet bekræftet. Fortsætter til testen."
+    },
+    "record": {
+      "capture": "Tag billede",
+      "checking": "Kontrollerer...",
+      "cameraError": "Ingen adgang til kameraet. Tjek tilladelserne, og prøv igen.",
+      "error": "Noget gik galt. Prøv igen.",
+      "tooShort": "Vi kunne ikke se dit ansigt tydeligt. Prøv igen."
+    },
+    "fallback": {
+      "otpButton": "Send mig en kode på e-mail",
+      "otpSending": "Sender…",
+      "otpSentNotice": "Kode sendt — tjek din e-mail.",
+      "otpPlaceholder": "6-cifret kode",
+      "otpVerify": "Bekræft kode",
+      "otpVerifying": "Bekræfter…",
+      "otpResend": "Send kode igen",
+      "otpSuccess": "Kode bekræftet",
+      "otpSendError": "Noget gik galt, da koden skulle sendes. Prøv igen.",
+      "otpInvalidError": "Koden virkede ikke. Tjek den, og prøv igen."
+    },
+    "enrollmentConsent": {
+      "title": "Konfigurer ansigtsbekræftelse",
+      "subtitle": "Det hjælper med at bekræfte, at det virkelig er dig, der tager testen.",
+      "body": "Vi tager et billede af dit ansigt som reference til identitetsbekræftelse. Billedet og ansigtsscanninger bruges til at bekræfte din identitet før niveautest og øvesessioner (Moduler) og løbende under dem — ikke kun én gang i starten. Opbevares sikkert og bruges kun til dette formål.",
+      "checkboxLabel": "Jeg forstår og accepterer ansigtsbaseret identitetsbekræftelse, herunder løbende kontrol under test og øvelser.",
+      "submit": "Fortsæt",
+      "decline": "Ikke nu"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Studerende",
+      "it_engineering": "IT / Ingeniør",
+      "customer_support": "Kundeservice",
+      "sales_marketing": "Salg / Marketing",
+      "healthcare": "Sundhed",
+      "education": "Uddannelse",
+      "finance": "Økonomi",
+      "operations": "Drift",
+      "management": "Ledelse",
+      "other": "Andet"
+    },
+    "gender": {
+      "female": "Kvinde",
+      "male": "Mand",
+      "non_binary": "Ikke-binær",
+      "prefer_not": "Vil helst ikke oplyse"
+    },
+    "ageBand": {
+      "under_18": "Under 18"
+    }
+  },
+  "plans": {
+    "title": "Planer",
+    "onFree": "Du bruger gratisplanen.",
+    "activeUntil": "Fuld adgang aktiv indtil {{date}}.",
+    "orgManaged": "Din adgang administreres af din organisation — spørg din administrator eller leder.",
+    "unavailable": "Planer er ikke tilgængelige lige nu. Prøv igen senere.",
+    "payError": "Kunne ikke starte betalingen. Prøv igen.",
+    "free": {
+      "name": "Gratis",
+      "usage": "{{used}} af {{limit}} gratis sessioner brugt i denne uge."
+    },
+    "full": {
+      "name": "Fuld adgang",
+      "perMonth": "{{price}} pr. måned"
+    },
+    "features": {
+      "placementOnce": "Én niveautest",
+      "placementUnlimited": "Gentagelse af niveautesten",
+      "practiceLimited": "{{count}} øvesessioner om ugen",
+      "practiceUnlimited": "Ubegrænset træning i alle moduler",
+      "progress": "Fremskridtsrapporter og læringsplan",
+      "mockTests": "Fulde prøvetest",
+      "tutor": "AI-tutor til tale"
+    },
+    "months_one": "{{count}} måned",
+    "months_other": "{{count}} måneder",
+    "total": "I alt",
+    "startNote": "Adgangen starter, så snart betalingen er bekræftet.",
+    "extendNote": "Lægges til, efter din nuværende adgang slutter {{date}}.",
+    "testMode": "Testtilstand — betalingen simuleres, og der trækkes ingen penge.",
+    "buy_one": "Køb {{count}} måned",
+    "buy_other": "Køb {{count}} måneder",
+    "extend_one": "Forlæng med {{count}} måned",
+    "extend_other": "Forlæng med {{count}} måneder",
+    "redirecting": "Åbner betaling…",
+    "invoices": "Fakturaer",
+    "upgrade": "Se planer",
+    "locked": {
+      "mocktest": "Prøvetest er en del af fuld adgang.",
+      "coach": "AI-tutoren er en del af fuld adgang.",
+      "placement": "Du har brugt din gratis niveautest. Gentagelser er en del af fuld adgang.",
+      "practice": "Du har brugt dine {{limit}} gratis sessioner i denne uge. De fornyes over en løbende 7-dages periode — eller opgrader for ubegrænset træning."
+    },
+    "lockedTitle": "Opgrader for at fortsætte"
+  }
+}

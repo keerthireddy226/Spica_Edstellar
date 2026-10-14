@@ -15,6 +15,7 @@ export function Signup() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -26,6 +27,10 @@ export function Signup() {
     setError(null);
     if (password.length < 8) {
       setError(t("auth.signup.passwordTooShort"));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t("auth.signup.passwordMismatch"));
       return;
     }
     setSubmitting(true);
@@ -97,6 +102,16 @@ export function Signup() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t("auth.signup.passwordPlaceholder")}
+          autoComplete="new-password"
+          required
+        />
+        <FormField
+          id="confirmPassword"
+          label={t("auth.signup.confirmPasswordLabel")}
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder={t("auth.signup.confirmPasswordPlaceholder")}
           autoComplete="new-password"
           required
         />

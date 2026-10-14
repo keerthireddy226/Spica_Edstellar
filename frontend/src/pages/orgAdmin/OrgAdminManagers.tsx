@@ -1,6 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { UserPlus, X, Mail, Ban, RotateCcw, Trash2 } from "lucide-react";
+import { UserPlus, X, Mail, Ban, RotateCcw, Trash2, Pencil } from "lucide-react";
+import { getOrgLicenseOverview, LICENSE_ERROR_TEXT, type BatchBudget } from "@/api/licenses";
 import { ApiError } from "@/lib/api";
+import { planErrorMessage } from "@/api/plans";
+import { PlanLimitHint, PlanLockNote, refreshPlan, useHasFeature } from "@/components/plans/usePlan";
 import { Button } from "@/components/Button";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
@@ -13,6 +16,7 @@ import {
   deleteManager,
   deactivateManager,
   reactivateManager,
+  updateManager,
   type OrgManager,
   type OrgBatch,
 } from "@/api/orgAdmin";
@@ -22,53 +26,81 @@ function initials(firstName: string | null, lastName: string | null, email: stri
   return fromName || email.slice(0, 2).toUpperCase();
 }
 
-function OnboardManagerModal({
+function ManagerFormModal({
+  manager,
   batches,
+  budgets,
+  poolAvailable,
   onClose,
-  onCreated,
+  onSaved,
 }: {
+  manager: OrgManager | null;
   batches: OrgBatch[];
+  budgets: BatchBudget[];
+  poolAvailable: number | null;
   onClose: () => void;
-  onCreated: (email: string) => void;
+  onSaved: (message: string) => void;
 }) {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [batchIds, setBatchIds] = useState<string[]>([]);
+  const editing = manager !== null;
+  const [firstName, setFirstName] = useState(manager?.firstName ?? "");
+  const [lastName, setLastName] = useState(manager?.lastName ?? "");
+  const [email, setEmail] = useState(manager?.email ?? "");
+  const [batchIds, setBatchIds] = useState<string[]>(manager?.batchIds ?? []);
+  const [pool, setPool] = useState(manager?.licensesAllotted != null ? String(manager.licensesAllotted) : "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const poolsAllowed = useHasFeature("manager_pools") !== false;
 
   function toggleBatch(id: string) {
     setBatchIds((prev) => (prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]));
   }
 
+  const selfName = manager ? [manager.firstName, manager.lastName].filter(Boolean).join(" ") : "";
+  const poolNumber = pool.trim() ? Math.max(0, Math.floor(Number(pool))) : null;
+  const poolUsed = manager?.licensesUsed ?? 0;
+  // Unreserved + whatever this Manager already has set aside = the most they can hold.
+  const maxPool = poolAvailable === null ? null : poolAvailable + Math.max(0, (manager?.licensesAllotted ?? 0) - poolUsed) + poolUsed;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (batchIds.length === 0) {
-      setError("Pick at least one batch for this Manager.");
+    if (poolNumber !== null && maxPool !== null && poolNumber > maxPool) {
+      setError(`Only ${maxPool} licenses can be set aside for this Manager right now.`);
       return;
     }
     setError(null);
     setSubmitting(true);
+    // Without pools on this plan, leave whatever is already set untouched.
+    const licenseAllotment = poolsAllowed ? poolNumber : (manager?.licensesAllotted ?? null);
     try {
-      await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds });
-      onCreated(email.trim());
-    } catch (err) {
-      if (err instanceof ApiError && err.message === "email_already_registered") {
-        setError("That email is already registered.");
+      if (editing) {
+        await updateManager(manager.id, { firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment });
+        onSaved(`${firstName.trim()} ${lastName.trim()} updated.`);
       } else {
-        setError("Something went wrong onboarding that manager.");
+        await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment });
+        onSaved(`Invite sent to ${email.trim()} — they'll receive an email to set their password.`);
+      }
+    } catch (err) {
+      if (planErrorMessage(err)) {
+        setError(planErrorMessage(err));
+      } else if (err instanceof ApiError && err.message === "email_already_registered") {
+        setError("That email is already registered.");
+      } else if (err instanceof ApiError && LICENSE_ERROR_TEXT[err.message]) {
+        setError(LICENSE_ERROR_TEXT[err.message]);
+      } else {
+        setError(editing ? "Something went wrong saving this manager." : "Something went wrong onboarding that manager.");
       }
     } finally {
       setSubmitting(false);
     }
   }
 
+  const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Onboard Manager</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{editing ? "Edit Manager" : "Onboard Manager"}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -77,21 +109,11 @@ function OnboardManagerModal({
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
-              <input
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-              />
+              <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
-              <input
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-              />
+              <input required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
           </div>
 
@@ -104,38 +126,86 @@ function OnboardManagerModal({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+              disabled={editing}
+              className={`${inputClass} ${editing ? "opacity-60 cursor-not-allowed" : ""}`}
             />
+            {editing && <p className="text-xs text-muted">Email is their login, so it can't be changed here.</p>}
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Assign to batch(es)</label>
-            {batches.length === 0 ? (
-              <p className="text-sm text-muted">Create a batch first before onboarding a Manager.</p>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">License pool for this Manager</label>
+            {!poolsAllowed ? (
+              <PlanLockNote feature="manager_pools" compact />
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {batches.map((b) => (
-                  <label key={b.id} className="flex items-center gap-2.5 text-sm text-ink cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={batchIds.includes(b.id)}
-                      onChange={() => toggleBatch(b.id)}
-                      className="h-4 w-4 rounded accent-navy cursor-pointer"
-                    />
-                    {b.name}
-                  </label>
-                ))}
-              </div>
+            <>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min={poolUsed}
+                value={pool}
+                onChange={(e) => setPool(e.target.value)}
+                placeholder="0"
+                className="w-32 rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+              />
+              <span className="text-xs text-muted">
+                {editing && poolUsed ? `${poolUsed} already assigned from it · ` : ""}
+                {maxPool !== null ? `up to ${maxPool} available to set aside` : ""}
+              </span>
+            </div>
+            <p className="text-xs text-muted">
+              Set aside from your pool for this Manager to use in any of their batches, including batches they create themselves. They can't change it —
+              they send you a request.
+            </p>
+            </>
             )}
           </div>
 
-          {error && <p className="text-sm text-error">{error}</p>}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batches they manage</label>
+            {batches.length === 0 ? (
+              <p className="text-sm text-muted">No batches yet — the Manager can create their own.</p>
+            ) : (
+              <div className="border border-rule rounded-input overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-paper-warm/60 border-b border-rule text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
+                      <th className="px-3 py-2">Batch</th>
+                      <th className="px-3 py-2 text-right">Fixed batch licenses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {batches.map((b) => {
+                      const checked = batchIds.includes(b.id);
+                      const fixed = budgets.find((x) => x.batchId === b.id);
+                      const others = b.managerNames.filter((n) => n.trim() !== selfName);
+                      return (
+                        <tr key={b.id} className="border-b border-rule last:border-0">
+                          <td className="px-3 py-2.5">
+                            <label className="flex items-center gap-2.5 text-ink cursor-pointer min-w-0">
+                              <input type="checkbox" checked={checked} onChange={() => toggleBatch(b.id)} className="h-4 w-4 rounded accent-navy cursor-pointer" />
+                              <span className="truncate">{b.name}</span>
+                            </label>
+                            {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">also managed by {others.join(", ")}</p>}
+                          </td>
+                          <td className="px-3 py-2.5 text-right text-xs text-muted">
+                            {fixed?.budget != null ? `${fixed.used} / ${fixed.budget} used` : "None — uses Manager's pool"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="text-xs text-muted">Fixed batch licenses are set when you create a batch (or in Licenses → Allotments) and are used first for that batch's learners.</p>
+          </div>
 
-          <p className="text-xs text-muted">They'll get an email to set their own password.</p>
+          {error && <p className="text-sm text-error">{error}</p>}
+          {!editing && <p className="text-xs text-muted">They'll get an email to set their own password.</p>}
 
           <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" disabled={submitting || batches.length === 0} className="flex-1">
-              {submitting ? "Sending invite…" : "Send invite"}
+            <Button type="submit" disabled={submitting} className="flex-1">
+              {submitting ? (editing ? "Saving…" : "Sending invite…") : editing ? "Save changes" : "Send invite"}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
@@ -152,7 +222,10 @@ export function OrgAdminManagers() {
   const [batches, setBatches] = useState<OrgBatch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showOnboard, setShowOnboard] = useState(false);
+  const [editingManager, setEditingManager] = useState<OrgManager | null>(null);
   const [justInvited, setJustInvited] = useState<string | null>(null);
+  const [budgets, setBudgets] = useState<BatchBudget[]>([]);
+  const [poolAvailable, setPoolAvailable] = useState<number | null>(null);
   const [viewingManagerId, setViewingManagerId] = useState<string | null>(null);
   const [deletingManager, setDeletingManager] = useState<OrgManager | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -162,6 +235,12 @@ export function OrgAdminManagers() {
       .then((res) => setManagers(res.managers))
       .catch(() => setError("Could not load managers."));
     getBatches().then((res) => setBatches(res.batches));
+    getOrgLicenseOverview()
+      .then((res) => {
+        setBudgets(res.batches);
+        setPoolAvailable(res.summary.unreserved);
+      })
+      .catch(() => {});
   }
 
   useEffect(load, []);
@@ -191,8 +270,9 @@ export function OrgAdminManagers() {
       if (manager.active) await deactivateManager(manager.id);
       else await reactivateManager(manager.id);
       load();
-    } catch {
-      setError("Could not update that manager's status.");
+      refreshPlan();
+    } catch (err) {
+      setError(planErrorMessage(err) ?? "Could not update that manager's status.");
     } finally {
       setBusyId(null);
     }
@@ -205,14 +285,17 @@ export function OrgAdminManagers() {
           <h1 className="font-display font-bold text-2xl text-ink">Managers</h1>
           <p className="text-sm text-muted mt-1">Each one scoped to only the batch(es) you assign them.</p>
         </div>
-        <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-          <UserPlus size={18} /> Onboard Manager
-        </Button>
+        <div className="flex flex-col items-end gap-1.5">
+          <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
+            <UserPlus size={18} /> Onboard Manager
+          </Button>
+          <PlanLimitHint limit="managers" />
+        </div>
       </div>
 
       {justInvited && (
         <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
-          Invite sent to {justInvited} — they'll receive an email to set their password.
+          {justInvited}
         </p>
       )}
 
@@ -227,6 +310,7 @@ export function OrgAdminManagers() {
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <th className="px-4 py-3">Manager</th>
                 <th className="px-4 py-3">Batches</th>
+                <th className="px-4 py-3">License pool</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -255,6 +339,23 @@ export function OrgAdminManagers() {
                     </td>
                     <td className="px-4 py-3 text-muted">{m.batchNames.join(", ") || "—"}</td>
                     <td className="px-4 py-3">
+                      {m.licensesAllotted === null ? (
+                        <span className="text-xs text-muted">No pool</span>
+                      ) : (
+                        <div className="flex items-center gap-2 min-w-32">
+                          <div className="flex-1 h-1.5 rounded-full bg-rule overflow-hidden">
+                            <div
+                              className="h-full bg-navy rounded-full"
+                              style={{ width: `${m.licensesAllotted ? Math.min(100, (m.licensesUsed / m.licensesAllotted) * 100) : 0}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted whitespace-nowrap">
+                            {m.licensesUsed} / {m.licensesAllotted} used
+                          </span>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
                       <span
                         className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${
                           status === "active"
@@ -269,6 +370,13 @@ export function OrgAdminManagers() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setEditingManager(m)}
+                          title="Edit"
+                          className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
+                        >
+                          <Pencil size={16} />
+                        </button>
                         <button
                           onClick={() => handleToggleActive(m)}
                           disabled={busyId === m.id}
@@ -297,13 +405,22 @@ export function OrgAdminManagers() {
         </div>
       )}
 
-      {showOnboard && (
-        <OnboardManagerModal
+      {(showOnboard || editingManager) && (
+        <ManagerFormModal
+          key={editingManager?.id ?? "new"}
+          manager={editingManager}
           batches={batches}
-          onClose={() => setShowOnboard(false)}
-          onCreated={(email) => {
+          budgets={budgets}
+          poolAvailable={poolAvailable}
+          onClose={() => {
             setShowOnboard(false);
-            setJustInvited(email);
+            setEditingManager(null);
+          }}
+          onSaved={(message) => {
+            refreshPlan();
+            setShowOnboard(false);
+            setEditingManager(null);
+            setJustInvited(message);
             load();
           }}
         />

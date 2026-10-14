@@ -29,3 +29,17 @@ export function managerOnboardLearner(payload: OnboardLearnerPayload): Promise<{
 export function managerOnboardLearnersBulk(batchId: string, rows: BulkLearnerRow[]): Promise<{ results: BulkLearnerResult[] }> {
   return api("/manager/learners/bulk", { method: "POST", body: JSON.stringify({ batchId, rows }) });
 }
+
+export function managerMoveLearner(id: string, batchId: string, reason?: string): Promise<{ id: string }> {
+  return api(`/manager/learners/${id}/move`, { method: "POST", body: JSON.stringify({ batchId, reason }) });
+}
+
+export function managerCreateBatch(body: {
+  name: string;
+  durationMonths?: number;
+  startDate?: string;
+  startCefr?: string;
+  targetCefr?: string;
+}): Promise<{ id: string }> {
+  return api("/manager/batches", { method: "POST", body: JSON.stringify(body) });
+}

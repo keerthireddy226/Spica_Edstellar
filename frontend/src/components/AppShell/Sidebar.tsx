@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3 } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles } from "lucide-react";
+import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
 import type { SkillTag } from "@/api/testSession";
@@ -58,6 +59,7 @@ function NavEntry({
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const location = useLocation();
+  const myLicense = useMyLicense();
   const [searchParams] = useSearchParams();
   const hasPlacement = useHasPlacement();
   const locked = hasPlacement !== true;
@@ -162,6 +164,16 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             locked={locked}
             onClick={onClose}
           />
+          {myLicense?.individual && (
+            <NavEntry
+              to={ROUTES.PLANS}
+              icon={Sparkles}
+              label={t("plans.title")}
+              isActive={location.pathname === ROUTES.PLANS}
+              locked={locked}
+              onClick={onClose}
+            />
+          )}
           <NavEntry
             to={ROUTES.PROFILE}
             icon={User}

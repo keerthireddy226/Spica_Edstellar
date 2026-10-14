@@ -20,6 +20,14 @@ import { managerRouter } from "./manager/routes.js";
 import { coachRouter } from "./coach/routes.js";
 import { faceRouter } from "./face/routes.js";
 import { requireAuth } from "./auth/middleware.js";
+import { licensesRouter } from "./licenses/routes.js";
+import { paymentsRouter, stripeWebhookHandler } from "./payments/routes.js";
+import { notificationsRouter, remindersRouter } from "./notifications/routes.js";
+import { startJobRunner } from "./notifications/jobs.js";
+import { analyticsRouter } from "./analytics/routes.js";
+import { plansRouter } from "./plans/routes.js";
+import { PlanError } from "./plans/service.js";
+import { requireAccess } from "./licenses/gate.js";
 
 // Railway's network has no IPv6 egress — without this, Node's dual-stack DNS
 // resolution can still pick a host's IPv6 address (e.g. smtp.gmail.com) and
@@ -43,6 +51,8 @@ app.use(helmet());
 // origin:true + credentials:true would let any site make credentialed requests.
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 // Raised from 100kb default — base64 audio/image payloads need the room.
+// Stripe signs the raw request bytes, so its webhook must see them before JSON parsing.
+app.post("/api/payments/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookHandler);
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 app.use(morgan("dev"));
@@ -61,20 +71,30 @@ app.get("/api/health", async (_req, res, next) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/onboarding", onboardingRouter);
-app.use("/api/placement", placementRouter);
+app.use("/api/placement", requireAccess("placement"), placementRouter);
 app.use("/api/roadmap", roadmapRouter);
 app.use("/api/dashboard", dashboardRouter);
-app.use("/api/practice", practiceRouter);
-app.use("/api/practice-tests", practiceTestsRouter);
-app.use("/api/coach", coachRouter);
+app.use("/api/practice", requireAccess("practice"), practiceRouter);
+app.use("/api/practice-tests", requireAccess("mocktest"), practiceTestsRouter);
+app.use("/api/coach", requireAccess("coach"), coachRouter);
 app.use("/api/face", faceRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/org-admin", orgAdminRouter);
 app.use("/api/manager", managerRouter);
+app.use("/api/licenses", licensesRouter);
+app.use("/api/payments", paymentsRouter);
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/reminders", remindersRouter);
+app.use("/api/analytics", analyticsRouter);
+app.use("/api/plans", plansRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {
     return res.status(400).json({ error: "validation_error", issues: err.issues });
+  }
+  // Any route can hit a plan gate; the details let the UI say which plan unlocks it.
+  if (err instanceof PlanError) {
+    return res.status(403).json({ error: err.code, ...err.detail });
   }
   console.error(err);
   res.status(500).json({ error: "internal_server_error" });
@@ -83,4 +103,5 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 const port = process.env.PORT ?? 4000;
 app.listen(port, () => {
   console.log(`Spica backend listening on :${port}`);
+  startJobRunner();
 });

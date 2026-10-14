@@ -11,7 +11,11 @@ import {
   type ExamReason,
   type GoalLevel,
   type OnboardingAnswers,
+  type JobRole,
+  type Gender,
+  type AgeBand,
 } from "@/api/onboarding";
+import { AGE_BANDS, GENDERS, JOB_ROLES, sortedCountries } from "@/constants/demographics";
 import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
@@ -19,7 +23,7 @@ import { getRoadmap } from "@/api/roadmap";
 
 /* Shared step chrome + small controls, local to this page */
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 function WizardShell({
   stepIndex,
@@ -157,6 +161,12 @@ type FormState = Omit<
   pastAttemptsStatus: AttemptsStatus | null;
   dailyMinutesPreference: number | null;
   accessDuration: AccessDuration | null;
+  country: string;
+  city: string;
+  jobRole: JobRole | null;
+  gender: Gender | null;
+  ageBand: AgeBand | null;
+  demographicsConsent: boolean;
 };
 
 function emptyForm(): FormState {
@@ -176,11 +186,17 @@ function emptyForm(): FormState {
     dailyMinutesPreference: null,
     accessDuration: null,
     consentGiven: false,
+    country: "",
+    city: "",
+    jobRole: null,
+    gender: null,
+    ageBand: null,
+    demographicsConsent: false,
   };
 }
 
 export function Onboarding() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(0);
@@ -251,7 +267,8 @@ export function Onboarding() {
       form.targetPrepDays === null ||
       form.pastAttemptsStatus === null ||
       form.dailyMinutesPreference === null ||
-      form.accessDuration === null
+      form.accessDuration === null ||
+      form.jobRole === null
     ) {
       return;
     }
@@ -261,7 +278,16 @@ export function Onboarding() {
       // The guard above already confirmed every nullable field is filled in —
       // TS just can't carry that narrowing through a spread, so this cast
       // stands in for re-listing all 8 fields individually.
-      await submitOnboarding({ ...(form as OnboardingAnswers), consentGiven: true });
+      await submitOnboarding({
+        ...(form as OnboardingAnswers),
+        consentGiven: true,
+        country: form.country,
+        city: form.city.trim(),
+        jobRole: form.jobRole,
+        gender: form.gender,
+        ageBand: form.ageBand,
+        demographicsConsent: form.demographicsConsent,
+      });
       navigate(ROUTES.PLACEMENT, { replace: true });
     } catch {
       setError(t("onboarding.wizard.consent.error"));
@@ -310,6 +336,100 @@ export function Onboarding() {
   }
 
   if (step === 1) {
+    const needsConsent = form.gender !== null || form.ageBand !== null;
+    const invalid =
+      !form.country || !form.city.trim() || form.jobRole === null || (needsConsent && !form.demographicsConsent);
+    const selectClass = `${textInputClass} cursor-pointer`;
+    return (
+      <WizardShell stepIndex={1} onNext={next} onBack={back} nextDisabled={invalid}>
+        <div>
+          <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.about.title")}</h2>
+          <p className="text-sm text-muted mt-1">{t("onboarding.wizard.about.subtitle")}</p>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <FieldLabel>{t("onboarding.wizard.about.countryLabel")}</FieldLabel>
+            <select className={selectClass} value={form.country} onChange={(e) => patch({ country: e.target.value })}>
+              <option value="">{t("onboarding.wizard.about.select")}</option>
+              {sortedCountries(i18n.language).map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>{t("onboarding.wizard.about.cityLabel")}</FieldLabel>
+            <input
+              className={textInputClass}
+              value={form.city}
+              onChange={(e) => patch({ city: e.target.value })}
+              placeholder={t("onboarding.wizard.about.cityPlaceholder")}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <FieldLabel>{t("onboarding.wizard.about.jobRoleLabel")}</FieldLabel>
+            <select
+              className={selectClass}
+              value={form.jobRole ?? ""}
+              onChange={(e) => patch({ jobRole: (e.target.value || null) as JobRole | null })}
+            >
+              <option value="">{t("onboarding.wizard.about.select")}</option>
+              {JOB_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {t(`demographics.jobRole.${r}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>{t("onboarding.wizard.about.genderLabel")}</FieldLabel>
+            <select
+              className={selectClass}
+              value={form.gender ?? ""}
+              onChange={(e) => patch({ gender: (e.target.value || null) as Gender | null })}
+            >
+              <option value="">{t("onboarding.wizard.about.skip")}</option>
+              {GENDERS.map((g) => (
+                <option key={g} value={g}>
+                  {t(`demographics.gender.${g}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <FieldLabel>{t("onboarding.wizard.about.ageLabel")}</FieldLabel>
+            <select
+              className={selectClass}
+              value={form.ageBand ?? ""}
+              onChange={(e) => patch({ ageBand: (e.target.value || null) as AgeBand | null })}
+            >
+              <option value="">{t("onboarding.wizard.about.skip")}</option>
+              {AGE_BANDS.map((a) => (
+                <option key={a} value={a}>
+                  {t(`demographics.ageBand.${a}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {needsConsent && (
+          <label className="flex items-start gap-2.5 rounded-input border border-rule p-3.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.demographicsConsent}
+              onChange={(e) => patch({ demographicsConsent: e.target.checked })}
+              className="mt-0.5 accent-navy"
+            />
+            <span className="text-sm text-ink">{t("onboarding.wizard.about.consent")}</span>
+          </label>
+        )}
+        <p className="text-xs text-muted">{t("onboarding.wizard.about.privacyNote")}</p>
+      </WizardShell>
+    );
+  }
+
+  if (step === 2) {
     const examOptions = (
       ["versant", "ielts", "toefl", "pte", "cambridge", "other"] as const
     ).map((value) => ({
@@ -324,7 +444,7 @@ export function Onboarding() {
     }));
     const invalid = form.examPreference === null || form.goalLevel === null;
     return (
-      <WizardShell stepIndex={1} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell stepIndex={2} onNext={next} onBack={back} nextDisabled={invalid}>
         <div>
           <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.examGoal.examTitle")}</h2>
           <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.examGoal.examSubtitle")}</p>
@@ -348,7 +468,7 @@ export function Onboarding() {
     );
   }
 
-  if (step === 2) {
+  if (step === 3) {
     const reasonOptions = (["university", "job", "immigration", "promotion", "personal"] as const).map((value) => ({
       value,
       label: t(`onboarding.wizard.reasonTimeline.reason.${value}`),
@@ -360,7 +480,7 @@ export function Onboarding() {
       form.targetPrepDays === null ||
       form.targetPrepDays <= 0;
     return (
-      <WizardShell stepIndex={2} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell stepIndex={3} onNext={next} onBack={back} nextDisabled={invalid}>
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.reasonTimeline.reasonTitle")}</h2>
@@ -413,7 +533,7 @@ export function Onboarding() {
     );
   }
 
-  if (step === 3) {
+  if (step === 4) {
     const attemptsOptions = (["first", "once", "multiple"] as const).map((value) => ({
       value,
       label: t(`onboarding.wizard.attemptsCommitment.attempts.${value}`),
@@ -425,7 +545,7 @@ export function Onboarding() {
     }));
     const invalid = form.pastAttemptsStatus === null || form.dailyMinutesPreference === null;
     return (
-      <WizardShell stepIndex={3} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell stepIndex={4} onNext={next} onBack={back} nextDisabled={invalid}>
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <h2 className="font-display font-bold text-xl text-ink">
@@ -474,7 +594,7 @@ export function Onboarding() {
     );
   }
 
-  if (step === 4) {
+  if (step === 5) {
     const DURATION_VALUE: Record<string, AccessDuration> = {
       oneMonth: "1month",
       threeMonths: "3months",
@@ -488,7 +608,7 @@ export function Onboarding() {
     }));
     const invalid = form.accessDuration === null;
     return (
-      <WizardShell stepIndex={4} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell stepIndex={5} onNext={next} onBack={back} nextDisabled={invalid}>
         <div>
           <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.duration.title")}</h2>
           <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.duration.subtitle")}</p>
@@ -498,9 +618,9 @@ export function Onboarding() {
     );
   }
 
-  // step === 5: consent
+  // step === 6: consent
   return (
-    <WizardShell stepIndex={5} onNext={handleFinish} onBack={back} nextDisabled={!form.consentGiven || submitting} nextLabel={submitting ? t("onboarding.wizard.consent.submitting") : t("onboarding.wizard.consent.submit")}>
+    <WizardShell stepIndex={6} onNext={handleFinish} onBack={back} nextDisabled={!form.consentGiven || submitting} nextLabel={submitting ? t("onboarding.wizard.consent.submitting") : t("onboarding.wizard.consent.submit")}>
       <div>
         <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.consent.title")}</h2>
         <p className="text-sm text-muted mt-1">{t("onboarding.wizard.consent.subtitle")}</p>

@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { TIER_LABELS } from "@/api/plans";
 import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { OrganizationDetailModal } from "@/components/OrganizationDetailModal";
+import { sortedCountries } from "@/constants/demographics";
 import {
   getAdminConsoleOverview,
   onboardOrganization,
@@ -22,6 +24,10 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [category, setCategory] = useState<"company" | "university">("company");
   const [industry, setIndustry] = useState("");
   const [expectedLearnerCount, setExpectedLearnerCount] = useState("");
+  const [country, setCountry] = useState("");
+  const [billingContactName, setBillingContactName] = useState("");
+  const [billingContactEmail, setBillingContactEmail] = useState("");
+  const [taxId, setTaxId] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -39,6 +45,10 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         category,
         industry: industry.trim() || undefined,
         expectedLearnerCount: expectedLearnerCount.trim() ? Number(expectedLearnerCount.trim()) : undefined,
+        country: country || undefined,
+        billingContactName: billingContactName.trim() || undefined,
+        billingContactEmail: billingContactEmail.trim() || undefined,
+        taxId: taxId.trim() || undefined,
         orgAdmin: {
           email: email.trim(),
           firstName: firstName.trim(),
@@ -123,6 +133,39 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 placeholder="e.g. 50"
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Country</label>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
+                <option value="">Select…</option>
+                {sortedCountries("en").map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Tax ID — GST / VAT (optional)</label>
+              <input value={taxId} onChange={(e) => setTaxId(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+          </div>
+
+          <div className="border-t border-rule pt-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-ink">Billing contact (optional)</p>
+            <p className="text-xs text-muted">Who receives license invoices. Leave blank if it's the Org Admin.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Name</label>
+              <input value={billingContactName} onChange={(e) => setBillingContactName(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Email</label>
+              <input type="email" value={billingContactEmail} onChange={(e) => setBillingContactEmail(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
@@ -411,6 +454,7 @@ export function AdminOrganizations() {
             <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
               <th className="px-4 py-3">Organization</th>
               <th className="px-4 py-3">Type</th>
+              <th className="px-4 py-3">Plan</th>
               <th className="px-4 py-3">Learners</th>
               <th className="px-4 py-3">Org Admin assigned</th>
               <th className="px-4 py-3">Status</th>
@@ -420,7 +464,7 @@ export function AdminOrganizations() {
           <tbody>
             {overview.organizations.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-muted">
+                <td colSpan={7} className="px-4 py-6 text-center text-muted">
                   No organizations yet.
                 </td>
               </tr>
@@ -444,6 +488,10 @@ export function AdminOrganizations() {
                     {org.category === "university" ? <GraduationCap size={13} /> : <Briefcase size={13} />}
                     {org.category === "university" ? "University" : "Organization"}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-navy/10 text-navy">{TIER_LABELS[org.planTier]}</span>
+                  {org.pilotEndsAt && <span className="ml-1.5 text-xs font-semibold px-2 py-0.5 rounded-pill bg-warning/15 text-navy-deep">Pilot</span>}
                 </td>
                 <td className="px-4 py-3 text-muted">{org.learnerCount}</td>
                 <td className="px-4 py-3">

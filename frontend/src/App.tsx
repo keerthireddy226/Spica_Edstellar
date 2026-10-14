@@ -43,6 +43,13 @@ import { AdminManagersList } from "@/pages/admin/AdminManagersList";
 import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
 import { OrgAdminBatches } from "@/pages/orgAdmin/OrgAdminBatches";
 import { OrgAdminManagers } from "@/pages/orgAdmin/OrgAdminManagers";
+import { LicenseGate } from "@/components/licenses/LicenseGate";
+import { Plans } from "@/pages/Plans";
+import { AnalyticsPage } from "@/pages/AnalyticsPage";
+import { CheckoutReturn } from "@/pages/CheckoutReturn";
+import { InvoiceView } from "@/pages/InvoiceView";
+import { OrgAdminLicenses } from "@/pages/orgAdmin/OrgAdminLicenses";
+import { OrgAdminPlan } from "@/pages/orgAdmin/OrgAdminPlan";
 import { OrgAdminLearners } from "@/pages/orgAdmin/OrgAdminLearners";
 import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
 import { ManagerLearners } from "@/pages/manager/ManagerLearners";
@@ -75,6 +82,22 @@ function App() {
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+        <Route
+          path={ROUTES.CHECKOUT_RETURN}
+          element={
+            <ProtectedRoute>
+              <CheckoutReturn />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.INVOICE}
+          element={
+            <ProtectedRoute>
+              <InvoiceView />
+            </ProtectedRoute>
+          }
+        />
         <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmail />} />
         <Route
           path={ROUTES.ONBOARDING}
@@ -88,7 +111,9 @@ function App() {
           path={ROUTES.PLACEMENT}
           element={
             <ProtectedRoute>
-              <Placement />
+              <LicenseGate feature="placement">
+                <Placement />
+              </LicenseGate>
             </ProtectedRoute>
           }
         />
@@ -104,7 +129,9 @@ function App() {
           path={ROUTES.PLACEMENT_TEST}
           element={
             <ProtectedRoute>
-              <PlacementTest />
+              <LicenseGate feature="placement">
+                <PlacementTest />
+              </LicenseGate>
             </ProtectedRoute>
           }
         />
@@ -118,10 +145,11 @@ function App() {
           <Route path={ROUTES.ROADMAP} element={<Roadmap />} />
           <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
           <Route path={ROUTES.PROGRESS} element={<Progress />} />
-          <Route path={ROUTES.MODULES} element={<Modules />} />
-          <Route path={ROUTES.PRACTICE_TESTS} element={<PracticeTests />} />
-          <Route path={ROUTES.TUTOR} element={<Tutor />} />
+          <Route path={ROUTES.MODULES} element={<LicenseGate feature="practice"><Modules /></LicenseGate>} />
+          <Route path={ROUTES.PRACTICE_TESTS} element={<LicenseGate feature="mocktest"><PracticeTests /></LicenseGate>} />
+          <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
+          <Route path={ROUTES.PLANS} element={<Plans />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route
@@ -137,6 +165,7 @@ function App() {
           <Route path={ROUTES.ADMIN_MANAGERS} element={<ManagersList />} />
           <Route path={ROUTES.ADMIN_LEARNERS} element={<IndividualLearnersList />} />
           <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.ADMIN_ANALYTICS} element={<AnalyticsPage />} />
           <Route path={ROUTES.ADMIN_REVIEW} element={<AdminReview />} />
         </Route>
         {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
@@ -152,6 +181,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<AdminManagersList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_USERS} element={<AdminUsers />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_ANALYTICS} element={<AnalyticsPage />} />
         </Route>
         {/* Org Admin's own console — their one organization only: every batch, every Manager. */}
         <Route
@@ -165,7 +195,10 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_BATCHES} element={<OrgAdminBatches />} />
           <Route path={ROUTES.ORG_ADMIN_MANAGERS} element={<OrgAdminManagers />} />
           <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
+          <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
+          <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
           <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.ORG_ADMIN_ANALYTICS} element={<AnalyticsPage />} />
         </Route>
         {/* Manager's own console — only the batch(es) assigned to them. */}
         <Route
@@ -178,6 +211,7 @@ function App() {
           <Route path={ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
           <Route path={ROUTES.MANAGER_LEARNERS} element={<ManagerLearners />} />
           <Route path={ROUTES.MANAGER_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.MANAGER_ANALYTICS} element={<AnalyticsPage />} />
         </Route>
         <Route path="*" element={<DefaultRedirect />} />
       </Routes>

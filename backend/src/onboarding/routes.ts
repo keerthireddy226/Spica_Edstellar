@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
-import { onboardingSchema } from "./schemas.js";
+import { demographicsSchema, onboardingSchema } from "./schemas.js";
 
 const voicePreferenceSchema = z.object({ preferredVoice: z.enum(["male", "female"]) });
 const preferencesSchema = z.object({ spokenPromptsEnabled: z.boolean() });
@@ -48,8 +48,9 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
       `INSERT INTO participant_profiles (
          user_id, onboarding_step, onboarding_complete, exam_preference, goal_level, score_target,
          exam_reason, has_applied_for_exam, exam_date, target_prep_days, past_attempts_status,
-         daily_minutes_preference, access_duration, access_window_start_date, access_window_duration_days
-       ) VALUES ($1, 'done', true, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_DATE, $12)
+         daily_minutes_preference, access_duration, access_window_start_date, access_window_duration_days,
+         country, city, job_role, gender, age_band
+       ) VALUES ($1, 'done', true, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, CURRENT_DATE, $12, $13, $14, $15, $16, $17)
        ON CONFLICT (user_id) DO UPDATE SET
          onboarding_step = EXCLUDED.onboarding_step,
          onboarding_complete = EXCLUDED.onboarding_complete,
@@ -65,6 +66,11 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
          access_duration = EXCLUDED.access_duration,
          access_window_start_date = EXCLUDED.access_window_start_date,
          access_window_duration_days = EXCLUDED.access_window_duration_days,
+         country = EXCLUDED.country,
+         city = EXCLUDED.city,
+         job_role = EXCLUDED.job_role,
+         gender = EXCLUDED.gender,
+         age_band = EXCLUDED.age_band,
          updated_at = now()`,
       [
         req.user!.id,
@@ -79,8 +85,21 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
         body.dailyMinutesPreference,
         body.accessDuration,
         accessWindowDurationDays,
+        body.country,
+        body.city,
+        body.jobRole,
+        body.gender ?? null,
+        body.ageBand ?? null,
       ],
     );
+
+    if (body.gender || body.ageBand) {
+      await client.query(
+        `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
+         VALUES ($1, 'v1', 'demographics', $2)`,
+        [req.user!.id, req.ip],
+      );
+    }
 
     // FR-041: a past attempt goes into external_results, not a free-text
     // field on the profile — avoids the two-places-for-one-fact duplication
@@ -131,6 +150,39 @@ onboardingRouter.patch("/voice-preference", requireAuth, async (req: AuthedReque
       [body.preferredVoice, req.user!.id],
     );
     if (!result.rows[0]) return res.status(404).json({ error: "profile_not_found" });
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+onboardingRouter.patch("/demographics", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = demographicsSchema.parse(req.body);
+    const result = await pool.query(
+      `UPDATE participant_profiles SET country = $1, city = $2, job_role = $3, gender = $4, age_band = $5, updated_at = now()
+       WHERE user_id = $6 RETURNING user_id`,
+      [body.country, body.city, body.jobRole, body.gender ?? null, body.ageBand ?? null, req.user!.id],
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: "profile_not_found" });
+    if (body.gender || body.ageBand) {
+      const existing = await pool.query(
+        `SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'demographics' AND revoked_at IS NULL`,
+        [req.user!.id],
+      );
+      if (existing.rowCount === 0) {
+        await pool.query(
+          `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, 'v1', 'demographics', $2)`,
+          [req.user!.id, req.ip],
+        );
+      }
+    } else {
+      // Both sensitive fields cleared — treat as withdrawing that consent.
+      await pool.query(
+        `UPDATE consent_records SET revoked_at = now() WHERE user_id = $1 AND consent_type = 'demographics' AND revoked_at IS NULL`,
+        [req.user!.id],
+      );
+    }
     res.status(204).send();
   } catch (err) {
     next(err);

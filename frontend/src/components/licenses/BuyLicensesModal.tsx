@@ -1,0 +1,128 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
+import { Button } from "@/components/Button";
+import { createPaymentOrder, formatAmount, getQuote, startCheckout, type Quote } from "@/api/payments";
+
+// Org Admin self-serve purchase. The calculator mirrors how orgs think about
+// it ("20 learners for 3 months") and turns it into a license count.
+export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
+  const [learners, setLearners] = useState("10");
+  const [months, setMonths] = useState("3");
+  const [quantity, setQuantity] = useState(30);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const l = Math.max(0, Math.floor(Number(learners) || 0));
+    const m = Math.max(0, Math.floor(Number(months) || 0));
+    if (l > 0 && m > 0) setQuantity(l * m);
+  }, [learners, months]);
+
+  useEffect(() => {
+    if (quantity < 1) return;
+    const handle = setTimeout(() => {
+      getQuote(quantity)
+        .then((q) => {
+          setQuote(q);
+          setError(null);
+        })
+        .catch(() => setError("Checkout isn't available right now."));
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [quantity]);
+
+  async function pay() {
+    setPaying(true);
+    setError(null);
+    try {
+      await startCheckout(await createPaymentOrder(quantity), navigate);
+    } catch {
+      setError("Couldn't start checkout. Please try again.");
+      setPaying(false);
+    }
+  }
+
+  const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+          <h2 className="font-display font-bold text-lg text-ink">Buy licenses</h2>
+          <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Learners</label>
+              <input type="number" min={1} value={learners} onChange={(e) => setLearners(e.target.value)} className={inputClass} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Months each</label>
+              <input type="number" min={1} value={months} onChange={(e) => setMonths(e.target.value)} className={inputClass} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Licenses to buy</label>
+            <input
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
+              className={inputClass}
+            />
+            <p className="text-xs text-muted">
+              1 license = 1 learner for 1 month. Unassigned licenses stay valid for 12 months. Buying 50 or more lowers the price per license.
+            </p>
+          </div>
+
+          {quote && (
+            <div className="text-sm flex flex-col gap-1 bg-paper-warm rounded-input px-3.5 py-2.5">
+              <div className="flex justify-between">
+                <span className="text-muted">
+                  {quote.quantity} × {formatAmount(quote.unitAmount, quote.currency)}
+                  {quote.unitAmount < quote.listUnitAmount && (
+                    <span className="ml-1.5 line-through text-muted/70">{formatAmount(quote.listUnitAmount, quote.currency)}</span>
+                  )}
+                </span>
+                <span className="text-ink">{formatAmount(quote.subtotal, quote.currency)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">{quote.taxLabel ?? "Tax"}</span>
+                <span className="text-ink">{formatAmount(quote.taxAmount, quote.currency)}</span>
+              </div>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>{formatAmount(quote.total, quote.currency)}</span>
+              </div>
+              {!quote.billingCountry && (
+                <p className="text-xs text-muted mt-1">Add your organization's country in Profile so tax and currency are right on the invoice.</p>
+              )}
+              {quote.upgradesTo && (
+                <p className="text-xs text-success mt-1">
+                  This purchase moves your organization to the Business plan: lower prices on future purchases, unlimited managers and batches.
+                </p>
+              )}
+              {quote.testMode && <p className="text-xs text-navy-deep mt-1">Test mode — payment is simulated, no real charge.</p>}
+            </div>
+          )}
+
+          {error && <p className="text-sm text-error">{error}</p>}
+          <div className="flex items-center gap-3">
+            <Button onClick={pay} disabled={paying || !quote} className="flex-1">
+              {paying ? "Opening checkout…" : quote ? `Pay ${formatAmount(quote.total, quote.currency)}` : "Pay"}
+            </Button>
+            <Button variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

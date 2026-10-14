@@ -6,6 +6,7 @@ import { ROUTES, PROFILE_ROUTE_BY_ROLE } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { NotificationBell } from "@/components/NotificationBell";
 
 function useTitleKey(pathname: string): string {
   if (pathname === ROUTES.ROADMAP) return "nav.roadmap";
@@ -15,6 +16,7 @@ function useTitleKey(pathname: string): string {
   if (pathname.startsWith(ROUTES.PRACTICE_TESTS)) return "nav.practiceTests";
   if (pathname === ROUTES.TUTOR) return "nav.tutor";
   if (pathname === ROUTES.PROFILE) return "nav.profile";
+  if (pathname === ROUTES.PLANS) return "plans.title";
   if (pathname === ROUTES.ADMIN_ADMINS) return "admin.nav.admins";
   if (pathname === ROUTES.ADMIN_ORG_ADMINS) return "admin.nav.orgAdmins";
   if (pathname === ROUTES.ADMIN_LEARNERS) return "admin.nav.learners";
@@ -38,6 +40,12 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.ORG_ADMIN_BATCHES]: "Batches",
   [ROUTES.ORG_ADMIN_MANAGERS]: "Managers",
   [ROUTES.ORG_ADMIN_LEARNERS]: "Learners",
+  [ROUTES.ORG_ADMIN_LICENSES]: "Licenses",
+  [ROUTES.ORG_ADMIN_PLAN]: "Plan",
+  [ROUTES.ADMIN_ANALYTICS]: "Analytics",
+  [ROUTES.ADMIN_CONSOLE_ANALYTICS]: "Analytics",
+  [ROUTES.ORG_ADMIN_ANALYTICS]: "Analytics",
+  [ROUTES.MANAGER_ANALYTICS]: "Analytics",
   [ROUTES.MANAGER_DASHBOARD]: "Manager Dashboard",
   [ROUTES.MANAGER_LEARNERS]: "Learners",
 };
@@ -131,6 +139,7 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         >
           {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
         </button>
+        <NotificationBell />
         <UserMenu />
       </div>
     </header>

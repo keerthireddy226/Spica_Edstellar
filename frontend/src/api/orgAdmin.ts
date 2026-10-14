@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
+import type { LearnerAccess } from "@/api/licenses";
 
 export interface OrgAdminOverview {
   organizationName: string | null;
@@ -19,9 +20,17 @@ export function updateOrganizationName(name: string): Promise<{ name: string }> 
   return api("/org-admin/organization", { method: "PATCH", body: JSON.stringify({ name }) });
 }
 
+export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
 export interface OrgBatch {
   id: string;
   name: string;
+  batchCode: string;
+  startCefr: CefrLevel | null;
+  targetCefr: CefrLevel | null;
+  durationMonths: number | null;
+  startDate: string | null;
+  targetCutScore: number | null;
   learnerCount: number;
   managerNames: string[];
   createdAt: string;
@@ -31,19 +40,40 @@ export function getBatches(): Promise<{ batches: OrgBatch[] }> {
   return api("/org-admin/batches");
 }
 
-export function createBatch(name: string): Promise<{ id: string }> {
-  return api("/org-admin/batches", { method: "POST", body: JSON.stringify({ name }) });
+export interface CreateBatchPayload {
+  name: string;
+  durationMonths?: number;
+  startDate?: string;
+  targetCutScore?: number;
+  startCefr?: CefrLevel;
+  targetCefr?: CefrLevel;
+  licenseAllotment?: number;
+}
+
+export function createBatch(payload: CreateBatchPayload): Promise<{ id: string }> {
+  return api("/org-admin/batches", { method: "POST", body: JSON.stringify(payload) });
 }
 
 export interface OrgBatchDetail {
   id: string;
   name: string;
+  fixedLicenses: number | null;
+  fixedLicensesUsed: number;
+  assignments?: { total: number; fromFixed: number; fromManagerPools: number; fromOrgPool: number; used: number; notStarted: number };
+  batchCode: string;
+  startCefr: CefrLevel | null;
+  targetCefr: CefrLevel | null;
+  durationMonths: number | null;
+  startDate: string | null;
+  targetCutScore: number | null;
   managerNames: string[];
   createdAt: string;
 }
 
 export interface OrgBatchLearner {
   id: string;
+  license?: LearnerAccess;
+  participantId: string | null;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -66,6 +96,9 @@ export interface OrgManager {
   firstName: string | null;
   lastName: string | null;
   batchNames: string[];
+  batchIds: string[];
+  licensesAllotted: number | null;
+  licensesUsed: number;
   active: boolean;
   hasLoggedIn: boolean;
   createdAt: string;
@@ -80,6 +113,11 @@ export interface OnboardManagerPayload {
   firstName: string;
   lastName: string;
   batchIds: string[];
+  licenseAllotment?: number | null;
+}
+
+export function updateManager(id: string, payload: Omit<OnboardManagerPayload, "email">): Promise<{ id: string }> {
+  return api(`/org-admin/managers/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
 export function onboardManager(payload: OnboardManagerPayload): Promise<{ id: string; email: string }> {
@@ -104,6 +142,9 @@ export function reactivateManager(id: string): Promise<{ id: string }> {
 
 export interface OrgLearner {
   id: string;
+  batchId?: string | null;
+  participantId: string | null;
+  license?: LearnerAccess;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -146,4 +187,87 @@ export function deactivateLearner(id: string): Promise<{ id: string }> {
 
 export function reactivateLearner(id: string): Promise<{ id: string }> {
   return api(`/org-admin/learners/${id}/reactivate`, { method: "POST" });
+}
+
+export function moveLearner(id: string, batchId: string, reason?: string): Promise<{ id: string }> {
+  return api(`/org-admin/learners/${id}/move`, { method: "POST", body: JSON.stringify({ batchId, reason }) });
+}
+
+export type EmployeeCountBand = "1_50" | "51_200" | "201_1000" | "1001_5000" | "5000_plus";
+
+export interface OrganizationProfile {
+  name: string;
+  category: string | null;
+  legalName: string | null;
+  industry: string | null;
+  employeeCountBand: EmployeeCountBand | null;
+  expectedLearnerCount: number | null;
+  website: string | null;
+  phone: string | null;
+  addressLine: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+  taxId: string | null;
+  trainingGoal: string | null;
+  billingContactName: string | null;
+  billingContactEmail: string | null;
+  billingContactPhone: string | null;
+  purchaseOrderRef: string | null;
+  createdAt: string;
+}
+
+export type OrganizationProfileUpdate = Partial<Omit<OrganizationProfile, "category" | "createdAt">>;
+
+export function getOrganization(): Promise<OrganizationProfile> {
+  return api("/org-admin/organization");
+}
+
+export function updateOrganization(update: OrganizationProfileUpdate): Promise<OrganizationProfile> {
+  return api("/org-admin/organization", { method: "PATCH", body: JSON.stringify(update) });
+}
+
+export interface OrgAdminContact {
+  phone: string | null;
+  jobTitle: string | null;
+}
+
+export function getOrgAdminContact(): Promise<OrgAdminContact> {
+  return api("/org-admin/me");
+}
+
+export function updateOrgAdminContact(contact: OrgAdminContact): Promise<OrgAdminContact> {
+  return api("/org-admin/me", { method: "PATCH", body: JSON.stringify(contact) });
+}
+
+export interface OrgInviteOptions {
+  batchId: string | null;
+  licenseMonths: number;
+}
+
+export function inviteLearner(
+  payload: OrgInviteOptions & { email: string; firstName: string; lastName: string },
+): Promise<{ id: string; email: string; licenseError: string | null }> {
+  return api("/org-admin/learners", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function inviteLearnersBulk(
+  options: OrgInviteOptions,
+  rows: BulkLearnerRow[],
+): Promise<{ results: (BulkLearnerResult & { licenseError?: string | null })[] }> {
+  return api("/org-admin/learners/bulk", { method: "POST", body: JSON.stringify({ ...options, rows }) });
+}
+
+export interface EditBatchPayload {
+  name: string;
+  durationMonths: number | null;
+  startDate: string | null;
+  targetCutScore: number | null;
+  startCefr: CefrLevel | null;
+  targetCefr: CefrLevel | null;
+}
+
+export function updateBatch(id: string, payload: EditBatchPayload): Promise<{ id: string }> {
+  return api(`/org-admin/batches/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
 }

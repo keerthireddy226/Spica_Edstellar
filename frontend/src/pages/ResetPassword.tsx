@@ -14,6 +14,7 @@ export function ResetPassword() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,6 +23,10 @@ export function ResetPassword() {
     setError(null);
     if (password.length < 8) {
       setError(t("auth.resetPassword.passwordTooShort"));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t("auth.resetPassword.passwordMismatch"));
       return;
     }
     setSubmitting(true);
@@ -66,6 +71,16 @@ export function ResetPassword() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t("auth.resetPassword.passwordPlaceholder")}
+          autoComplete="new-password"
+          required
+        />
+        <FormField
+          id="confirmPassword"
+          label={t("auth.resetPassword.confirmPasswordLabel")}
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder={t("auth.resetPassword.confirmPasswordPlaceholder")}
           autoComplete="new-password"
           required
         />

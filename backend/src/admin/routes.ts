@@ -232,6 +232,7 @@ adminRouter.get("/activity", requireAuth, async (req: AuthedRequest, res, next) 
       sessionsByType: sessionsByType.rows.map((r) => ({ type: r.session_type, count: r.n })),
       recentSignups: recentSignups.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -263,6 +264,7 @@ adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) =>
     res.json({
       admins: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -471,6 +473,7 @@ adminRouter.get("/org-admins", requireAuth, async (req: AuthedRequest, res, next
     res.json({
       orgAdmins: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -507,7 +510,7 @@ adminRouter.get("/org-admins/:id/activity", requireAuth, async (req: AuthedReque
     const tenantId = oa.tenant_id;
 
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          coalesce(array_agg(DISTINCT b.name) FILTER (WHERE b.id IS NOT NULL), '{}') AS batch_names,
          count(DISTINCT l.id)::int AS learner_count
@@ -534,6 +537,7 @@ adminRouter.get("/org-admins/:id/activity", requireAuth, async (req: AuthedReque
       },
       managers: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -575,6 +579,7 @@ adminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, next) 
     res.json({
       managers: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -615,7 +620,7 @@ adminRouter.get("/managers/:id/activity", requireAuth, async (req: AuthedRequest
     const mgr = manager.rows[0];
 
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, b.name AS batch_name,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, b.name AS batch_name,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        JOIN batches b ON b.id = u.batch_id
@@ -641,6 +646,7 @@ adminRouter.get("/managers/:id/activity", requireAuth, async (req: AuthedRequest
       },
       learners: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -677,6 +683,7 @@ adminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next) 
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
@@ -700,7 +707,7 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
   if (!requirePlatformAdmin(req, res)) return;
   try {
     const learnerResult = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.participant_id,
          t.name AS tenant_name, t.type AS tenant_type, t.category AS tenant_category, b.name AS batch_name
        FROM users u
        LEFT JOIN tenants t ON t.id = u.tenant_id
@@ -711,7 +718,7 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
     if (learnerResult.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
     const learner = learnerResult.rows[0];
 
-    const [onboarding, placement, roadmap, progress, skillStats, sessionTotals, sessionsByType] = await Promise.all([
+    const [onboarding, placement, roadmap, progress, skillStats, sessionTotals, sessionsByType, batchMoves] = await Promise.all([
       pool.query(`SELECT * FROM participant_profiles WHERE user_id = $1`, [req.params.id]),
       pool.query(`SELECT * FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [req.params.id]),
       pool.query(`SELECT * FROM roadmaps WHERE user_id = $1 ORDER BY generated_at DESC LIMIT 1`, [req.params.id]),
@@ -728,6 +735,12 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
         `SELECT session_type, count(*)::int AS n FROM sessions WHERE user_id = $1 GROUP BY session_type`,
         [req.params.id],
       ),
+      pool.query(
+        `SELECT bm.from_batch_name, bm.to_batch_name, bm.reason, bm.moved_at, concat_ws(' ', mu.first_name, mu.last_name) AS moved_by_name
+         FROM batch_moves bm LEFT JOIN users mu ON mu.id = bm.moved_by
+         WHERE bm.user_id = $1 ORDER BY bm.moved_at DESC`,
+        [req.params.id],
+      ),
     ]);
 
     const p = onboarding.rows[0];
@@ -738,6 +751,7 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
     res.json({
       learner: {
         id: learner.id,
+        participantId: learner.participant_id,
         email: learner.email,
         firstName: learner.first_name,
         lastName: learner.last_name,
@@ -762,6 +776,11 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
             prevScore: p.prev_score,
             prevDate: p.prev_date,
             dailyMinutesPreference: p.daily_minutes_preference,
+            country: p.country,
+            city: p.city,
+            jobRole: p.job_role,
+            gender: p.gender,
+            ageBand: p.age_band,
           }
         : null,
       placement: pl
@@ -798,6 +817,13 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
         lastSessionAt: sessionTotals.rows[0].last_session_at,
         sessionsByType: sessionsByType.rows.map((r2) => ({ type: r2.session_type, count: r2.n })),
       },
+      batchHistory: batchMoves.rows.map((m) => ({
+        fromBatch: m.from_batch_name,
+        toBatch: m.to_batch_name,
+        reason: m.reason,
+        movedBy: m.moved_by_name || null,
+        movedAt: m.moved_at,
+      })),
     });
   } catch (err) {
     next(err);
@@ -823,13 +849,17 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
     const { clause, params } = orgScopeClause(req);
     const [orgs, pendingInvites] = await Promise.all([
       pool.query(
-        `SELECT t.id, t.name, t.category, t.deactivated_at,
+        `SELECT t.id, t.name, t.category, t.deactivated_at, t.industry, t.expected_learner_count, t.country,
+           t.billing_contact_name, t.billing_contact_email, t.tax_id, t.legal_name, t.website, t.phone, t.address_line,
+           t.city, t.state, t.postal_code, t.employee_count_band, t.training_goal, t.billing_contact_phone, t.purchase_order_ref,
+           t.plan_tier, t.pilot_ends_at, t.custom_price_cents,
            count(DISTINCT l.id)::int AS learner_count,
            count(DISTINCT oa.id)::int AS has_org_admin,
            count(DISTINCT oa.id) FILTER (WHERE EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = oa.id))::int AS org_admin_logged_in,
            (SELECT json_build_object(
               'id', oa2.id, 'email', oa2.email,
-              'name', trim(coalesce(oa2.first_name, '') || ' ' || coalesce(oa2.last_name, ''))
+              'name', trim(coalesce(oa2.first_name, '') || ' ' || coalesce(oa2.last_name, '')),
+              'phone', oa2.phone, 'jobTitle', oa2.job_title
             ) FROM users oa2 WHERE oa2.tenant_id = t.id AND oa2.role = 'org_admin' AND oa2.deleted_at IS NULL
             ORDER BY oa2.created_at LIMIT 1
            ) AS org_admin,
@@ -873,6 +903,26 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
         orgAdminStatus: r.has_org_admin === 0 ? "none" : r.org_admin_logged_in > 0 ? "active" : "pending",
         orgAdmin: r.org_admin,
         managers: r.managers,
+        planTier: r.plan_tier,
+        pilotEndsAt: r.pilot_ends_at,
+        customPriceCents: r.custom_price_cents,
+        industry: r.industry,
+        expectedLearnerCount: r.expected_learner_count,
+        country: r.country,
+        billingContactName: r.billing_contact_name,
+        billingContactEmail: r.billing_contact_email,
+        taxId: r.tax_id,
+        legalName: r.legal_name,
+        website: r.website,
+        phone: r.phone,
+        addressLine: r.address_line,
+        city: r.city,
+        state: r.state,
+        postalCode: r.postal_code,
+        employeeCountBand: r.employee_count_band,
+        trainingGoal: r.training_goal,
+        billingContactPhone: r.billing_contact_phone,
+        purchaseOrderRef: r.purchase_order_ref,
         active: !r.deactivated_at,
       })),
       totalOrganizations: activeOrgs.length,
@@ -921,6 +971,10 @@ const onboardOrgSchema = z.object({
   category: z.enum(["company", "university"]),
   industry: z.string().min(1).optional(),
   expectedLearnerCount: z.coerce.number().int().positive().optional(),
+  country: z.string().length(2).toUpperCase().optional(),
+  billingContactName: z.string().min(1).optional(),
+  billingContactEmail: z.string().email().optional(),
+  taxId: z.string().min(1).optional(),
   orgAdmin: z.object({
     email: z.string().email(),
     firstName: z.string().min(1),
@@ -940,9 +994,20 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
   try {
     const body = onboardOrgSchema.parse(req.body);
     const tenant = await pool.query(
-      `INSERT INTO tenants (name, type, category, managed_by, industry, expected_learner_count)
-       VALUES ($1, 'cohort', $2, $3, $4, $5) RETURNING id`,
-      [body.name, body.category, req.user!.id, body.industry ?? null, body.expectedLearnerCount ?? null],
+      `INSERT INTO tenants (name, type, category, managed_by, industry, expected_learner_count, country,
+         billing_contact_name, billing_contact_email, tax_id)
+       VALUES ($1, 'cohort', $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [
+        body.name,
+        body.category,
+        req.user!.id,
+        body.industry ?? null,
+        body.expectedLearnerCount ?? null,
+        body.country ?? null,
+        body.billingContactName ?? null,
+        body.billingContactEmail ?? null,
+        body.taxId ?? null,
+      ],
     );
     const tenantId = tenant.rows[0].id;
 
@@ -1059,7 +1124,7 @@ adminRouter.get("/console/learners", requireAuth, async (req: AuthedRequest, res
   try {
     const { clause, params } = orgScopeClause(req);
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id,
          t.name AS org_name, t.type AS tenant_type, t.category AS org_category, b.name AS batch_name,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
@@ -1074,6 +1139,7 @@ adminRouter.get("/console/learners", requireAuth, async (req: AuthedRequest, res
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,

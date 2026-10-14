@@ -1,0 +1,732 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "ダッシュボード",
+      "admins": "管理者",
+      "orgAdmins": "組織管理者",
+      "learners": "個人学習者"
+    }
+  },
+  "skills": {
+    "listening": "リスニング",
+    "speaking": "スピーキング",
+    "reading": "リーディング",
+    "writing": "ライティング"
+  },
+  "auth": {
+    "login": {
+      "title": "おかえりなさい",
+      "subtitle": "ログインして練習を続けましょう。",
+      "emailLabel": "メールアドレス",
+      "passwordLabel": "パスワード",
+      "submit": "ログイン",
+      "submitting": "ログイン中…",
+      "errorInvalidCredentials": "メールアドレスまたはパスワードが正しくありません。",
+      "errorEmailNotVerified": "ログインする前にメールアドレスを確認してください。受信トレイの確認リンクをご確認ください。",
+      "errorWrongPortal": "このアカウントはこのページからログインできません。",
+      "errorAlreadyLoggedIn": "このアカウントは別の端末でログイン中です。先にそちらでログアウトしてください。",
+      "errorOrganizationDeactivated": "この組織は無効化されています。管理者にお問い合わせください。",
+      "errorTooManyAttempts": "ログイン試行回数が多すぎます。数分待ってから再度お試しください。",
+      "errorGeneric": "問題が発生しました。接続を確認して、もう一度お試しください。",
+      "forgotPassword": "パスワードをお忘れですか？",
+      "createAccount": "アカウントを作成"
+    },
+    "signup": {
+      "title": "アカウントを作成",
+      "subtitle": "数秒で練習を始められます。",
+      "firstNameLabel": "名",
+      "lastNameLabel": "姓",
+      "emailLabel": "メールアドレス",
+      "passwordLabel": "パスワード",
+      "passwordPlaceholder": "8文字以上",
+      "confirmPasswordLabel": "パスワード（確認）",
+      "confirmPasswordPlaceholder": "パスワードを再入力",
+      "passwordTooShort": "パスワードは8文字以上にしてください。",
+      "passwordMismatch": "パスワードが一致しません。",
+      "submit": "登録する",
+      "submitting": "アカウントを作成中…",
+      "errorEmailTaken": "このメールアドレスのアカウントはすでに存在します。",
+      "errorGeneric": "問題が発生しました。もう一度お試しください。",
+      "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+      "signIn": "ログイン",
+      "checkEmailTitle": "メールをご確認ください",
+      "checkEmailBody": "{{email}} に確認リンクを送信しました。確認後にログインして続行してください。",
+      "signInButton": "ログイン"
+    },
+    "forgotPassword": {
+      "title": "パスワードをリセット",
+      "subtitle": "新しいパスワードを設定するためのリンクをメールでお送りします。",
+      "submitted": "このメールアドレスのアカウントが存在する場合、リセット用リンクが送信されます。",
+      "emailLabel": "メールアドレス",
+      "submit": "リセットリンクを送信",
+      "submitting": "送信中…",
+      "backToSignIn": "ログインに戻る"
+    },
+    "resetPassword": {
+      "title": "新しいパスワードを設定",
+      "subtitle": "8文字以上。",
+      "missingTokenTitle": "パスワードをリセット",
+      "missingTokenSubtitle": "このリンクにはトークンがありません。",
+      "requestNewLink": "新しいリンクをリクエスト",
+      "passwordLabel": "新しいパスワード",
+      "passwordPlaceholder": "8文字以上",
+      "confirmPasswordLabel": "新しいパスワード（確認）",
+      "confirmPasswordPlaceholder": "パスワードを再入力",
+      "passwordTooShort": "パスワードは8文字以上にしてください。",
+      "passwordMismatch": "パスワードが一致しません。",
+      "submit": "パスワードをリセット",
+      "submitting": "保存中…",
+      "error": "このリンクは無効か、期限が切れています。"
+    },
+    "verifyEmail": {
+      "title": "メールアドレスの確認",
+      "pending": "確認中…",
+      "success": "メールアドレスが確認されました。ログインして続行してください。",
+      "signInButton": "ログイン",
+      "error": "この確認リンクは無効か、期限が切れています。"
+    }
+  },
+  "onboarding": {
+    "title": "初期設定へようこそ",
+    "logout": "ログアウト",
+    "wizard": {
+      "stepLabel": "{{current}} / {{total}}",
+      "back": "戻る",
+      "next": "次へ",
+      "basics": {
+        "title": "あなたについて教えてください",
+        "subtitle": "メールアドレスはログイン情報から入力されています",
+        "firstNameLabel": "名",
+        "firstNamePlaceholder": "名を入力",
+        "lastNameLabel": "姓",
+        "lastNamePlaceholder": "姓を入力",
+        "emailLabel": "メールアドレス",
+        "emailNote": "アカウント情報から入力済み"
+      },
+      "examGoal": {
+        "examTitle": "どの試験の準備をしていますか？",
+        "examSubtitle": "試験の形式に合わせて練習内容を調整します",
+        "goalTitle": "目標のレベルやスコアは？",
+        "goalSubtitle": "この試験での目標",
+        "scoreTargetLabel": "具体的な目標スコア（任意）",
+        "scoreTargetPlaceholder": "例：IELTS 7.0、Versant 69+、PTE 65",
+        "exam": {
+          "versantDesc": "スピーキング、ライティング、プレイスメント、ビジネス",
+          "ieltsDesc": "アカデミックまたはジェネラル・トレーニング",
+          "toeflDesc": "インターネット版テスト",
+          "pteDesc": "Pearson のコンピューター試験",
+          "other": "その他 / 一般",
+          "otherDesc": "総合的な英語力の向上"
+        },
+        "goal": {
+          "A1": "A1 – 入門",
+          "A1Desc": "簡単な単語と日常表現",
+          "A2": "A2 – 初級",
+          "A2Desc": "簡単な文、やさしい会話",
+          "B1": "B1 – 中級",
+          "B1Desc": "旅行や仕事のほとんどの場面",
+          "B2": "B2 – 中上級",
+          "B2Desc": "流暢な会話、詳細な文章",
+          "C1": "C1 – 上級",
+          "C1Desc": "複雑なテーマ、言外の意味",
+          "C2": "C2 – 熟達",
+          "C2Desc": "ネイティブに近い正確さと流暢さ",
+          "unsure": "まだわからない",
+          "unsureDesc": "プレイスメントテストで決めましょう"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "試験を受ける理由は？",
+        "reasonSubtitle": "実際のニーズに合わせて内容を調整します",
+        "reason": {
+          "university": "大学入学",
+          "job": "勤務先の要件",
+          "immigration": "移住",
+          "promotion": "昇進・キャリアアップ",
+          "personal": "個人的な目標"
+        },
+        "appliedTitle": "すでに試験に申し込みましたか？",
+        "appliedSubtitle": "期限に合わせて練習スケジュールを組みます",
+        "appliedYes": "はい、日程が確定しています",
+        "appliedNo": "いいえ、まだです",
+        "examDateLabel": "試験日はいつですか？",
+        "prepDaysLabel": "何日間準備したいですか？",
+        "prepDaysPlaceholder": "例：30",
+        "days": "日"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "この試験を受けたことはありますか？",
+        "attemptsSubtitle": "現在の出発点を把握するのに役立ちます",
+        "attempts": {
+          "first": "いいえ、今回が初めてです",
+          "once": "はい、1回",
+          "multiple": "はい、複数回"
+        },
+        "prevScoreLabel": "前回のスコアは？",
+        "prevScorePlaceholder": "例：B1、5.5、58",
+        "prevDateLabel": "最後に受けたのはいつですか？",
+        "prevDatePlaceholder": "例：2026年3月、6か月前",
+        "timeTitle": "1日にどのくらい時間を取れますか？",
+        "timeSubtitle": "無理のない範囲で — 量より継続が大切です",
+        "time": {
+          "min15": "15分",
+          "min15Desc": "毎日の短い練習",
+          "min30": "30分",
+          "min30Desc": "着実な上達",
+          "min60": "1時間",
+          "min60Desc": "本格的な準備",
+          "min90": "90分以上",
+          "min90Desc": "集中的な学習"
+        }
+      },
+      "duration": {
+        "title": "利用期間はどのくらいにしますか？",
+        "subtitle": "スケジュールに合ったプランを選んでください",
+        "oneMonth": "1か月",
+        "oneMonthDesc": "短期集中",
+        "threeMonths": "3か月",
+        "threeMonthsDesc": "バランスの取れた準備",
+        "sixMonths": "6か月",
+        "sixMonthsDesc": "じっくり着実な学習",
+        "untilExam": "試験日まで",
+        "untilExamDesc": "試験日から計算します"
+      },
+      "consent": {
+        "title": "続行する前に",
+        "subtitle": "練習とテストの間、音声が録音されます",
+        "body": "スピーキングを評価してフィードバックを提供するため、口頭での回答を録音します。録音は一定期間のみ保存され、結果の評価と改善のためだけに使用されます。データは設定からいつでも削除できます。",
+        "checkboxLabel": "練習とテストの間に音声が録音されることを理解し、同意します。",
+        "submit": "テストへ進む",
+        "submitting": "保存中…",
+        "error": "回答の保存中に問題が発生しました。もう一度お試しください。"
+      },
+      "about": {
+        "title": "あなたについて",
+        "subtitle": "あなたの状況に合わせて練習内容を調整します。",
+        "countryLabel": "国",
+        "cityLabel": "市区町村",
+        "cityPlaceholder": "例：大阪",
+        "jobRoleLabel": "職種",
+        "genderLabel": "性別（任意）",
+        "ageLabel": "年齢（任意）",
+        "select": "選択…",
+        "skip": "回答しない",
+        "consent": "性別と年齢層が保存され、匿名化された集計レポートにのみ使用されることに同意します。",
+        "privacyNote": "性別と年齢は任意です。他の学習者に表示されることはなく、5人以上のグループでのみ集計されます。"
+      }
+    }
+  },
+  "placement": {
+    "title": "準備完了！",
+    "subtitle": "初期設定が完了しました。次はプレイスメントテストです。",
+    "scheduleLater": "後で受ける",
+    "scheduling": "送信中…",
+    "scheduleSent": "リマインダーのリンクをメールでお送りしました。",
+    "scheduleLaterError": "リマインダーの送信中に問題が発生しました。もう一度お試しください。",
+    "info": {
+      "timing": "時間制限あり — 約15〜20分を確保してください",
+      "covers": "スピーキング、リスニング、リーディング、ライティングを測定",
+      "graded": "このテストは採点され、評価のため音声が録音されます。外部の助けを借りず、一人で正直に回答してください。",
+      "equipment": "ヘッドホンとマイクを準備してください"
+    },
+    "instructions": {
+      "checkboxLabel": "説明を読み、準備ができました。",
+      "begin": "テストを開始"
+    },
+    "resume": {
+      "title": "前回の続きから",
+      "subtitle": "このテストですでに{{count}}問に回答しています。続けると進捗が引き継がれます。",
+      "continue": "テストを続ける"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "開始",
+    "loading": "テストを読み込み中…",
+    "loadError": "テストの読み込み中に問題が発生しました。もう一度お試しください。",
+    "micError": "マイクにアクセスできません。マイクへのアクセスを許可して、もう一度お試しください。",
+    "progress": "{{current}} / {{total}}",
+    "play": "音声を再生",
+    "playAgain": "もう一度再生",
+    "replay": "再再生",
+    "playing": "再生中…",
+    "record": "回答を録音",
+    "recordAgain": "録音し直す",
+    "audioSaved": "録音を保存しました",
+    "stopRecording": "録音を停止",
+    "skip": "スキップ",
+    "exitConfirm": "テストを終了しますか？この問題の進捗は保存されません。",
+    "answerPlaceholder": "ここに回答を入力…",
+    "submitting": "送信中…",
+    "next": "次へ",
+    "finish": "終了",
+    "submitError": "回答の送信中に問題が発生しました。もう一度お試しください。",
+    "resultsTitle": "テスト完了",
+    "resultsSummary": "自動採点された{{graded}}問中{{correct}}問正解しました。{{pending}}件の回答はまだ採点待ちです。",
+    "done": "完了",
+    "yourLevel": "推定レベル：{{level}}",
+    "levelDisclaimer": "これはテストに基づく当社独自のCEFR準拠の評価であり、公式スコアではありません。",
+    "pendingNote": "{{pending}}件の回答は、レベルに反映される前に採点が必要です。",
+    "goToRoadmap": "学習プランへ",
+    "notEnoughAnswered": "回答数が不足しています",
+    "gapCappedNote": "一部のレベルはテストされていません。実際のレベルはもっと高い可能性があります。",
+    "failedNote": "採点サービスの一時的な問題により、{{failed}}件の回答を採点できませんでした。回答に問題があったわけではありません。後でもう一度お試しください。"
+  },
+  "roadmap": {
+    "loading": "学習プランを読み込み中…",
+    "loadError": "学習プランの読み込み中に問題が発生しました。もう一度お試しください。",
+    "pendingReviewBanner": "本人確認の一環として、プレイスメントテストの結果を確認中です。その間も以下の機能はすべてご利用いただけます。",
+    "notReadyTitle": "学習プランはまだ準備できていません",
+    "notReadyBody": "プレイスメントテストを受けて、あなた専用のプランを作成しましょう。",
+    "notReadyBodyScheduled": "プレイスメントテストを{{date}}に予定しています。準備ができたら受けてください。終了後すぐに学習プランが作成されます。",
+    "takeTestNow": "プレイスメントテストを受ける",
+    "greeting": "こんにちは、{{name}}さん",
+    "currentLevel": "現在のレベル",
+    "goalLevel": "目標",
+    "daysLeftLabel": "残り日数",
+    "skillBreakdownTitle": "スキル別の内訳",
+    "timelineTitle": "あなたの学習プラン",
+    "milestoneReach": "{{level}}に到達",
+    "milestoneMaintain": "レベルを維持",
+    "dayOffset": "{{day}}日目",
+    "focusOn": "重点：{{skill}}",
+    "welcomeBack": "おかえりなさい",
+    "goalProgress": "目標への進捗",
+    "ofYourRoadmap": "（学習プラン全体）",
+    "streak": "連続記録",
+    "streakDays_other": "{{count}}日",
+    "startStreakToday": "今日から連続記録を始めましょう。",
+    "keepStreakGoing": "この調子で続けましょう！",
+    "today": "今日",
+    "practicedSoFar": "これまでの練習",
+    "accuracy": "正答率",
+    "practiceToUnlock": "練習して解除",
+    "practiceAccuracy": "練習の正答率",
+    "strongest": "最も得意",
+    "notTested": "未テスト",
+    "gapCappedNote": "一部のレベルはテストされていません。実際のレベルはもっと高い可能性があります。"
+  },
+  "dashboard": {
+    "welcome": "ようこそ、{{email}}さん",
+    "role": "ロール：{{role}}",
+    "placeholder": "これは仮のページです。本来のダッシュボード（レベル、プラン進捗、連続記録、バッジ）は後のフェーズで提供されます。"
+  },
+  "nav": {
+    "roadmap": "学習プラン",
+    "overview": "概要",
+    "progress": "進捗",
+    "modules": "モジュール",
+    "practiceTests": "模擬試験",
+    "tutor": "チューター",
+    "profile": "プロフィール"
+  },
+  "shell": {
+    "openMenu": "メニューを開く",
+    "toggleTheme": "テーマを切り替え"
+  },
+  "practiceTests": {
+    "subtitle": "本番の Versant 試験と同じ構成の、時間制限付き模擬試験です。",
+    "comingSoon": "近日公開",
+    "setsCount": "{{count}}セット",
+    "setsCount_other": "{{count}}セット",
+    "questionsCount": "{{count}}問",
+    "questionsCount_other": "{{count}}問",
+    "completed": "完了",
+    "startExam": "開始",
+    "retake": "もう一度受ける",
+    "backToProducts": "試験一覧に戻る",
+    "backToExams": "セット一覧に戻る",
+    "loadError": "現在読み込めません。もう一度お試しください。",
+    "saveAndNext": "保存して次へ",
+    "sectionLabel": "パート {{current}} / {{total}} — {{label}}",
+    "youHear": "聞こえる内容",
+    "youSay": "あなたの発話",
+    "playsRemaining": "残り再生回数：{{count}}",
+    "playsRemaining_other": "残り再生回数：{{count}}",
+    "scoreReport": {
+      "title": "試験完了",
+      "overall": "総合スコア",
+      "sectionResults": "パート別結果",
+      "testType": "試験",
+      "skippedNote": "{{count}}問がスキップまたは未回答のため、レベルには反映されません。",
+      "skippedNote_other": "{{count}}問がスキップまたは未回答のため、レベルには反映されません。"
+    },
+    "overview": {
+      "title": "始める前に",
+      "subtitle": "この試験は複数のパートで構成されています。パートごとに異なる種類の課題があります。",
+      "begin": "試験を開始",
+      "startSection": "{{label}}を開始"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "スピーキングとリスニング — 17分。",
+      "fourSkillsDesc": "スピーキング、リスニング、リーディング、ライティング — 30分。",
+      "writingDesc": "英語ライティング — 35分。",
+      "professionalDesc": "スピーキング、リスニング、リーディング、ライティング — 60分。",
+      "placementDesc": "スピーキング、リスニング、リーディング、ライティング — 50分。"
+    }
+  },
+  "tutor": {
+    "subtitle": "AIコーチと気軽に会話練習。",
+    "inputPlaceholder": "返信を入力…",
+    "loading": "会話を開始中…",
+    "typing": "入力中…",
+    "sendError": "送信中に問題が発生しました。もう一度お試しください。",
+    "newConversation": "新しい会話",
+    "newConversationConfirm": "新しい会話を始めますか？現在の会話は終了します。"
+  },
+  "profile": {
+    "account": {
+      "unnamed": "あなたのアカウント",
+      "individual": "個人"
+    },
+    "language": {
+      "title": "言語"
+    },
+    "voice": {
+      "title": "音声",
+      "subtitle": "テストや練習で問題を読み上げる音声を選んでください。",
+      "loading": "音声設定を読み込み中…",
+      "female": "女性の声",
+      "male": "男性の声",
+      "preview": "この声を試聴",
+      "previewLine": "問題はこのように読み上げられます。",
+      "saved": "保存しました。今後はこの声が使われます。"
+    },
+    "plan": {
+      "title": "試験目標",
+      "loading": "プランを読み込み中…",
+      "notSet": "未設定",
+      "exam": "試験",
+      "currentToGoal": "現在 → 目標",
+      "examDateLabel": "試験日",
+      "accessDaysLeft": "利用可能な残り日数"
+    },
+    "personalInfo": {
+      "title": "個人情報",
+      "edit": "編集",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "メールアドレス",
+      "accountType": "アカウントの種類",
+      "save": "保存",
+      "saving": "保存中…",
+      "cancel": "キャンセル",
+      "participantId": "受講者ID"
+    },
+    "preferences": {
+      "title": "設定",
+      "spokenPrompts": {
+        "title": "音声による指示",
+        "subtitle": "練習中にリスニングの指示を読み上げます。"
+      },
+      "weeklyReports": {
+        "title": "週間進捗レポート",
+        "subtitle": "学習状況のまとめをメールで受け取ります。"
+      },
+      "strictTimer": {
+        "title": "厳格タイマーモード",
+        "subtitle": "時間制限のある練習で一時停止を無効にします。"
+      }
+    },
+    "about": {
+      "title": "あなたについて",
+      "gender": "性別",
+      "age": "年齢",
+      "notShared": "未回答",
+      "error": "保存できませんでした。もう一度お試しください。"
+    },
+    "access": {
+      "title": "利用状況",
+      "activeUntil": "{{date}}まで有効",
+      "grace": "期限切れ — {{date}}まで猶予期間",
+      "expired": "{{date}}に期限切れ",
+      "none": "ライセンスはまだ割り当てられていません",
+      "queued_other": "割り当て済みの追加{{count}}か月を含む",
+      "help": "利用権は所属組織が管理しています。延長については管理者またはマネージャーにお問い合わせください。"
+    },
+    "reminder": {
+      "title": "毎日の練習リマインダー",
+      "on": "オン",
+      "off": "オフ",
+      "subtitle": "選んだ曜日のこの時刻にメールでお知らせします。その日すでに練習済みの場合は自動的に送信されません。",
+      "time": "時刻",
+      "streakAlert": "連続記録（3日以上）が途切れそうなときは22時にも通知する",
+      "error": "保存できませんでした。もう一度お試しください。",
+      "savedOn": "保存しました — {{time}}にリマインダーを送信します。",
+      "savedOff": "保存しました — リマインダーはオフです。",
+      "days": {
+        "sun": "日",
+        "mon": "月",
+        "tue": "火",
+        "wed": "水",
+        "thu": "木",
+        "fri": "金",
+        "sat": "土"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "どんなプランも0%から始まります。あなたはもう一歩先にいます。",
+    "mid": "もう出発点にはいません。このまま進みましょう。",
+    "high": "ゴールはもうすぐそこです。"
+  },
+  "motivational": {
+    "line1": "毎日15分の練習は、週1回の2時間に勝ります。",
+    "line2": "声に出して話すこと — 独り言でも — が流暢さへの近道です。",
+    "line3": "練習でのミスは、本番でのミスを一つ減らします。",
+    "line4": "量より継続 — 毎日少しずつがすぐに大きな差になります。",
+    "line5": "完璧でなくて大丈夫。続けることが大切です。",
+    "line6": "どんな専門家も、あきらめなかった初心者でした。",
+    "line7": "今日の小さな一歩が、明日の大きな自信になります。",
+    "line8": "今日練習すれば、試験日もいつもの一日になります。",
+    "line9": "練習に最適なときは昨日でした。次に良いときは今です。"
+  },
+  "achievement": {
+    "goalSetterTitle": "目標設定",
+    "goalSetterBody": "目標レベルと学習プランを設定しましょう。"
+  },
+  "recommendedPractice": {
+    "title": "あなたへのおすすめ",
+    "startPractice": "練習を始める",
+    "estimatedMinutes": "約{{minutes}}分"
+  },
+  "dailyChallenge": {
+    "title": "今日のチャレンジ",
+    "subtitle": "今日のちょっとしたボーナス",
+    "wordTab": "今日の単語",
+    "idiomTab": "イディオム",
+    "wordOfDay": "今日の単語 — タップして{{action}}",
+    "reveal": "表示",
+    "hide": "非表示",
+    "idiomOfDay": "今日のイディオム",
+    "meaningTab": "意味を選ぶ",
+    "pickClosestMeaning": "最も近い意味を選んでください",
+    "correctFeedback": "正解です！🎉",
+    "incorrectFeedback": "惜しい！意味は「{{answer}}」です。"
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "困難から素早く立ち直ることができる。",
+      "articulate": "考えや気持ちを明確かつ効果的に表現する。",
+      "candid": "正直で率直な、包み隠さない。",
+      "diligent": "仕事や務めに粘り強く丁寧に取り組む。"
+    },
+    "idioms": {
+      "hitTheBooks": "勉強に取りかかる。特に大事な試験の前に本気で勉強すること。",
+      "breakTheIce": "会話の始めに、場の緊張をほぐすようなことを言ったりしたりする。",
+      "sameSage": "他の人と意見が一致している、または同じように理解している。",
+      "underWeather": "少し体調が悪い。"
+    }
+  },
+  "coachPromo": {
+    "badge": "採点なし · プレッシャーなし",
+    "title": "何から始めればいいかわからない？話してみましょう。",
+    "body": "コーチモードは気軽なウォームアップ会話です。時間制限も採点もありません。",
+    "cta": "コーチモードを開く"
+  },
+  "dashboardHome": {
+    "welcomeBack": "おかえりなさい、{{name}}さん",
+    "subtitle": "英語の練習を続けて、4つのスキルすべてで自信をつけましょう。",
+    "subtitleFirstTime": "まだ練習を始めていません。最初のセッションはわずか数分です。さあ始めましょう！",
+    "subtitleAllDoneToday": "今日の分はすべて完了 — お疲れさまでした！明日も来て連続記録を伸ばしましょう。",
+    "subtitleContinue_other": "今日の残りタスクは{{count}}件 — 頑張りましょう！",
+    "viewRoadmap": "学習プラン",
+    "startPractice": "練習を始める",
+    "overallProgressTitle": "練習の総合進捗",
+    "todaysTasksTitle": "今日のタスク",
+    "todaysTasksTitleGo": "今日のタスク — 頑張りましょう！",
+    "todaysTasksAllDone": "今日のタスク — すべて完了！",
+    "taskProgress": "今日のタスク {{done}}/{{target}}",
+    "practiceAction": "練習",
+    "statusNotStarted": "未開始",
+    "statusInProgress": "進行中",
+    "statusCompleted": "完了",
+    "statsSessions": "練習セッション",
+    "statsQuestions": "回答した問題",
+    "statsTime": "練習時間",
+    "statsTimeValue": "{{minutes}}分",
+    "statsStreak": "現在の連続記録",
+    "statsStreakValue_other": "{{count}}日",
+    "statsLevel": "レベル",
+    "statsLevelValue": "Lv. {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "前回の続きから",
+    "continuePracticeBody": "{{skill}} — {{total}}問中{{answered}}問回答済み",
+    "achievementsTitle": "実績"
+  },
+  "progressPage": {
+    "title": "あなたの進捗",
+    "subtitle": "今週の毎日の練習の様子です。",
+    "loading": "進捗を読み込み中…",
+    "loadError": "進捗を読み込めませんでした。もう一度お試しください。",
+    "todaysReport": "今日のレポート",
+    "questions": "問題数",
+    "accuracy": "正答率",
+    "minutes": "分",
+    "moreThanYesterday_other": "昨日より{{count}}問多い",
+    "lessThanYesterday_other": "昨日より{{count}}問少ない",
+    "sameAsYesterday": "昨日と同じ — この調子で",
+    "firstDayBack": "今日も練習してくれてうれしいです！",
+    "dailyChartTitle": "過去7日間",
+    "today": "今日",
+    "questionsThisWeek_other": "今週{{count}}問",
+    "bestDay": "ベストな日：{{day}}",
+    "bestDayBadge": "今週のベストな日"
+  },
+  "modules": {
+    "title": "練習モジュール",
+    "subtitle": "練習するスキルを選んでください。内容は適応的に変わるので、すべて解き終わるまで同じ問題は出ません。",
+    "loadingAvailability": "モジュールを読み込み中…",
+    "remainingItems": "残り {{count}} / {{total}} 問",
+    "allDone": "このセクションは今のところすべて完了しました。新しいコンテンツが追加されたらまた来てください。",
+    "start": "開始",
+    "backToSkills": "スキル一覧に戻る",
+    "pickTypeSubtitle": "練習する問題タイプを選んでください。",
+    "starting": "セッションを開始中…",
+    "startError": "セッションの開始中に問題が発生しました。もう一度お試しください。",
+    "sessionComplete": "よくできました！",
+    "practiceAgain": "もう一度練習",
+    "backToDashboard": "ダッシュボードに戻る",
+    "startReading": "読み始める",
+    "passageHidden": "本文は非表示になりました。自分の言葉で書いてください。",
+    "backToTypes": "問題タイプに戻る",
+    "pickUnitTitle": "練習するユニットを選んでください。",
+    "unitComplete": "全セット完了",
+    "setsProgress": "{{total}}セット中{{done}}セット完了",
+    "backToUnits": "ユニット一覧に戻る",
+    "setCompleted": "完了",
+    "startPractice": "練習を始める",
+    "typeDesc": {
+      "reading": "文を自然に、はっきりと音読します。",
+      "repeats": "一度だけ聞いて、そのとおりに繰り返します。",
+      "sentence_builds": "単語を並べ替えて正しい文を作ります。",
+      "conversations": "会話を聞いて質問に答えます。",
+      "reading_selective": "読んで重要な情報を見つけます。",
+      "short_answer": "簡単な質問に短く答えます。",
+      "passage_comprehension": "文章を聞いて質問に答えます。",
+      "speaking_situations": "日常の場面に自然に応答します。",
+      "story_retelling": "話を聞いて、自分の言葉で言い直します。",
+      "open_questions": "自分の意見を自由に述べます。",
+      "dictation": "聞こえたとおりに正確に書き取ります。",
+      "response_selection": "選択肢から正しい応答を選びます。",
+      "passage_reconstruction": "読んだ後、記憶をもとに再現します。",
+      "summary_and_opinion": "文章を要約し、意見を述べます。",
+      "reading_comprehension": "文章を読んで質問に答えます。",
+      "sentence_completion": "空欄の単語や語句を補います。",
+      "typing": "短いタイピングのウォームアップです。",
+      "email_writing": "短く実用的なメールを書きます。"
+    }
+  },
+  "faceCheck": {
+    "back": "戻る",
+    "enroll": {
+      "title": "顔認証の設定",
+      "success": "顔を登録しました",
+      "proceed": "続ける",
+      "subtitle": "これは一度だけの設定です。この写真を使って、各プレイスメントテスト、モジュール、模擬試験の前に本人確認を行います。",
+      "successSubtitle": "設定が完了しました。プレイスメントテストの前に説明が表示されます。"
+    },
+    "verify": {
+      "title": "かんたん顔認証",
+      "success": "顔認証が完了しました",
+      "proceed": "続ける",
+      "mismatchError": "登録された写真と顔が一致しません。もう一度お試しください。",
+      "subtitle": {
+        "placement": "プレイスメントテストの前に本人確認を行います。",
+        "practice": "この練習セッションの前に本人確認を行います。",
+        "practice_test": "この模擬試験の前に本人確認を行います。"
+      },
+      "successSubtitle": "本人確認が完了しました。テストに進みます。"
+    },
+    "record": {
+      "capture": "撮影",
+      "checking": "確認中...",
+      "cameraError": "カメラにアクセスできません。権限を確認して、もう一度お試しください。",
+      "error": "問題が発生しました。もう一度お試しください。",
+      "tooShort": "顔をはっきり認識できませんでした。もう一度お試しください。"
+    },
+    "fallback": {
+      "otpButton": "コードをメールで受け取る",
+      "otpSending": "送信中…",
+      "otpSentNotice": "コードを送信しました。メールをご確認ください。",
+      "otpPlaceholder": "6桁のコード",
+      "otpVerify": "コードを確認",
+      "otpVerifying": "確認中…",
+      "otpResend": "コードを再送信",
+      "otpSuccess": "コードを確認しました",
+      "otpSendError": "コードの送信中に問題が発生しました。もう一度お試しください。",
+      "otpInvalidError": "このコードは使用できません。確認して、もう一度お試しください。"
+    },
+    "enrollmentConsent": {
+      "title": "顔認証の設定",
+      "subtitle": "テストを受けているのが本当にあなたであることを確認するためのものです。",
+      "body": "本人確認の基準として顔写真を撮影します。この写真と顔スキャンは、プレイスメントテストと練習セッション（モジュール）の前、およびその最中に定期的に本人確認を行うために使用されます（開始時の1回だけではありません）。安全に保管され、この目的にのみ使用されます。",
+      "checkboxLabel": "テストや練習中の定期的な確認を含む、顔による本人確認について理解し、同意します。",
+      "submit": "続ける",
+      "decline": "今はしない"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "学生",
+      "it_engineering": "IT / エンジニアリング",
+      "customer_support": "カスタマーサポート",
+      "sales_marketing": "営業 / マーケティング",
+      "healthcare": "医療",
+      "education": "教育",
+      "finance": "金融・経理",
+      "operations": "オペレーション",
+      "management": "管理職",
+      "other": "その他"
+    },
+    "gender": {
+      "female": "女性",
+      "male": "男性",
+      "non_binary": "ノンバイナリー",
+      "prefer_not": "回答しない"
+    },
+    "ageBand": {
+      "under_18": "18歳未満"
+    }
+  },
+  "plans": {
+    "title": "プラン",
+    "onFree": "無料プランをご利用中です。",
+    "activeUntil": "フルアクセスは{{date}}まで有効です。",
+    "orgManaged": "利用権は所属組織が管理しています。管理者またはマネージャーにお問い合わせください。",
+    "unavailable": "現在プランをご利用いただけません。後でもう一度お試しください。",
+    "payError": "支払いを開始できませんでした。もう一度お試しください。",
+    "free": {
+      "name": "無料",
+      "usage": "今週の無料セッション：{{limit}}回中{{used}}回使用"
+    },
+    "full": {
+      "name": "フルアクセス",
+      "perMonth": "月額 {{price}}"
+    },
+    "features": {
+      "placementOnce": "プレイスメントテスト1回",
+      "placementUnlimited": "プレイスメントテストの再受験",
+      "practiceLimited": "週{{count}}回の練習セッション",
+      "practiceUnlimited": "全モジュールで練習し放題",
+      "progress": "進捗レポートと学習プラン",
+      "mockTests": "本番形式の模擬試験",
+      "tutor": "AIスピーキングチューター"
+    },
+    "months_other": "{{count}}か月",
+    "total": "合計",
+    "startNote": "支払いが確認され次第、利用が開始されます。",
+    "extendNote": "現在の利用期間が終了する{{date}}の後に追加されます。",
+    "testMode": "テストモード — 支払いはシミュレーションで、実際の請求は発生しません。",
+    "buy_other": "{{count}}か月分を購入",
+    "extend_other": "{{count}}か月延長",
+    "redirecting": "支払いページを開いています…",
+    "invoices": "請求書",
+    "upgrade": "プランを見る",
+    "locked": {
+      "mocktest": "模擬試験はフルアクセスに含まれます。",
+      "coach": "AIチューターはフルアクセスに含まれます。",
+      "placement": "無料のプレイスメントテストは使用済みです。再受験はフルアクセスに含まれます。",
+      "practice": "今週の無料セッション{{limit}}回を使い切りました。7日間の期間で順次回復します。無制限に練習するにはアップグレードしてください。"
+    },
+    "lockedTitle": "続けるにはアップグレード"
+  }
+}

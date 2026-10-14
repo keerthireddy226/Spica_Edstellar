@@ -21,6 +21,9 @@ export const ROUTES = {
   PRACTICE_TESTS: "/practice-tests",
   TUTOR: "/tutor",
   PROFILE: "/profile",
+  PLANS: "/plans",
+  CHECKOUT_RETURN: "/checkout/return",
+  INVOICE: "/invoice/:id",
   ADMIN_REVIEW: "/admin/review",
   // Super Admin's own console — exclusively theirs, never reachable by an
   // Admin (see SUPER_ADMIN_ONLY_ROLES below). Sees every organization,
@@ -31,6 +34,7 @@ export const ROUTES = {
   ADMIN_MANAGERS: "/superadmin/managers",
   ADMIN_LEARNERS: "/superadmin/learners",
   ADMIN_PROFILE: "/superadmin/profile",
+  ADMIN_ANALYTICS: "/superadmin/analytics",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -39,18 +43,23 @@ export const ROUTES = {
   ADMIN_CONSOLE_USERS: "/admin/users",
   ADMIN_CONSOLE_MANAGERS: "/admin/managers",
   ADMIN_CONSOLE_PROFILE: "/admin/profile",
+  ADMIN_CONSOLE_ANALYTICS: "/admin/analytics",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
   ORG_ADMIN_BATCHES: "/orgadmin/batches",
   ORG_ADMIN_MANAGERS: "/orgadmin/managers",
   ORG_ADMIN_LEARNERS: "/orgadmin/learners",
+  ORG_ADMIN_LICENSES: "/orgadmin/licenses",
+  ORG_ADMIN_ANALYTICS: "/orgadmin/analytics",
+  ORG_ADMIN_PLAN: "/orgadmin/plan",
   ORG_ADMIN_PROFILE: "/orgadmin/profile",
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.
   MANAGER_DASHBOARD: "/manager/dashboard",
   MANAGER_LEARNERS: "/manager/learners",
   MANAGER_PROFILE: "/manager/profile",
+  MANAGER_ANALYTICS: "/manager/analytics",
 } as const;
 
 // These route groups are never shared — a role hitting another role's URL

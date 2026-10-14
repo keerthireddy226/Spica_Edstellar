@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import i18n from "i18next";
+import { changeAppLanguage, isSupportedLanguage } from "@/i18n";
 import { api } from "@/lib/api";
 
 export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager";
@@ -15,6 +17,8 @@ type AuthUser = {
   lastLoginAt?: string | null;
   department?: string | null;
   permissions?: Record<string, unknown>;
+  participantId?: string | null;
+  preferredLanguage?: string | null;
 };
 
 export interface LoginHistoryEntry {
@@ -36,6 +40,10 @@ export function getLoginHistory(): Promise<{ logins: LoginHistoryEntry[] }> {
 
 export function getActiveSessions(): Promise<{ sessions: ActiveSession[] }> {
   return api("/auth/me/sessions");
+}
+
+export function saveLanguagePreference(language: string): Promise<void> {
+  return api("/auth/me/language", { method: "PATCH", body: JSON.stringify({ language }) });
 }
 
 export function revokeSession(id: string): Promise<void> {
@@ -63,6 +71,20 @@ export function useAuthState() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // The saved language follows the user across devices. If they've never
+  // picked one, record whatever they're currently using so analytics and
+  // emails have a language for every account.
+  const userId = state.user?.id;
+  const savedLanguage = state.user?.preferredLanguage;
+  useEffect(() => {
+    if (!userId) return;
+    if (savedLanguage) {
+      if (savedLanguage !== i18n.language && isSupportedLanguage(savedLanguage)) changeAppLanguage(savedLanguage);
+    } else {
+      saveLanguagePreference(i18n.language).catch(() => {});
+    }
+  }, [userId, savedLanguage]);
 
   // `allowedRoles` names which role(s) the login portal accepts (e.g.
   // /admin/login accepts both admin and super_admin) — the backend rejects

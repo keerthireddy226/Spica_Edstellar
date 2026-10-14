@@ -1,0 +1,142 @@
+import { api } from "@/lib/api";
+
+export interface Quote {
+  kind: "org_licenses" | "individual_plan";
+  currency: "INR" | "USD";
+  provider: "stripe" | "razorpay" | "test";
+  quantity: number;
+  unitAmount: number;
+  subtotal: number;
+  taxLabel: string | null;
+  taxRate: number;
+  taxAmount: number;
+  total: number;
+  billingCountry: string | null;
+  // Rate-card price per unit before plan, volume and education pricing.
+  listUnitAmount: number;
+  upgradesTo: "business" | "enterprise" | null;
+  planMonths: number[] | null;
+  testMode: boolean;
+}
+
+export interface RazorpayOptions {
+  key: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  prefill: { email?: string; name?: string };
+}
+
+export type CreatedOrder =
+  | { orderId: string; provider: "stripe"; redirectUrl: string }
+  | { orderId: string; provider: "razorpay"; razorpay: RazorpayOptions }
+  | { orderId: string; provider: "test" };
+
+export interface InvoiceSummary {
+  id: string;
+  invoiceNumber: string;
+  issuedAt: string;
+  description: string;
+  quantity: number;
+  currency: string;
+  total: number;
+  provider: string;
+}
+
+export interface Invoice extends InvoiceSummary {
+  seller: { name: string; address: string; taxId: string; email: string };
+  billTo: Record<string, string | null>;
+  unitAmount: number;
+  subtotal: number;
+  taxLabel: string | null;
+  taxRate: number;
+  taxAmount: number;
+  providerPaymentId: string | null;
+}
+
+export function getQuote(quantity: number): Promise<Quote> {
+  return api(`/payments/quote?quantity=${quantity}`);
+}
+
+export function createPaymentOrder(quantity: number): Promise<CreatedOrder> {
+  return api("/payments/orders", { method: "POST", body: JSON.stringify({ quantity }) });
+}
+
+export function confirmPaymentOrder(
+  orderId: string,
+  body: Record<string, string> = {},
+): Promise<{ status: "paid"; invoiceId: string; kind: Quote["kind"]; quantity: number }> {
+  return api(`/payments/orders/${orderId}/confirm`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function cancelPaymentOrder(orderId: string): Promise<void> {
+  return api(`/payments/orders/${orderId}/cancel`, { method: "POST" });
+}
+
+export function getInvoices(): Promise<{ invoices: InvoiceSummary[] }> {
+  return api("/payments/invoices");
+}
+
+export function getInvoice(id: string): Promise<Invoice> {
+  return api(`/payments/invoices/${id}`);
+}
+
+// Amounts are in minor units (cents / paise).
+export function formatAmount(minor: number, currency: string): string {
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : undefined, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: minor % 100 === 0 ? 0 : 2,
+  }).format(minor / 100);
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => { open: () => void; on: (event: string, cb: (r: unknown) => void) => void };
+  }
+}
+
+function loadRazorpay(): Promise<void> {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("razorpay_load_failed"));
+    document.body.appendChild(script);
+  });
+}
+
+export const CHECKOUT_RETURN_PATH = "/checkout/return";
+
+// Sends the browser through whichever provider the server picked. Every path
+// ends on /checkout/return, which asks the server to verify and fulfil.
+export async function startCheckout(order: CreatedOrder, navigate: (to: string) => void): Promise<void> {
+  if (order.provider === "stripe") {
+    window.location.href = order.redirectUrl;
+    return;
+  }
+  if (order.provider === "test") {
+    navigate(`${CHECKOUT_RETURN_PATH}?order=${order.orderId}&test=1`);
+    return;
+  }
+  await loadRazorpay();
+  const o = order.razorpay;
+  const rzp = new window.Razorpay!({
+    key: o.key,
+    order_id: o.orderId,
+    amount: o.amount,
+    currency: o.currency,
+    name: o.name,
+    description: o.description,
+    prefill: o.prefill,
+    handler: (resp: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+      const qs = new URLSearchParams({ order: order.orderId, ...resp });
+      navigate(`${CHECKOUT_RETURN_PATH}?${qs.toString()}`);
+    },
+    modal: { ondismiss: () => cancelPaymentOrder(order.orderId).catch(() => {}) },
+  });
+  rzp.open();
+}

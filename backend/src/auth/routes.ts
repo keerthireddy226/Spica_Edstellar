@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import bcrypt from "bcrypt";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
@@ -114,7 +115,8 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
     const result = await pool.query(
-      `SELECT u.id, u.password_hash, u.role, u.email_verified, u.first_name, u.last_name, t.deactivated_at AS tenant_deactivated_at
+      `SELECT u.id, u.password_hash, u.role, u.email_verified, u.first_name, u.last_name, u.preferred_language,
+         t.deactivated_at AS tenant_deactivated_at
        FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id
        WHERE u.email = $1 AND u.deleted_at IS NULL`,
       [body.email],
@@ -170,6 +172,7 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       emailVerified: user.email_verified,
       firstName: user.first_name,
       lastName: user.last_name,
+      preferredLanguage: user.preferred_language,
     });
   } catch (err) {
     next(err);
@@ -198,7 +201,8 @@ authRouter.get("/me", async (req, res, next) => {
     if (!token) return res.status(401).json({ error: "not_authenticated" });
 
     const result = await pool.query(
-      `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name, u.created_at, u.department, u.permissions
+      `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name, u.created_at, u.department, u.permissions,
+         u.participant_id, u.preferred_language
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.session_token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.deleted_at IS NULL`,
@@ -225,7 +229,24 @@ authRouter.get("/me", async (req, res, next) => {
       lastLoginAt: lastLogin.rows[0]?.created_at ?? null,
       department: user.department,
       permissions: user.permissions ?? {},
+      participantId: user.participant_id,
+      preferredLanguage: user.preferred_language,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Persisted server-side (not just browser storage) so the choice follows the
+// user across devices, drives email language, and is visible to analytics.
+authRouter.patch("/me/language", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ language: z.string().min(2).max(10) }).parse(req.body);
+    await pool.query(`UPDATE users SET preferred_language = $1, updated_at = now() WHERE id = $2`, [
+      body.language,
+      req.user!.id,
+    ]);
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
@@ -428,6 +449,20 @@ authRouter.post("/reset-password", async (req, res, next) => {
     await pool.query("UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL", [
       row.user_id,
     ]);
+    // This same endpoint also serves every invite-accept flow (Org Admin,
+    // Manager, Learner, Admin). An invite link is routinely opened in a
+    // browser that's still signed in as the person who SENT the invite — if
+    // we only revoke the invited user's own sessions above, that unrelated
+    // cookie survives and the next page load bounces back to the inviter's
+    // own console instead of showing a clean login page. Revoke + clear
+    // whatever session cookie is actually sitting in this browser too.
+    const currentToken = req.cookies?.[SESSION_COOKIE];
+    if (currentToken) {
+      await pool.query("UPDATE auth_sessions SET revoked_at = now() WHERE session_token_hash = $1 AND revoked_at IS NULL", [
+        hashToken(currentToken),
+      ]);
+    }
+    res.clearCookie(SESSION_COOKIE);
     // Returned so the frontend can send the learner back to *their* role's
     // login page, not always the learner one.
     res.json({ role: user.rows[0].role });

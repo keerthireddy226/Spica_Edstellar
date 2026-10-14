@@ -1,0 +1,742 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "admins": "Beheerders",
+      "orgAdmins": "Organisatiebeheerders",
+      "learners": "Individuele cursisten"
+    }
+  },
+  "skills": {
+    "listening": "Luisteren",
+    "speaking": "Spreken",
+    "reading": "Lezen",
+    "writing": "Schrijven"
+  },
+  "auth": {
+    "login": {
+      "title": "Welkom terug",
+      "subtitle": "Log in om verder te oefenen.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Wachtwoord",
+      "submit": "Inloggen",
+      "submitting": "Bezig met inloggen…",
+      "errorInvalidCredentials": "Onjuist e-mailadres of wachtwoord.",
+      "errorEmailNotVerified": "Bevestig eerst je e-mailadres voordat je inlogt — de bevestigingslink staat in je inbox.",
+      "errorWrongPortal": "Dit account heeft geen toegang via deze inlogpagina.",
+      "errorAlreadyLoggedIn": "Dit account is al ingelogd op een ander apparaat. Log daar eerst uit.",
+      "errorOrganizationDeactivated": "Deze organisatie is gedeactiveerd. Neem contact op met je beheerder.",
+      "errorTooManyAttempts": "Te veel inlogpogingen. Wacht een paar minuten en probeer het opnieuw.",
+      "errorGeneric": "Er is iets misgegaan. Controleer je verbinding en probeer het opnieuw.",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "createAccount": "Account aanmaken"
+    },
+    "signup": {
+      "title": "Maak je account aan",
+      "subtitle": "Begin binnen een paar seconden met oefenen.",
+      "firstNameLabel": "Voornaam",
+      "lastNameLabel": "Achternaam",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "Minimaal 8 tekens",
+      "confirmPasswordLabel": "Bevestig wachtwoord",
+      "confirmPasswordPlaceholder": "Voer je wachtwoord opnieuw in",
+      "passwordTooShort": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "submit": "Registreren",
+      "submitting": "Account wordt aangemaakt…",
+      "errorEmailTaken": "Er bestaat al een account met dit e-mailadres.",
+      "errorGeneric": "Er is iets misgegaan. Probeer het opnieuw.",
+      "alreadyHaveAccount": "Heb je al een account?",
+      "signIn": "Inloggen",
+      "checkEmailTitle": "Check je e-mail",
+      "checkEmailBody": "We hebben een bevestigingslink gestuurd naar {{email}}. Log na bevestiging in om verder te gaan.",
+      "signInButton": "Inloggen"
+    },
+    "forgotPassword": {
+      "title": "Wachtwoord opnieuw instellen",
+      "subtitle": "We mailen je een link om een nieuw wachtwoord in te stellen.",
+      "submitted": "Als er een account bestaat voor dit e-mailadres, is er een herstellink onderweg.",
+      "emailLabel": "E-mail",
+      "submit": "Herstellink versturen",
+      "submitting": "Bezig met versturen…",
+      "backToSignIn": "Terug naar inloggen"
+    },
+    "resetPassword": {
+      "title": "Kies een nieuw wachtwoord",
+      "subtitle": "Minimaal 8 tekens.",
+      "missingTokenTitle": "Wachtwoord opnieuw instellen",
+      "missingTokenSubtitle": "Deze link mist een token.",
+      "requestNewLink": "Nieuwe herstellink aanvragen",
+      "passwordLabel": "Nieuw wachtwoord",
+      "passwordPlaceholder": "Minimaal 8 tekens",
+      "confirmPasswordLabel": "Bevestig nieuw wachtwoord",
+      "confirmPasswordPlaceholder": "Voer je wachtwoord opnieuw in",
+      "passwordTooShort": "Het wachtwoord moet minimaal 8 tekens lang zijn.",
+      "passwordMismatch": "De wachtwoorden komen niet overeen.",
+      "submit": "Wachtwoord opnieuw instellen",
+      "submitting": "Opslaan…",
+      "error": "Deze herstellink is ongeldig of verlopen."
+    },
+    "verifyEmail": {
+      "title": "E-mailbevestiging",
+      "pending": "Bezig met bevestigen…",
+      "success": "Je e-mailadres is bevestigd. Log in om verder te gaan.",
+      "signInButton": "Inloggen",
+      "error": "Deze bevestigingslink is ongeldig of verlopen."
+    }
+  },
+  "onboarding": {
+    "title": "Welkom bij de onboarding",
+    "logout": "Uitloggen",
+    "wizard": {
+      "stepLabel": "{{current}} van {{total}}",
+      "back": "Terug",
+      "next": "Volgende",
+      "basics": {
+        "title": "Laten we kennismaken",
+        "subtitle": "Je e-mail wordt automatisch ingevuld vanuit je login",
+        "firstNameLabel": "Voornaam",
+        "firstNamePlaceholder": "Vul je voornaam in",
+        "lastNameLabel": "Achternaam",
+        "lastNamePlaceholder": "Vul je achternaam in",
+        "emailLabel": "E-mail",
+        "emailNote": "Automatisch ingevuld vanuit je account"
+      },
+      "examGoal": {
+        "examTitle": "Voor welk examen bereid je je voor?",
+        "examSubtitle": "We stemmen je oefeningen af op het format van dit examen",
+        "goalTitle": "Welk niveau of welke score wil je halen?",
+        "goalSubtitle": "Je doel voor dit examen",
+        "scoreTargetLabel": "Specifieke doelscore (optioneel)",
+        "scoreTargetPlaceholder": "bijv. IELTS 7.0, Versant 69+, PTE 65",
+        "exam": {
+          "versantDesc": "Spreken, schrijven, niveaubepaling, professioneel",
+          "ieltsDesc": "Academic of General Training",
+          "toeflDesc": "Online examen",
+          "pteDesc": "Computerexamen van Pearson",
+          "other": "Anders / Algemeen",
+          "otherDesc": "Algemene verbetering van je Engels"
+        },
+        "goal": {
+          "A1": "A1 - Beginner",
+          "A1Desc": "Eenvoudige woorden en alledaagse zinnen",
+          "A2": "A2 - Basis",
+          "A2Desc": "Eenvoudige zinnen, simpele gesprekken",
+          "B1": "B1 - Gemiddeld",
+          "B1Desc": "De meeste reis- en werksituaties aankunnen",
+          "B2": "B2 - Hoger gemiddeld",
+          "B2Desc": "Vloeiend communiceren, gedetailleerde teksten",
+          "C1": "C1 - Gevorderd",
+          "C1Desc": "Complexe onderwerpen, impliciete betekenissen",
+          "C2": "C2 - Bijna moedertaal",
+          "C2Desc": "Bijna moedertaalniveau in precisie en vloeiendheid",
+          "unsure": "Weet ik nog niet",
+          "unsureDesc": "De niveautest helpt bij de keuze"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "Waarom doe je dit examen?",
+        "reasonSubtitle": "Zo kunnen we de inhoud afstemmen op wat je echt nodig hebt",
+        "reason": {
+          "university": "Toelating tot de universiteit",
+          "job": "Vereiste voor werk",
+          "immigration": "Immigratie",
+          "promotion": "Promotie of loopbaangroei",
+          "personal": "Persoonlijk doel"
+        },
+        "appliedTitle": "Heb je je al aangemeld voor het examen?",
+        "appliedSubtitle": "We plannen je leertraject rond je deadline",
+        "appliedYes": "Ja, ik heb een vaste datum",
+        "appliedNo": "Nee, nog niet",
+        "examDateLabel": "Wanneer is je examen?",
+        "prepDaysLabel": "Hoeveel dagen wil je je voorbereiden?",
+        "prepDaysPlaceholder": "bijv. 30",
+        "days": "dagen"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "Heb je dit examen eerder gedaan?",
+        "attemptsSubtitle": "Zo begrijpen we waar je begint",
+        "attempts": {
+          "first": "Nee, dit is mijn eerste poging",
+          "once": "Ja, één keer",
+          "multiple": "Ja, meerdere keren"
+        },
+        "prevScoreLabel": "Wat was je vorige score?",
+        "prevScorePlaceholder": "bijv. B1, 5.5, 58",
+        "prevDateLabel": "Wanneer heb je het voor het laatst gedaan?",
+        "prevDatePlaceholder": "bijv. maart 2026, 6 maanden geleden",
+        "timeTitle": "Hoeveel tijd kun je dagelijks besteden?",
+        "timeSubtitle": "Wees realistisch — regelmaat wint van intensiteit",
+        "time": {
+          "min15": "15 minuten",
+          "min15Desc": "Korte dagelijkse oefening",
+          "min30": "30 minuten",
+          "min30Desc": "Gestage, stevige vooruitgang",
+          "min60": "1 uur",
+          "min60Desc": "Intensieve voorbereiding",
+          "min90": "90+ minuten",
+          "min90Desc": "Volledige onderdompeling"
+        }
+      },
+      "duration": {
+        "title": "Hoe lang wil je toegang?",
+        "subtitle": "Kies een abonnement dat bij je planning past",
+        "oneMonth": "1 maand",
+        "oneMonthDesc": "Korte, intensieve sprint",
+        "threeMonths": "3 maanden",
+        "threeMonthsDesc": "Evenwichtige voorbereiding",
+        "sixMonths": "6 maanden",
+        "sixMonthsDesc": "Grondige, gestage opbouw",
+        "untilExam": "Tot mijn examendatum",
+        "untilExamDesc": "Berekend op basis van je examendatum"
+      },
+      "consent": {
+        "title": "Voordat we verdergaan",
+        "subtitle": "Je stem wordt opgenomen tijdens oefeningen en toetsen",
+        "body": "We nemen je gesproken antwoorden op om je spreekvaardigheid te beoordelen en je feedback te geven. Opnames worden beperkte tijd bewaard en alleen gebruikt om je eigen resultaten te beoordelen en te verbeteren. Je kunt je gegevens op elk moment verwijderen via Instellingen.",
+        "checkboxLabel": "Ik begrijp het en geef toestemming om mijn stem op te nemen voor oefeningen en toetsen.",
+        "submit": "Naar de toets",
+        "submitting": "Opslaan…",
+        "error": "Er ging iets mis bij het opslaan van je antwoorden. Probeer het opnieuw."
+      },
+      "about": {
+        "title": "Over jou",
+        "subtitle": "Zo stemmen we het oefenen af op jouw situatie.",
+        "countryLabel": "Land",
+        "cityLabel": "Stad",
+        "cityPlaceholder": "bijv. Utrecht",
+        "jobRoleLabel": "Functie",
+        "genderLabel": "Geslacht (optioneel)",
+        "ageLabel": "Leeftijd (optioneel)",
+        "select": "Selecteer…",
+        "skip": "Liever niet",
+        "consent": "Ik ga ermee akkoord dat mijn geslacht en leeftijdsgroep worden opgeslagen en alleen in geanonimiseerde, samengevoegde rapporten worden gebruikt.",
+        "privacyNote": "Geslacht en leeftijd zijn optioneel. Ze worden nooit aan andere cursisten getoond en alleen gerapporteerd in groepen van 5 of meer."
+      }
+    }
+  },
+  "placement": {
+    "title": "Je bent klaar!",
+    "subtitle": "De onboarding is afgerond — nu volgt je niveautest.",
+    "scheduleLater": "Inplannen voor later",
+    "scheduling": "Bezig met versturen…",
+    "scheduleSent": "We hebben je een herinneringslink gemaild.",
+    "scheduleLaterError": "Er ging iets mis bij het versturen van je herinnering. Probeer het opnieuw.",
+    "info": {
+      "timing": "Getimed — reken op ongeveer 15–20 minuten",
+      "covers": "Omvat spreken, luisteren, lezen en schrijven",
+      "graded": "Dit wordt beoordeeld en je stem wordt opgenomen voor de beoordeling — antwoord eerlijk, zelfstandig en zonder hulp van buitenaf.",
+      "equipment": "Zorg dat je een koptelefoon en microfoon klaar hebt"
+    },
+    "instructions": {
+      "checkboxLabel": "Ik heb de instructies gelezen en ben klaar om te beginnen.",
+      "begin": "Start de toets"
+    },
+    "resume": {
+      "title": "Ga verder waar je gebleven was",
+      "subtitle": "Je hebt al {{count}} vraag/vragen beantwoord in deze toets — als je verdergaat, blijft die voortgang bewaard.",
+      "continue": "Toets voortzetten"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "Start",
+    "loading": "Je toets wordt geladen…",
+    "loadError": "Er ging iets mis bij het laden van je toets. Probeer het opnieuw.",
+    "micError": "We hebben geen toegang tot je microfoon. Sta microfoontoegang toe en probeer het opnieuw.",
+    "progress": "{{current}} van {{total}}",
+    "play": "Audio afspelen",
+    "playAgain": "Opnieuw afspelen",
+    "replay": "Herhalen",
+    "playing": "Speelt af…",
+    "record": "Neem je antwoord op",
+    "recordAgain": "Opnieuw opnemen",
+    "audioSaved": "Audio opgeslagen",
+    "stopRecording": "Opname stoppen",
+    "skip": "Overslaan",
+    "exitConfirm": "Wil je de toets nu verlaten? Je voortgang bij deze vraag wordt niet opgeslagen.",
+    "answerPlaceholder": "Typ hier je antwoord…",
+    "submitting": "Bezig met verzenden…",
+    "next": "Volgende",
+    "finish": "Afronden",
+    "submitError": "Er ging iets mis bij het verzenden van je antwoord. Probeer het opnieuw.",
+    "resultsTitle": "Toets afgerond",
+    "resultsSummary": "{{correct}} van {{graded}} automatisch beoordeelde antwoorden zijn goed. {{pending}} antwoorden wachten nog op beoordeling.",
+    "done": "Klaar",
+    "yourLevel": "Je geschatte niveau: {{level}}",
+    "levelDisclaimer": "Dit is onze eigen, op het ERK afgestemde inschatting op basis van je toets, geen officiële score.",
+    "pendingNote": "{{pending}} van je antwoorden moeten nog worden beoordeeld voordat ze meetellen voor je niveau.",
+    "goToRoadmap": "Naar je leertraject",
+    "notEnoughAnswered": "Te weinig beantwoord",
+    "gapCappedNote": "Sommige niveaus zijn niet getest — je werkelijke niveau kan hoger zijn.",
+    "failedNote": "{{failed}} van je antwoorden konden niet worden beoordeeld door een tijdelijk probleem met onze beoordelingsdienst — dit ligt niet aan je antwoorden. Probeer het later opnieuw."
+  },
+  "roadmap": {
+    "loading": "Je leertraject wordt geladen…",
+    "loadError": "Er ging iets mis bij het laden van je leertraject. Probeer het opnieuw.",
+    "pendingReviewBanner": "Je niveautestresultaat wordt gecontroleerd voor identiteitsverificatie. Je kunt alles hieronder in de tussentijd gewoon gebruiken.",
+    "notReadyTitle": "Je leertraject is nog niet klaar",
+    "notReadyBody": "Doe de niveautest om een persoonlijk plan te krijgen.",
+    "notReadyBodyScheduled": "Je hebt je niveautest ingepland voor {{date}}. Doe hem wanneer je er klaar voor bent — je leertraject wordt direct daarna gemaakt.",
+    "takeTestNow": "Doe de niveautest",
+    "greeting": "Hoi {{name}}",
+    "currentLevel": "Huidig niveau",
+    "goalLevel": "Doel",
+    "daysLeftLabel": "Dagen over",
+    "skillBreakdownTitle": "Vaardigheden in detail",
+    "timelineTitle": "Je leertraject",
+    "milestoneReach": "{{level}} bereiken",
+    "milestoneMaintain": "Je niveau behouden",
+    "dayOffset": "Dag {{day}}",
+    "focusOn": "Focus: {{skill}}",
+    "welcomeBack": "Welkom terug",
+    "goalProgress": "Voortgang naar je doel",
+    "ofYourRoadmap": "van je leertraject",
+    "streak": "Reeks",
+    "streakDays_one": "{{count}} dag",
+    "streakDays_other": "{{count}} dagen",
+    "startStreakToday": "Begin vandaag je reeks.",
+    "keepStreakGoing": "Ga zo door!",
+    "today": "Vandaag",
+    "practicedSoFar": "tot nu toe geoefend",
+    "accuracy": "Nauwkeurigheid",
+    "practiceToUnlock": "Oefen om te ontgrendelen",
+    "practiceAccuracy": "oefennauwkeurigheid",
+    "strongest": "sterkst",
+    "notTested": "Nog niet getest",
+    "gapCappedNote": "Sommige niveaus zijn niet getest — je werkelijke niveau kan hoger zijn."
+  },
+  "dashboard": {
+    "welcome": "Welkom, {{email}}",
+    "role": "Rol: {{role}}",
+    "placeholder": "Dit is een tijdelijke pagina — het echte dashboard (niveau, voortgang, reeks, badges) volgt in een latere fase."
+  },
+  "nav": {
+    "roadmap": "Leertraject",
+    "overview": "Overzicht",
+    "progress": "Voortgang",
+    "modules": "Modules",
+    "practiceTests": "Oefentoetsen",
+    "tutor": "Tutor",
+    "profile": "Profiel"
+  },
+  "shell": {
+    "openMenu": "Menu openen",
+    "toggleTheme": "Thema wisselen"
+  },
+  "practiceTests": {
+    "subtitle": "Volledige, getimede proeftoetsen die overeenkomen met de echte Versant-examens.",
+    "comingSoon": "Binnenkort",
+    "setsCount": "{{count}} set",
+    "setsCount_other": "{{count}} sets",
+    "questionsCount": "{{count}} vraag",
+    "questionsCount_other": "{{count}} vragen",
+    "completed": "Voltooid",
+    "startExam": "Starten",
+    "retake": "Opnieuw doen",
+    "backToProducts": "Terug naar toetsen",
+    "backToExams": "Terug naar sets",
+    "loadError": "Kon dit nu niet laden. Probeer het opnieuw.",
+    "saveAndNext": "Opslaan en verder",
+    "sectionLabel": "Onderdeel {{current}} van {{total}} — {{label}}",
+    "youHear": "Je hoort",
+    "youSay": "Je zegt",
+    "playsRemaining": "Nog {{count}} keer afspelen",
+    "playsRemaining_other": "Nog {{count}} keer afspelen",
+    "scoreReport": {
+      "title": "Toets afgerond",
+      "overall": "Totaalscore",
+      "sectionResults": "Resultaten per onderdeel",
+      "testType": "Toets",
+      "skippedNote": "{{count}} vraag is leeg gelaten of overgeslagen en telt niet mee voor je niveau.",
+      "skippedNote_other": "{{count}} vragen zijn leeg gelaten of overgeslagen en tellen niet mee voor je niveau."
+    },
+    "overview": {
+      "title": "Voordat je begint",
+      "subtitle": "Deze toets bestaat uit meerdere onderdelen. In elk onderdeel doe je een andere opdracht.",
+      "begin": "Start toets",
+      "startSection": "Start {{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "Spreken en luisteren — 17 minuten.",
+      "fourSkillsDesc": "Spreken, luisteren, lezen, schrijven — 30 minuten.",
+      "writingDesc": "Geschreven Engels — 35 minuten.",
+      "professionalDesc": "Spreken, luisteren, lezen, schrijven — 60 minuten.",
+      "placementDesc": "Spreken, luisteren, lezen, schrijven — 50 minuten."
+    }
+  },
+  "tutor": {
+    "subtitle": "Een ontspannen oefengesprek met je AI-coach.",
+    "inputPlaceholder": "Typ je antwoord…",
+    "loading": "Je gesprek wordt gestart…",
+    "typing": "Typt…",
+    "sendError": "Er ging iets mis bij het versturen. Probeer het opnieuw.",
+    "newConversation": "Nieuw gesprek",
+    "newConversationConfirm": "Een nieuw gesprek beginnen? Je huidige gesprek wordt beëindigd."
+  },
+  "profile": {
+    "account": {
+      "unnamed": "Je account",
+      "individual": "Individueel"
+    },
+    "language": {
+      "title": "Taal"
+    },
+    "voice": {
+      "title": "Stem",
+      "subtitle": "Kies welke stem de vragen voorleest tijdens toetsen en oefeningen.",
+      "loading": "Je stemvoorkeur wordt geladen…",
+      "female": "Vrouwenstem",
+      "male": "Mannenstem",
+      "preview": "Beluister deze stem",
+      "previewLine": "Zo klinken de vragen straks.",
+      "saved": "Opgeslagen — deze stem wordt vanaf nu gebruikt."
+    },
+    "plan": {
+      "title": "Examendoel",
+      "loading": "Je plan wordt geladen…",
+      "notSet": "Niet ingesteld",
+      "exam": "Examen",
+      "currentToGoal": "Huidig → Doel",
+      "examDateLabel": "Examendatum",
+      "accessDaysLeft": "Resterende toegangsdagen"
+    },
+    "personalInfo": {
+      "title": "Persoonlijke gegevens",
+      "edit": "Bewerken",
+      "firstName": "Voornaam",
+      "lastName": "Achternaam",
+      "email": "E-mailadres",
+      "accountType": "Accounttype",
+      "save": "Opslaan",
+      "saving": "Opslaan…",
+      "cancel": "Annuleren",
+      "participantId": "Deelnemers-ID"
+    },
+    "preferences": {
+      "title": "Voorkeuren",
+      "spokenPrompts": {
+        "title": "Gesproken audio-instructies",
+        "subtitle": "Luisteropdrachten hardop voorlezen tijdens het oefenen."
+      },
+      "weeklyReports": {
+        "title": "Wekelijkse voortgangsrapporten",
+        "subtitle": "Ontvang een samenvatting van je oefenactiviteit per e-mail."
+      },
+      "strictTimer": {
+        "title": "Strikte timermodus",
+        "subtitle": "Pauzeren uitschakelen bij getimede oefeningen."
+      }
+    },
+    "about": {
+      "title": "Over jou",
+      "gender": "Geslacht",
+      "age": "Leeftijd",
+      "notShared": "Niet gedeeld",
+      "error": "Opslaan mislukt. Probeer het opnieuw."
+    },
+    "access": {
+      "title": "Je toegang",
+      "activeUntil": "Actief tot {{date}}",
+      "grace": "Verlopen — respijtperiode tot {{date}}",
+      "expired": "Verlopen op {{date}}",
+      "none": "Nog geen licentie toegewezen",
+      "queued_one": "Inclusief {{count}} extra maand die al is toegewezen",
+      "queued_other": "Inclusief {{count}} extra maanden die al zijn toegewezen",
+      "help": "Je organisatie beheert je toegang. Vraag je beheerder of manager om deze te verlengen."
+    },
+    "reminder": {
+      "title": "Dagelijkse oefenherinnering",
+      "on": "Aan",
+      "off": "Uit",
+      "subtitle": "We mailen je op dit tijdstip op de gekozen dagen — automatisch overgeslagen als je die dag al hebt geoefend.",
+      "time": "Tijd",
+      "streakAlert": "Waarschuw me ook om 22.00 uur als mijn reeks (3+ dagen) dreigt te breken",
+      "error": "Opslaan mislukt. Probeer het opnieuw.",
+      "savedOn": "Opgeslagen — herinnering ingesteld op {{time}}.",
+      "savedOff": "Opgeslagen — herinneringen staan uit.",
+      "days": {
+        "sun": "Zo",
+        "mon": "Ma",
+        "tue": "Di",
+        "wed": "Wo",
+        "thu": "Do",
+        "fri": "Vr",
+        "sat": "Za"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "Elk plan begint bij 0%. Daar ben je al voorbij.",
+    "mid": "Je bent niet meer waar je was. Blijf doorgaan.",
+    "high": "De finish is al bijna in zicht."
+  },
+  "motivational": {
+    "line1": "15 minuten per dag oefenen werkt beter dan 2 uur één keer per week.",
+    "line2": "Hardop spreken — zelfs tegen jezelf — is de snelste weg naar vloeiendheid.",
+    "line3": "Elke fout tijdens het oefenen is er één minder op het examen.",
+    "line4": "Regelmaat wint van intensiteit — elke dag een beetje telt snel op.",
+    "line5": "Je hoeft niet perfect te zijn. Je moet alleen doorgaan.",
+    "line6": "Elke expert was ooit een beginner die niet opgaf.",
+    "line7": "Kleine stappen vandaag, veel zelfvertrouwen morgen.",
+    "line8": "Oefen vandaag, zodat de examendag als een gewone dag voelt.",
+    "line9": "Het beste moment om te oefenen was gisteren. Het op één na beste is nu."
+  },
+  "achievement": {
+    "goalSetterTitle": "Doelzetter",
+    "goalSetterBody": "Stel je doelniveau en leertraject in."
+  },
+  "recommendedPractice": {
+    "title": "Voor jou gekozen",
+    "startPractice": "Begin met oefenen",
+    "estimatedMinutes": "~{{minutes}} min"
+  },
+  "dailyChallenge": {
+    "title": "Dagelijkse uitdaging",
+    "subtitle": "Iets extra's voor vandaag",
+    "wordTab": "Woord van de dag",
+    "idiomTab": "Uitdrukking",
+    "wordOfDay": "Woord van de dag — tik om te {{action}}",
+    "reveal": "tonen",
+    "hide": "verbergen",
+    "idiomOfDay": "Uitdrukking van de dag",
+    "meaningTab": "Kies de betekenis",
+    "pickClosestMeaning": "Kies de best passende betekenis",
+    "correctFeedback": "Top! Precies goed. 🎉",
+    "incorrectFeedback": "Niet helemaal — het betekent “{{answer}}”."
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "In staat om snel te herstellen van tegenslagen.",
+      "articulate": "Een idee of gevoel duidelijk en doeltreffend uitdrukken.",
+      "candid": "Eerlijk en recht door zee; openhartig.",
+      "diligent": "Met gestage, zorgvuldige inzet in werk of taken."
+    },
+    "idioms": {
+      "hitTheBooks": "Gaan studeren, meestal serieus of voor een belangrijk examen.",
+      "breakTheIce": "Iets zeggen of doen waardoor de spanning aan het begin van een gesprek verdwijnt.",
+      "sameSage": "Het met elkaar eens zijn, of iets op dezelfde manier begrijpen als anderen.",
+      "underWeather": "Zich een beetje ziek voelen."
+    }
+  },
+  "coachPromo": {
+    "badge": "Zonder score · zonder druk",
+    "title": "Weet je niet waar je moet beginnen? Praat het uit.",
+    "body": "Coachmodus is een vriendelijk opwarmgesprek — geen timers, geen scores.",
+    "cta": "Coachmodus openen"
+  },
+  "dashboardHome": {
+    "welcomeBack": "Welkom terug, {{name}}",
+    "subtitle": "Oefen verder met je Engels en bouw zelfvertrouwen op in alle vier de vaardigheden.",
+    "subtitleFirstTime": "Je bent nog niet begonnen met oefenen — je eerste sessie duurt maar een paar minuten. Aan de slag!",
+    "subtitleAllDoneToday": "Je hebt alles voor vandaag af — goed gedaan! Kom morgen terug om je reeks vast te houden.",
+    "subtitleContinue_one": "Nog {{count}} taak voor vandaag — aan de slag!",
+    "subtitleContinue_other": "Nog {{count}} taken voor vandaag — aan de slag!",
+    "viewRoadmap": "Leertraject",
+    "startPractice": "Begin met oefenen",
+    "overallProgressTitle": "Totale oefenvoortgang",
+    "todaysTasksTitle": "Taken van vandaag",
+    "todaysTasksTitleGo": "Taken van vandaag — aan de slag!",
+    "todaysTasksAllDone": "Taken van vandaag — alles af!",
+    "taskProgress": "{{done}}/{{target}} opdrachten vandaag",
+    "practiceAction": "Oefenen",
+    "statusNotStarted": "Niet begonnen",
+    "statusInProgress": "Bezig",
+    "statusCompleted": "Voltooid",
+    "statsSessions": "Oefensessies",
+    "statsQuestions": "Beantwoorde vragen",
+    "statsTime": "Oefentijd",
+    "statsTimeValue": "{{minutes}} min",
+    "statsStreak": "Huidige reeks",
+    "statsStreakValue_one": "{{count}} dag",
+    "statsStreakValue_other": "{{count}} dagen",
+    "statsLevel": "Level",
+    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "Ga verder waar je gebleven was",
+    "continuePracticeBody": "{{skill}} — {{answered}} van {{total}} beantwoord",
+    "achievementsTitle": "Prestaties"
+  },
+  "progressPage": {
+    "title": "Je voortgang",
+    "subtitle": "Hoe je dagelijkse oefening zich deze week heeft ontwikkeld.",
+    "loading": "Je voortgang wordt geladen…",
+    "loadError": "Je voortgang kon niet worden geladen. Probeer het opnieuw.",
+    "todaysReport": "Rapport van vandaag",
+    "questions": "Vragen",
+    "accuracy": "Nauwkeurigheid",
+    "minutes": "Minuten",
+    "moreThanYesterday_one": "{{count}} vraag meer dan gisteren",
+    "moreThanYesterday_other": "{{count}} vragen meer dan gisteren",
+    "lessThanYesterday_one": "{{count}} vraag minder dan gisteren",
+    "lessThanYesterday_other": "{{count}} vragen minder dan gisteren",
+    "sameAsYesterday": "Evenveel als gisteren — ga zo door",
+    "firstDayBack": "Fijn dat je er vandaag weer bent!",
+    "dailyChartTitle": "Laatste 7 dagen",
+    "today": "Vandaag",
+    "questionsThisWeek_one": "{{count}} vraag deze week",
+    "questionsThisWeek_other": "{{count}} vragen deze week",
+    "bestDay": "Beste dag: {{day}}",
+    "bestDayBadge": "Beste dag van de week"
+  },
+  "modules": {
+    "title": "Oefenmodules",
+    "subtitle": "Kies een vaardigheid om te oefenen — de inhoud past zich aan, zodat je dezelfde opdrachten pas terugziet als je alles hebt gedaan.",
+    "loadingAvailability": "Je oefenmodules worden geladen…",
+    "remainingItems": "Nog {{count}} van {{total}} opdrachten te doen",
+    "allDone": "Je hebt voorlopig alles in dit onderdeel gedaan — kom terug als er nieuwe inhoud is toegevoegd.",
+    "start": "Starten",
+    "backToSkills": "Terug naar vaardigheden",
+    "pickTypeSubtitle": "Kies een vraagtype om te oefenen.",
+    "starting": "Je oefensessie wordt gestart…",
+    "startError": "Er ging iets mis bij het starten van deze oefensessie. Probeer het opnieuw.",
+    "sessionComplete": "Goed gedaan!",
+    "practiceAgain": "Opnieuw oefenen",
+    "backToDashboard": "Terug naar dashboard",
+    "startReading": "Begin met lezen",
+    "passageHidden": "De tekst is nu verborgen — schrijf hem in je eigen woorden.",
+    "backToTypes": "Terug naar vraagtypes",
+    "pickUnitTitle": "Kies een onderdeel om te oefenen.",
+    "unitComplete": "Alle sets voltooid",
+    "setsProgress": "{{done}} van {{total}} sets klaar",
+    "backToUnits": "Terug naar onderdelen",
+    "setCompleted": "Voltooid",
+    "startPractice": "Begin met oefenen",
+    "typeDesc": {
+      "reading": "Lees de zin hardop voor, natuurlijk en duidelijk.",
+      "repeats": "Luister één keer en herhaal het precies.",
+      "sentence_builds": "Zet de woorden in de juiste volgorde.",
+      "conversations": "Luister naar een dialoog en beantwoord vragen.",
+      "reading_selective": "Lees en haal de belangrijkste informatie eruit.",
+      "short_answer": "Beantwoord een korte vraag in een paar woorden.",
+      "passage_comprehension": "Luister naar een tekst en beantwoord vragen.",
+      "speaking_situations": "Reageer natuurlijk op een alledaagse situatie.",
+      "story_retelling": "Luister naar een verhaal en vertel het na in je eigen woorden.",
+      "open_questions": "Geef vrij je eigen mening.",
+      "dictation": "Typ precies wat je hoort.",
+      "response_selection": "Kies het juiste antwoord uit de opties.",
+      "passage_reconstruction": "Lees het en schrijf het daarna uit je hoofd op.",
+      "summary_and_opinion": "Vat een tekst samen en geef je mening.",
+      "reading_comprehension": "Lees een tekst en beantwoord vragen.",
+      "sentence_completion": "Vul het ontbrekende woord of de ontbrekende woordgroep in.",
+      "typing": "Een korte typopwarming.",
+      "email_writing": "Schrijf een korte, realistische e-mail."
+    }
+  },
+  "faceCheck": {
+    "back": "Terug",
+    "enroll": {
+      "title": "Gezichtsverificatie instellen",
+      "success": "Gezicht vastgelegd",
+      "proceed": "Doorgaan",
+      "subtitle": "Dit stel je één keer in. We gebruiken deze foto om vóór elke proeftoets, module en oefentoets te bevestigen dat jij het bent.",
+      "successSubtitle": "Instellen gelukt. Hierna zie je de instructies voordat je proeftoets begint."
+    },
+    "verify": {
+      "title": "Snelle gezichtscontrole",
+      "success": "Gezicht bevestigd",
+      "proceed": "Doorgaan",
+      "mismatchError": "Je gezicht kwam niet overeen met je geregistreerde foto. Probeer het opnieuw.",
+      "subtitle": {
+        "placement": "We bevestigen dat jij het bent voordat je proeftoets begint.",
+        "practice": "We bevestigen dat jij het bent voor deze oefensessie.",
+        "practice_test": "We bevestigen dat jij het bent voor deze oefentoets."
+      },
+      "successSubtitle": "Identiteit bevestigd. Door naar je toets."
+    },
+    "record": {
+      "capture": "Vastleggen",
+      "checking": "Controleren...",
+      "cameraError": "Geen toegang tot de camera. Controleer de rechten en probeer het opnieuw.",
+      "error": "Er is iets misgegaan. Probeer het opnieuw.",
+      "tooShort": "We konden je gezicht niet goed zien. Probeer het opnieuw."
+    },
+    "fallback": {
+      "otpButton": "Stuur me een code per e-mail",
+      "otpSending": "Bezig met versturen…",
+      "otpSentNotice": "Code verstuurd — check je e-mail.",
+      "otpPlaceholder": "6-cijferige code",
+      "otpVerify": "Code controleren",
+      "otpVerifying": "Controleren…",
+      "otpResend": "Code opnieuw versturen",
+      "otpSuccess": "Code bevestigd",
+      "otpSendError": "Er ging iets mis bij het versturen van de code. Probeer het opnieuw.",
+      "otpInvalidError": "Die code werkt niet. Controleer hem en probeer het opnieuw."
+    },
+    "enrollmentConsent": {
+      "title": "Gezichtsverificatie instellen",
+      "subtitle": "Zo bevestigen we dat jij echt degene bent die de toets maakt.",
+      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Deze foto en gezichtsscans worden gebruikt om je identiteit te bevestigen vóór en regelmatig tijdens niveautests en oefensessies (Modules) — niet alleen eenmalig aan het begin. Veilig opgeslagen en alleen voor dit doel gebruikt.",
+      "checkboxLabel": "Ik begrijp het en geef toestemming voor gezichtsverificatie, inclusief regelmatige controles tijdens toetsen en oefensessies.",
+      "submit": "Doorgaan",
+      "decline": "Niet nu"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Student",
+      "it_engineering": "IT / Techniek",
+      "customer_support": "Klantenservice",
+      "sales_marketing": "Verkoop / Marketing",
+      "healthcare": "Zorg",
+      "education": "Onderwijs",
+      "finance": "Financiën",
+      "operations": "Operations",
+      "management": "Management",
+      "other": "Anders"
+    },
+    "gender": {
+      "female": "Vrouw",
+      "male": "Man",
+      "non_binary": "Non-binair",
+      "prefer_not": "Zeg ik liever niet"
+    },
+    "ageBand": {
+      "under_18": "Jonger dan 18"
+    }
+  },
+  "plans": {
+    "title": "Abonnementen",
+    "onFree": "Je gebruikt het gratis abonnement.",
+    "activeUntil": "Volledige toegang actief tot {{date}}.",
+    "orgManaged": "Je organisatie beheert je toegang — vraag het je beheerder of manager.",
+    "unavailable": "Abonnementen zijn nu niet beschikbaar. Probeer het later opnieuw.",
+    "payError": "De betaling kon niet worden gestart. Probeer het opnieuw.",
+    "free": {
+      "name": "Gratis",
+      "usage": "{{used}} van {{limit}} gratis oefensessies gebruikt deze week."
+    },
+    "full": {
+      "name": "Volledige toegang",
+      "perMonth": "{{price}} per maand"
+    },
+    "features": {
+      "placementOnce": "Eén niveautest",
+      "placementUnlimited": "Niveautest opnieuw doen",
+      "practiceLimited": "{{count}} oefensessies per week",
+      "practiceUnlimited": "Onbeperkt oefenen in alle modules",
+      "progress": "Voortgangsrapporten en leertraject",
+      "mockTests": "Volledige proeftoetsen",
+      "tutor": "AI-spreektutor"
+    },
+    "months_one": "{{count}} maand",
+    "months_other": "{{count}} maanden",
+    "total": "Totaal",
+    "startNote": "Je toegang begint zodra de betaling is bevestigd.",
+    "extendNote": "Toegevoegd na het einde van je huidige toegang op {{date}}.",
+    "testMode": "Testmodus — de betaling wordt gesimuleerd, er wordt niets afgeschreven.",
+    "buy_one": "Koop {{count}} maand",
+    "buy_other": "Koop {{count}} maanden",
+    "extend_one": "Verleng met {{count}} maand",
+    "extend_other": "Verleng met {{count}} maanden",
+    "redirecting": "Betaling wordt geopend…",
+    "invoices": "Facturen",
+    "upgrade": "Bekijk abonnementen",
+    "locked": {
+      "mocktest": "Proeftoetsen horen bij volledige toegang.",
+      "coach": "De AI-tutor hoort bij volledige toegang.",
+      "placement": "Je hebt je gratis niveautest al gedaan. Opnieuw doen hoort bij volledige toegang.",
+      "practice": "Je hebt je {{limit}} gratis oefensessies van deze week gebruikt. Ze worden doorlopend per 7 dagen aangevuld, of upgrade voor onbeperkt oefenen."
+    },
+    "lockedTitle": "Upgrade om verder te gaan"
+  }
+}

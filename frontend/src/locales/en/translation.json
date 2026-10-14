@@ -47,7 +47,10 @@
       "emailPlaceholder": "you@example.com",
       "passwordLabel": "Password",
       "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
       "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords don't match.",
       "submit": "Sign Up",
       "submitting": "Creating account…",
       "errorEmailTaken": "An account with that email already exists.",
@@ -76,7 +79,10 @@
       "requestNewLink": "Request a new reset link",
       "passwordLabel": "New password",
       "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm new password",
+      "confirmPasswordPlaceholder": "Re-enter your password",
       "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords don't match.",
       "submit": "Reset Password",
       "submitting": "Saving…",
       "error": "This reset link is invalid or has expired."
@@ -208,6 +214,20 @@
         "submit": "Go to test",
         "submitting": "Saving…",
         "error": "Something went wrong saving your answers. Please try again."
+      },
+      "about": {
+        "title": "About you",
+        "subtitle": "Helps us tailor practice to your context.",
+        "countryLabel": "Country",
+        "cityLabel": "City",
+        "cityPlaceholder": "e.g. Hyderabad",
+        "jobRoleLabel": "Job role",
+        "genderLabel": "Gender (optional)",
+        "ageLabel": "Age (optional)",
+        "select": "Select…",
+        "skip": "Prefer to skip",
+        "consent": "I agree that my gender and age range can be stored and used only in anonymised, aggregated reports.",
+        "privacyNote": "Gender and age are optional. They're never shown to other learners and only ever reported in groups of 5 or more."
       }
     }
   },
@@ -410,7 +430,8 @@
       "accountType": "Account Type",
       "save": "Save",
       "saving": "Saving…",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "participantId": "Participant ID"
     },
     "preferences": {
       "title": "Preferences",
@@ -425,6 +446,43 @@
       "strictTimer": {
         "title": "Strict Timer Mode",
         "subtitle": "Disable pausing during timed practice items."
+      }
+    },
+    "about": {
+      "title": "About you",
+      "gender": "Gender",
+      "age": "Age",
+      "notShared": "Not shared",
+      "error": "Couldn't save. Please try again."
+    },
+    "access": {
+      "title": "Your access",
+      "activeUntil": "Active until {{date}}",
+      "grace": "Ended — grace period until {{date}}",
+      "expired": "Ended on {{date}}",
+      "none": "No license assigned yet",
+      "queued_one": "Includes {{count}} more month already assigned",
+      "queued_other": "Includes {{count}} more months already assigned",
+      "help": "Your organization manages your access. Ask your admin or manager to extend it."
+    },
+    "reminder": {
+      "title": "Daily practice reminder",
+      "on": "On",
+      "off": "Off",
+      "subtitle": "We'll email you at this time on the days you pick — skipped automatically if you've already practised that day.",
+      "time": "Time",
+      "streakAlert": "Also warn me at 10 pm if my streak (3+ days) is about to break",
+      "error": "Couldn't save. Please try again.",
+      "savedOn": "Saved — reminder set for {{time}}.",
+      "savedOff": "Saved — reminders are off.",
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
       }
     }
   },
@@ -632,5 +690,79 @@
       "submit": "Continue",
       "decline": "Not now"
     }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Student",
+      "it_engineering": "IT / Engineering",
+      "customer_support": "Customer support",
+      "sales_marketing": "Sales / Marketing",
+      "healthcare": "Healthcare",
+      "education": "Education",
+      "finance": "Finance",
+      "operations": "Operations",
+      "management": "Management",
+      "other": "Other"
+    },
+    "gender": {
+      "female": "Female",
+      "male": "Male",
+      "non_binary": "Non-binary",
+      "prefer_not": "Prefer not to say"
+    },
+    "ageBand": {
+      "under_18": "Under 18",
+      "18_24": "18–24",
+      "25_34": "25–34",
+      "35_44": "35–44",
+      "45_54": "45–54",
+      "55_plus": "55+"
+    }
+  },
+  "plans": {
+    "title": "Plans",
+    "onFree": "You're on the free plan.",
+    "activeUntil": "Full access active until {{date}}.",
+    "orgManaged": "Your organization manages your access — ask your admin or manager.",
+    "unavailable": "Plans are unavailable right now. Please try again later.",
+    "payError": "Couldn't start checkout. Please try again.",
+    "free": {
+      "name": "Free",
+      "price": "₹0 / $0",
+      "usage": "{{used}} of {{limit}} free practice sessions used this week."
+    },
+    "full": {
+      "name": "Full access",
+      "perMonth": "{{price}} per month"
+    },
+    "features": {
+      "placementOnce": "One placement test",
+      "placementUnlimited": "Placement test retakes",
+      "practiceLimited": "{{count}} practice sessions a week",
+      "practiceUnlimited": "Unlimited practice in every module",
+      "progress": "Progress reports and roadmap",
+      "mockTests": "Full-length mock tests",
+      "tutor": "AI speaking tutor"
+    },
+    "months_one": "{{count}} month",
+    "months_other": "{{count}} months",
+    "total": "Total",
+    "startNote": "Access starts as soon as payment is confirmed.",
+    "extendNote": "Added after your current access ends on {{date}}.",
+    "testMode": "Test mode — payment is simulated, no real charge.",
+    "buy_one": "Buy {{count}} month",
+    "buy_other": "Buy {{count}} months",
+    "extend_one": "Extend by {{count}} month",
+    "extend_other": "Extend by {{count}} months",
+    "redirecting": "Opening checkout…",
+    "invoices": "Invoices",
+    "upgrade": "See plans",
+    "locked": {
+      "mocktest": "Mock tests are part of Full access.",
+      "coach": "The AI tutor is part of Full access.",
+      "placement": "You've already taken your free placement test. Retakes are part of Full access.",
+      "practice": "You've used your {{limit}} free practice sessions this week. They reset on a rolling 7-day basis, or upgrade for unlimited practice."
+    },
+    "lockedTitle": "Upgrade to keep going"
   }
 }

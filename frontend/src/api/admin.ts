@@ -253,8 +253,28 @@ export interface AdminConsoleOrg {
   learnerCount: number;
   hasOrgAdmin: boolean;
   orgAdminStatus: "none" | "pending" | "active";
-  orgAdmin: { id: string; email: string; name: string } | null;
+  orgAdmin: { id: string; email: string; name: string; phone: string | null; jobTitle: string | null } | null;
   managers: { id: string; name: string; email: string; learnerCount: number }[];
+  planTier: "starter" | "business" | "enterprise";
+  pilotEndsAt: string | null;
+  customPriceCents: number | null;
+  legalName: string | null;
+  website: string | null;
+  phone: string | null;
+  addressLine: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  employeeCountBand: string | null;
+  trainingGoal: string | null;
+  billingContactPhone: string | null;
+  purchaseOrderRef: string | null;
+  industry: string | null;
+  expectedLearnerCount: number | null;
+  country: string | null;
+  billingContactName: string | null;
+  billingContactEmail: string | null;
+  taxId: string | null;
   active: boolean;
 }
 
@@ -286,6 +306,10 @@ export interface OnboardOrgPayload {
   category: "company" | "university";
   industry?: string;
   expectedLearnerCount?: number;
+  country?: string;
+  billingContactName?: string;
+  billingContactEmail?: string;
+  taxId?: string;
   orgAdmin: {
     email: string;
     firstName: string;
@@ -327,6 +351,7 @@ export function getConsoleBatches(): Promise<{ batches: ConsoleBatch[] }> {
 
 export interface ConsoleLearner {
   id: string;
+  participantId: string | null;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -358,8 +383,10 @@ export function onboardConsoleLearnersBulk(batchId: string, rows: BulkLearnerRow
 }
 
 export interface LearnerProfile {
+  batchHistory?: { fromBatch: string | null; toBatch: string | null; reason: string | null; movedBy: string | null; movedAt: string }[];
   learner: {
     id: string;
+    participantId: string | null;
     email: string;
     firstName: string | null;
     lastName: string | null;
@@ -383,6 +410,11 @@ export interface LearnerProfile {
     prevScore: string | null;
     prevDate: string | null;
     dailyMinutesPreference: number | null;
+    country: string | null;
+    city: string | null;
+    jobRole: string | null;
+    gender: string | null;
+    ageBand: string | null;
   } | null;
   placement: {
     cefrLevel: string;

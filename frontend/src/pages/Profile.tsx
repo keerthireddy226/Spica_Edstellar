@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ShieldCheck,
@@ -17,14 +17,30 @@ import {
   Clock,
   Globe,
   Mic,
+  Hash,
+  MapPin,
+  Briefcase,
+  KeyRound,
 } from "lucide-react";
 import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
-import { getOnboardingProfile, updateSpokenPromptsPreference, type OnboardingProfile } from "@/api/onboarding";
+import {
+  getOnboardingProfile,
+  updateSpokenPromptsPreference,
+  updateDemographics,
+  type OnboardingProfile,
+  type JobRole,
+  type Gender,
+  type AgeBand,
+} from "@/api/onboarding";
+import { AGE_BANDS, GENDERS, JOB_ROLES, countryName, sortedCountries } from "@/constants/demographics";
 import { getRoadmap, type RoadmapData } from "@/api/roadmap";
 import { ROUTES } from "@/constants/routes";
+import { useMyLicense } from "@/components/licenses/LicenseGate";
+import { DailyReminderCard } from "@/components/DailyReminderCard";
+import { formatShortDate } from "@/api/licenses";
 
 // Colored icon-in-squircle badge, reused as the visual anchor for every card header/row here.
 function IconBadge({ icon: Icon, tint, size = 36 }: { icon: typeof GraduationCap; tint: string; size?: number }) {
@@ -126,6 +142,41 @@ function PlanSection() {
 
 
 // Real editing — PATCH /auth/me updates the account. Email stays read-only (tied to login/verification).
+function AccessSection() {
+  const { t } = useTranslation();
+  const license = useMyLicense();
+  if (!license || (!license.required && !license.individual)) return null;
+  const onFreePlan = license.individual && license.status !== "active" && license.status !== "grace";
+  const status =
+    license.status === "active"
+      ? t("profile.access.activeUntil", { date: formatShortDate(license.accessEndsAt) })
+      : license.status === "grace"
+        ? t("profile.access.grace", { date: formatShortDate(license.graceEndsAt) })
+        : onFreePlan
+          ? t("plans.onFree")
+          : license.status === "expired"
+            ? t("profile.access.expired", { date: formatShortDate(license.accessEndsAt) })
+            : t("profile.access.none");
+  const tone =
+    license.status === "active" ? "text-success" : license.status === "grace" ? "text-navy-deep" : onFreePlan ? "text-ink" : "text-error";
+  return (
+    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+      <SectionHeader icon={KeyRound} tint="bg-navy/15 text-navy" title={t("profile.access.title")} />
+      <p className={`text-sm font-semibold ${tone}`}>{status}</p>
+      {license.queuedMonths > 0 && (
+        <p className="text-xs text-muted">{t("profile.access.queued", { count: license.queuedMonths })}</p>
+      )}
+      {license.individual ? (
+        <Link to={ROUTES.PLANS} className="self-start">
+          <Button variant={onFreePlan ? "primary" : "secondary"}>{onFreePlan ? t("plans.upgrade") : t("plans.title")}</Button>
+        </Link>
+      ) : (
+        <p className="text-xs text-muted">{t("profile.access.help")}</p>
+      )}
+    </div>
+  );
+}
+
 function PersonalInformation() {
   const { t } = useTranslation();
   const { user, updateName } = useAuth();
@@ -209,6 +260,175 @@ function PersonalInformation() {
           <FieldDisplay icon={User} label={t("profile.personalInfo.lastName")} value={user?.lastName || "—"} />
           <FieldDisplay icon={Mail} label={t("profile.personalInfo.email")} value={user?.email ?? ""} />
           <FieldDisplay icon={ShieldCheck} label={t("profile.personalInfo.accountType")} value={accountType ?? ""} />
+          {user?.participantId && (
+            <FieldDisplay icon={Hash} label={t("profile.personalInfo.participantId")} value={user.participantId} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const profileInputClass =
+  "w-full rounded-input border border-rule bg-paper px-3.5 py-2.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-navy/20 focus:border-navy";
+
+function AboutYouSection() {
+  const { t, i18n } = useTranslation();
+  const [profile, setProfile] = useState<OnboardingProfile | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [jobRole, setJobRole] = useState<JobRole | "">("");
+  const [gender, setGender] = useState<Gender | "">("");
+  const [ageBand, setAgeBand] = useState<AgeBand | "">("");
+  const [consent, setConsent] = useState(false);
+
+  useEffect(() => {
+    getOnboardingProfile().then(setProfile).catch(() => {});
+  }, []);
+
+  if (!profile) return null;
+
+  function startEditing() {
+    setCountry(profile!.country ?? "");
+    setCity(profile!.city ?? "");
+    setJobRole(profile!.job_role ?? "");
+    setGender(profile!.gender ?? "");
+    setAgeBand(profile!.age_band ?? "");
+    setConsent(Boolean(profile!.gender || profile!.age_band));
+    setError(null);
+    setEditing(true);
+  }
+
+  const needsConsent = Boolean(gender || ageBand);
+  const invalid = !country || !city.trim() || !jobRole || (needsConsent && !consent);
+
+  async function handleSave() {
+    if (invalid) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await updateDemographics({
+        country,
+        city: city.trim(),
+        jobRole: jobRole as JobRole,
+        gender: gender || null,
+        ageBand: ageBand || null,
+        demographicsConsent: consent,
+      });
+      setProfile({ ...profile!, country, city: city.trim(), job_role: jobRole as JobRole, gender: gender || null, age_band: ageBand || null });
+      setEditing(false);
+    } catch {
+      setError(t("profile.about.error"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const notShared = t("profile.about.notShared");
+
+  return (
+    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <SectionHeader icon={MapPin} tint="bg-accent/15 text-accent" title={t("profile.about.title")} />
+        {!editing && (
+          <button
+            onClick={startEditing}
+            aria-label={t("profile.personalInfo.edit")}
+            className="h-9 w-9 rounded-full flex items-center justify-center text-muted hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer shrink-0"
+          >
+            <Pencil size={16} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+
+      {editing ? (
+        <div className="flex flex-col gap-3">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.countryLabel")}</label>
+              <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${profileInputClass} cursor-pointer`}>
+                <option value="">{t("onboarding.wizard.about.select")}</option>
+                {sortedCountries(i18n.language).map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.cityLabel")}</label>
+              <input value={city} onChange={(e) => setCity(e.target.value)} className={profileInputClass} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.jobRoleLabel")}</label>
+              <select value={jobRole} onChange={(e) => setJobRole(e.target.value as JobRole | "")} className={`${profileInputClass} cursor-pointer`}>
+                <option value="">{t("onboarding.wizard.about.select")}</option>
+                {JOB_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {t(`demographics.jobRole.${r}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.genderLabel")}</label>
+              <select value={gender} onChange={(e) => setGender(e.target.value as Gender | "")} className={`${profileInputClass} cursor-pointer`}>
+                <option value="">{t("onboarding.wizard.about.skip")}</option>
+                {GENDERS.map((g) => (
+                  <option key={g} value={g}>
+                    {t(`demographics.gender.${g}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.ageLabel")}</label>
+              <select value={ageBand} onChange={(e) => setAgeBand(e.target.value as AgeBand | "")} className={`${profileInputClass} cursor-pointer`}>
+                <option value="">{t("onboarding.wizard.about.skip")}</option>
+                {AGE_BANDS.map((a) => (
+                  <option key={a} value={a}>
+                    {t(`demographics.ageBand.${a}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {needsConsent && (
+            <label className="flex items-start gap-2.5 rounded-input border border-rule p-3 cursor-pointer">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 accent-navy" />
+              <span className="text-sm text-ink">{t("onboarding.wizard.about.consent")}</span>
+            </label>
+          )}
+          {error && <p className="text-sm text-error">{error}</p>}
+          <div className="flex gap-2.5">
+            <Button onClick={handleSave} disabled={saving || invalid}>
+              <span className="flex items-center gap-1.5">
+                <Check size={16} strokeWidth={2.2} />
+                {saving ? t("profile.personalInfo.saving") : t("profile.personalInfo.save")}
+              </span>
+            </Button>
+            <Button variant="secondary" onClick={() => setEditing(false)} disabled={saving}>
+              <span className="flex items-center gap-1.5">
+                <X size={16} strokeWidth={2.2} />
+                {t("profile.personalInfo.cancel")}
+              </span>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-x-4 gap-y-4">
+          <FieldDisplay icon={MapPin} label={t("onboarding.wizard.about.countryLabel")} value={countryName(profile.country, i18n.language)} />
+          <FieldDisplay icon={MapPin} label={t("onboarding.wizard.about.cityLabel")} value={profile.city || "—"} />
+          <FieldDisplay
+            icon={Briefcase}
+            label={t("onboarding.wizard.about.jobRoleLabel")}
+            value={profile.job_role ? t(`demographics.jobRole.${profile.job_role}`) : "—"}
+          />
+          <FieldDisplay icon={User} label={t("profile.about.gender")} value={profile.gender ? t(`demographics.gender.${profile.gender}`) : notShared} />
+          <FieldDisplay icon={CalendarDays} label={t("profile.about.age")} value={profile.age_band ? t(`demographics.ageBand.${profile.age_band}`) : notShared} />
         </div>
       )}
     </div>
@@ -370,6 +590,9 @@ export function Profile() {
                 <Mail size={13} strokeWidth={1.8} />
                 {user?.email}
               </p>
+              {user?.participantId && (
+                <p className="text-xs text-muted font-mono">{user.participantId}</p>
+              )}
               <span className="text-xs font-semibold text-accent bg-accent/15 px-2.5 py-1 rounded-pill">{accountType}</span>
               <button
                 onClick={handleLogout}
@@ -382,10 +605,13 @@ export function Profile() {
           </div>
 
           <PlanSection />
+          <AccessSection />
         </div>
 
         <div className="flex flex-col gap-6">
           <PersonalInformation />
+          <AboutYouSection />
+          <DailyReminderCard />
           <PreferencesSection />
         </div>
       </div>

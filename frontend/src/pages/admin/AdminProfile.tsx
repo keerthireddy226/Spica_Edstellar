@@ -11,6 +11,7 @@ import {
 import { PERMISSION_LABELS, type AdminPermissions } from "@/api/admin";
 import { getOrgOverview } from "@/api/orgAdmin";
 import { Button } from "@/components/Button";
+import { OrganizationProfileCard } from "@/components/OrganizationProfileCard";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
@@ -340,6 +341,7 @@ export function AdminProfile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [onboardedBy, setOnboardedBy] = useState<{ id: string; email: string; name: string } | null>(null);
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
 
   useEffect(() => {
     setFirstName(user?.firstName ?? "");
@@ -349,7 +351,10 @@ export function AdminProfile() {
   useEffect(() => {
     if (user?.role !== "org_admin") return;
     getOrgOverview()
-      .then((o) => setOnboardedBy(o.onboardedBy))
+      .then((o) => {
+        setOnboardedBy(o.onboardedBy);
+        setOrganizationName(o.organizationName);
+      })
       .catch(() => {});
   }, [user?.role]);
 
@@ -368,51 +373,64 @@ export function AdminProfile() {
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Not named yet";
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">Profile</h1>
+        <p className="text-sm text-muted mt-1">Your account, security, and sign-in activity.</p>
       </div>
 
       <div
         style={{ background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 100%, black 35%))" }}
-        className="rounded-card shadow-sm p-6 flex items-center gap-5"
+        className="rounded-card shadow-sm p-6 flex items-center gap-5 flex-wrap"
       >
         <span className="h-16 w-16 rounded-full bg-white/20 text-white flex items-center justify-center text-xl font-bold shrink-0">
           {initials}
         </span>
-        <div>
-          <p className="font-display font-bold text-xl text-white">{fullName}</p>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white mt-1.5">
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-xl text-white truncate">{fullName}</p>
+          <p className="text-sm text-white/80 truncate">
+            {user?.email}
+            {organizationName ? ` · ${organizationName}` : ""}
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white mt-2">
             <ShieldCheck size={13} /> {user ? (ROLE_LABEL[user.role] ?? user.role) : "—"}
           </span>
         </div>
+        <button
+          onClick={logout}
+          className="flex items-center gap-2 px-4 py-2 rounded-pill border border-white/40 text-white text-sm font-semibold hover:bg-white/15 transition-colors cursor-pointer shrink-0"
+        >
+          <LogOut size={16} /> Log out
+        </button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4 items-start">
-        <div className="flex flex-col gap-4">
-          <AccountDetails
-            user={user}
-            onboardedBy={onboardedBy}
-            firstName={firstName}
-            lastName={lastName}
-            setFirstName={setFirstName}
-            setLastName={setLastName}
-            saving={saving}
-            saved={saved}
-            onSave={handleSave}
-          />
-          <PermissionsSection user={user} />
-        </div>
+        <AccountDetails
+          user={user}
+          onboardedBy={onboardedBy}
+          firstName={firstName}
+          lastName={lastName}
+          setFirstName={setFirstName}
+          setLastName={setLastName}
+          saving={saving}
+          saved={saved}
+          onSave={handleSave}
+        />
         <div className="flex flex-col gap-4">
           <SecuritySection email={user?.email} />
+          <PermissionsSection user={user} />
+        </div>
+      </div>
+
+      {user?.role === "org_admin" && <OrganizationProfileCard />}
+
+      <div className="flex flex-col gap-3">
+        <h2 className="font-display font-bold text-lg text-ink">Sign-in activity</h2>
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
           <ActiveSessionsSection />
           <LoginHistorySection />
         </div>
       </div>
-
-      <Button variant="secondary" onClick={logout} className="self-start flex items-center gap-2">
-        <LogOut size={18} /> Log out
-      </Button>
     </div>
   );
 }

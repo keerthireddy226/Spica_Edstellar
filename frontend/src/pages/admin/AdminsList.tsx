@@ -605,14 +605,14 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
       {viewingOrgAdminId && (
         <OrgAdminDetailModal
           orgAdminId={viewingOrgAdminId}
-          onClose={() => setViewingOrgAdminId(null)}
+          onClose={onClose}
           onBack={() => setViewingOrgAdminId(null)}
         />
       )}
       {viewingManagerId && (
         <ManagerDetailModal
           managerId={viewingManagerId}
-          onClose={() => setViewingManagerId(null)}
+          onClose={onClose}
           onBack={() => setViewingManagerId(null)}
         />
       )}

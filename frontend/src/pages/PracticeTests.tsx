@@ -19,7 +19,6 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
-import { SKILL_TINT_CLASSES } from "@/lib/skillTints";
 import {
   getExamsForProduct,
   startExamSession,
@@ -396,7 +395,7 @@ export function PracticeTests() {
       const result = await completeExamSession(sessionId);
       setSummary(result);
     } catch {
-      setSummary({ gradedCount: 0, correctCount: 0, pendingCount: items.length, failedCount: 0, overallPercent: 0, partResults: [] });
+      setSummary({ gradedCount: 0, correctCount: 0, pendingCount: items.length, failedCount: 0, skippedCount: 0, overallPercent: 0, partResults: [] });
     }
   }
 

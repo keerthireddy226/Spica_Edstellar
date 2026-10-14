@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { countryName } from "@/constants/demographics";
 import { DetailModal } from "@/components/DetailModal";
 import { getLearnerProfile, type LearnerProfile } from "@/api/admin";
 
@@ -7,11 +9,13 @@ function formatDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
+// Label sits outside the bordered box, flush with every other section
+// heading in this modal (boxed or not) so they all line up on one left edge.
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border border-rule rounded-input px-4 py-3">
+    <div>
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{title}</p>
-      {children}
+      <div className="border border-rule rounded-input px-4 py-3">{children}</div>
     </div>
   );
 }
@@ -51,6 +55,7 @@ export function LearnerProfileModal({
   // tenant-scoped endpoint instead of the platform-wide Admin one.
   fetcher?: (learnerId: string) => Promise<LearnerProfile>;
 }) {
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +86,7 @@ export function LearnerProfileModal({
   return (
     <DetailModal
       title={name}
-      subtitle={`${learner.email} · ${learner.tenantName ?? "Individual"}${learner.batchName ? ` · ${learner.batchName}` : ""}`}
+      subtitle={`${learner.participantId ? `${learner.participantId} · ` : ""}${learner.email} · ${learner.tenantName ?? "Individual"}${learner.batchName ? ` · ${learner.batchName}` : ""}`}
       onClose={onClose}
       onBack={onBack}
       wide
@@ -89,10 +94,25 @@ export function LearnerProfileModal({
       <div className="flex flex-col gap-4">
         <Section title="Account">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <Field label="Participant ID" value={learner.participantId ?? "—"} />
             <Field label="Joined" value={formatDate(learner.createdAt)} />
             <Field label="Plan / org type" value={learner.tenantCategory ?? learner.tenantType ?? "—"} />
             <Field label="Status" value={learner.active ? "Active" : "Deactivated"} />
           </div>
+        </Section>
+
+        <Section title="About">
+          {!onboarding ? (
+            <p className="text-sm text-muted">Hasn't completed onboarding yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <Field label="Country" value={countryName(onboarding.country, i18n.language)} />
+              <Field label="City" value={onboarding.city ?? "—"} />
+              <Field label="Job role" value={onboarding.jobRole ? t(`demographics.jobRole.${onboarding.jobRole}`) : "—"} />
+              <Field label="Gender" value={onboarding.gender ? t(`demographics.gender.${onboarding.gender}`) : "Not shared"} />
+              <Field label="Age" value={onboarding.ageBand ? t(`demographics.ageBand.${onboarding.ageBand}`) : "Not shared"} />
+            </div>
+          )}
         </Section>
 
         <Section title="Onboarding questionnaire">
@@ -169,6 +189,25 @@ export function LearnerProfileModal({
             </div>
           )}
         </Section>
+
+        {profile.batchHistory && profile.batchHistory.length > 0 && (
+          <Section title="Batch history">
+            <div className="flex flex-col gap-2">
+              {profile.batchHistory.map((m, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-ink">
+                    {m.fromBatch ?? "No batch"} → {m.toBatch ?? "No batch"}
+                    {m.reason ? <span className="text-muted"> · {m.reason}</span> : null}
+                  </span>
+                  <span className="text-xs text-muted shrink-0">
+                    {m.movedBy ? `${m.movedBy} · ` : ""}
+                    {formatDate(m.movedAt)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
 
         <Section title="Activity across the platform">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-3">

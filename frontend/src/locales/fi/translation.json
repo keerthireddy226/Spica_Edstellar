@@ -1,0 +1,742 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Hallintapaneeli",
+      "admins": "Ylläpitäjät",
+      "orgAdmins": "Organisaation ylläpitäjät",
+      "learners": "Yksittäiset opiskelijat"
+    }
+  },
+  "skills": {
+    "listening": "Kuullun ymmärtäminen",
+    "speaking": "Puhuminen",
+    "reading": "Lukeminen",
+    "writing": "Kirjoittaminen"
+  },
+  "auth": {
+    "login": {
+      "title": "Tervetuloa takaisin",
+      "subtitle": "Kirjaudu sisään jatkaaksesi harjoittelua.",
+      "emailLabel": "Sähköposti",
+      "passwordLabel": "Salasana",
+      "submit": "Kirjaudu sisään",
+      "submitting": "Kirjaudutaan…",
+      "errorInvalidCredentials": "Väärä sähköposti tai salasana.",
+      "errorEmailNotVerified": "Vahvista sähköpostisi ennen kirjautumista — vahvistuslinkki on saapuneissa viesteissä.",
+      "errorWrongPortal": "Tällä tilillä ei voi kirjautua tämän sivun kautta.",
+      "errorAlreadyLoggedIn": "Tili on jo kirjautuneena toisella laitteella. Kirjaudu siellä ensin ulos.",
+      "errorOrganizationDeactivated": "Tämä organisaatio on poistettu käytöstä. Ota yhteyttä ylläpitäjään.",
+      "errorTooManyAttempts": "Liian monta kirjautumisyritystä. Odota muutama minuutti ja yritä uudelleen.",
+      "errorGeneric": "Jokin meni vikaan. Tarkista yhteys ja yritä uudelleen.",
+      "forgotPassword": "Unohditko salasanan?",
+      "createAccount": "Luo tili"
+    },
+    "signup": {
+      "title": "Luo tilisi",
+      "subtitle": "Aloita harjoittelu sekunneissa.",
+      "firstNameLabel": "Etunimi",
+      "lastNameLabel": "Sukunimi",
+      "emailLabel": "Sähköposti",
+      "passwordLabel": "Salasana",
+      "passwordPlaceholder": "Vähintään 8 merkkiä",
+      "confirmPasswordLabel": "Vahvista salasana",
+      "confirmPasswordPlaceholder": "Kirjoita salasana uudelleen",
+      "passwordTooShort": "Salasanassa on oltava vähintään 8 merkkiä.",
+      "passwordMismatch": "Salasanat eivät täsmää.",
+      "submit": "Rekisteröidy",
+      "submitting": "Luodaan tiliä…",
+      "errorEmailTaken": "Tällä sähköpostilla on jo tili.",
+      "errorGeneric": "Jokin meni vikaan. Yritä uudelleen.",
+      "alreadyHaveAccount": "Onko sinulla jo tili?",
+      "signIn": "Kirjaudu sisään",
+      "checkEmailTitle": "Tarkista sähköpostisi",
+      "checkEmailBody": "Lähetimme vahvistuslinkin osoitteeseen {{email}}. Kirjaudu sisään vahvistuksen jälkeen jatkaaksesi.",
+      "signInButton": "Kirjaudu sisään"
+    },
+    "forgotPassword": {
+      "title": "Nollaa salasana",
+      "subtitle": "Lähetämme sinulle linkin uuden salasanan valitsemiseen.",
+      "submitted": "Jos tällä sähköpostilla on tili, nollauslinkki on matkalla.",
+      "emailLabel": "Sähköposti",
+      "submit": "Lähetä nollauslinkki",
+      "submitting": "Lähetetään…",
+      "backToSignIn": "Takaisin kirjautumiseen"
+    },
+    "resetPassword": {
+      "title": "Valitse uusi salasana",
+      "subtitle": "Vähintään 8 merkkiä.",
+      "missingTokenTitle": "Nollaa salasana",
+      "missingTokenSubtitle": "Linkistä puuttuu tunniste.",
+      "requestNewLink": "Pyydä uusi linkki",
+      "passwordLabel": "Uusi salasana",
+      "passwordPlaceholder": "Vähintään 8 merkkiä",
+      "confirmPasswordLabel": "Vahvista uusi salasana",
+      "confirmPasswordPlaceholder": "Kirjoita salasana uudelleen",
+      "passwordTooShort": "Salasanassa on oltava vähintään 8 merkkiä.",
+      "passwordMismatch": "Salasanat eivät täsmää.",
+      "submit": "Nollaa salasana",
+      "submitting": "Tallennetaan…",
+      "error": "Linkki on virheellinen tai vanhentunut."
+    },
+    "verifyEmail": {
+      "title": "Sähköpostin vahvistus",
+      "pending": "Vahvistetaan…",
+      "success": "Sähköpostisi on vahvistettu. Kirjaudu sisään jatkaaksesi.",
+      "signInButton": "Kirjaudu sisään",
+      "error": "Vahvistuslinkki on virheellinen tai vanhentunut."
+    }
+  },
+  "onboarding": {
+    "title": "Tervetuloa käyttöönottoon",
+    "logout": "Kirjaudu ulos",
+    "wizard": {
+      "stepLabel": "{{current}}/{{total}}",
+      "back": "Takaisin",
+      "next": "Seuraava",
+      "basics": {
+        "title": "Tutustutaan",
+        "subtitle": "Sähköpostisi on täytetty kirjautumistiedoista",
+        "firstNameLabel": "Etunimi",
+        "firstNamePlaceholder": "Kirjoita etunimesi",
+        "lastNameLabel": "Sukunimi",
+        "lastNamePlaceholder": "Kirjoita sukunimesi",
+        "emailLabel": "Sähköposti",
+        "emailNote": "Täytetty tilisi tiedoista"
+      },
+      "examGoal": {
+        "examTitle": "Mihin kokeeseen valmistaudut?",
+        "examSubtitle": "Sovitamme harjoitukset kokeen muotoon",
+        "goalTitle": "Mihin tasoon tai tulokseen tähtäät?",
+        "goalSubtitle": "Tavoitteesi kokeessa",
+        "scoreTargetLabel": "Tarkka tulostavoite (valinnainen)",
+        "scoreTargetPlaceholder": "esim. IELTS 7.0, Versant 69+, PTE 65",
+        "exam": {
+          "versantDesc": "Puhuminen, kirjoittaminen, tasotesti, ammatillinen",
+          "ieltsDesc": "Academic tai General Training",
+          "toeflDesc": "Verkossa tehtävä koe",
+          "pteDesc": "Pearsonin tietokonepohjainen koe",
+          "other": "Muu / Yleinen",
+          "otherDesc": "Yleinen englannin parantaminen"
+        },
+        "goal": {
+          "A1": "A1 – Alkeet",
+          "A1Desc": "Yksinkertaiset sanat ja arkiset fraasit",
+          "A2": "A2 – Perustaso",
+          "A2Desc": "Yksinkertaiset lauseet, helpot keskustelut",
+          "B1": "B1 – Keskitaso",
+          "B1Desc": "Useimmat matka- ja työtilanteet",
+          "B2": "B2 – Ylempi keskitaso",
+          "B2Desc": "Sujuva keskustelu, yksityiskohtaiset tekstit",
+          "C1": "C1 – Edistynyt",
+          "C1Desc": "Monimutkaiset aiheet, rivien välistä lukeminen",
+          "C2": "C2 – Taitava",
+          "C2Desc": "Lähes äidinkielinen tarkkuus ja sujuvuus",
+          "unsure": "En ole vielä varma",
+          "unsureDesc": "Anna tasotestin auttaa päättämään"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "Miksi teet kokeen?",
+        "reasonSubtitle": "Näin voimme sovittaa sisällön todellisiin tarpeisiisi",
+        "reason": {
+          "university": "Yliopistoon haku",
+          "job": "Työnantajan vaatimus",
+          "immigration": "Maahanmuutto",
+          "promotion": "Ylennys tai uralla eteneminen",
+          "personal": "Henkilökohtainen tavoite"
+        },
+        "appliedTitle": "Oletko jo ilmoittautunut kokeeseen?",
+        "appliedSubtitle": "Aikataulutamme harjoittelun määräaikasi mukaan",
+        "appliedYes": "Kyllä, minulla on vahvistettu päivä",
+        "appliedNo": "En vielä",
+        "examDateLabel": "Milloin kokeesi on?",
+        "prepDaysLabel": "Montako päivää haluat valmistautua?",
+        "prepDaysPlaceholder": "esim. 30",
+        "days": "päivää"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "Oletko tehnyt kokeen aiemmin?",
+        "attemptsSubtitle": "Näin ymmärrämme lähtötasosi",
+        "attempts": {
+          "first": "En, tämä on ensimmäinen yritykseni",
+          "once": "Kyllä, kerran",
+          "multiple": "Kyllä, useita kertoja"
+        },
+        "prevScoreLabel": "Mikä oli aiempi tuloksesi?",
+        "prevScorePlaceholder": "esim. B1, 5.5, 58",
+        "prevDateLabel": "Milloin teit sen viimeksi?",
+        "prevDatePlaceholder": "esim. maaliskuu 2026, 6 kuukautta sitten",
+        "timeTitle": "Paljonko aikaa voit käyttää päivittäin?",
+        "timeSubtitle": "Ole realistinen — säännöllisyys voittaa intensiteetin",
+        "time": {
+          "min15": "15 minuuttia",
+          "min15Desc": "Nopea päivittäinen harjoitus",
+          "min30": "30 minuuttia",
+          "min30Desc": "Tasaista, varmaa edistystä",
+          "min60": "1 tunti",
+          "min60Desc": "Vakavaa valmistautumista",
+          "min90": "90+ minuuttia",
+          "min90Desc": "Intensiivistä uppoutumista"
+        }
+      },
+      "duration": {
+        "title": "Kuinka pitkäksi aikaa haluat käyttöoikeuden?",
+        "subtitle": "Valitse aikatauluusi sopiva paketti",
+        "oneMonth": "1 kuukausi",
+        "oneMonthDesc": "Lyhyt, intensiivinen kiri",
+        "threeMonths": "3 kuukautta",
+        "threeMonthsDesc": "Tasapainoinen valmistautuminen",
+        "sixMonths": "6 kuukautta",
+        "sixMonthsDesc": "Perusteellista, tasaista oppimista",
+        "untilExam": "Koepäivääni asti",
+        "untilExamDesc": "Laskettu koepäiväsi perusteella"
+      },
+      "consent": {
+        "title": "Ennen kuin jatketaan",
+        "subtitle": "Äänesi tallennetaan harjoitusten ja testien aikana",
+        "body": "Tallennamme suulliset vastauksesi arvioidaksemme puhumistasi ja antaaksemme palautetta. Tallenteita säilytetään rajoitetun ajan, ja niitä käytetään vain tulostesi arviointiin ja parantamiseen. Voit poistaa tietosi milloin tahansa Asetuksista.",
+        "checkboxLabel": "Ymmärrän ja hyväksyn, että ääneni tallennetaan harjoitusten ja testien aikana.",
+        "submit": "Siirry testiin",
+        "submitting": "Tallennetaan…",
+        "error": "Vastausten tallennuksessa tapahtui virhe. Yritä uudelleen."
+      },
+      "about": {
+        "title": "Tietoja sinusta",
+        "subtitle": "Näin voimme sovittaa harjoitukset tilanteeseesi.",
+        "countryLabel": "Maa",
+        "cityLabel": "Kaupunki",
+        "cityPlaceholder": "esim. Tampere",
+        "jobRoleLabel": "Työtehtävä",
+        "genderLabel": "Sukupuoli (valinnainen)",
+        "ageLabel": "Ikä (valinnainen)",
+        "select": "Valitse…",
+        "skip": "En halua kertoa",
+        "consent": "Hyväksyn, että sukupuoleni ja ikäryhmäni tallennetaan ja niitä käytetään vain anonymisoiduissa koosteraporteissa.",
+        "privacyNote": "Sukupuoli ja ikä ovat valinnaisia. Niitä ei koskaan näytetä muille opiskelijoille, ja ne raportoidaan vain vähintään 5 hengen ryhminä."
+      }
+    }
+  },
+  "placement": {
+    "title": "Kaikki valmista!",
+    "subtitle": "Käyttöönotto on valmis — nyt on tasotestin vuoro.",
+    "scheduleLater": "Ajoita myöhemmäksi",
+    "scheduling": "Lähetetään…",
+    "scheduleSent": "Lähetimme sinulle muistutuslinkin sähköpostiin.",
+    "scheduleLaterError": "Muistutuksen lähetyksessä tapahtui virhe. Yritä uudelleen.",
+    "info": {
+      "timing": "Ajastettu — varaa noin 15–20 minuuttia",
+      "covers": "Sisältää puhumisen, kuullun ymmärtämisen, lukemisen ja kirjoittamisen",
+      "graded": "Testi arvioidaan, ja äänesi tallennetaan arviointia varten — vastaa rehellisesti, yksin ja ilman ulkopuolista apua.",
+      "equipment": "Pidä kuulokkeet ja mikrofoni valmiina"
+    },
+    "instructions": {
+      "checkboxLabel": "Olen lukenut ohjeet ja olen valmis.",
+      "begin": "Aloita testi"
+    },
+    "resume": {
+      "title": "Jatka siitä, mihin jäit",
+      "subtitle": "Olet jo vastannut {{count}} kysymykseen tässä testissä — jatka, niin edistymisesi säilyy.",
+      "continue": "Jatka testiä"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "Aloita",
+    "loading": "Ladataan testiä…",
+    "loadError": "Testin lataamisessa tapahtui virhe. Yritä uudelleen.",
+    "micError": "Emme pääse mikrofoniisi. Salli mikrofonin käyttö ja yritä uudelleen.",
+    "progress": "{{current}}/{{total}}",
+    "play": "Toista ääni",
+    "playAgain": "Toista uudelleen",
+    "replay": "Toista uudelleen",
+    "playing": "Toistetaan…",
+    "record": "Tallenna vastaus",
+    "recordAgain": "Tallenna uudelleen",
+    "audioSaved": "Tallenne tallennettu",
+    "stopRecording": "Lopeta tallennus",
+    "skip": "Ohita",
+    "exitConfirm": "Poistutaanko testistä nyt? Tämän kysymyksen edistymistä ei tallenneta.",
+    "answerPlaceholder": "Kirjoita vastauksesi tähän…",
+    "submitting": "Lähetetään…",
+    "next": "Seuraava",
+    "finish": "Valmis",
+    "submitError": "Vastauksen lähetyksessä tapahtui virhe. Yritä uudelleen.",
+    "resultsTitle": "Testi suoritettu",
+    "resultsSummary": "Vastasit oikein {{correct}}/{{graded}} automaattisesti arvioituun kysymykseen. {{pending}} vastausta odottaa vielä arviointia.",
+    "done": "Valmis",
+    "yourLevel": "Arvioitu tasosi: {{level}}",
+    "levelDisclaimer": "Tämä on oma CEFR-pohjainen arviomme testin perusteella, ei virallinen tulos.",
+    "pendingNote": "{{pending}} vastaustasi pitää vielä arvioida, ennen kuin ne lasketaan tasoosi.",
+    "goToRoadmap": "Siirry opintosuunnitelmaan",
+    "notEnoughAnswered": "Liian vähän vastauksia",
+    "gapCappedNote": "Joitakin tasoja ei testattu — todellinen tasosi voi olla korkeampi.",
+    "failedNote": "{{failed}} vastaustasi ei voitu arvioida arviointipalvelumme tilapäisen ongelman vuoksi — syy ei ole vastauksissasi. Yritä myöhemmin uudelleen."
+  },
+  "roadmap": {
+    "loading": "Ladataan opintosuunnitelmaa…",
+    "loadError": "Opintosuunnitelman lataamisessa tapahtui virhe. Yritä uudelleen.",
+    "pendingReviewBanner": "Tasotestisi tulosta tarkistetaan osana henkilöllisyyden varmistusta. Voit käyttää kaikkea alla olevaa sillä välin.",
+    "notReadyTitle": "Opintosuunnitelmasi ei ole vielä valmis",
+    "notReadyBody": "Tee tasotesti saadaksesi henkilökohtaisen suunnitelman.",
+    "notReadyBodyScheduled": "Ajoitit tasotestin päivälle {{date}}. Tee se, kun olet valmis — opintosuunnitelma luodaan heti sen jälkeen.",
+    "takeTestNow": "Tee tasotesti",
+    "greeting": "Hei, {{name}}",
+    "currentLevel": "Nykyinen taso",
+    "goalLevel": "Tavoite",
+    "daysLeftLabel": "Päiviä jäljellä",
+    "skillBreakdownTitle": "Taidot tarkemmin",
+    "timelineTitle": "Opintosuunnitelmasi",
+    "milestoneReach": "Saavuta {{level}}",
+    "milestoneMaintain": "Pidä tasosi",
+    "dayOffset": "Päivä {{day}}",
+    "focusOn": "Painopiste: {{skill}}",
+    "welcomeBack": "Tervetuloa takaisin",
+    "goalProgress": "Edistyminen kohti tavoitetta",
+    "ofYourRoadmap": "opintosuunnitelmastasi",
+    "streak": "Putki",
+    "streakDays_one": "{{count}} päivä",
+    "streakDays_other": "{{count}} päivää",
+    "startStreakToday": "Aloita putkesi tänään.",
+    "keepStreakGoing": "Jatka samaan malliin!",
+    "today": "Tänään",
+    "practicedSoFar": "harjoiteltu tähän mennessä",
+    "accuracy": "Tarkkuus",
+    "practiceToUnlock": "Harjoittele avataksesi",
+    "practiceAccuracy": "harjoitusten tarkkuus",
+    "strongest": "vahvin",
+    "notTested": "Ei vielä testattu",
+    "gapCappedNote": "Joitakin tasoja ei testattu — todellinen tasosi voi olla korkeampi."
+  },
+  "dashboard": {
+    "welcome": "Tervetuloa, {{email}}",
+    "role": "Rooli: {{role}}",
+    "placeholder": "Tämä on väliaikainen sivu — varsinainen hallintapaneeli (taso, suunnitelma, putki, merkit) tulee myöhemmässä vaiheessa."
+  },
+  "nav": {
+    "roadmap": "Opintosuunnitelma",
+    "overview": "Yleiskatsaus",
+    "progress": "Edistyminen",
+    "modules": "Moduulit",
+    "practiceTests": "Harjoituskokeet",
+    "tutor": "Tutor",
+    "profile": "Profiili"
+  },
+  "shell": {
+    "openMenu": "Avaa valikko",
+    "toggleTheme": "Vaihda teema"
+  },
+  "practiceTests": {
+    "subtitle": "Täysimittaiset, ajastetut harjoituskokeet, jotka vastaavat oikeita Versant-kokeita.",
+    "comingSoon": "Tulossa pian",
+    "setsCount": "{{count}} sarja",
+    "setsCount_other": "{{count}} sarjaa",
+    "questionsCount": "{{count}} kysymys",
+    "questionsCount_other": "{{count}} kysymystä",
+    "completed": "Suoritettu",
+    "startExam": "Aloita",
+    "retake": "Tee uudelleen",
+    "backToProducts": "Takaisin kokeisiin",
+    "backToExams": "Takaisin sarjoihin",
+    "loadError": "Lataus ei onnistunut juuri nyt. Yritä uudelleen.",
+    "saveAndNext": "Tallenna ja seuraava",
+    "sectionLabel": "Osa {{current}}/{{total}} — {{label}}",
+    "youHear": "Kuulet",
+    "youSay": "Sanot",
+    "playsRemaining": "{{count}} toisto jäljellä",
+    "playsRemaining_other": "{{count}} toistoa jäljellä",
+    "scoreReport": {
+      "title": "Koe suoritettu",
+      "overall": "Kokonaistulos",
+      "sectionResults": "Tulokset osittain",
+      "testType": "Koe",
+      "skippedNote": "{{count}} kysymys ohitettiin tai jäi vastaamatta, eikä se vaikuta tasoosi.",
+      "skippedNote_other": "{{count}} kysymystä ohitettiin tai jäi vastaamatta, eivätkä ne vaikuta tasoosi."
+    },
+    "overview": {
+      "title": "Ennen kuin aloitat",
+      "subtitle": "Tässä kokeessa on useita osia. Jokaisessa osassa on oma tehtävätyyppinsä.",
+      "begin": "Aloita koe",
+      "startSection": "Aloita: {{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "Puhuminen ja kuullun ymmärtäminen — 17 minuuttia.",
+      "fourSkillsDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 30 minuuttia.",
+      "writingDesc": "Kirjallinen englanti — 35 minuuttia.",
+      "professionalDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 60 minuuttia.",
+      "placementDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 50 minuuttia."
+    }
+  },
+  "tutor": {
+    "subtitle": "Rento harjoituskeskustelu tekoälyvalmentajasi kanssa.",
+    "inputPlaceholder": "Kirjoita vastauksesi…",
+    "loading": "Aloitetaan keskustelua…",
+    "typing": "Kirjoittaa…",
+    "sendError": "Lähetyksessä tapahtui virhe. Yritä uudelleen.",
+    "newConversation": "Uusi keskustelu",
+    "newConversationConfirm": "Aloitetaanko uusi keskustelu? Nykyinen päättyy."
+  },
+  "profile": {
+    "account": {
+      "unnamed": "Tilisi",
+      "individual": "Yksityinen"
+    },
+    "language": {
+      "title": "Kieli"
+    },
+    "voice": {
+      "title": "Ääni",
+      "subtitle": "Valitse ääni, joka lukee kysymykset testeissä ja harjoituksissa.",
+      "loading": "Ladataan ääniasetusta…",
+      "female": "Naisääni",
+      "male": "Miesääni",
+      "preview": "Kuuntele tätä ääntä",
+      "previewLine": "Tältä kysymyksesi kuulostavat.",
+      "saved": "Tallennettu — tätä ääntä käytetään tästä lähtien."
+    },
+    "plan": {
+      "title": "Koetavoite",
+      "loading": "Ladataan suunnitelmaa…",
+      "notSet": "Ei asetettu",
+      "exam": "Koe",
+      "currentToGoal": "Nyt → Tavoite",
+      "examDateLabel": "Koepäivä",
+      "accessDaysLeft": "Käyttöpäiviä jäljellä"
+    },
+    "personalInfo": {
+      "title": "Henkilötiedot",
+      "edit": "Muokkaa",
+      "firstName": "Etunimi",
+      "lastName": "Sukunimi",
+      "email": "Sähköpostiosoite",
+      "accountType": "Tilin tyyppi",
+      "save": "Tallenna",
+      "saving": "Tallennetaan…",
+      "cancel": "Peruuta",
+      "participantId": "Osallistujatunnus"
+    },
+    "preferences": {
+      "title": "Asetukset",
+      "spokenPrompts": {
+        "title": "Puhutut ohjeet",
+        "subtitle": "Lue kuuntelutehtävien ohjeet ääneen harjoitusten aikana."
+      },
+      "weeklyReports": {
+        "title": "Viikoittaiset edistymisraportit",
+        "subtitle": "Saat sähköpostiin yhteenvedon toiminnastasi."
+      },
+      "strictTimer": {
+        "title": "Tiukka ajanotto",
+        "subtitle": "Poista tauko käytöstä ajastetuissa harjoituksissa."
+      }
+    },
+    "about": {
+      "title": "Tietoja sinusta",
+      "gender": "Sukupuoli",
+      "age": "Ikä",
+      "notShared": "Ei kerrottu",
+      "error": "Tallennus ei onnistunut. Yritä uudelleen."
+    },
+    "access": {
+      "title": "Käyttöoikeutesi",
+      "activeUntil": "Voimassa {{date}} asti",
+      "grace": "Päättynyt — lisäaika {{date}} asti",
+      "expired": "Päättyi {{date}}",
+      "none": "Lisenssiä ei ole vielä myönnetty",
+      "queued_one": "Sisältää {{count}} jo myönnetyn lisäkuukauden",
+      "queued_other": "Sisältää {{count}} jo myönnettyä lisäkuukautta",
+      "help": "Käyttöoikeuttasi hallinnoi organisaatiosi. Pyydä jatkoa ylläpitäjältä tai esihenkilöltä."
+    },
+    "reminder": {
+      "title": "Päivittäinen harjoitusmuistutus",
+      "on": "Päällä",
+      "off": "Pois",
+      "subtitle": "Lähetämme sinulle sähköpostia tähän aikaan valittuina päivinä — ohitetaan automaattisesti, jos olet jo harjoitellut sinä päivänä.",
+      "time": "Aika",
+      "streakAlert": "Varoita minua myös klo 22, jos putkeni (3+ päivää) on katkeamassa",
+      "error": "Tallennus ei onnistunut. Yritä uudelleen.",
+      "savedOn": "Tallennettu — muistutus klo {{time}}.",
+      "savedOff": "Tallennettu — muistutukset ovat pois päältä.",
+      "days": {
+        "sun": "Su",
+        "mon": "Ma",
+        "tue": "Ti",
+        "wed": "Ke",
+        "thu": "To",
+        "fri": "Pe",
+        "sat": "La"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "Jokainen suunnitelma alkaa 0 %:sta. Olet jo pidemmällä.",
+    "mid": "Et ole enää siellä, mistä aloitit. Jatka.",
+    "high": "Maaliviiva on jo melkein näkyvissä."
+  },
+  "motivational": {
+    "line1": "15 minuuttia harjoittelua päivässä voittaa 2 tuntia kerran viikossa.",
+    "line2": "Ääneen puhuminen — vaikka itselleen — on nopein tie sujuvuuteen.",
+    "line3": "Jokainen harjoituksessa tehty virhe on yksi virhe vähemmän kokeessa.",
+    "line4": "Säännöllisyys voittaa intensiteetin — vähän joka päivä kertyy nopeasti.",
+    "line5": "Sinun ei tarvitse olla täydellinen. Riittää, että jatkat.",
+    "line6": "Jokainen asiantuntija oli joskus aloittelija, joka ei luovuttanut.",
+    "line7": "Pieniä askelia tänään, suurta itsevarmuutta huomenna.",
+    "line8": "Harjoittele tänään, niin koepäivä tuntuu tavalliselta päivältä.",
+    "line9": "Paras aika harjoitella oli eilen. Toiseksi paras on nyt."
+  },
+  "achievement": {
+    "goalSetterTitle": "Tavoitteiden asettaja",
+    "goalSetterBody": "Määritä tavoitetasosi ja opintosuunnitelmasi."
+  },
+  "recommendedPractice": {
+    "title": "Valittu sinulle",
+    "startPractice": "Aloita harjoittelu",
+    "estimatedMinutes": "~{{minutes}} min"
+  },
+  "dailyChallenge": {
+    "title": "Päivän haaste",
+    "subtitle": "Pieni bonus tälle päivälle",
+    "wordTab": "Päivän sana",
+    "idiomTab": "Sanonta",
+    "wordOfDay": "Päivän sana — napauta ja {{action}}",
+    "reveal": "näytä",
+    "hide": "piilota",
+    "idiomOfDay": "Päivän sanonta",
+    "meaningTab": "Valitse merkitys",
+    "pickClosestMeaning": "Valitse lähin merkitys",
+    "correctFeedback": "Hienoa! Juuri niin. 🎉",
+    "incorrectFeedback": "Ei aivan — se tarkoittaa ”{{answer}}”."
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "Kykenevä toipumaan nopeasti vaikeuksista.",
+      "articulate": "Ilmaista ajatus tai tunne selkeästi ja tehokkaasti.",
+      "candid": "Rehellinen ja suora; avoin.",
+      "diligent": "Osoittaa sitkeää, huolellista työtä tehtävissään."
+    },
+    "idioms": {
+      "hitTheBooks": "Ryhtyä opiskelemaan, usein tosissaan tai ennen tärkeää koetta.",
+      "breakTheIce": "Sanoa tai tehdä jotain, joka keventää tunnelmaa keskustelun alussa.",
+      "sameSage": "Olla samaa mieltä tai ymmärtää asia samalla tavalla kuin muut.",
+      "underWeather": "Tuntea olonsa hieman huonoksi."
+    }
+  },
+  "coachPromo": {
+    "badge": "Ei arviointia · ei paineita",
+    "title": "Etkö tiedä, mistä aloittaa? Jutellaan.",
+    "body": "Valmentajatila on ystävällinen lämmittelykeskustelu — ei aikarajoja, ei arviointia.",
+    "cta": "Avaa valmentajatila"
+  },
+  "dashboardHome": {
+    "welcomeBack": "Tervetuloa takaisin, {{name}}",
+    "subtitle": "Jatka englannin harjoittelua ja kasvata itsevarmuutta kaikissa neljässä taidossa.",
+    "subtitleFirstTime": "Et ole vielä aloittanut harjoittelua — ensimmäinen kerta vie vain muutaman minuutin. Aloitetaan!",
+    "subtitleAllDoneToday": "Kaikki tehty tältä päivältä — hienoa työtä! Palaa huomenna pitääksesi putken yllä.",
+    "subtitleContinue_one": "{{count}} tehtävä jäljellä tänään — aloitetaan!",
+    "subtitleContinue_other": "{{count}} tehtävää jäljellä tänään — aloitetaan!",
+    "viewRoadmap": "Opintosuunnitelma",
+    "startPractice": "Aloita harjoittelu",
+    "overallProgressTitle": "Harjoittelun kokonaisedistyminen",
+    "todaysTasksTitle": "Päivän tehtävät",
+    "todaysTasksTitleGo": "Päivän tehtävät — aloitetaan!",
+    "todaysTasksAllDone": "Päivän tehtävät — kaikki tehty!",
+    "taskProgress": "{{done}}/{{target}} tehtävää tänään",
+    "practiceAction": "Harjoittele",
+    "statusNotStarted": "Ei aloitettu",
+    "statusInProgress": "Kesken",
+    "statusCompleted": "Suoritettu",
+    "statsSessions": "Harjoituskerrat",
+    "statsQuestions": "Vastatut kysymykset",
+    "statsTime": "Harjoitteluaika",
+    "statsTimeValue": "{{minutes}} min",
+    "statsStreak": "Nykyinen putki",
+    "statsStreakValue_one": "{{count}} päivä",
+    "statsStreakValue_other": "{{count}} päivää",
+    "statsLevel": "Taso",
+    "statsLevelValue": "Taso {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "Jatka siitä, mihin jäit",
+    "continuePracticeBody": "{{skill}} — {{answered}}/{{total}} vastattu",
+    "achievementsTitle": "Saavutukset"
+  },
+  "progressPage": {
+    "title": "Edistymisesi",
+    "subtitle": "Näin päivittäinen harjoittelusi on sujunut tällä viikolla.",
+    "loading": "Ladataan edistymistä…",
+    "loadError": "Edistymisen lataus ei onnistunut. Yritä uudelleen.",
+    "todaysReport": "Päivän raportti",
+    "questions": "Kysymykset",
+    "accuracy": "Tarkkuus",
+    "minutes": "Minuutit",
+    "moreThanYesterday_one": "{{count}} kysymys enemmän kuin eilen",
+    "moreThanYesterday_other": "{{count}} kysymystä enemmän kuin eilen",
+    "lessThanYesterday_one": "{{count}} kysymys vähemmän kuin eilen",
+    "lessThanYesterday_other": "{{count}} kysymystä vähemmän kuin eilen",
+    "sameAsYesterday": "Sama kuin eilen — jatka samaan malliin",
+    "firstDayBack": "Kiva nähdä sinut taas harjoittelemassa!",
+    "dailyChartTitle": "Viimeiset 7 päivää",
+    "today": "Tänään",
+    "questionsThisWeek_one": "{{count}} kysymys tällä viikolla",
+    "questionsThisWeek_other": "{{count}} kysymystä tällä viikolla",
+    "bestDay": "Paras päivä: {{day}}",
+    "bestDayBadge": "Viikon paras päivä"
+  },
+  "modules": {
+    "title": "Harjoitusmoduulit",
+    "subtitle": "Valitse harjoiteltava taito — sisältö mukautuu, joten et näe samoja tehtäviä uudelleen ennen kuin olet tehnyt kaikki.",
+    "loadingAvailability": "Ladataan moduuleja…",
+    "remainingItems": "{{count}}/{{total}} tehtävää jäljellä",
+    "allDone": "Olet tehnyt kaiken tästä osiosta toistaiseksi — palaa, kun uutta sisältöä tulee.",
+    "start": "Aloita",
+    "backToSkills": "Takaisin taitoihin",
+    "pickTypeSubtitle": "Valitse harjoiteltava kysymystyyppi.",
+    "starting": "Aloitetaan harjoitusta…",
+    "startError": "Harjoituksen aloituksessa tapahtui virhe. Yritä uudelleen.",
+    "sessionComplete": "Hyvää työtä!",
+    "practiceAgain": "Harjoittele uudelleen",
+    "backToDashboard": "Takaisin hallintapaneeliin",
+    "startReading": "Aloita lukeminen",
+    "passageHidden": "Teksti on nyt piilotettu — kirjoita se omin sanoin.",
+    "backToTypes": "Takaisin kysymystyyppeihin",
+    "pickUnitTitle": "Valitse harjoiteltava jakso.",
+    "unitComplete": "Kaikki sarjat suoritettu",
+    "setsProgress": "{{done}}/{{total}} sarjaa suoritettu",
+    "backToUnits": "Takaisin jaksoihin",
+    "setCompleted": "Suoritettu",
+    "startPractice": "Aloita harjoittelu",
+    "typeDesc": {
+      "reading": "Lue lause ääneen luontevasti ja selkeästi.",
+      "repeats": "Kuuntele kerran ja toista sitten tarkasti.",
+      "sentence_builds": "Järjestä sanat oikeaksi lauseeksi.",
+      "conversations": "Kuuntele keskustelu ja vastaa kysymyksiin.",
+      "reading_selective": "Lue ja poimi tärkeimmät tiedot.",
+      "short_answer": "Vastaa lyhyesti yksinkertaiseen kysymykseen.",
+      "passage_comprehension": "Kuuntele teksti ja vastaa kysymyksiin.",
+      "speaking_situations": "Reagoi luontevasti arkiseen tilanteeseen.",
+      "story_retelling": "Kuuntele tarina ja kerro se omin sanoin.",
+      "open_questions": "Kerro oma mielipiteesi vapaasti.",
+      "dictation": "Kirjoita tarkalleen se, mitä kuulet.",
+      "response_selection": "Valitse oikea vastaus vaihtoehdoista.",
+      "passage_reconstruction": "Lue ja kirjoita teksti sitten muistista.",
+      "summary_and_opinion": "Tiivistä teksti ja kerro mielipiteesi.",
+      "reading_comprehension": "Lue teksti ja vastaa kysymyksiin.",
+      "sentence_completion": "Täydennä puuttuva sana tai ilmaus.",
+      "typing": "Lyhyt näppäilyn lämmittelytehtävä.",
+      "email_writing": "Kirjoita lyhyt, realistinen sähköposti."
+    }
+  },
+  "faceCheck": {
+    "back": "Takaisin",
+    "enroll": {
+      "title": "Ota kasvojen tunnistus käyttöön",
+      "success": "Kasvot rekisteröity",
+      "proceed": "Jatka",
+      "subtitle": "Tämä on kertaluonteinen asetus. Käytämme kuvaa varmistaaksemme, että kyseessä olet sinä, ennen jokaista tasotestiä, moduulia ja harjoituskoetta.",
+      "successSubtitle": "Asetus on valmis. Näet ohjeet ennen tasotestin alkua."
+    },
+    "verify": {
+      "title": "Nopea kasvojen tunnistus",
+      "success": "Kasvot tunnistettu",
+      "proceed": "Jatka",
+      "mismatchError": "Kasvot eivät vastaa rekisteröityä kuvaasi. Yritä uudelleen.",
+      "subtitle": {
+        "placement": "Varmistamme, että kyseessä olet sinä, ennen tasotestin alkua.",
+        "practice": "Varmistamme, että kyseessä olet sinä, ennen tätä harjoitusta.",
+        "practice_test": "Varmistamme, että kyseessä olet sinä, ennen tätä harjoituskoetta."
+      },
+      "successSubtitle": "Henkilöllisyys vahvistettu. Siirrytään testiin."
+    },
+    "record": {
+      "capture": "Ota kuva",
+      "checking": "Tarkistetaan...",
+      "cameraError": "Kameraan ei saada yhteyttä. Tarkista käyttöoikeudet ja yritä uudelleen.",
+      "error": "Jokin meni vikaan. Yritä uudelleen.",
+      "tooShort": "Kasvojasi ei näkynyt selvästi. Yritä uudelleen."
+    },
+    "fallback": {
+      "otpButton": "Lähetä minulle koodi sähköpostiin",
+      "otpSending": "Lähetetään…",
+      "otpSentNotice": "Koodi lähetetty — tarkista sähköpostisi.",
+      "otpPlaceholder": "6-numeroinen koodi",
+      "otpVerify": "Vahvista koodi",
+      "otpVerifying": "Vahvistetaan…",
+      "otpResend": "Lähetä koodi uudelleen",
+      "otpSuccess": "Koodi vahvistettu",
+      "otpSendError": "Koodin lähetyksessä tapahtui virhe. Yritä uudelleen.",
+      "otpInvalidError": "Koodi ei toiminut. Tarkista se ja yritä uudelleen."
+    },
+    "enrollmentConsent": {
+      "title": "Ota kasvojen tunnistus käyttöön",
+      "subtitle": "Näin varmistetaan, että testin tekee todella sinä.",
+      "body": "Otamme kasvoistasi kuvan henkilöllisyyden varmistamisen vertailukohdaksi. Kuvaa ja kasvoskannauksia käytetään henkilöllisyytesi vahvistamiseen ennen tasotestejä ja harjoituksia (Moduulit) sekä säännöllisesti niiden aikana — ei vain kerran alussa. Tallennetaan turvallisesti ja käytetään vain tähän tarkoitukseen.",
+      "checkboxLabel": "Ymmärrän ja hyväksyn kasvoihin perustuvan henkilöllisyyden varmistamisen, mukaan lukien säännölliset tarkistukset testien ja harjoitusten aikana.",
+      "submit": "Jatka",
+      "decline": "Ei nyt"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Opiskelija",
+      "it_engineering": "IT / Tekniikka",
+      "customer_support": "Asiakaspalvelu",
+      "sales_marketing": "Myynti / Markkinointi",
+      "healthcare": "Terveydenhuolto",
+      "education": "Koulutus",
+      "finance": "Talous",
+      "operations": "Operatiiviset tehtävät",
+      "management": "Johto",
+      "other": "Muu"
+    },
+    "gender": {
+      "female": "Nainen",
+      "male": "Mies",
+      "non_binary": "Muunsukupuolinen",
+      "prefer_not": "En halua kertoa"
+    },
+    "ageBand": {
+      "under_18": "Alle 18"
+    }
+  },
+  "plans": {
+    "title": "Paketit",
+    "onFree": "Käytät ilmaista pakettia.",
+    "activeUntil": "Täysi käyttöoikeus voimassa {{date}} asti.",
+    "orgManaged": "Käyttöoikeuttasi hallinnoi organisaatiosi — kysy ylläpitäjältä tai esihenkilöltä.",
+    "unavailable": "Paketit eivät ole juuri nyt saatavilla. Yritä myöhemmin uudelleen.",
+    "payError": "Maksun aloitus ei onnistunut. Yritä uudelleen.",
+    "free": {
+      "name": "Ilmainen",
+      "usage": "{{used}}/{{limit}} ilmaista harjoituskertaa käytetty tällä viikolla."
+    },
+    "full": {
+      "name": "Täysi käyttöoikeus",
+      "perMonth": "{{price}} kuukaudessa"
+    },
+    "features": {
+      "placementOnce": "Yksi tasotesti",
+      "placementUnlimited": "Tasotestin uusiminen",
+      "practiceLimited": "{{count}} harjoituskertaa viikossa",
+      "practiceUnlimited": "Rajaton harjoittelu kaikissa moduuleissa",
+      "progress": "Edistymisraportit ja opintosuunnitelma",
+      "mockTests": "Täysimittaiset harjoituskokeet",
+      "tutor": "Tekoälytutor puhumiseen"
+    },
+    "months_one": "{{count}} kuukausi",
+    "months_other": "{{count}} kuukautta",
+    "total": "Yhteensä",
+    "startNote": "Käyttöoikeus alkaa heti, kun maksu on vahvistettu.",
+    "extendNote": "Lisätään nykyisen käyttöoikeutesi päätyttyä {{date}}.",
+    "testMode": "Testitila — maksu simuloidaan, eikä mitään veloiteta.",
+    "buy_one": "Osta {{count}} kuukausi",
+    "buy_other": "Osta {{count}} kuukautta",
+    "extend_one": "Jatka {{count}} kuukaudella",
+    "extend_other": "Jatka {{count}} kuukaudella",
+    "redirecting": "Avataan maksua…",
+    "invoices": "Laskut",
+    "upgrade": "Katso paketit",
+    "locked": {
+      "mocktest": "Harjoituskokeet kuuluvat täyteen käyttöoikeuteen.",
+      "coach": "Tekoälytutor kuuluu täyteen käyttöoikeuteen.",
+      "placement": "Olet käyttänyt ilmaisen tasotestisi. Uusinnat kuuluvat täyteen käyttöoikeuteen.",
+      "practice": "Olet käyttänyt tämän viikon {{limit}} ilmaista harjoituskertaa. Ne uusiutuvat liukuvan 7 päivän jakson aikana — tai päivitä rajattomaan harjoitteluun."
+    },
+    "lockedTitle": "Päivitä jatkaaksesi"
+  }
+}

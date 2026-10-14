@@ -63,32 +63,34 @@ export function OrgAdminDetailModal({
   return (
     <DetailModal title={name} subtitle={`Org Admin at ${orgAdmin.tenantName}`} onClose={onClose} onBack={onBack} wide>
       <div className="flex flex-col gap-4">
-        <div className="border border-rule rounded-input px-4 py-3">
+        <div>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Org Admin details</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div>
-              <p className="text-xs text-muted">Email</p>
-              <p className="text-sm text-ink">{orgAdmin.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted">Organization</p>
-              <p className="text-sm text-ink">
-                {orgAdmin.tenantName} ({categoryLabel(orgAdmin.tenantCategory)})
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted">Joined</p>
-              <p className="text-sm text-ink">{formatDate(orgAdmin.createdAt)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted">Status</p>
-              <span
-                className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-pill mt-0.5 ${
-                  status === "active" ? "bg-success/15 text-success" : status === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                }`}
-              >
-                {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
-              </span>
+          <div className="border border-rule rounded-input px-4 py-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted">Email</p>
+                <p className="text-sm text-ink">{orgAdmin.email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Organization</p>
+                <p className="text-sm text-ink">
+                  {orgAdmin.tenantName} ({categoryLabel(orgAdmin.tenantCategory)})
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Joined</p>
+                <p className="text-sm text-ink">{formatDate(orgAdmin.createdAt)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted">Status</p>
+                <span
+                  className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-pill mt-0.5 ${
+                    status === "active" ? "bg-success/15 text-success" : status === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
+                  }`}
+                >
+                  {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -134,7 +136,7 @@ export function OrgAdminDetailModal({
       {viewingManagerId && (
         <ManagerDetailModal
           managerId={viewingManagerId}
-          onClose={() => setViewingManagerId(null)}
+          onClose={onClose}
           onBack={() => setViewingManagerId(null)}
         />
       )}

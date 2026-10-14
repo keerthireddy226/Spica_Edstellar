@@ -60,3 +60,19 @@ export async function sendPlacementReminderEmail(email: string, token: string) {
     `Whenever you're ready, come back and take your placement test:\n\n${link}\n\nThis reminder is valid for 1 week — after that, log in and you can send yourself a new one.`,
   );
 }
+
+// Generic notification email (reminders, license alerts). Includes a one-click
+// unsubscribe header when the email is something the user can switch off.
+export async function sendNotificationEmail(args: { to: string; subject: string; text: string; unsubscribeUrl?: string }) {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
+    to: args.to,
+    subject: args.subject,
+    text: args.unsubscribeUrl ? `${args.text}\n\n—\nDon't want these emails? Turn them off: ${args.unsubscribeUrl}` : args.text,
+    headers: args.unsubscribeUrl
+      ? { "List-Unsubscribe": `<${args.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+      : undefined,
+  });
+}
+
+export const APP_URL = FRONTEND_URL;

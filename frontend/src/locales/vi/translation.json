@@ -1,0 +1,732 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Bảng điều khiển",
+      "admins": "Quản trị viên",
+      "orgAdmins": "Quản trị viên tổ chức",
+      "learners": "Học viên cá nhân"
+    }
+  },
+  "skills": {
+    "listening": "Nghe",
+    "speaking": "Nói",
+    "reading": "Đọc",
+    "writing": "Viết"
+  },
+  "auth": {
+    "login": {
+      "title": "Chào mừng trở lại",
+      "subtitle": "Đăng nhập để tiếp tục luyện tập.",
+      "emailLabel": "Email",
+      "passwordLabel": "Mật khẩu",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập…",
+      "errorInvalidCredentials": "Email hoặc mật khẩu không đúng.",
+      "errorEmailNotVerified": "Vui lòng xác minh email trước khi đăng nhập — hãy kiểm tra hộp thư để tìm liên kết xác minh.",
+      "errorWrongPortal": "Tài khoản này không thể đăng nhập qua trang này.",
+      "errorAlreadyLoggedIn": "Tài khoản này đang đăng nhập trên thiết bị khác. Hãy đăng xuất ở đó trước.",
+      "errorOrganizationDeactivated": "Tổ chức này đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+      "errorTooManyAttempts": "Quá nhiều lần đăng nhập. Vui lòng đợi vài phút rồi thử lại.",
+      "errorGeneric": "Đã xảy ra lỗi. Vui lòng kiểm tra kết nối và thử lại.",
+      "forgotPassword": "Quên mật khẩu?",
+      "createAccount": "Tạo tài khoản"
+    },
+    "signup": {
+      "title": "Tạo tài khoản của bạn",
+      "subtitle": "Bắt đầu luyện tập chỉ trong vài giây.",
+      "firstNameLabel": "Tên",
+      "lastNameLabel": "Họ",
+      "emailLabel": "Email",
+      "passwordLabel": "Mật khẩu",
+      "passwordPlaceholder": "Ít nhất 8 ký tự",
+      "confirmPasswordLabel": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "passwordMismatch": "Mật khẩu không khớp.",
+      "submit": "Đăng ký",
+      "submitting": "Đang tạo tài khoản…",
+      "errorEmailTaken": "Đã có tài khoản dùng email này.",
+      "errorGeneric": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "alreadyHaveAccount": "Đã có tài khoản?",
+      "signIn": "Đăng nhập",
+      "checkEmailTitle": "Kiểm tra email của bạn",
+      "checkEmailBody": "Chúng tôi đã gửi liên kết xác minh đến {{email}}. Sau khi xác minh, hãy đăng nhập để tiếp tục.",
+      "signInButton": "Đăng nhập"
+    },
+    "forgotPassword": {
+      "title": "Đặt lại mật khẩu",
+      "subtitle": "Chúng tôi sẽ gửi email cho bạn liên kết để đặt mật khẩu mới.",
+      "submitted": "Nếu có tài khoản dùng email đó, liên kết đặt lại mật khẩu đang được gửi đến.",
+      "emailLabel": "Email",
+      "submit": "Gửi liên kết đặt lại",
+      "submitting": "Đang gửi…",
+      "backToSignIn": "Quay lại đăng nhập"
+    },
+    "resetPassword": {
+      "title": "Chọn mật khẩu mới",
+      "subtitle": "Ít nhất 8 ký tự.",
+      "missingTokenTitle": "Đặt lại mật khẩu",
+      "missingTokenSubtitle": "Liên kết này thiếu mã token.",
+      "requestNewLink": "Yêu cầu liên kết mới",
+      "passwordLabel": "Mật khẩu mới",
+      "passwordPlaceholder": "Ít nhất 8 ký tự",
+      "confirmPasswordLabel": "Xác nhận mật khẩu mới",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "passwordMismatch": "Mật khẩu không khớp.",
+      "submit": "Đặt lại mật khẩu",
+      "submitting": "Đang lưu…",
+      "error": "Liên kết này không hợp lệ hoặc đã hết hạn."
+    },
+    "verifyEmail": {
+      "title": "Xác minh email",
+      "pending": "Đang xác minh…",
+      "success": "Email của bạn đã được xác minh. Hãy đăng nhập để tiếp tục.",
+      "signInButton": "Đăng nhập",
+      "error": "Liên kết xác minh này không hợp lệ hoặc đã hết hạn."
+    }
+  },
+  "onboarding": {
+    "title": "Chào mừng bạn đến với phần thiết lập",
+    "logout": "Đăng xuất",
+    "wizard": {
+      "stepLabel": "{{current}} / {{total}}",
+      "back": "Quay lại",
+      "next": "Tiếp",
+      "basics": {
+        "title": "Hãy cho chúng tôi biết về bạn",
+        "subtitle": "Email đã được điền từ thông tin đăng nhập",
+        "firstNameLabel": "Tên",
+        "firstNamePlaceholder": "Nhập tên của bạn",
+        "lastNameLabel": "Họ",
+        "lastNamePlaceholder": "Nhập họ của bạn",
+        "emailLabel": "Email",
+        "emailNote": "Đã điền từ tài khoản của bạn"
+      },
+      "examGoal": {
+        "examTitle": "Bạn đang ôn thi kỳ thi nào?",
+        "examSubtitle": "Chúng tôi sẽ điều chỉnh bài luyện theo định dạng kỳ thi",
+        "goalTitle": "Bạn hướng tới trình độ hoặc điểm số nào?",
+        "goalSubtitle": "Mục tiêu của bạn cho kỳ thi này",
+        "scoreTargetLabel": "Điểm mục tiêu cụ thể (không bắt buộc)",
+        "scoreTargetPlaceholder": "VD: IELTS 7.0, Versant 69+, PTE 65",
+        "exam": {
+          "versantDesc": "Nói, viết, xếp lớp, chuyên nghiệp",
+          "ieltsDesc": "Học thuật hoặc Tổng quát",
+          "toeflDesc": "Bài thi qua Internet",
+          "pteDesc": "Bài thi trên máy tính của Pearson",
+          "other": "Khác / Tổng quát",
+          "otherDesc": "Nâng cao tiếng Anh tổng quát"
+        },
+        "goal": {
+          "A1": "A1 – Mới bắt đầu",
+          "A1Desc": "Từ đơn giản và cụm từ hằng ngày",
+          "A2": "A2 – Sơ cấp",
+          "A2Desc": "Câu đơn giản, hội thoại dễ",
+          "B1": "B1 – Trung cấp",
+          "B1Desc": "Hầu hết tình huống khi đi lại và làm việc",
+          "B2": "B2 – Trung cao cấp",
+          "B2Desc": "Hội thoại trôi chảy, văn bản chi tiết",
+          "C1": "C1 – Cao cấp",
+          "C1Desc": "Chủ đề phức tạp, ý nghĩa ngầm",
+          "C2": "C2 – Thành thạo",
+          "C2Desc": "Chính xác và trôi chảy gần như người bản ngữ",
+          "unsure": "Chưa chắc",
+          "unsureDesc": "Để bài kiểm tra xếp lớp giúp bạn quyết định"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "Vì sao bạn thi kỳ thi này?",
+        "reasonSubtitle": "Điều này giúp chúng tôi điều chỉnh nội dung theo nhu cầu thực của bạn",
+        "reason": {
+          "university": "Xét tuyển đại học",
+          "job": "Yêu cầu của nhà tuyển dụng",
+          "immigration": "Định cư",
+          "promotion": "Thăng tiến hoặc phát triển sự nghiệp",
+          "personal": "Mục tiêu cá nhân"
+        },
+        "appliedTitle": "Bạn đã đăng ký thi chưa?",
+        "appliedSubtitle": "Chúng tôi sẽ lên lịch luyện tập theo hạn của bạn",
+        "appliedYes": "Rồi, tôi đã có ngày thi",
+        "appliedNo": "Chưa",
+        "examDateLabel": "Khi nào bạn thi?",
+        "prepDaysLabel": "Bạn muốn ôn trong bao nhiêu ngày?",
+        "prepDaysPlaceholder": "VD: 30",
+        "days": "ngày"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "Bạn đã từng thi kỳ thi này chưa?",
+        "attemptsSubtitle": "Điều này giúp chúng tôi hiểu điểm xuất phát của bạn",
+        "attempts": {
+          "first": "Chưa, đây là lần đầu",
+          "once": "Rồi, một lần",
+          "multiple": "Rồi, nhiều lần"
+        },
+        "prevScoreLabel": "Điểm lần trước của bạn là bao nhiêu?",
+        "prevScorePlaceholder": "VD: B1, 5.5, 58",
+        "prevDateLabel": "Lần gần nhất bạn thi là khi nào?",
+        "prevDatePlaceholder": "VD: tháng 3/2026, 6 tháng trước",
+        "timeTitle": "Mỗi ngày bạn dành được bao nhiêu thời gian?",
+        "timeSubtitle": "Hãy thực tế — đều đặn quan trọng hơn cường độ",
+        "time": {
+          "min15": "15 phút",
+          "min15Desc": "Luyện tập nhanh mỗi ngày",
+          "min30": "30 phút",
+          "min30Desc": "Tiến bộ đều đặn",
+          "min60": "1 giờ",
+          "min60Desc": "Ôn luyện nghiêm túc",
+          "min90": "90+ phút",
+          "min90Desc": "Học chuyên sâu"
+        }
+      },
+      "duration": {
+        "title": "Bạn muốn sử dụng trong bao lâu?",
+        "subtitle": "Chọn gói phù hợp với lịch của bạn",
+        "oneMonth": "1 tháng",
+        "oneMonthDesc": "Tăng tốc ngắn hạn",
+        "threeMonths": "3 tháng",
+        "threeMonthsDesc": "Ôn luyện cân bằng",
+        "sixMonths": "6 tháng",
+        "sixMonthsDesc": "Học kỹ, đều đặn",
+        "untilExam": "Đến ngày thi của tôi",
+        "untilExamDesc": "Tính theo ngày thi của bạn"
+      },
+      "consent": {
+        "title": "Trước khi tiếp tục",
+        "subtitle": "Giọng nói của bạn sẽ được ghi âm trong khi luyện tập và kiểm tra",
+        "body": "Chúng tôi ghi âm câu trả lời nói của bạn để đánh giá kỹ năng nói và đưa ra nhận xét. Bản ghi được lưu trong thời gian giới hạn và chỉ dùng để đánh giá, cải thiện kết quả của bạn. Bạn có thể xóa dữ liệu bất cứ lúc nào trong Cài đặt.",
+        "checkboxLabel": "Tôi hiểu và đồng ý cho ghi âm giọng nói trong khi luyện tập và kiểm tra.",
+        "submit": "Tiếp tục đến bài kiểm tra",
+        "submitting": "Đang lưu…",
+        "error": "Đã xảy ra lỗi khi lưu câu trả lời. Vui lòng thử lại."
+      },
+      "about": {
+        "title": "Về bạn",
+        "subtitle": "Giúp chúng tôi điều chỉnh bài luyện theo hoàn cảnh của bạn.",
+        "countryLabel": "Quốc gia",
+        "cityLabel": "Thành phố",
+        "cityPlaceholder": "VD: Đà Nẵng",
+        "jobRoleLabel": "Vị trí công việc",
+        "genderLabel": "Giới tính (không bắt buộc)",
+        "ageLabel": "Độ tuổi (không bắt buộc)",
+        "select": "Chọn…",
+        "skip": "Không muốn trả lời",
+        "consent": "Tôi đồng ý cho lưu giới tính và nhóm tuổi của mình, chỉ dùng trong báo cáo tổng hợp ẩn danh.",
+        "privacyNote": "Giới tính và tuổi là không bắt buộc. Thông tin này không bao giờ hiển thị cho học viên khác và chỉ được báo cáo theo nhóm từ 5 người trở lên."
+      }
+    }
+  },
+  "placement": {
+    "title": "Sẵn sàng rồi!",
+    "subtitle": "Thiết lập đã xong — giờ đến bài kiểm tra xếp lớp.",
+    "scheduleLater": "Hẹn làm sau",
+    "scheduling": "Đang gửi…",
+    "scheduleSent": "Chúng tôi đã gửi email liên kết nhắc nhở cho bạn.",
+    "scheduleLaterError": "Đã xảy ra lỗi khi gửi lời nhắc. Vui lòng thử lại.",
+    "info": {
+      "timing": "Có giới hạn thời gian — hãy dành khoảng 15–20 phút",
+      "covers": "Gồm nói, nghe, đọc và viết",
+      "graded": "Bài kiểm tra được chấm điểm và giọng nói của bạn được ghi âm để đánh giá — hãy trả lời trung thực, tự làm, không nhờ trợ giúp.",
+      "equipment": "Chuẩn bị sẵn tai nghe và micro"
+    },
+    "instructions": {
+      "checkboxLabel": "Tôi đã đọc hướng dẫn và sẵn sàng.",
+      "begin": "Bắt đầu kiểm tra"
+    },
+    "resume": {
+      "title": "Tiếp tục từ chỗ bạn dừng",
+      "subtitle": "Bạn đã trả lời {{count}} câu trong bài kiểm tra này — tiếp tục để giữ tiến độ.",
+      "continue": "Tiếp tục kiểm tra"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "Bắt đầu",
+    "loading": "Đang tải bài kiểm tra…",
+    "loadError": "Đã xảy ra lỗi khi tải bài kiểm tra. Vui lòng thử lại.",
+    "micError": "Không thể truy cập micro. Hãy cho phép truy cập micro rồi thử lại.",
+    "progress": "{{current}} / {{total}}",
+    "play": "Phát âm thanh",
+    "playAgain": "Phát lại",
+    "replay": "Phát lại",
+    "playing": "Đang phát…",
+    "record": "Ghi âm câu trả lời",
+    "recordAgain": "Ghi âm lại",
+    "audioSaved": "Đã lưu bản ghi",
+    "stopRecording": "Dừng ghi âm",
+    "skip": "Bỏ qua",
+    "exitConfirm": "Thoát bài kiểm tra ngay? Tiến độ câu này sẽ không được lưu.",
+    "answerPlaceholder": "Nhập câu trả lời tại đây…",
+    "submitting": "Đang gửi…",
+    "next": "Tiếp",
+    "finish": "Hoàn thành",
+    "submitError": "Đã xảy ra lỗi khi gửi câu trả lời. Vui lòng thử lại.",
+    "resultsTitle": "Đã hoàn thành bài kiểm tra",
+    "resultsSummary": "Bạn trả lời đúng {{correct}}/{{graded}} câu được chấm tự động. Còn {{pending}} câu trả lời đang chờ chấm.",
+    "done": "Xong",
+    "yourLevel": "Trình độ ước tính của bạn: {{level}}",
+    "levelDisclaimer": "Đây là đánh giá theo khung CEFR của chúng tôi dựa trên bài kiểm tra, không phải điểm chính thức.",
+    "pendingNote": "Còn {{pending}} câu trả lời cần được chấm trước khi tính vào trình độ của bạn.",
+    "goToRoadmap": "Xem lộ trình học",
+    "notEnoughAnswered": "Chưa trả lời đủ",
+    "gapCappedNote": "Một số trình độ chưa được kiểm tra — trình độ thực của bạn có thể cao hơn.",
+    "failedNote": "{{failed}} câu trả lời của bạn không chấm được do sự cố tạm thời của dịch vụ chấm điểm — không phải do câu trả lời của bạn. Vui lòng thử lại sau."
+  },
+  "roadmap": {
+    "loading": "Đang tải lộ trình học…",
+    "loadError": "Đã xảy ra lỗi khi tải lộ trình học. Vui lòng thử lại.",
+    "pendingReviewBanner": "Kết quả kiểm tra xếp lớp của bạn đang được xem xét trong quá trình xác minh danh tính. Trong lúc chờ, bạn vẫn có thể dùng mọi thứ bên dưới.",
+    "notReadyTitle": "Lộ trình học của bạn chưa sẵn sàng",
+    "notReadyBody": "Làm bài kiểm tra xếp lớp để nhận kế hoạch riêng cho bạn.",
+    "notReadyBodyScheduled": "Bạn đã hẹn làm bài kiểm tra xếp lớp vào {{date}}. Hãy làm khi sẵn sàng — lộ trình học sẽ được tạo ngay sau đó.",
+    "takeTestNow": "Làm bài kiểm tra xếp lớp",
+    "greeting": "Xin chào, {{name}}",
+    "currentLevel": "Trình độ hiện tại",
+    "goalLevel": "Mục tiêu",
+    "daysLeftLabel": "Số ngày còn lại",
+    "skillBreakdownTitle": "Chi tiết kỹ năng",
+    "timelineTitle": "Lộ trình học của bạn",
+    "milestoneReach": "Đạt {{level}}",
+    "milestoneMaintain": "Duy trì trình độ",
+    "dayOffset": "Ngày {{day}}",
+    "focusOn": "Tập trung: {{skill}}",
+    "welcomeBack": "Chào mừng trở lại",
+    "goalProgress": "Tiến độ mục tiêu",
+    "ofYourRoadmap": "lộ trình học",
+    "streak": "Chuỗi ngày",
+    "streakDays_other": "{{count}} ngày",
+    "startStreakToday": "Bắt đầu chuỗi ngày của bạn hôm nay.",
+    "keepStreakGoing": "Tiếp tục phát huy!",
+    "today": "Hôm nay",
+    "practicedSoFar": "đã luyện tập",
+    "accuracy": "Độ chính xác",
+    "practiceToUnlock": "Luyện tập để mở khóa",
+    "practiceAccuracy": "độ chính xác khi luyện tập",
+    "strongest": "mạnh nhất",
+    "notTested": "Chưa kiểm tra",
+    "gapCappedNote": "Một số trình độ chưa được kiểm tra — trình độ thực của bạn có thể cao hơn."
+  },
+  "dashboard": {
+    "welcome": "Chào mừng, {{email}}",
+    "role": "Vai trò: {{role}}",
+    "placeholder": "Đây là trang tạm — bảng điều khiển thật (trình độ, tiến độ lộ trình, chuỗi ngày, huy hiệu) sẽ có ở giai đoạn sau."
+  },
+  "nav": {
+    "roadmap": "Lộ trình",
+    "overview": "Tổng quan",
+    "progress": "Tiến độ",
+    "modules": "Học phần",
+    "practiceTests": "Bài thi thử",
+    "tutor": "Gia sư",
+    "profile": "Hồ sơ"
+  },
+  "shell": {
+    "openMenu": "Mở menu",
+    "toggleTheme": "Đổi giao diện"
+  },
+  "practiceTests": {
+    "subtitle": "Bài thi thử đầy đủ, có giới hạn thời gian, giống bài thi Versant thật.",
+    "comingSoon": "Sắp ra mắt",
+    "setsCount": "{{count}} bộ đề",
+    "setsCount_other": "{{count}} bộ đề",
+    "questionsCount": "{{count}} câu hỏi",
+    "questionsCount_other": "{{count}} câu hỏi",
+    "completed": "Đã hoàn thành",
+    "startExam": "Bắt đầu",
+    "retake": "Làm lại",
+    "backToProducts": "Quay lại danh sách bài thi",
+    "backToExams": "Quay lại danh sách bộ đề",
+    "loadError": "Không thể tải lúc này. Vui lòng thử lại.",
+    "saveAndNext": "Lưu và tiếp",
+    "sectionLabel": "Phần {{current}}/{{total}} — {{label}}",
+    "youHear": "Bạn nghe",
+    "youSay": "Bạn nói",
+    "playsRemaining": "Còn {{count}} lượt phát",
+    "playsRemaining_other": "Còn {{count}} lượt phát",
+    "scoreReport": {
+      "title": "Đã hoàn thành bài thi",
+      "overall": "Điểm tổng",
+      "sectionResults": "Kết quả từng phần",
+      "testType": "Bài thi",
+      "skippedNote": "{{count}} câu hỏi bị bỏ qua hoặc chưa trả lời và sẽ không ảnh hưởng đến trình độ của bạn.",
+      "skippedNote_other": "{{count}} câu hỏi bị bỏ qua hoặc chưa trả lời và sẽ không ảnh hưởng đến trình độ của bạn."
+    },
+    "overview": {
+      "title": "Trước khi bắt đầu",
+      "subtitle": "Bài thi này có nhiều phần. Mỗi phần có một dạng bài riêng.",
+      "begin": "Bắt đầu bài thi",
+      "startSection": "Bắt đầu {{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "Nói và nghe — 17 phút.",
+      "fourSkillsDesc": "Nói, nghe, đọc, viết — 30 phút.",
+      "writingDesc": "Viết tiếng Anh — 35 phút.",
+      "professionalDesc": "Nói, nghe, đọc, viết — 60 phút.",
+      "placementDesc": "Nói, nghe, đọc, viết — 50 phút."
+    }
+  },
+  "tutor": {
+    "subtitle": "Trò chuyện luyện tập thoải mái với huấn luyện viên AI.",
+    "inputPlaceholder": "Nhập câu trả lời…",
+    "loading": "Đang bắt đầu cuộc trò chuyện…",
+    "typing": "Đang nhập…",
+    "sendError": "Đã xảy ra lỗi khi gửi. Vui lòng thử lại.",
+    "newConversation": "Cuộc trò chuyện mới",
+    "newConversationConfirm": "Bắt đầu cuộc trò chuyện mới? Cuộc trò chuyện hiện tại sẽ kết thúc."
+  },
+  "profile": {
+    "account": {
+      "unnamed": "Tài khoản của bạn",
+      "individual": "Cá nhân"
+    },
+    "language": {
+      "title": "Ngôn ngữ"
+    },
+    "voice": {
+      "title": "Giọng đọc",
+      "subtitle": "Chọn giọng đọc câu hỏi trong bài kiểm tra và luyện tập.",
+      "loading": "Đang tải cài đặt giọng đọc…",
+      "female": "Giọng nữ",
+      "male": "Giọng nam",
+      "preview": "Nghe thử giọng này",
+      "previewLine": "Câu hỏi của bạn sẽ được đọc như thế này.",
+      "saved": "Đã lưu — giọng này sẽ được dùng từ bây giờ."
+    },
+    "plan": {
+      "title": "Mục tiêu kỳ thi",
+      "loading": "Đang tải kế hoạch…",
+      "notSet": "Chưa đặt",
+      "exam": "Kỳ thi",
+      "currentToGoal": "Hiện tại → Mục tiêu",
+      "examDateLabel": "Ngày thi",
+      "accessDaysLeft": "Số ngày sử dụng còn lại"
+    },
+    "personalInfo": {
+      "title": "Thông tin cá nhân",
+      "edit": "Chỉnh sửa",
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "email": "Địa chỉ email",
+      "accountType": "Loại tài khoản",
+      "save": "Lưu",
+      "saving": "Đang lưu…",
+      "cancel": "Hủy",
+      "participantId": "Mã học viên"
+    },
+    "preferences": {
+      "title": "Tùy chọn",
+      "spokenPrompts": {
+        "title": "Hướng dẫn bằng giọng nói",
+        "subtitle": "Đọc to hướng dẫn phần nghe khi luyện tập."
+      },
+      "weeklyReports": {
+        "title": "Báo cáo tiến độ hằng tuần",
+        "subtitle": "Nhận email tóm tắt hoạt động của bạn."
+      },
+      "strictTimer": {
+        "title": "Chế độ hẹn giờ nghiêm ngặt",
+        "subtitle": "Tắt tạm dừng trong bài luyện có giới hạn thời gian."
+      }
+    },
+    "about": {
+      "title": "Về bạn",
+      "gender": "Giới tính",
+      "age": "Độ tuổi",
+      "notShared": "Chưa cung cấp",
+      "error": "Không thể lưu. Vui lòng thử lại."
+    },
+    "access": {
+      "title": "Quyền truy cập của bạn",
+      "activeUntil": "Còn hiệu lực đến {{date}}",
+      "grace": "Đã hết hạn — gia hạn tạm thời đến {{date}}",
+      "expired": "Đã hết hạn ngày {{date}}",
+      "none": "Chưa được cấp giấy phép",
+      "queued_other": "Bao gồm {{count}} tháng bổ sung đã được cấp",
+      "help": "Quyền truy cập của bạn do tổ chức quản lý. Hãy liên hệ quản trị viên hoặc quản lý để gia hạn."
+    },
+    "reminder": {
+      "title": "Nhắc luyện tập hằng ngày",
+      "on": "Bật",
+      "off": "Tắt",
+      "subtitle": "Chúng tôi sẽ gửi email cho bạn vào giờ này trong những ngày đã chọn — tự động bỏ qua nếu hôm đó bạn đã luyện tập.",
+      "time": "Giờ",
+      "streakAlert": "Cũng cảnh báo tôi lúc 22:00 nếu chuỗi ngày (3+ ngày) sắp bị đứt",
+      "error": "Không thể lưu. Vui lòng thử lại.",
+      "savedOn": "Đã lưu — nhắc lúc {{time}}.",
+      "savedOff": "Đã lưu — đã tắt lời nhắc.",
+      "days": {
+        "sun": "CN",
+        "mon": "T2",
+        "tue": "T3",
+        "wed": "T4",
+        "thu": "T5",
+        "fri": "T6",
+        "sat": "T7"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "Mọi kế hoạch đều bắt đầu từ 0%. Bạn đã tiến xa hơn rồi.",
+    "mid": "Bạn không còn ở điểm xuất phát nữa. Cứ tiếp tục nhé.",
+    "high": "Đích đến đã gần ngay trước mắt."
+  },
+  "motivational": {
+    "line1": "15 phút luyện tập mỗi ngày hiệu quả hơn 2 giờ mỗi tuần một lần.",
+    "line2": "Nói thành tiếng — kể cả với chính mình — là con đường nhanh nhất đến sự trôi chảy.",
+    "line3": "Mỗi lỗi khi luyện tập là một lỗi ít hơn trong phòng thi.",
+    "line4": "Đều đặn quan trọng hơn cường độ — mỗi ngày một chút sẽ nhanh chóng thành nhiều.",
+    "line5": "Bạn không cần hoàn hảo. Bạn chỉ cần tiếp tục.",
+    "line6": "Chuyên gia nào cũng từng là người mới bắt đầu không bỏ cuộc.",
+    "line7": "Bước nhỏ hôm nay, tự tin lớn ngày mai.",
+    "line8": "Luyện tập hôm nay để ngày thi chỉ như một ngày bình thường.",
+    "line9": "Thời điểm tốt nhất để luyện tập là hôm qua. Tốt thứ hai là ngay bây giờ."
+  },
+  "achievement": {
+    "goalSetterTitle": "Người đặt mục tiêu",
+    "goalSetterBody": "Đặt trình độ mục tiêu và lộ trình học của bạn."
+  },
+  "recommendedPractice": {
+    "title": "Chọn riêng cho bạn",
+    "startPractice": "Bắt đầu luyện tập",
+    "estimatedMinutes": "~{{minutes}} phút"
+  },
+  "dailyChallenge": {
+    "title": "Thử thách hằng ngày",
+    "subtitle": "Phần thưởng nhỏ cho hôm nay",
+    "wordTab": "Từ của ngày",
+    "idiomTab": "Thành ngữ",
+    "wordOfDay": "Từ của ngày — chạm để {{action}}",
+    "reveal": "hiện",
+    "hide": "ẩn",
+    "idiomOfDay": "Thành ngữ của ngày",
+    "meaningTab": "Chọn nghĩa",
+    "pickClosestMeaning": "Chọn nghĩa gần nhất",
+    "correctFeedback": "Tuyệt! Chính xác. 🎉",
+    "incorrectFeedback": "Chưa đúng — nghĩa là \"{{answer}}\"."
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "Có khả năng nhanh chóng phục hồi sau khó khăn.",
+      "articulate": "Diễn đạt suy nghĩ hoặc cảm xúc một cách rõ ràng và hiệu quả.",
+      "candid": "Thật thà và thẳng thắn; cởi mở.",
+      "diligent": "Thể hiện sự nỗ lực bền bỉ, cẩn thận trong công việc hoặc nhiệm vụ."
+    },
+    "idioms": {
+      "hitTheBooks": "Bắt tay vào học, thường là học nghiêm túc hoặc trước một kỳ thi quan trọng.",
+      "breakTheIce": "Nói hoặc làm điều gì đó để làm dịu bầu không khí khi bắt đầu cuộc trò chuyện.",
+      "sameSage": "Đồng ý hoặc hiểu điều gì đó giống như người khác.",
+      "underWeather": "Cảm thấy hơi mệt, không khỏe."
+    }
+  },
+  "coachPromo": {
+    "badge": "Không chấm điểm · không áp lực",
+    "title": "Chưa biết bắt đầu từ đâu? Cùng trò chuyện nhé.",
+    "body": "Chế độ Huấn luyện là một cuộc trò chuyện khởi động thân thiện — không giới hạn thời gian, không chấm điểm.",
+    "cta": "Mở chế độ Huấn luyện"
+  },
+  "dashboardHome": {
+    "welcomeBack": "Chào mừng trở lại, {{name}}",
+    "subtitle": "Tiếp tục luyện tiếng Anh và xây dựng sự tự tin ở cả bốn kỹ năng.",
+    "subtitleFirstTime": "Bạn chưa bắt đầu luyện tập — buổi đầu tiên chỉ mất vài phút. Bắt đầu thôi!",
+    "subtitleAllDoneToday": "Đã xong hết cho hôm nay — làm tốt lắm! Quay lại ngày mai để giữ chuỗi ngày.",
+    "subtitleContinue_other": "Còn {{count}} nhiệm vụ hôm nay — cố lên!",
+    "viewRoadmap": "Lộ trình",
+    "startPractice": "Bắt đầu luyện tập",
+    "overallProgressTitle": "Tổng tiến độ luyện tập",
+    "todaysTasksTitle": "Nhiệm vụ hôm nay",
+    "todaysTasksTitleGo": "Nhiệm vụ hôm nay — cố lên!",
+    "todaysTasksAllDone": "Nhiệm vụ hôm nay — đã xong hết!",
+    "taskProgress": "{{done}}/{{target}} nhiệm vụ hôm nay",
+    "practiceAction": "Luyện tập",
+    "statusNotStarted": "Chưa bắt đầu",
+    "statusInProgress": "Đang làm",
+    "statusCompleted": "Đã hoàn thành",
+    "statsSessions": "Buổi luyện tập",
+    "statsQuestions": "Câu hỏi đã làm",
+    "statsTime": "Thời gian luyện tập",
+    "statsTimeValue": "{{minutes}} phút",
+    "statsStreak": "Chuỗi ngày hiện tại",
+    "statsStreakValue_other": "{{count}} ngày",
+    "statsLevel": "Cấp độ",
+    "statsLevelValue": "Cấp {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "Tiếp tục từ chỗ bạn dừng",
+    "continuePracticeBody": "{{skill}} — đã trả lời {{answered}}/{{total}}",
+    "achievementsTitle": "Thành tích"
+  },
+  "progressPage": {
+    "title": "Tiến độ của bạn",
+    "subtitle": "Tình hình luyện tập hằng ngày của bạn trong tuần này.",
+    "loading": "Đang tải tiến độ…",
+    "loadError": "Không thể tải tiến độ. Vui lòng thử lại.",
+    "todaysReport": "Báo cáo hôm nay",
+    "questions": "Câu hỏi",
+    "accuracy": "Độ chính xác",
+    "minutes": "Phút",
+    "moreThanYesterday_other": "Nhiều hơn hôm qua {{count}} câu",
+    "lessThanYesterday_other": "Ít hơn hôm qua {{count}} câu",
+    "sameAsYesterday": "Bằng hôm qua — tiếp tục nhé",
+    "firstDayBack": "Thật vui khi thấy bạn luyện tập lại hôm nay!",
+    "dailyChartTitle": "7 ngày qua",
+    "today": "Hôm nay",
+    "questionsThisWeek_other": "{{count}} câu hỏi tuần này",
+    "bestDay": "Ngày tốt nhất: {{day}}",
+    "bestDayBadge": "Ngày tốt nhất tuần"
+  },
+  "modules": {
+    "title": "Học phần luyện tập",
+    "subtitle": "Chọn kỹ năng để luyện — nội dung tự điều chỉnh, nên bạn sẽ không gặp lại bài cũ cho đến khi làm hết.",
+    "loadingAvailability": "Đang tải học phần…",
+    "remainingItems": "Còn {{count}}/{{total}} bài",
+    "allDone": "Bạn đã hoàn thành mọi bài trong phần này — hãy quay lại khi có nội dung mới.",
+    "start": "Bắt đầu",
+    "backToSkills": "Quay lại kỹ năng",
+    "pickTypeSubtitle": "Chọn dạng câu hỏi để luyện.",
+    "starting": "Đang bắt đầu buổi luyện…",
+    "startError": "Đã xảy ra lỗi khi bắt đầu buổi luyện. Vui lòng thử lại.",
+    "sessionComplete": "Làm tốt lắm!",
+    "practiceAgain": "Luyện lại",
+    "backToDashboard": "Quay lại bảng điều khiển",
+    "startReading": "Bắt đầu đọc",
+    "passageHidden": "Đoạn văn đã được ẩn — hãy viết lại bằng lời của bạn.",
+    "backToTypes": "Quay lại dạng câu hỏi",
+    "pickUnitTitle": "Chọn bài học để luyện.",
+    "unitComplete": "Đã hoàn thành tất cả bộ",
+    "setsProgress": "Đã hoàn thành {{done}}/{{total}} bộ",
+    "backToUnits": "Quay lại bài học",
+    "setCompleted": "Đã hoàn thành",
+    "startPractice": "Bắt đầu luyện tập",
+    "typeDesc": {
+      "reading": "Đọc to một câu, tự nhiên và rõ ràng.",
+      "repeats": "Nghe một lần rồi nhắc lại chính xác.",
+      "sentence_builds": "Sắp xếp các từ thành câu đúng.",
+      "conversations": "Nghe đoạn hội thoại và trả lời câu hỏi.",
+      "reading_selective": "Đọc và tìm thông tin chính.",
+      "short_answer": "Trả lời ngắn một câu hỏi đơn giản.",
+      "passage_comprehension": "Nghe đoạn văn và trả lời câu hỏi.",
+      "speaking_situations": "Phản hồi tự nhiên trong tình huống hằng ngày.",
+      "story_retelling": "Nghe câu chuyện và kể lại bằng lời của bạn.",
+      "open_questions": "Tự do chia sẻ ý kiến của bạn.",
+      "dictation": "Viết chính xác những gì bạn nghe.",
+      "response_selection": "Chọn câu trả lời đúng trong các lựa chọn.",
+      "passage_reconstruction": "Đọc, rồi viết lại từ trí nhớ.",
+      "summary_and_opinion": "Tóm tắt đoạn văn và nêu ý kiến.",
+      "reading_comprehension": "Đọc đoạn văn và trả lời câu hỏi.",
+      "sentence_completion": "Điền từ hoặc cụm từ còn thiếu.",
+      "typing": "Khởi động gõ phím ngắn.",
+      "email_writing": "Viết một email ngắn, thực tế."
+    }
+  },
+  "faceCheck": {
+    "back": "Quay lại",
+    "enroll": {
+      "title": "Thiết lập xác minh khuôn mặt",
+      "success": "Đã đăng ký khuôn mặt",
+      "proceed": "Tiếp tục",
+      "subtitle": "Đây là bước thiết lập một lần. Chúng tôi sẽ dùng ảnh này để xác nhận đúng là bạn trước mỗi bài kiểm tra xếp lớp, học phần và bài thi thử.",
+      "successSubtitle": "Thiết lập hoàn tất. Bạn sẽ thấy hướng dẫn trước khi bài kiểm tra xếp lớp bắt đầu."
+    },
+    "verify": {
+      "title": "Xác minh khuôn mặt nhanh",
+      "success": "Đã xác minh khuôn mặt",
+      "proceed": "Tiếp tục",
+      "mismatchError": "Khuôn mặt không khớp với ảnh đã đăng ký. Vui lòng thử lại.",
+      "subtitle": {
+        "placement": "Xác nhận đúng là bạn trước khi bài kiểm tra xếp lớp bắt đầu.",
+        "practice": "Xác nhận đúng là bạn trước buổi luyện tập này.",
+        "practice_test": "Xác nhận đúng là bạn trước bài thi thử này."
+      },
+      "successSubtitle": "Đã xác nhận danh tính. Đang chuyển đến bài kiểm tra."
+    },
+    "record": {
+      "capture": "Chụp ảnh",
+      "checking": "Đang kiểm tra...",
+      "cameraError": "Không thể truy cập camera. Hãy kiểm tra quyền truy cập rồi thử lại.",
+      "error": "Đã xảy ra lỗi. Vui lòng thử lại.",
+      "tooShort": "Không nhận rõ khuôn mặt của bạn. Vui lòng thử lại."
+    },
+    "fallback": {
+      "otpButton": "Gửi mã qua email cho tôi",
+      "otpSending": "Đang gửi…",
+      "otpSentNotice": "Đã gửi mã — hãy kiểm tra email.",
+      "otpPlaceholder": "Mã 6 chữ số",
+      "otpVerify": "Xác minh mã",
+      "otpVerifying": "Đang xác minh…",
+      "otpResend": "Gửi lại mã",
+      "otpSuccess": "Đã xác minh mã",
+      "otpSendError": "Đã xảy ra lỗi khi gửi mã. Vui lòng thử lại.",
+      "otpInvalidError": "Mã không hợp lệ. Hãy kiểm tra và thử lại."
+    },
+    "enrollmentConsent": {
+      "title": "Thiết lập xác minh khuôn mặt",
+      "subtitle": "Giúp xác nhận đúng là bạn đang làm bài.",
+      "body": "Chúng tôi sẽ chụp ảnh khuôn mặt của bạn làm mẫu tham chiếu để xác minh danh tính. Ảnh này và các lần quét khuôn mặt được dùng để xác nhận danh tính trước các bài kiểm tra xếp lớp và buổi luyện tập (Học phần), và định kỳ trong quá trình làm — không chỉ một lần lúc bắt đầu. Được lưu trữ an toàn và chỉ dùng cho mục đích này.",
+      "checkboxLabel": "Tôi hiểu và đồng ý xác minh danh tính bằng khuôn mặt, bao gồm kiểm tra định kỳ trong khi làm bài và luyện tập.",
+      "submit": "Tiếp tục",
+      "decline": "Để sau"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Sinh viên",
+      "it_engineering": "CNTT / Kỹ thuật",
+      "customer_support": "Chăm sóc khách hàng",
+      "sales_marketing": "Kinh doanh / Marketing",
+      "healthcare": "Y tế",
+      "education": "Giáo dục",
+      "finance": "Tài chính",
+      "operations": "Vận hành",
+      "management": "Quản lý",
+      "other": "Khác"
+    },
+    "gender": {
+      "female": "Nữ",
+      "male": "Nam",
+      "non_binary": "Phi nhị giới",
+      "prefer_not": "Không muốn trả lời"
+    },
+    "ageBand": {
+      "under_18": "Dưới 18"
+    }
+  },
+  "plans": {
+    "title": "Gói",
+    "onFree": "Bạn đang dùng gói miễn phí.",
+    "activeUntil": "Quyền truy cập đầy đủ còn hiệu lực đến {{date}}.",
+    "orgManaged": "Quyền truy cập của bạn do tổ chức quản lý — hãy hỏi quản trị viên hoặc quản lý.",
+    "unavailable": "Hiện không có gói nào. Vui lòng thử lại sau.",
+    "payError": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
+    "free": {
+      "name": "Miễn phí",
+      "usage": "Đã dùng {{used}}/{{limit}} buổi miễn phí trong tuần này."
+    },
+    "full": {
+      "name": "Truy cập đầy đủ",
+      "perMonth": "{{price}} mỗi tháng"
+    },
+    "features": {
+      "placementOnce": "Một bài kiểm tra xếp lớp",
+      "placementUnlimited": "Làm lại bài kiểm tra xếp lớp",
+      "practiceLimited": "{{count}} buổi luyện tập mỗi tuần",
+      "practiceUnlimited": "Luyện tập không giới hạn ở mọi học phần",
+      "progress": "Báo cáo tiến độ và lộ trình học",
+      "mockTests": "Bài thi thử đầy đủ",
+      "tutor": "Gia sư AI luyện nói"
+    },
+    "months_other": "{{count}} tháng",
+    "total": "Tổng cộng",
+    "startNote": "Quyền truy cập bắt đầu ngay khi thanh toán được xác nhận.",
+    "extendNote": "Được cộng thêm sau khi quyền truy cập hiện tại kết thúc vào {{date}}.",
+    "testMode": "Chế độ thử nghiệm — thanh toán chỉ là mô phỏng, không bị trừ tiền.",
+    "buy_other": "Mua {{count}} tháng",
+    "extend_other": "Gia hạn {{count}} tháng",
+    "redirecting": "Đang mở trang thanh toán…",
+    "invoices": "Hóa đơn",
+    "upgrade": "Xem các gói",
+    "locked": {
+      "mocktest": "Bài thi thử thuộc gói truy cập đầy đủ.",
+      "coach": "Gia sư AI thuộc gói truy cập đầy đủ.",
+      "placement": "Bạn đã dùng lượt kiểm tra xếp lớp miễn phí. Làm lại thuộc gói truy cập đầy đủ.",
+      "practice": "Bạn đã dùng hết {{limit}} buổi miễn phí trong tuần này. Số buổi được khôi phục dần trong chu kỳ 7 ngày — hoặc nâng cấp để luyện tập không giới hạn."
+    },
+    "lockedTitle": "Nâng cấp để tiếp tục"
+  }
+}

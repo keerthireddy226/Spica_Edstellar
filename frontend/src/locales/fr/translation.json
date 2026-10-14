@@ -2,6 +2,14 @@
   "common": {
     "appName": "Spica"
   },
+  "admin": {
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "admins": "Administrateurs",
+      "orgAdmins": "Administrateurs d'organisation",
+      "learners": "Apprenants individuels"
+    }
+  },
   "skills": {
     "listening": "Compréhension orale",
     "speaking": "Expression orale",
@@ -39,7 +47,10 @@
       "emailPlaceholder": "you@example.com",
       "passwordLabel": "Mot de passe",
       "passwordPlaceholder": "Au moins 8 caractères",
+      "confirmPasswordLabel": "Confirmez le mot de passe",
+      "confirmPasswordPlaceholder": "Ressaisissez votre mot de passe",
       "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "submit": "S'inscrire",
       "submitting": "Création du compte…",
       "errorEmailTaken": "Un compte avec cet e-mail existe déjà.",
@@ -68,7 +79,10 @@
       "requestNewLink": "Demander un nouveau lien de réinitialisation",
       "passwordLabel": "Nouveau mot de passe",
       "passwordPlaceholder": "Au moins 8 caractères",
+      "confirmPasswordLabel": "Confirmez le nouveau mot de passe",
+      "confirmPasswordPlaceholder": "Ressaisissez votre mot de passe",
       "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
       "submit": "Réinitialiser le mot de passe",
       "submitting": "Enregistrement…",
       "error": "Ce lien de réinitialisation est invalide ou a expiré."
@@ -200,6 +214,20 @@
         "submit": "Aller au test",
         "submitting": "Enregistrement…",
         "error": "Une erreur s'est produite lors de l'enregistrement de vos réponses. Veuillez réessayer."
+      },
+      "about": {
+        "title": "À propos de vous",
+        "subtitle": "Nous aide à adapter l'entraînement à votre contexte.",
+        "countryLabel": "Pays",
+        "cityLabel": "Ville",
+        "cityPlaceholder": "ex. Lyon",
+        "jobRoleLabel": "Poste",
+        "genderLabel": "Genre (facultatif)",
+        "ageLabel": "Âge (facultatif)",
+        "select": "Sélectionnez…",
+        "skip": "Je préfère ne pas répondre",
+        "consent": "J'accepte que mon genre et ma tranche d'âge soient enregistrés et utilisés uniquement dans des rapports anonymisés et agrégés.",
+        "privacyNote": "Le genre et l'âge sont facultatifs. Ils ne sont jamais montrés aux autres apprenants et ne sont rapportés que par groupes de 5 ou plus."
       }
     }
   },
@@ -227,12 +255,14 @@
     }
   },
   "placementTest": {
+    "typeIntroStart": "Commencer",
     "loading": "Chargement de votre test…",
     "loadError": "Une erreur s'est produite lors du chargement de votre test. Veuillez réessayer.",
     "micError": "Nous n'avons pas pu accéder à votre microphone. Veuillez autoriser l'accès au microphone et réessayer.",
     "progress": "{{current}} sur {{total}}",
     "play": "Écouter l'audio",
     "playAgain": "Réécouter",
+    "replay": "Réécouter",
     "playing": "Lecture en cours…",
     "record": "Enregistrez votre réponse",
     "recordAgain": "Réenregistrer",
@@ -324,10 +354,25 @@
     "loadError": "Impossible de charger pour le moment. Veuillez réessayer.",
     "saveAndNext": "Enregistrer et suivant",
     "sectionLabel": "Section {{current}} sur {{total}} — {{label}}",
+    "youHear": "Vous entendez",
+    "youSay": "Vous dites",
+    "playsRemaining": "{{count}} écoute restante",
+    "playsRemaining_one": "{{count}} écoute restante",
+    "playsRemaining_other": "{{count}} écoutes restantes",
     "scoreReport": {
       "title": "Test terminé",
       "overall": "Score global",
-      "sectionResults": "Résultats par section"
+      "sectionResults": "Résultats par section",
+      "testType": "Examen",
+      "skippedNote": "{{count}} question a été passée ou laissée sans réponse et n'affectera pas votre niveau.",
+      "skippedNote_one": "{{count}} question a été passée ou laissée sans réponse et n'affectera pas votre niveau.",
+      "skippedNote_other": "{{count}} questions ont été passées ou laissées sans réponse et n'affecteront pas votre niveau."
+    },
+    "overview": {
+      "title": "Avant de commencer",
+      "subtitle": "Cet examen comporte plusieurs parties. Chaque partie a son propre type de tâche.",
+      "begin": "Commencer l'examen",
+      "startSection": "Commencer : {{label}}"
     },
     "versantProduct": {
       "speakingListening": "Test d'expression orale et de compréhension orale en anglais",
@@ -387,7 +432,8 @@
       "accountType": "Type de Compte",
       "save": "Enregistrer",
       "saving": "Enregistrement…",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "participantId": "ID participant"
     },
     "preferences": {
       "title": "Préférences",
@@ -402,6 +448,43 @@
       "strictTimer": {
         "title": "Mode Minuteur Strict",
         "subtitle": "Désactiver la pause pendant les exercices chronométrés."
+      }
+    },
+    "about": {
+      "title": "À propos de vous",
+      "gender": "Genre",
+      "age": "Âge",
+      "notShared": "Non partagé",
+      "error": "Échec de l'enregistrement. Veuillez réessayer."
+    },
+    "access": {
+      "title": "Votre accès",
+      "activeUntil": "Actif jusqu'au {{date}}",
+      "grace": "Terminé — période de grâce jusqu'au {{date}}",
+      "expired": "Terminé le {{date}}",
+      "none": "Aucune licence attribuée pour l'instant",
+      "queued_one": "Inclut {{count}} mois supplémentaire déjà attribué",
+      "queued_other": "Inclut {{count}} mois supplémentaires déjà attribués",
+      "help": "Votre organisation gère votre accès. Demandez à votre administrateur ou responsable de le prolonger."
+    },
+    "reminder": {
+      "title": "Rappel d'entraînement quotidien",
+      "on": "Activé",
+      "off": "Désactivé",
+      "subtitle": "Nous vous enverrons un e-mail à cette heure les jours choisis — ignoré si vous vous êtes déjà entraîné ce jour-là.",
+      "time": "Heure",
+      "streakAlert": "Prévenez-moi aussi à 22 h si ma série (3+ jours) va s'interrompre",
+      "error": "Échec de l'enregistrement. Réessayez.",
+      "savedOn": "Enregistré — rappel à {{time}}.",
+      "savedOff": "Enregistré — rappels désactivés.",
+      "days": {
+        "sun": "Dim",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Jeu",
+        "fri": "Ven",
+        "sat": "Sam"
       }
     }
   },
@@ -538,7 +621,28 @@
     "unitComplete": "Toutes les séries terminées",
     "setsProgress": "{{done}} sur {{total}} séries terminées",
     "backToUnits": "Retour aux unités",
-    "setCompleted": "Terminé"
+    "setCompleted": "Terminé",
+    "startPractice": "Commencer l'entraînement",
+    "typeDesc": {
+      "reading": "Lisez une phrase à voix haute, naturellement et clairement.",
+      "repeats": "Écoutez une fois, puis répétez exactement.",
+      "sentence_builds": "Remettez les mots dans l'ordre pour former une phrase correcte.",
+      "conversations": "Écoutez un dialogue et répondez aux questions.",
+      "reading_selective": "Lisez et repérez les informations clés.",
+      "short_answer": "Répondez brièvement à une question simple.",
+      "passage_comprehension": "Écoutez un texte et répondez aux questions.",
+      "speaking_situations": "Réagissez naturellement à une situation du quotidien.",
+      "story_retelling": "Écoutez une histoire et racontez-la avec vos mots.",
+      "open_questions": "Donnez librement votre avis.",
+      "dictation": "Écrivez exactement ce que vous entendez.",
+      "response_selection": "Choisissez la bonne réponse parmi les options.",
+      "passage_reconstruction": "Lisez, puis reconstituez le texte de mémoire.",
+      "summary_and_opinion": "Résumez un texte et donnez votre avis.",
+      "reading_comprehension": "Lisez un texte et répondez aux questions.",
+      "sentence_completion": "Complétez le mot ou l'expression manquant.",
+      "typing": "Un court échauffement de frappe au clavier.",
+      "email_writing": "Rédigez un e-mail court et réaliste."
+    }
   },
   "faceCheck": {
     "back": "Back",
@@ -588,5 +692,79 @@
       "submit": "Continue",
       "decline": "Not now"
     }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Étudiant",
+      "it_engineering": "Informatique / Ingénierie",
+      "customer_support": "Support client",
+      "sales_marketing": "Ventes / Marketing",
+      "healthcare": "Santé",
+      "education": "Éducation",
+      "finance": "Finance",
+      "operations": "Opérations",
+      "management": "Direction",
+      "other": "Autre"
+    },
+    "gender": {
+      "female": "Femme",
+      "male": "Homme",
+      "non_binary": "Non binaire",
+      "prefer_not": "Je préfère ne pas le dire"
+    },
+    "ageBand": {
+      "under_18": "Moins de 18 ans",
+      "18_24": "18–24",
+      "25_34": "25–34",
+      "35_44": "35–44",
+      "45_54": "45–54",
+      "55_plus": "55+"
+    }
+  },
+  "plans": {
+    "title": "Offres",
+    "onFree": "Vous êtes sur l'offre gratuite.",
+    "activeUntil": "Accès complet actif jusqu'au {{date}}.",
+    "orgManaged": "Votre organisation gère votre accès — adressez-vous à votre administrateur ou responsable.",
+    "unavailable": "Les offres sont indisponibles pour le moment. Réessayez plus tard.",
+    "payError": "Impossible de lancer le paiement. Réessayez.",
+    "free": {
+      "name": "Gratuit",
+      "price": "₹0 / $0",
+      "usage": "{{used}} sur {{limit}} séances gratuites utilisées cette semaine."
+    },
+    "full": {
+      "name": "Accès complet",
+      "perMonth": "{{price}} par mois"
+    },
+    "features": {
+      "placementOnce": "Un test de positionnement",
+      "placementUnlimited": "Repasser le test de positionnement",
+      "practiceLimited": "{{count}} séances d'entraînement par semaine",
+      "practiceUnlimited": "Entraînement illimité dans tous les modules",
+      "progress": "Rapports de progression et parcours",
+      "mockTests": "Examens blancs complets",
+      "tutor": "Tuteur oral IA"
+    },
+    "months_one": "{{count}} mois",
+    "months_other": "{{count}} mois",
+    "total": "Total",
+    "startNote": "L'accès commence dès la confirmation du paiement.",
+    "extendNote": "Ajouté après la fin de votre accès actuel le {{date}}.",
+    "testMode": "Mode test — paiement simulé, aucun débit réel.",
+    "buy_one": "Acheter {{count}} mois",
+    "buy_other": "Acheter {{count}} mois",
+    "extend_one": "Prolonger de {{count}} mois",
+    "extend_other": "Prolonger de {{count}} mois",
+    "redirecting": "Ouverture du paiement…",
+    "invoices": "Factures",
+    "upgrade": "Voir les offres",
+    "locked": {
+      "mocktest": "Les examens blancs font partie de l'accès complet.",
+      "coach": "Le tuteur IA fait partie de l'accès complet.",
+      "placement": "Vous avez déjà passé votre test de positionnement gratuit. Le repasser fait partie de l'accès complet.",
+      "practice": "Vous avez utilisé vos {{limit}} séances gratuites cette semaine. Elles se renouvellent sur 7 jours glissants, ou passez à l'accès complet."
+    },
+    "lockedTitle": "Passez à l'accès complet pour continuer"
   }
 }

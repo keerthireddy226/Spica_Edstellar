@@ -1,0 +1,742 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "admins": "Admin",
+      "orgAdmins": "Admin dell'organizzazione",
+      "learners": "Studenti individuali"
+    }
+  },
+  "skills": {
+    "listening": "Ascolto",
+    "speaking": "Parlato",
+    "reading": "Lettura",
+    "writing": "Scrittura"
+  },
+  "auth": {
+    "login": {
+      "title": "Bentornato",
+      "subtitle": "Accedi per continuare a esercitarti.",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "submit": "Accedi",
+      "submitting": "Accesso in corso…",
+      "errorInvalidCredentials": "Email o password non corretti.",
+      "errorEmailNotVerified": "Verifica la tua email prima di accedere: trovi il link di verifica nella tua casella di posta.",
+      "errorWrongPortal": "Questo account non ha accesso da questa pagina di login.",
+      "errorAlreadyLoggedIn": "Questo account ha già una sessione attiva su un altro dispositivo. Esci prima da lì.",
+      "errorOrganizationDeactivated": "Questa organizzazione è stata disattivata. Contatta il tuo Admin.",
+      "errorTooManyAttempts": "Troppi tentativi di accesso. Attendi qualche minuto e riprova.",
+      "errorGeneric": "Qualcosa è andato storto. Controlla la connessione e riprova.",
+      "forgotPassword": "Password dimenticata?",
+      "createAccount": "Crea un account"
+    },
+    "signup": {
+      "title": "Crea il tuo account",
+      "subtitle": "Inizia a esercitarti in pochi secondi.",
+      "firstNameLabel": "Nome",
+      "lastNameLabel": "Cognome",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Almeno 8 caratteri",
+      "confirmPasswordLabel": "Conferma password",
+      "confirmPasswordPlaceholder": "Reinserisci la password",
+      "passwordTooShort": "La password deve contenere almeno 8 caratteri.",
+      "passwordMismatch": "Le password non corrispondono.",
+      "submit": "Registrati",
+      "submitting": "Creazione dell'account…",
+      "errorEmailTaken": "Esiste già un account con questa email.",
+      "errorGeneric": "Qualcosa è andato storto. Riprova.",
+      "alreadyHaveAccount": "Hai già un account?",
+      "signIn": "Accedi",
+      "checkEmailTitle": "Controlla la tua email",
+      "checkEmailBody": "Abbiamo inviato un link di verifica a {{email}}. Dopo la verifica, accedi per continuare.",
+      "signInButton": "Accedi"
+    },
+    "forgotPassword": {
+      "title": "Reimposta la password",
+      "subtitle": "Ti invieremo un link per impostarne una nuova.",
+      "submitted": "Se esiste un account con questa email, ti stiamo inviando un link per reimpostare la password.",
+      "emailLabel": "Email",
+      "submit": "Invia link",
+      "submitting": "Invio in corso…",
+      "backToSignIn": "Torna all'accesso"
+    },
+    "resetPassword": {
+      "title": "Scegli una nuova password",
+      "subtitle": "Almeno 8 caratteri.",
+      "missingTokenTitle": "Reimposta la password",
+      "missingTokenSubtitle": "In questo link manca il token.",
+      "requestNewLink": "Richiedi un nuovo link",
+      "passwordLabel": "Nuova password",
+      "passwordPlaceholder": "Almeno 8 caratteri",
+      "confirmPasswordLabel": "Conferma la nuova password",
+      "confirmPasswordPlaceholder": "Reinserisci la password",
+      "passwordTooShort": "La password deve contenere almeno 8 caratteri.",
+      "passwordMismatch": "Le password non corrispondono.",
+      "submit": "Reimposta password",
+      "submitting": "Salvataggio…",
+      "error": "Questo link non è valido o è scaduto."
+    },
+    "verifyEmail": {
+      "title": "Verifica email",
+      "pending": "Verifica in corso…",
+      "success": "La tua email è verificata. Accedi per continuare.",
+      "signInButton": "Accedi",
+      "error": "Questo link di verifica non è valido o è scaduto."
+    }
+  },
+  "onboarding": {
+    "title": "Benvenuto nell'onboarding",
+    "logout": "Esci",
+    "wizard": {
+      "stepLabel": "{{current}} di {{total}}",
+      "back": "Indietro",
+      "next": "Avanti",
+      "basics": {
+        "title": "Conosciamoci",
+        "subtitle": "La tua email è compilata automaticamente dall'accesso",
+        "firstNameLabel": "Nome",
+        "firstNamePlaceholder": "Inserisci il tuo nome",
+        "lastNameLabel": "Cognome",
+        "lastNamePlaceholder": "Inserisci il tuo cognome",
+        "emailLabel": "Email",
+        "emailNote": "Compilata dal tuo account di accesso"
+      },
+      "examGoal": {
+        "examTitle": "Per quale esame ti stai preparando?",
+        "examSubtitle": "Adatteremo l'esercitazione al formato di questo esame",
+        "goalTitle": "Qual è il tuo livello o punteggio obiettivo?",
+        "goalSubtitle": "L'obiettivo che vuoi raggiungere in questo esame",
+        "scoreTargetLabel": "Punteggio obiettivo specifico (facoltativo)",
+        "scoreTargetPlaceholder": "es. IELTS 7.0, Versant 69+, PTE 65",
+        "exam": {
+          "versantDesc": "Parlato, scrittura, piazzamento, professionale",
+          "ieltsDesc": "Academic o General Training",
+          "toeflDesc": "Test online",
+          "pteDesc": "Test al computer di Pearson",
+          "other": "Altro / Generale",
+          "otherDesc": "Miglioramento generale dell'inglese"
+        },
+        "goal": {
+          "A1": "A1 - Principiante",
+          "A1Desc": "Parole semplici e frasi quotidiane",
+          "A2": "A2 - Elementare",
+          "A2Desc": "Frasi semplici, interazioni di base",
+          "B1": "B1 - Intermedio",
+          "B1Desc": "Gestire la maggior parte delle situazioni di viaggio e lavoro",
+          "B2": "B2 - Intermedio superiore",
+          "B2Desc": "Interazione fluente, testi dettagliati",
+          "C1": "C1 - Avanzato",
+          "C1Desc": "Argomenti complessi, significati impliciti",
+          "C2": "C2 - Padronanza",
+          "C2Desc": "Precisione e fluidità quasi madrelingua",
+          "unsure": "Non ancora sicuro",
+          "unsureDesc": "Il test di valutazione aiuterà a decidere"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "Perché sostieni questo esame?",
+        "reasonSubtitle": "Ci aiuta ad adattare i contenuti alle tue esigenze reali",
+        "reason": {
+          "university": "Ammissione all'università",
+          "job": "Requisito di lavoro",
+          "immigration": "Immigrazione",
+          "promotion": "Promozione o crescita professionale",
+          "personal": "Obiettivo personale"
+        },
+        "appliedTitle": "Ti sei già iscritto all'esame?",
+        "appliedSubtitle": "Organizzeremo il tuo percorso in base alla scadenza",
+        "appliedYes": "Sì, ho una data confermata",
+        "appliedNo": "No, non ancora",
+        "examDateLabel": "Quando è il tuo esame?",
+        "prepDaysLabel": "Quanti giorni vuoi dedicare alla preparazione?",
+        "prepDaysPlaceholder": "es. 30",
+        "days": "giorni"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "Hai già sostenuto questo esame?",
+        "attemptsSubtitle": "Ci aiuta a capire da dove parti",
+        "attempts": {
+          "first": "No, è il mio primo tentativo",
+          "once": "Sì, una volta",
+          "multiple": "Sì, più volte"
+        },
+        "prevScoreLabel": "Qual era il tuo punteggio precedente?",
+        "prevScorePlaceholder": "es. B1, 5.5, 58",
+        "prevDateLabel": "Quando l'hai sostenuto l'ultima volta?",
+        "prevDatePlaceholder": "es. marzo 2026, 6 mesi fa",
+        "timeTitle": "Quanto tempo puoi dedicare ogni giorno?",
+        "timeSubtitle": "Sii realistico: la costanza batte l'intensità",
+        "time": {
+          "min15": "15 minuti",
+          "min15Desc": "Breve esercizio quotidiano",
+          "min30": "30 minuti",
+          "min30Desc": "Progressi solidi e costanti",
+          "min60": "1 ora",
+          "min60Desc": "Preparazione intensiva",
+          "min90": "90+ minuti",
+          "min90Desc": "Immersione totale"
+        }
+      },
+      "duration": {
+        "title": "Per quanto tempo vuoi l'accesso?",
+        "subtitle": "Scegli un piano adatto alle tue tempistiche",
+        "oneMonth": "1 mese",
+        "oneMonthDesc": "Sprint breve e intensivo",
+        "threeMonths": "3 mesi",
+        "threeMonthsDesc": "Preparazione equilibrata",
+        "sixMonths": "6 mesi",
+        "sixMonthsDesc": "Percorso completo e costante",
+        "untilExam": "Fino alla data dell'esame",
+        "untilExamDesc": "Calcolato in base alla data dell'esame"
+      },
+      "consent": {
+        "title": "Prima di continuare",
+        "subtitle": "La tua voce verrà registrata durante esercizi e test",
+        "body": "Registriamo le tue risposte orali per valutare il tuo parlato e darti un feedback. Le registrazioni sono conservate per un periodo limitato e usate solo per valutare e migliorare i tuoi risultati. Puoi eliminare i tuoi dati in qualsiasi momento dalle Impostazioni.",
+        "checkboxLabel": "Ho capito e acconsento alla registrazione della mia voce per esercizi e test.",
+        "submit": "Vai al test",
+        "submitting": "Salvataggio…",
+        "error": "Qualcosa è andato storto durante il salvataggio delle risposte. Riprova."
+      },
+      "about": {
+        "title": "Su di te",
+        "subtitle": "Ci aiuta ad adattare l'esercitazione al tuo contesto.",
+        "countryLabel": "Paese",
+        "cityLabel": "Città",
+        "cityPlaceholder": "es. Milano",
+        "jobRoleLabel": "Ruolo lavorativo",
+        "genderLabel": "Genere (facoltativo)",
+        "ageLabel": "Età (facoltativo)",
+        "select": "Seleziona…",
+        "skip": "Preferisco non rispondere",
+        "consent": "Accetto che il mio genere e la mia fascia d'età vengano memorizzati e usati solo in report anonimi e aggregati.",
+        "privacyNote": "Genere ed età sono facoltativi. Non vengono mai mostrati ad altri studenti e sono riportati solo in gruppi di almeno 5 persone."
+      }
+    }
+  },
+  "placement": {
+    "title": "Tutto pronto!",
+    "subtitle": "L'onboarding è completo: ora tocca al test di piazzamento.",
+    "scheduleLater": "Pianifica per dopo",
+    "scheduling": "Invio in corso…",
+    "scheduleSent": "Ti abbiamo inviato un link promemoria via email.",
+    "scheduleLaterError": "Qualcosa è andato storto nell'invio del promemoria. Riprova.",
+    "info": {
+      "timing": "A tempo: prevedi circa 15–20 minuti",
+      "covers": "Copre parlato, ascolto, lettura e scrittura",
+      "graded": "Il test viene valutato e la tua voce viene registrata per il punteggio: rispondi con onestà, da solo, senza aiuti esterni.",
+      "equipment": "Tieni pronti cuffie e microfono"
+    },
+    "instructions": {
+      "checkboxLabel": "Ho letto le istruzioni e sono pronto a iniziare.",
+      "begin": "Inizia il test"
+    },
+    "resume": {
+      "title": "Riprendi da dove eri rimasto",
+      "subtitle": "Hai già risposto a {{count}} domanda/e in questo test: continuando mantieni i progressi invece di ricominciare.",
+      "continue": "Continua il test"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "Inizia",
+    "loading": "Caricamento del test…",
+    "loadError": "Qualcosa è andato storto nel caricamento del test. Riprova.",
+    "micError": "Non riusciamo ad accedere al microfono. Consenti l'accesso al microfono e riprova.",
+    "progress": "{{current}} di {{total}}",
+    "play": "Riproduci audio",
+    "playAgain": "Riproduci di nuovo",
+    "replay": "Riascolta",
+    "playing": "Riproduzione…",
+    "record": "Registra la risposta",
+    "recordAgain": "Registra di nuovo",
+    "audioSaved": "Audio salvato",
+    "stopRecording": "Interrompi registrazione",
+    "skip": "Salta",
+    "exitConfirm": "Uscire dal test adesso? I progressi su questa domanda non verranno salvati.",
+    "answerPlaceholder": "Scrivi qui la tua risposta…",
+    "submitting": "Invio…",
+    "next": "Avanti",
+    "finish": "Termina",
+    "submitError": "Qualcosa è andato storto nell'invio della risposta. Riprova.",
+    "resultsTitle": "Test completato",
+    "resultsSummary": "{{correct}} risposte corrette su {{graded}} valutate automaticamente. {{pending}} risposte sono ancora in attesa di revisione.",
+    "done": "Fatto",
+    "yourLevel": "Il tuo livello stimato: {{level}}",
+    "levelDisclaimer": "Questa è una nostra stima allineata al QCER basata sul test, non un punteggio ufficiale.",
+    "pendingNote": "{{pending}} delle tue risposte devono ancora essere revisionate prima di contare per il tuo livello.",
+    "goToRoadmap": "Vai al tuo percorso",
+    "notEnoughAnswered": "Risposte insufficienti",
+    "gapCappedNote": "Alcuni livelli non sono stati testati: il tuo livello reale potrebbe essere più alto.",
+    "failedNote": "{{failed}} delle tue risposte non sono state valutate per un problema temporaneo del nostro servizio di valutazione: non dipende dalle tue risposte. Riprova più tardi."
+  },
+  "roadmap": {
+    "loading": "Caricamento del percorso…",
+    "loadError": "Qualcosa è andato storto nel caricamento del percorso. Riprova.",
+    "pendingReviewBanner": "Il risultato del tuo piazzamento è in verifica per il controllo d'identità. Nel frattempo puoi continuare a usare tutto qui sotto.",
+    "notReadyTitle": "Il tuo percorso non è ancora pronto",
+    "notReadyBody": "Fai il test di piazzamento per ricevere un piano personalizzato.",
+    "notReadyBodyScheduled": "Hai pianificato il test di piazzamento per il {{date}}. Fallo quando vuoi: il tuo percorso verrà creato subito dopo.",
+    "takeTestNow": "Fai il test di piazzamento",
+    "greeting": "Ciao {{name}}",
+    "currentLevel": "Livello attuale",
+    "goalLevel": "Obiettivo",
+    "daysLeftLabel": "Giorni rimanenti",
+    "skillBreakdownTitle": "Dettaglio delle abilità",
+    "timelineTitle": "Il tuo percorso",
+    "milestoneReach": "Raggiungi {{level}}",
+    "milestoneMaintain": "Mantieni il tuo livello",
+    "dayOffset": "Giorno {{day}}",
+    "focusOn": "Focus: {{skill}}",
+    "welcomeBack": "Bentornato",
+    "goalProgress": "Progresso verso l'obiettivo",
+    "ofYourRoadmap": "del tuo percorso",
+    "streak": "Serie",
+    "streakDays_one": "{{count}} giorno",
+    "streakDays_other": "{{count}} giorni",
+    "startStreakToday": "Inizia la tua serie oggi.",
+    "keepStreakGoing": "Continua così!",
+    "today": "Oggi",
+    "practicedSoFar": "esercitato finora",
+    "accuracy": "Precisione",
+    "practiceToUnlock": "Esercitati per sbloccare",
+    "practiceAccuracy": "precisione negli esercizi",
+    "strongest": "il più forte",
+    "notTested": "Non ancora testato",
+    "gapCappedNote": "Alcuni livelli non sono stati testati: il tuo livello reale potrebbe essere più alto."
+  },
+  "dashboard": {
+    "welcome": "Benvenuto, {{email}}",
+    "role": "Ruolo: {{role}}",
+    "placeholder": "Questo è un segnaposto: la vera dashboard (livello, avanzamento del piano, serie, badge) arriverà in una fase successiva."
+  },
+  "nav": {
+    "roadmap": "Percorso",
+    "overview": "Panoramica",
+    "progress": "Progressi",
+    "modules": "Moduli",
+    "practiceTests": "Test di prova",
+    "tutor": "Tutor",
+    "profile": "Profilo"
+  },
+  "shell": {
+    "openMenu": "Apri menu",
+    "toggleTheme": "Cambia tema"
+  },
+  "practiceTests": {
+    "subtitle": "Simulazioni complete e a tempo, come i veri esami Versant.",
+    "comingSoon": "In arrivo",
+    "setsCount": "{{count}} set",
+    "setsCount_other": "{{count}} set",
+    "questionsCount": "{{count}} domanda",
+    "questionsCount_other": "{{count}} domande",
+    "completed": "Completato",
+    "startExam": "Inizia",
+    "retake": "Ripeti",
+    "backToProducts": "Torna ai test",
+    "backToExams": "Torna ai set",
+    "loadError": "Impossibile caricare in questo momento. Riprova.",
+    "saveAndNext": "Salva e continua",
+    "sectionLabel": "Sezione {{current}} di {{total}} — {{label}}",
+    "youHear": "Ascolti",
+    "youSay": "Rispondi",
+    "playsRemaining": "{{count}} ascolto rimasto",
+    "playsRemaining_other": "{{count}} ascolti rimasti",
+    "scoreReport": {
+      "title": "Test completato",
+      "overall": "Punteggio complessivo",
+      "sectionResults": "Risultati per sezione",
+      "testType": "Test",
+      "skippedNote": "{{count}} domanda è stata lasciata vuota o saltata e non conterà per il tuo livello.",
+      "skippedNote_other": "{{count}} domande sono state lasciate vuote o saltate e non conteranno per il tuo livello."
+    },
+    "overview": {
+      "title": "Prima di iniziare",
+      "subtitle": "Questo test ha più parti. In ogni parte svolgerai un compito diverso.",
+      "begin": "Inizia il test",
+      "startSection": "Inizia {{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "Parlato e ascolto — 17 minuti.",
+      "fourSkillsDesc": "Parlato, ascolto, lettura, scrittura — 30 minuti.",
+      "writingDesc": "Inglese scritto — 35 minuti.",
+      "professionalDesc": "Parlato, ascolto, lettura, scrittura — 60 minuti.",
+      "placementDesc": "Parlato, ascolto, lettura, scrittura — 50 minuti."
+    }
+  },
+  "tutor": {
+    "subtitle": "Una conversazione di pratica rilassata con il tuo coach IA.",
+    "inputPlaceholder": "Scrivi la tua risposta…",
+    "loading": "Avvio della conversazione…",
+    "typing": "Sta scrivendo…",
+    "sendError": "Qualcosa è andato storto nell'invio. Riprova.",
+    "newConversation": "Nuova conversazione",
+    "newConversationConfirm": "Iniziare una nuova conversazione? Quella attuale verrà chiusa."
+  },
+  "profile": {
+    "account": {
+      "unnamed": "Il tuo account",
+      "individual": "Individuale"
+    },
+    "language": {
+      "title": "Lingua"
+    },
+    "voice": {
+      "title": "Voce",
+      "subtitle": "Scegli quale voce legge le domande ad alta voce durante test ed esercizi.",
+      "loading": "Caricamento della preferenza vocale…",
+      "female": "Voce femminile",
+      "male": "Voce maschile",
+      "preview": "Ascolta l'anteprima",
+      "previewLine": "Ecco come suoneranno le domande.",
+      "saved": "Salvato: d'ora in poi verrà usata questa voce."
+    },
+    "plan": {
+      "title": "Obiettivo d'esame",
+      "loading": "Caricamento del piano…",
+      "notSet": "Non impostato",
+      "exam": "Esame",
+      "currentToGoal": "Attuale → Obiettivo",
+      "examDateLabel": "Data dell'esame",
+      "accessDaysLeft": "Giorni di accesso rimanenti"
+    },
+    "personalInfo": {
+      "title": "Informazioni personali",
+      "edit": "Modifica",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "email": "Indirizzo email",
+      "accountType": "Tipo di account",
+      "save": "Salva",
+      "saving": "Salvataggio…",
+      "cancel": "Annulla",
+      "participantId": "ID partecipante"
+    },
+    "preferences": {
+      "title": "Preferenze",
+      "spokenPrompts": {
+        "title": "Istruzioni audio",
+        "subtitle": "Leggi ad alta voce le istruzioni di ascolto durante gli esercizi."
+      },
+      "weeklyReports": {
+        "title": "Report settimanali dei progressi",
+        "subtitle": "Ricevi via email un riepilogo della tua attività."
+      },
+      "strictTimer": {
+        "title": "Modalità timer rigorosa",
+        "subtitle": "Disattiva la pausa negli esercizi a tempo."
+      }
+    },
+    "about": {
+      "title": "Su di te",
+      "gender": "Genere",
+      "age": "Età",
+      "notShared": "Non indicato",
+      "error": "Impossibile salvare. Riprova."
+    },
+    "access": {
+      "title": "Il tuo accesso",
+      "activeUntil": "Attivo fino al {{date}}",
+      "grace": "Scaduto: periodo di tolleranza fino al {{date}}",
+      "expired": "Scaduto il {{date}}",
+      "none": "Nessuna licenza ancora assegnata",
+      "queued_one": "Include {{count}} altro mese già assegnato",
+      "queued_other": "Include altri {{count}} mesi già assegnati",
+      "help": "Il tuo accesso è gestito dalla tua organizzazione. Chiedi al tuo admin o manager di prolungarlo."
+    },
+    "reminder": {
+      "title": "Promemoria giornaliero",
+      "on": "Attivo",
+      "off": "Disattivo",
+      "subtitle": "Ti invieremo un'email a quest'ora nei giorni scelti; viene saltata se quel giorno ti sei già esercitato.",
+      "time": "Ora",
+      "streakAlert": "Avvisami anche alle 22 se la mia serie (3+ giorni) sta per interrompersi",
+      "error": "Impossibile salvare. Riprova.",
+      "savedOn": "Salvato: promemoria alle {{time}}.",
+      "savedOff": "Salvato: promemoria disattivati.",
+      "days": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Gio",
+        "fri": "Ven",
+        "sat": "Sab"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "Ogni piano parte da 0%. Tu sei già oltre.",
+    "mid": "Non sei più dove eri. Continua così.",
+    "high": "Il traguardo è quasi a portata di mano."
+  },
+  "motivational": {
+    "line1": "15 minuti di esercizio al giorno valgono più di 2 ore una volta a settimana.",
+    "line2": "Parlare ad alta voce, anche da soli, è la scorciatoia più veloce verso la fluidità.",
+    "line3": "Ogni errore in allenamento è un errore in meno all'esame.",
+    "line4": "La costanza batte l'intensità: un po' ogni giorno fa una grande differenza.",
+    "line5": "Non devi essere perfetto. Devi solo continuare.",
+    "line6": "Ogni esperto è stato un principiante che non ha mollato.",
+    "line7": "Piccoli passi oggi, grande sicurezza domani.",
+    "line8": "Esercitati oggi così il giorno dell'esame sembrerà normale.",
+    "line9": "Il momento migliore per esercitarsi era ieri. Il secondo migliore è adesso."
+  },
+  "achievement": {
+    "goalSetterTitle": "Obiettivo fissato",
+    "goalSetterBody": "Imposta il livello obiettivo e il percorso."
+  },
+  "recommendedPractice": {
+    "title": "Scelto per te",
+    "startPractice": "Inizia l'esercizio",
+    "estimatedMinutes": "~{{minutes}} min"
+  },
+  "dailyChallenge": {
+    "title": "Sfida del giorno",
+    "subtitle": "Un piccolo extra per oggi",
+    "wordTab": "Parola del giorno",
+    "idiomTab": "Modo di dire",
+    "wordOfDay": "Parola del giorno — tocca per {{action}}",
+    "reveal": "mostrare",
+    "hide": "nascondere",
+    "idiomOfDay": "Modo di dire del giorno",
+    "meaningTab": "Scegli il significato",
+    "pickClosestMeaning": "Scegli il significato più vicino",
+    "correctFeedback": "Ottimo! È proprio così. 🎉",
+    "incorrectFeedback": "Non proprio: significa «{{answer}}»."
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "Capace di riprendersi rapidamente dalle difficoltà.",
+      "articulate": "Esprimere un'idea o un sentimento in modo chiaro ed efficace.",
+      "candid": "Sincero e diretto; franco.",
+      "diligent": "Che mostra un impegno costante e accurato nel lavoro o nei doveri."
+    },
+    "idioms": {
+      "hitTheBooks": "Mettersi a studiare, di solito seriamente o per un esame importante.",
+      "breakTheIce": "Dire o fare qualcosa che allenta la tensione all'inizio di una conversazione.",
+      "sameSage": "Essere d'accordo, o capire qualcosa allo stesso modo degli altri.",
+      "underWeather": "Sentirsi leggermente indisposti."
+    }
+  },
+  "coachPromo": {
+    "badge": "Senza punteggio · senza pressione",
+    "title": "Non sai da dove iniziare? Parliamone.",
+    "body": "La modalità Coach è una chiacchierata di riscaldamento: niente timer, niente punteggi.",
+    "cta": "Apri la modalità Coach"
+  },
+  "dashboardHome": {
+    "welcomeBack": "Bentornato, {{name}}",
+    "subtitle": "Continua a esercitarti in inglese e acquisisci sicurezza in tutte e quattro le abilità.",
+    "subtitleFirstTime": "Non hai ancora iniziato: la prima sessione richiede solo pochi minuti. Iniziamo!",
+    "subtitleAllDoneToday": "Hai completato tutto per oggi, ottimo lavoro! Torna domani per mantenere la serie.",
+    "subtitleContinue_one": "Ti resta {{count}} attività per oggi: forza!",
+    "subtitleContinue_other": "Ti restano {{count}} attività per oggi: forza!",
+    "viewRoadmap": "Percorso",
+    "startPractice": "Inizia a esercitarti",
+    "overallProgressTitle": "Progresso complessivo",
+    "todaysTasksTitle": "Attività di oggi",
+    "todaysTasksTitleGo": "Attività di oggi: forza!",
+    "todaysTasksAllDone": "Attività di oggi: tutto fatto!",
+    "taskProgress": "{{done}}/{{target}} attività oggi",
+    "practiceAction": "Esercitati",
+    "statusNotStarted": "Non iniziato",
+    "statusInProgress": "In corso",
+    "statusCompleted": "Completato",
+    "statsSessions": "Sessioni di esercizio",
+    "statsQuestions": "Domande completate",
+    "statsTime": "Tempo di esercizio",
+    "statsTimeValue": "{{minutes}} min",
+    "statsStreak": "Serie attuale",
+    "statsStreakValue_one": "{{count}} giorno",
+    "statsStreakValue_other": "{{count}} giorni",
+    "statsLevel": "Livello",
+    "statsLevelValue": "Liv. {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "Riprendi da dove eri rimasto",
+    "continuePracticeBody": "{{skill}} — {{answered}} di {{total}} risposte",
+    "achievementsTitle": "Traguardi"
+  },
+  "progressPage": {
+    "title": "I tuoi progressi",
+    "subtitle": "Come è andato il tuo esercizio quotidiano questa settimana.",
+    "loading": "Caricamento dei progressi…",
+    "loadError": "Impossibile caricare i progressi. Riprova.",
+    "todaysReport": "Report di oggi",
+    "questions": "Domande",
+    "accuracy": "Precisione",
+    "minutes": "Minuti",
+    "moreThanYesterday_one": "{{count}} domanda in più di ieri",
+    "moreThanYesterday_other": "{{count}} domande in più di ieri",
+    "lessThanYesterday_one": "{{count}} domanda in meno di ieri",
+    "lessThanYesterday_other": "{{count}} domande in meno di ieri",
+    "sameAsYesterday": "Come ieri: continua così",
+    "firstDayBack": "Bene, oggi sei di nuovo all'opera!",
+    "dailyChartTitle": "Ultimi 7 giorni",
+    "today": "Oggi",
+    "questionsThisWeek_one": "{{count}} domanda questa settimana",
+    "questionsThisWeek_other": "{{count}} domande questa settimana",
+    "bestDay": "Giorno migliore: {{day}}",
+    "bestDayBadge": "Giorno migliore della settimana"
+  },
+  "modules": {
+    "title": "Moduli di esercizio",
+    "subtitle": "Scegli un'abilità da allenare: i contenuti si adattano, così non rivedrai gli stessi esercizi finché non li avrai fatti tutti.",
+    "loadingAvailability": "Caricamento dei moduli…",
+    "remainingItems": "Restano {{count}} esercizi su {{total}}",
+    "allDone": "Per ora hai completato tutto in questa sezione: torna quando verranno aggiunti nuovi contenuti.",
+    "start": "Inizia",
+    "backToSkills": "Torna alle abilità",
+    "pickTypeSubtitle": "Scegli un tipo di domanda da allenare.",
+    "starting": "Avvio della sessione…",
+    "startError": "Qualcosa è andato storto nell'avvio della sessione. Riprova.",
+    "sessionComplete": "Ottimo lavoro!",
+    "practiceAgain": "Esercitati di nuovo",
+    "backToDashboard": "Torna alla dashboard",
+    "startReading": "Inizia a leggere",
+    "passageHidden": "Il testo ora è nascosto: riscrivilo con parole tue.",
+    "backToTypes": "Torna ai tipi di domanda",
+    "pickUnitTitle": "Scegli un'unità da allenare.",
+    "unitComplete": "Tutti i set completati",
+    "setsProgress": "{{done}} set su {{total}} completati",
+    "backToUnits": "Torna alle unità",
+    "setCompleted": "Completato",
+    "startPractice": "Inizia l'esercizio",
+    "typeDesc": {
+      "reading": "Leggi la frase ad alta voce, in modo naturale e chiaro.",
+      "repeats": "Ascolta una volta, poi ripeti esattamente.",
+      "sentence_builds": "Riordina le parole in una frase corretta.",
+      "conversations": "Ascolta un dialogo e rispondi a domande su di esso.",
+      "reading_selective": "Leggi e individua le informazioni chiave.",
+      "short_answer": "Rispondi a una domanda veloce in poche parole.",
+      "passage_comprehension": "Ascolta un brano e rispondi a domande su di esso.",
+      "speaking_situations": "Rispondi in modo naturale a una situazione reale.",
+      "story_retelling": "Ascolta una storia e raccontala con parole tue.",
+      "open_questions": "Esprimi liberamente la tua opinione a voce.",
+      "dictation": "Scrivi esattamente ciò che senti.",
+      "response_selection": "Scegli la risposta corretta tra le opzioni.",
+      "passage_reconstruction": "Leggilo, poi ricostruiscilo a memoria.",
+      "summary_and_opinion": "Riassumi un brano e dai la tua opinione.",
+      "reading_comprehension": "Leggi un brano e rispondi alle domande.",
+      "sentence_completion": "Completa con la parola o l'espressione mancante.",
+      "typing": "Un breve riscaldamento di digitazione.",
+      "email_writing": "Scrivi una breve email realistica."
+    }
+  },
+  "faceCheck": {
+    "back": "Indietro",
+    "enroll": {
+      "title": "Configura la verifica del volto",
+      "success": "Volto acquisito",
+      "proceed": "Continua",
+      "subtitle": "È una configurazione una tantum. Useremo questa foto per confermare che sei tu prima di ogni simulazione, modulo e test di prova.",
+      "successSubtitle": "Configurazione completata. Ora vedrai le istruzioni prima dell'inizio della simulazione."
+    },
+    "verify": {
+      "title": "Controllo rapido del volto",
+      "success": "Volto verificato",
+      "proceed": "Continua",
+      "mismatchError": "Il volto non corrisponde alla foto registrata. Riprova.",
+      "subtitle": {
+        "placement": "Confermiamo che sei tu prima dell'inizio della simulazione.",
+        "practice": "Confermiamo che sei tu prima di questa sessione di esercizio.",
+        "practice_test": "Confermiamo che sei tu prima di questo test di prova."
+      },
+      "successSubtitle": "Identità confermata. Passiamo al test."
+    },
+    "record": {
+      "capture": "Scatta",
+      "checking": "Verifica...",
+      "cameraError": "Impossibile accedere alla fotocamera. Controlla i permessi e riprova.",
+      "error": "Qualcosa è andato storto. Riprova.",
+      "tooShort": "Non siamo riusciti a vedere bene il tuo volto. Riprova."
+    },
+    "fallback": {
+      "otpButton": "Inviami un codice via email",
+      "otpSending": "Invio…",
+      "otpSentNotice": "Codice inviato: controlla la tua email.",
+      "otpPlaceholder": "Codice a 6 cifre",
+      "otpVerify": "Verifica codice",
+      "otpVerifying": "Verifica…",
+      "otpResend": "Invia di nuovo il codice",
+      "otpSuccess": "Codice verificato",
+      "otpSendError": "Qualcosa è andato storto nell'invio del codice. Riprova.",
+      "otpInvalidError": "Il codice non è valido. Controllalo e riprova."
+    },
+    "enrollmentConsent": {
+      "title": "Configura la verifica del volto",
+      "subtitle": "Ci aiuta a confermare che sei davvero tu a fare il test.",
+      "body": "Scatteremo una foto del tuo volto come riferimento per la verifica dell'identità. Questa foto e le scansioni del volto servono a confermare la tua identità prima e periodicamente durante i test di piazzamento e le sessioni di esercizio (Moduli), non solo una volta all'inizio. Conservata in modo sicuro e usata solo per questo scopo.",
+      "checkboxLabel": "Ho capito e acconsento alla verifica dell'identità tramite volto, inclusi controlli periodici durante test ed esercizi.",
+      "submit": "Continua",
+      "decline": "Non ora"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "Studente",
+      "it_engineering": "IT / Ingegneria",
+      "customer_support": "Assistenza clienti",
+      "sales_marketing": "Vendite / Marketing",
+      "healthcare": "Sanità",
+      "education": "Istruzione",
+      "finance": "Finanza",
+      "operations": "Operazioni",
+      "management": "Management",
+      "other": "Altro"
+    },
+    "gender": {
+      "female": "Donna",
+      "male": "Uomo",
+      "non_binary": "Non binario",
+      "prefer_not": "Preferisco non dirlo"
+    },
+    "ageBand": {
+      "under_18": "Meno di 18"
+    }
+  },
+  "plans": {
+    "title": "Piani",
+    "onFree": "Stai usando il piano gratuito.",
+    "activeUntil": "Accesso completo attivo fino al {{date}}.",
+    "orgManaged": "Il tuo accesso è gestito dalla tua organizzazione: chiedi al tuo admin o manager.",
+    "unavailable": "I piani non sono disponibili al momento. Riprova più tardi.",
+    "payError": "Impossibile avviare il pagamento. Riprova.",
+    "free": {
+      "name": "Gratuito",
+      "usage": "{{used}} di {{limit}} sessioni gratuite usate questa settimana."
+    },
+    "full": {
+      "name": "Accesso completo",
+      "perMonth": "{{price}} al mese"
+    },
+    "features": {
+      "placementOnce": "Un test di piazzamento",
+      "placementUnlimited": "Ripetizione del test di piazzamento",
+      "practiceLimited": "{{count}} sessioni di esercizio a settimana",
+      "practiceUnlimited": "Esercizio illimitato in tutti i moduli",
+      "progress": "Report dei progressi e percorso",
+      "mockTests": "Simulazioni complete",
+      "tutor": "Tutor di conversazione IA"
+    },
+    "months_one": "{{count}} mese",
+    "months_other": "{{count}} mesi",
+    "total": "Totale",
+    "startNote": "L'accesso inizia appena il pagamento è confermato.",
+    "extendNote": "Aggiunto dopo la scadenza dell'accesso attuale, il {{date}}.",
+    "testMode": "Modalità di prova: il pagamento è simulato, nessun addebito reale.",
+    "buy_one": "Acquista {{count}} mese",
+    "buy_other": "Acquista {{count}} mesi",
+    "extend_one": "Prolunga di {{count}} mese",
+    "extend_other": "Prolunga di {{count}} mesi",
+    "redirecting": "Apertura del pagamento…",
+    "invoices": "Fatture",
+    "upgrade": "Vedi i piani",
+    "locked": {
+      "mocktest": "Le simulazioni fanno parte dell'accesso completo.",
+      "coach": "Il tutor IA fa parte dell'accesso completo.",
+      "placement": "Hai già fatto il test di piazzamento gratuito. Le ripetizioni fanno parte dell'accesso completo.",
+      "practice": "Hai usato le tue {{limit}} sessioni gratuite di questa settimana. Si rinnovano ogni 7 giorni, oppure passa all'accesso completo per esercitarti senza limiti."
+    },
+    "lockedTitle": "Passa al piano completo per continuare"
+  }
+}

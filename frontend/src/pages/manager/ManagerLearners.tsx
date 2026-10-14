@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { UserPlus, X, Mail, Upload, FileText } from "lucide-react";
+import { FollowUpPanel } from "@/components/FollowUpPanel";
+import { UserPlus, X, Mail, Upload, FileText, ArrowRightLeft } from "lucide-react";
+import { MoveLearnerModal } from "@/components/MoveLearnerModal";
+import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
+import { AssignLicenseModal } from "@/components/licenses/AssignLicenseModal";
+import { getManagerLicenseOverview, managerAssignLicenses, type BatchBudget, type ManagerPool } from "@/api/licenses";
+import { RequestLicenseChangeModal } from "@/components/licenses/RequestLicenseChangeModal";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { getManagerOverview } from "@/api/manager";
@@ -7,6 +13,7 @@ import {
   getManagerLearners,
   managerOnboardLearner,
   managerOnboardLearnersBulk,
+  managerMoveLearner,
 } from "@/api/manager";
 import type { OrgLearner, BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
 
@@ -271,12 +278,24 @@ export function ManagerLearners() {
   const [error, setError] = useState<string | null>(null);
   const [showOnboard, setShowOnboard] = useState(false);
   const [justInvited, setJustInvited] = useState<string | null>(null);
+  const [movingLearner, setMovingLearner] = useState<OrgLearner | null>(null);
+  const [assigning, setAssigning] = useState<OrgLearner | null>(null);
+  const [returning, setReturning] = useState<OrgLearner | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [budgets, setBudgets] = useState<BatchBudget[]>([]);
+  const [myPool, setMyPool] = useState<ManagerPool | undefined>(undefined);
 
   function load() {
     getManagerLearners()
       .then((res) => setLearners(res.learners))
       .catch(() => setError("Could not load learners."));
     getManagerOverview().then((res) => setBatches(res.batches));
+    getManagerLicenseOverview()
+      .then((res) => {
+        setBudgets(res.batches);
+        setMyPool(res.myPool);
+      })
+      .catch(() => {});
   }
 
   useEffect(load, []);
@@ -303,6 +322,8 @@ export function ManagerLearners() {
         </Button>
       </div>
 
+      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
+
       {justInvited && (
         <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
           Invite sent to {justInvited} — they'll receive an email to set their password.
@@ -313,6 +334,8 @@ export function ManagerLearners() {
       {!learners && !error && <p className="text-sm text-muted">Loading…</p>}
       {learners?.length === 0 && <p className="text-sm text-muted">No learners yet.</p>}
 
+      <FollowUpPanel />
+
       {learners && learners.length > 0 && (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
           <table className="w-full text-sm">
@@ -321,7 +344,9 @@ export function ManagerLearners() {
                 <th className="px-4 py-3">Learner</th>
                 <th className="px-4 py-3">Batch</th>
                 <th className="px-4 py-3">Sessions completed</th>
+                <th className="px-4 py-3">License</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
@@ -334,16 +359,47 @@ export function ManagerLearners() {
                       </span>
                       <div className="min-w-0">
                         <p className="text-ink font-medium truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
-                        <p className="text-muted text-xs truncate">{l.email}</p>
+                        <p className="text-muted text-xs truncate">
+                          {l.participantId ? `${l.participantId} · ` : ""}
+                          {l.email}
+                        </p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-muted">{l.batchName ?? "—"}</td>
                   <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
+                  <td className="px-4 py-3">{l.license && <LicenseStatusPill license={l.license} />}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
                       {l.active ? "Active" : "Deactivated"}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {l.license && l.license.queuedMonths > 0 && (
+                      <button
+                        onClick={() => setReturning(l)}
+                        title="Ask your Org Admin to return this learner's unused months to the pool"
+                        className="text-xs font-semibold text-muted hover:text-error cursor-pointer mr-2"
+                      >
+                        Request unassign
+                      </button>
+                    )}
+                    <Button
+                      variant={l.license && (l.license.status === "active" || l.license.status === "grace") ? "secondary" : "primary"}
+                      onClick={() => setAssigning(l)}
+                      disabled={!l.active}
+                      className="!px-3 !py-1.5 !text-xs mr-1"
+                    >
+                      {l.license && (l.license.status === "active" || l.license.status === "grace") ? "Extend" : "Assign"}
+                    </Button>
+                    <button
+                      onClick={() => setMovingLearner(l)}
+                      disabled={batches.length < 2}
+                      title={batches.length < 2 ? "You only manage one batch" : "Move to another batch"}
+                      className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <ArrowRightLeft size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -359,6 +415,55 @@ export function ManagerLearners() {
           onCreated={(email) => {
             setShowOnboard(false);
             setJustInvited(email);
+            load();
+          }}
+        />
+      )}
+
+      {assigning && assigning.license && (
+        <AssignLicenseModal
+          learnerName={[assigning.firstName, assigning.lastName].filter(Boolean).join(" ") || assigning.email}
+          license={assigning.license}
+          poolHint={(() => {
+            const b = budgets.find((x) => x.batchId === assigning.batchId);
+            const pool = myPool?.allotment != null ? `${myPool.remaining} left in your pool` : "no pool allotted to you yet";
+            if (b && b.budget !== null && (b.remaining ?? 0) > 0) return `Uses ${b.batchName}'s fixed licenses first (${b.remaining} left), then your pool (${pool}).`;
+            return `Uses your pool — ${pool}.`;
+          })()}
+          onAssign={(months) => managerAssignLicenses(assigning.id, months)}
+          onClose={() => setAssigning(null)}
+          onDone={() => {
+            setAssigning(null);
+            load();
+          }}
+        />
+      )}
+
+      {returning && returning.license && (
+        <RequestLicenseChangeModal
+          batches={budgets}
+          learner={{
+            id: returning.id,
+            name: [returning.firstName, returning.lastName].filter(Boolean).join(" ") || returning.email,
+            queuedMonths: returning.license.queuedMonths,
+          }}
+          onClose={() => setReturning(null)}
+          onSent={() => {
+            setReturning(null);
+            setNotice("Unassign request sent to your Org Admin.");
+          }}
+        />
+      )}
+
+      {movingLearner && (
+        <MoveLearnerModal
+          learnerName={[movingLearner.firstName, movingLearner.lastName].filter(Boolean).join(" ") || movingLearner.email}
+          currentBatchName={movingLearner.batchName}
+          batches={batches}
+          onMove={(batchId, reason) => managerMoveLearner(movingLearner.id, batchId, reason)}
+          onClose={() => setMovingLearner(null)}
+          onMoved={() => {
+            setMovingLearner(null);
             load();
           }}
         />

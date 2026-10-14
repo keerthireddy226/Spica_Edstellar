@@ -1,8 +1,11 @@
 import { z } from "zod";
+import { assertWithinLimit } from "../plans/service.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { createAndInviteUser } from "../auth/invite.js";
+import { moveLearnerSchema, moveLearnerToBatch } from "../batches/moveLearner.js";
+import { learnerAccessMap } from "../licenses/service.js";
 
 export const managerRouter = Router();
 
@@ -71,7 +74,7 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
     const batchIds = await assignedBatchIds(req.user!.id);
     if (batchIds.length === 0) return res.json({ learners: [] });
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, b.name AS batch_name,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, u.batch_id, b.name AS batch_name,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        LEFT JOIN batches b ON b.id = u.batch_id
@@ -81,16 +84,20 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
        ORDER BY u.created_at DESC`,
       [batchIds],
     );
+    const access = await learnerAccessMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
+        participantId: r.participant_id ?? null,
         email: r.email,
         firstName: r.first_name,
         lastName: r.last_name,
+        batchId: r.batch_id,
         batchName: r.batch_name,
         sessionCount: r.session_count,
         active: !r.deleted_at,
         createdAt: r.created_at,
+        license: access.get(r.id),
       })),
     });
   } catch (err) {
@@ -175,6 +182,66 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
     }
 
     res.status(201).json({ results });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A Manager can only shift learners between batches they themselves manage —
+// both the learner's current batch and the target must be theirs.
+managerRouter.post("/learners/:id/move", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const body = moveLearnerSchema.parse(req.body);
+    const batchIds = await assignedBatchIds(req.user!.id);
+    if (!batchIds.includes(body.batchId)) return res.status(400).json({ error: "invalid_batch" });
+    const learner = await pool.query(
+      `SELECT 1 FROM users WHERE id = $1 AND role = 'learner' AND batch_id = ANY($2::uuid[])`,
+      [req.params.id, batchIds],
+    );
+    if (learner.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
+    const result = await moveLearnerToBatch({ learnerId: String(req.params.id), toBatchId: body.batchId, movedBy: req.user!.id, reason: body.reason });
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Managers can create their own batches. They're automatically its Manager,
+// and it has no fixed allotment — licenses come from the Manager's own pool.
+const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+
+managerRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const body = z
+      .object({
+        name: z.string().trim().min(1).max(200),
+        durationMonths: z.coerce.number().int().positive().optional(),
+        startDate: z.string().optional(),
+        startCefr: z.enum(CEFR).optional(),
+        targetCefr: z.enum(CEFR).optional(),
+      })
+      .parse(req.body);
+    await assertWithinLimit(req.user!.tenantId!, "batches");
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const batch = await client.query(
+        `INSERT INTO batches (tenant_id, name, duration_months, start_date, start_cefr, target_cefr, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [req.user!.tenantId, body.name, body.durationMonths ?? null, body.startDate || null, body.startCefr ?? null, body.targetCefr ?? null, req.user!.id],
+      );
+      await client.query(`INSERT INTO batch_managers (batch_id, user_id) VALUES ($1, $2)`, [batch.rows[0].id, req.user!.id]);
+      await client.query("COMMIT");
+      res.status(201).json({ id: batch.rows[0].id });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     next(err);
   }

@@ -1,0 +1,732 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "仪表板",
+      "admins": "管理员",
+      "orgAdmins": "组织管理员",
+      "learners": "个人学员"
+    }
+  },
+  "skills": {
+    "listening": "听力",
+    "speaking": "口语",
+    "reading": "阅读",
+    "writing": "写作"
+  },
+  "auth": {
+    "login": {
+      "title": "欢迎回来",
+      "subtitle": "登录以继续练习。",
+      "emailLabel": "邮箱",
+      "passwordLabel": "密码",
+      "submit": "登录",
+      "submitting": "正在登录…",
+      "errorInvalidCredentials": "邮箱或密码错误。",
+      "errorEmailNotVerified": "请先验证邮箱再登录——请在收件箱中查找验证链接。",
+      "errorWrongPortal": "此账号无法通过此页面登录。",
+      "errorAlreadyLoggedIn": "此账号已在其他设备上登录。请先在该设备上退出。",
+      "errorOrganizationDeactivated": "该组织已被停用。请联系你的管理员。",
+      "errorTooManyAttempts": "登录尝试次数过多。请等待几分钟后重试。",
+      "errorGeneric": "出了点问题。请检查网络连接后重试。",
+      "forgotPassword": "忘记密码？",
+      "createAccount": "创建账号"
+    },
+    "signup": {
+      "title": "创建你的账号",
+      "subtitle": "几秒钟即可开始练习。",
+      "firstNameLabel": "名",
+      "lastNameLabel": "姓",
+      "emailLabel": "邮箱",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "至少 8 个字符",
+      "confirmPasswordLabel": "确认密码",
+      "confirmPasswordPlaceholder": "再次输入密码",
+      "passwordTooShort": "密码至少需要 8 个字符。",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "submit": "注册",
+      "submitting": "正在创建账号…",
+      "errorEmailTaken": "该邮箱已注册账号。",
+      "errorGeneric": "出了点问题。请重试。",
+      "alreadyHaveAccount": "已有账号？",
+      "signIn": "登录",
+      "checkEmailTitle": "请查收邮件",
+      "checkEmailBody": "我们已向 {{email}} 发送验证链接。验证后请登录以继续。",
+      "signInButton": "登录"
+    },
+    "forgotPassword": {
+      "title": "重置密码",
+      "subtitle": "我们会通过邮件发送设置新密码的链接。",
+      "submitted": "如果该邮箱已注册账号，重置链接正在发送中。",
+      "emailLabel": "邮箱",
+      "submit": "发送重置链接",
+      "submitting": "正在发送…",
+      "backToSignIn": "返回登录"
+    },
+    "resetPassword": {
+      "title": "设置新密码",
+      "subtitle": "至少 8 个字符。",
+      "missingTokenTitle": "重置密码",
+      "missingTokenSubtitle": "此链接缺少令牌。",
+      "requestNewLink": "申请新链接",
+      "passwordLabel": "新密码",
+      "passwordPlaceholder": "至少 8 个字符",
+      "confirmPasswordLabel": "确认新密码",
+      "confirmPasswordPlaceholder": "再次输入密码",
+      "passwordTooShort": "密码至少需要 8 个字符。",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "submit": "重置密码",
+      "submitting": "正在保存…",
+      "error": "此链接无效或已过期。"
+    },
+    "verifyEmail": {
+      "title": "邮箱验证",
+      "pending": "正在验证…",
+      "success": "你的邮箱已验证。请登录以继续。",
+      "signInButton": "登录",
+      "error": "此验证链接无效或已过期。"
+    }
+  },
+  "onboarding": {
+    "title": "欢迎开始设置",
+    "logout": "退出登录",
+    "wizard": {
+      "stepLabel": "{{current}} / {{total}}",
+      "back": "返回",
+      "next": "下一步",
+      "basics": {
+        "title": "认识一下你",
+        "subtitle": "邮箱已根据你的登录信息填写",
+        "firstNameLabel": "名",
+        "firstNamePlaceholder": "输入你的名",
+        "lastNameLabel": "姓",
+        "lastNamePlaceholder": "输入你的姓",
+        "emailLabel": "邮箱",
+        "emailNote": "已根据你的账号填写"
+      },
+      "examGoal": {
+        "examTitle": "你在备考哪项考试？",
+        "examSubtitle": "我们会根据考试形式定制练习",
+        "goalTitle": "你的目标等级或分数是多少？",
+        "goalSubtitle": "你在这项考试中的目标",
+        "scoreTargetLabel": "具体目标分数（可选）",
+        "scoreTargetPlaceholder": "例如：IELTS 7.0、Versant 69+、PTE 65",
+        "exam": {
+          "versantDesc": "口语、写作、分级测试、职场",
+          "ieltsDesc": "学术类或培训类",
+          "toeflDesc": "网考",
+          "pteDesc": "Pearson 机考",
+          "other": "其他 / 通用",
+          "otherDesc": "整体提升英语水平"
+        },
+        "goal": {
+          "A1": "A1 – 入门",
+          "A1Desc": "简单词汇和日常用语",
+          "A2": "A2 – 初级",
+          "A2Desc": "简单句子，轻松对话",
+          "B1": "B1 – 中级",
+          "B1Desc": "应对大多数旅行和工作场景",
+          "B2": "B2 – 中高级",
+          "B2Desc": "流利对话，阅读详细文本",
+          "C1": "C1 – 高级",
+          "C1Desc": "复杂话题，言外之意",
+          "C2": "C2 – 精通",
+          "C2Desc": "接近母语的准确与流利",
+          "unsure": "还不确定",
+          "unsureDesc": "让分级测试帮你决定"
+        }
+      },
+      "reasonTimeline": {
+        "reasonTitle": "你为什么参加这项考试？",
+        "reasonSubtitle": "这能帮助我们根据你的实际需求定制内容",
+        "reason": {
+          "university": "大学申请",
+          "job": "雇主要求",
+          "immigration": "移民",
+          "promotion": "升职或职业发展",
+          "personal": "个人目标"
+        },
+        "appliedTitle": "你已经报名考试了吗？",
+        "appliedSubtitle": "我们会根据你的截止日期安排练习",
+        "appliedYes": "是的，考试日期已确定",
+        "appliedNo": "还没有",
+        "examDateLabel": "你的考试日期是？",
+        "prepDaysLabel": "你想准备多少天？",
+        "prepDaysPlaceholder": "例如：30",
+        "days": "天"
+      },
+      "attemptsCommitment": {
+        "attemptsTitle": "你之前参加过这项考试吗？",
+        "attemptsSubtitle": "这能帮助我们了解你的起点",
+        "attempts": {
+          "first": "没有，这是我第一次考",
+          "once": "是的，考过一次",
+          "multiple": "是的，考过多次"
+        },
+        "prevScoreLabel": "你之前的成绩是？",
+        "prevScorePlaceholder": "例如：B1、5.5、58",
+        "prevDateLabel": "你上次考是什么时候？",
+        "prevDatePlaceholder": "例如：2026 年 3 月、6 个月前",
+        "timeTitle": "你每天能投入多少时间？",
+        "timeSubtitle": "量力而行——坚持比强度更重要",
+        "time": {
+          "min15": "15 分钟",
+          "min15Desc": "每日快速练习",
+          "min30": "30 分钟",
+          "min30Desc": "稳步提升",
+          "min60": "1 小时",
+          "min60Desc": "认真备考",
+          "min90": "90 分钟以上",
+          "min90Desc": "高强度沉浸学习"
+        }
+      },
+      "duration": {
+        "title": "你需要多长时间的使用权限？",
+        "subtitle": "选择适合你时间安排的方案",
+        "oneMonth": "1 个月",
+        "oneMonthDesc": "短期冲刺",
+        "threeMonths": "3 个月",
+        "threeMonthsDesc": "均衡备考",
+        "sixMonths": "6 个月",
+        "sixMonthsDesc": "全面、稳定地学习",
+        "untilExam": "直到我的考试日期",
+        "untilExamDesc": "根据你的考试日期计算"
+      },
+      "consent": {
+        "title": "继续之前",
+        "subtitle": "练习和测试期间会录制你的声音",
+        "body": "我们会录制你的口语回答，用于评估口语并提供反馈。录音只保存有限时间，仅用于评估和提升你的成绩。你可以随时在设置中删除你的数据。",
+        "checkboxLabel": "我理解并同意在练习和测试期间录制我的声音。",
+        "submit": "前往测试",
+        "submitting": "正在保存…",
+        "error": "保存回答时出现问题。请重试。"
+      },
+      "about": {
+        "title": "关于你",
+        "subtitle": "这能帮助我们根据你的情况定制练习。",
+        "countryLabel": "国家/地区",
+        "cityLabel": "城市",
+        "cityPlaceholder": "例如：上海",
+        "jobRoleLabel": "职业",
+        "genderLabel": "性别（可选）",
+        "ageLabel": "年龄（可选）",
+        "select": "请选择…",
+        "skip": "不愿透露",
+        "consent": "我同意存储我的性别和年龄段，且仅用于匿名的汇总报告。",
+        "privacyNote": "性别和年龄为可选项。它们不会向其他学员显示，仅在 5 人及以上的群组中汇总报告。"
+      }
+    }
+  },
+  "placement": {
+    "title": "一切就绪！",
+    "subtitle": "设置已完成——现在开始分级测试。",
+    "scheduleLater": "稍后安排",
+    "scheduling": "正在发送…",
+    "scheduleSent": "我们已通过邮件向你发送提醒链接。",
+    "scheduleLaterError": "发送提醒时出现问题。请重试。",
+    "info": {
+      "timing": "限时测试——请预留约 15–20 分钟",
+      "covers": "涵盖口语、听力、阅读和写作",
+      "graded": "本测试会评分，并录制你的声音用于评估——请独立、诚实作答，不要借助外部帮助。",
+      "equipment": "请准备好耳机和麦克风"
+    },
+    "instructions": {
+      "checkboxLabel": "我已阅读说明并准备就绪。",
+      "begin": "开始测试"
+    },
+    "resume": {
+      "title": "从上次中断处继续",
+      "subtitle": "你已在本测试中回答了 {{count}} 道题——继续作答即可保留进度。",
+      "continue": "继续测试"
+    }
+  },
+  "placementTest": {
+    "typeIntroStart": "开始",
+    "loading": "正在加载测试…",
+    "loadError": "加载测试时出现问题。请重试。",
+    "micError": "无法访问你的麦克风。请允许麦克风权限后重试。",
+    "progress": "{{current}} / {{total}}",
+    "play": "播放音频",
+    "playAgain": "再次播放",
+    "replay": "重播",
+    "playing": "正在播放…",
+    "record": "录制回答",
+    "recordAgain": "重新录制",
+    "audioSaved": "录音已保存",
+    "stopRecording": "停止录音",
+    "skip": "跳过",
+    "exitConfirm": "现在退出测试？本题的进度将不会保存。",
+    "answerPlaceholder": "在此输入你的答案…",
+    "submitting": "正在提交…",
+    "next": "下一题",
+    "finish": "完成",
+    "submitError": "提交答案时出现问题。请重试。",
+    "resultsTitle": "测试完成",
+    "resultsSummary": "在 {{graded}} 道自动评分的题目中，你答对了 {{correct}} 道。还有 {{pending}} 个回答等待评分。",
+    "done": "完成",
+    "yourLevel": "你的预估等级：{{level}}",
+    "levelDisclaimer": "这是我们根据测试做出的 CEFR 对标评估，并非官方成绩。",
+    "pendingNote": "你还有 {{pending}} 个回答需要评分后才会计入等级。",
+    "goToRoadmap": "查看学习计划",
+    "notEnoughAnswered": "作答数量不足",
+    "gapCappedNote": "部分等级未经测试——你的实际水平可能更高。",
+    "failedNote": "由于评分服务暂时出现问题，你有 {{failed}} 个回答无法评分——这与你的回答无关。请稍后重试。"
+  },
+  "roadmap": {
+    "loading": "正在加载学习计划…",
+    "loadError": "加载学习计划时出现问题。请重试。",
+    "pendingReviewBanner": "作为身份核验的一部分，你的分级测试结果正在审核中。在此期间你可以使用下方的所有功能。",
+    "notReadyTitle": "你的学习计划尚未生成",
+    "notReadyBody": "完成分级测试即可获得个性化计划。",
+    "notReadyBodyScheduled": "你已将分级测试安排在 {{date}}。准备好后即可参加——完成后会立即生成学习计划。",
+    "takeTestNow": "参加分级测试",
+    "greeting": "你好，{{name}}",
+    "currentLevel": "当前等级",
+    "goalLevel": "目标",
+    "daysLeftLabel": "剩余天数",
+    "skillBreakdownTitle": "技能详情",
+    "timelineTitle": "你的学习计划",
+    "milestoneReach": "达到 {{level}}",
+    "milestoneMaintain": "保持你的等级",
+    "dayOffset": "第 {{day}} 天",
+    "focusOn": "重点：{{skill}}",
+    "welcomeBack": "欢迎回来",
+    "goalProgress": "目标进度",
+    "ofYourRoadmap": "（学习计划总进度）",
+    "streak": "连续打卡",
+    "streakDays_other": "{{count}} 天",
+    "startStreakToday": "今天就开始连续打卡吧。",
+    "keepStreakGoing": "继续保持！",
+    "today": "今天",
+    "practicedSoFar": "已练习",
+    "accuracy": "正确率",
+    "practiceToUnlock": "练习后解锁",
+    "practiceAccuracy": "练习正确率",
+    "strongest": "最强",
+    "notTested": "尚未测试",
+    "gapCappedNote": "部分等级未经测试——你的实际水平可能更高。"
+  },
+  "dashboard": {
+    "welcome": "欢迎，{{email}}",
+    "role": "角色：{{role}}",
+    "placeholder": "这是临时页面——正式的仪表板（等级、计划进度、连续打卡、徽章）将在后续阶段推出。"
+  },
+  "nav": {
+    "roadmap": "学习计划",
+    "overview": "概览",
+    "progress": "进度",
+    "modules": "模块",
+    "practiceTests": "模拟考试",
+    "tutor": "导师",
+    "profile": "个人资料"
+  },
+  "shell": {
+    "openMenu": "打开菜单",
+    "toggleTheme": "切换主题"
+  },
+  "practiceTests": {
+    "subtitle": "与真实 Versant 考试一致的完整限时模拟考试。",
+    "comingSoon": "即将推出",
+    "setsCount": "{{count}} 套",
+    "setsCount_other": "{{count}} 套",
+    "questionsCount": "{{count}} 道题",
+    "questionsCount_other": "{{count}} 道题",
+    "completed": "已完成",
+    "startExam": "开始",
+    "retake": "重新考试",
+    "backToProducts": "返回考试列表",
+    "backToExams": "返回套题列表",
+    "loadError": "暂时无法加载。请重试。",
+    "saveAndNext": "保存并继续",
+    "sectionLabel": "第 {{current}} / {{total}} 部分 — {{label}}",
+    "youHear": "你听到",
+    "youSay": "你说",
+    "playsRemaining": "剩余 {{count}} 次播放",
+    "playsRemaining_other": "剩余 {{count}} 次播放",
+    "scoreReport": {
+      "title": "考试完成",
+      "overall": "总分",
+      "sectionResults": "各部分成绩",
+      "testType": "考试",
+      "skippedNote": "有 {{count}} 道题被跳过或未作答，不会影响你的等级。",
+      "skippedNote_other": "有 {{count}} 道题被跳过或未作答，不会影响你的等级。"
+    },
+    "overview": {
+      "title": "开始之前",
+      "subtitle": "本考试分为多个部分，每个部分有不同的题型。",
+      "begin": "开始考试",
+      "startSection": "开始{{label}}"
+    },
+    "versantProduct": {
+      "speakingListeningDesc": "口语和听力——17 分钟。",
+      "fourSkillsDesc": "口语、听力、阅读、写作——30 分钟。",
+      "writingDesc": "英语写作——35 分钟。",
+      "professionalDesc": "口语、听力、阅读、写作——60 分钟。",
+      "placementDesc": "口语、听力、阅读、写作——50 分钟。"
+    }
+  },
+  "tutor": {
+    "subtitle": "与你的 AI 教练轻松进行对话练习。",
+    "inputPlaceholder": "输入你的回复…",
+    "loading": "正在开始对话…",
+    "typing": "正在输入…",
+    "sendError": "发送时出现问题。请重试。",
+    "newConversation": "新对话",
+    "newConversationConfirm": "开始新对话？当前对话将结束。"
+  },
+  "profile": {
+    "account": {
+      "unnamed": "你的账号",
+      "individual": "个人"
+    },
+    "language": {
+      "title": "语言"
+    },
+    "voice": {
+      "title": "语音",
+      "subtitle": "选择在测试和练习中朗读题目的声音。",
+      "loading": "正在加载语音设置…",
+      "female": "女声",
+      "male": "男声",
+      "preview": "试听此声音",
+      "previewLine": "你的题目将会这样朗读。",
+      "saved": "已保存——之后将使用此声音。"
+    },
+    "plan": {
+      "title": "考试目标",
+      "loading": "正在加载你的计划…",
+      "notSet": "未设置",
+      "exam": "考试",
+      "currentToGoal": "当前 → 目标",
+      "examDateLabel": "考试日期",
+      "accessDaysLeft": "剩余使用天数"
+    },
+    "personalInfo": {
+      "title": "个人信息",
+      "edit": "编辑",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "邮箱地址",
+      "accountType": "账号类型",
+      "save": "保存",
+      "saving": "正在保存…",
+      "cancel": "取消",
+      "participantId": "学员编号"
+    },
+    "preferences": {
+      "title": "偏好设置",
+      "spokenPrompts": {
+        "title": "语音提示",
+        "subtitle": "练习时朗读听力题的说明。"
+      },
+      "weeklyReports": {
+        "title": "每周进度报告",
+        "subtitle": "通过邮件接收你的学习活动摘要。"
+      },
+      "strictTimer": {
+        "title": "严格计时模式",
+        "subtitle": "在限时练习中禁用暂停。"
+      }
+    },
+    "about": {
+      "title": "关于你",
+      "gender": "性别",
+      "age": "年龄",
+      "notShared": "未填写",
+      "error": "无法保存。请重试。"
+    },
+    "access": {
+      "title": "你的使用权限",
+      "activeUntil": "有效期至 {{date}}",
+      "grace": "已到期——宽限期至 {{date}}",
+      "expired": "已于 {{date}} 到期",
+      "none": "尚未分配许可证",
+      "queued_other": "包含已分配的额外 {{count}} 个月",
+      "help": "你的使用权限由所在组织管理。如需延期，请联系管理员或经理。"
+    },
+    "reminder": {
+      "title": "每日练习提醒",
+      "on": "开",
+      "off": "关",
+      "subtitle": "我们会在所选日期的这个时间给你发邮件——如果当天已练习，则自动跳过。",
+      "time": "时间",
+      "streakAlert": "如果我的连续打卡（3 天以上）即将中断，也在晚上 10 点提醒我",
+      "error": "无法保存。请重试。",
+      "savedOn": "已保存——将在 {{time}} 提醒。",
+      "savedOff": "已保存——提醒已关闭。",
+      "days": {
+        "sun": "日",
+        "mon": "一",
+        "tue": "二",
+        "wed": "三",
+        "thu": "四",
+        "fri": "五",
+        "sat": "六"
+      }
+    }
+  },
+  "heroTagline": {
+    "low": "每个计划都从 0% 开始。你已经领先一步了。",
+    "mid": "你已不在起点。继续前进。",
+    "high": "终点就在眼前。"
+  },
+  "motivational": {
+    "line1": "每天练习 15 分钟，胜过每周一次练 2 小时。",
+    "line2": "大声说出来——哪怕是对自己说——是通往流利的最快途径。",
+    "line3": "练习中犯的每个错误，都会让考试时少犯一个错。",
+    "line4": "坚持胜过强度——每天一点点，很快就会积少成多。",
+    "line5": "你不需要完美，只需要坚持下去。",
+    "line6": "每位专家都曾是没有放弃的初学者。",
+    "line7": "今天的小步伐，成就明天的大自信。",
+    "line8": "今天多练习，考试那天就像平常一样。",
+    "line9": "练习的最佳时间是昨天，其次是现在。"
+  },
+  "achievement": {
+    "goalSetterTitle": "目标设定者",
+    "goalSetterBody": "设定你的目标等级和学习计划。"
+  },
+  "recommendedPractice": {
+    "title": "为你精选",
+    "startPractice": "开始练习",
+    "estimatedMinutes": "约 {{minutes}} 分钟"
+  },
+  "dailyChallenge": {
+    "title": "每日挑战",
+    "subtitle": "今天的小小加分题",
+    "wordTab": "每日一词",
+    "idiomTab": "习语",
+    "wordOfDay": "每日一词——点击{{action}}",
+    "reveal": "显示",
+    "hide": "隐藏",
+    "idiomOfDay": "每日习语",
+    "meaningTab": "选择含义",
+    "pickClosestMeaning": "选择最接近的含义",
+    "correctFeedback": "太棒了！完全正确。🎉",
+    "incorrectFeedback": "不太对——它的意思是“{{answer}}”。"
+  },
+  "dailyContent": {
+    "words": {
+      "resilient": "能够迅速从困难中恢复过来。",
+      "articulate": "清晰有效地表达想法或感受。",
+      "candid": "诚实直率；坦率。",
+      "diligent": "在工作或职责中表现出持续、细致的努力。"
+    },
+    "idioms": {
+      "hitTheBooks": "开始学习，通常指认真学习或在重要考试前用功。",
+      "breakTheIce": "在交谈开始时说些话或做些事来缓解紧张气氛。",
+      "sameSage": "与他人意见一致或理解相同。",
+      "underWeather": "感觉有点不舒服。"
+    }
+  },
+  "coachPromo": {
+    "badge": "不评分 · 无压力",
+    "title": "不知道从哪里开始？聊聊吧。",
+    "body": "教练模式是一次轻松的热身对话——没有时间限制，也不评分。",
+    "cta": "打开教练模式"
+  },
+  "dashboardHome": {
+    "welcomeBack": "欢迎回来，{{name}}",
+    "subtitle": "继续练习英语，在四项技能上全面建立自信。",
+    "subtitleFirstTime": "你还没有开始练习——第一次练习只需几分钟。开始吧！",
+    "subtitleAllDoneToday": "今天的任务全部完成——干得好！明天再来保持连续打卡。",
+    "subtitleContinue_other": "今天还剩 {{count}} 项任务——加油！",
+    "viewRoadmap": "学习计划",
+    "startPractice": "开始练习",
+    "overallProgressTitle": "练习总进度",
+    "todaysTasksTitle": "今日任务",
+    "todaysTasksTitleGo": "今日任务——加油！",
+    "todaysTasksAllDone": "今日任务——全部完成！",
+    "taskProgress": "今日任务 {{done}}/{{target}}",
+    "practiceAction": "练习",
+    "statusNotStarted": "未开始",
+    "statusInProgress": "进行中",
+    "statusCompleted": "已完成",
+    "statsSessions": "练习次数",
+    "statsQuestions": "已完成题目",
+    "statsTime": "练习时长",
+    "statsTimeValue": "{{minutes}} 分钟",
+    "statsStreak": "当前连续打卡",
+    "statsStreakValue_other": "{{count}} 天",
+    "statsLevel": "等级",
+    "statsLevelValue": "Lv. {{level}} · {{xp}} XP",
+    "continuePracticeTitle": "从上次中断处继续",
+    "continuePracticeBody": "{{skill}}——已回答 {{answered}}/{{total}}",
+    "achievementsTitle": "成就"
+  },
+  "progressPage": {
+    "title": "你的进度",
+    "subtitle": "本周你的每日练习情况。",
+    "loading": "正在加载进度…",
+    "loadError": "无法加载进度。请重试。",
+    "todaysReport": "今日报告",
+    "questions": "题目",
+    "accuracy": "正确率",
+    "minutes": "分钟",
+    "moreThanYesterday_other": "比昨天多 {{count}} 道题",
+    "lessThanYesterday_other": "比昨天少 {{count}} 道题",
+    "sameAsYesterday": "和昨天一样——继续保持",
+    "firstDayBack": "很高兴今天又见到你来练习！",
+    "dailyChartTitle": "最近 7 天",
+    "today": "今天",
+    "questionsThisWeek_other": "本周 {{count}} 道题",
+    "bestDay": "最佳一天：{{day}}",
+    "bestDayBadge": "本周最佳"
+  },
+  "modules": {
+    "title": "练习模块",
+    "subtitle": "选择要练习的技能——内容会自适应调整，在你做完所有题目之前不会重复出现相同的题。",
+    "loadingAvailability": "正在加载模块…",
+    "remainingItems": "剩余 {{count}} / {{total}} 题",
+    "allDone": "你已完成本部分目前的全部内容——有新内容时再来吧。",
+    "start": "开始",
+    "backToSkills": "返回技能列表",
+    "pickTypeSubtitle": "选择要练习的题型。",
+    "starting": "正在开始练习…",
+    "startError": "开始练习时出现问题。请重试。",
+    "sessionComplete": "做得好！",
+    "practiceAgain": "再练一次",
+    "backToDashboard": "返回仪表板",
+    "startReading": "开始阅读",
+    "passageHidden": "原文已隐藏——请用自己的话写出来。",
+    "backToTypes": "返回题型列表",
+    "pickUnitTitle": "选择要练习的单元。",
+    "unitComplete": "所有套题已完成",
+    "setsProgress": "已完成 {{done}} / {{total}} 套",
+    "backToUnits": "返回单元列表",
+    "setCompleted": "已完成",
+    "startPractice": "开始练习",
+    "typeDesc": {
+      "reading": "自然、清晰地朗读句子。",
+      "repeats": "听一遍，然后准确复述。",
+      "sentence_builds": "将词语排列成正确的句子。",
+      "conversations": "听一段对话并回答问题。",
+      "reading_selective": "阅读并找出关键信息。",
+      "short_answer": "简短回答一个简单的问题。",
+      "passage_comprehension": "听一段短文并回答问题。",
+      "speaking_situations": "对日常情景作出自然回应。",
+      "story_retelling": "听一个故事并用自己的话复述。",
+      "open_questions": "自由表达你的观点。",
+      "dictation": "准确写下你听到的内容。",
+      "response_selection": "从选项中选择正确的回应。",
+      "passage_reconstruction": "阅读后凭记忆复写内容。",
+      "summary_and_opinion": "概括一篇短文并发表你的观点。",
+      "reading_comprehension": "阅读短文并回答问题。",
+      "sentence_completion": "填写缺失的单词或短语。",
+      "typing": "简短的打字热身。",
+      "email_writing": "写一封简短、实用的邮件。"
+    }
+  },
+  "faceCheck": {
+    "back": "返回",
+    "enroll": {
+      "title": "设置人脸验证",
+      "success": "人脸已录入",
+      "proceed": "继续",
+      "subtitle": "这是一次性设置。我们会在每次分级测试、模块练习和模拟考试前用这张照片确认是你本人。",
+      "successSubtitle": "设置完成。分级测试开始前你会看到说明。"
+    },
+    "verify": {
+      "title": "快速人脸验证",
+      "success": "人脸已验证",
+      "proceed": "继续",
+      "mismatchError": "人脸与你录入的照片不匹配。请重试。",
+      "subtitle": {
+        "placement": "分级测试开始前确认是你本人。",
+        "practice": "本次练习开始前确认是你本人。",
+        "practice_test": "本次模拟考试开始前确认是你本人。"
+      },
+      "successSubtitle": "身份已确认。正在进入测试。"
+    },
+    "record": {
+      "capture": "拍照",
+      "checking": "正在检查...",
+      "cameraError": "无法访问摄像头。请检查权限后重试。",
+      "error": "出了点问题。请重试。",
+      "tooShort": "未能清晰识别你的面部。请重试。"
+    },
+    "fallback": {
+      "otpButton": "通过邮件发送验证码",
+      "otpSending": "正在发送…",
+      "otpSentNotice": "验证码已发送——请查收邮件。",
+      "otpPlaceholder": "6 位验证码",
+      "otpVerify": "验证",
+      "otpVerifying": "正在验证…",
+      "otpResend": "重新发送验证码",
+      "otpSuccess": "验证码已验证",
+      "otpSendError": "发送验证码时出现问题。请重试。",
+      "otpInvalidError": "验证码无效。请检查后重试。"
+    },
+    "enrollmentConsent": {
+      "title": "设置人脸验证",
+      "subtitle": "这有助于确认参加测试的确实是你本人。",
+      "body": "我们会拍摄一张你的面部照片作为身份验证的参照。该照片和人脸扫描将用于在分级测试和练习（模块）开始前以及进行过程中定期确认你的身份——而不仅仅是开始时一次。照片会被安全存储，且仅用于此目的。",
+      "checkboxLabel": "我理解并同意基于人脸的身份验证，包括在测试和练习过程中的定期检查。",
+      "submit": "继续",
+      "decline": "暂不"
+    }
+  },
+  "demographics": {
+    "jobRole": {
+      "student": "学生",
+      "it_engineering": "IT / 工程",
+      "customer_support": "客户支持",
+      "sales_marketing": "销售 / 市场营销",
+      "healthcare": "医疗卫生",
+      "education": "教育",
+      "finance": "金融",
+      "operations": "运营",
+      "management": "管理",
+      "other": "其他"
+    },
+    "gender": {
+      "female": "女",
+      "male": "男",
+      "non_binary": "非二元性别",
+      "prefer_not": "不愿透露"
+    },
+    "ageBand": {
+      "under_18": "18 岁以下"
+    }
+  },
+  "plans": {
+    "title": "方案",
+    "onFree": "你正在使用免费方案。",
+    "activeUntil": "完整权限有效期至 {{date}}。",
+    "orgManaged": "你的使用权限由所在组织管理——请咨询管理员或经理。",
+    "unavailable": "方案暂不可用。请稍后重试。",
+    "payError": "无法发起支付。请重试。",
+    "free": {
+      "name": "免费",
+      "usage": "本周已使用 {{used}}/{{limit}} 次免费练习。"
+    },
+    "full": {
+      "name": "完整权限",
+      "perMonth": "{{price}}/月"
+    },
+    "features": {
+      "placementOnce": "一次分级测试",
+      "placementUnlimited": "可重新参加分级测试",
+      "practiceLimited": "每周 {{count}} 次练习",
+      "practiceUnlimited": "所有模块无限练习",
+      "progress": "进度报告和学习计划",
+      "mockTests": "完整模拟考试",
+      "tutor": "AI 口语导师"
+    },
+    "months_other": "{{count}} 个月",
+    "total": "合计",
+    "startNote": "支付确认后立即开通。",
+    "extendNote": "将在你当前权限于 {{date}} 到期后追加。",
+    "testMode": "测试模式——支付为模拟，不会实际扣款。",
+    "buy_other": "购买 {{count}} 个月",
+    "extend_other": "延长 {{count}} 个月",
+    "redirecting": "正在打开支付页面…",
+    "invoices": "发票",
+    "upgrade": "查看方案",
+    "locked": {
+      "mocktest": "模拟考试属于完整权限。",
+      "coach": "AI 导师属于完整权限。",
+      "placement": "你已使用免费的分级测试。重新测试属于完整权限。",
+      "practice": "你已用完本周 {{limit}} 次免费练习。次数会在滚动 7 天内恢复——或升级以无限练习。"
+    },
+    "lockedTitle": "升级以继续"
+  }
+}

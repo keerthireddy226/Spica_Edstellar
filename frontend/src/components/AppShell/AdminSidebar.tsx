@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 
@@ -15,6 +15,7 @@ const SUPER_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] =
   { to: ROUTES.ADMIN_ORG_ADMINS, icon: Building2, label: "Org Admins" },
   { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: "Managers" },
   { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: "Individual Learners" },
+  { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.ADMIN_PROFILE, icon: User, label: "Profile" },
 ];
 
@@ -23,6 +24,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[]
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: "Organizations" },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: "Managers" },
   { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: "Users" },
+  { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: "Profile" },
 ];
 
@@ -31,12 +33,16 @@ const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: "Batches" },
   { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: "Managers" },
   { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: "Learners" },
+  { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: "Licenses" },
+  { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: "Plan" },
+  { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.ORG_ADMIN_PROFILE, icon: User, label: "Profile" },
 ];
 
 const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
   { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: "Learners" },
+  { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.MANAGER_PROFILE, icon: User, label: "Profile" },
 ];
 

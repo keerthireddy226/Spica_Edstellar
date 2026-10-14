@@ -14,6 +14,7 @@ export function DetailModal({
   onBack,
   children,
   wide,
+  actions,
 }: {
   title: string;
   subtitle?: string;
@@ -21,6 +22,8 @@ export function DetailModal({
   onBack?: () => void;
   children: ReactNode;
   wide?: boolean;
+  // Buttons shown in the header, left of the close button.
+  actions?: ReactNode;
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
@@ -46,9 +49,12 @@ export function DetailModal({
             <h2 className="font-display font-bold text-2xl text-ink truncate">{title}</h2>
             {subtitle && <p className="text-sm text-muted mt-1">{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer shrink-0">
-            <X size={26} />
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            {actions}
+            <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer shrink-0">
+              <X size={26} />
+            </button>
+          </div>
         </div>
         <div className={`px-8 py-6 overflow-y-auto ${wide ? "flex-1" : ""}`}>{children}</div>
       </div>
