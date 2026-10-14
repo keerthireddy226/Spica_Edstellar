@@ -122,6 +122,13 @@ export interface OrgManager {
   active: boolean;
   hasLoggedIn: boolean;
   createdAt: string;
+  jobTitle?: string | null;
+  phone?: string | null;
+  lastLoginAt?: string | null;
+  learnerCount?: number;
+  activeLearners7d?: number;
+  pendingRequests?: number;
+  invitedByName?: string | null;
 }
 
 export function getManagers(): Promise<{ managers: OrgManager[] }> {

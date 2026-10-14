@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Code2 } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 
@@ -37,7 +37,7 @@ const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: "Audit log" },
   { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: "Plan" },
   { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: "Settings" },
-  { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Code2, label: "Developers" },
+  { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Plug, label: "Integrations" },
   { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.ORG_ADMIN_PROFILE, icon: User, label: "Profile" },
 ];

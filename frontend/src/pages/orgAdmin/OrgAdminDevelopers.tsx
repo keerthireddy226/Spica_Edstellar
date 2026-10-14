@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Copy, KeyRound, Webhook, Trash2, Send, Eye, EyeOff } from "lucide-react";
+import { Copy, KeyRound, Webhook, Trash2, Send, Eye, EyeOff, RefreshCw, BarChart3 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
-import { planErrorMessage } from "@/api/plans";
+import { planErrorMessage, sendEnterpriseInquiry } from "@/api/plans";
 import { developersApi, type ApiKeyInfo, type WebhookInfo } from "@/api/developers";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -227,16 +228,78 @@ function Webhooks() {
   );
 }
 
+const USES: { icon: LucideIcon; title: string; text: string; example: string }[] = [
+  {
+    icon: RefreshCw,
+    title: "Add learners automatically",
+    text: "Your HR system or LMS creates, moves and deactivates learners through the API, so nobody uploads CSVs by hand.",
+    example: "A new hire joins in Workday → they get a Spica invite and a license the same day.",
+  },
+  {
+    icon: BarChart3,
+    title: "Pull progress into your own reports",
+    text: "Read each learner's level, sessions, license and certificates, and batch results, to show them in your BI or LMS.",
+    example: "A Power BI dashboard shows English levels by department next to other training.",
+  },
+  {
+    icon: Webhook,
+    title: "Get told the moment something happens",
+    text: "Webhooks send a signed message to your system when a learner is added, a license is assigned, a batch completes or a certificate is issued.",
+    example: "A certificate is issued → it's stored on the employee's record automatically.",
+  },
+];
+
+// Integrations: API keys and webhooks that connect Spica to an
+// organization's own systems. Usually set up by their IT team.
 export function OrgAdminDevelopers() {
   const allowed = useHasFeature("api_access");
+  const [asked, setAsked] = useState(false);
   return (
     <div className="flex flex-col gap-5 w-full">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Developers</h1>
-        <p className="text-sm text-muted mt-1">Connect Spica to your own systems.</p>
+        <h1 className="font-display font-bold text-2xl text-ink">Integrations</h1>
+        <p className="text-sm text-muted mt-1 max-w-3xl">
+          Connect Spica to your HR system, LMS or reporting tools so learners, licenses and results stay in sync without manual work. This is
+          usually set up once by your IT team.
+        </p>
       </div>
+
+      <div className="grid md:grid-cols-3 gap-4">
+        {USES.map((u) => (
+          <div key={u.title} className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-2">
+            <span className="h-10 w-10 rounded-2xl bg-navy/10 text-navy flex items-center justify-center">
+              <u.icon size={20} strokeWidth={1.8} />
+            </span>
+            <p className="font-display font-bold text-ink">{u.title}</p>
+            <p className="text-sm text-muted">{u.text}</p>
+            <p className="text-xs text-ink bg-paper-warm rounded-input px-3 py-2 mt-auto">{u.example}</p>
+          </div>
+        ))}
+      </div>
+
       {allowed === false ? (
-        <PlanLockNote feature="api_access" />
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+          <PlanLockNote feature="api_access" />
+          <p className="text-sm text-muted">
+            Not sure you need it? If you add learners a few times a month, CSV upload and single sign-on are usually enough. Integrations help
+            when learners change every week or results must appear in other systems.
+          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              disabled={asked}
+              onClick={() =>
+                sendEnterpriseInquiry("Interested in integrations (API and webhooks).")
+                  .then(() => setAsked(true))
+                  .catch(() => {})
+              }
+            >
+              {asked ? "We'll be in touch" : "Talk to us about Enterprise"}
+            </Button>
+            <a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="text-sm font-semibold text-navy hover:underline">
+              Show the API reference to your IT team
+            </a>
+          </div>
+        </div>
       ) : (
         <>
           <ApiKeys />

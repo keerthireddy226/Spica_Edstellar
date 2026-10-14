@@ -472,7 +472,16 @@ orgAdminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, nex
          u.license_allotment,
          (SELECT count(*)::int FROM license_assignments a WHERE a.reclaimed_at IS NULL
             AND a.source = 'manager' AND a.source_manager_id = u.id) AS licenses_used,
-         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
+         u.job_title, u.phone,
+         (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
+         (SELECT count(*)::int FROM users l WHERE l.role = 'learner' AND l.deleted_at IS NULL
+            AND l.batch_id IN (SELECT x.batch_id FROM batch_managers x WHERE x.user_id = u.id)) AS learner_count,
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN users l ON l.id = d.user_id
+            WHERE l.batch_id IN (SELECT x.batch_id FROM batch_managers x WHERE x.user_id = u.id)
+              AND d.sessions > 0 AND d.day > current_date - 7) AS active_learners_7d,
+         (SELECT count(*)::int FROM license_requests r WHERE r.requested_by = u.id AND r.status = 'pending') AS pending_requests,
+         (SELECT coalesce(nullif(concat_ws(' ', ib.first_name, ib.last_name), ''), ib.email) FROM users ib WHERE ib.id = u.invited_by) AS invited_by_name
        FROM users u
        LEFT JOIN batch_managers bm ON bm.user_id = u.id
        LEFT JOIN batches b ON b.id = bm.batch_id
@@ -495,6 +504,13 @@ orgAdminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, nex
         active: !r.deleted_at,
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
+        jobTitle: r.job_title,
+        phone: r.phone,
+        lastLoginAt: r.last_login_at,
+        learnerCount: r.learner_count,
+        activeLearners7d: r.active_learners_7d,
+        pendingRequests: r.pending_requests,
+        invitedByName: r.invited_by_name,
       })),
     });
   } catch (err) {
