@@ -129,6 +129,8 @@ export interface OrgManager {
   activeLearners7d?: number;
   pendingRequests?: number;
   invitedByName?: string | null;
+  department?: string | null;
+  city?: string | null;
 }
 
 export function getManagers(): Promise<{ managers: OrgManager[] }> {
@@ -141,6 +143,10 @@ export interface OnboardManagerPayload {
   lastName: string;
   batchIds: string[];
   licenseAllotment?: number | null;
+  phone?: string;
+  jobTitle?: string;
+  department?: string;
+  city?: string;
 }
 
 export function updateManager(id: string, payload: Omit<OnboardManagerPayload, "email">): Promise<{ id: string }> {

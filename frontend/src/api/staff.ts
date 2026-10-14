@@ -168,7 +168,16 @@ export interface IndividualLearner {
 }
 
 export const getIndividuals = () => api<{ learners: IndividualLearner[] }>("/admin/individuals");
-export const inviteIndividual = (body: { email: string; firstName: string; lastName: string; compMonths: number }) =>
+export const inviteIndividual = (body: {
+  email: string;
+  firstName: string;
+  lastName: string;
+  compMonths: number;
+  phone?: string;
+  country?: string;
+  city?: string;
+  jobRole?: string;
+}) =>
   api<{ id: string; email: string; accessError: string | null }>("/admin/individuals", { method: "POST", body: JSON.stringify(body) });
 export const inviteIndividualsBulk = (compMonths: number, rows: { email: string; firstName: string; lastName: string }[]) =>
   api<{ results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string; licenseError?: string | null }[] }>("/admin/individuals/bulk", {

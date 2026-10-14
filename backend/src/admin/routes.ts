@@ -66,6 +66,15 @@ const onboardAdminSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   department: z.string().trim().optional(),
+  phone: z.string().trim().max(40).optional(),
+  jobTitle: z.string().trim().max(120).optional(),
+  region: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(100).optional(),
+  country: z.string().trim().length(2).toUpperCase().optional().or(z.literal("").transform(() => undefined)),
+  notes: z.string().trim().max(1000).optional(),
+  // Organizations this Admin owns from day one (Super Admin assigns).
+  organizationIds: z.array(z.string().uuid()).max(500).optional(),
+
   permissions: z.object(Object.fromEntries(PERMISSION_KEYS.map((k) => [k, z.boolean()]))).partial(),
 });
 
@@ -75,6 +84,15 @@ const editAdminSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   department: z.string().trim().optional(),
+  phone: z.string().trim().max(40).optional(),
+  jobTitle: z.string().trim().max(120).optional(),
+  region: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(100).optional(),
+  country: z.string().trim().length(2).toUpperCase().optional().or(z.literal("").transform(() => undefined)),
+  notes: z.string().trim().max(1000).optional(),
+  // Organizations this Admin owns from day one (Super Admin assigns).
+  organizationIds: z.array(z.string().uuid()).max(500).optional(),
+
   permissions: z.object(Object.fromEntries(PERMISSION_KEYS.map((k) => [k, z.boolean()]))).partial(),
 });
 
@@ -97,15 +115,39 @@ async function createAndInviteAdmin(row: {
   department?: string;
   permissions?: Record<string, boolean | undefined>;
   invitedBy: string;
+  phone?: string;
+  jobTitle?: string;
+  region?: string;
+  city?: string;
+  country?: string;
+  notes?: string;
+  organizationIds?: string[];
 }): Promise<{ id: string }> {
   const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
   const inserted = await pool.query(
-    `INSERT INTO users (role, email, password_hash, first_name, last_name, department, permissions, invited_by, email_verified)
-     VALUES ('admin', $1, $2, $3, $4, $5, $6::jsonb, $7, true)
+    `INSERT INTO users (role, email, password_hash, first_name, last_name, department, permissions, invited_by, phone, job_title, region, city, country, staff_notes, email_verified)
+     VALUES ('admin', $1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12, $13, true)
      RETURNING id`,
-    [row.email, placeholderHash, row.firstName, row.lastName, row.department ?? null, JSON.stringify(row.permissions ?? {}), row.invitedBy],
+    [
+      row.email,
+      placeholderHash,
+      row.firstName,
+      row.lastName,
+      row.department ?? null,
+      JSON.stringify(row.permissions ?? {}),
+      row.invitedBy,
+      row.phone || null,
+      row.jobTitle || null,
+      row.region || null,
+      row.city || null,
+      row.country || null,
+      row.notes || null,
+    ],
   );
   const userId = inserted.rows[0].id;
+  if (row.organizationIds?.length) {
+    await pool.query(`UPDATE tenants SET managed_by = $1 WHERE id = ANY($2::uuid[]) AND type = 'cohort'`, [userId, row.organizationIds]);
+  }
 
   const inviteToken = generateToken();
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
@@ -265,7 +307,8 @@ adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) =>
          coalesce(array_agg(t.name ORDER BY t.name) FILTER (WHERE t.id IS NOT NULL), '{}') AS managed_org_names,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
-         u.phone, u.job_title
+         u.phone, u.job_title, u.region, u.city, u.country, u.staff_notes,
+         coalesce(array_agg(t.id) FILTER (WHERE t.id IS NOT NULL), '{}') AS managed_org_ids
        FROM users u LEFT JOIN tenants t ON t.managed_by = u.id
        WHERE u.role = 'admin'
        GROUP BY u.id
@@ -287,6 +330,11 @@ adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) =>
         lastLoginAt: r.last_login_at,
         phone: r.phone,
         jobTitle: r.job_title,
+        region: r.region,
+        city: r.city,
+        country: r.country,
+        notes: r.staff_notes,
+        managedOrgIds: r.managed_org_ids,
         createdAt: r.created_at,
       })),
     });
@@ -410,12 +458,28 @@ adminRouter.patch("/admins/:id", requireAuth, async (req: AuthedRequest, res, ne
   try {
     const body = editAdminSchema.parse(req.body);
     const result = await pool.query(
-      `UPDATE users SET first_name = $1, last_name = $2, department = $3, permissions = $4::jsonb
+      `UPDATE users SET first_name = $1, last_name = $2, department = $3, permissions = $4::jsonb,
+         phone = $6, job_title = $7, region = $8, city = $9, country = $10, staff_notes = $11, updated_at = now()
        WHERE id = $5 AND role = 'admin' AND deleted_at IS NULL
        RETURNING id`,
-      [body.firstName, body.lastName, body.department ?? null, JSON.stringify(body.permissions), req.params.id],
+      [
+        body.firstName,
+        body.lastName,
+        body.department ?? null,
+        JSON.stringify(body.permissions),
+        req.params.id,
+        body.phone || null,
+        body.jobTitle || null,
+        body.region || null,
+        body.city || null,
+        body.country || null,
+        body.notes || null,
+      ],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "admin_not_found" });
+    if (body.organizationIds) {
+      await pool.query(`UPDATE tenants SET managed_by = $1 WHERE id = ANY($2::uuid[]) AND type = 'cohort'`, [req.params.id, body.organizationIds]);
+    }
     res.json({ id: req.params.id });
   } catch (err) {
     next(err);
@@ -1004,9 +1068,26 @@ adminRouter.get("/console/user-breakdown", requireAuth, async (req: AuthedReques
   }
 });
 
+const optText = (max: number) => z.string().trim().max(max).optional().or(z.literal("").transform(() => undefined));
 const onboardOrgSchema = z.object({
   name: z.string().min(1),
   category: z.enum(["company", "university"]),
+  legalName: optText(200),
+  website: optText(200),
+  phone: optText(40),
+  addressLine: optText(300),
+  city: optText(100),
+  state: optText(100),
+  postalCode: optText(20),
+  employeeCountBand: z.enum(["1_50", "51_200", "201_1000", "1001_5000", "5000_plus"]).optional(),
+  trainingGoal: optText(1000),
+  billingContactPhone: optText(40),
+  purchaseOrderRef: optText(100),
+  planTier: z.enum(["starter", "business", "enterprise"]).optional(),
+  contractStart: z.string().optional().or(z.literal("").transform(() => undefined)),
+  contractEnd: z.string().optional().or(z.literal("").transform(() => undefined)),
+  contractValue: z.coerce.number().min(0).max(100000000).optional(),
+  contractCurrency: z.string().length(3).toUpperCase().optional(),
   industry: z.string().min(1).optional(),
   expectedLearnerCount: z.coerce.number().int().positive().optional(),
   country: z.string().length(2).toUpperCase().optional(),
@@ -1018,6 +1099,7 @@ const onboardOrgSchema = z.object({
     firstName: z.string().min(1),
     lastName: z.string().min(1),
     phone: z.string().min(1).optional(),
+    jobTitle: optText(120),
   }),
 });
 
@@ -1051,13 +1133,39 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
       ],
     );
     const tenantId = tenant.rows[0].id;
+    await pool.query(
+      `UPDATE tenants SET legal_name = $2, website = $3, phone = $4, address_line = $5, city = $6, state = $7, postal_code = $8,
+         employee_count_band = $9, training_goal = $10, billing_contact_phone = $11, purchase_order_ref = $12,
+         plan_tier = coalesce($13, plan_tier), contract_start = $14, contract_end = $15,
+         contract_value_cents = $16, contract_currency = coalesce($17, contract_currency)
+       WHERE id = $1`,
+      [
+        tenantId,
+        body.legalName ?? null,
+        body.website ?? null,
+        body.phone ?? null,
+        body.addressLine ?? null,
+        body.city ?? null,
+        body.state ?? null,
+        body.postalCode ?? null,
+        body.employeeCountBand ?? null,
+        body.trainingGoal ?? null,
+        body.billingContactPhone ?? null,
+        body.purchaseOrderRef ?? null,
+        body.planTier ?? null,
+        body.contractStart ?? null,
+        body.contractEnd ?? null,
+        body.contractValue != null ? Math.round(body.contractValue * 100) : null,
+        body.contractCurrency ?? null,
+      ],
+    );
 
     const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
     const user = await pool.query(
-      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, invited_by, email_verified)
-       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, $7, true)
+      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, phone, job_title, invited_by, email_verified)
+       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, $7, $8, true)
        RETURNING id`,
-      [tenantId, body.orgAdmin.email, placeholderHash, body.orgAdmin.firstName, body.orgAdmin.lastName, body.orgAdmin.phone ?? null, req.user!.id],
+      [tenantId, body.orgAdmin.email, placeholderHash, body.orgAdmin.firstName, body.orgAdmin.lastName, body.orgAdmin.phone ?? null, body.orgAdmin.jobTitle ?? null, req.user!.id],
     );
     const userId = user.rows[0].id;
 

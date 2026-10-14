@@ -1,9 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { TIER_LABELS } from "@/api/plans";
 import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw, KeyRound } from "lucide-react";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 import { ago, getOrgMetrics, getStaffAdmins, setOrgOwner, shortDate, type OrgMetrics } from "@/api/staff";
-import { cardGradient } from "@/lib/cardGradients";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { OrganizationDetailModal } from "@/components/OrganizationDetailModal";
@@ -33,6 +32,8 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [x, setX] = useState<Record<string, string>>({ planTier: "business", contractCurrency: "USD" });
+  const f = (k: string) => ({ value: x[k] ?? "", onChange: (e: { target: { value: string } }) => setX((p) => ({ ...p, [k]: e.target.value })) });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,11 +51,28 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         billingContactName: billingContactName.trim() || undefined,
         billingContactEmail: billingContactEmail.trim() || undefined,
         taxId: taxId.trim() || undefined,
+        legalName: x.legalName?.trim() || undefined,
+        website: x.website?.trim() || undefined,
+        phone: x.phone?.trim() || undefined,
+        addressLine: x.addressLine?.trim() || undefined,
+        city: x.city?.trim() || undefined,
+        state: x.state?.trim() || undefined,
+        postalCode: x.postalCode?.trim() || undefined,
+        employeeCountBand: (x.employeeCountBand || undefined) as OnboardOrgPayload["employeeCountBand"],
+        trainingGoal: x.trainingGoal?.trim() || undefined,
+        billingContactPhone: x.billingContactPhone?.trim() || undefined,
+        purchaseOrderRef: x.purchaseOrderRef?.trim() || undefined,
+        planTier: (x.planTier || undefined) as OnboardOrgPayload["planTier"],
+        contractStart: x.contractStart || undefined,
+        contractEnd: x.contractEnd || undefined,
+        contractValue: x.contractValue ? Number(x.contractValue) : undefined,
+        contractCurrency: x.contractCurrency || undefined,
         orgAdmin: {
           email: email.trim(),
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           phone: phone.trim() || undefined,
+          jobTitle: x.orgAdminJobTitle?.trim() || undefined,
         },
       };
       await onboardOrganization(payload);
@@ -156,6 +174,95 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
           </div>
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-ink">Company details (optional)</p>
+            <p className="text-xs text-muted">Used on quotes and invoices; the Org Admin can complete them later.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Registered legal name</label>
+              <input type="text" {...f("legalName")} placeholder="e.g. Acme Technologies Pvt Ltd" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Website</label>
+              <input type="text" {...f("website")} placeholder="https://" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Main phone</label>
+              <input type="tel" {...f("phone")} placeholder="+91 …" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Employees</label>
+              <select {...f("employeeCountBand")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
+                <option value="">Not set</option>
+                <option value="1_50">1–50</option>
+                <option value="51_200">51–200</option>
+                <option value="201_1000">201–1,000</option>
+                <option value="1001_5000">1,001–5,000</option>
+                <option value="5000_plus">5,000+</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 col-span-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Address</label>
+              <input type="text" {...f("addressLine")} placeholder="Street and building" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">City</label>
+              <input type="text" {...f("city")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">State / province</label>
+              <input type="text" {...f("state")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Postal code</label>
+              <input type="text" {...f("postalCode")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+          </div>
+
+          <div className="border-t border-rule pt-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-ink">Plan, contract and goals</p>
+            <p className="text-xs text-muted">Licenses are added after onboarding from the organization's details.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Plan</label>
+              <select {...f("planTier")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
+                <option value="starter">Starter</option>
+                <option value="business">Business</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Purchase order reference</label>
+              <input type="text" {...f("purchaseOrderRef")} placeholder="e.g. PO-2026-118" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract start</label>
+              <input type="date" {...f("contractStart")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract end</label>
+              <input type="date" {...f("contractEnd")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract value</label>
+              <input type="number" {...f("contractValue")} placeholder="e.g. 12000" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Currency</label>
+              <select {...f("contractCurrency")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
+                {["USD", "INR", "EUR", "GBP", "AED", "SGD"].map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 col-span-2">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Training goal</label>
+              <textarea rows={2} {...f("trainingGoal")} placeholder="e.g. Get 200 support agents from B1 to B2 for the Versant Professional test by March" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+          </div>
+
+          <div className="border-t border-rule pt-4 flex flex-col gap-1">
             <p className="text-sm font-semibold text-ink">Billing contact (optional)</p>
             <p className="text-xs text-muted">Who receives license invoices. Leave blank if it's the Org Admin.</p>
           </div>
@@ -167,6 +274,10 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">Email</label>
               <input type="email" value={billingContactEmail} onChange={(e) => setBillingContactEmail(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Phone</label>
+              <input type="tel" {...f("billingContactPhone")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
@@ -217,6 +328,10 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
                 onChange={(e) => setPhone(e.target.value)}
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Job title (optional)</label>
+              <input type="text" {...f("orgAdminJobTitle")} placeholder="e.g. L&D Head" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
@@ -511,20 +626,26 @@ export function AdminOrganizations() {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
+          variant="tint"
+          palette="terracotta"
           index={0}
           icon={Building2}
           value={active.length}
           label="Active organizations"
           sub={`${active.filter((o) => o.category !== "university").length} companies · ${active.filter((o) => o.category === "university").length} universities`}
         />
-        <StatCard index={1} icon={Users} value={overview.totalLearners} label="Learners" sub={`${sum((x) => x.active7)} practised this week`} />
+        <StatCard variant="tint" palette="terracotta" index={1} icon={Users} value={overview.totalLearners} label="Learners" sub={`${sum((x) => x.active7)} practised this week`} />
         <StatCard
+          variant="tint"
+          palette="terracotta"
           index={2}
           icon={KeyRound}
           value={`${sum((x) => x.licensesAssigned)} / ${sum((x) => x.licensesBought)}`}
           label="Licenses assigned / bought"
         />
         <StatCard
+          variant="tint"
+          palette="terracotta"
           index={3}
           icon={Mail}
           value={active.filter((o) => o.health?.band === "at_risk").length}
@@ -565,7 +686,10 @@ export function AdminOrganizations() {
           const x = m(org.id);
           const util = x && x.licensesBought ? Math.min(100, (x.licensesAssigned / x.licensesBought) * 100) : 0;
           return (
-            <div key={org.id} style={cardGradient(i)} className={`rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 text-white ${org.active ? "" : "opacity-60"}`}>
+            <div
+              key={org.id}
+              style={{ background: `linear-gradient(135deg, ${paletteColor("terracotta", i)}, color-mix(in srgb, ${paletteColor("terracotta", i)} 62%, black))` }}
+              className={`rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-4 text-white ${org.active ? "" : "opacity-60"}`}>
               <div className="flex items-start gap-3">
                 <span className="h-11 w-11 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
                   {org.category === "university" ? <GraduationCap size={20} /> : <Briefcase size={20} />}

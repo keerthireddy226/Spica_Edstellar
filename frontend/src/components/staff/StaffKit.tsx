@@ -33,17 +33,136 @@ export function useStaffPermissions(): StaffPermissions & { isSuper: boolean } {
   };
 }
 
-export function StatCard({ label, value, sub, icon: Icon, index }: { label: string; value: ReactNode; sub?: ReactNode; icon: LucideIcon; index: number }) {
-  return (
-    <div style={cardGradient(index)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4 min-w-0">
-      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-2xl font-display font-bold text-white truncate">{value}</p>
-        <p className="text-xs text-white/85">{label}</p>
-        {sub && <p className="text-[11px] text-white/70 mt-0.5 truncate">{sub}</p>}
+// Each console page has its own card look and colors, so modules are easy
+// to tell apart at a glance.
+export const PALETTES = {
+  warm: ["var(--color-navy)", "var(--color-accent)", "var(--color-warning)", "var(--color-error)"],
+  terracotta: ["#b5653f", "#d4a373", "#8b5e3c", "#c98a7a"],
+  rose: ["#c98a7a", "#a8613f", "#b97a62", "#8b5e3c"],
+  moss: ["#6e9660", "#8a8f4f", "#5f7d52", "#9a9a62"],
+  sand: ["#c9965c", "#e0aa52", "#b8865b", "#d48c5e"],
+  sage: ["#7f9478", "#6e9660", "#a08c5b", "#b5653f"],
+} as const;
+export type PaletteName = keyof typeof PALETTES;
+export type CardVariant = "gradient" | "tint" | "outline" | "split" | "pastel" | "glass" | "ledger";
+
+export const paletteColor = (palette: PaletteName, i: number) => PALETTES[palette][i % PALETTES[palette].length];
+const mix = (c: string, pct: number, w = "white") => `color-mix(in srgb, ${c} ${pct}%, ${w})`;
+
+export function StatCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  index,
+  variant = "gradient",
+  palette = "warm",
+  progress,
+}: {
+  label: string;
+  value: ReactNode;
+  sub?: ReactNode;
+  icon: LucideIcon;
+  index: number;
+  variant?: CardVariant;
+  palette?: PaletteName;
+  // 0..1, drawn by the "ledger" style.
+  progress?: number | null;
+}) {
+  const c = palette === "warm" && variant === "gradient" ? null : paletteColor(palette, index);
+  const text = (
+    <div className="min-w-0">
+      <p className="text-2xl font-display font-bold truncate">{value}</p>
+      <p className="text-xs opacity-85">{label}</p>
+      {sub && <p className="text-[11px] opacity-70 mt-0.5 truncate">{sub}</p>}
+    </div>
+  );
+  if (variant === "gradient" || variant === "glass") {
+    const style =
+      variant === "glass" && c
+        ? { background: `linear-gradient(160deg, ${mix(c, 85)}, ${c} 55%, ${mix(c, 70, "black")})` }
+        : c
+          ? { background: `linear-gradient(135deg, ${c}, ${mix(c, 65, "black")})` }
+          : cardGradient(index);
+    return (
+      <div style={style} className={`relative overflow-hidden rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4 min-w-0 text-white`}>
+        {variant === "glass" && <span className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/15" />}
+        <span className={`h-11 w-11 ${variant === "glass" ? "rounded-full ring-2 ring-white/40" : "rounded-2xl"} bg-white/20 flex items-center justify-center shrink-0`}>
+          <Icon size={22} strokeWidth={1.8} />
+        </span>
+        {text}
       </div>
+    );
+  }
+  const col = c ?? "var(--color-navy)";
+  if (variant === "tint") {
+    return (
+      <div
+        style={{ background: mix(col, 13, "var(--color-surface)"), borderLeftColor: col }}
+        className="rounded-card border border-rule border-l-4 shadow-sm p-5 flex items-center gap-4 min-w-0 text-ink"
+      >
+        <span style={{ background: col }} className="h-11 w-11 rounded-xl text-white flex items-center justify-center shrink-0">
+          <Icon size={21} strokeWidth={1.8} />
+        </span>
+        {text}
+      </div>
+    );
+  }
+  if (variant === "outline") {
+    return (
+      <div className="relative bg-surface rounded-card border border-rule shadow-sm p-5 pt-6 flex items-center gap-4 min-w-0 overflow-hidden">
+        <span style={{ background: col }} className="absolute inset-x-0 top-0 h-1.5" />
+        <span style={{ background: mix(col, 15, "var(--color-surface)"), color: col }} className="h-11 w-11 rounded-full flex items-center justify-center shrink-0">
+          <Icon size={21} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0">
+          <p style={{ color: col }} className="text-2xl font-display font-bold truncate">
+            {value}
+          </p>
+          <p className="text-xs text-ink">{label}</p>
+          {sub && <p className="text-[11px] text-muted mt-0.5 truncate">{sub}</p>}
+        </div>
+      </div>
+    );
+  }
+  if (variant === "split") {
+    return (
+      <div className="bg-surface rounded-card border border-rule shadow-sm flex items-stretch min-w-0 overflow-hidden">
+        <span style={{ background: `linear-gradient(180deg, ${col}, ${mix(col, 70, "black")})` }} className="w-16 text-white flex items-center justify-center shrink-0">
+          <Icon size={24} strokeWidth={1.8} />
+        </span>
+        <div className="p-4 text-ink min-w-0">{text}</div>
+      </div>
+    );
+  }
+  if (variant === "pastel") {
+    return (
+      <div style={{ background: mix(col, 22, "var(--color-surface)") }} className="rounded-card shadow-sm p-5 flex flex-col gap-3 min-w-0">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: mix(col, 75, "black") }}>
+            {label}
+          </p>
+          <Icon size={18} style={{ color: col }} />
+        </div>
+        <p className="text-3xl font-display font-bold" style={{ color: mix(col, 70, "black") }}>
+          {value}
+        </p>
+        {sub && <p className="text-[11px] text-muted truncate">{sub}</p>}
+      </div>
+    );
+  }
+  // ledger
+  return (
+    <div className="bg-surface rounded-card border border-rule shadow-sm p-5 flex flex-col gap-2 min-w-0">
+      <div className="flex items-center gap-2 text-muted">
+        <Icon size={16} style={{ color: col }} />
+        <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+      </div>
+      <p className="text-3xl font-display font-bold text-ink truncate">{value}</p>
+      <div className="h-1.5 rounded-full bg-rule overflow-hidden">
+        <div style={{ background: col, width: `${Math.round(Math.min(1, Math.max(0.04, progress ?? 1)) * 100)}%` }} className="h-full rounded-full" />
+      </div>
+      {sub && <p className="text-[11px] text-muted truncate">{sub}</p>}
     </div>
   );
 }

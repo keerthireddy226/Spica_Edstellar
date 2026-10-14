@@ -473,7 +473,7 @@ orgAdminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, nex
          (SELECT count(*)::int FROM license_assignments a WHERE a.reclaimed_at IS NULL
             AND a.source = 'manager' AND a.source_manager_id = u.id) AS licenses_used,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
-         u.job_title, u.phone,
+         u.job_title, u.phone, u.department, u.city,
          (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
          (SELECT count(*)::int FROM users l WHERE l.role = 'learner' AND l.deleted_at IS NULL
             AND l.batch_id IN (SELECT x.batch_id FROM batch_managers x WHERE x.user_id = u.id)) AS learner_count,
@@ -511,6 +511,8 @@ orgAdminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, nex
         activeLearners7d: r.active_learners_7d,
         pendingRequests: r.pending_requests,
         invitedByName: r.invited_by_name,
+        department: r.department,
+        city: r.city,
       })),
     });
   } catch (err) {
@@ -526,7 +528,19 @@ const onboardManagerSchema = z.object({
   batchIds: z.array(z.string().uuid()),
   // The Manager's own pool, usable in any batch they manage.
   licenseAllotment: z.coerce.number().int().min(0).max(100000).nullable().optional(),
+  phone: z.string().trim().max(40).optional(),
+  jobTitle: z.string().trim().max(120).optional(),
+  department: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(100).optional(),
 });
+
+// Contact and role details kept on a Manager's account.
+async function saveManagerProfile(id: string, b: { phone?: string; jobTitle?: string; department?: string; city?: string }) {
+  await pool.query(
+    `UPDATE users SET phone = coalesce($2, phone), job_title = coalesce($3, job_title), department = coalesce($4, department), city = coalesce($5, city), updated_at = now() WHERE id = $1`,
+    [id, b.phone || null, b.jobTitle || null, b.department || null, b.city || null],
+  );
+}
 
 async function ownsAllBatches(tenantId: string, batchIds: string[]): Promise<boolean> {
   const result = await pool.query(`SELECT id FROM batches WHERE tenant_id = $1 AND id = ANY($2::uuid[])`, [tenantId, batchIds]);
@@ -566,6 +580,7 @@ orgAdminRouter.post("/managers", requireAuth, async (req: AuthedRequest, res, ne
     if (body.licenseAllotment !== undefined) {
       await setManagerAllotment({ tenantId, managerId: userId, allotment: body.licenseAllotment, actorId: req.user!.id });
     }
+    await saveManagerProfile(userId, body);
     res.status(201).json({ id: userId, email: body.email });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
@@ -616,6 +631,7 @@ orgAdminRouter.patch("/managers/:id", requireAuth, async (req: AuthedRequest, re
         throw err;
       }
     }
+    await saveManagerProfile(managerId, body);
     res.json({ id: managerId });
   } catch (err) {
     next(err);

@@ -3,8 +3,7 @@ import { KeyRound, ShieldCheck, Users, UserX } from "lucide-react";
 import { getManagers as getManagerAccounts, type ManagerAccount } from "@/api/admin";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
 import { ago, shortDate } from "@/api/staff";
-import { cardGradient } from "@/lib/cardGradients";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
 type F = "all" | "active" | "pending" | "deactivated";
 const status = (m: ManagerAccount): Exclude<F, "all"> => (!m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active");
@@ -41,10 +40,12 @@ export function ManagersList() {
     <div className="flex flex-col gap-6 w-full">
       <PageHeader title="Managers" subtitle={`Managers run batches inside ${perms.isSuper ? "each" : "your"} organization${perms.isSuper ? "" : "s"}. Their Org Admin adds and manages them.`} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard index={0} icon={ShieldCheck} value={rows.filter((m) => status(m) === "active").length} label="Active Managers" />
-        <StatCard index={1} icon={UserX} value={rows.filter((m) => status(m) === "pending").length} label="Invite not accepted" />
-        <StatCard index={2} icon={Users} value={rows.reduce((n, m) => n + m.learnerCount, 0)} label="Learners in their batches" sub={`${rows.reduce((n, m) => n + (m.activeLearners7d ?? 0), 0)} practised this week`} />
+        <StatCard variant="pastel" palette="sand" index={0} icon={ShieldCheck} value={rows.filter((m) => status(m) === "active").length} label="Active Managers" />
+        <StatCard variant="pastel" palette="sand" index={1} icon={UserX} value={rows.filter((m) => status(m) === "pending").length} label="Invite not accepted" />
+        <StatCard variant="pastel" palette="sand" index={2} icon={Users} value={rows.reduce((n, m) => n + m.learnerCount, 0)} label="Learners in their batches" sub={`${rows.reduce((n, m) => n + (m.activeLearners7d ?? 0), 0)} practised this week`} />
         <StatCard
+          variant="pastel"
+          palette="sand"
           index={3}
           icon={KeyRound}
           value={`${rows.reduce((n, m) => n + (m.licensesUsed ?? 0), 0)} / ${rows.reduce((n, m) => n + (m.licensesAllotted ?? 0), 0)}`}
@@ -73,53 +74,64 @@ export function ManagersList() {
             const s = status(m);
             const left = m.licensesAllotted != null ? Math.max(0, m.licensesAllotted - (m.licensesUsed ?? 0)) : null;
             return (
-              <div key={m.id} style={cardGradient(i)} className={`rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 text-white ${m.active ? "" : "opacity-60"}`}>
+              <div
+                key={m.id}
+                style={{ borderLeftColor: paletteColor("sand", i) }}
+                className={`bg-surface rounded-card border border-rule border-l-[6px] shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 ${m.active ? "" : "opacity-60"}`}
+              >
                 <div className="flex items-start gap-3">
-                  <span className="h-11 w-11 rounded-full bg-white/25 flex items-center justify-center text-sm font-bold shrink-0">
+                  <span
+                    style={{ background: `color-mix(in srgb, ${paletteColor("sand", i)} 18%, var(--color-surface))`, color: paletteColor("sand", i) }}
+                    className="h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                  >
                     {`${m.firstName?.[0] ?? ""}${m.lastName?.[0] ?? ""}`.toUpperCase() || m.email.slice(0, 2).toUpperCase()}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-display font-bold truncate">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 uppercase tracking-wide">
+                      <p className="font-display font-bold text-ink truncate">{[m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                      <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : "error"}>
                         {s === "active" ? "Active" : s === "pending" ? "Invite pending" : "Deactivated"}
-                      </span>
+                      </StatusPill>
                     </div>
-                    <p className="text-xs text-white/80 truncate">
+                    <p className="text-xs text-muted truncate">
                       {m.jobTitle ? `${m.jobTitle} · ` : ""}
                       {m.email} · {m.tenantName}
                     </p>
                   </div>
-                  <button onClick={() => setViewing(m.id)} className="text-xs font-semibold hover:underline cursor-pointer shrink-0">
+                  <button onClick={() => setViewing(m.id)} className="text-xs font-semibold text-navy hover:underline cursor-pointer shrink-0">
                     View details
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {m.batchNames.length === 0 ? (
-                    <span className="text-xs text-white/75 italic">No batches yet</span>
+                    <span className="text-xs text-muted italic">No batches yet</span>
                   ) : (
                     m.batchNames.map((b) => (
-                      <span key={b} className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20">
+                      <span
+                        key={b}
+                        style={{ background: `color-mix(in srgb, ${paletteColor("sand", i)} 15%, var(--color-surface))`, color: `color-mix(in srgb, ${paletteColor("sand", i)} 75%, black)` }}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-pill"
+                      >
                         {b}
                       </span>
                     ))
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
-                  <div>
-                    <p className="font-display font-bold text-xl">{m.learnerCount}</p>
-                    <p className="text-[11px] text-white/75">Learners</p>
+                <div className="grid grid-cols-3 divide-x divide-rule border-y border-rule py-2.5">
+                  <div className="pr-3">
+                    <p className="font-display font-bold text-xl text-ink">{m.learnerCount}</p>
+                    <p className="text-[11px] text-muted">Learners</p>
                   </div>
-                  <div>
-                    <p className="font-display font-bold text-xl">{m.activeLearners7d ?? 0}</p>
-                    <p className="text-[11px] text-white/75">Practised this week</p>
+                  <div className="px-3">
+                    <p className="font-display font-bold text-xl text-ink">{m.activeLearners7d ?? 0}</p>
+                    <p className="text-[11px] text-muted">Practised this week</p>
                   </div>
-                  <div>
-                    <p className="font-display font-bold text-xl">{left ?? "—"}</p>
-                    <p className="text-[11px] text-white/75">{left === null ? "No license pool" : `Pool left of ${m.licensesAllotted}`}</p>
+                  <div className="pl-3">
+                    <p className="font-display font-bold text-xl text-ink">{left ?? "—"}</p>
+                    <p className="text-[11px] text-muted">{left === null ? "No license pool" : `Pool left of ${m.licensesAllotted}`}</p>
                   </div>
                 </div>
-                <p className="text-xs text-white/80">
+                <p className="text-xs text-muted">
                   {s === "pending" ? "Hasn't signed in yet" : `Last signed in ${ago(m.lastLoginAt)}`} · Added {shortDate(m.createdAt)}
                 </p>
               </div>

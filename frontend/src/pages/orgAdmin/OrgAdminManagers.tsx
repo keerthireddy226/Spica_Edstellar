@@ -109,6 +109,8 @@ function ManagerFormModal({
   const [email, setEmail] = useState(manager?.email ?? "");
   const [batchIds, setBatchIds] = useState<string[]>(manager?.batchIds ?? []);
   const [pool, setPool] = useState(manager?.licensesAllotted != null ? String(manager.licensesAllotted) : "");
+  const [profile, setProfile] = useState({ phone: manager?.phone ?? "", jobTitle: manager?.jobTitle ?? "", department: manager?.department ?? "", city: manager?.city ?? "" });
+  const pf = (k: keyof typeof profile) => ({ value: profile[k], onChange: (e: { target: { value: string } }) => setProfile((p) => ({ ...p, [k]: e.target.value })) });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const poolsAllowed = useHasFeature("manager_pools") !== false;
@@ -135,10 +137,10 @@ function ManagerFormModal({
     const licenseAllotment = poolsAllowed ? poolNumber : (manager?.licensesAllotted ?? null);
     try {
       if (editing) {
-        await updateManager(manager.id, { firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment });
+        await updateManager(manager.id, { firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment, ...profile });
         onSaved(`${firstName.trim()} ${lastName.trim()} updated.`);
       } else {
-        await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment });
+        await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment, ...profile });
         onSaved(`Invite sent to ${email.trim()} — they'll receive an email to set their password.`);
       }
     } catch (err) {
@@ -192,6 +194,24 @@ function ManagerFormModal({
               className={`${inputClass} ${editing ? "opacity-60 cursor-not-allowed" : ""}`}
             />
             {editing && <p className="text-xs text-muted">Email is their login, so it can't be changed here.</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Job title</label>
+              <input {...pf("jobTitle")} placeholder="e.g. Training Lead" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Department</label>
+              <input {...pf("department")} placeholder="e.g. Customer Support" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Phone</label>
+              <input {...pf("phone")} placeholder="e.g. +91 98765 43210" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">City</label>
+              <input {...pf("city")} placeholder="e.g. Pune" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">

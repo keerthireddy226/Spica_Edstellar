@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { JOB_ROLES, sortedCountries } from "@/constants/demographics";
+import type { JobRole } from "@/api/onboarding";
 import { Building2, Eye, Gift, Mail, RotateCcw, Ban, UserPlus, Users, User, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
@@ -32,6 +35,8 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [more, setMore] = useState({ phone: "", country: "", city: "", jobRole: "" });
+  const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +45,16 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
     setBusy(true);
     setError(null);
     try {
-      const r = await inviteIndividual({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), compMonths });
+      const r = await inviteIndividual({
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        compMonths,
+        phone: more.phone.trim() || undefined,
+        country: more.country || undefined,
+        city: more.city.trim() || undefined,
+        jobRole: (more.jobRole || undefined) as JobRole | undefined,
+      });
       onDone(
         `Invite sent to ${r.email}${compMonths && !r.accessError ? ` with ${compMonths} free month${compMonths === 1 ? "" : "s"} of full access` : ""}.${
           r.accessError ? " The free months couldn't be added." : ""
@@ -94,6 +108,27 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
               <input required placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
             <input required type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+            <div className="grid grid-cols-2 gap-3">
+              <input placeholder="Phone (optional)" value={more.phone} onChange={(e) => setMore((m) => ({ ...m, phone: e.target.value }))} className={inputClass} />
+              <select value={more.jobRole} onChange={(e) => setMore((m) => ({ ...m, jobRole: e.target.value }))} className={`${inputClass} cursor-pointer`}>
+                <option value="">Job role (optional)</option>
+                {JOB_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {t(`demographics.jobRole.${r}`)}
+                  </option>
+                ))}
+              </select>
+              <select value={more.country} onChange={(e) => setMore((m) => ({ ...m, country: e.target.value }))} className={`${inputClass} cursor-pointer`}>
+                <option value="">Country (optional)</option>
+                {sortedCountries(i18n.language).map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <input placeholder="City (optional)" value={more.city} onChange={(e) => setMore((m) => ({ ...m, city: e.target.value }))} className={inputClass} />
+            </div>
+            <p className="text-xs text-muted">These are pre-filled in their onboarding; they can change them.</p>
             {error && <p className="text-sm text-error">{error}</p>}
             <p className="text-xs text-muted">They'll get an email to set their password.</p>
             <div className="flex gap-3">
@@ -272,10 +307,10 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard index={0} icon={Users} value={rows.length} label="Individual learners" sub={`${rows.filter((r) => Date.now() - new Date(r.createdAt).getTime() < 7 * 86400000).length} joined this week`} />
-        <StatCard index={1} icon={CreditCard} value={rows.filter((r) => r.plan === "paid").length} label="Paid" sub={revenue ? `${money(revenue, currency)} paid in total` : "No payments yet"} />
-        <StatCard index={2} icon={Gift} value={rows.filter((r) => r.plan === "complimentary").length} label="Complimentary" sub={`${rows.filter((r) => r.plan === "free").length} on the free plan`} />
-        <StatCard index={3} icon={User} value={rows.filter((r) => r.source === "invited").length} label="Invited by Edstellar" sub={`${rows.filter((r) => r.source === "signup").length} signed up themselves`} />
+        <StatCard variant="glass" palette="sage" index={0} icon={Users} value={rows.length} label="Individual learners" sub={`${rows.filter((r) => Date.now() - new Date(r.createdAt).getTime() < 7 * 86400000).length} joined this week`} />
+        <StatCard variant="glass" palette="sage" index={1} icon={CreditCard} value={rows.filter((r) => r.plan === "paid").length} label="Paid" sub={revenue ? `${money(revenue, currency)} paid in total` : "No payments yet"} />
+        <StatCard variant="glass" palette="sage" index={2} icon={Gift} value={rows.filter((r) => r.plan === "complimentary").length} label="Complimentary" sub={`${rows.filter((r) => r.plan === "free").length} on the free plan`} />
+        <StatCard variant="glass" palette="sage" index={3} icon={User} value={rows.filter((r) => r.source === "invited").length} label="Invited by Edstellar" sub={`${rows.filter((r) => r.source === "signup").length} signed up themselves`} />
       </div>
       {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
       {error && <p className="text-sm text-error">{error}</p>}

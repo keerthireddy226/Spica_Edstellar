@@ -5,6 +5,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { createAndInviteUser, resendSetPasswordLink } from "../auth/invite.js";
 import { LicenseError, assignMonths, creditPool, learnerAccessMap } from "../licenses/service.js";
 import { orgHealth } from "./health.js";
+import { learnerDetailsSchema } from "../learners/details.js";
 import { isSuperAdmin, orgScope, requirePermission, requireStaff, staffPermissions } from "./staff.js";
 
 // The Edstellar staff consoles: the portfolio dashboard, billing and audit
@@ -461,6 +462,11 @@ const individualSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   firstName: z.string().trim().min(1).max(100),
   lastName: z.string().trim().min(1).max(100),
+  // Optional: what we know about them, pre-filled in their onboarding.
+  phone: learnerDetailsSchema.shape.phone,
+  country: learnerDetailsSchema.shape.country,
+  city: learnerDetailsSchema.shape.city,
+  jobRole: learnerDetailsSchema.shape.jobRole,
 });
 const compMonths = z.coerce.number().int().min(0).max(24).default(0);
 
@@ -472,7 +478,16 @@ async function inviteIndividual(row: z.infer<typeof individualSchema>, months: n
   let id: string;
   try {
     id = (
-      await createAndInviteUser({ role: "learner", tenantId, email: row.email, firstName: row.firstName, lastName: row.lastName, roleLabel: "a learner", invitedBy: actorId })
+      await createAndInviteUser({
+        role: "learner",
+        tenantId,
+        email: row.email,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        roleLabel: "a learner",
+        invitedBy: actorId,
+        details: { phone: row.phone, country: row.country, city: row.city, jobRole: row.jobRole },
+      })
     ).id;
   } catch (err) {
     await pool.query(`DELETE FROM tenants WHERE id = $1`, [tenantId]);

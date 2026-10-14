@@ -3,9 +3,7 @@ import {
   UserPlus,
   X,
   Mail,
-  Briefcase,
   Users,
-  CalendarPlus,
   CalendarClock,
   UserCheck,
   UserX,
@@ -15,8 +13,8 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { cardGradient } from "@/lib/cardGradients";
+import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor } from "@/components/staff/StaffKit";
+import { ago, getPortfolio, shortDate } from "@/api/staff";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import {
@@ -37,6 +35,7 @@ import {
   type AdminOnboardedOrg,
 } from "@/api/admin";
 import { DetailModal } from "@/components/DetailModal";
+import { AdminProfileFields, toAdminPayloadExtras, type AdminProfile } from "@/components/staff/AdminProfileFields";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
 
@@ -185,14 +184,19 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
-  const [permissions, setPermissions] = useState<AdminPermissions>(EMPTY_PERMISSIONS);
+  const [profile, setProfile] = useState<AdminProfile>({
+    department: "",
+    jobTitle: "",
+    phone: "",
+    region: "",
+    city: "",
+    country: "",
+    notes: "",
+    organizationIds: [],
+    permissions: EMPTY_PERMISSIONS,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  function togglePermission(key: keyof AdminPermissions) {
-    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -203,8 +207,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
         email: email.trim(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        department: department.trim() || undefined,
-        permissions,
+        ...toAdminPayloadExtras(profile),
       };
       await onboardAdmin(payload);
       onCreated(payload.email);
@@ -285,34 +288,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-              <Briefcase size={13} /> Department
-            </label>
-            <input
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              placeholder="e.g. Sales, Delivery, L&D"
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2 pt-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Permissions</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((key) => (
-                <label key={key} className="flex items-center gap-2.5 text-sm text-ink cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!permissions[key]}
-                    onChange={() => togglePermission(key)}
-                    className="h-4 w-4 rounded accent-navy cursor-pointer"
-                  />
-                  {PERMISSION_LABELS[key]}
-                </label>
-              ))}
-            </div>
-          </div>
+          <AdminProfileFields value={profile} onChange={setProfile} />
 
           {error && <p className="text-sm text-error">{error}</p>}
 
@@ -346,14 +322,19 @@ function EditAdminModal({
 }) {
   const [firstName, setFirstName] = useState(admin.firstName ?? "");
   const [lastName, setLastName] = useState(admin.lastName ?? "");
-  const [department, setDepartment] = useState(admin.department ?? "");
-  const [permissions, setPermissions] = useState<AdminPermissions>(admin.permissions);
+  const [profile, setProfile] = useState<AdminProfile>({
+    department: admin.department ?? "",
+    jobTitle: admin.jobTitle ?? "",
+    phone: admin.phone ?? "",
+    region: admin.region ?? "",
+    city: admin.city ?? "",
+    country: admin.country ?? "",
+    notes: admin.notes ?? "",
+    organizationIds: admin.managedOrgIds ?? [],
+    permissions: admin.permissions,
+  });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  function togglePermission(key: keyof AdminPermissions) {
-    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -363,8 +344,7 @@ function EditAdminModal({
       const payload: EditAdminPayload = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        department: department.trim() || undefined,
-        permissions,
+        ...toAdminPayloadExtras(profile),
       };
       await editAdmin(admin.id, payload);
       onSaved();
@@ -419,34 +399,7 @@ function EditAdminModal({
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-              <Briefcase size={13} /> Department
-            </label>
-            <input
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              placeholder="e.g. Sales, Delivery, L&D"
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-2 pt-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Permissions</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((key) => (
-                <label key={key} className="flex items-center gap-2.5 text-sm text-ink cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={!!permissions[key]}
-                    onChange={() => togglePermission(key)}
-                    className="h-4 w-4 rounded accent-navy cursor-pointer"
-                  />
-                  {PERMISSION_LABELS[key]}
-                </label>
-              ))}
-            </div>
-          </div>
+          <AdminProfileFields value={profile} onChange={setProfile} />
 
           {error && <p className="text-sm text-error">{error}</p>}
 
@@ -620,50 +573,21 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
   );
 }
 
-function isSameDay(iso: string, ref: Date): boolean {
-  const d = new Date(iso);
-  return d.toDateString() === ref.toDateString();
-}
-
 function isWithinDays(iso: string, days: number): boolean {
-  return Date.now() - new Date(iso).getTime() <= days * 24 * 60 * 60 * 1000;
+  return Date.now() - new Date(iso).getTime() <= days * 86400000;
 }
 
-function AdminsSummary({ admins }: { admins: AdminAccount[] }) {
-  const today = new Date();
-  const onboardedToday = admins.filter((a) => isSameDay(a.createdAt, today)).length;
-  const onboardedThisWeek = admins.filter((a) => isWithinDays(a.createdAt, 7)).length;
-  const activeCount = admins.filter((a) => a.active && a.hasLoggedIn).length;
-  const inactiveCount = admins.length - activeCount;
-
-  const cards: { label: string; value: number; icon: LucideIcon }[] = [
-    { label: "Total admins", value: admins.length, icon: Users },
-    { label: "Onboarded today", value: onboardedToday, icon: CalendarPlus },
-    { label: "Onboarded this week", value: onboardedThisWeek, icon: CalendarClock },
-    { label: "Active", value: activeCount, icon: UserCheck },
-    // Invite pending or deactivated — everyone not counted in "Active".
-    { label: "Inactive", value: inactiveCount, icon: UserX },
-  ];
-
-  return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {cards.map(({ label, value, icon: Icon }, i) => (
-        <div key={label} style={cardGradient(i)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4">
-          <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-            <Icon size={22} strokeWidth={1.8} />
-          </span>
-          <div>
-            <p className="text-2xl font-display font-bold text-white">{value}</p>
-            <p className="text-xs text-white/80">{label}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function isSameDay(iso: string, ref: Date): boolean {
+  return new Date(iso).toDateString() === ref.toDateString();
 }
+
+type AdminFilter = "all" | "active" | "pending" | "quiet" | "deactivated";
+const adminStatus = (a: AdminAccount) => (!a.active ? "deactivated" : !a.hasLoggedIn ? "pending" : "active");
+const isQuiet = (a: AdminAccount) => a.active && a.hasLoggedIn && (!a.lastLoginAt || Date.now() - new Date(a.lastLoginAt).getTime() > 14 * 86400000);
 
 export function AdminsList() {
   const [admins, setAdmins] = useState<AdminAccount[] | null>(null);
+  const [portfolio, setPortfolio] = useState<Map<string, { learners: number; atRisk: number; organizations: number }>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [showOnboard, setShowOnboard] = useState(false);
   const [justInvited, setJustInvited] = useState<string | null>(null);
@@ -672,11 +596,17 @@ export function AdminsList() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reactivatingId, setReactivatingId] = useState<string | null>(null);
   const [viewingActivity, setViewingActivity] = useState<AdminAccount | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<AdminFilter>("all");
+  const [dept, setDept] = useState("all");
 
   function load() {
     getAdmins()
       .then((res) => setAdmins(res.admins))
       .catch(() => setError("Could not load admins."));
+    getPortfolio()
+      .then((p) => setPortfolio(new Map((p.admins ?? []).map((a) => [a.id, { learners: a.learners, atRisk: a.atRisk, organizations: a.organizations }]))))
+      .catch(() => {});
   }
 
   useEffect(load, []);
@@ -706,145 +636,193 @@ export function AdminsList() {
     }
   }
 
-  // Auto-dismiss the success banner instead of leaving it on screen until a
-  // manual refresh clears it.
   useEffect(() => {
     if (!justInvited) return;
     const timer = setTimeout(() => setJustInvited(null), 5000);
     return () => clearTimeout(timer);
   }, [justInvited]);
 
+  const all = admins ?? [];
+  const depts = [...new Set(all.map((a) => a.department).filter(Boolean) as string[])].sort();
+  const q = query.trim().toLowerCase();
+  const shown = all.filter(
+    (a) =>
+      (filter === "all" || (filter === "quiet" ? isQuiet(a) : adminStatus(a) === filter)) &&
+      (dept === "all" || a.department === dept) &&
+      (!q || [a.firstName, a.lastName, a.email, a.department, ...a.managedOrgNames].some((v) => v?.toLowerCase().includes(q))),
+  );
+  const totalPerms = Object.keys(PERMISSION_LABELS).length;
+
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Admins</h1>
-          <p className="text-sm text-muted mt-1">Internal Edstellar staff — Sales, Delivery, L&D.</p>
-        </div>
-        <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-          <UserPlus size={18} /> Onboard Admin
-        </Button>
-      </div>
+      <PageHeader
+        title="Admins"
+        subtitle="Edstellar staff who onboard and look after organizations — Sales, Delivery, L&D — and what each may do."
+        actions={
+          <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
+            <UserPlus size={18} /> Onboard Admin
+          </Button>
+        }
+      />
 
       {justInvited && (
         <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
           Invite sent to {justInvited} — they'll receive an email to set their password.
         </p>
       )}
-
       {error && <p className="text-sm text-error">{error}</p>}
       {!admins && !error && <p className="text-sm text-muted">Loading…</p>}
-      {admins?.length === 0 && <p className="text-sm text-muted">No admins yet.</p>}
 
-      {admins && admins.length > 0 && <AdminsSummary admins={admins} />}
+      {admins && (
+        <>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <StatCard variant="outline" palette="rose" index={0} icon={Users} value={all.filter((a) => adminStatus(a) === "active").length} label="Active Admins" sub={`${all.filter((a) => isWithinDays(a.createdAt, 7)).length} added this week`} />
+            <StatCard variant="outline" palette="rose" index={1} icon={UserX} value={all.filter((a) => adminStatus(a) === "pending").length} label="Invite not accepted" sub={`${all.filter(isQuiet).length} quiet for 14+ days`} />
+            <StatCard variant="outline" palette="rose" index={2} icon={CalendarClock} value={[...portfolio.values()].reduce((n, p) => n + p.organizations, 0)} label="Organizations owned" sub={`${all.filter((a) => a.active && a.managedOrgCount === 0).length} Admins own none`} />
+            <StatCard variant="outline" palette="rose" index={3} icon={UserCheck} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label="Accounts at risk" sub={`${[...portfolio.values()].reduce((n, p) => n + p.learners, 0)} learners in their portfolios`} />
+          </div>
 
-      {admins && admins.length > 0 && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Admin</th>
-                <th className="px-4 py-3">Department</th>
-                <th className="px-4 py-3">Permissions</th>
-                <th className="px-4 py-3">Managed orgs</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map((a) => {
-                const grantedCount = Object.values(a.permissions).filter(Boolean).length;
-                const status = !a.active ? "deactivated" : !a.hasLoggedIn ? "pending" : "active";
-                return (
-                  <tr key={a.id} className="border-b border-rule last:border-0 align-top">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setViewingActivity(a)}
-                          title="View activity"
-                          className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer hover:ring-2 hover:ring-navy/40 transition-shadow"
+          <div className="flex items-center gap-3 flex-wrap">
+            <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, department or organization" />
+            {depts.length > 0 && <SelectFilter label="Department" value={dept} onChange={setDept} options={[["all", "All departments"], ...depts.map((d) => [d, d] as [string, string])]} />}
+            <FilterPills<AdminFilter>
+              value={filter}
+              onChange={setFilter}
+              options={[
+                ["all", "All", all.length],
+                ["active", "Active", all.filter((a) => adminStatus(a) === "active").length],
+                ["pending", "Invite pending", all.filter((a) => adminStatus(a) === "pending").length],
+                ["quiet", "Quiet 14+ days", all.filter(isQuiet).length],
+                ["deactivated", "Deactivated", all.filter((a) => adminStatus(a) === "deactivated").length],
+              ]}
+            />
+          </div>
+
+          {all.length === 0 && <EmptyNote>No Admins yet — onboard your first one.</EmptyNote>}
+          {all.length > 0 && shown.length === 0 && <EmptyNote>No Admins match.</EmptyNote>}
+
+          <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+            {shown.map((a, i) => {
+              const c = paletteColor("rose", i);
+              const st = adminStatus(a);
+              const p = portfolio.get(a.id);
+              const granted = (Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).filter((k) => a.permissions[k]);
+              return (
+                <div
+                  key={a.id}
+                  style={{ background: `color-mix(in srgb, ${c} 9%, var(--color-surface))` }}
+                  className={`rounded-card border border-rule shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 ${a.active ? "" : "opacity-60"}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <button
+                      onClick={() => setViewingActivity(a)}
+                      title="View their organizations"
+                      style={{ background: c }}
+                      className="h-12 w-12 rounded-2xl text-white flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer"
+                    >
+                      {initials(a.firstName, a.lastName, a.email)}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-display font-bold text-ink truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                        <StatusPill tone={st === "active" ? "success" : st === "pending" ? "warning" : "error"}>
+                          {st === "active" ? "Active" : st === "pending" ? "Invite pending" : "Deactivated"}
+                        </StatusPill>
+                        {isSameDay(a.createdAt, new Date()) && <StatusPill tone="navy">New</StatusPill>}
+                      </div>
+                      <p className="text-xs text-muted truncate">
+                        {a.department ?? "No department"} · {a.email}
+                        {a.phone ? ` · ${a.phone}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        [p?.organizations ?? a.managedOrgCount, "Organizations"],
+                        [p?.learners ?? 0, "Learners"],
+                        [p?.atRisk ?? 0, "At risk"],
+                      ] as const
+                    ).map(([v, l]) => (
+                      <div key={l} className="rounded-input bg-surface border border-rule px-3 py-2">
+                        <p className="font-display font-bold text-xl" style={{ color: l === "At risk" && v ? "var(--color-error)" : c }}>
+                          {v}
+                        </p>
+                        <p className="text-[11px] text-muted">{l}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {a.managedOrgNames.length === 0 ? (
+                      <span className="text-xs text-muted italic">Owns no organizations yet</span>
+                    ) : (
+                      a.managedOrgNames.map((n) => (
+                        <span key={n} style={{ color: c, background: `color-mix(in srgb, ${c} 14%, var(--color-surface))` }} className="text-xs font-semibold px-2.5 py-1 rounded-pill">
+                          {n}
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">
+                      Permissions · {granted.length} of {totalPerms}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((k) => (
+                        <span
+                          key={k}
+                          className={`text-[11px] px-2 py-0.5 rounded-pill border ${a.permissions[k] ? "border-success/30 bg-success/10 text-success" : "border-rule text-muted line-through"}`}
                         >
-                          {initials(a.firstName, a.lastName, a.email)}
+                          {PERMISSION_LABELS[k]}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-rule">
+                    <span className="text-xs text-muted">
+                      {st === "pending" ? "Hasn't signed in yet" : `Last signed in ${ago(a.lastLoginAt)}`} · Added {shortDate(a.createdAt)}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => setViewingActivity(a)} className="text-xs font-semibold text-navy hover:underline cursor-pointer px-1">
+                        Organizations
+                      </button>
+                      {st === "deactivated" ? (
+                        <button
+                          onClick={() => handleReactivate(a)}
+                          disabled={reactivatingId === a.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold bg-success/10 text-success hover:bg-success/20 cursor-pointer disabled:opacity-50"
+                        >
+                          <RotateCcw size={13} /> {reactivatingId === a.id ? "Activating…" : "Reactivate"}
                         </button>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="text-ink font-medium truncate">
-                              {[a.firstName, a.lastName].filter(Boolean).join(" ") || "Not named yet"}
-                            </p>
-                            {isSameDay(a.createdAt, new Date()) && (
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-pill bg-accent/15 text-accent shrink-0">
-                                New
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-muted text-xs truncate">{a.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {a.department ? (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-navy/10 text-navy">{a.department}</span>
                       ) : (
-                        <span className="text-xs text-muted">Not assigned</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-muted text-xs">
-                      {grantedCount === 0 ? "None granted" : `${grantedCount} of ${Object.keys(PERMISSION_LABELS).length}`}
-                    </td>
-                    <td className="px-4 py-3 text-muted">
-                      {a.managedOrgCount === 0 ? "—" : a.managedOrgNames.join(", ")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${
-                          status === "active"
-                            ? "bg-success/15 text-success"
-                            : status === "pending"
-                              ? "bg-warning/15 text-navy-deep"
-                              : "bg-error/15 text-error"
-                        }`}
-                      >
-                        {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end">
-                        {status === "deactivated" ? (
+                        <>
                           <button
-                            onClick={() => handleReactivate(a)}
-                            disabled={reactivatingId === a.id}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold bg-success/10 text-success hover:bg-success/20 transition-colors cursor-pointer disabled:opacity-50"
+                            onClick={() => setEditing(a)}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill border border-rule text-xs font-semibold text-ink hover:bg-paper-warm cursor-pointer"
                           >
-                            <RotateCcw size={14} />
-                            {reactivatingId === a.id ? "Activating…" : "Activate"}
+                            <Pencil size={13} /> Edit & permissions
                           </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => setEditing(a)}
-                              title="Edit"
-                              className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
-                            >
-                              <Pencil size={16} />
-                            </button>
-                            <button
-                              onClick={() => setConfirmingDelete(a)}
-                              disabled={deletingId === a.id}
-                              title="Deactivate"
-                              className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer disabled:opacity-50"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                          <button
+                            onClick={() => setConfirmingDelete(a)}
+                            disabled={deletingId === a.id}
+                            title="Deactivate"
+                            className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error cursor-pointer disabled:opacity-50"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {showOnboard && (

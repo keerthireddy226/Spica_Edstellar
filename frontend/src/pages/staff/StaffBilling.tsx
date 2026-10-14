@@ -48,10 +48,10 @@ export function StaffBilling() {
         subtitle={perms.isSuper ? "Payments, unpaid invoices and contracts across Spica." : "Payments, unpaid invoices and contracts for your organizations, and individual learners' plans."}
       />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard index={0} icon={CreditCard} value={money(total(paid.filter((o) => o.paidAt && new Date(o.paidAt).getTime() >= monthStart)), cur)} label="Paid this month" sub={`${money(total(paid), cur)} in total`} />
-        <StatCard index={1} icon={FileText} value={unpaid.length} label="Unpaid invoices" sub={money(total(unpaid), cur)} />
-        <StatCard index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label="Overdue" sub={money(total(unpaid.filter((o) => o.overdue)), cur)} />
-        <StatCard index={3} icon={CalendarClock} value={ending.length} label="Contracts ending in 90 days" sub={`${contracts.length} contracts in total`} />
+        <StatCard variant="ledger" palette="rose" index={0} icon={CreditCard} value={money(total(paid.filter((o) => o.paidAt && new Date(o.paidAt).getTime() >= monthStart)), cur)} label="Paid this month" sub={`${money(total(paid), cur)} in total`} />
+        <StatCard variant="ledger" palette="rose" index={1} icon={FileText} value={unpaid.length} label="Unpaid invoices" sub={money(total(unpaid), cur)} progress={orders.length ? unpaid.length / orders.length : 0} />
+        <StatCard variant="ledger" palette="rose" index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label="Overdue" sub={money(total(unpaid.filter((o) => o.overdue)), cur)} progress={unpaid.length ? unpaid.filter((o) => o.overdue).length / unpaid.length : 0} />
+        <StatCard variant="ledger" palette="rose" index={3} icon={CalendarClock} value={ending.length} label="Contracts ending in 90 days" sub={`${contracts.length} contracts in total`} progress={contracts.length ? ending.length / contracts.length : 0} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 items-start">

@@ -43,6 +43,14 @@ export interface AdminAccount {
   active: boolean;
   hasLoggedIn: boolean;
   createdAt: string;
+  lastLoginAt?: string | null;
+  phone?: string | null;
+  jobTitle?: string | null;
+  region?: string | null;
+  city?: string | null;
+  country?: string | null;
+  notes?: string | null;
+  managedOrgIds?: string[];
 }
 
 export interface OnboardAdminPayload {
@@ -51,6 +59,13 @@ export interface OnboardAdminPayload {
   lastName: string;
   department?: string;
   permissions: AdminPermissions;
+  jobTitle?: string;
+  phone?: string;
+  region?: string;
+  city?: string;
+  country?: string;
+  notes?: string;
+  organizationIds?: string[];
 }
 
 export interface EditAdminPayload {
@@ -58,6 +73,13 @@ export interface EditAdminPayload {
   lastName: string;
   department?: string;
   permissions: AdminPermissions;
+  jobTitle?: string;
+  phone?: string;
+  region?: string;
+  city?: string;
+  country?: string;
+  notes?: string;
+  organizationIds?: string[];
 }
 
 export interface OrgAdminAccount {
@@ -325,11 +347,28 @@ export interface OnboardOrgPayload {
   billingContactName?: string;
   billingContactEmail?: string;
   taxId?: string;
+  legalName?: string;
+  website?: string;
+  phone?: string;
+  addressLine?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  employeeCountBand?: "1_50" | "51_200" | "201_1000" | "1001_5000" | "5000_plus";
+  trainingGoal?: string;
+  billingContactPhone?: string;
+  purchaseOrderRef?: string;
+  planTier?: "starter" | "business" | "enterprise";
+  contractStart?: string;
+  contractEnd?: string;
+  contractValue?: number;
+  contractCurrency?: string;
   orgAdmin: {
     email: string;
     firstName: string;
     lastName: string;
     phone?: string;
+    jobTitle?: string;
   };
 }
 
