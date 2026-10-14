@@ -5,9 +5,9 @@ import { pool } from "../db.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { notify } from "../notifications/service.js";
+import { inviteExpiryMs } from "../auth/policy.js";
 
 const BCRYPT_ROUNDS = 12;
-const INVITE_TTL_MS = 24 * 60 * 60 * 1000;
 const PG_UNIQUE_VIOLATION = "23505";
 
 export const newOrgAdminSchema = z.object({
@@ -81,7 +81,7 @@ export async function replaceOrgAdmin(args: {
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
     newId,
     hashToken(token),
-    new Date(Date.now() + INVITE_TTL_MS),
+    new Date(Date.now() + (await inviteExpiryMs(args.tenantId))),
   ]);
   sendAdminInviteEmail(args.next.email, token, "an Org Admin").catch((err) => console.error("failed to send org admin invite:", err));
 

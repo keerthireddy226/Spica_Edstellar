@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "Zu viele Anmeldeversuche. Bitte warte ein paar Minuten und versuche es erneut.",
       "errorGeneric": "Etwas ist schiefgelaufen. Bitte prüfe deine Verbindung und versuche es erneut.",
       "forgotPassword": "Passwort vergessen?",
-      "createAccount": "Konto erstellen"
+      "createAccount": "Konto erstellen",
+      "errorIpNotAllowed": "Die Anmeldung aus diesem Netzwerk ist nicht erlaubt. Wenden Sie sich an den Admin Ihrer Organisation.",
+      "errorSessionExpired": "Sie wurden nach längerer Inaktivität abgemeldet. Bitte melden Sie sich erneut an."
     },
     "signup": {
       "title": "Erstelle dein Konto",
@@ -84,6 +86,20 @@
       "success": "Deine E-Mail-Adresse ist bestätigt. Melde dich an, um fortzufahren.",
       "signInButton": "Anmelden",
       "error": "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+    },
+    "mfa": {
+      "title": "Bestätigung in zwei Schritten",
+      "subtitle": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.",
+      "codeLabel": "Bestätigungscode",
+      "codeHint": "Telefon verloren? Verwenden Sie einen Ihrer Wiederherstellungscodes.",
+      "submit": "Bestätigen",
+      "invalid": "Der Code hat nicht funktioniert. Versuchen Sie den neuesten Code aus Ihrer App.",
+      "expired": "Diese Anmeldung ist abgelaufen. Bitte beginnen Sie erneut."
+    },
+    "password": {
+      "tooShort": "Verwenden Sie mindestens {{min}} Zeichen.",
+      "tooWeak": "Verwenden Sie Buchstaben und Zahlen.",
+      "tooCommon": "Dieses Passwort ist zu verbreitet. Wählen Sie ein anderes."
     }
   },
   "onboarding": {
@@ -470,6 +486,10 @@
         "fri": "Fr",
         "sat": "Sa"
       }
+    },
+    "certificates": {
+      "title": "Zertifikate",
+      "view": "Ansehen und drucken"
     }
   },
   "heroTagline": {
@@ -744,5 +764,15 @@
       "practice": "Du hast deine {{limit}} kostenlosen Übungseinheiten für diese Woche genutzt. Sie erneuern sich fortlaufend über 7 Tage – oder wechsle für unbegrenztes Üben."
     },
     "lockedTitle": "Upgrade, um weiterzumachen"
+  },
+  "certificate": {
+    "heading": "Abschlusszertifikat",
+    "awardedTo": "Hiermit wird bestätigt, dass",
+    "completed": "das Englisch-Trainingsprogramm abgeschlossen hat",
+    "level": "Erreichtes Niveau: {{level}}",
+    "verify": "Prüfen unter {{url}} mit dem Code {{code}}",
+    "revoked": "Dieses Zertifikat wurde widerrufen.",
+    "notFound": "Kein Zertifikat mit diesem Code gefunden.",
+    "print": "Drucken / als PDF speichern"
   }
 }

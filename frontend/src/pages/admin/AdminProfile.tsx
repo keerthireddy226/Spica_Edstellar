@@ -13,6 +13,7 @@ import { getOrgOverview } from "@/api/orgAdmin";
 import { Button } from "@/components/Button";
 import { OrganizationProfileCard } from "@/components/OrganizationProfileCard";
 import { HandoverCard } from "@/components/HandoverCard";
+import { MfaCard } from "@/components/MfaCard";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
@@ -423,6 +424,7 @@ export function AdminProfile() {
         </div>
       </div>
 
+      <MfaCard />
       {user?.role === "org_admin" && <OrganizationProfileCard />}
       {user?.role === "org_admin" && <HandoverCard />}
 

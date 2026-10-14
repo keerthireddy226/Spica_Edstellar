@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "登录尝试次数过多。请等待几分钟后重试。",
       "errorGeneric": "出了点问题。请检查网络连接后重试。",
       "forgotPassword": "忘记密码？",
-      "createAccount": "创建账号"
+      "createAccount": "创建账号",
+      "errorIpNotAllowed": "不允许从此网络登录。请联系你所在组织的管理员。",
+      "errorSessionExpired": "由于长时间未操作，你已退出登录。请重新登录。"
     },
     "signup": {
       "title": "创建你的账号",
@@ -84,6 +86,20 @@
       "success": "你的邮箱已验证。请登录以继续。",
       "signInButton": "登录",
       "error": "此验证链接无效或已过期。"
+    },
+    "mfa": {
+      "title": "两步验证",
+      "subtitle": "输入身份验证器应用中的 6 位验证码。",
+      "codeLabel": "验证码",
+      "codeHint": "手机丢失？请使用你的恢复码。",
+      "submit": "验证",
+      "invalid": "验证码无效。请使用应用中的最新验证码。",
+      "expired": "本次登录已过期。请重新开始。"
+    },
+    "password": {
+      "tooShort": "至少使用 {{min}} 个字符。",
+      "tooWeak": "请同时使用字母和数字。",
+      "tooCommon": "该密码过于常见，请换一个。"
     }
   },
   "onboarding": {
@@ -463,6 +479,10 @@
         "fri": "五",
         "sat": "六"
       }
+    },
+    "certificates": {
+      "title": "证书",
+      "view": "查看并打印"
     }
   },
   "heroTagline": {
@@ -729,5 +749,15 @@
       "practice": "你已用完本周 {{limit}} 次免费练习。次数会在滚动 7 天内恢复——或升级以无限练习。"
     },
     "lockedTitle": "升级以继续"
+  },
+  "certificate": {
+    "heading": "结业证书",
+    "awardedTo": "兹证明",
+    "completed": "已完成英语培训课程",
+    "level": "达到等级：{{level}}",
+    "verify": "请在 {{url}} 使用代码 {{code}} 验证",
+    "revoked": "此证书已被撤销。",
+    "notFound": "未找到与此代码对应的证书。",
+    "print": "打印 / 保存为 PDF"
   }
 }

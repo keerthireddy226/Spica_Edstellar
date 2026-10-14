@@ -4,9 +4,10 @@ import { pool } from "../db.js";
 import { generateToken, hashToken } from "./tokens.js";
 import { sendAdminInviteEmail } from "./mailer.js";
 import { applyLearnerDefaults } from "../orgAdmin/settings.js";
+import { inviteExpiryMs } from "./policy.js";
 
 const BCRYPT_ROUNDS = 12;
-const INVITE_TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours — same as the Admin/Org Admin invite, longer than a real password reset since an invite may sit unread a while
+// How long an invite link works is the organization's choice (24 hours by default).
 
 // Shared by Org Admin (inviting a Manager or a learner) and Manager
 // (inviting a learner into their own batch) — same pattern as
@@ -37,7 +38,7 @@ export async function createAndInviteUser(row: {
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
     userId,
     hashToken(inviteToken),
-    new Date(Date.now() + INVITE_TOKEN_TTL_MS),
+    new Date(Date.now() + (await inviteExpiryMs(row.tenantId))),
   ]);
   sendAdminInviteEmail(row.email, inviteToken, row.roleLabel).catch((err) =>
     console.error(`failed to send ${row.roleLabel} invite email:`, err),
@@ -49,7 +50,7 @@ export async function createAndInviteUser(row: {
 // A fresh "set your password" link for someone who already has an account:
 // an invite that expired, or a person locked out of their account.
 export async function resendSetPasswordLink(userId: string, roleLabel: string): Promise<string | null> {
-  const u = await pool.query(`SELECT email FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
+  const u = await pool.query(`SELECT email, tenant_id FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
   if (u.rowCount === 0) return null;
   // Older links stop working, so only the newest one is ever valid.
   await pool.query(`UPDATE password_reset_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, [userId]);
@@ -57,7 +58,7 @@ export async function resendSetPasswordLink(userId: string, roleLabel: string): 
   await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
     userId,
     hashToken(token),
-    new Date(Date.now() + INVITE_TOKEN_TTL_MS),
+    new Date(Date.now() + (await inviteExpiryMs(u.rows[0].tenant_id))),
   ]);
   sendAdminInviteEmail(u.rows[0].email, token, roleLabel).catch((err) => console.error("failed to resend invite email:", err));
   return u.rows[0].email;

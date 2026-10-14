@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "Te veel inlogpogingen. Wacht een paar minuten en probeer het opnieuw.",
       "errorGeneric": "Er is iets misgegaan. Controleer je verbinding en probeer het opnieuw.",
       "forgotPassword": "Wachtwoord vergeten?",
-      "createAccount": "Account aanmaken"
+      "createAccount": "Account aanmaken",
+      "errorIpNotAllowed": "Inloggen vanaf dit netwerk is niet toegestaan. Neem contact op met de beheerder van je organisatie.",
+      "errorSessionExpired": "Je bent uitgelogd na een periode van inactiviteit. Log opnieuw in."
     },
     "signup": {
       "title": "Maak je account aan",
@@ -84,6 +86,20 @@
       "success": "Je e-mailadres is bevestigd. Log in om verder te gaan.",
       "signInButton": "Inloggen",
       "error": "Deze bevestigingslink is ongeldig of verlopen."
+    },
+    "mfa": {
+      "title": "Verificatie in twee stappen",
+      "subtitle": "Voer de 6-cijferige code uit je authenticator-app in.",
+      "codeLabel": "Verificatiecode",
+      "codeHint": "Telefoon kwijt? Gebruik een van je herstelcodes.",
+      "submit": "Verifiëren",
+      "invalid": "Die code werkte niet. Probeer de nieuwste code uit je app.",
+      "expired": "Deze inlogpoging is verlopen. Begin opnieuw."
+    },
+    "password": {
+      "tooShort": "Gebruik minstens {{min}} tekens.",
+      "tooWeak": "Gebruik letters en cijfers.",
+      "tooCommon": "Dat wachtwoord is te gangbaar. Kies een ander."
     }
   },
   "onboarding": {
@@ -465,6 +481,10 @@
         "fri": "Vr",
         "sat": "Za"
       }
+    },
+    "certificates": {
+      "title": "Certificaten",
+      "view": "Bekijken en afdrukken"
     }
   },
   "heroTagline": {
@@ -739,5 +759,15 @@
       "practice": "Je hebt je {{limit}} gratis oefensessies van deze week gebruikt. Ze worden doorlopend per 7 dagen aangevuld, of upgrade voor onbeperkt oefenen."
     },
     "lockedTitle": "Upgrade om verder te gaan"
+  },
+  "certificate": {
+    "heading": "Certificaat van voltooiing",
+    "awardedTo": "Hierbij wordt verklaard dat",
+    "completed": "het Engelse trainingsprogramma heeft voltooid",
+    "level": "Bereikt niveau: {{level}}",
+    "verify": "Controleer op {{url}} met code {{code}}",
+    "revoked": "Dit certificaat is ingetrokken.",
+    "notFound": "Geen certificaat gevonden met deze code.",
+    "print": "Afdrukken / opslaan als pdf"
   }
 }

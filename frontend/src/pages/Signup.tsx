@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { passwordErrorText } from "@/lib/passwordErrors";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,9 +40,8 @@ export function Signup() {
       setSubmittedEmail(email);
     } catch (err) {
       setError(
-        err instanceof Error && err.message === "email_already_registered"
-          ? t("auth.signup.errorEmailTaken")
-          : t("auth.signup.errorGeneric"),
+        passwordErrorText(err, t) ??
+          (err instanceof Error && err.message === "email_already_registered" ? t("auth.signup.errorEmailTaken") : t("auth.signup.errorGeneric")),
       );
     } finally {
       setSubmitting(false);

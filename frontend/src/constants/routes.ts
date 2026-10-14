@@ -23,6 +23,8 @@ export const ROUTES = {
   PROFILE: "/profile",
   PLANS: "/plans",
   CHECKOUT_RETURN: "/checkout/return",
+  MFA_SETUP: "/security/two-step",
+  CERTIFICATE: "/certificate/:code",
   INVOICE: "/invoice/:id",
   ADMIN_REVIEW: "/admin/review",
   // Super Admin's own console — exclusively theirs, never reachable by an

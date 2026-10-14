@@ -42,6 +42,8 @@ export type PlanFeature =
   | "license_requests"
   | "batch_analytics"
   | "custom_pool_expiry"
+  | "security_policies"
+  | "ip_allowlist"
   | "audit_log"
   | "scheduled_reports"
   | "po_invoicing"
@@ -90,12 +92,24 @@ export const FEATURES: Record<PlanFeature, FeatureInfo> = {
     minTier: "enterprise",
     available: true,
   },
+  security_policies: {
+    label: "Security policies",
+    description: "Password length, idle sign-out and invite link expiry for your organization.",
+    minTier: "business",
+    available: true,
+  },
+  ip_allowlist: {
+    label: "IP allowlist",
+    description: "Org Admins and Managers can only sign in from your networks.",
+    minTier: "enterprise",
+    available: true,
+  },
   audit_log: { label: "Audit log", description: "Who changed what across the organization.", minTier: "business", available: true },
-  scheduled_reports: { label: "Scheduled reports", description: "Progress reports emailed on a schedule.", minTier: "business", available: false },
+  scheduled_reports: { label: "Scheduled reports", description: "Progress reports emailed on a schedule.", minTier: "business", available: true },
   po_invoicing: { label: "Purchase orders and invoicing", description: "Pay by invoice against a PO.", minTier: "business", available: false },
   sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider.", minTier: "enterprise", available: false },
   api_access: { label: "API and webhooks", description: "Connect Spica to your LMS or HR system.", minTier: "enterprise", available: false },
-  mfa_enforcement: { label: "Enforced two-factor sign-in", description: "Require MFA for every admin and manager.", minTier: "enterprise", available: false },
+  mfa_enforcement: { label: "Enforced two-factor sign-in", description: "Require MFA for every admin and manager.", minTier: "enterprise", available: true },
   data_governance: { label: "Data governance", description: "DPA, retention rules and data export.", minTier: "enterprise", available: false },
   account_manager: { label: "Dedicated account manager", description: "A named contact and an SLA.", minTier: "enterprise", available: false },
 };

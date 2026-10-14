@@ -34,7 +34,9 @@
       "errorTooManyAttempts": "Demasiados intentos de inicio de sesión. Espera unos minutos e intenta de nuevo.",
       "errorGeneric": "Algo salió mal. Por favor verifica tu conexión e intenta de nuevo.",
       "forgotPassword": "¿Olvidaste tu contraseña?",
-      "createAccount": "Crear una cuenta"
+      "createAccount": "Crear una cuenta",
+      "errorIpNotAllowed": "No se permite iniciar sesión desde esta red. Contacta con el administrador de tu organización.",
+      "errorSessionExpired": "Se cerró tu sesión por inactividad. Vuelve a iniciar sesión."
     },
     "signup": {
       "title": "Crea tu cuenta",
@@ -93,6 +95,20 @@
       "success": "Tu correo electrónico ha sido verificado. Inicia sesión para continuar.",
       "signInButton": "Iniciar sesión",
       "error": "Este enlace de verificación no es válido o ha expirado."
+    },
+    "mfa": {
+      "title": "Verificación en dos pasos",
+      "subtitle": "Introduce el código de 6 dígitos de tu app de autenticación.",
+      "codeLabel": "Código de verificación",
+      "codeHint": "¿Perdiste el teléfono? Usa uno de tus códigos de recuperación.",
+      "submit": "Verificar",
+      "invalid": "Ese código no funcionó. Prueba el más reciente de tu app.",
+      "expired": "Este inicio de sesión caducó. Empieza de nuevo."
+    },
+    "password": {
+      "tooShort": "Usa al menos {{min}} caracteres.",
+      "tooWeak": "Usa letras y números.",
+      "tooCommon": "Esa contraseña es demasiado común. Elige otra."
     }
   },
   "onboarding": {
@@ -487,6 +503,10 @@
         "fri": "Vie",
         "sat": "Sáb"
       }
+    },
+    "certificates": {
+      "title": "Certificados",
+      "view": "Ver e imprimir"
     }
   },
   "heroTagline": {
@@ -767,5 +787,15 @@
       "practice": "Has usado tus {{limit}} sesiones gratuitas esta semana. Se renuevan cada 7 días, o mejora tu plan para práctica ilimitada."
     },
     "lockedTitle": "Mejora tu plan para continuar"
+  },
+  "certificate": {
+    "heading": "Certificado de finalización",
+    "awardedTo": "Se certifica que",
+    "completed": "completó el programa de formación en inglés",
+    "level": "Nivel alcanzado: {{level}}",
+    "verify": "Verifícalo en {{url}} con el código {{code}}",
+    "revoked": "Este certificado ha sido revocado.",
+    "notFound": "No hay ningún certificado con este código.",
+    "print": "Imprimir / guardar como PDF"
   }
 }

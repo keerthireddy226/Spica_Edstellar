@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "For mange innloggingsforsøk. Vent noen minutter og prøv igjen.",
       "errorGeneric": "Noe gikk galt. Sjekk tilkoblingen og prøv igjen.",
       "forgotPassword": "Glemt passordet?",
-      "createAccount": "Opprett konto"
+      "createAccount": "Opprett konto",
+      "errorIpNotAllowed": "Innlogging er ikke tillatt fra dette nettverket. Kontakt organisasjonens administrator.",
+      "errorSessionExpired": "Du ble logget ut etter inaktivitet. Logg inn på nytt."
     },
     "signup": {
       "title": "Opprett kontoen din",
@@ -84,6 +86,20 @@
       "success": "E-posten din er bekreftet. Logg inn for å fortsette.",
       "signInButton": "Logg inn",
       "error": "Denne bekreftelseslenken er ugyldig eller utløpt."
+    },
+    "mfa": {
+      "title": "Totrinnsbekreftelse",
+      "subtitle": "Skriv inn den 6-sifrede koden fra autentiseringsappen.",
+      "codeLabel": "Bekreftelseskode",
+      "codeHint": "Mistet telefonen? Bruk en av gjenopprettingskodene dine.",
+      "submit": "Bekreft",
+      "invalid": "Koden fungerte ikke. Prøv den nyeste koden fra appen.",
+      "expired": "Denne innloggingen har utløpt. Start på nytt."
+    },
+    "password": {
+      "tooShort": "Bruk minst {{min}} tegn.",
+      "tooWeak": "Bruk både bokstaver og tall.",
+      "tooCommon": "Passordet er for vanlig. Velg et annet."
     }
   },
   "onboarding": {
@@ -465,6 +481,10 @@
         "fri": "Fr",
         "sat": "Lø"
       }
+    },
+    "certificates": {
+      "title": "Sertifikater",
+      "view": "Vis og skriv ut"
     }
   },
   "heroTagline": {
@@ -739,5 +759,15 @@
       "practice": "Du har brukt de {{limit}} gratis øktene dine denne uken. De fornyes over en løpende 7-dagersperiode — eller oppgrader for ubegrenset øving."
     },
     "lockedTitle": "Oppgrader for å fortsette"
+  },
+  "certificate": {
+    "heading": "Kursbevis",
+    "awardedTo": "Det bekreftes herved at",
+    "completed": "har fullført engelskopplæringen",
+    "level": "Oppnådd nivå: {{level}}",
+    "verify": "Bekreft på {{url}} med koden {{code}}",
+    "revoked": "Dette sertifikatet er trukket tilbake.",
+    "notFound": "Fant ingen sertifikater med denne koden.",
+    "print": "Skriv ut / lagre som PDF"
   }
 }

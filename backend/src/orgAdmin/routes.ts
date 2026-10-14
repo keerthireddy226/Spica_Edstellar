@@ -9,6 +9,7 @@ import { assertFeature, assertWithinLimit } from "../plans/service.js";
 import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
+import { ipAllowed, parseAllowlist } from "../auth/policy.js";
 import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
 import { BATCH_END_SQL, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit } from "../audit/service.js";
@@ -1263,7 +1264,25 @@ orgAdminRouter.patch("/settings", requireAuth, async (req: AuthedRequest, res, n
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
-    await updateOrgSettings(tenantId, settingsSchema.parse(req.body));
+    const body = settingsSchema.parse(req.body);
+    const current = (await getOrgSettings(tenantId))!;
+    // Security settings are plan features; only check the ones actually changing.
+    if (body.mfaRequired && !current.mfaRequired) await assertFeature(tenantId, "mfa_enforcement");
+    if (body.ipAllowlist && body.ipAllowlist.length > 0) {
+      await assertFeature(tenantId, "ip_allowlist");
+      if (!parseAllowlist(body.ipAllowlist)) return res.status(400).json({ error: "invalid_ip_allowlist" });
+      // Never let an Org Admin lock themselves out with their own save.
+      if (!ipAllowed(req.ip, body.ipAllowlist)) return res.status(400).json({ error: "allowlist_excludes_you", yourIp: req.ip });
+    }
+    const changed = (k: "sessionIdleMinutes" | "passwordMinLength" | "inviteExpiryHours") => body[k] !== undefined && body[k] !== current[k];
+    if (changed("sessionIdleMinutes") || changed("passwordMinLength") || changed("inviteExpiryHours")) await assertFeature(tenantId, "security_policies");
+    if (body.mfaRequired && !current.mfaRequired) {
+      // Whoever turns it on must already use it, or they'd be locked out next.
+      const me = (await pool.query(`SELECT mfa_enabled_at FROM users WHERE id = $1`, [req.user!.id])).rows[0];
+      if (!me?.mfa_enabled_at) return res.status(400).json({ error: "enable_your_mfa_first" });
+    }
+    if (body.ipAllowlist?.length === 0) body.ipAllowlist = null;
+    await updateOrgSettings(tenantId, body);
     res.json(await getOrgSettings(tenantId));
   } catch (err) {
     next(err);

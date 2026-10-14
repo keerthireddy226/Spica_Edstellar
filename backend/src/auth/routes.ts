@@ -5,7 +5,9 @@ import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
 import { generateToken, hashToken, SESSION_COOKIE } from "./tokens.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
-import { requireAuth, type AuthedRequest } from "./middleware.js";
+import { checkSession, requireAuth, type AuthedRequest } from "./middleware.js";
+import { ORG_CONSOLE_ROLES, ipAllowed, passwordMinLengthFor, passwordProblem } from "./policy.js";
+import { checkSecondFactor, confirmMfaSetup, createChallenge, disableMfa, redeemChallenge, regenerateRecoveryCodes, startMfaSetup } from "./mfa.js";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -68,6 +70,8 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
   const client = await pool.connect();
   try {
     const body = signupSchema.parse(req.body);
+    const problem = passwordProblem(body.password);
+    if (problem) return res.status(400).json({ error: problem, minLength: 8 });
     await client.query("BEGIN");
 
     const tenant = await client.query(
@@ -115,8 +119,8 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
     const result = await pool.query(
-      `SELECT u.id, u.password_hash, u.role, u.email_verified, u.first_name, u.last_name, u.preferred_language,
-         t.deactivated_at AS tenant_deactivated_at
+      `SELECT u.id, u.password_hash, u.role, u.email_verified, u.first_name, u.last_name, u.preferred_language, u.mfa_enabled_at,
+         t.deactivated_at AS tenant_deactivated_at, t.ip_allowlist
        FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id
        WHERE u.email = $1 AND u.deleted_at IS NULL`,
       [body.email],
@@ -143,41 +147,74 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
       return res.status(403).json({ error: "wrong_login_portal" });
     }
 
-    // One active session per account — a second login while the first is still
-    // open gets rejected instead of silently coexisting with it.
-    const activeSession = await pool.query(
-      `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() LIMIT 1`,
-      [user.id],
-    );
-    if (activeSession.rows[0]) {
-      return res.status(409).json({ error: "already_logged_in" });
+    // Org Admins and Managers can be limited to the organization's networks.
+    if (ORG_CONSOLE_ROLES.includes(user.role) && !ipAllowed(req.ip, user.ip_allowlist)) {
+      return res.status(403).json({ error: "ip_not_allowed" });
     }
-
-    const { token } = await createSession(pool, user.id);
-    setSessionCookie(res, token);
-    // Passive signal only — no decision is made from this yet. Persisted so
-    // there's real per-account login history to design anomaly detection
-    // against later instead of guessing.
-    pool
-      .query(`INSERT INTO login_events (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`, [
-        user.id,
-        req.ip,
-        req.headers["user-agent"] ?? null,
-      ])
-      .catch((err) => console.error("failed to record login event:", err));
-    res.json({
-      id: user.id,
-      email: body.email,
-      role: user.role,
-      emailVerified: user.email_verified,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      preferredLanguage: user.preferred_language,
-    });
+    // Password was right; with two-factor on, a code is still owed before
+    // any session exists.
+    if (user.mfa_enabled_at) {
+      const challenge = await createChallenge(user.id);
+      return res.json({ mfaRequired: true, challenge });
+    }
+    await finishLogin(req, res, user.id);
   } catch (err) {
     next(err);
   }
 });
+
+// Second step of a two-factor login.
+authRouter.post("/mfa/verify", loginLimiter, async (req, res, next) => {
+  try {
+    const body = z.object({ challenge: z.string().min(10), code: z.string().trim().min(6).max(20) }).parse(req.body);
+    const result = await redeemChallenge(body.challenge, body.code);
+    if ("error" in result) return res.status(result.error === "invalid_code" ? 401 : 400).json({ error: result.error });
+    await finishLogin(req, res, result.userId);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Shared tail of every successful login: one active session per account,
+// the cookie, the login record, and who you are.
+async function finishLogin(req: import("express").Request, res: import("express").Response, userId: string) {
+  // One active session per account — a second login while the first is still
+  // open gets rejected instead of silently coexisting with it.
+  const activeSession = await pool.query(
+    `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() LIMIT 1`,
+    [userId],
+  );
+  if (activeSession.rows[0]) {
+    res.status(409).json({ error: "already_logged_in" });
+    return;
+  }
+  const u = (
+    await pool.query(
+      `SELECT u.id, u.email, u.role, u.email_verified, u.first_name, u.last_name, u.preferred_language, u.mfa_enabled_at, t.mfa_required
+       FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+      [userId],
+    )
+  ).rows[0];
+  const { token } = await createSession(pool, userId);
+  setSessionCookie(res, token);
+  // Passive signal only — no decision is made from this yet. Persisted so
+  // there's real per-account login history to design anomaly detection
+  // against later instead of guessing.
+  pool
+    .query(`INSERT INTO login_events (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`, [userId, req.ip, req.headers["user-agent"] ?? null])
+    .catch((err) => console.error("failed to record login event:", err));
+  res.json({
+    id: u.id,
+    email: u.email,
+    role: u.role,
+    emailVerified: u.email_verified,
+    firstName: u.first_name,
+    lastName: u.last_name,
+    preferredLanguage: u.preferred_language,
+    // The organization requires two-factor sign-in and it isn't set up yet.
+    mfaSetupRequired: ORG_CONSOLE_ROLES.includes(u.role) && u.mfa_required && !u.mfa_enabled_at,
+  });
+}
 
 authRouter.post("/logout", async (req, res, next) => {
   try {
@@ -197,19 +234,15 @@ authRouter.post("/logout", async (req, res, next) => {
 
 authRouter.get("/me", async (req, res, next) => {
   try {
-    const token = req.cookies?.[SESSION_COOKIE];
-    if (!token) return res.status(401).json({ error: "not_authenticated" });
-
+    const check = await checkSession(req.cookies?.[SESSION_COOKIE], req.ip);
+    if (!check.user) return res.status(check.error === "ip_not_allowed" ? 403 : 401).json({ error: check.error });
     const result = await pool.query(
       `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name, u.created_at, u.department, u.permissions,
          u.participant_id, u.preferred_language
-       FROM auth_sessions s
-       JOIN users u ON u.id = s.user_id
-       WHERE s.session_token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.deleted_at IS NULL`,
-      [hashToken(token)],
+       FROM users u WHERE u.id = $1`,
+      [check.user.id],
     );
     const user = result.rows[0];
-    if (!user) return res.status(401).json({ error: "not_authenticated" });
 
     // Second-most-recent login — the most recent one is this very session.
     const lastLogin = await pool.query(
@@ -231,6 +264,8 @@ authRouter.get("/me", async (req, res, next) => {
       permissions: user.permissions ?? {},
       participantId: user.participant_id,
       preferredLanguage: user.preferred_language,
+      mfaEnabled: check.user.mfaEnabled,
+      mfaSetupRequired: check.user.mfaSetupRequired,
     });
   } catch (err) {
     next(err);
@@ -437,6 +472,8 @@ authRouter.post("/reset-password", async (req, res, next) => {
     );
     const row = result.rows[0];
     if (!row) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const problem = passwordProblem(body.password, await passwordMinLengthFor(row.user_id));
+    if (problem) return res.status(400).json({ error: problem, minLength: await passwordMinLengthFor(row.user_id) });
 
     const passwordHash = await bcrypt.hash(body.password, BCRYPT_ROUNDS);
     const user = await pool.query("UPDATE users SET password_hash = $1 WHERE id = $2 RETURNING role", [
@@ -466,6 +503,76 @@ authRouter.post("/reset-password", async (req, res, next) => {
     // Returned so the frontend can send the learner back to *their* role's
     // login page, not always the learner one.
     res.json({ role: user.rows[0].role });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Two-factor sign-in, for any account ----
+
+authRouter.get("/mfa/status", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT u.mfa_enabled_at, coalesce(array_length(u.mfa_recovery_hashes, 1), 0) AS codes_left, t.mfa_required
+       FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+      [req.user!.id],
+    );
+    const u = r.rows[0];
+    res.json({
+      enabled: u.mfa_enabled_at !== null,
+      enabledAt: u.mfa_enabled_at,
+      recoveryCodesLeft: u.codes_left,
+      requiredByOrganization: ORG_CONSOLE_ROLES.includes(req.user!.role) && !!u.mfa_required,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.post("/mfa/setup", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const u = (await pool.query(`SELECT email, mfa_enabled_at FROM users WHERE id = $1`, [req.user!.id])).rows[0];
+    if (u.mfa_enabled_at) return res.status(400).json({ error: "already_enabled" });
+    res.json(await startMfaSetup(req.user!.id, u.email));
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.post("/mfa/enable", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ code: z.string().trim().min(6).max(10) }).parse(req.body);
+    const codes = await confirmMfaSetup(req.user!.id, body.code);
+    if (!codes) return res.status(400).json({ error: "invalid_code" });
+    res.json({ recoveryCodes: codes });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Turning it off needs the password and a current code, and isn't allowed
+// when the organization requires it.
+authRouter.post("/mfa/disable", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ password: z.string().min(1), code: z.string().trim().min(6).max(20) }).parse(req.body);
+    const u = (
+      await pool.query(`SELECT u.password_hash, t.mfa_required FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [req.user!.id])
+    ).rows[0];
+    if (ORG_CONSOLE_ROLES.includes(req.user!.role) && u.mfa_required) return res.status(403).json({ error: "required_by_organization" });
+    if (!(await bcrypt.compare(body.password, u.password_hash))) return res.status(401).json({ error: "invalid_credentials" });
+    if (!(await checkSecondFactor(req.user!.id, body.code))) return res.status(401).json({ error: "invalid_code" });
+    await disableMfa(req.user!.id);
+    res.json({ enabled: false });
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.post("/mfa/recovery-codes", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ code: z.string().trim().min(6).max(20) }).parse(req.body);
+    if (!(await checkSecondFactor(req.user!.id, body.code))) return res.status(401).json({ error: "invalid_code" });
+    res.json({ recoveryCodes: await regenerateRecoveryCodes(req.user!.id) });
   } catch (err) {
     next(err);
   }

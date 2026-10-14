@@ -19,7 +19,17 @@ type AuthUser = {
   permissions?: Record<string, unknown>;
   participantId?: string | null;
   preferredLanguage?: string | null;
+  mfaEnabled?: boolean;
+  // The organization requires two-step sign-in and it isn't set up yet.
+  mfaSetupRequired?: boolean;
 };
+
+// With two-step sign-in on, the password step returns a challenge instead of a user.
+export type LoginResult = AuthUser | { mfaRequired: true; challenge: string };
+
+export function isMfaChallenge(r: LoginResult): r is { mfaRequired: true; challenge: string } {
+  return (r as { mfaRequired?: boolean }).mfaRequired === true;
+}
 
 export interface LoginHistoryEntry {
   ipAddress: string | null;
@@ -92,11 +102,17 @@ export function useAuthState() {
   // real access boundary, not just a different-looking page. Returns the
   // logged-in user so the caller can redirect based on their actual role
   // immediately, without waiting on a state update to propagate.
-  const login = useCallback(async (email: string, password: string, allowedRoles: Role[]) => {
-    const user = await api<AuthUser>("/auth/login", {
+  const login = useCallback(async (email: string, password: string, allowedRoles: Role[]): Promise<LoginResult> => {
+    const result = await api<LoginResult>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password, allowedRoles }),
     });
+    if (!isMfaChallenge(result)) setState({ user: result, loading: false, error: null });
+    return result;
+  }, []);
+
+  const verifyMfa = useCallback(async (challenge: string, code: string): Promise<AuthUser> => {
+    const user = await api<AuthUser>("/auth/mfa/verify", { method: "POST", body: JSON.stringify({ challenge, code }) });
     setState({ user, loading: false, error: null });
     return user;
   }, []);
@@ -145,7 +161,7 @@ export function useAuthState() {
     [refresh],
   );
 
-  return { ...state, login, signup, logout, forgotPassword, resetPassword, verifyEmail, updateName, refresh };
+  return { ...state, login, verifyMfa, signup, logout, forgotPassword, resetPassword, verifyEmail, updateName, refresh };
 }
 
 export const AuthContext = createContext<ReturnType<typeof useAuthState> | null>(null);

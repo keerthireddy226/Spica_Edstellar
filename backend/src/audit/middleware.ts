@@ -7,7 +7,7 @@ interface Rule {
   method: "POST" | "PATCH" | "PUT" | "DELETE";
   path: string; // relative to where the router is mounted, e.g. "/batches/:id"
   action: string;
-  targetType: "batch" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user";
+  targetType: "batch" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user" | "certificate";
 }
 
 const SECRET_KEYS = /pass|token|secret|code|otp/i;
@@ -129,4 +129,9 @@ export const MANAGER_AUDIT: Rule[] = [
   { method: "POST", path: "/learners/bulk", action: "learner.bulk_invited", targetType: "learner" },
   { method: "POST", path: "/learners/:id/move", action: "learner.moved", targetType: "learner" },
   { method: "POST", path: "/batches", action: "batch.created", targetType: "batch" },
+];
+
+export const CERTIFICATE_AUDIT: Rule[] = [
+  { method: "POST", path: "/org/issue", action: "certificate.issued", targetType: "certificate" },
+  { method: "DELETE", path: "/org/:id", action: "certificate.revoked", targetType: "certificate" },
 ];

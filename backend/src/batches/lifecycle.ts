@@ -2,6 +2,7 @@ import { pool } from "../db.js";
 import { setBatchBudget } from "../licenses/service.js";
 import { assertWithinLimit } from "../plans/service.js";
 import { batchManagerIds, notify, orgAdminIds } from "../notifications/service.js";
+import { issueForBatch } from "../certificates/service.js";
 
 // A batch ends `duration_months` after it starts (its start date, or the day
 // it was created). Batches without a duration never end on their own.
@@ -54,6 +55,8 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
     released = budget - used;
   }
 
+  // Everyone who practised gets a completion certificate.
+  const certificates = await issueForBatch(args.batchId, args.actorId);
   const s = await summary(args.batchId);
   const recipients = [...new Set([...(await orgAdminIds(args.tenantId)), ...(await batchManagerIds(args.batchId))])];
   const goal = s.target_cefr ? ` ${s.reached_goal} of ${s.learners} reached ${s.target_cefr}.` : "";
@@ -64,14 +67,14 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
       title: `${s.name} is complete`,
       body: `${args.automatic ? "The batch reached its end date. " : ""}${s.practised} of ${s.learners} learners practised.${goal}${
         released ? ` ${released} unused fixed license${released === 1 ? "" : "s"} went back to the pool.` : ""
-      }`,
+      }${certificates ? ` ${certificates} completion certificate${certificates === 1 ? "" : "s"} issued.` : ""}`,
       link: "/orgadmin/batches",
       dedupeKey: `batchdone:${args.batchId}:${new Date().toISOString().slice(0, 10)}`,
       email: true,
       batchId: args.batchId,
     });
   }
-  return { releasedLicenses: released };
+  return { releasedLicenses: released, certificatesIssued: certificates };
 }
 
 export async function archiveBatch(tenantId: string, batchId: string) {

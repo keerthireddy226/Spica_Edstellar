@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Mail, Lock } from "lucide-react";
-import { useAuth, type Role } from "@/hooks/useAuth";
+import { Mail, Lock, ShieldCheck } from "lucide-react";
+import { isMfaChallenge, useAuth, type Role } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -11,21 +11,49 @@ import { LANDING_ROUTE_BY_ROLE, ROUTES } from "@/constants/routes";
 export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, login } = useAuth();
+  const { user, login, verifyMfa } = useAuth();
+  // Set after a correct password when the account uses two-step sign-in.
+  const [challenge, setChallenge] = useState<string | null>(null);
+  const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  if (user) return <Navigate to={LANDING_ROUTE_BY_ROLE[user.role]} replace />;
+  if (user) return <Navigate to={user.mfaSetupRequired ? ROUTES.MFA_SETUP : LANDING_ROUTE_BY_ROLE[user.role]} replace />;
+
+  function landing(u: { role: Role; mfaSetupRequired?: boolean }) {
+    navigate(u.mfaSetupRequired ? ROUTES.MFA_SETUP : LANDING_ROUTE_BY_ROLE[u.role], { replace: true });
+  }
+
+  async function handleCode(e: FormEvent) {
+    e.preventDefault();
+    if (!challenge) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      landing(await verifyMfa(challenge, code.trim()));
+    } catch (err) {
+      if (err instanceof Error && err.message === "invalid_code") setError(t("auth.mfa.invalid"));
+      else if (err instanceof Error && err.message === "already_logged_in") setError(t("auth.login.errorAlreadyLoggedIn"));
+      else {
+        setError(t("auth.mfa.expired"));
+        setChallenge(null);
+        setCode("");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const loggedInUser = await login(email, password, allowedRoles);
-      navigate(LANDING_ROUTE_BY_ROLE[loggedInUser.role], { replace: true });
+      const result = await login(email, password, allowedRoles);
+      if (isMfaChallenge(result)) setChallenge(result.challenge);
+      else landing(result);
     } catch (err) {
       if (err instanceof Error && err.message === "invalid_credentials") {
         setError(t("auth.login.errorInvalidCredentials"));
@@ -37,6 +65,8 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
         setError(t("auth.login.errorAlreadyLoggedIn"));
       } else if (err instanceof Error && err.message === "organization_deactivated") {
         setError(t("auth.login.errorOrganizationDeactivated"));
+      } else if (err instanceof Error && err.message === "ip_not_allowed") {
+        setError(t("auth.login.errorIpNotAllowed"));
       } else if (err instanceof Error && err.message === "too_many_attempts") {
         setError(t("auth.login.errorTooManyAttempts"));
       } else {
@@ -45,6 +75,32 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (challenge) {
+    return (
+      <AuthCard eyebrow={t("common.appName")} title={t("auth.mfa.title")} subtitle={t("auth.mfa.subtitle")}>
+        <form onSubmit={handleCode} className="flex flex-col gap-3">
+          <FormField
+            id="mfa-code"
+            label={t("auth.mfa.codeLabel")}
+            icon={<ShieldCheck size={15} />}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="123456"
+            autoComplete="one-time-code"
+            inputMode="text"
+            autoFocus
+            required
+          />
+          <p className="text-[11px] text-muted">{t("auth.mfa.codeHint")}</p>
+          {error && <p className="text-xs text-error">{error}</p>}
+          <Button type="submit" className="mt-0.5 w-full !py-2 !text-xs" disabled={submitting || code.trim().length < 6}>
+            {submitting ? t("auth.login.submitting") : t("auth.mfa.submit")}
+          </Button>
+        </form>
+      </AuthCard>
+    );
   }
 
   return (

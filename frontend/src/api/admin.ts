@@ -494,3 +494,18 @@ export function getQueueStats(): Promise<QueueStats> {
 export function retryQueueJob(id: number): Promise<{ ok: true }> {
   return api(`/admin/jobs/${id}/retry`, { method: "POST" });
 }
+
+export interface MfaStatus {
+  enabled: boolean;
+  enabledAt: string | null;
+  recoveryCodesLeft: number;
+  requiredByOrganization: boolean;
+}
+
+export const mfaApi = {
+  status: () => api<MfaStatus>("/auth/mfa/status"),
+  setup: () => api<{ secret: string; otpauthUrl: string; qrDataUrl: string }>("/auth/mfa/setup", { method: "POST" }),
+  enable: (code: string) => api<{ recoveryCodes: string[] }>("/auth/mfa/enable", { method: "POST", body: JSON.stringify({ code }) }),
+  disable: (password: string, code: string) => api<{ enabled: false }>("/auth/mfa/disable", { method: "POST", body: JSON.stringify({ password, code }) }),
+  newRecoveryCodes: (code: string) => api<{ recoveryCodes: string[] }>("/auth/mfa/recovery-codes", { method: "POST", body: JSON.stringify({ code }) }),
+};

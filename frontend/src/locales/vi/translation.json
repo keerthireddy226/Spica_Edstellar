@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "Quá nhiều lần đăng nhập. Vui lòng đợi vài phút rồi thử lại.",
       "errorGeneric": "Đã xảy ra lỗi. Vui lòng kiểm tra kết nối và thử lại.",
       "forgotPassword": "Quên mật khẩu?",
-      "createAccount": "Tạo tài khoản"
+      "createAccount": "Tạo tài khoản",
+      "errorIpNotAllowed": "Không được phép đăng nhập từ mạng này. Hãy liên hệ quản trị viên tổ chức của bạn.",
+      "errorSessionExpired": "Bạn đã bị đăng xuất do không hoạt động. Vui lòng đăng nhập lại."
     },
     "signup": {
       "title": "Tạo tài khoản của bạn",
@@ -84,6 +86,20 @@
       "success": "Email của bạn đã được xác minh. Hãy đăng nhập để tiếp tục.",
       "signInButton": "Đăng nhập",
       "error": "Liên kết xác minh này không hợp lệ hoặc đã hết hạn."
+    },
+    "mfa": {
+      "title": "Xác minh hai bước",
+      "subtitle": "Nhập mã 6 chữ số từ ứng dụng xác thực của bạn.",
+      "codeLabel": "Mã xác minh",
+      "codeHint": "Mất điện thoại? Hãy dùng một mã khôi phục.",
+      "submit": "Xác minh",
+      "invalid": "Mã không đúng. Hãy thử mã mới nhất trong ứng dụng.",
+      "expired": "Phiên đăng nhập đã hết hạn. Vui lòng bắt đầu lại."
+    },
+    "password": {
+      "tooShort": "Dùng ít nhất {{min}} ký tự.",
+      "tooWeak": "Dùng cả chữ và số.",
+      "tooCommon": "Mật khẩu này quá phổ biến. Hãy chọn mật khẩu khác."
     }
   },
   "onboarding": {
@@ -463,6 +479,10 @@
         "fri": "T6",
         "sat": "T7"
       }
+    },
+    "certificates": {
+      "title": "Chứng chỉ",
+      "view": "Xem và in"
     }
   },
   "heroTagline": {
@@ -729,5 +749,15 @@
       "practice": "Bạn đã dùng hết {{limit}} buổi miễn phí trong tuần này. Số buổi được khôi phục dần trong chu kỳ 7 ngày — hoặc nâng cấp để luyện tập không giới hạn."
     },
     "lockedTitle": "Nâng cấp để tiếp tục"
+  },
+  "certificate": {
+    "heading": "Chứng nhận hoàn thành",
+    "awardedTo": "Chứng nhận rằng",
+    "completed": "đã hoàn thành chương trình đào tạo tiếng Anh",
+    "level": "Trình độ đạt được: {{level}}",
+    "verify": "Xác minh tại {{url}} bằng mã {{code}}",
+    "revoked": "Chứng chỉ này đã bị thu hồi.",
+    "notFound": "Không tìm thấy chứng chỉ với mã này.",
+    "print": "In / lưu PDF"
   }
 }

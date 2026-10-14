@@ -25,6 +25,7 @@
     "@google/genai": "^2.23.0",
     "@picovoice/eagle-node": "^3.0.1",
     "@simplewebauthn/server": "^14.0.3",
+    "@types/qrcode": "^1.5.5",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
@@ -38,6 +39,7 @@
     "nodemailer": "^9.0.6",
     "onnxruntime-node": "^1.30.0",
     "pg": "^8.23.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.35.5",
     "sherpa-onnx-node": "^1.13.8",
     "zod": "^4.5.4"

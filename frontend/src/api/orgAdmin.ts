@@ -356,6 +356,11 @@ export interface OrgSettings {
   reminderDefaultTime: string;
   faceCheckRequired: boolean;
   allowedTestProducts: string[] | null;
+  mfaRequired: boolean;
+  ipAllowlist: string[] | null;
+  sessionIdleMinutes: number | null;
+  passwordMinLength: number;
+  inviteExpiryHours: number;
 }
 
 export function getOrgSettings(): Promise<OrgSettings> {

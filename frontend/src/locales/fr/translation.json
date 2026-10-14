@@ -34,7 +34,9 @@
       "errorTooManyAttempts": "Trop de tentatives de connexion. Veuillez patienter quelques minutes et réessayer.",
       "errorGeneric": "Une erreur s'est produite. Veuillez vérifier votre connexion et réessayer.",
       "forgotPassword": "Mot de passe oublié ?",
-      "createAccount": "Créer un compte"
+      "createAccount": "Créer un compte",
+      "errorIpNotAllowed": "La connexion n'est pas autorisée depuis ce réseau. Contactez l'administrateur de votre organisation.",
+      "errorSessionExpired": "Vous avez été déconnecté après une période d'inactivité. Reconnectez-vous."
     },
     "signup": {
       "title": "Créez votre compte",
@@ -93,6 +95,20 @@
       "success": "Votre e-mail est vérifié. Connectez-vous pour continuer.",
       "signInButton": "Se connecter",
       "error": "Ce lien de vérification est invalide ou a expiré."
+    },
+    "mfa": {
+      "title": "Vérification en deux étapes",
+      "subtitle": "Saisissez le code à 6 chiffres de votre application d'authentification.",
+      "codeLabel": "Code de vérification",
+      "codeHint": "Téléphone perdu ? Utilisez l'un de vos codes de récupération.",
+      "submit": "Vérifier",
+      "invalid": "Ce code n'a pas fonctionné. Essayez le plus récent de votre application.",
+      "expired": "Cette connexion a expiré. Recommencez."
+    },
+    "password": {
+      "tooShort": "Utilisez au moins {{min}} caractères.",
+      "tooWeak": "Utilisez des lettres et des chiffres.",
+      "tooCommon": "Ce mot de passe est trop courant. Choisissez-en un autre."
     }
   },
   "onboarding": {
@@ -487,6 +503,10 @@
         "fri": "Ven",
         "sat": "Sam"
       }
+    },
+    "certificates": {
+      "title": "Certificats",
+      "view": "Voir et imprimer"
     }
   },
   "heroTagline": {
@@ -767,5 +787,15 @@
       "practice": "Vous avez utilisé vos {{limit}} séances gratuites cette semaine. Elles se renouvellent sur 7 jours glissants, ou passez à l'accès complet."
     },
     "lockedTitle": "Passez à l'accès complet pour continuer"
+  },
+  "certificate": {
+    "heading": "Certificat de réussite",
+    "awardedTo": "Nous certifions que",
+    "completed": "a suivi le programme de formation en anglais",
+    "level": "Niveau atteint : {{level}}",
+    "verify": "Vérifiez sur {{url}} avec le code {{code}}",
+    "revoked": "Ce certificat a été révoqué.",
+    "notFound": "Aucun certificat ne correspond à ce code.",
+    "print": "Imprimer / enregistrer en PDF"
   }
 }

@@ -28,6 +28,11 @@ export interface OrgSettings {
   reminderDefaultTime: string;
   faceCheckRequired: boolean;
   allowedTestProducts: string[] | null;
+  mfaRequired: boolean;
+  ipAllowlist: string[] | null;
+  sessionIdleMinutes: number | null;
+  passwordMinLength: number;
+  inviteExpiryHours: number;
 }
 
 export const settingsSchema = z.object({
@@ -50,12 +55,19 @@ export const settingsSchema = z.object({
   faceCheckRequired: z.boolean().optional(),
   // null = every product; otherwise at least one.
   allowedTestProducts: z.array(z.enum(PRACTICE_TEST_PRODUCTS)).min(1).nullable().optional(),
+  mfaRequired: z.boolean().optional(),
+  // null or [] = no restriction.
+  ipAllowlist: z.array(z.string().trim().min(2).max(64)).max(50).nullable().optional(),
+  sessionIdleMinutes: z.number().int().min(5).max(10080).nullable().optional(),
+  passwordMinLength: z.number().int().min(8).max(64).optional(),
+  inviteExpiryHours: z.number().int().min(1).max(720).optional(),
 });
 
 export async function getOrgSettings(tenantId: string): Promise<OrgSettings | null> {
   const r = await pool.query(
     `SELECT logo_path, brand_color, default_language, timezone, reminder_default_enabled,
-       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products
+       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products,
+       mfa_required, ip_allowlist, session_idle_minutes, password_min_length, invite_expiry_hours
      FROM tenants WHERE id = $1`,
     [tenantId],
   );
@@ -70,6 +82,11 @@ export async function getOrgSettings(tenantId: string): Promise<OrgSettings | nu
     reminderDefaultTime: t.reminder_default_time,
     faceCheckRequired: t.face_check_required,
     allowedTestProducts: t.allowed_test_products,
+    mfaRequired: t.mfa_required,
+    ipAllowlist: t.ip_allowlist,
+    sessionIdleMinutes: t.session_idle_minutes,
+    passwordMinLength: t.password_min_length,
+    inviteExpiryHours: t.invite_expiry_hours,
   };
 }
 
@@ -82,6 +99,11 @@ export async function updateOrgSettings(tenantId: string, body: z.infer<typeof s
     ["reminderDefaultTime", "reminder_default_time"],
     ["faceCheckRequired", "face_check_required"],
     ["allowedTestProducts", "allowed_test_products"],
+    ["mfaRequired", "mfa_required"],
+    ["ipAllowlist", "ip_allowlist"],
+    ["sessionIdleMinutes", "session_idle_minutes"],
+    ["passwordMinLength", "password_min_length"],
+    ["inviteExpiryHours", "invite_expiry_hours"],
   ];
   const sets: string[] = [];
   const values: unknown[] = [];

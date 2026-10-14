@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { passwordErrorText } from "@/lib/passwordErrors";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,8 +34,8 @@ export function ResetPassword() {
     try {
       const { role } = await resetPassword(token, password);
       navigate(LOGIN_ROUTE_BY_ROLE[role], { replace: true });
-    } catch {
-      setError(t("auth.resetPassword.error"));
+    } catch (err) {
+      setError(passwordErrorText(err, t) ?? t("auth.resetPassword.error"));
     } finally {
       setSubmitting(false);
     }

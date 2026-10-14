@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { OverviewView } from "@/components/analytics/OverviewView";
 import { BatchView } from "@/components/analytics/BatchView";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
+import { ReportSubscriptionCard } from "@/components/ReportSubscriptionCard";
 import { planErrorMessage } from "@/api/plans";
 import {
   downloadCsv,
@@ -115,6 +116,8 @@ export function AnalyticsPage() {
       )}
 
       {error && <p className="text-sm text-error">{error}</p>}
+
+      {hasBatches && tab === "overview" && <ReportSubscriptionCard />}
 
       {tab === "overview" && (overview ? <OverviewView data={overview} showCompanies={role === "super_admin" || role === "admin"} /> : !error && <p className="text-sm text-muted">Loading…</p>)}
 

@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "För många inloggningsförsök. Vänta några minuter och försök igen.",
       "errorGeneric": "Något gick fel. Kontrollera anslutningen och försök igen.",
       "forgotPassword": "Glömt lösenordet?",
-      "createAccount": "Skapa ett konto"
+      "createAccount": "Skapa ett konto",
+      "errorIpNotAllowed": "Inloggning är inte tillåten från det här nätverket. Kontakta din organisations administratör.",
+      "errorSessionExpired": "Du loggades ut efter en tids inaktivitet. Logga in igen."
     },
     "signup": {
       "title": "Skapa ditt konto",
@@ -84,6 +86,20 @@
       "success": "Din e-post är bekräftad. Logga in för att fortsätta.",
       "signInButton": "Logga in",
       "error": "Bekräftelselänken är ogiltig eller har gått ut."
+    },
+    "mfa": {
+      "title": "Tvåstegsverifiering",
+      "subtitle": "Ange den 6-siffriga koden från din autentiseringsapp.",
+      "codeLabel": "Verifieringskod",
+      "codeHint": "Tappat telefonen? Använd en av dina återställningskoder.",
+      "submit": "Verifiera",
+      "invalid": "Koden fungerade inte. Prova den senaste koden från appen.",
+      "expired": "Inloggningen har gått ut. Börja om."
+    },
+    "password": {
+      "tooShort": "Använd minst {{min}} tecken.",
+      "tooWeak": "Använd både bokstäver och siffror.",
+      "tooCommon": "Lösenordet är för vanligt. Välj ett annat."
     }
   },
   "onboarding": {
@@ -465,6 +481,10 @@
         "fri": "Fre",
         "sat": "Lör"
       }
+    },
+    "certificates": {
+      "title": "Certifikat",
+      "view": "Visa och skriv ut"
     }
   },
   "heroTagline": {
@@ -739,5 +759,15 @@
       "practice": "Du har använt dina {{limit}} gratissessioner den här veckan. De förnyas under en rullande 7-dagarsperiod — eller uppgradera för obegränsad övning."
     },
     "lockedTitle": "Uppgradera för att fortsätta"
+  },
+  "certificate": {
+    "heading": "Intyg om genomförd kurs",
+    "awardedTo": "Härmed intygas att",
+    "completed": "har genomfört engelskutbildningen",
+    "level": "Uppnådd nivå: {{level}}",
+    "verify": "Verifiera på {{url}} med koden {{code}}",
+    "revoked": "Detta certifikat har återkallats.",
+    "notFound": "Inget certifikat hittades med den här koden.",
+    "print": "Skriv ut / spara som PDF"
   }
 }

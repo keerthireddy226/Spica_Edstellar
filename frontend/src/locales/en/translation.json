@@ -34,7 +34,9 @@
       "errorTooManyAttempts": "Too many login attempts. Please wait a few minutes and try again.",
       "errorGeneric": "Something went wrong. Please check your connection and try again.",
       "forgotPassword": "Forgot password?",
-      "createAccount": "Create an account"
+      "createAccount": "Create an account",
+      "errorIpNotAllowed": "Sign-in isn't allowed from this network. Contact your organization's admin.",
+      "errorSessionExpired": "You were signed out after a period of inactivity. Please sign in again."
     },
     "signup": {
       "title": "Create your account",
@@ -93,6 +95,20 @@
       "success": "Your email is verified. Sign in to continue.",
       "signInButton": "Sign In",
       "error": "This verification link is invalid or has expired."
+    },
+    "mfa": {
+      "title": "Two-step verification",
+      "subtitle": "Enter the 6-digit code from your authenticator app.",
+      "codeLabel": "Verification code",
+      "codeHint": "Lost your phone? Use one of your recovery codes instead.",
+      "submit": "Verify",
+      "invalid": "That code didn't work. Try the newest code from your app.",
+      "expired": "This sign-in expired. Please start again."
+    },
+    "password": {
+      "tooShort": "Use at least {{min}} characters.",
+      "tooWeak": "Use both letters and numbers.",
+      "tooCommon": "That password is too common. Choose another."
     }
   },
   "onboarding": {
@@ -485,6 +501,10 @@
         "fri": "Fri",
         "sat": "Sat"
       }
+    },
+    "certificates": {
+      "title": "Certificates",
+      "view": "View and print"
     }
   },
   "heroTagline": {
@@ -765,5 +785,15 @@
       "practice": "You've used your {{limit}} free practice sessions this week. They reset on a rolling 7-day basis, or upgrade for unlimited practice."
     },
     "lockedTitle": "Upgrade to keep going"
+  },
+  "certificate": {
+    "heading": "Certificate of Completion",
+    "awardedTo": "This certifies that",
+    "completed": "completed the English training programme",
+    "level": "Level reached: {{level}}",
+    "verify": "Verify at {{url}} with code {{code}}",
+    "revoked": "This certificate has been revoked.",
+    "notFound": "No certificate found with this code.",
+    "print": "Print / save as PDF"
   }
 }

@@ -5,7 +5,8 @@ import { BatchFixedLicenses } from "@/components/licenses/BatchFixedLicenses";
 import { EditBatchModal } from "@/components/EditBatchModal";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
-import { Pencil } from "lucide-react";
+import { Award, Pencil } from "lucide-react";
+import { issueCertificate, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 function initials(firstName: string | null, lastName: string | null, email: string): string {
@@ -27,8 +28,16 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   const [viewingLearnerId, setViewingLearnerId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [certs, setCerts] = useState<Map<string, CertificateSummary>>(new Map());
+
+  function loadCerts() {
+    orgCertificates(batchId)
+      .then((r) => setCerts(new Map(r.certificates.filter((c) => !c.revokedAt && c.userId).map((c) => [c.userId!, c]))))
+      .catch(() => {});
+  }
 
   function load() {
+    loadCerts();
     getBatchDetail(batchId)
       .then((res) => {
         setBatch(res.batch);
@@ -152,6 +161,38 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                     <p className="text-xs text-muted">{l.sessionCount} session{l.sessionCount === 1 ? "" : "s"} completed</p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
+                  {certs.get(l.id) ? (
+                    <span className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <a
+                        href={`/certificate/${certs.get(l.id)!.code}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="View certificate"
+                        className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline"
+                      >
+                        <Award size={14} /> Certificate
+                      </a>
+                      <span
+                        role="button"
+                        title="Revoke certificate"
+                        onClick={() => revokeCertificate(certs.get(l.id)!.id).then(loadCerts)}
+                        className="text-muted hover:text-error cursor-pointer px-1"
+                      >
+                        ×
+                      </span>
+                    </span>
+                  ) : (
+                    <span
+                      role="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        issueCertificate(l.id, batch.id).then(loadCerts);
+                      }}
+                      className="text-xs font-semibold text-navy hover:underline shrink-0 cursor-pointer"
+                    >
+                      Issue certificate
+                    </span>
+                  )}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
                     {l.active ? "Active" : "Deactivated"}
                   </span>

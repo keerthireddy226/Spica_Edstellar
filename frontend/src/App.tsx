@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthContext, useAuth, useAuthState } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { MfaSetup } from "@/pages/MfaSetup";
+import { CertificateView } from "@/pages/CertificateView";
 import {
   ADMIN_CONSOLE_ONLY_ROLES,
   ADMIN_LOGIN_ALLOWED_ROLES,
@@ -84,6 +86,15 @@ function App() {
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+        <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />
+        <Route
+          path={ROUTES.MFA_SETUP}
+          element={
+            <ProtectedRoute>
+              <MfaSetup />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path={ROUTES.CHECKOUT_RETURN}
           element={

@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "For mange loginforsøg. Vent et par minutter, og prøv igen.",
       "errorGeneric": "Noget gik galt. Tjek din forbindelse, og prøv igen.",
       "forgotPassword": "Glemt adgangskode?",
-      "createAccount": "Opret en konto"
+      "createAccount": "Opret en konto",
+      "errorIpNotAllowed": "Login er ikke tilladt fra dette netværk. Kontakt din organisations administrator.",
+      "errorSessionExpired": "Du blev logget ud efter inaktivitet. Log ind igen."
     },
     "signup": {
       "title": "Opret din konto",
@@ -84,6 +86,20 @@
       "success": "Din e-mail er bekræftet. Log ind for at fortsætte.",
       "signInButton": "Log ind",
       "error": "Dette bekræftelseslink er ugyldigt eller udløbet."
+    },
+    "mfa": {
+      "title": "Totrinsbekræftelse",
+      "subtitle": "Indtast den 6-cifrede kode fra din godkendelsesapp.",
+      "codeLabel": "Bekræftelseskode",
+      "codeHint": "Mistet telefonen? Brug en af dine gendannelseskoder.",
+      "submit": "Bekræft",
+      "invalid": "Koden virkede ikke. Prøv den nyeste kode fra appen.",
+      "expired": "Dette login er udløbet. Start forfra."
+    },
+    "password": {
+      "tooShort": "Brug mindst {{min}} tegn.",
+      "tooWeak": "Brug både bogstaver og tal.",
+      "tooCommon": "Den adgangskode er for almindelig. Vælg en anden."
     }
   },
   "onboarding": {
@@ -465,6 +481,10 @@
         "fri": "Fr",
         "sat": "Lø"
       }
+    },
+    "certificates": {
+      "title": "Certifikater",
+      "view": "Se og udskriv"
     }
   },
   "heroTagline": {
@@ -739,5 +759,15 @@
       "practice": "Du har brugt dine {{limit}} gratis sessioner i denne uge. De fornyes over en løbende 7-dages periode — eller opgrader for ubegrænset træning."
     },
     "lockedTitle": "Opgrader for at fortsætte"
+  },
+  "certificate": {
+    "heading": "Kursusbevis",
+    "awardedTo": "Det bekræftes hermed, at",
+    "completed": "har gennemført engelskuddannelsen",
+    "level": "Opnået niveau: {{level}}",
+    "verify": "Bekræft på {{url}} med koden {{code}}",
+    "revoked": "Dette certifikat er tilbagekaldt.",
+    "notFound": "Der findes intet certifikat med denne kode.",
+    "print": "Udskriv / gem som PDF"
   }
 }

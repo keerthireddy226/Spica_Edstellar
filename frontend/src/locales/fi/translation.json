@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "Liian monta kirjautumisyritystä. Odota muutama minuutti ja yritä uudelleen.",
       "errorGeneric": "Jokin meni vikaan. Tarkista yhteys ja yritä uudelleen.",
       "forgotPassword": "Unohditko salasanan?",
-      "createAccount": "Luo tili"
+      "createAccount": "Luo tili",
+      "errorIpNotAllowed": "Kirjautuminen tästä verkosta ei ole sallittua. Ota yhteyttä organisaatiosi ylläpitäjään.",
+      "errorSessionExpired": "Sinut kirjattiin ulos käyttämättömyyden vuoksi. Kirjaudu uudelleen."
     },
     "signup": {
       "title": "Luo tilisi",
@@ -84,6 +86,20 @@
       "success": "Sähköpostisi on vahvistettu. Kirjaudu sisään jatkaaksesi.",
       "signInButton": "Kirjaudu sisään",
       "error": "Vahvistuslinkki on virheellinen tai vanhentunut."
+    },
+    "mfa": {
+      "title": "Kaksivaiheinen vahvistus",
+      "subtitle": "Syötä 6-numeroinen koodi todennussovelluksesta.",
+      "codeLabel": "Vahvistuskoodi",
+      "codeHint": "Puhelin hukassa? Käytä jotakin palautuskoodeistasi.",
+      "submit": "Vahvista",
+      "invalid": "Koodi ei toiminut. Kokeile sovelluksen uusinta koodia.",
+      "expired": "Kirjautuminen vanheni. Aloita alusta."
+    },
+    "password": {
+      "tooShort": "Käytä vähintään {{min}} merkkiä.",
+      "tooWeak": "Käytä sekä kirjaimia että numeroita.",
+      "tooCommon": "Salasana on liian yleinen. Valitse toinen."
     }
   },
   "onboarding": {
@@ -465,6 +481,10 @@
         "fri": "Pe",
         "sat": "La"
       }
+    },
+    "certificates": {
+      "title": "Todistukset",
+      "view": "Näytä ja tulosta"
     }
   },
   "heroTagline": {
@@ -739,5 +759,15 @@
       "practice": "Olet käyttänyt tämän viikon {{limit}} ilmaista harjoituskertaa. Ne uusiutuvat liukuvan 7 päivän jakson aikana — tai päivitä rajattomaan harjoitteluun."
     },
     "lockedTitle": "Päivitä jatkaaksesi"
+  },
+  "certificate": {
+    "heading": "Suoritustodistus",
+    "awardedTo": "Täten todistetaan, että",
+    "completed": "on suorittanut englannin koulutusohjelman",
+    "level": "Saavutettu taso: {{level}}",
+    "verify": "Tarkista osoitteessa {{url}} koodilla {{code}}",
+    "revoked": "Tämä todistus on peruttu.",
+    "notFound": "Tällä koodilla ei löytynyt todistusta.",
+    "print": "Tulosta / tallenna PDF:nä"
   }
 }

@@ -29,7 +29,9 @@
       "errorTooManyAttempts": "Zbyt wiele prób logowania. Odczekaj kilka minut i spróbuj ponownie.",
       "errorGeneric": "Coś poszło nie tak. Sprawdź połączenie i spróbuj ponownie.",
       "forgotPassword": "Nie pamiętasz hasła?",
-      "createAccount": "Utwórz konto"
+      "createAccount": "Utwórz konto",
+      "errorIpNotAllowed": "Logowanie z tej sieci jest niedozwolone. Skontaktuj się z administratorem organizacji.",
+      "errorSessionExpired": "Wylogowano Cię z powodu braku aktywności. Zaloguj się ponownie."
     },
     "signup": {
       "title": "Utwórz konto",
@@ -84,6 +86,20 @@
       "success": "Twój e-mail został potwierdzony. Zaloguj się, aby kontynuować.",
       "signInButton": "Zaloguj się",
       "error": "Ten link weryfikacyjny jest nieprawidłowy lub wygasł."
+    },
+    "mfa": {
+      "title": "Weryfikacja dwuetapowa",
+      "subtitle": "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej.",
+      "codeLabel": "Kod weryfikacyjny",
+      "codeHint": "Zgubiony telefon? Użyj jednego z kodów odzyskiwania.",
+      "submit": "Zweryfikuj",
+      "invalid": "Ten kod nie zadziałał. Użyj najnowszego kodu z aplikacji.",
+      "expired": "To logowanie wygasło. Zacznij od nowa."
+    },
+    "password": {
+      "tooShort": "Użyj co najmniej {{min}} znaków.",
+      "tooWeak": "Użyj liter i cyfr.",
+      "tooCommon": "To hasło jest zbyt popularne. Wybierz inne."
     }
   },
   "onboarding": {
@@ -481,6 +497,10 @@
         "fri": "Pt",
         "sat": "So"
       }
+    },
+    "certificates": {
+      "title": "Certyfikaty",
+      "view": "Zobacz i wydrukuj"
     }
   },
   "heroTagline": {
@@ -771,5 +791,15 @@
       "practice": "Wykorzystałeś {{limit}} darmowe sesje w tym tygodniu. Odnawiają się w cyklu 7-dniowym — możesz też przejść na pełny dostęp bez limitów."
     },
     "lockedTitle": "Przejdź na pełny dostęp, aby kontynuować"
+  },
+  "certificate": {
+    "heading": "Certyfikat ukończenia",
+    "awardedTo": "Niniejszym zaświadcza się, że",
+    "completed": "ukończył(a) program szkoleniowy z języka angielskiego",
+    "level": "Osiągnięty poziom: {{level}}",
+    "verify": "Sprawdź na {{url}}, kod {{code}}",
+    "revoked": "Ten certyfikat został unieważniony.",
+    "notFound": "Nie znaleziono certyfikatu o tym kodzie.",
+    "print": "Drukuj / zapisz jako PDF"
   }
 }

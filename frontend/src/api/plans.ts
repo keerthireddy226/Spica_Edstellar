@@ -8,6 +8,8 @@ export type PlanFeatureKey =
   | "license_requests"
   | "batch_analytics"
   | "custom_pool_expiry"
+  | "security_policies"
+  | "ip_allowlist"
   | "audit_log"
   | "scheduled_reports"
   | "po_invoicing"
@@ -91,6 +93,11 @@ const FEATURE_LABELS: Record<string, string> = {
   license_requests: "License requests",
   batch_analytics: "Batch analytics",
   custom_pool_expiry: "Custom license validity",
+  security_policies: "Security policies",
+  ip_allowlist: "IP allowlist",
+  mfa_enforcement: "Enforced two-step sign-in",
+  audit_log: "The audit log",
+  scheduled_reports: "Scheduled reports",
 };
 const LIMIT_LABELS: Record<string, string> = { managers: "Managers", batches: "Batches" };
 
@@ -99,7 +106,10 @@ export function planErrorMessage(err: unknown): string | null {
   if (!(err instanceof ApiError)) return null;
   const body = err.body as { error?: string; feature?: string; limit?: string; max?: number; tier?: PlanTier } | null;
   if (body?.error === "plan_feature_locked") {
-    return `${FEATURE_LABELS[body.feature ?? ""] ?? "This feature"} is available on the Business plan and above.`;
+    const tier = ["custom_pool_expiry", "ip_allowlist", "mfa_enforcement", "sso", "api_access", "data_governance"].includes(body.feature ?? "")
+      ? "Enterprise plan"
+      : "Business plan and above";
+    return `${FEATURE_LABELS[body.feature ?? ""] ?? "This feature"} is available on the ${tier}.`;
   }
   if (body?.error === "plan_limit_reached") {
     const what = (LIMIT_LABELS[body.limit ?? ""] ?? "items").toLowerCase();

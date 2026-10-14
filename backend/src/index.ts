@@ -28,7 +28,9 @@ import { startScheduler } from "./queue/schedule.js";
 import { analyticsRouter } from "./analytics/routes.js";
 import { plansRouter } from "./plans/routes.js";
 import { brandingRouter } from "./orgAdmin/branding.js";
-import { MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
+import { reportsRouter } from "./reports/routes.js";
+import { certificatesRouter } from "./certificates/routes.js";
+import { CERTIFICATE_AUDIT, MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
 import { PlanError } from "./plans/service.js";
 import { BatchStateError } from "./batches/lifecycle.js";
 import { requireAccess } from "./licenses/gate.js";
@@ -92,6 +94,8 @@ app.use("/api/reminders", remindersRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/plans", plansRouter);
 app.use("/api/branding", brandingRouter);
+app.use("/api/reports", reportsRouter);
+app.use("/api/certificates", auditTrail(CERTIFICATE_AUDIT), certificatesRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {

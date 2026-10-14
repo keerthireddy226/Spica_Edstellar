@@ -4,6 +4,9 @@ import { Button } from "@/components/Button";
 import { LANGUAGES } from "@/i18n";
 import { getOrgSettings, removeOrgLogo, updateOrgSettings, uploadOrgLogo, type OrgSettings } from "@/api/orgAdmin";
 import { refreshBranding } from "@/components/AppShell/useBranding";
+import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
+import { planErrorMessage } from "@/api/plans";
+import { ApiError } from "@/lib/api";
 
 const PRODUCTS: [string, string][] = [
   ["fourSkills", "Versant 4 Skills Essential"],
@@ -34,6 +37,9 @@ function Section({ title, description, children }: { title: string; description:
 }
 
 export function OrgAdminSettings() {
+  const hasSecurity = useHasFeature("security_policies");
+  const hasMfaEnforcement = useHasFeature("mfa_enforcement");
+  const hasIpAllowlist = useHasFeature("ip_allowlist");
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [draft, setDraft] = useState<OrgSettings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -66,8 +72,18 @@ export function OrgAdminSettings() {
       setDraft(next);
       refreshBranding();
       setMessage({ ok: true, text: "Settings saved." });
-    } catch {
-      setMessage({ ok: false, text: "Couldn't save. Check the values and try again." });
+    } catch (err) {
+      const body = err instanceof ApiError ? (err.body as { error?: string; yourIp?: string }) : null;
+      const text =
+        planErrorMessage(err) ??
+        (body?.error === "allowlist_excludes_you"
+          ? `That allowlist doesn't include your own address (${body.yourIp}), so saving it would lock you out. Add it first.`
+          : body?.error === "invalid_ip_allowlist"
+            ? "One of the allowlist entries isn't an IP address or range (for example 203.0.113.5 or 203.0.113.0/24)."
+            : body?.error === "enable_your_mfa_first"
+              ? "Turn on two-step sign-in for your own account (Profile) before requiring it for everyone."
+              : "Couldn't save. Check the values and try again.");
+      setMessage({ ok: false, text });
     } finally {
       setSaving(false);
     }
@@ -201,6 +217,108 @@ export function OrgAdminSettings() {
           Require face verification for learners
         </label>
         {!draft.faceCheckRequired && <p className="text-xs text-warning">Learners won't be asked to verify their face before tests or practice.</p>}
+      </Section>
+
+      <Section
+        title="Security"
+        description="Sign-in rules for your organization. Two-step sign-in and the IP allowlist apply to Org Admins and Managers; the password rule applies to everyone."
+      >
+        <PlanLockNote feature="security_policies" compact />
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted">Minimum password length</label>
+            <select
+              value={draft.passwordMinLength}
+              onChange={(e) => set("passwordMinLength", Number(e.target.value))}
+              disabled={hasSecurity === false}
+              className={`${inputClass} cursor-pointer`}
+            >
+              {[8, 10, 12, 14, 16, 20].map((n) => (
+                <option key={n} value={n}>
+                  {n} characters
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted">Sign out after inactivity</label>
+            <select
+              value={draft.sessionIdleMinutes ?? ""}
+              onChange={(e) => set("sessionIdleMinutes", e.target.value ? Number(e.target.value) : null)}
+              disabled={hasSecurity === false}
+              className={`${inputClass} cursor-pointer`}
+            >
+              <option value="">Never (7-day sessions)</option>
+              {[
+                [15, "15 minutes"],
+                [30, "30 minutes"],
+                [60, "1 hour"],
+                [240, "4 hours"],
+                [480, "8 hours"],
+                [1440, "1 day"],
+              ].map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs text-muted">Invite links work for</label>
+            <select
+              value={draft.inviteExpiryHours}
+              onChange={(e) => set("inviteExpiryHours", Number(e.target.value))}
+              disabled={hasSecurity === false}
+              className={`${inputClass} cursor-pointer`}
+            >
+              {[
+                [24, "24 hours"],
+                [48, "2 days"],
+                [72, "3 days"],
+                [168, "7 days"],
+                [336, "14 days"],
+              ].map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="border-t border-rule pt-4 flex flex-col gap-2">
+          <PlanLockNote feature="mfa_enforcement" compact />
+          <label className={`flex items-center gap-2 text-sm text-ink ${hasMfaEnforcement === false ? "opacity-60" : "cursor-pointer"}`}>
+            <input
+              type="checkbox"
+              checked={draft.mfaRequired}
+              disabled={hasMfaEnforcement === false && !draft.mfaRequired}
+              onChange={(e) => set("mfaRequired", e.target.checked)}
+              className="h-4 w-4 accent-navy"
+            />
+            Require two-step sign-in for Org Admins and Managers
+          </label>
+          <p className="text-xs text-muted">Managers without it are asked to set it up the next time they sign in.</p>
+        </div>
+        <div className="border-t border-rule pt-4 flex flex-col gap-2">
+          <PlanLockNote feature="ip_allowlist" compact />
+          <label className="text-xs text-muted">IP allowlist (one address or range per line; leave empty for no restriction)</label>
+          <textarea
+            rows={3}
+            value={(draft.ipAllowlist ?? []).join("\n")}
+            disabled={hasIpAllowlist === false}
+            onChange={(e) =>
+              set(
+                "ipAllowlist",
+                e.target.value
+                  .split(/[\n,]/)
+                  .map((x) => x.trim())
+                  .filter(Boolean),
+              )
+            }
+            placeholder={"203.0.113.0/24\n198.51.100.7"}
+            className={`${inputClass} font-mono text-xs`}
+          />
+        </div>
       </Section>
 
       <Section title="Practice tests" description="Choose which mock exams your learners can take.">
