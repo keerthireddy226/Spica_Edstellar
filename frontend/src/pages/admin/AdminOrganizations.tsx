@@ -33,6 +33,11 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [x, setX] = useState<Record<string, string>>({ planTier: "business", contractCurrency: "USD" });
+  const isSuper = useStaffPermissions().isSuper;
+  const [admins, setAdmins] = useState<{ id: string; name: string; email: string }[]>([]);
+  useEffect(() => {
+    if (isSuper) getStaffAdmins().then((r) => setAdmins(r.admins)).catch(() => {});
+  }, [isSuper]);
   const f = (k: string) => ({ value: x[k] ?? "", onChange: (e: { target: { value: string } }) => setX((p) => ({ ...p, [k]: e.target.value })) });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +72,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         contractEnd: x.contractEnd || undefined,
         contractValue: x.contractValue ? Number(x.contractValue) : undefined,
         contractCurrency: x.contractCurrency || undefined,
+        ownerId: x.ownerId || undefined,
         orgAdmin: {
           email: email.trim(),
           firstName: firstName.trim(),
@@ -102,6 +108,20 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
+          {isSuper && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Owning Admin</label>
+              <select {...f("ownerId")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
+                <option value="">Me (Super Admin) — assign later</option>
+                {admins.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} ({a.email})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted">The Admin who will look after this organization in their console.</p>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">Organization name</label>
             <input
@@ -529,7 +549,7 @@ type OrgFilter = "active" | "pilot" | "at_risk" | "invite" | "deactivated" | "al
 
 export function AdminOrganizations() {
   const perms = useStaffPermissions();
-  const canManage = !perms.isSuper && perms.manageOrganizations;
+  const canManage = perms.manageOrganizations;
   const [overview, setOverview] = useState<AdminConsoleOverview | null>(null);
   const [metrics, setMetrics] = useState<Map<string, OrgMetrics>>(new Map());
   const [error, setError] = useState<string | null>(null);

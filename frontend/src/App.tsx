@@ -42,6 +42,8 @@ import { StaffLearners } from "@/pages/staff/StaffLearners";
 import { StaffBilling } from "@/pages/staff/StaffBilling";
 import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { SystemPage } from "@/pages/staff/SystemPage";
+import { StaffInsights } from "@/pages/staff/StaffInsights";
+import { PlansCatalog } from "@/pages/staff/PlansCatalog";
 import { AdminOrganizations } from "@/pages/admin/AdminOrganizations";
 import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
 import { OrgAdminBatches } from "@/pages/orgAdmin/OrgAdminBatches";
@@ -189,6 +191,8 @@ function App() {
           <Route path={ROUTES.SUPER_BILLING} element={<StaffBilling />} />
           <Route path={ROUTES.SUPER_AUDIT} element={<StaffAudit />} />
           <Route path={ROUTES.SUPER_SYSTEM} element={<SystemPage />} />
+          <Route path={ROUTES.SUPER_INSIGHTS} element={<StaffInsights />} />
+          <Route path={ROUTES.SUPER_PLANS} element={<PlansCatalog />} />
           <Route path={ROUTES.ADMIN_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_ORG_ADMINS} element={<OrgAdminsList />} />
           <Route path={ROUTES.ADMIN_MANAGERS} element={<ManagersList />} />
@@ -210,6 +214,9 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_BILLING} element={<StaffBilling />} />
           <Route path={ROUTES.ADMIN_CONSOLE_AUDIT} element={<StaffAudit />} />
           <Route path={ROUTES.ADMIN_CONSOLE_REVIEWS} element={<AdminReview />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} element={<AdminOrganizations />} />
           <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<ManagersList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_USERS} element={<StaffLearners />} />

@@ -6,7 +6,7 @@ import type { AuthedRequest } from "../auth/middleware.js";
 // the organizations they own (onboarded, or are account manager for), within
 // the permissions the Super Admin gave them.
 
-export const STAFF_PERMISSIONS = ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "contentReview", "scoreReview", "viewReports"] as const;
+export const STAFF_PERMISSIONS = ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "contentReview", "scoreReview", "viewReports", "manageAdmins"] as const;
 export type StaffPermission = (typeof STAFF_PERMISSIONS)[number];
 
 export const isSuperAdmin = (req: AuthedRequest) => req.user?.role === "super_admin";
@@ -59,4 +59,11 @@ export async function staffCanSeeUser(req: AuthedRequest, userId: string): Promi
     [userId, isSuperAdmin(req), req.user!.id],
   );
   return (r.rowCount ?? 0) > 0;
+}
+
+// An Admin who manages other Admins can only hand out permissions they
+// hold themselves; a Super Admin can hand out any.
+export async function clampPermissions(req: AuthedRequest, requested: Partial<Record<string, boolean | undefined>>) {
+  const mine = await staffPermissions(req);
+  return Object.fromEntries(Object.entries(requested).map(([k, v]) => [k, !!v && (isSuperAdmin(req) || mine[k as StaffPermission] === true)]));
 }

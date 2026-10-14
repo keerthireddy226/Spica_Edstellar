@@ -12,7 +12,7 @@ import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { queueStats, retryJob } from "../queue/queue.js";
 import { orgHealth } from "./health.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
-import { orgScope, requirePermission, staffCanSeeUser, staffOwnsTenant } from "./staff.js";
+import { clampPermissions, staffPermissions, orgScope, requirePermission, staffCanSeeUser, staffOwnsTenant } from "./staff.js";
 import { learnerAccessMap } from "../licenses/service.js";
 
 export const adminRouter = Router();
@@ -59,6 +59,7 @@ const PERMISSION_KEYS = [
   "contentReview",
   "scoreReview",
   "viewReports",
+  "manageAdmins",
 ] as const;
 
 const onboardAdminSchema = z.object({
@@ -299,7 +300,7 @@ adminRouter.get("/activity", requireAuth, async (req: AuthedRequest, res, next) 
 
 // Internal Edstellar staff (role='admin') — Super Admin manages these directly.
 adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const result = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.department, u.permissions, u.created_at, u.deleted_at,
@@ -348,9 +349,11 @@ adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) =>
 // for the address), and the person sets their own password via an emailed
 // invite link (same reset-password page/flow everyone else uses).
 adminRouter.post("/admins", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const body = onboardAdminSchema.parse(req.body);
+    body.permissions = await clampPermissions(req, body.permissions);
+    if (req.user!.role !== "super_admin") delete body.organizationIds;
     const { id } = await createAndInviteAdmin({ ...body, invitedBy: req.user!.id });
     res.status(201).json({ id, email: body.email });
   } catch (err) {
@@ -367,7 +370,7 @@ adminRouter.post("/admins", requireAuth, async (req: AuthedRequest, res, next) =
 const MAX_BULK_ROWS = 200;
 
 adminRouter.post("/admins/bulk", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const rows = z.array(z.unknown()).max(MAX_BULK_ROWS).parse(req.body.rows);
 
@@ -401,7 +404,7 @@ adminRouter.post("/admins/bulk", requireAuth, async (req: AuthedRequest, res, ne
 // (tenants.managed_by = this admin). Shown as a detail view from the Admins
 // table, same shape as the org list anywhere else in this console.
 adminRouter.get("/admins/:id/activity", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const result = await pool.query(
       `SELECT t.id, t.name, t.category, t.deactivated_at, t.created_at,
@@ -454,9 +457,22 @@ adminRouter.get("/admins/:id/activity", requireAuth, async (req: AuthedRequest, 
 
 // Only a Super Admin edits another Admin's details — same rule as who can create one.
 adminRouter.patch("/admins/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const body = editAdminSchema.parse(req.body);
+    if (req.user!.role !== "super_admin") {
+      // Admins can't change their own permissions or move organizations.
+      if (req.params.id === req.user!.id) return res.status(403).json({ error: "cannot_edit_self" });
+      delete body.organizationIds;
+      // Permissions the editor doesn't hold stay as they were.
+      const mine = await staffPermissions(req);
+      const current = (await pool.query(`SELECT permissions FROM users WHERE id = $1 AND role = 'admin'`, [req.params.id])).rows[0]?.permissions ?? {};
+      body.permissions = Object.fromEntries(
+        PERMISSION_KEYS.map((k) => [k, mine[k] ? !!body.permissions[k] : !!current[k]]),
+      );
+    } else {
+      body.permissions = await clampPermissions(req, body.permissions);
+    }
     const result = await pool.query(
       `UPDATE users SET first_name = $1, last_name = $2, department = $3, permissions = $4::jsonb,
          phone = $6, job_title = $7, region = $8, city = $9, country = $10, staff_notes = $11, updated_at = now()
@@ -490,7 +506,7 @@ adminRouter.patch("/admins/:id", requireAuth, async (req: AuthedRequest, res, ne
 // a hard DELETE. Also revokes any active sessions so the account can't keep
 // being used right up until its next natural token expiry.
 adminRouter.delete("/admins/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   if (req.params.id === req.user!.id) {
     return res.status(400).json({ error: "cannot_delete_own_account" });
   }
@@ -508,7 +524,7 @@ adminRouter.delete("/admins/:id", requireAuth, async (req: AuthedRequest, res, n
 });
 
 adminRouter.post("/admins/:id/reactivate", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireSuperAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "manageAdmins"))) return;
   try {
     const result = await pool.query(
       `UPDATE users SET deleted_at = NULL WHERE id = $1 AND role = 'admin' AND deleted_at IS NOT NULL RETURNING id`,
@@ -1088,6 +1104,8 @@ const onboardOrgSchema = z.object({
   contractEnd: z.string().optional().or(z.literal("").transform(() => undefined)),
   contractValue: z.coerce.number().min(0).max(100000000).optional(),
   contractCurrency: z.string().length(3).toUpperCase().optional(),
+  // Super Admin onboarding for an Admin: who will own it (default: themself).
+  ownerId: z.string().uuid().optional(),
   industry: z.string().min(1).optional(),
   expectedLearnerCount: z.coerce.number().int().positive().optional(),
   country: z.string().length(2).toUpperCase().optional(),
@@ -1110,12 +1128,18 @@ const onboardOrgSchema = z.object({
 // least attributed to the Admin who created them, even though nothing
 // filters by it yet.
 adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const body = onboardOrgSchema.parse(req.body);
     const taxProblem = taxIdProblem(body.country, body.taxId);
     if (taxProblem) return res.status(400).json({ error: "invalid_tax_id", message: taxProblem });
     if (body.taxId) body.taxId = normalizeTaxId(body.taxId);
+    let owner = req.user!.id;
+    if (body.ownerId && req.user!.role === "super_admin") {
+      const ok = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND role = 'admin' AND deleted_at IS NULL`, [body.ownerId]);
+      if (ok.rowCount === 0) return res.status(400).json({ error: "admin_not_found" });
+      owner = body.ownerId;
+    }
     const tenant = await pool.query(
       `INSERT INTO tenants (name, type, category, managed_by, industry, expected_learner_count, country,
          billing_contact_name, billing_contact_email, tax_id)
@@ -1123,7 +1147,7 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
       [
         body.name,
         body.category,
-        req.user!.id,
+        owner,
         body.industry ?? null,
         body.expectedLearnerCount ?? null,
         body.country ?? null,
@@ -1194,12 +1218,12 @@ const editOrgSchema = z.object({
 });
 
 adminRouter.patch("/organizations/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const body = editOrgSchema.parse(req.body);
     const result = await pool.query(
-      `UPDATE tenants SET name = $1, category = $2 WHERE id = $3 AND type = 'cohort' AND managed_by = $4 RETURNING id`,
-      [body.name, body.category, req.params.id, req.user!.id],
+      `UPDATE tenants SET name = $1, category = $2 WHERE id = $3 AND type = 'cohort' AND ($5::boolean OR managed_by = $4 OR account_manager_id = $4) RETURNING id`,
+      [body.name, body.category, req.params.id, req.user!.id, req.user!.role === "super_admin"],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "organization_not_found" });
     res.json({ id: req.params.id });
@@ -1211,11 +1235,11 @@ adminRouter.patch("/organizations/:id", requireAuth, async (req: AuthedRequest, 
 // Deactivating reuses tenants.deactivated_at (already sat there unused since
 // the roles migration) rather than inventing a second soft-delete field.
 adminRouter.delete("/organizations/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const result = await pool.query(
-      `UPDATE tenants SET deactivated_at = now() WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NULL AND managed_by = $2 RETURNING id`,
-      [req.params.id, req.user!.id],
+      `UPDATE tenants SET deactivated_at = now() WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NULL AND ($3::boolean OR managed_by = $2 OR account_manager_id = $2) RETURNING id`,
+      [req.params.id, req.user!.id, req.user!.role === "super_admin"],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "organization_not_found" });
     await pool.query(
@@ -1230,11 +1254,11 @@ adminRouter.delete("/organizations/:id", requireAuth, async (req: AuthedRequest,
 });
 
 adminRouter.post("/organizations/:id/reactivate", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const result = await pool.query(
-      `UPDATE tenants SET deactivated_at = NULL WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NOT NULL AND managed_by = $2 RETURNING id`,
-      [req.params.id, req.user!.id],
+      `UPDATE tenants SET deactivated_at = NULL WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NOT NULL AND ($3::boolean OR managed_by = $2 OR account_manager_id = $2) RETURNING id`,
+      [req.params.id, req.user!.id, req.user!.role === "super_admin"],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "organization_not_found" });
     res.json({ id: req.params.id });

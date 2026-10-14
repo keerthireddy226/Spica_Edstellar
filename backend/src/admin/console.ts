@@ -628,3 +628,118 @@ staffConsoleRouter.post("/individuals/bulk/validate", requireAuth, async (req: A
     next(err);
   }
 });
+
+// ---- Insights: how learners are doing across this person's organizations ----
+
+staffConsoleRouter.get("/insights", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "viewReports"))) return;
+  try {
+    const sup = isSuperAdmin(req);
+    const scope = orgScope(req);
+    const ids = (await pool.query(`SELECT t.id FROM tenants t WHERE t.type = 'cohort' AND t.deactivated_at IS NULL ${scope.sql}`, scope.params)).rows.map((r) => r.id);
+    const L = `WITH l AS (
+      SELECT u.id, u.tenant_id, u.batch_id, u.first_name, u.last_name, u.email, t.type AS tenant_type, t.name AS org_name
+      FROM users u JOIN tenants t ON t.id = u.tenant_id
+      WHERE u.role = 'learner' AND u.deleted_at IS NULL AND u.erased_at IS NULL AND (t.type <> 'cohort' OR t.id = ANY($1::uuid[]) OR $2::boolean)
+    )`;
+    const p = [ids, sup];
+    const [funnel, cefr, orgs, inactive, exams] = await Promise.all([
+      pool.query(
+        `${L} SELECT count(*)::int AS invited,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = l.id))::int AS signed_in,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM participant_profiles pp WHERE pp.user_id = l.id AND pp.onboarding_complete))::int AS onboarded,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id))::int AS placed,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0 AND d.day > current_date - 7))::int AS practising,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.revoked_at IS NULL))::int AS certified
+         FROM l`,
+        p,
+      ),
+      pool.query(
+        `${L} SELECT x.cefr_level AS level, count(*)::int AS n FROM l
+         JOIN LATERAL (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1) x ON true
+         GROUP BY 1 ORDER BY 1`,
+        p,
+      ),
+      pool.query(
+        `${L} SELECT l.tenant_id, min(l.org_name) AS name, count(*)::int AS learners,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = l.id))::int AS signed_in,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0 AND d.day > current_date - 7))::int AS active7,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id))::int AS placed,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.revoked_at IS NULL))::int AS certified,
+           coalesce(round(avg((SELECT ps.practice_minutes FROM progress_stats ps WHERE ps.user_id = l.id))), 0)::int AS avg_minutes,
+           mode() WITHIN GROUP (ORDER BY (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1)) AS typical_level
+         FROM l WHERE l.tenant_type = 'cohort'
+         GROUP BY l.tenant_id ORDER BY learners DESC`,
+        p,
+      ),
+      // Licensed learners who haven't practised for two weeks.
+      pool.query(
+        `${L} SELECT l.id, l.first_name, l.last_name, l.email, CASE WHEN l.tenant_type = 'cohort' THEN l.org_name END AS org_name,
+           (SELECT b.name FROM batches b WHERE b.id = l.batch_id) AS batch_name,
+           (SELECT max(d.day) FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0) AS last_active
+         FROM l
+         WHERE EXISTS (SELECT 1 FROM license_assignments a WHERE a.user_id = l.id AND a.reclaimed_at IS NULL AND a.ends_at > now())
+           AND NOT EXISTS (SELECT 1 FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0 AND d.day > current_date - 14)
+         ORDER BY last_active NULLS FIRST LIMIT 50`,
+        p,
+      ),
+      pool.query(
+        `${L} SELECT l.id, l.first_name, l.last_name, l.email, CASE WHEN l.tenant_type = 'cohort' THEN l.org_name END AS org_name,
+           pp.exam_preference, pp.exam_date, pp.goal_level, pp.score_target,
+           (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1) AS level
+         FROM l JOIN participant_profiles pp ON pp.user_id = l.id
+         WHERE pp.exam_date BETWEEN current_date AND current_date + 60
+         ORDER BY pp.exam_date LIMIT 50`,
+        p,
+      ),
+    ]);
+    const name = (r: { first_name: string | null; last_name: string | null; email: string }) => [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email;
+    res.json({
+      funnel: funnel.rows[0],
+      cefr: cefr.rows,
+      organizations: orgs.rows.map((o) => ({
+        id: o.tenant_id,
+        name: o.name,
+        learners: o.learners,
+        signedIn: o.signed_in,
+        active7: o.active7,
+        placed: o.placed,
+        certified: o.certified,
+        avgMinutes: o.avg_minutes,
+        typicalLevel: o.typical_level,
+      })),
+      inactive: inactive.rows.map((r) => ({ id: r.id, name: name(r), email: r.email, orgName: r.org_name, batchName: r.batch_name, lastActive: r.last_active })),
+      exams: exams.rows.map((r) => ({ id: r.id, name: name(r), orgName: r.org_name, exam: r.exam_preference, date: r.exam_date, goal: r.goal_level, scoreTarget: r.score_target, level: r.level })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Plans and pricing, for conversations with customers ----
+
+staffConsoleRouter.get("/plans-catalog", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireStaff(req, res)) return;
+  try {
+    const c = await import("../plans/config.js");
+    res.json({
+      tiers: c.PLAN_TIERS.map((t) => ({
+        tier: t,
+        label: c.TIER_LABELS[t],
+        priceFloorCents: c.TIER_PRICE_FLOOR_CENTS[t],
+        limits: c.TIER_LIMITS[t],
+        support: c.TIER_SUPPORT[t],
+        features: Object.entries(c.FEATURES)
+          .filter(([key]) => c.tierIncludes(t, key as never))
+          .map(([key, f]) => ({ key, label: f.label, description: f.description, available: f.available })),
+      })),
+      volumeBands: c.VOLUME_BANDS,
+      businessQualifyingQuantity: c.BUSINESS_QUALIFYING_QUANTITY,
+      educationDiscountPercent: c.EDUCATION_DISCOUNT_PERCENT,
+      pilot: { licenses: c.PILOT_DEFAULT_LICENSES, days: c.PILOT_DEFAULT_DAYS },
+      allFeatures: Object.entries(c.FEATURES).map(([key, f]) => ({ key, label: f.label, description: f.description, minTier: f.minTier, available: f.available })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});

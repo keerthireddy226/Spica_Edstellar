@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { PERMISSION_LABELS, getAdminConsoleOverview, type AdminPermissions } from "@/api/admin";
 import { sortedCountries } from "@/constants/demographics";
+import { useStaffPermissions } from "@/components/staff/StaffKit";
 
 export interface AdminProfile {
   department: string;
@@ -22,6 +23,7 @@ const PRESETS: { label: string; perms: (keyof AdminPermissions)[] }[] = [
   { label: "Sales / Account manager", perms: ["manageOrganizations", "inviteLearners", "viewReports"] },
   { label: "Delivery / L&D", perms: ["inviteLearners", "viewLearnerInfo", "viewReports", "contentReview"] },
   { label: "Assessment reviewer", perms: ["viewLearnerInfo", "scoreReview", "contentReview"] },
+  { label: "Team lead", perms: ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "viewReports", "manageAdmins"] },
   { label: "Full access", perms: Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[] },
 ];
 
@@ -31,7 +33,8 @@ const PERMISSION_HELP: Record<keyof AdminPermissions, string> = {
   viewLearnerInfo: "Open learners' full profiles",
   contentReview: "Review practice content",
   scoreReview: "Decide flagged placement tests",
-  viewReports: "Analytics and reports",
+  viewReports: "Analytics, insights and reports",
+  manageAdmins: "Onboard and edit other Admins (team lead)",
 };
 
 const input = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -39,12 +42,15 @@ const label = "text-xs font-semibold uppercase tracking-wide text-muted";
 
 export function AdminProfileFields({ value, onChange }: { value: AdminProfile; onChange: (v: AdminProfile) => void }) {
   const { i18n } = useTranslation();
+  const perms = useStaffPermissions();
   const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
+    // Only a Super Admin hands organizations to Admins.
+    if (!perms.isSuper) return;
     getAdminConsoleOverview()
       .then((o) => setOrgs(o.organizations.filter((x) => x.active).map((x) => ({ id: x.id, name: x.name }))))
       .catch(() => {});
-  }, []);
+  }, [perms.isSuper]);
   const set = <K extends keyof AdminProfile>(k: K, v: AdminProfile[K]) => onChange({ ...value, [k]: v });
   const customDept = value.department && !DEPARTMENTS.includes(value.department);
 
@@ -111,7 +117,7 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
           ))}
         </div>
         <div className="grid sm:grid-cols-2 gap-2">
-          {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((k) => (
+          {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).filter((k) => perms.isSuper || perms[k]).map((k) => (
             <label key={k} className="flex items-start gap-2.5 text-sm text-ink cursor-pointer rounded-input border border-rule px-3 py-2">
               <input type="checkbox" checked={!!value.permissions[k]} onChange={() => set("permissions", { ...value.permissions, [k]: !value.permissions[k] })} className="h-4 w-4 mt-0.5 accent-navy" />
               <span>

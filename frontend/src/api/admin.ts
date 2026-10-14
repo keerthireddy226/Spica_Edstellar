@@ -20,6 +20,7 @@ export interface AdminPermissions {
   contentReview?: boolean;
   scoreReview?: boolean;
   viewReports?: boolean;
+  manageAdmins?: boolean;
 }
 
 export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
@@ -29,6 +30,7 @@ export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
   contentReview: "Content review",
   scoreReview: "Score review",
   viewReports: "View reports",
+  manageAdmins: "Manage Admins",
 };
 
 export interface AdminAccount {
@@ -363,6 +365,7 @@ export interface OnboardOrgPayload {
   contractEnd?: string;
   contractValue?: number;
   contractCurrency?: string;
+  ownerId?: string;
   orgAdmin: {
     email: string;
     firstName: string;

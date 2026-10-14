@@ -63,14 +63,27 @@ export function StaffDashboard() {
         }
         actions={
           sup ? (
-            <Link to={ROUTES.ADMIN_ADMINS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
-              <ShieldCheck size={15} /> Manage Admins
-            </Link>
+            <>
+              <Link to={ROUTES.SUPER_ORGANIZATIONS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <Building2 size={15} /> Onboard an organization
+              </Link>
+              <Link to={ROUTES.ADMIN_ADMINS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <ShieldCheck size={15} /> Manage Admins
+              </Link>
+              <Link to={ROUTES.ADMIN_LEARNERS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <UserPlus size={15} /> Invite an individual learner
+              </Link>
+            </>
           ) : (
             <>
               {perms.manageOrganizations && (
                 <Link to={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
                   <Building2 size={15} /> Onboard an organization
+                </Link>
+              )}
+              {perms.manageAdmins && (
+                <Link to={ROUTES.ADMIN_CONSOLE_ADMINS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                  <ShieldCheck size={15} /> Onboard an Admin
                 </Link>
               )}
               {perms.inviteLearners && (

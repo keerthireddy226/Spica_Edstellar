@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import type { StaffPermissions } from "@/api/staff";
@@ -19,7 +19,9 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
   { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: "Managers" },
   { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: "Learners" },
+  { to: ROUTES.SUPER_INSIGHTS, icon: Lightbulb, label: "Insights" },
   { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: "Billing" },
+  { to: ROUTES.SUPER_PLANS, icon: Gem, label: "Plans & pricing" },
   { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: "Placement reviews" },
   { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: "Audit log" },
   { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: "System" },
@@ -30,10 +32,13 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
 const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: "Organizations" },
+  { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: "Admins", permission: "manageAdmins" },
   { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: "Managers" },
   { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: "Learners" },
+  { to: ROUTES.ADMIN_CONSOLE_INSIGHTS, icon: Lightbulb, label: "Insights", permission: "viewReports" },
   { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: "Billing" },
+  { to: ROUTES.ADMIN_CONSOLE_PLANS, icon: Gem, label: "Plans & pricing" },
   { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: "Placement reviews", permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: "Audit log" },
   { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: "Analytics", permission: "viewReports" },

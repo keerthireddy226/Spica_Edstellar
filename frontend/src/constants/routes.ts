@@ -42,6 +42,8 @@ export const ROUTES = {
   SUPER_BILLING: "/superadmin/billing",
   SUPER_AUDIT: "/superadmin/audit",
   SUPER_SYSTEM: "/superadmin/system",
+  SUPER_INSIGHTS: "/superadmin/insights",
+  SUPER_PLANS: "/superadmin/plans",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -55,6 +57,9 @@ export const ROUTES = {
   ADMIN_CONSOLE_BILLING: "/admin/billing",
   ADMIN_CONSOLE_AUDIT: "/admin/audit",
   ADMIN_CONSOLE_REVIEWS: "/admin/reviews",
+  ADMIN_CONSOLE_ADMINS: "/admin/admins",
+  ADMIN_CONSOLE_INSIGHTS: "/admin/insights",
+  ADMIN_CONSOLE_PLANS: "/admin/plans",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
