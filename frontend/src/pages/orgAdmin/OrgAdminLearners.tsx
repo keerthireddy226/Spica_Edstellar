@@ -18,6 +18,7 @@ import {
   reactivateLearner,
   getBatches,
   moveLearner,
+  updateOrgLearnerDetails,
   type OrgLearner,
   type OrgBatch,
 } from "@/api/orgAdmin";
@@ -42,6 +43,13 @@ export function OrgAdminLearners() {
   const [poolAvailable, setPoolAvailable] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [erasingLearner, setErasingLearner] = useState<OrgLearner | null>(null);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const shown = (learners ?? []).filter(
+    (l) =>
+      !q ||
+      [l.firstName, l.lastName, l.email, l.participantId, l.employeeId, l.department, l.jobTitle, l.batchName].some((v) => v?.toLowerCase().includes(q)),
+  );
 
   function load() {
     getOrgLearners()
@@ -119,11 +127,21 @@ export function OrgAdminLearners() {
       <FollowUpPanel />
 
       {learners && learners.length > 0 && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, email, employee ID, department or batch"
+          className="w-full sm:max-w-md rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+        />
+      )}
+
+      {learners && learners.length > 0 && (
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <th className="px-4 py-3">Learner</th>
+                <th className="px-4 py-3">Department</th>
                 <th className="px-4 py-3">Batch</th>
                 <th className="px-4 py-3">Sessions completed</th>
                 <th className="px-4 py-3">License</th>
@@ -132,7 +150,7 @@ export function OrgAdminLearners() {
               </tr>
             </thead>
             <tbody>
-              {learners.map((l) => (
+              {shown.map((l) => (
                 <tr
                   key={l.id}
                   onClick={() => setViewingLearnerId(l.id)}
@@ -151,6 +169,10 @@ export function OrgAdminLearners() {
                         </p>
                       </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted">
+                    <p>{l.department ?? "—"}</p>
+                    {(l.employeeId || l.jobTitle) && <p className="text-xs">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
                   </td>
                   <td className="px-4 py-3 text-muted">{l.batchName ?? <span className="text-xs italic">No batch yet</span>}</td>
                   <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
@@ -217,7 +239,12 @@ export function OrgAdminLearners() {
       )}
 
       {viewingLearnerId && (
-        <LearnerProfileModal learnerId={viewingLearnerId} onClose={() => setViewingLearnerId(null)} fetcher={getOrgLearnerDetail} />
+        <LearnerProfileModal
+          learnerId={viewingLearnerId}
+          onClose={() => setViewingLearnerId(null)}
+          fetcher={getOrgLearnerDetail}
+          saveDetails={(id, d) => updateOrgLearnerDetails(id, d).then(load)}
+        />
       )}
 
       {movingLearner && (

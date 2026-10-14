@@ -1,181 +1,52 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Plus, X, Layers, Users, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Layers, Users, Trash2, MapPin } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { Button } from "@/components/Button";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { OrgAdminBatchDetailModal } from "@/components/OrgAdminBatchDetailModal";
-import { getBatches, createBatch, deleteBatch, type OrgBatch, type CefrLevel, type BatchStatus } from "@/api/orgAdmin";
+import { getBatches, createBatch, deleteBatch, type OrgBatch, type BatchStatus } from "@/api/orgAdmin";
+import { BatchFormModal } from "@/components/BatchFormModal";
+import { EXAM_FOCUS_LABEL } from "@/api/details";
 import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
-import { getOrgLicenseOverview, type BatchBudget } from "@/api/licenses";
-import { ApiError } from "@/lib/api";
-import { planErrorMessage } from "@/api/plans";
+import { getOrgLicenseOverview } from "@/api/licenses";
 import { PlanLimitHint, PlanLockNote, refreshPlan, useHasFeature } from "@/components/plans/usePlan";
 
-const CEFR: CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
 function CreateBatchModal({ onClose, onCreated, unreserved }: { onClose: () => void; onCreated: () => void; unreserved: number | null }) {
-  const [name, setName] = useState("");
-  const [durationMonths, setDurationMonths] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [targetCutScore, setTargetCutScore] = useState("");
-  const [startCefr, setStartCefr] = useState<CefrLevel | "">("");
-  const [targetCefr, setTargetCefr] = useState<CefrLevel | "">("");
   const [fixedLicenses, setFixedLicenses] = useState("");
   const allotmentsAllowed = useHasFeature("batch_allotments") !== false;
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (startCefr && targetCefr && CEFR.indexOf(targetCefr) <= CEFR.indexOf(startCefr)) {
-      setError("Target level must be above the starting level.");
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
-    try {
-      await createBatch({
-        startCefr: startCefr || undefined,
-        targetCefr: targetCefr || undefined,
-        licenseAllotment: allotmentsAllowed && fixedLicenses.trim() ? Number(fixedLicenses) : undefined,
-        name: name.trim(),
-        durationMonths: durationMonths.trim() ? Number(durationMonths.trim()) : undefined,
-        startDate: startDate.trim() || undefined,
-        targetCutScore: targetCutScore.trim() ? Number(targetCutScore.trim()) : undefined,
-      });
-      onCreated();
-    } catch (err) {
-      setError(
-        planErrorMessage(err) ??
-        (err instanceof ApiError && err.message === "insufficient_unreserved"
-          ? "Not enough unreserved licenses for that many fixed licenses."
-          : "Something went wrong creating that batch."),
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">New batch</h2>
-          <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
-            <X size={20} />
-          </button>
-        </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-6 py-5">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batch name</label>
-            <input
-              required
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. 2026 Intake"
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Duration (months)</label>
+    <BatchFormModal
+      title="New batch"
+      submitLabel="Create batch"
+      onClose={onClose}
+      onSubmit={async (d) => {
+        await createBatch({ ...d, licenseAllotment: allotmentsAllowed && fixedLicenses.trim() ? Number(fixedLicenses) : undefined });
+        onCreated();
+      }}
+      extra={
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted">Fixed licenses for this batch (optional)</label>
+          {!allotmentsAllowed ? (
+            <PlanLockNote feature="batch_allotments" compact />
+          ) : (
+            <>
               <input
                 type="number"
-                min={1}
-                value={durationMonths}
-                onChange={(e) => setDurationMonths(e.target.value)}
-                placeholder="e.g. 3"
+                min={0}
+                max={unreserved ?? undefined}
+                value={fixedLicenses}
+                onChange={(e) => setFixedLicenses(e.target.value)}
+                placeholder="None — learners use their Manager's pool"
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Start date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Starting level</label>
-              <select
-                value={startCefr}
-                onChange={(e) => setStartCefr(e.target.value as CefrLevel | "")}
-                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer"
-              >
-                <option value="">Not set</option>
-                {CEFR.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Goal level</label>
-              <select
-                value={targetCefr}
-                onChange={(e) => setTargetCefr(e.target.value as CefrLevel | "")}
-                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer"
-              >
-                <option value="">Not set</option>
-                {CEFR.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Fixed licenses for this batch (optional)</label>
-            {!allotmentsAllowed ? (
-              <PlanLockNote feature="batch_allotments" compact />
-            ) : (
-            <>
-            <input
-              type="number"
-              min={0}
-              max={unreserved ?? undefined}
-              value={fixedLicenses}
-              onChange={(e) => setFixedLicenses(e.target.value)}
-              placeholder="None — learners use their Manager's pool"
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-            />
-            <p className="text-xs text-muted">
-              Set aside only for this batch's learners{unreserved !== null ? ` · ${unreserved} unreserved licenses available` : ""}.
-            </p>
+              <p className="text-xs text-muted">
+                Set aside only for this batch's learners{unreserved !== null ? ` · ${unreserved} unreserved licenses available` : ""}.
+              </p>
             </>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Target cut score % (optional)</label>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={targetCutScore}
-              onChange={(e) => setTargetCutScore(e.target.value)}
-              placeholder="e.g. 60"
-              className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-            />
-          </div>
-          {error && <p className="text-sm text-error">{error}</p>}
-          <div className="flex items-center gap-3 pt-1">
-            <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? "Creating…" : "Create batch"}
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          )}
+        </div>
+      }
+    />
   );
 }
 
@@ -187,7 +58,6 @@ export function OrgAdminBatches() {
   const [deletingBatch, setDeletingBatch] = useState<OrgBatch | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [unreserved, setUnreserved] = useState<number | null>(null);
-  const [fixed, setFixed] = useState<BatchBudget[]>([]);
   const [statusFilter, setStatusFilter] = useState<BatchStatus>("active");
 
   function load() {
@@ -195,10 +65,7 @@ export function OrgAdminBatches() {
       .then((res) => setBatches(res.batches))
       .catch(() => setError("Could not load batches."));
     getOrgLicenseOverview()
-      .then((res) => {
-        setUnreserved(res.summary.unreserved);
-        setFixed(res.batches);
-      })
+      .then((res) => setUnreserved(res.summary.unreserved))
       .catch(() => {});
   }
 
@@ -262,9 +129,12 @@ export function OrgAdminBatches() {
       {batches && batches.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {batches.filter((b) => b.status === statusFilter).map((b, i) => (
-            <button
+            <div
               key={b.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setViewingBatchId(b.id)}
+              onKeyDown={(e) => e.key === "Enter" && setViewingBatchId(b.id)}
               style={cardGradient(i)}
               className="relative rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 text-left cursor-pointer"
             >
@@ -292,8 +162,16 @@ export function OrgAdminBatches() {
                   Goal: {b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
                 </span>
               )}
+              {(b.department || b.location || b.examFocus) && (
+                <p className="text-xs text-white/80 flex items-center gap-1.5 flex-wrap">
+                  {(b.department || b.location) && <MapPin size={12} />}
+                  {[b.department, b.location, b.examFocus ? EXAM_FOCUS_LABEL[b.examFocus] : null].filter(Boolean).join(" · ")}
+                </p>
+              )}
               <div className="flex items-center gap-1.5 text-white/80 text-xs">
-                <Users size={13} /> {b.learnerCount} learner{b.learnerCount === 1 ? "" : "s"}
+                <Users size={13} /> {b.learnerCount}
+                {b.capacity ? ` of ${b.capacity}` : ""} learner{(b.capacity ?? b.learnerCount) === 1 ? "" : "s"}
+                {b.capacity && b.learnerCount >= b.capacity ? " · full" : ""}
               </div>
               {b.durationMonths && (
                 <p className="text-xs text-white/70">
@@ -310,13 +188,18 @@ export function OrgAdminBatches() {
               <p className="text-xs text-white/70">
                 {b.managerNames.length === 0 ? "No manager assigned yet" : `Managed by ${b.managerNames.join(", ")}`}
               </p>
-              <p className="text-xs text-white/80">
-                {(() => {
-                  const f = fixed.find((x) => x.batchId === b.id);
-                  return f?.budget != null ? `Fixed licenses: ${f.used} used of ${f.budget} · ${Math.max(0, f.budget - f.used)} left` : "No fixed licenses — uses Manager's pool";
-                })()}
-              </p>
-            </button>
+              <div className="text-xs text-white/85 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
+                <span>
+                  {b.fixedLicenses != null
+                    ? `Fixed licenses: ${b.licenses.fixedUsed} used of ${b.fixedLicenses} · ${Math.max(0, b.fixedLicenses - b.licenses.fixedUsed)} left`
+                    : "No fixed licenses — uses Manager's pool"}
+                </span>
+                <span>
+                  {b.licenses.licensed} licensed · {b.licenses.unlicensed} without a license
+                  {b.licenses.endingSoon ? ` · ${b.licenses.endingSoon} ending soon` : ""}
+                </span>
+              </div>
+            </div>
           ))}
         </div>
       )}

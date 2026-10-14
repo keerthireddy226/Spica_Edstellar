@@ -3,6 +3,7 @@ import { Router, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
 import { createAndInviteUser } from "../auth/invite.js";
+import { DetailsError } from "../learners/details.js";
 import { learnerAccessMap, assignMonths, releaseQueuedMonths, LicenseError } from "../licenses/service.js";
 import { recordAudit } from "../audit/service.js";
 import { requireApiKey, requireScope, type ApiRequest } from "./keys.js";
@@ -50,6 +51,7 @@ function audit(req: ApiRequest, action: string, targetId: string | null, label: 
 async function learnersQuery(tenantId: string, where: string, params: unknown[], limit = 100) {
   const r = await pool.query(
     `SELECT u.id, u.participant_id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at,
+       u.employee_id, u.department, u.job_title,
        b.id AS batch_id, b.batch_code, b.name AS batch_name,
        EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS accepted,
        (SELECT cefr_level FROM placements pl WHERE pl.user_id = u.id ORDER BY taken_at DESC LIMIT 1) AS cefr,
@@ -72,6 +74,9 @@ async function learnersQuery(tenantId: string, where: string, params: unknown[],
         email: x.email,
         firstName: x.first_name,
         lastName: x.last_name,
+        employeeId: x.employee_id,
+        department: x.department,
+        jobTitle: x.job_title,
         status: x.deleted_at ? "deactivated" : "active",
         inviteAccepted: x.accepted,
         batch: x.batch_id ? { id: x.batch_id, code: x.batch_code, name: x.batch_name } : null,
@@ -146,6 +151,9 @@ apiV1Router.post("/learners", requireScope("write"), async (req: ApiRequest, res
         lastName: z.string().trim().min(1).max(100),
         batchCode: z.string().max(40).optional(),
         licenseMonths: z.number().int().min(0).max(24).default(0),
+        employeeId: z.string().trim().max(60).optional(),
+        department: z.string().trim().max(120).optional(),
+        jobTitle: z.string().trim().max(120).optional(),
       })
       .parse(req.body);
     const tenantId = req.apiKey!.tenantId;
@@ -158,8 +166,10 @@ apiV1Router.post("/learners", requireScope("write"), async (req: ApiRequest, res
     }
     let id: string;
     try {
-      id = (await createAndInviteUser({ role: "learner", tenantId, batchId, email: body.email, firstName: body.firstName, lastName: body.lastName, roleLabel: "a learner" })).id;
+      const details = { employeeId: body.employeeId, department: body.department, jobTitle: body.jobTitle };
+      id = (await createAndInviteUser({ role: "learner", tenantId, batchId, email: body.email, firstName: body.firstName, lastName: body.lastName, roleLabel: "a learner", details })).id;
     } catch (err) {
+      if (err instanceof DetailsError) return res.status(409).json({ error: err.code });
       if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) return res.status(409).json({ error: "email_already_registered" });
       throw err;
     }

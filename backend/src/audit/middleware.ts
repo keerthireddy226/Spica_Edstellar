@@ -11,13 +11,19 @@ interface Rule {
 }
 
 const SECRET_KEYS = /pass|token|secret|code|otp/i;
+// Personal details: the log says they changed, not what they are.
+const PERSONAL_KEYS = /^(gender|ageBand|phone)$/;
 
 function sanitize(body: unknown): Record<string, unknown> {
   if (!body || typeof body !== "object") return {};
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(body as Record<string, unknown>)) {
     if (SECRET_KEYS.test(k)) continue;
-    if (Array.isArray(v)) {
+    if (PERSONAL_KEYS.test(k)) {
+      out[k] = v == null ? v : "(set)";
+    } else if (k === "details" && v && typeof v === "object") {
+      out[k] = { fields: Object.keys(v) };
+    } else if (Array.isArray(v)) {
       out[k] =
         v.length > 0 && typeof v[0] === "object"
           ? { count: v.length, emails: v.slice(0, 50).map((x) => (x as { email?: string }).email).filter(Boolean) }
@@ -109,6 +115,7 @@ export const ORG_ADMIN_AUDIT: Rule[] = [
   { method: "POST", path: "/learners/:id/deactivate", action: "learner.deactivated", targetType: "learner" },
   { method: "POST", path: "/learners/:id/reactivate", action: "learner.reactivated", targetType: "learner" },
   { method: "POST", path: "/learners/:id/move", action: "learner.moved", targetType: "learner" },
+  { method: "PATCH", path: "/learners/:id/details", action: "learner.details_updated", targetType: "learner" },
   { method: "POST", path: "/learners/:id/resend-invite", action: "learner.invite_resent", targetType: "learner" },
   { method: "PATCH", path: "/organization", action: "organization.updated", targetType: "organization" },
   { method: "PATCH", path: "/settings", action: "organization.settings_updated", targetType: "settings" },
@@ -138,7 +145,9 @@ export const MANAGER_AUDIT: Rule[] = [
   { method: "POST", path: "/learners", action: "learner.invited", targetType: "learner" },
   { method: "POST", path: "/learners/bulk", action: "learner.bulk_invited", targetType: "learner" },
   { method: "POST", path: "/learners/:id/move", action: "learner.moved", targetType: "learner" },
+  { method: "PATCH", path: "/learners/:id/details", action: "learner.details_updated", targetType: "learner" },
   { method: "POST", path: "/batches", action: "batch.created", targetType: "batch" },
+  { method: "PATCH", path: "/batches/:id", action: "batch.updated", targetType: "batch" },
 ];
 
 export const CERTIFICATE_AUDIT: Rule[] = [

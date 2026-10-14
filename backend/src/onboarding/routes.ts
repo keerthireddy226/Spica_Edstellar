@@ -71,6 +71,7 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
          job_role = EXCLUDED.job_role,
          gender = EXCLUDED.gender,
          age_band = EXCLUDED.age_band,
+         demographics_source = 'self',
          updated_at = now()`,
       [
         req.user!.id,

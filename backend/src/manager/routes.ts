@@ -4,7 +4,19 @@ import { BATCH_END_SQL, assertBatchActive, cloneBatch, completeBatch } from "../
 import { buildLearnerProfile } from "../learners/profile.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { createRequest } from "../licenses/requests.js";
-import { learnerAccessMap } from "../licenses/service.js";
+import { GRACE_DAYS, LicenseError, assignMonths, learnerAccessMap, managerPools } from "../licenses/service.js";
+import {
+  BATCH_DETAIL_SQL,
+  BATCH_LICENSE_SQL,
+  batchDetailsJson,
+  batchDetailsSchema,
+  batchEditSchema,
+  insertBatch,
+  managerLicenseRoom,
+  updateBatch,
+} from "../batches/fields.js";
+import { DetailsError, EMPLOYEE_SELECT, employeeJson, learnerDetailsSchema, pickLearnerDetails, saveLearnerDetails } from "../learners/details.js";
+import { BatchStateError } from "../batches/lifecycle.js";
 import { listScopedActivity } from "../audit/service.js";
 import { Router } from "express";
 import { pool } from "../db.js";
@@ -44,17 +56,16 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
   if (!requireManager(req, res)) return;
   try {
     const batchIds = await assignedBatchIds(req.user!.id);
+    const [myPool] = await managerPools(req.user!.tenantId!, [req.user!.id]);
+    const emptyLicenses = { licensed: 0, unlicensed: 0, grace: 0, endingSoon: 0, fromFixed: 0, fromPool: 0 };
     if (batchIds.length === 0) {
-      return res.json({ batches: [], totalLearners: 0, sessionsCompletedToday: 0 });
+      return res.json({ activeBatches: 0, totalLearners: 0, sessionsCompletedToday: 0, myPool: myPool ?? null, licenses: emptyLicenses });
     }
-    const [batches, sessionsToday] = await Promise.all([
+    const [counts, sessionsToday, licenses] = await Promise.all([
       pool.query(
-        `SELECT b.id, b.name, b.status, count(l.id)::int AS learner_count
-         FROM batches b
-         LEFT JOIN users l ON l.batch_id = b.id AND l.role = 'learner' AND l.deleted_at IS NULL
-         WHERE b.id = ANY($1::uuid[]) AND b.status <> 'archived'
-         GROUP BY b.id
-         ORDER BY b.status = 'active' DESC, b.created_at DESC`,
+        `SELECT count(*) FILTER (WHERE b.status = 'active')::int AS active_batches,
+           (SELECT count(*)::int FROM users l WHERE l.batch_id = ANY($1::uuid[]) AND l.role = 'learner' AND l.deleted_at IS NULL) AS learners
+         FROM batches b WHERE b.id = ANY($1::uuid[])`,
         [batchIds],
       ),
       pool.query(
@@ -62,11 +73,29 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
          WHERE u.batch_id = ANY($1::uuid[]) AND s.completed_at::date = current_date AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")}`,
         [batchIds],
       ),
+      // Each active learner by where their access stands: licensed now,
+      // ending within 14 days, in the grace days after it ended, or none.
+      pool.query(
+        `SELECT count(*) FILTER (WHERE x.ends > now())::int AS licensed,
+           count(*) FILTER (WHERE x.ends > now() AND x.ends < now() + interval '14 days')::int AS ending_soon,
+           count(*) FILTER (WHERE x.ends <= now() AND x.ends > now() - make_interval(days => $2))::int AS grace,
+           count(*) FILTER (WHERE x.ends IS NULL OR x.ends <= now() - make_interval(days => $2))::int AS unlicensed,
+           coalesce(sum(x.fixed), 0)::int AS from_fixed, coalesce(sum(x.from_pool), 0)::int AS from_pool
+         FROM (SELECT
+             (SELECT max(a.ends_at) FROM license_assignments a WHERE a.user_id = u.id AND a.reclaimed_at IS NULL) AS ends,
+             (SELECT count(*) FROM license_assignments a WHERE a.user_id = u.id AND a.reclaimed_at IS NULL AND a.source = 'batch') AS fixed,
+             (SELECT count(*) FROM license_assignments a WHERE a.user_id = u.id AND a.reclaimed_at IS NULL AND a.source = 'manager') AS from_pool
+           FROM users u WHERE u.batch_id = ANY($1::uuid[]) AND u.role = 'learner' AND u.deleted_at IS NULL) x`,
+        [batchIds, GRACE_DAYS],
+      ),
     ]);
+    const l = licenses.rows[0];
     res.json({
-      batches: batches.rows.map((r) => ({ id: r.id, name: r.name, status: r.status, learnerCount: r.learner_count })),
-      totalLearners: batches.rows.reduce((sum, r) => sum + r.learner_count, 0),
+      activeBatches: counts.rows[0].active_batches,
+      totalLearners: counts.rows[0].learners,
       sessionsCompletedToday: sessionsToday.rows[0].n,
+      myPool: myPool ?? null,
+      licenses: { licensed: l.licensed, unlicensed: l.unlicensed, grace: l.grace, endingSoon: l.ending_soon, fromFixed: l.from_fixed, fromPool: l.from_pool },
     });
   } catch (err) {
     next(err);
@@ -80,6 +109,7 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
     if (batchIds.length === 0) return res.json({ learners: [] });
     const result = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, u.batch_id, b.name AS batch_name,
+         ${EMPLOYEE_SELECT},
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
@@ -105,6 +135,7 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        ...employeeJson(r),
       })),
     });
   } catch (err) {
@@ -112,12 +143,36 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
   }
 });
 
+// Months of access to give each new learner; left out, the batch's default.
+const licenseMonthsField = z.coerce.number().int().min(0).max(24).optional();
+
 const onboardLearnerSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   batchId: z.string().uuid(),
+  licenseMonths: licenseMonthsField,
+  details: learnerDetailsSchema.optional(),
 });
+
+async function inviteMonths(batchId: string, given: number | undefined): Promise<number> {
+  if (given !== undefined) return given;
+  const r = await pool.query(`SELECT default_license_months FROM batches WHERE id = $1`, [batchId]);
+  return r.rows[0]?.default_license_months ?? 0;
+}
+
+// Licenses come from the batch's fixed allotment first, then the Manager's
+// own pool; a shortfall is reported, not fatal, since the learner exists.
+async function giveManagerLicenses(tenantId: string, userId: string, months: number, managerId: string): Promise<string | null> {
+  if (!months) return null;
+  try {
+    await assignMonths({ tenantId, userId, months, actorId: managerId, actorRole: "manager" });
+    return null;
+  } catch (err) {
+    if (err instanceof LicenseError) return err.code;
+    throw err;
+  }
+}
 
 managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
@@ -128,6 +183,10 @@ managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, nex
       return res.status(403).json({ error: "not_your_batch" });
     }
     await assertBatchActive(body.batchId);
+    const months = await inviteMonths(body.batchId, body.licenseMonths);
+    if (months > 0 && (await managerLicenseRoom(req.user!.id, body.batchId)).room < months) {
+      return res.status(400).json({ error: "not_enough_licenses" });
+    }
     const { id } = await createAndInviteUser({
       role: "learner",
       tenantId: req.user!.tenantId!,
@@ -136,8 +195,10 @@ managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, nex
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Learner",
+      details: body.details,
     });
-    res.status(201).json({ id, email: body.email });
+    const licenseError = await giveManagerLicenses(req.user!.tenantId!, id, months, req.user!.id);
+    res.status(201).json({ id, email: body.email, licenseMonths: licenseError ? 0 : months, licenseError });
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
       return res.status(409).json({ error: "email_already_registered" });
@@ -146,7 +207,7 @@ managerRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, nex
   }
 });
 
-const bulkLearnerRowSchema = z.object({
+const bulkLearnerRowSchema = learnerDetailsSchema.extend({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -155,14 +216,17 @@ const bulkLearnerRowSchema = z.object({
 managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
   try {
-    const body = z.object({ batchId: z.string().uuid(), rows: z.array(z.unknown()).max(MAX_BULK_ROWS) }).parse(req.body);
+    const body = z
+      .object({ batchId: z.string().uuid(), licenseMonths: licenseMonthsField, rows: z.array(z.unknown()).max(MAX_BULK_ROWS) })
+      .parse(req.body);
     const batchIds = await assignedBatchIds(req.user!.id);
     if (!batchIds.includes(body.batchId)) {
       return res.status(403).json({ error: "not_your_batch" });
     }
     await assertBatchActive(body.batchId);
+    const months = await inviteMonths(body.batchId, body.licenseMonths);
 
-    const results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string }[] = [];
+    const results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string; licenseError?: string | null }[] = [];
     for (const raw of body.rows) {
       const parsed = bulkLearnerRowSchema.safeParse(raw);
       if (!parsed.success) {
@@ -171,7 +235,7 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
         continue;
       }
       try {
-        await createAndInviteUser({
+        const { id } = await createAndInviteUser({
           role: "learner",
           tenantId: req.user!.tenantId!,
           batchId: body.batchId,
@@ -179,10 +243,16 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           roleLabel: "a Learner",
+          details: pickLearnerDetails(parsed.data),
         });
-        results.push({ email: parsed.data.email, status: "created" });
+        const licenseError = await giveManagerLicenses(req.user!.tenantId!, id, months, req.user!.id);
+        results.push({ email: parsed.data.email, status: "created", licenseError });
       } catch (err) {
-        if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
+        if (err instanceof DetailsError) {
+          results.push({ email: parsed.data.email, status: "invalid", message: "Another learner already has this employee ID." });
+        } else if (err instanceof BatchStateError && err.code === "batch_full") {
+          results.push({ email: parsed.data.email, status: "invalid", message: "The batch is full." });
+        } else if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
           results.push({ email: parsed.data.email, status: "duplicate" });
         } else {
           results.push({ email: parsed.data.email, status: "invalid", message: "Something went wrong creating this account." });
@@ -190,7 +260,7 @@ managerRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, res
       }
     }
 
-    res.status(201).json({ results });
+    res.status(201).json({ results, licenseMonths: months });
   } catch (err) {
     next(err);
   }
@@ -219,32 +289,18 @@ managerRouter.post("/learners/:id/move", requireAuth, async (req: AuthedRequest,
 
 // Managers can create their own batches. They're automatically its Manager,
 // and it has no fixed allotment — licenses come from the Manager's own pool.
-const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
 managerRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
   try {
-    const body = z
-      .object({
-        name: z.string().trim().min(1).max(200),
-        durationMonths: z.coerce.number().int().positive().optional(),
-        startDate: z.string().optional(),
-        startCefr: z.enum(CEFR).optional(),
-        targetCefr: z.enum(CEFR).optional(),
-      })
-      .parse(req.body);
+    const body = batchDetailsSchema.parse(req.body);
     await assertWithinLimit(req.user!.tenantId!, "batches");
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const batch = await client.query(
-        `INSERT INTO batches (tenant_id, name, duration_months, start_date, start_cefr, target_cefr, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-        [req.user!.tenantId, body.name, body.durationMonths ?? null, body.startDate || null, body.startCefr ?? null, body.targetCefr ?? null, req.user!.id],
-      );
-      await client.query(`INSERT INTO batch_managers (batch_id, user_id) VALUES ($1, $2)`, [batch.rows[0].id, req.user!.id]);
+      const id = await insertBatch(req.user!.tenantId!, body, req.user!.id, client);
+      await client.query(`INSERT INTO batch_managers (batch_id, user_id) VALUES ($1, $2)`, [id, req.user!.id]);
       await client.query("COMMIT");
-      res.status(201).json({ id: batch.rows[0].id });
+      res.status(201).json({ id });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -286,9 +342,23 @@ managerRouter.get("/learners/:id", requireAuth, async (req: AuthedRequest, res, 
   if (!requireManager(req, res)) return;
   try {
     const batchIds = await assignedBatchIds(req.user!.id);
-    const profile = await buildLearnerProfile(String(req.params.id), { tenantId: req.user!.tenantId!, batchIds, includeSensitive: false });
+    const profile = await buildLearnerProfile(String(req.params.id), { tenantId: req.user!.tenantId!, batchIds, includeSensitive: true });
     if (!profile) return res.status(404).json({ error: "learner_not_found" });
     res.json(profile);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Employee details and demographics for a learner in one of their batches.
+managerRouter.patch("/learners/:id/details", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const body = learnerDetailsSchema.parse(req.body);
+    const { learner } = await managedLearner(req.user!.id, String(req.params.id));
+    if (!learner) return res.status(404).json({ error: "learner_not_found" });
+    await saveLearnerDetails(learner.id, body);
+    res.json({ id: learner.id });
   } catch (err) {
     next(err);
   }
@@ -362,6 +432,63 @@ async function requireManagedBatch(req: AuthedRequest, res: import("express").Re
   return id;
 }
 
+// The Batches page: every batch they manage, with its licenses.
+managerRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const batchIds = await assignedBatchIds(req.user!.id);
+    const [myPool] = await managerPools(req.user!.tenantId!, [req.user!.id]);
+    if (batchIds.length === 0) return res.json({ batches: [], myPool: myPool ?? null });
+    const r = await pool.query(
+      `SELECT b.id, b.name, b.batch_code, b.status, b.start_date, b.duration_months, b.start_cefr, b.target_cefr, b.target_cut_score,
+         b.created_at, b.completed_at, b.license_budget, ${BATCH_DETAIL_SQL}, ${BATCH_LICENSE_SQL},
+         CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
+         (SELECT coalesce(array_agg(concat_ws(' ', m.first_name, m.last_name)), '{}') FROM batch_managers bm JOIN users m ON m.id = bm.user_id
+            WHERE bm.batch_id = b.id AND m.deleted_at IS NULL) AS managers
+       FROM batches b WHERE b.id = ANY($1::uuid[])
+       ORDER BY b.status = 'active' DESC, b.created_at DESC`,
+      [batchIds],
+    );
+    res.json({
+      myPool: myPool ?? null,
+      batches: r.rows.map((b) => ({
+        id: b.id,
+        name: b.name,
+        batchCode: b.batch_code,
+        status: b.status,
+        startDate: b.start_date,
+        durationMonths: b.duration_months,
+        endDate: b.end_date,
+        startCefr: b.start_cefr,
+        targetCefr: b.target_cefr,
+        targetCutScore: b.target_cut_score,
+        createdAt: b.created_at,
+        completedAt: b.completed_at,
+        fixedLicenses: b.license_budget,
+        licenses: b.license_stats,
+        managerNames: b.managers.filter((n: string) => n.trim()),
+        ...batchDetailsJson(b),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Managers edit what their batch is and how it runs; fixed licenses stay
+// with the Org Admin.
+managerRouter.patch("/batches/:id", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const batchId = await requireManagedBatch(req, res);
+    if (!batchId) return;
+    await updateBatch(batchId, req.user!.tenantId!, batchEditSchema.parse(req.body));
+    res.json({ id: batchId });
+  } catch (err) {
+    next(err);
+  }
+});
+
 managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
   try {
@@ -370,7 +497,7 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
     const b = (
       await pool.query(
         `SELECT b.id, b.name, b.batch_code, b.status, b.start_date, b.duration_months, b.start_cefr, b.target_cefr, b.target_cut_score,
-           b.auto_reminders, b.created_at, b.completed_at, b.license_budget,
+           b.created_at, b.completed_at, b.license_budget, ${BATCH_DETAIL_SQL}, ${BATCH_LICENSE_SQL},
            CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
            (SELECT count(*)::int FROM license_assignments a WHERE a.batch_id = b.id AND a.source = 'batch' AND a.reclaimed_at IS NULL) AS fixed_used,
            (SELECT coalesce(array_agg(concat_ws(' ', m.first_name, m.last_name)), '{}') FROM batch_managers bm JOIN users m ON m.id = bm.user_id
@@ -380,7 +507,7 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
       )
     ).rows[0];
     const learners = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.participant_id, u.deleted_at,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.participant_id, u.deleted_at, ${EMPLOYEE_SELECT},
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          (SELECT coalesce(sum(d.sessions), 0)::int FROM learner_activity_daily d WHERE d.user_id = u.id) AS sessions
        FROM users u WHERE u.batch_id = $1 AND u.role = 'learner' AND u.erased_at IS NULL ORDER BY u.created_at`,
@@ -399,12 +526,13 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
         startCefr: b.start_cefr,
         targetCefr: b.target_cefr,
         targetCutScore: b.target_cut_score,
-        autoReminders: b.auto_reminders,
         createdAt: b.created_at,
         completedAt: b.completed_at,
         fixedLicenses: b.license_budget,
         fixedLicensesUsed: b.fixed_used,
+        licenses: b.license_stats,
         managerNames: b.managers.filter((n: string) => n.trim()),
+        ...batchDetailsJson(b),
       },
       learners: learners.rows.map((l) => ({
         id: l.id,
@@ -416,6 +544,7 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
         hasLoggedIn: l.has_logged_in,
         sessionCount: l.sessions,
         license: access.get(l.id),
+        ...employeeJson(l),
       })),
     });
   } catch (err) {

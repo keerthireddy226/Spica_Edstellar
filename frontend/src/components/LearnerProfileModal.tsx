@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { countryName } from "@/constants/demographics";
 import { DetailModal } from "@/components/DetailModal";
 import { getLearnerProfile, type LearnerProfile } from "@/api/admin";
+import { EditLearnerDetailsModal } from "@/components/EditLearnerDetailsModal";
+import type { LearnerDetails } from "@/api/details";
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -11,10 +13,13 @@ function formatDate(iso: string | null | undefined): string {
 
 // Label sits outside the bordered box, flush with every other section
 // heading in this modal (boxed or not) so they all line up on one left edge.
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{title}</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{title}</p>
+        {action}
+      </div>
       <div className="border border-rule rounded-input px-4 py-3">{children}</div>
     </div>
   );
@@ -47,6 +52,7 @@ export function LearnerProfileModal({
   onClose,
   onBack,
   fetcher = getLearnerProfile,
+  saveDetails,
 }: {
   learnerId: string;
   onClose: () => void;
@@ -54,16 +60,20 @@ export function LearnerProfileModal({
   // Lets the Org Admin console reuse this exact same view against its own
   // tenant-scoped endpoint instead of the platform-wide Admin one.
   fetcher?: (learnerId: string) => Promise<LearnerProfile>;
+  // Org Admin and Manager: lets them edit the learner's employee details.
+  saveDetails?: (learnerId: string, d: LearnerDetails) => Promise<unknown>;
 }) {
   const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     fetcher(learnerId)
       .then(setProfile)
       .catch(() => setError("Could not load this learner's details."));
-  }, [learnerId, fetcher]);
+  }, [learnerId, fetcher, reload]);
 
   if (error) {
     return (
@@ -80,7 +90,7 @@ export function LearnerProfileModal({
     );
   }
 
-  const { learner, onboarding, placement, roadmap, progress, skillStats, activity } = profile;
+  const { learner, onboarding, placement, roadmap, progress, skillStats, activity, employment } = profile;
   const name = [learner.firstName, learner.lastName].filter(Boolean).join(" ") || "Not named yet";
 
   return (
@@ -101,19 +111,51 @@ export function LearnerProfileModal({
           </div>
         </Section>
 
-        <Section title="About">
-          {!onboarding ? (
-            <p className="text-sm text-muted">Hasn't completed onboarding yet.</p>
-          ) : (
+        {employment ? (
+          <Section
+            title="Employee details"
+            action={
+              saveDetails && (
+                <button onClick={() => setEditing(true)} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
+                  Edit details
+                </button>
+              )
+            }
+          >
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="Country" value={countryName(onboarding.country, i18n.language)} />
-              <Field label="City" value={onboarding.city ?? "—"} />
-              <Field label="Job role" value={onboarding.jobRole ? t(`demographics.jobRole.${onboarding.jobRole}`) : "—"} />
-              <Field label="Gender" value={onboarding.gender ? t(`demographics.gender.${onboarding.gender}`) : "Not shared"} />
-              <Field label="Age" value={onboarding.ageBand ? t(`demographics.ageBand.${onboarding.ageBand}`) : "Not shared"} />
+              <Field label="Employee ID" value={employment.employeeId ?? "—"} />
+              <Field label="Department" value={employment.department ?? "—"} />
+              <Field label="Job title" value={employment.jobTitle ?? "—"} />
+              <Field label="Job role" value={employment.jobRole ? t(`demographics.jobRole.${employment.jobRole}`) : "—"} />
+              <Field label="Work phone" value={employment.phone ?? "—"} />
+              <Field label="Country" value={countryName(employment.country, i18n.language)} />
+              <Field label="City" value={employment.city ?? "—"} />
+              <Field label="Gender" value={employment.gender ? t(`demographics.gender.${employment.gender}`) : "Not shared"} />
+              <Field label="Age" value={employment.ageBand ? t(`demographics.ageBand.${employment.ageBand}`) : "Not shared"} />
             </div>
-          )}
-        </Section>
+            {employment.demographicsSource && (
+              <p className="text-xs text-muted mt-3">
+                {employment.demographicsSource === "organization"
+                  ? "Location, gender and age were entered by the organization; the learner can change them when they sign in."
+                  : "Location, gender and age were given by the learner."}
+              </p>
+            )}
+          </Section>
+        ) : (
+          <Section title="About">
+            {!onboarding ? (
+              <p className="text-sm text-muted">Hasn't completed onboarding yet.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                <Field label="Country" value={countryName(onboarding.country, i18n.language)} />
+                <Field label="City" value={onboarding.city ?? "—"} />
+                <Field label="Job role" value={onboarding.jobRole ? t(`demographics.jobRole.${onboarding.jobRole}`) : "—"} />
+                <Field label="Gender" value={onboarding.gender ? t(`demographics.gender.${onboarding.gender}`) : "Not shared"} />
+                <Field label="Age" value={onboarding.ageBand ? t(`demographics.ageBand.${onboarding.ageBand}`) : "Not shared"} />
+              </div>
+            )}
+          </Section>
+        )}
 
         <Section title="Onboarding questionnaire">
           {!onboarding ? (
@@ -226,6 +268,18 @@ export function LearnerProfileModal({
           )}
         </Section>
       </div>
+      {editing && employment && saveDetails && (
+        <EditLearnerDetailsModal
+          name={name}
+          initial={employment}
+          save={(d) => saveDetails(learner.id, d)}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            setReload((n) => n + 1);
+          }}
+        />
+      )}
     </DetailModal>
   );
 }

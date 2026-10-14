@@ -63,6 +63,7 @@ export const ROUTES = {
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.
   MANAGER_DASHBOARD: "/manager/dashboard",
+  MANAGER_BATCHES: "/manager/batches",
   MANAGER_LEARNERS: "/manager/learners",
   MANAGER_PROFILE: "/manager/profile",
   MANAGER_ANALYTICS: "/manager/analytics",

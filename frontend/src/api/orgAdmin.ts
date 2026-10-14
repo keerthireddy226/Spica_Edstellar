@@ -1,6 +1,20 @@
 import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
+import type { BatchDetails, BatchLicenseStats, DeliveryMode, ExamFocus, LearnerDetails } from "@/api/details";
+
+// Batch fields beyond the basics, as the API returns them.
+export interface BatchExtras {
+  description: string | null;
+  department: string | null;
+  location: string | null;
+  deliveryMode: DeliveryMode | null;
+  examFocus: ExamFocus | null;
+  weeklyMinutesGoal: number | null;
+  capacity: number | null;
+  defaultLicenseMonths: number | null;
+  autoReminders: boolean;
+}
 
 export interface OrgAdminOverview {
   organizationName: string | null;
@@ -22,7 +36,7 @@ export function updateOrganizationName(name: string): Promise<{ name: string }> 
 
 export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
-export interface OrgBatch {
+export interface OrgBatch extends BatchExtras {
   id: string;
   name: string;
   batchCode: string;
@@ -38,6 +52,8 @@ export interface OrgBatch {
   endDate: string | null;
   completedAt: string | null;
   archivedAt: string | null;
+  fixedLicenses: number | null;
+  licenses: BatchLicenseStats;
 }
 
 export type BatchStatus = "active" | "completed" | "archived";
@@ -46,21 +62,14 @@ export function getBatches(): Promise<{ batches: OrgBatch[] }> {
   return api("/org-admin/batches");
 }
 
-export interface CreateBatchPayload {
-  name: string;
-  durationMonths?: number;
-  startDate?: string;
-  targetCutScore?: number;
-  startCefr?: CefrLevel;
-  targetCefr?: CefrLevel;
-  licenseAllotment?: number;
-}
+export type CreateBatchPayload = BatchDetails & { licenseAllotment?: number };
 
 export function createBatch(payload: CreateBatchPayload): Promise<{ id: string }> {
   return api("/org-admin/batches", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export interface OrgBatchDetail {
+export interface OrgBatchDetail extends BatchExtras {
+  licenses: BatchLicenseStats;
   id: string;
   name: string;
   fixedLicenses: number | null;
@@ -80,7 +89,8 @@ export interface OrgBatchDetail {
   archivedAt: string | null;
 }
 
-export interface OrgBatchLearner {
+export interface OrgBatchLearner extends LearnerDetails {
+  hasLoggedIn?: boolean;
   id: string;
   license?: LearnerAccess;
   participantId: string | null;
@@ -150,7 +160,7 @@ export function reactivateManager(id: string): Promise<{ id: string }> {
   return api(`/org-admin/managers/${id}/reactivate`, { method: "POST" });
 }
 
-export interface OrgLearner {
+export interface OrgLearner extends LearnerDetails {
   id: string;
   batchId?: string | null;
   participantId: string | null;
@@ -172,7 +182,7 @@ export function getOrgLearners(): Promise<{ learners: OrgLearner[] }> {
 // Shared row/result shapes for CSV bulk-upload flows elsewhere (e.g. the
 // Admin console's own bulk invite) — Org Admins no longer onboard learners
 // themselves, so no onboarding function lives in this file anymore.
-export interface BulkLearnerRow {
+export interface BulkLearnerRow extends Partial<LearnerDetails> {
   email: string;
   firstName: string;
   lastName: string;
@@ -182,10 +192,15 @@ export interface BulkLearnerResult {
   email: string;
   status: "created" | "duplicate" | "invalid";
   message?: string;
+  licenseError?: string | null;
 }
 
 export function getOrgLearnerDetail(id: string): Promise<LearnerProfile> {
   return api(`/org-admin/learners/${id}`);
+}
+
+export function updateOrgLearnerDetails(id: string, d: LearnerDetails): Promise<{ id: string }> {
+  return api(`/org-admin/learners/${id}/details`, { method: "PATCH", body: JSON.stringify(d) });
 }
 
 export function deleteLearner(id: string): Promise<{ id: string; reclaimedMonths?: number }> {
@@ -258,7 +273,7 @@ export interface OrgInviteOptions {
 }
 
 export function inviteLearner(
-  payload: OrgInviteOptions & { email: string; firstName: string; lastName: string },
+  payload: OrgInviteOptions & { email: string; firstName: string; lastName: string; details?: Partial<LearnerDetails> },
 ): Promise<{ id: string; email: string; licenseError: string | null }> {
   return api("/org-admin/learners", { method: "POST", body: JSON.stringify(payload) });
 }
@@ -270,14 +285,7 @@ export function inviteLearnersBulk(
   return api("/org-admin/learners/bulk", { method: "POST", body: JSON.stringify({ ...options, rows }) });
 }
 
-export interface EditBatchPayload {
-  name: string;
-  durationMonths: number | null;
-  startDate: string | null;
-  targetCutScore: number | null;
-  startCefr: CefrLevel | null;
-  targetCefr: CefrLevel | null;
-}
+export type EditBatchPayload = Partial<BatchDetails>;
 
 export function updateBatch(id: string, payload: EditBatchPayload): Promise<{ id: string }> {
   return api(`/org-admin/batches/${id}`, { method: "PATCH", body: JSON.stringify(payload) });

@@ -10,7 +10,7 @@ import { emitEvent } from "../webhooks/service.js";
 export const BATCH_END_SQL = `(coalesce(b.start_date, b.created_at::date) + make_interval(months => b.duration_months))::date`;
 
 export class BatchStateError extends Error {
-  constructor(public code: "batch_not_found" | "batch_not_active" | "batch_not_closed" | "batch_closed") {
+  constructor(public code: "batch_not_found" | "batch_not_active" | "batch_not_closed" | "batch_closed" | "batch_full") {
     super(code);
   }
 }

@@ -8,6 +8,9 @@ const learner = {
     email: { type: "string", format: "email" },
     firstName: { type: "string" },
     lastName: { type: "string" },
+    employeeId: { type: "string", nullable: true },
+    department: { type: "string", nullable: true },
+    jobTitle: { type: "string", nullable: true },
     status: { type: "string", enum: ["active", "deactivated"] },
     inviteAccepted: { type: "boolean" },
     batch: { type: ["object", "null"], properties: { id: { type: "string" }, code: { type: "string" }, name: { type: "string" } } },
@@ -53,7 +56,7 @@ export const OPENAPI = {
               schema: {
                 type: "object",
                 required: ["email", "firstName", "lastName"],
-                properties: { email: { type: "string" }, firstName: { type: "string" }, lastName: { type: "string" }, batchCode: { type: "string" }, licenseMonths: { type: "integer", maximum: 24 } },
+                properties: { email: { type: "string" }, firstName: { type: "string" }, lastName: { type: "string" }, batchCode: { type: "string" }, licenseMonths: { type: "integer", maximum: 24 }, employeeId: { type: "string" }, department: { type: "string" }, jobTitle: { type: "string" } },
               },
             },
           },

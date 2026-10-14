@@ -15,6 +15,7 @@ const VERBS: Record<string, string> = {
   "learner.deactivated": "deactivated",
   "learner.reactivated": "reactivated",
   "learner.moved": "moved",
+  "learner.details_updated": "updated the employee details of",
   "learner.deleted": "deleted",
   "learner.erased": "erased the data of",
   "learner.invite_resent": "resent the invite to",

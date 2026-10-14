@@ -20,6 +20,7 @@ export interface AnalyticsOverview {
     dailyReminderAdoption: number;
   };
   breakdowns: {
+    department?: Bucket[];
     country: Bucket[];
     jobRole: Bucket[];
     ageBand: Bucket[];

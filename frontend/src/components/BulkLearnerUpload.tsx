@@ -2,8 +2,11 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Download, FileText, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/Button";
 import { downloadText, parseCsv, toCsv } from "@/lib/csv";
+import type { LearnerDetails } from "@/api/details";
+import type { AgeBand, Gender, JobRole } from "@/api/onboarding";
+import { AGE_BANDS, COUNTRY_CODES, JOB_ROLES, countryName } from "@/constants/demographics";
 
-export interface BulkRow {
+export interface BulkRow extends Partial<LearnerDetails> {
   email: string;
   firstName: string;
   lastName: string;
@@ -19,37 +22,108 @@ export interface BulkResult {
 type RowState = BulkRow & { line: number; problem: string | null };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const HEADER_ALIASES: Record<keyof BulkRow, string[]> = {
+type Column = "email" | "firstName" | "lastName" | keyof LearnerDetails;
+const HEADER_ALIASES: Record<Column, string[]> = {
   email: ["email", "e-mail", "email address", "mail"],
   firstName: ["firstname", "first name", "first", "given name", "givenname"],
   lastName: ["lastname", "last name", "last", "surname", "family name", "familyname"],
+  employeeId: ["employee id", "employeeid", "emp id", "empid", "employee number", "employee no", "staff id"],
+  department: ["department", "dept", "team"],
+  jobTitle: ["job title", "jobtitle", "title", "designation", "position"],
+  phone: ["phone", "phone number", "mobile", "work phone", "contact number"],
+  country: ["country", "country code"],
+  city: ["city", "town"],
+  jobRole: ["job role", "jobrole", "role", "function"],
+  gender: ["gender", "sex"],
+  ageBand: ["age", "age band", "ageband", "age group", "age range"],
 };
+const DETAIL_COLUMNS: (keyof LearnerDetails)[] = ["employeeId", "department", "jobTitle", "phone", "country", "city", "jobRole", "gender", "ageBand"];
+const TEMPLATE_HEADER = ["email", "first name", "last name", "employee id", "department", "job title", "phone", "country", "city", "job role", "gender", "age"];
 
-// Finds the columns by header name when there is a header row, otherwise
-// assumes email, first name, last name.
-function toRows(table: string[][]): BulkRow[] {
-  if (table.length === 0) return [];
-  const head = table[0].map((h) => h.toLowerCase().replace(/[_]/g, " ").trim());
-  const idx = (k: keyof BulkRow) => head.findIndex((h) => HEADER_ALIASES[k].includes(h));
-  const hasHeader = idx("email") !== -1;
-  const cols = hasHeader ? { email: idx("email"), firstName: idx("firstName"), lastName: idx("lastName") } : { email: 0, firstName: 1, lastName: 2 };
-  return table.slice(hasHeader ? 1 : 0).map((r) => ({
-    email: (r[cols.email] ?? "").trim(),
-    firstName: cols.firstName >= 0 ? (r[cols.firstName] ?? "").trim() : "",
-    lastName: cols.lastName >= 0 ? (r[cols.lastName] ?? "").trim() : "",
-  }));
+const squash = (v: string) => v.toLowerCase().replace(/[^a-z0-9+]/g, "");
+
+// CSV cells are free text; these turn them into the values the API takes,
+// or say what's wrong.
+function toGender(v: string): Gender | null | Error {
+  const k = squash(v);
+  if (!k) return null;
+  if (["f", "female", "woman"].includes(k)) return "female";
+  if (["m", "male", "man"].includes(k)) return "male";
+  if (["nonbinary", "nb", "other"].includes(k)) return "non_binary";
+  if (k.startsWith("prefernot") || k === "undisclosed") return "prefer_not";
+  return new Error(`Unknown gender "${v}"`);
 }
 
-function check(rows: BulkRow[], existing: Set<string>): RowState[] {
+function toAgeBand(v: string): AgeBand | null | Error {
+  const k = squash(v);
+  if (!k) return null;
+  if (/^\d{1,3}$/.test(k)) {
+    const n = Number(k);
+    return n < 18 ? "under_18" : n <= 24 ? "18_24" : n <= 34 ? "25_34" : n <= 44 ? "35_44" : n <= 54 ? "45_54" : "55_plus";
+  }
+  if (k === "under18" || k === "18") return "under_18";
+  if (k === "55+" || k === "55plus" || k === "55andabove") return "55_plus";
+  const band = AGE_BANDS.find((a) => squash(a) === k);
+  return band ?? new Error(`Unknown age "${v}"`);
+}
+
+function toCountry(v: string): string | null | Error {
+  const k = v.trim();
+  if (!k) return null;
+  if (/^[a-z]{2}$/i.test(k)) return k.toUpperCase();
+  const hit = COUNTRY_CODES.find((c) => squash(countryName(c, "en")) === squash(k));
+  return hit ?? new Error(`Unknown country "${v}" — use a 2-letter code like IN`);
+}
+
+const ROLE_SYNONYMS: Record<string, JobRole> = { it: "it_engineering", engineering: "it_engineering", support: "customer_support", sales: "sales_marketing", marketing: "sales_marketing" };
+function toJobRole(v: string): JobRole | null | Error {
+  const k = squash(v);
+  if (!k) return null;
+  return JOB_ROLES.find((r) => squash(r) === k) ?? ROLE_SYNONYMS[k] ?? new Error(`Unknown job role "${v}"`);
+}
+
+// Finds the columns by header name when there is a header row, otherwise
+// assumes email, first name, last name, then the detail columns in template order.
+function toRows(table: string[][]): (BulkRow & { problem?: string })[] {
+  if (table.length === 0) return [];
+  const head = table[0].map((h) => h.toLowerCase().replace(/[_]/g, " ").trim());
+  const idx = (k: Column) => head.findIndex((h) => HEADER_ALIASES[k].includes(h));
+  const hasHeader = idx("email") !== -1;
+  const all: Column[] = ["email", "firstName", "lastName", ...DETAIL_COLUMNS];
+  const cols = Object.fromEntries(all.map((k, i) => [k, hasHeader ? idx(k) : i])) as Record<Column, number>;
+  return table.slice(hasHeader ? 1 : 0).map((r) => {
+    const cell = (k: Column) => (cols[k] >= 0 ? (r[cols[k]] ?? "").trim() : "");
+    const row: BulkRow & { problem?: string } = { email: cell("email"), firstName: cell("firstName"), lastName: cell("lastName") };
+    for (const k of ["employeeId", "department", "jobTitle", "phone", "city"] as const) if (cell(k)) row[k] = cell(k);
+    const parsed: [keyof LearnerDetails, string | null | Error][] = [
+      ["country", toCountry(cell("country"))],
+      ["jobRole", toJobRole(cell("jobRole"))],
+      ["gender", toGender(cell("gender"))],
+      ["ageBand", toAgeBand(cell("ageBand"))],
+    ];
+    for (const [k, v] of parsed) {
+      if (v instanceof Error) row.problem ??= v.message;
+      else if (v) (row as unknown as Record<string, unknown>)[k] = v;
+    }
+    return row;
+  });
+}
+
+function check(rows: (BulkRow & { problem?: string | null })[], existing: Set<string>): RowState[] {
   const seen = new Map<string, number>();
+  const seenEmployee = new Map<string, number>();
   return rows.map((r, i) => {
     const key = r.email.toLowerCase();
+    const emp = r.employeeId?.toLowerCase();
     let problem: string | null = null;
     if (!EMAIL_RE.test(r.email)) problem = "Invalid email";
     else if (!r.firstName || !r.lastName) problem = "First and last name needed";
     else if (seen.has(key)) problem = `Duplicate of row ${seen.get(key)}`;
     else if (existing.has(key)) problem = "Already has an account";
+    else if (emp && seenEmployee.has(emp)) problem = `Same employee ID as row ${seenEmployee.get(emp)}`;
+    else if (r.problem) problem = r.problem;
     if (!seen.has(key)) seen.set(key, i + 1);
+    if (emp && !seenEmployee.has(emp)) seenEmployee.set(emp, i + 1);
     return { ...r, line: i + 1, problem };
   });
 }
@@ -112,7 +186,9 @@ export function BulkLearnerUpload({
       const kept = prev.filter((r) => r.line !== line);
       // Re-check so a "duplicate of row N" clears when row N is removed.
       const existing = new Set(prev.filter((r) => r.problem === "Already has an account").map((r) => r.email.toLowerCase()));
-      return check(kept, existing).map((r, i) => ({ ...r, line: kept[i].line }));
+      // Problems from reading the file (unknown gender, etc.) stay.
+      const parseProblem = (r: RowState) => (r.problem && /^Unknown /.test(r.problem) ? r.problem : null);
+      return check(kept.map((r) => ({ ...r, problem: parseProblem(r) })), existing).map((r, i) => ({ ...r, line: kept[i].line }));
     });
   }
 
@@ -120,7 +196,7 @@ export function BulkLearnerUpload({
     setBusy(true);
     setError(null);
     try {
-      setResults(await submit(rows.filter((r) => !r.problem).map(({ email, firstName, lastName }) => ({ email, firstName, lastName }))));
+      setResults(await submit(rows.filter((r) => !r.problem).map(({ line: _line, problem: _problem, ...row }) => row)));
     } catch {
       setError("Something went wrong sending the invites.");
     } finally {
@@ -147,10 +223,21 @@ export function BulkLearnerUpload({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm text-muted">Up to {maxRows} learners per file. Columns: email, first name, last name.</p>
+        <p className="text-sm text-muted">
+          Up to {maxRows} learners per file. Columns: email, first name, last name; optionally employee ID, department, job title, phone, country, city,
+          job role, gender, age.
+        </p>
         <button
           type="button"
-          onClick={() => downloadText(toCsv([["email", "first name", "last name"], ["ana.silva@example.com", "Ana", "Silva"]]), "learners-template.csv")}
+          onClick={() =>
+            downloadText(
+              toCsv([
+                TEMPLATE_HEADER,
+                ["ana.silva@example.com", "Ana", "Silva", "EMP-1042", "Customer Support", "Support Associate", "+91 98765 43210", "IN", "Hyderabad", "customer_support", "female", "25-34"],
+              ]),
+              "learners-template.csv",
+            )
+          }
           className="flex items-center gap-1.5 text-xs font-semibold text-navy hover:underline cursor-pointer"
         >
           <Download size={13} /> Template
@@ -186,6 +273,7 @@ export function BulkLearnerUpload({
                   <th className="px-3 py-2 w-10">#</th>
                   <th className="px-3 py-2">Email</th>
                   <th className="px-3 py-2">Name</th>
+                  <th className="px-3 py-2">Employee</th>
                   <th className="px-3 py-2">Check</th>
                   <th className="px-2 py-2 w-8" />
                 </tr>
@@ -196,6 +284,7 @@ export function BulkLearnerUpload({
                     <td className="px-3 py-1.5 text-muted">{r.line}</td>
                     <td className="px-3 py-1.5 text-ink break-all">{r.email || "—"}</td>
                     <td className="px-3 py-1.5 text-ink">{[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}</td>
+                    <td className="px-3 py-1.5 text-muted">{[r.employeeId, r.department].filter(Boolean).join(" · ") || "—"}</td>
                     <td className={`px-3 py-1.5 ${r.problem ? "text-error" : "text-success"}`}>{r.problem ?? "Ready"}</td>
                     <td className="px-2 py-1.5">
                       <button onClick={() => remove(r.line)} title="Remove row" className="text-muted hover:text-error cursor-pointer">
@@ -219,7 +308,7 @@ export function BulkLearnerUpload({
             {created} invited
             {results.length - created > 0 ? ` · ${results.length - created} not invited` : ""}
             {rows.some((r) => r.problem) ? ` · ${rows.filter((r) => r.problem).length} skipped` : ""}
-            {results.some((r) => r.licenseError) ? ` · ${results.filter((r) => r.licenseError).length} without a license (pool ran out)` : ""}.
+            {results.some((r) => r.licenseError) ? ` · ${results.filter((r) => r.licenseError).length} without a license (not enough licenses)` : ""}.
           </p>
           <div className="flex gap-3">
             <Button variant="secondary" onClick={downloadReport} className="flex items-center gap-2">

@@ -51,6 +51,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.ORG_ADMIN_ANALYTICS]: "Analytics",
   [ROUTES.MANAGER_ANALYTICS]: "Analytics",
   [ROUTES.MANAGER_DASHBOARD]: "Manager Dashboard",
+  [ROUTES.MANAGER_BATCHES]: "Batches",
   [ROUTES.MANAGER_LEARNERS]: "Learners",
   [ROUTES.MANAGER_ACTIVITY]: "Activity",
 };

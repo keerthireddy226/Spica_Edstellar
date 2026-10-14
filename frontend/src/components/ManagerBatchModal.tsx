@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Award, CheckCircle2, Copy } from "lucide-react";
+import { Award, CheckCircle2, Copy, Pencil } from "lucide-react";
+import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
+import { BatchFormModal } from "@/components/BatchFormModal";
 import { DetailModal } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
@@ -7,7 +9,15 @@ import { Button } from "@/components/Button";
 import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { planErrorMessage } from "@/api/plans";
 import { refreshPlan } from "@/components/plans/usePlan";
-import { getManagerBatch, getManagerLearnerDetail, managerCloneBatch, managerCompleteBatch, type ManagerBatchDetail } from "@/api/manager";
+import {
+  getManagerBatch,
+  getManagerLearnerDetail,
+  managerCloneBatch,
+  managerCompleteBatch,
+  managerUpdateBatch,
+  managerUpdateLearnerDetails,
+  type ManagerBatchDetail,
+} from "@/api/manager";
 import { managerCertificates, managerIssueCertificate, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
 
 function fmt(d: string) {
@@ -16,8 +26,8 @@ function fmt(d: string) {
 
 const pill = "flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer disabled:opacity-50";
 
-// A Manager's own batch: details, learners, certificates, and closing it out
-// or starting the next one from it.
+// A Manager's own batch: details, licenses, learners, certificates, editing
+// it, and closing it out or starting the next one from it.
 export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: string; onClose: () => void; onChanged: () => void }) {
   const [data, setData] = useState<ManagerBatchDetail | null>(null);
   const [certs, setCerts] = useState<Map<string, CertificateSummary>>(new Map());
@@ -25,6 +35,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
   const [cloning, setCloning] = useState(false);
   const [cloneName, setCloneName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   function load() {
@@ -73,6 +84,11 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
       wide
       actions={
         <div className="flex gap-2 flex-wrap justify-end">
+          {b.status !== "archived" && (
+            <button className={pill} disabled={busy} onClick={() => setEditing(true)}>
+              <Pencil size={14} /> Edit
+            </button>
+          )}
           {b.status === "active" && (
             <button
               className={pill}
@@ -111,22 +127,36 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
           </div>
         )}
 
-        <div className="border border-rule rounded-input px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-xs text-muted">Level goal</p>
-            <p className="text-ink">{b.startCefr || b.targetCefr ? `${b.startCefr ?? "?"} → ${b.targetCefr ?? "?"}` : "—"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted">Duration</p>
-            <p className="text-ink">{b.durationMonths ? `${b.durationMonths} month${b.durationMonths === 1 ? "" : "s"}` : "—"}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted">Fixed licenses</p>
-            <p className="text-ink">{b.fixedLicenses === null ? "None — your pool" : `${b.fixedLicensesUsed} used of ${b.fixedLicenses}`}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted">Managed with</p>
-            <p className="text-ink">{b.managerNames.length > 1 ? b.managerNames.join(", ") : "Just you"}</p>
+        <BatchDetailsGrid
+          batch={b}
+          learnerCount={data.learners.filter((l) => l.active).length}
+          managedBy={b.managerNames.length > 1 ? b.managerNames.join(", ") : "Just you"}
+        />
+
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Licenses</p>
+          <div className="border border-rule rounded-input px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-xs text-muted">Fixed licenses</p>
+              <p className="text-ink">
+                {b.fixedLicenses === null ? "None — your pool" : `${b.fixedLicensesUsed} used of ${b.fixedLicenses} · ${Math.max(0, b.fixedLicenses - b.fixedLicensesUsed)} left`}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">From your pool</p>
+              <p className="text-ink">{b.licenses.fromPool} license-month{b.licenses.fromPool === 1 ? "" : "s"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">Learners licensed</p>
+              <p className="text-ink">
+                {b.licenses.licensed} of {b.licenses.learners}
+                {b.licenses.endingSoon ? ` · ${b.licenses.endingSoon} ending soon` : ""}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted">Without a license</p>
+              <p className={b.licenses.unlicensed ? "text-error" : "text-ink"}>{b.licenses.unlicensed}</p>
+            </div>
           </div>
         </div>
 
@@ -147,6 +177,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                       <p className="text-xs text-muted">
+                        {[l.employeeId, l.department, l.jobTitle].filter(Boolean).map((x) => `${x} · `).join("")}
                         {l.sessionCount} session{l.sessionCount === 1 ? "" : "s"}
                         {!l.hasLoggedIn ? " · invite pending" : ""}
                         {!l.active ? " · deactivated" : ""}
@@ -176,7 +207,31 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
           )}
         </div>
       </div>
-      {viewing && <LearnerProfileModal learnerId={viewing} onClose={onClose} onBack={() => setViewing(null)} fetcher={getManagerLearnerDetail} />}
+      {viewing && (
+        <LearnerProfileModal
+          learnerId={viewing}
+          onClose={onClose}
+          onBack={() => setViewing(null)}
+          fetcher={getManagerLearnerDetail}
+          saveDetails={(id, d) => managerUpdateLearnerDetails(id, d).then(load)}
+        />
+      )}
+      {editing && (
+        <BatchFormModal
+          title="Edit batch"
+          submitLabel="Save changes"
+          initial={{ ...b, targetCutScore: b.targetCutScore != null ? Number(b.targetCutScore) : null }}
+          note="Fixed licenses are set by your Org Admin."
+          onClose={() => setEditing(false)}
+          onSubmit={async (d) => {
+            await managerUpdateBatch(b.id, d);
+            setEditing(false);
+            setMsg({ ok: true, text: "Batch updated." });
+            load();
+            onChanged();
+          }}
+        />
+      )}
     </DetailModal>
   );
 }

@@ -6,6 +6,8 @@ import { sendAdminInviteEmail } from "./mailer.js";
 import { applyLearnerDefaults } from "../orgAdmin/settings.js";
 import { inviteExpiryMs } from "./policy.js";
 import { emitEvent } from "../webhooks/service.js";
+import { DetailsError, saveLearnerDetails, type LearnerDetails } from "../learners/details.js";
+import { assertBatchCapacity } from "../batches/fields.js";
 
 const BCRYPT_ROUNDS = 12;
 // How long an invite link works is the organization's choice (24 hours by default).
@@ -23,7 +25,16 @@ export async function createAndInviteUser(row: {
   firstName: string;
   lastName: string;
   roleLabel: string;
+  // Employee details and demographics the organization records for a learner.
+  details?: LearnerDetails;
 }): Promise<{ id: string }> {
+  if (row.role === "learner") {
+    await assertBatchCapacity(row.batchId);
+    if (row.details?.employeeId) {
+      const taken = await pool.query(`SELECT 1 FROM users WHERE tenant_id = $1 AND employee_id = $2`, [row.tenantId, row.details.employeeId]);
+      if (taken.rowCount) throw new DetailsError("employee_id_taken");
+    }
+  }
   const placeholderHash = await bcrypt.hash(randomUUID(), BCRYPT_ROUNDS);
   const inserted = await pool.query(
     `INSERT INTO users (role, tenant_id, batch_id, email, password_hash, first_name, last_name, email_verified)
@@ -34,6 +45,7 @@ export async function createAndInviteUser(row: {
   const userId = inserted.rows[0].id;
   // The organization's defaults for new learners (language, daily reminder).
   if (row.role === "learner") {
+    if (row.details) await saveLearnerDetails(userId, row.details);
     await applyLearnerDefaults(row.tenantId, userId);
     await emitEvent(row.tenantId, "learner.created", { learnerId: userId, email: row.email, firstName: row.firstName, lastName: row.lastName, batchId: row.batchId ?? null });
   }

@@ -9,10 +9,12 @@ const GENUINELY_COMPLETED = `
 `;
 
 // Everything about one learner for the console views. `batchIds` limits a
-// Manager to their own batches; gender and age only go to the Org Admin.
+// Manager to their own batches. `includeSensitive` gates gender and age;
+// both the Org Admin and the learner's Manager see them.
 export async function buildLearnerProfile(learnerId: string, scope: { tenantId: string; batchIds?: string[]; includeSensitive: boolean }) {
   const learnerResult = await pool.query(
-    `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.participant_id,
+    `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.participant_id, u.batch_id,
+       u.employee_id, u.department, u.job_title, u.phone,
        t.name AS tenant_name, t.type AS tenant_type, t.category AS tenant_category, b.name AS batch_name
      FROM users u
      LEFT JOIN tenants t ON t.id = u.tenant_id
@@ -64,9 +66,24 @@ export async function buildLearnerProfile(learnerId: string, scope: { tenantId: 
       tenantName: learner.tenant_name,
       tenantType: learner.tenant_type,
       tenantCategory: learner.tenant_category,
+      batchId: learner.batch_id,
       batchName: learner.batch_name,
       active: !learner.deleted_at,
       createdAt: learner.created_at,
+    },
+    // What the organization records about them; gender and age are only
+    // here when the viewer may see them.
+    employment: {
+      employeeId: learner.employee_id,
+      department: learner.department,
+      jobTitle: learner.job_title,
+      phone: learner.phone,
+      country: p?.country ?? null,
+      city: p?.city ?? null,
+      jobRole: p?.job_role ?? null,
+      gender: scope.includeSensitive ? (p?.gender ?? null) : null,
+      ageBand: scope.includeSensitive ? (p?.age_band ?? null) : null,
+      demographicsSource: p?.demographics_source ?? null,
     },
     onboarding: p
       ? {
@@ -85,7 +102,6 @@ export async function buildLearnerProfile(learnerId: string, scope: { tenantId: 
           country: p.country,
           city: p.city,
           jobRole: p.job_role,
-          // Managers don't see gender or age; only the Org Admin does.
           gender: scope.includeSensitive ? p.gender : null,
           ageBand: scope.includeSensitive ? p.age_band : null,
         }

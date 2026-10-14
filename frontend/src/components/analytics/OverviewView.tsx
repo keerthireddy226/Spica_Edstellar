@@ -47,6 +47,11 @@ export function OverviewView({ data, showCompanies }: { data: AnalyticsOverview;
         <Card title="Location" subtitle="Country">
           <BarList data={b.country} label={(k) => countryName(k, "en")} emptyText="No locations captured yet." />
         </Card>
+        {!showCompanies && (
+          <Card title="Department" subtitle="From employee details · top 15">
+            <BarList data={b.department ?? []} label={(k) => (k === "unknown" ? "Not recorded" : k)} emptyText="No departments recorded yet." />
+          </Card>
+        )}
         <Card title="Job role">
           <BarList data={b.jobRole} label={(k) => t(`demographics.jobRole.${k}`, { defaultValue: k })} emptyText="No job roles captured yet." />
         </Card>

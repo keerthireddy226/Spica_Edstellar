@@ -44,6 +44,7 @@ const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
 
 const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
+  { to: ROUTES.MANAGER_BATCHES, icon: Layers, label: "Batches" },
   { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: "Learners" },
   { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: "Analytics" },
   { to: ROUTES.MANAGER_ACTIVITY, icon: ScrollText, label: "Activity" },

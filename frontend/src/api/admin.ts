@@ -1,3 +1,4 @@
+import type { LearnerDetails } from "@/api/details";
 import { api } from "@/lib/api";
 import type { BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
 
@@ -384,6 +385,8 @@ export function onboardConsoleLearnersBulk(batchId: string, rows: BulkLearnerRow
 }
 
 export interface LearnerProfile {
+  // Org learners only: what their organization records about them.
+  employment?: LearnerDetails & { demographicsSource: "self" | "organization" | null };
   batchHistory?: { fromBatch: string | null; toBatch: string | null; reason: string | null; movedBy: string | null; movedAt: string }[];
   learner: {
     id: string;

@@ -225,6 +225,17 @@ export function Onboarding() {
               if (!cancelled) navigate(ROUTES.PLACEMENT, { replace: true });
             });
         } else {
+          // The organization may have filled some of this in when it added them.
+          if (profile) {
+            setForm((f) => ({
+              ...f,
+              country: f.country || profile.country || "",
+              city: f.city || profile.city || "",
+              jobRole: f.jobRole ?? profile.job_role ?? null,
+              gender: f.gender ?? profile.gender ?? null,
+              ageBand: f.ageBand ?? profile.age_band ?? null,
+            }));
+          }
           setCheckingProfile(false);
         }
       })

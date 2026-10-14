@@ -39,6 +39,7 @@ import { certificatesRouter } from "./certificates/routes.js";
 import { CERTIFICATE_AUDIT, MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
 import { PlanError } from "./plans/service.js";
 import { BatchStateError } from "./batches/lifecycle.js";
+import { DetailsError } from "./learners/details.js";
 import { requireAccess } from "./licenses/gate.js";
 
 // Railway's network has no IPv6 egress — without this, Node's dual-stack DNS
@@ -117,6 +118,9 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   }
   if (err instanceof BatchStateError) {
     return res.status(err.code === "batch_not_found" ? 404 : 400).json({ error: err.code });
+  }
+  if (err instanceof DetailsError) {
+    return res.status(409).json({ error: err.code });
   }
   console.error(err);
   res.status(500).json({ error: "internal_server_error" });

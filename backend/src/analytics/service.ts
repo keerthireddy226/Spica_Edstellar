@@ -32,7 +32,7 @@ const GENUINE = `s.completed_at IS NOT NULL AND NOT EXISTS (
 
 function learnersCte(scope: Scope, params: unknown[]): string {
   return `WITH learners AS (
-    SELECT u.id, u.tenant_id, u.batch_id, u.preferred_language, u.created_at, t.type AS tenant_type, t.category, t.name AS tenant_name
+    SELECT u.id, u.tenant_id, u.batch_id, u.preferred_language, u.created_at, u.department, t.type AS tenant_type, t.category, t.name AS tenant_name
     FROM users u JOIN tenants t ON t.id = u.tenant_id
     WHERE u.role = 'learner' AND u.deleted_at IS NULL ${scopeFilter(scope, params)}
   )`;
@@ -64,7 +64,7 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
   const profileJoin = "LEFT JOIN participant_profiles pp ON pp.user_id = l.id";
   const latestPlacement = `LEFT JOIN LATERAL (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1) pl ON true`;
 
-  const [country, jobRole, ageBand, gender, language, cefr, orgType, companies] = await Promise.all([
+  const [country, jobRole, ageBand, gender, language, cefr, orgType, companies, department] = await Promise.all([
     breakdown(scope, "pp.country", profileJoin),
     breakdown(scope, "pp.job_role", profileJoin),
     breakdown(scope, "pp.age_band", profileJoin, true),
@@ -73,6 +73,8 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
     breakdown(scope, "pl.cefr_level", latestPlacement),
     breakdown(scope, `CASE WHEN l.tenant_type <> 'cohort' THEN 'individual' WHEN l.category = 'university' THEN 'university' ELSE 'organization' END`),
     opts.withCompanies ? breakdown(scope, `CASE WHEN l.tenant_type <> 'cohort' THEN 'Individual learners' ELSE l.tenant_name END`, "", false, 15) : Promise.resolve([]),
+    // Employee departments the organization recorded; top 15.
+    breakdown(scope, "nullif(trim(l.department), '')", "", false, 15),
   ]);
 
   const params = p();
@@ -172,7 +174,7 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
       avgMinutesPerActiveLearnerPerWeek: totals.active28 ? Math.round(Number(totals.active_ms28) / 60000 / 4 / totals.active28) : 0,
       dailyReminderAdoption: learnerCount ? Math.round((totals.reminders_on / learnerCount) * 100) : 0,
     },
-    breakdowns: { country, jobRole, ageBand, gender, language, cefr, orgType, companies },
+    breakdowns: { country, jobRole, ageBand, gender, language, cefr, orgType, companies, department },
     trend: trend.map((t) => ({ week: t.week, activeLearners: t.active, signups: t.signups, sessions: t.sessions })),
     reminders: {
       sentLast30Days: reminders.sent,

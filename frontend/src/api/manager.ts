@@ -2,18 +2,61 @@ import { api } from "@/lib/api";
 import type { AuditEntry, BulkLearnerResult, BulkLearnerRow, OrgLearner } from "@/api/orgAdmin";
 import type { LearnerProfile } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
+import type { BatchExtras, CefrLevel } from "@/api/orgAdmin";
+import type { BatchDetails, BatchLicenseStats, LearnerDetails } from "@/api/details";
 
 export interface OnboardLearnerPayload {
   email: string;
   firstName: string;
   lastName: string;
   batchId: string;
+  // Months of access to give them now; left out, the batch's default.
+  licenseMonths?: number;
+  details?: Partial<LearnerDetails>;
+}
+
+export interface ManagerPool {
+  allotment: number | null;
+  used: number;
+  remaining: number | null;
 }
 
 export interface ManagerOverview {
-  batches: { id: string; name: string; learnerCount: number; status?: "active" | "completed" | "archived" }[];
+  activeBatches: number;
   totalLearners: number;
   sessionsCompletedToday: number;
+  myPool: ManagerPool | null;
+  licenses: { licensed: number; unlicensed: number; grace: number; endingSoon: number; fromFixed: number; fromPool: number };
+}
+
+export interface ManagerBatch extends BatchExtras {
+  id: string;
+  name: string;
+  batchCode: string;
+  status: "active" | "completed" | "archived";
+  startDate: string | null;
+  durationMonths: number | null;
+  endDate: string | null;
+  startCefr: CefrLevel | null;
+  targetCefr: CefrLevel | null;
+  targetCutScore: number | null;
+  createdAt: string;
+  completedAt: string | null;
+  fixedLicenses: number | null;
+  licenses: BatchLicenseStats;
+  managerNames: string[];
+}
+
+export function getManagerBatches(): Promise<{ batches: ManagerBatch[]; myPool: ManagerPool | null }> {
+  return api("/manager/batches");
+}
+
+export function managerUpdateBatch(id: string, body: Partial<BatchDetails>): Promise<{ id: string }> {
+  return api(`/manager/batches/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+}
+
+export function managerUpdateLearnerDetails(id: string, d: LearnerDetails): Promise<{ id: string }> {
+  return api(`/manager/learners/${id}/details`, { method: "PATCH", body: JSON.stringify(d) });
 }
 
 export function getManagerOverview(): Promise<ManagerOverview> {
@@ -24,25 +67,25 @@ export function getManagerLearners(): Promise<{ learners: OrgLearner[] }> {
   return api("/manager/learners");
 }
 
-export function managerOnboardLearner(payload: OnboardLearnerPayload): Promise<{ id: string; email: string }> {
+export function managerOnboardLearner(
+  payload: OnboardLearnerPayload,
+): Promise<{ id: string; email: string; licenseMonths: number; licenseError: string | null }> {
   return api("/manager/learners", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function managerOnboardLearnersBulk(batchId: string, rows: BulkLearnerRow[]): Promise<{ results: BulkLearnerResult[] }> {
-  return api("/manager/learners/bulk", { method: "POST", body: JSON.stringify({ batchId, rows }) });
+export function managerOnboardLearnersBulk(
+  batchId: string,
+  rows: BulkLearnerRow[],
+  licenseMonths?: number,
+): Promise<{ results: BulkLearnerResult[]; licenseMonths: number }> {
+  return api("/manager/learners/bulk", { method: "POST", body: JSON.stringify({ batchId, rows, licenseMonths }) });
 }
 
 export function managerMoveLearner(id: string, batchId: string, reason?: string): Promise<{ id: string }> {
   return api(`/manager/learners/${id}/move`, { method: "POST", body: JSON.stringify({ batchId, reason }) });
 }
 
-export function managerCreateBatch(body: {
-  name: string;
-  durationMonths?: number;
-  startDate?: string;
-  startCefr?: string;
-  targetCefr?: string;
-}): Promise<{ id: string }> {
+export function managerCreateBatch(body: BatchDetails): Promise<{ id: string }> {
   return api("/manager/batches", { method: "POST", body: JSON.stringify(body) });
 }
 
@@ -63,7 +106,8 @@ export function managerReactivateLearner(id: string): Promise<{ id: string }> {
 }
 
 export interface ManagerBatchDetail {
-  batch: {
+  batch: BatchExtras & {
+    licenses: BatchLicenseStats;
     id: string;
     name: string;
     batchCode: string;
@@ -71,17 +115,16 @@ export interface ManagerBatchDetail {
     startDate: string | null;
     durationMonths: number | null;
     endDate: string | null;
-    startCefr: string | null;
-    targetCefr: string | null;
+    startCefr: CefrLevel | null;
+    targetCefr: CefrLevel | null;
     targetCutScore: number | null;
-    autoReminders: boolean;
     createdAt: string;
     completedAt: string | null;
     fixedLicenses: number | null;
     fixedLicensesUsed: number;
     managerNames: string[];
   };
-  learners: {
+  learners: (LearnerDetails & {
     id: string;
     email: string;
     firstName: string | null;
@@ -91,7 +134,7 @@ export interface ManagerBatchDetail {
     hasLoggedIn: boolean;
     sessionCount: number;
     license?: LearnerAccess;
-  }[];
+  })[];
 }
 
 export function getManagerBatch(id: string): Promise<ManagerBatchDetail> {

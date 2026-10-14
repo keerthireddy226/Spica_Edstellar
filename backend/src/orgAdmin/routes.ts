@@ -6,6 +6,8 @@ import { createAndInviteUser } from "../auth/invite.js";
 import { moveLearnerSchema, moveLearnerToBatch } from "../batches/moveLearner.js";
 import { LicenseError, assignMonths, learnerAccessMap, setBatchBudget, setManagerAllotment, unreservedAvailable } from "../licenses/service.js";
 import { assertFeature, assertWithinLimit } from "../plans/service.js";
+import { BATCH_DETAIL_SQL, BATCH_LICENSE_SQL, batchDetailsBase, batchDetailsJson, batchEditSchema, insertBatch, updateBatch } from "../batches/fields.js";
+import { DetailsError, EMPLOYEE_SELECT, employeeJson, learnerDetailsSchema, pickLearnerDetails, saveLearnerDetails } from "../learners/details.js";
 import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
@@ -13,7 +15,7 @@ import { buildLearnerProfile } from "../learners/profile.js";
 import { ipAllowed, parseAllowlist } from "../auth/policy.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
 import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
-import { BATCH_END_SQL, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
+import { BATCH_END_SQL, BatchStateError, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { startViewAs } from "../auth/viewAs.js";
 import { notify } from "../notifications/service.js";
@@ -268,6 +270,7 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
     const result = await pool.query(
       `SELECT b.id, b.name, b.batch_code, b.start_cefr, b.target_cefr, b.duration_months, b.start_date, b.target_cut_score, b.created_at,
          b.status, b.completed_at, b.archived_at, CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
+         b.license_budget, ${BATCH_DETAIL_SQL}, ${BATCH_LICENSE_SQL},
          count(DISTINCT l.id)::int AS learner_count,
          coalesce(array_agg(DISTINCT m.first_name || ' ' || m.last_name) FILTER (WHERE m.id IS NOT NULL), '{}') AS manager_names
        FROM batches b
@@ -296,6 +299,9 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
         endDate: r.end_date,
         completedAt: r.completed_at,
         archivedAt: r.archived_at,
+        fixedLicenses: r.license_budget,
+        licenses: r.license_stats,
+        ...batchDetailsJson(r),
       })),
     });
   } catch (err) {
@@ -303,16 +309,13 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
   }
 });
 
-const createBatchSchema = z.object({
-  name: z.string().min(1),
-  durationMonths: z.coerce.number().int().positive().optional(),
-  startDate: z.string().optional(),
-  targetCutScore: z.coerce.number().min(0).max(100).optional(),
-  startCefr: z.enum(CEFR_LEVELS).optional(),
-  targetCefr: z.enum(CEFR_LEVELS).optional(),
-  // Licenses fixed to this batch, set aside from the unreserved pool.
-  licenseAllotment: z.coerce.number().int().min(0).max(100000).optional(),
-});
+// Licenses fixed to this batch are set aside from the unreserved pool.
+const createBatchSchema = batchDetailsBase
+  .extend({ licenseAllotment: z.coerce.number().int().min(0).max(100000).optional() })
+  .refine((b) => !b.startCefr || !b.targetCefr || CEFR_LEVELS.indexOf(b.targetCefr) > CEFR_LEVELS.indexOf(b.startCefr), {
+    message: "target_level_must_be_above_start",
+    path: ["targetCefr"],
+  });
 
 orgAdminRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireOrgAdmin(req, res)) return;
@@ -325,21 +328,8 @@ orgAdminRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, nex
       await assertFeature(tenantId, "batch_allotments");
       if (body.licenseAllotment > (await unreservedAvailable(tenantId))) return res.status(400).json({ error: "insufficient_unreserved" });
     }
-    const result = await pool.query(
-      `INSERT INTO batches (tenant_id, name, duration_months, start_date, target_cut_score, start_cefr, target_cefr, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [
-        tenantId,
-        body.name,
-        body.durationMonths ?? null,
-        body.startDate ?? null,
-        body.targetCutScore ?? null,
-        body.startCefr ?? null,
-        body.targetCefr ?? null,
-        req.user!.id,
-      ],
-    );
-    const batchId = result.rows[0].id;
+    const { licenseAllotment: _allot, ...details } = body;
+    const batchId = await insertBatch(tenantId, details, req.user!.id);
     // Through setBatchBudget so it takes the tenant's license lock; the check
     // above is only a fast path, this is the one that can't be raced.
     if (body.licenseAllotment) {
@@ -364,7 +354,7 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
   try {
     const batch = await pool.query(
       `SELECT b.id, b.name, b.batch_code, b.start_cefr, b.target_cefr, b.duration_months, b.start_date, b.target_cut_score, b.created_at,
-         b.license_budget, b.status, b.completed_at, b.archived_at,
+         b.license_budget, b.status, b.completed_at, b.archived_at, ${BATCH_DETAIL_SQL}, ${BATCH_LICENSE_SQL},
          CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
          (SELECT count(*)::int FROM license_assignments a WHERE a.batch_id = b.id AND a.source = 'batch' AND a.reclaimed_at IS NULL) AS fixed_used,
          (SELECT json_build_object(
@@ -389,7 +379,8 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
     const b = batch.rows[0];
 
     const learners = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, ${EMPLOYEE_SELECT},
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        LEFT JOIN sessions s ON s.user_id = u.id
@@ -418,6 +409,8 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
         endDate: b.end_date,
         completedAt: b.completed_at,
         archivedAt: b.archived_at,
+        licenses: b.license_stats,
+        ...batchDetailsJson(b),
       },
       learners: learners.rows.map((r) => ({
         id: r.id,
@@ -430,6 +423,7 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        ...employeeJson(r),
       })),
     });
   } catch (err) {
@@ -437,27 +431,13 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
   }
 });
 
-const editBatchSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  durationMonths: z.coerce.number().int().positive().nullable(),
-  startDate: z.string().nullable(),
-  targetCutScore: z.coerce.number().min(0).max(100).nullable(),
-  startCefr: z.enum(CEFR_LEVELS).nullable(),
-  targetCefr: z.enum(CEFR_LEVELS).nullable(),
-});
-
 orgAdminRouter.patch("/batches/:id", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireOrgAdmin(req, res)) return;
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
-    const body = editBatchSchema.parse(req.body);
-    const result = await pool.query(
-      `UPDATE batches SET name = $1, duration_months = $2, start_date = $3, target_cut_score = $4, start_cefr = $5, target_cefr = $6
-       WHERE id = $7 AND tenant_id = $8 RETURNING id`,
-      [body.name, body.durationMonths, body.startDate || null, body.targetCutScore, body.startCefr, body.targetCefr, String(req.params.id), tenantId],
-    );
-    if (result.rowCount === 0) return res.status(404).json({ error: "batch_not_found" });
+    const ok = await updateBatch(String(req.params.id), tenantId, batchEditSchema.parse(req.body));
+    if (!ok) return res.status(404).json({ error: "batch_not_found" });
     res.json({ id: req.params.id });
   } catch (err) {
     next(err);
@@ -745,6 +725,8 @@ orgAdminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, nex
   try {
     const result = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, u.batch_id, b.name AS batch_name,
+         ${EMPLOYEE_SELECT},
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        LEFT JOIN batches b ON b.id = u.batch_id
@@ -766,10 +748,28 @@ orgAdminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, nex
         batchName: r.batch_name,
         sessionCount: r.session_count,
         active: !r.deleted_at,
+        hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        ...employeeJson(r),
       })),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Employee details and demographics the organization keeps for a learner.
+orgAdminRouter.patch("/learners/:id/details", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = learnerDetailsSchema.parse(req.body);
+    const own = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'learner' AND erased_at IS NULL`, [req.params.id, tenantId]);
+    if (own.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
+    await saveLearnerDetails(String(req.params.id), body);
+    res.json({ id: req.params.id });
   } catch (err) {
     next(err);
   }
@@ -789,6 +789,7 @@ const orgInviteLearnerSchema = orgInviteOptionsSchema.extend({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
+  details: learnerDetailsSchema.optional(),
 });
 
 async function batchBelongsTo(tenantId: string, batchId: string | null | undefined): Promise<boolean> {
@@ -826,10 +827,12 @@ orgAdminRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, ne
       firstName: body.firstName,
       lastName: body.lastName,
       roleLabel: "a Learner",
+      details: body.details,
     });
     const licenseError = await giveLicenses(tenantId, id, body.licenseMonths, req.user!.id);
     res.status(201).json({ id, email: body.email, licenseError });
   } catch (err) {
+    if (err instanceof DetailsError) return res.status(409).json({ error: err.code });
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
       return res.status(409).json({ error: "email_already_registered" });
     }
@@ -837,7 +840,7 @@ orgAdminRouter.post("/learners", requireAuth, async (req: AuthedRequest, res, ne
   }
 });
 
-const bulkRowSchema = z.object({
+const bulkRowSchema = learnerDetailsSchema.extend({
   email: z.string().email(),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -869,11 +872,16 @@ orgAdminRouter.post("/learners/bulk", requireAuth, async (req: AuthedRequest, re
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
           roleLabel: "a Learner",
+          details: pickLearnerDetails(parsed.data),
         });
         const licenseError = await giveLicenses(tenantId, id, body.licenseMonths, req.user!.id);
         results.push({ email: parsed.data.email, status: "created", licenseError });
       } catch (err) {
-        if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
+        if (err instanceof DetailsError) {
+          results.push({ email: parsed.data.email, status: "invalid", message: "Another learner already has this employee ID." });
+        } else if (err instanceof BatchStateError && err.code === "batch_full") {
+          results.push({ email: parsed.data.email, status: "invalid", message: "The batch is full." });
+        } else if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
           results.push({ email: parsed.data.email, status: "duplicate" });
         } else {
           results.push({ email: parsed.data.email, status: "invalid", message: "Something went wrong creating this account." });

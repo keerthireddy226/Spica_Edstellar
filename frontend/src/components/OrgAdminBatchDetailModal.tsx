@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { DetailModal } from "@/components/DetailModal";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { BatchFixedLicenses } from "@/components/licenses/BatchFixedLicenses";
-import { EditBatchModal } from "@/components/EditBatchModal";
+import { BatchFormModal } from "@/components/BatchFormModal";
+import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Award, Pencil } from "lucide-react";
 import { issueCertificate, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
-import { getBatchDetail, getOrgLearnerDetail, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
+import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
@@ -96,37 +97,11 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
     >
       <div className="flex flex-col gap-4">
         {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-2.5">{notice}</p>}
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Batch details</p>
-          <div className="border border-rule rounded-input px-4 py-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-muted">Managed by</p>
-                <p className="text-sm text-ink">{batch.managerNames.length === 0 ? "No manager assigned yet" : batch.managerNames.join(", ")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Learners</p>
-                <p className="text-sm text-ink">{learners.length}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Level goal</p>
-                <p className="text-sm text-ink">{batch.startCefr || batch.targetCefr ? `${batch.startCefr ?? "?"} → ${batch.targetCefr ?? "?"}` : "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Duration</p>
-                <p className="text-sm text-ink">{batch.durationMonths ? `${batch.durationMonths} month${batch.durationMonths === 1 ? "" : "s"}` : "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Start date</p>
-                <p className="text-sm text-ink">{batch.startDate ? formatDate(batch.startDate) : "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted">Target cut score</p>
-                <p className="text-sm text-ink">{batch.targetCutScore != null ? `${batch.targetCutScore}%` : "—"}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <BatchDetailsGrid
+          batch={batch}
+          learnerCount={learners.filter((l) => l.active).length}
+          managedBy={batch.managerNames.length === 0 ? "No manager assigned yet" : batch.managerNames.join(", ")}
+        />
 
         <BatchFixedLicenses
           batchId={batch.id}
@@ -158,7 +133,11 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
-                    <p className="text-xs text-muted">{l.sessionCount} session{l.sessionCount === 1 ? "" : "s"} completed</p>
+                    <p className="text-xs text-muted">
+                      {[l.employeeId, l.department, l.jobTitle].filter(Boolean).join(" · ")}
+                      {l.employeeId || l.department || l.jobTitle ? " · " : ""}
+                      {l.sessionCount} session{l.sessionCount === 1 ? "" : "s"} completed
+                    </p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
                   {certs.get(l.id) ? (
@@ -204,10 +183,14 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
       </div>
 
       {editing && (
-        <EditBatchModal
-          batch={batch}
+        <BatchFormModal
+          title="Edit batch"
+          submitLabel="Save changes"
+          initial={{ ...batch, targetCutScore: batch.targetCutScore != null ? Number(batch.targetCutScore) : null }}
+          note="Fixed licenses are changed in the Licenses section of the batch."
           onClose={() => setEditing(false)}
-          onSaved={() => {
+          onSubmit={async (d) => {
+            await updateBatch(batch.id, d);
             setEditing(false);
             load();
             onChanged?.();
@@ -221,6 +204,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
           onClose={onClose}
           onBack={() => setViewingLearnerId(null)}
           fetcher={getOrgLearnerDetail}
+          saveDetails={(id, d) => updateOrgLearnerDetails(id, d).then(load)}
         />
       )}
     </DetailModal>
