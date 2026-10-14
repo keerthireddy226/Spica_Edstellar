@@ -14,7 +14,7 @@ const PG_UNIQUE_VIOLATION = "23505";
 const MAX_BULK_ROWS = 200;
 
 const GENUINELY_COMPLETED = `
-  completed_at IS NOT NULL
+  sessions.completed_at IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM attempts a WHERE a.session_id = sessions.id AND a.response_text IS NULL AND a.response_uri IS NULL
   )
@@ -55,7 +55,7 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
       ),
       pool.query(
         `SELECT count(*)::int AS n FROM sessions s JOIN users u ON u.id = s.user_id
-         WHERE u.batch_id = ANY($1::uuid[]) AND s.completed_at::date = current_date AND ${GENUINELY_COMPLETED.replace(/sessions\.id/g, "s.id")}`,
+         WHERE u.batch_id = ANY($1::uuid[]) AND s.completed_at::date = current_date AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")}`,
         [batchIds],
       ),
     ]);

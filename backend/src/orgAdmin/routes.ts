@@ -24,7 +24,7 @@ const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 // Same completion rule as the Super Admin/Admin consoles — completed_at
 // alone also means "skipped every item," so it isn't enough on its own.
 const GENUINELY_COMPLETED = `
-  completed_at IS NOT NULL
+  sessions.completed_at IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM attempts a WHERE a.session_id = sessions.id AND a.response_text IS NULL AND a.response_uri IS NULL
   )
@@ -70,7 +70,7 @@ orgAdminRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, nex
       ),
       pool.query(
         `SELECT count(*)::int AS n FROM sessions s JOIN users u ON u.id = s.user_id
-         WHERE u.tenant_id = $1 AND s.completed_at::date = current_date AND ${GENUINELY_COMPLETED.replace(/sessions\.id/g, "s.id")}`,
+         WHERE u.tenant_id = $1 AND s.completed_at::date = current_date AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")}`,
         [tenantId],
       ),
       // Same plain chronological feed as the Admin/Super Admin consoles,

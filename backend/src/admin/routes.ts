@@ -122,7 +122,7 @@ async function createAndInviteAdmin(row: {
 // set-picker completion checkmarks: completed_at alone only means "reached
 // the end of the list," which a run of pure Skips also does.
 const GENUINELY_COMPLETED = `
-  completed_at IS NOT NULL
+  sessions.completed_at IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM attempts a WHERE a.session_id = sessions.id AND a.response_text IS NULL AND a.response_uri IS NULL
   )
@@ -132,7 +132,7 @@ const GENUINELY_COMPLETED = `
 // skipped and at least one was genuinely answered — a learner who started
 // and dropped off mid-set, not one who finished for real.
 const GENUINELY_PARTIAL = `
-  completed_at IS NOT NULL
+  sessions.completed_at IS NOT NULL
   AND EXISTS (
     SELECT 1 FROM attempts a WHERE a.session_id = sessions.id AND a.response_text IS NULL AND a.response_uri IS NULL
   )
