@@ -51,6 +51,10 @@ export function getManagerBatches(): Promise<{ batches: ManagerBatch[]; myPool: 
   return api("/manager/batches");
 }
 
+export function managerMovePoolToBatch(id: string, quantity: number): Promise<{ id: string; fixedLicenses: number }> {
+  return api(`/manager/batches/${id}/licenses-from-pool`, { method: "POST", body: JSON.stringify({ quantity }) });
+}
+
 export function managerUpdateBatch(id: string, body: Partial<BatchDetails>): Promise<{ id: string }> {
   return api(`/manager/batches/${id}`, { method: "PATCH", body: JSON.stringify(body) });
 }
@@ -85,7 +89,9 @@ export function managerMoveLearner(id: string, batchId: string, reason?: string)
   return api(`/manager/learners/${id}/move`, { method: "POST", body: JSON.stringify({ batchId, reason }) });
 }
 
-export function managerCreateBatch(body: BatchDetails): Promise<{ id: string }> {
+export function managerCreateBatch(
+  body: BatchDetails & { fixedFromPool?: number; requestFromOrg?: { quantity: number; reason: string } },
+): Promise<{ id: string; fixedLicenses: number | null; requestId: string | null; requestError: string | null }> {
   return api("/manager/batches", { method: "POST", body: JSON.stringify(body) });
 }
 

@@ -187,6 +187,7 @@ export function OrgAdminBatches() {
               )}
               <p className="text-xs text-white/70">
                 {b.managerNames.length === 0 ? "No manager assigned yet" : `Managed by ${b.managerNames.join(", ")}`}
+                {b.createdBy?.role === "manager" ? ` · created by ${b.createdBy.name}` : ""}
               </p>
               <div className="text-xs text-white/85 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
                 <span>

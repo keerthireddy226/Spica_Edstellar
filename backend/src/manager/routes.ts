@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { assertWithinLimit } from "../plans/service.js";
+import { PlanError, assertFeature, assertWithinLimit } from "../plans/service.js";
 import { BATCH_END_SQL, assertBatchActive, cloneBatch, completeBatch } from "../batches/lifecycle.js";
 import { buildLearnerProfile } from "../learners/profile.js";
 import { resendSetPasswordLink } from "../auth/invite.js";
-import { createRequest } from "../licenses/requests.js";
-import { GRACE_DAYS, LicenseError, assignMonths, learnerAccessMap, managerPools } from "../licenses/service.js";
+import { RequestError, createRequest } from "../licenses/requests.js";
+import { GRACE_DAYS, LicenseError, assignMonths, learnerAccessMap, managerPools, movePoolToBatch } from "../licenses/service.js";
+import { notify } from "../notifications/service.js";
 import {
   BATCH_DETAIL_SQL,
   BATCH_LICENSE_SQL,
@@ -291,23 +292,110 @@ managerRouter.post("/learners/:id/move", requireAuth, async (req: AuthedRequest,
 
 // Managers can create their own batches. They're automatically its Manager,
 // and it has no fixed allotment — licenses come from the Manager's own pool.
+// Licenses for a new batch: set aside from the Manager's own pool now, and/or
+// ask the Org Admin for more as fixed licenses.
+const newBatchLicensesSchema = z.object({
+  fixedFromPool: z.coerce.number().int().min(0).max(100000).optional(),
+  requestFromOrg: z.object({ quantity: z.coerce.number().int().min(1).max(100000), reason: z.string().trim().min(1).max(500) }).optional(),
+});
+
 managerRouter.post("/batches", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
   try {
+    const tenantId = req.user!.tenantId!;
     const body = batchDetailsSchema.parse(req.body);
-    await assertWithinLimit(req.user!.tenantId!, "batches");
+    const lic = newBatchLicensesSchema.parse(req.body);
+    await assertWithinLimit(tenantId, "batches");
+    if (lic.fixedFromPool) {
+      await assertFeature(tenantId, "batch_allotments");
+      const [mine] = await managerPools(tenantId, [req.user!.id]);
+      if ((mine?.remaining ?? 0) < lic.fixedFromPool) return res.status(400).json({ error: "not_enough_licenses" });
+    }
     const client = await pool.connect();
+    let id: string;
     try {
       await client.query("BEGIN");
-      const id = await insertBatch(req.user!.tenantId!, body, req.user!.id, client);
+      id = await insertBatch(tenantId, body, req.user!.id, client);
       await client.query(`INSERT INTO batch_managers (batch_id, user_id) VALUES ($1, $2)`, [id, req.user!.id]);
       await client.query("COMMIT");
-      res.status(201).json({ id });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
     } finally {
       client.release();
+    }
+
+    // Under the license lock; the check above is only the fast path.
+    let fixedLicenses: number | null = null;
+    if (lic.fixedFromPool) {
+      try {
+        fixedLicenses = await movePoolToBatch({ tenantId, managerId: req.user!.id, batchId: id, quantity: lic.fixedFromPool });
+      } catch (err) {
+        await pool.query(`DELETE FROM batches WHERE id = $1`, [id]);
+        if (err instanceof LicenseError) return res.status(400).json({ error: "not_enough_licenses" });
+        throw err;
+      }
+    }
+
+    let requestId: string | null = null;
+    let requestError: string | null = null;
+    if (lic.requestFromOrg) {
+      try {
+        requestId = await createRequest({
+          tenantId,
+          managerId: req.user!.id,
+          managerBatchIds: [id],
+          kind: "increase_allotment",
+          quantity: lic.requestFromOrg.quantity,
+          batchId: id,
+          reason: lic.requestFromOrg.reason,
+        });
+      } catch (err) {
+        requestError = err instanceof PlanError ? err.code : err instanceof RequestError ? err.code : "request_failed";
+      }
+    }
+
+    // The Org Admin sees every batch; tell them a Manager started one.
+    const who = (await pool.query(`SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS name FROM users WHERE id = $1`, [req.user!.id]))
+      .rows[0].name;
+    const admins = await pool.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [tenantId]);
+    for (const a of admins.rows) {
+      await notify({
+        userId: a.id,
+        kind: "batch_created",
+        title: `${who} created the batch ${body.name}`,
+        body: [
+          fixedLicenses ? `${fixedLicenses} fixed licenses set aside from their pool.` : "Its learners use the Manager's pool.",
+          requestId ? `They're asking you for ${lic.requestFromOrg!.quantity} more fixed licenses.` : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        link: requestId ? "/orgadmin/licenses" : "/orgadmin/batches",
+        batchId: id,
+        sentBy: req.user!.id,
+      });
+    }
+
+    res.status(201).json({ id, fixedLicenses, requestId, requestError });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Move licenses from the Manager's pool into one of their batches' fixed licenses.
+managerRouter.post("/batches/:id/licenses-from-pool", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const batchId = await requireManagedBatch(req, res);
+    if (!batchId) return;
+    const { quantity } = z.object({ quantity: z.coerce.number().int().min(1).max(100000) }).parse(req.body);
+    await assertBatchActive(batchId);
+    try {
+      const fixedLicenses = await movePoolToBatch({ tenantId: req.user!.tenantId!, managerId: req.user!.id, batchId, quantity });
+      res.json({ id: batchId, fixedLicenses });
+    } catch (err) {
+      if (err instanceof LicenseError) return res.status(400).json({ error: "not_enough_licenses" });
+      throw err;
     }
   } catch (err) {
     next(err);

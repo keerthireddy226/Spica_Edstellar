@@ -21,7 +21,9 @@ export class LicenseError extends Error {
       | "no_budget"
       | "budget_exceeded"
       | "learner_not_found"
-      | "nothing_to_reclaim",
+      | "nothing_to_reclaim"
+      | "manager_not_found"
+      | "batch_not_found",
   ) {
     super(code);
   }
@@ -470,6 +472,44 @@ export async function setBatchBudget(args: { tenantId: string; batchId: string; 
       [args.tenantId, args.budget ?? 0, args.batchId, result.rows[0].name, args.actorId, args.budget === null ? "Fixed allotment removed" : null],
     );
     return true;
+  });
+}
+
+// A Manager sets licenses from their own pool aside for one of their
+// batches: the pool shrinks and the batch's fixed licenses grow by the same
+// amount, under one lock, so nothing else in the organization changes.
+export async function movePoolToBatch(args: { tenantId: string; managerId: string; batchId: string; quantity: number }): Promise<number> {
+  return withTenantLock(args.tenantId, async (client) => {
+    await assertFeature(args.tenantId, "batch_allotments", client);
+    const m = (
+      await client.query(
+        `SELECT license_allotment, email, coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS name,
+           (SELECT count(*)::int FROM license_assignments WHERE source = 'manager' AND source_manager_id = $1 AND reclaimed_at IS NULL) AS used
+         FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'manager'`,
+        [args.managerId, args.tenantId],
+      )
+    ).rows[0];
+    if (!m) throw new LicenseError("manager_not_found");
+    if (m.license_allotment === null || m.license_allotment - m.used < args.quantity) throw new LicenseError("budget_exceeded");
+    const b = (
+      await client.query(`UPDATE batches SET license_budget = coalesce(license_budget, 0) + $1 WHERE id = $2 AND tenant_id = $3 RETURNING name, license_budget`, [
+        args.quantity,
+        args.batchId,
+        args.tenantId,
+      ])
+    ).rows[0];
+    if (!b) throw new LicenseError("batch_not_found");
+    const left = m.license_allotment - args.quantity;
+    await client.query(`UPDATE users SET license_allotment = $1, updated_at = now() WHERE id = $2`, [left, args.managerId]);
+    await client.query(
+      `INSERT INTO license_events (tenant_id, kind, quantity, user_id, user_email, actor_id, note) VALUES ($1, 'manager_allotment', $2, $3, $4, $3, $5)`,
+      [args.tenantId, left, args.managerId, m.email, `${m.name} moved ${args.quantity} from their pool to ${b.name}`],
+    );
+    await client.query(
+      `INSERT INTO license_events (tenant_id, kind, quantity, batch_id, batch_name, actor_id, note) VALUES ($1, 'budget', $2, $3, $4, $5, $6)`,
+      [args.tenantId, b.license_budget, args.batchId, b.name, args.managerId, `${args.quantity} from ${m.name}'s pool`],
+    );
+    return b.license_budget as number;
   });
 }
 

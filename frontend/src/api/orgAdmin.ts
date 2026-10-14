@@ -53,6 +53,7 @@ export interface OrgBatch extends BatchExtras {
   archivedAt: string | null;
   fixedLicenses: number | null;
   licenses: BatchLicenseStats;
+  createdBy: { name: string; role: string } | null;
 }
 
 export type BatchStatus = "active" | "completed" | "archived";

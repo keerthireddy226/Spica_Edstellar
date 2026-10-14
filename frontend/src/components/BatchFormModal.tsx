@@ -98,7 +98,9 @@ export function BatchFormModal({
     } catch (err) {
       setError(
         planErrorMessage(err) ??
-          (err instanceof ApiError && err.message === "insufficient_unreserved"
+          ((err instanceof ApiError && err.message === "not_enough_licenses") || (err instanceof Error && err.message === "too_many")
+            ? "Not enough licenses left in your pool for that many."
+            : err instanceof ApiError && err.message === "insufficient_unreserved"
             ? "Not enough unreserved licenses for that many fixed licenses."
             : err instanceof ApiError && err.message === "validation_error"
               ? "Some values are out of range. Check the numbers and try again."

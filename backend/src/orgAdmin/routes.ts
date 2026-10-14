@@ -271,6 +271,8 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
       `SELECT b.id, b.name, b.batch_code, b.start_cefr, b.target_cefr, b.duration_months, b.start_date, b.target_cut_score, b.created_at,
          b.status, b.completed_at, b.archived_at, CASE WHEN b.duration_months IS NOT NULL THEN ${BATCH_END_SQL} END AS end_date,
          b.license_budget, ${BATCH_DETAIL_SQL}, ${BATCH_LICENSE_SQL},
+         (SELECT json_build_object('name', coalesce(nullif(concat_ws(' ', cu.first_name, cu.last_name), ''), cu.email), 'role', cu.role)
+            FROM users cu WHERE cu.id = b.created_by) AS created_by,
          count(DISTINCT l.id)::int AS learner_count,
          coalesce(array_agg(DISTINCT m.first_name || ' ' || m.last_name) FILTER (WHERE m.id IS NOT NULL), '{}') AS manager_names
        FROM batches b
@@ -301,6 +303,7 @@ orgAdminRouter.get("/batches", requireAuth, async (req: AuthedRequest, res, next
         archivedAt: r.archived_at,
         fixedLicenses: r.license_budget,
         licenses: r.license_stats,
+        createdBy: r.created_by,
         ...batchDetailsJson(r),
       })),
     });

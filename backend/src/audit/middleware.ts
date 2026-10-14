@@ -148,6 +148,7 @@ export const MANAGER_AUDIT: Rule[] = [
   { method: "PATCH", path: "/learners/:id/details", action: "learner.details_updated", targetType: "learner" },
   { method: "POST", path: "/batches", action: "batch.created", targetType: "batch" },
   { method: "PATCH", path: "/batches/:id", action: "batch.updated", targetType: "batch" },
+  { method: "POST", path: "/batches/:id/licenses-from-pool", action: "license.budget", targetType: "batch" },
 ];
 
 export const CERTIFICATE_AUDIT: Rule[] = [

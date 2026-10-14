@@ -5,7 +5,7 @@ import { Button } from "@/components/Button";
 import { BatchFormModal } from "@/components/BatchFormModal";
 import { ManagerBatchModal } from "@/components/ManagerBatchModal";
 import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
-import { PlanLimitHint, refreshPlan } from "@/components/plans/usePlan";
+import { PlanLimitHint, PlanLockNote, refreshPlan, useHasFeature } from "@/components/plans/usePlan";
 import { RequestLicenseChangeModal } from "@/components/licenses/RequestLicenseChangeModal";
 import { EXAM_FOCUS_LABEL } from "@/api/details";
 import { getManagerBatches, managerCreateBatch, type ManagerBatch } from "@/api/manager";
@@ -15,6 +15,97 @@ type Status = ManagerBatch["status"];
 
 function fmt(d: string) {
   return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+const fieldClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+const labelClass = "text-xs font-semibold uppercase tracking-wide text-muted";
+
+// A Manager's new batch. Licenses can be set aside from their own pool right
+// away (no approval needed, they're already theirs), and more can be asked
+// of the Org Admin in the same step.
+function NewBatchModal({ poolLeft, onClose, onCreated }: { poolLeft: number | null; onClose: () => void; onCreated: (text: string) => void }) {
+  const [fromPool, setFromPool] = useState("");
+  const [askMore, setAskMore] = useState(false);
+  const [askQty, setAskQty] = useState("");
+  const [askReason, setAskReason] = useState("");
+  const allotmentsAllowed = useHasFeature("batch_allotments") !== false;
+  const requestsAllowed = useHasFeature("license_requests") !== false;
+  const n = Math.max(0, Math.floor(Number(fromPool) || 0));
+  const tooMany = poolLeft !== null && n > poolLeft;
+
+  return (
+    <BatchFormModal
+      title="New batch"
+      submitLabel="Create batch"
+      note="You manage this batch automatically and it shows on your Org Admin's Batches page. Learners use its fixed licenses first, then your pool."
+      onClose={onClose}
+      extra={
+        !allotmentsAllowed ? (
+          <div className="sm:col-span-2">
+            <PlanLockNote feature="batch_allotments" compact />
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
+              <label className={labelClass}>Fixed licenses from your pool</label>
+              <input
+                type="number"
+                min={0}
+                max={poolLeft ?? 0}
+                value={fromPool}
+                onChange={(e) => setFromPool(e.target.value)}
+                placeholder={poolLeft ? `Up to ${poolLeft}` : "None"}
+                disabled={!poolLeft}
+                className={fieldClass}
+              />
+              <p className={`text-xs ${tooMany ? "text-error" : "text-muted"}`}>
+                {poolLeft === null
+                  ? "You have no license pool yet — ask your Org Admin for licenses below."
+                  : tooMany
+                    ? `Only ${poolLeft} left in your pool.`
+                    : `${poolLeft} left in your pool. These move into the batch and are kept for its learners only.`}
+              </p>
+            </div>
+            {requestsAllowed && (
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
+                  <input type="checkbox" checked={askMore} onChange={(e) => setAskMore(e.target.checked)} className="h-4 w-4 accent-navy" />
+                  Also ask my Org Admin for fixed licenses for this batch
+                </label>
+                {askMore && (
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} placeholder="How many" className={fieldClass} />
+                    <input
+                      value={askReason}
+                      onChange={(e) => setAskReason(e.target.value)}
+                      placeholder="Reason, e.g. 12 new joiners"
+                      className={`${fieldClass} sm:col-span-2`}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )
+      }
+      onSubmit={async (d) => {
+        if (tooMany) throw new Error("too_many");
+        const ask = askMore && Number(askQty) > 0 && askReason.trim() ? { quantity: Math.floor(Number(askQty)), reason: askReason.trim() } : undefined;
+        const r = await managerCreateBatch({ ...d, fixedFromPool: n || undefined, requestFromOrg: ask });
+        onCreated(
+          [
+            `${d.name} created.`,
+            r.fixedLicenses ? `${r.fixedLicenses} licenses set aside from your pool.` : "",
+            r.requestId ? `Request for ${ask!.quantity} more sent to your Org Admin.` : "",
+            r.requestError ? "The license request couldn't be sent — try again from the batch." : "",
+            "Invite learners into it from Learners.",
+          ]
+            .filter(Boolean)
+            .join(" "),
+        );
+      }}
+    />
+  );
 }
 
 // Every batch the Manager runs: details, seats and licenses at a glance;
@@ -195,16 +286,13 @@ export function ManagerBatches() {
       {viewing && <ManagerBatchModal batchId={viewing} onClose={() => setViewing(null)} onChanged={load} />}
 
       {creating && (
-        <BatchFormModal
-          title="New batch"
-          submitLabel="Create batch"
-          note="You manage this batch automatically. Its learners' licenses come from your pool unless your Org Admin gives it fixed licenses."
+        <NewBatchModal
+          poolLeft={myPool?.allotment != null ? (myPool.remaining ?? 0) : null}
           onClose={() => setCreating(false)}
-          onSubmit={async (d) => {
-            await managerCreateBatch(d);
+          onCreated={(text) => {
             refreshPlan();
             setCreating(false);
-            setNotice(`${d.name} created. Invite learners into it from Learners.`);
+            setNotice(text);
             load();
           }}
         />

@@ -8,12 +8,14 @@ import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Button } from "@/components/Button";
 import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { planErrorMessage } from "@/api/plans";
+import { getManagerLicenseOverview } from "@/api/licenses";
 import { refreshPlan } from "@/components/plans/usePlan";
 import {
   getManagerBatch,
   getManagerLearnerDetail,
   managerCloneBatch,
   managerCompleteBatch,
+  managerMovePoolToBatch,
   managerUpdateBatch,
   managerUpdateLearnerDetails,
   type ManagerBatchDetail,
@@ -36,9 +38,14 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
   const [cloneName, setCloneName] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [poolLeft, setPoolLeft] = useState<number | null>(null);
+  const [moveQty, setMoveQty] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   function load() {
+    getManagerLicenseOverview()
+      .then((r) => setPoolLeft(r.myPool?.allotment != null ? (r.myPool.remaining ?? 0) : null))
+      .catch(() => {});
     getManagerBatch(batchId)
       .then((d) => {
         setData(d);
@@ -157,6 +164,31 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
               <p className="text-xs text-muted">Without a license</p>
               <p className={b.licenses.unlicensed ? "text-error" : "text-ink"}>{b.licenses.unlicensed}</p>
             </div>
+            {b.status === "active" && poolLeft !== null && poolLeft > 0 && (
+              <div className="col-span-2 sm:col-span-4 flex items-center gap-2 flex-wrap pt-3 border-t border-rule">
+                <span className="text-xs text-muted">Set aside licenses from your pool ({poolLeft} left) for this batch only:</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={poolLeft}
+                  value={moveQty}
+                  onChange={(e) => setMoveQty(e.target.value)}
+                  className="w-24 rounded-input border border-rule bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-navy focus:outline-none"
+                />
+                <button
+                  className={pill}
+                  disabled={busy || !(Number(moveQty) >= 1 && Number(moveQty) <= poolLeft)}
+                  onClick={() =>
+                    run(
+                      () => managerMovePoolToBatch(b.id, Math.floor(Number(moveQty))),
+                      () => `${Math.floor(Number(moveQty))} licenses moved from your pool to ${b.name}.`,
+                    ).then(() => setMoveQty(""))
+                  }
+                >
+                  Move to batch
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
