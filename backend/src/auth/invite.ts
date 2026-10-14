@@ -42,3 +42,20 @@ export async function createAndInviteUser(row: {
 
   return { id: userId };
 }
+
+// A fresh "set your password" link for someone who already has an account:
+// an invite that expired, or a person locked out of their account.
+export async function resendSetPasswordLink(userId: string, roleLabel: string): Promise<string | null> {
+  const u = await pool.query(`SELECT email FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId]);
+  if (u.rowCount === 0) return null;
+  // Older links stop working, so only the newest one is ever valid.
+  await pool.query(`UPDATE password_reset_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, [userId]);
+  const token = generateToken();
+  await pool.query(`INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [
+    userId,
+    hashToken(token),
+    new Date(Date.now() + INVITE_TOKEN_TTL_MS),
+  ]);
+  sendAdminInviteEmail(u.rows[0].email, token, roleLabel).catch((err) => console.error("failed to resend invite email:", err));
+  return u.rows[0].email;
+}

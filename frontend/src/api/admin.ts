@@ -451,3 +451,31 @@ export interface LearnerProfile {
 export function getLearnerProfile(id: string): Promise<LearnerProfile> {
   return api(`/admin/learners/${id}/profile`);
 }
+
+export function replaceOrgAdmin(
+  tenantId: string,
+  body: { email: string; firstName: string; lastName: string; phone?: string; jobTitle?: string },
+): Promise<{ id: string }> {
+  return api(`/admin/organizations/${tenantId}/org-admin`, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function resendOrgAdminLink(tenantId: string): Promise<{ email: string }> {
+  return api(`/admin/organizations/${tenantId}/org-admin/resend`, { method: "POST" });
+}
+
+export interface OrgAuditEntry {
+  id: string;
+  source: "action" | "license" | "plan";
+  action: string;
+  actorLabel: string | null;
+  actorRole: string | null;
+  targetLabel: string | null;
+  details: Record<string, unknown>;
+  createdAt: string;
+}
+
+export function getOrgAudit(tenantId: string, before?: string): Promise<{ entries: OrgAuditEntry[]; hasMore: boolean }> {
+  const p = new URLSearchParams({ limit: "25" });
+  if (before) p.set("before", before);
+  return api(`/admin/organizations/${tenantId}/audit?${p}`);
+}

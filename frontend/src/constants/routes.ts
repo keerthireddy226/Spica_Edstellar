@@ -53,6 +53,7 @@ export const ROUTES = {
   ORG_ADMIN_LICENSES: "/orgadmin/licenses",
   ORG_ADMIN_ANALYTICS: "/orgadmin/analytics",
   ORG_ADMIN_PLAN: "/orgadmin/plan",
+  ORG_ADMIN_AUDIT: "/orgadmin/audit",
   ORG_ADMIN_PROFILE: "/orgadmin/profile",
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.

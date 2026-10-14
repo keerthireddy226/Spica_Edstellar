@@ -630,3 +630,31 @@ export async function freeTierUsage(userId: string) {
     placementTaken: r.placement_taken as boolean,
   };
 }
+
+// ---- Offboarding: give back what a departing person no longer needs ----
+
+// A learner who leaves keeps the month that's already running (it's
+// consumed) but every month that hasn't started goes back to the pool.
+export async function releaseQueuedMonths(args: { tenantId: string; userId: string; actorId: string; reason: string }): Promise<number> {
+  try {
+    return await reclaimMonths({ ...args, months: 1000 });
+  } catch (err) {
+    if (err instanceof LicenseError && (err.code === "nothing_to_reclaim" || err.code === "learner_not_found")) return 0;
+    throw err;
+  }
+}
+
+// A Manager who leaves stops holding licenses they never assigned: their
+// pool shrinks to what's already been used from it.
+export async function releaseManagerPool(args: { tenantId: string; managerId: string; actorId: string }): Promise<number> {
+  const m = await pool.query(
+    `SELECT license_allotment,
+       (SELECT count(*)::int FROM license_assignments WHERE source = 'manager' AND source_manager_id = $1 AND reclaimed_at IS NULL) AS used
+     FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'manager'`,
+    [args.managerId, args.tenantId],
+  );
+  const row = m.rows[0];
+  if (!row || row.license_allotment === null || row.license_allotment <= row.used) return 0;
+  await setManagerAllotment({ tenantId: args.tenantId, managerId: args.managerId, allotment: row.used === 0 ? null : row.used, actorId: args.actorId });
+  return row.license_allotment - row.used;
+}

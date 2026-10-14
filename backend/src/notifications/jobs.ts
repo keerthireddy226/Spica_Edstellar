@@ -109,26 +109,53 @@ export async function runLicenseAlerts(): Promise<number> {
       }
     }
 
-    // Pool: unassigned licenses about to expire, or learners stuck with no license.
+    // Pool: unassigned licenses about to expire. Each purchase lot gets its own
+    // warnings at 60, 30 and 7 days, so a second lot expiring later is never
+    // hidden behind the first.
     const summary = await poolSummary(org.id);
-    if (summary.nextPoolExpiry && summary.nextPoolExpiryQuantity > 0) {
-      const days = Math.ceil((new Date(summary.nextPoolExpiry).getTime() - now) / DAY);
-      const bucket = days <= 7 ? "7" : days <= 30 ? "30" : null;
-      if (bucket) {
-        for (const adminId of await orgAdminIds(org.id)) {
-          if (
-            await notify({
-              userId: adminId,
-              kind: "pool_expiring",
-              title: `${summary.nextPoolExpiryQuantity} unassigned license${summary.nextPoolExpiryQuantity === 1 ? "" : "s"} expire ${shortDate(summary.nextPoolExpiry)}`,
-              body: "Unassigned licenses are valid for 12 months after purchase. Assign them to learners before then.",
-              link: "/orgadmin/licenses",
-              dedupeKey: `poolexp:${org.id}:${summary.nextPoolExpiry.slice(0, 10)}:${bucket}`,
-              email: true,
-            })
-          )
-            sent++;
-        }
+    const lots = await pool.query(
+      `SELECT p.id, p.pool_expires_at, p.quantity - count(a.id) FILTER (WHERE a.reclaimed_at IS NULL)::int AS unused
+       FROM license_purchases p LEFT JOIN license_assignments a ON a.purchase_id = p.id
+       WHERE p.tenant_id = $1 AND p.pool_expires_at > now() AND p.pool_expires_at < now() + interval '60 days'
+       GROUP BY p.id
+       HAVING p.quantity - count(a.id) FILTER (WHERE a.reclaimed_at IS NULL) > 0`,
+      [org.id],
+    );
+    for (const lot of lots.rows) {
+      const days = Math.ceil((new Date(lot.pool_expires_at).getTime() - now) / DAY);
+      const bucket = days <= 7 ? "7" : days <= 30 ? "30" : "60";
+      for (const adminId of await orgAdminIds(org.id)) {
+        if (
+          await notify({
+            userId: adminId,
+            kind: "pool_expiring",
+            title: `${lot.unused} unassigned license${lot.unused === 1 ? "" : "s"} expire ${shortDate(lot.pool_expires_at)} (${days} day${days === 1 ? "" : "s"})`,
+            body: "Unassigned licenses expire 12 months after purchase and can't be used after that. Assign them to learners before then.",
+            link: "/orgadmin/licenses",
+            dedupeKey: `poolexp:${lot.id}:${bucket}`,
+            email: true,
+          })
+        )
+          sent++;
+      }
+    }
+    // Running low: fewer licenses left than learners who will need one soon.
+    const needSoon = summary.expiringSoonLearners + summary.unlicensedLearners;
+    if (summary.available > 0 && needSoon > summary.available) {
+      const week = dayKey(new Date(now - new Date().getUTCDay() * DAY));
+      for (const adminId of await orgAdminIds(org.id)) {
+        if (
+          await notify({
+            userId: adminId,
+            kind: "pool_low",
+            title: `Only ${summary.available} license${summary.available === 1 ? "" : "s"} left`,
+            body: `${needSoon} learner(s) have no license or will need an extension soon. Buy licenses so nobody loses access.`,
+            link: "/orgadmin/licenses",
+            dedupeKey: `poolrunlow:${org.id}:${week}`,
+            email: true,
+          })
+        )
+          sent++;
       }
     }
     if (summary.available === 0 && summary.unlicensedLearners + summary.expiredLearners > 0) {

@@ -26,6 +26,7 @@ import { notificationsRouter, remindersRouter } from "./notifications/routes.js"
 import { startJobRunner } from "./notifications/jobs.js";
 import { analyticsRouter } from "./analytics/routes.js";
 import { plansRouter } from "./plans/routes.js";
+import { MANAGER_AUDIT, ORG_ADMIN_AUDIT, auditTrail } from "./audit/middleware.js";
 import { PlanError } from "./plans/service.js";
 import { requireAccess } from "./licenses/gate.js";
 
@@ -79,8 +80,8 @@ app.use("/api/practice-tests", requireAccess("mocktest"), practiceTestsRouter);
 app.use("/api/coach", requireAccess("coach"), coachRouter);
 app.use("/api/face", faceRouter);
 app.use("/api/admin", adminRouter);
-app.use("/api/org-admin", orgAdminRouter);
-app.use("/api/manager", managerRouter);
+app.use("/api/org-admin", auditTrail(ORG_ADMIN_AUDIT), orgAdminRouter);
+app.use("/api/manager", auditTrail(MANAGER_AUDIT), managerRouter);
 app.use("/api/licenses", licensesRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/notifications", notificationsRouter);

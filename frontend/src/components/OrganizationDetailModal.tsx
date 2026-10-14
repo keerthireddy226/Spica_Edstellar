@@ -6,6 +6,8 @@ import type { AdminConsoleOrg } from "@/api/admin";
 import { countryName, employeeCountLabel } from "@/constants/demographics";
 import { OrgLicensesPanel } from "@/components/licenses/OrgLicensesPanel";
 import { OrgPlanAdminPanel } from "@/components/plans/OrgPlanAdminPanel";
+import { OrgAdminRecovery } from "@/components/OrgAdminRecovery";
+import { OrgAuditPanel } from "@/components/OrgAuditPanel";
 
 function categoryLabel(category: string | null): string {
   return category === "university" ? "University" : "Organization";
@@ -15,7 +17,7 @@ function categoryLabel(category: string | null): string {
 // console's Organizations table — data is already loaded there, so no
 // fetch here, just the same Org Admin / Manager drill-down used everywhere
 // else (shared OrgAdminDetailModal / ManagerDetailModal).
-export function OrganizationDetailModal({ org, onClose }: { org: AdminConsoleOrg; onClose: () => void }) {
+export function OrganizationDetailModal({ org, onClose, onChanged }: { org: AdminConsoleOrg; onClose: () => void; onChanged?: () => void }) {
   const [viewingOrgAdminId, setViewingOrgAdminId] = useState<string | null>(null);
   const [viewingManagerId, setViewingManagerId] = useState<string | null>(null);
   const [planTier, setPlanTier] = useState<string>(org.planTier);
@@ -136,6 +138,7 @@ export function OrganizationDetailModal({ org, onClose }: { org: AdminConsoleOrg
                 </span>
               </button>
             )}
+            <OrgAdminRecovery tenantId={org.id} hasOrgAdmin={!!org.orgAdmin} onReplaced={() => onChanged?.()} />
           </div>
         </div>
 
@@ -168,6 +171,7 @@ export function OrganizationDetailModal({ org, onClose }: { org: AdminConsoleOrg
             )}
           </div>
         </div>
+        <OrgAuditPanel tenantId={org.id} />
       </div>
 
       {viewingOrgAdminId && (

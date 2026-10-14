@@ -17,6 +17,7 @@ import {
   deactivateManager,
   reactivateManager,
   updateManager,
+  resendInvite,
   type OrgManager,
   type OrgBatch,
 } from "@/api/orgAdmin";
@@ -254,9 +255,11 @@ export function OrgAdminManagers() {
   async function handleDelete(manager: OrgManager) {
     setBusyId(manager.id);
     try {
-      await deleteManager(manager.id);
+      const r = await deleteManager(manager.id);
       setDeletingManager(null);
+      if (r.releasedLicenses) setJustInvited(`${r.releasedLicenses} unused license${r.releasedLicenses === 1 ? "" : "s"} from their pool went back to yours.`);
       load();
+      refreshPlan();
     } catch {
       setError("Could not delete that manager.");
     } finally {
@@ -267,8 +270,10 @@ export function OrgAdminManagers() {
   async function handleToggleActive(manager: OrgManager) {
     setBusyId(manager.id);
     try {
-      if (manager.active) await deactivateManager(manager.id);
-      else await reactivateManager(manager.id);
+      if (manager.active) {
+        const r = await deactivateManager(manager.id);
+        if (r.releasedLicenses) setJustInvited(`${r.releasedLicenses} unused license${r.releasedLicenses === 1 ? "" : "s"} from their pool went back to yours.`);
+      } else await reactivateManager(manager.id);
       load();
       refreshPlan();
     } catch (err) {
@@ -367,6 +372,22 @@ export function OrgAdminManagers() {
                       >
                         {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
                       </span>
+                      {status === "pending" && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              const r = await resendInvite("managers", m.id);
+                              setJustInvited(`A new invite link was sent to ${r.email}.`);
+                            } catch {
+                              setError("Could not resend the invite.");
+                            }
+                          }}
+                          className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer"
+                        >
+                          Resend invite
+                        </button>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>

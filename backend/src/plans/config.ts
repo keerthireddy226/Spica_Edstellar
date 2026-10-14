@@ -90,7 +90,7 @@ export const FEATURES: Record<PlanFeature, FeatureInfo> = {
     minTier: "enterprise",
     available: true,
   },
-  audit_log: { label: "Audit log", description: "Who changed what across the organization.", minTier: "business", available: false },
+  audit_log: { label: "Audit log", description: "Who changed what across the organization.", minTier: "business", available: true },
   scheduled_reports: { label: "Scheduled reports", description: "Progress reports emailed on a schedule.", minTier: "business", available: false },
   po_invoicing: { label: "Purchase orders and invoicing", description: "Pay by invoice against a PO.", minTier: "business", available: false },
   sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider.", minTier: "enterprise", available: false },

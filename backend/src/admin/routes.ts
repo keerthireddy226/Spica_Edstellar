@@ -6,7 +6,9 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
-import { createAndInviteUser } from "../auth/invite.js";
+import { createAndInviteUser, resendSetPasswordLink } from "../auth/invite.js";
+import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "../orgAdmin/handover.js";
+import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 
 export const adminRouter = Router();
 
@@ -1239,6 +1241,89 @@ adminRouter.post("/console/learners/bulk", requireAuth, async (req: AuthedReques
     }
 
     res.status(201).json({ results });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- One organization, from Edstellar's side: Org Admin recovery, audit ----
+
+// An Admin may act on organizations they manage; a Super Admin on any.
+async function staffOrg(req: AuthedRequest, res: import("express").Response): Promise<string | null> {
+  if (!requirePlatformAdmin(req, res)) return null;
+  const id = String(req.params.id);
+  const r = await pool.query(`SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3)`, [
+    id,
+    req.user!.role === "super_admin",
+    req.user!.id,
+  ]);
+  if (r.rowCount === 0) {
+    res.status(404).json({ error: "organization_not_found" });
+    return null;
+  }
+  return id;
+}
+
+// Replace the Org Admin — they left, or the account is unrecoverable.
+adminRouter.post("/organizations/:id/org-admin", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const tenantId = await staffOrg(req, res);
+    if (!tenantId) return;
+    const body = newOrgAdminSchema.parse(req.body);
+    const result = await replaceOrgAdmin({ tenantId, next: body, actorId: req.user!.id, reason: "replaced_by_admin" });
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "org_admin.replaced",
+      targetType: "org_admin",
+      targetId: result.newOrgAdminId,
+      targetLabel: `${body.firstName} ${body.lastName} (${body.email})`,
+      details: { previousOrgAdminId: result.previousOrgAdminId },
+      ip: req.ip ?? null,
+    });
+    res.status(201).json({ id: result.newOrgAdminId });
+  } catch (err) {
+    if (err instanceof HandoverError) return res.status(err.code === "email_already_registered" ? 409 : 404).json({ error: err.code });
+    next(err);
+  }
+});
+
+// A fresh set-password link for the current Org Admin: the invite expired,
+// or they're locked out.
+adminRouter.post("/organizations/:id/org-admin/resend", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const tenantId = await staffOrg(req, res);
+    if (!tenantId) return;
+    const oa = await pool.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [tenantId]);
+    if (oa.rowCount === 0) return res.status(404).json({ error: "org_admin_not_found" });
+    const email = await resendSetPasswordLink(oa.rows[0].id, "an Org Admin");
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "org_admin.invite_resent",
+      targetType: "org_admin",
+      targetId: oa.rows[0].id,
+      targetLabel: email,
+      ip: req.ip ?? null,
+    });
+    res.json({ email });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get("/organizations/:id/audit", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const tenantId = await staffOrg(req, res);
+    if (!tenantId) return;
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const rows = await listAudit({ tenantId, limit, before: typeof req.query.before === "string" ? req.query.before : null });
+    if (req.query.format === "csv") {
+      return res.type("text/csv").attachment(`audit-${tenantId.slice(0, 8)}.csv`).send(auditCsv(rows));
+    }
+    res.json({ entries: rows, hasMore: rows.length === limit });
   } catch (err) {
     next(err);
   }

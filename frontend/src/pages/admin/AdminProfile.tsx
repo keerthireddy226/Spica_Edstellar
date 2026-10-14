@@ -12,6 +12,7 @@ import { PERMISSION_LABELS, type AdminPermissions } from "@/api/admin";
 import { getOrgOverview } from "@/api/orgAdmin";
 import { Button } from "@/components/Button";
 import { OrganizationProfileCard } from "@/components/OrganizationProfileCard";
+import { HandoverCard } from "@/components/HandoverCard";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Admin",
@@ -423,6 +424,7 @@ export function AdminProfile() {
       </div>
 
       {user?.role === "org_admin" && <OrganizationProfileCard />}
+      {user?.role === "org_admin" && <HandoverCard />}
 
       <div className="flex flex-col gap-3">
         <h2 className="font-display font-bold text-lg text-ink">Sign-in activity</h2>

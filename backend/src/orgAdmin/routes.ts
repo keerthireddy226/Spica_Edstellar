@@ -6,6 +6,11 @@ import { createAndInviteUser } from "../auth/invite.js";
 import { moveLearnerSchema, moveLearnerToBatch } from "../batches/moveLearner.js";
 import { LicenseError, assignMonths, learnerAccessMap, setBatchBudget, setManagerAllotment, unreservedAvailable } from "../licenses/service.js";
 import { assertFeature, assertWithinLimit } from "../plans/service.js";
+import { releaseManagerPool, releaseQueuedMonths } from "../licenses/service.js";
+import { resendSetPasswordLink } from "../auth/invite.js";
+import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js";
+import { auditCsv, listAudit } from "../audit/service.js";
+import { SESSION_COOKIE } from "../auth/tokens.js";
 
 export const orgAdminRouter = Router();
 
@@ -399,6 +404,7 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
         lastName: r.last_name,
         sessionCount: r.session_count,
         active: !r.deleted_at,
+        hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
       })),
@@ -616,6 +622,7 @@ orgAdminRouter.get("/managers/:id", requireAuth, async (req: AuthedRequest, res,
 
     const result = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, u.batch_id, b.name AS batch_name,
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        JOIN batches b ON b.id = u.batch_id
@@ -661,12 +668,13 @@ orgAdminRouter.delete("/managers/:id", requireAuth, async (req: AuthedRequest, r
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
+    const releasedLicenses = await releaseManagerPool({ tenantId, managerId: String(req.params.id), actorId: req.user!.id });
     const result = await pool.query(`DELETE FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'manager' RETURNING id`, [
       req.params.id,
       tenantId,
     ]);
     if (result.rowCount === 0) return res.status(404).json({ error: "manager_not_found" });
-    res.json({ id: req.params.id });
+    res.json({ id: req.params.id, releasedLicenses });
   } catch (err) {
     next(err);
   }
@@ -682,7 +690,9 @@ orgAdminRouter.post("/managers/:id/deactivate", requireAuth, async (req: AuthedR
       [req.params.id, tenantId],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "manager_not_found" });
-    res.json({ id: req.params.id });
+    await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [req.params.id]);
+    const releasedLicenses = await releaseManagerPool({ tenantId, managerId: String(req.params.id), actorId: req.user!.id });
+    res.json({ id: req.params.id, releasedLicenses });
   } catch (err) {
     next(err);
   }
@@ -985,12 +995,19 @@ orgAdminRouter.delete("/learners/:id", requireAuth, async (req: AuthedRequest, r
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
+    // Unstarted months go back to the pool; used and running ones stay counted.
+    const reclaimedMonths = await releaseQueuedMonths({
+      tenantId,
+      userId: String(req.params.id),
+      actorId: req.user!.id,
+      reason: "Learner deleted",
+    });
     const result = await pool.query(`DELETE FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'learner' RETURNING id`, [
       req.params.id,
       tenantId,
     ]);
     if (result.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
-    res.json({ id: req.params.id });
+    res.json({ id: req.params.id, reclaimedMonths });
   } catch (err) {
     next(err);
   }
@@ -1006,7 +1023,14 @@ orgAdminRouter.post("/learners/:id/deactivate", requireAuth, async (req: AuthedR
       [req.params.id, tenantId],
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
-    res.json({ id: req.params.id });
+    await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [req.params.id]);
+    const reclaimedMonths = await releaseQueuedMonths({
+      tenantId,
+      userId: String(req.params.id),
+      actorId: req.user!.id,
+      reason: "Learner deactivated",
+    });
+    res.json({ id: req.params.id, reclaimedMonths });
   } catch (err) {
     next(err);
   }
@@ -1045,6 +1069,93 @@ orgAdminRouter.post("/learners/:id/move", requireAuth, async (req: AuthedRequest
     const result = await moveLearnerToBatch({ learnerId: String(req.params.id), toBatchId: body.batchId, movedBy: req.user!.id, reason: body.reason });
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({ id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---- Invites that expired or got lost ----
+
+for (const role of ["managers", "learners"] as const) {
+  orgAdminRouter.post(`/${role}/:id/resend-invite`, requireAuth, async (req: AuthedRequest, res, next) => {
+    if (!requireOrgAdmin(req, res)) return;
+    const tenantId = await requireOwnTenant(req, res);
+    if (!tenantId) return;
+    try {
+      const dbRole = role === "managers" ? "manager" : "learner";
+      const u = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2 AND role = $3 AND deleted_at IS NULL`, [
+        String(req.params.id),
+        tenantId,
+        dbRole,
+      ]);
+      if (u.rowCount === 0) return res.status(404).json({ error: `${dbRole}_not_found` });
+      const email = await resendSetPasswordLink(String(req.params.id), dbRole === "manager" ? "a Manager" : "a learner");
+      res.json({ id: req.params.id, email });
+    } catch (err) {
+      next(err);
+    }
+  });
+}
+
+// ---- Handing the Org Admin role to someone else ----
+
+// The current Org Admin names their successor. They're signed out straight
+// away; the successor gets the usual set-your-password invite.
+orgAdminRouter.post("/handover", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = newOrgAdminSchema.extend({ confirm: z.literal(true) }).parse(req.body);
+    const { confirm: _confirm, ...next } = body;
+    const result = await replaceOrgAdmin({ tenantId, next, actorId: req.user!.id, reason: "handover" });
+    res.clearCookie(SESSION_COOKIE);
+    res.json({ id: result.newOrgAdminId });
+  } catch (err) {
+    if (err instanceof HandoverError) return res.status(err.code === "email_already_registered" ? 409 : 404).json({ error: err.code });
+    next(err);
+  }
+});
+
+// ---- Audit log (Business and up) ----
+
+const auditQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  before: z.string().datetime().optional(),
+  action: z.string().trim().max(60).optional(),
+  actorId: z.string().uuid().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+orgAdminRouter.get("/audit", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    await assertFeature(tenantId, "audit_log");
+    const q = auditQuerySchema.parse(req.query);
+    const rows = await listAudit({ tenantId, ...q });
+    const actors = await pool.query(
+      `SELECT DISTINCT u.id, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name, u.role
+       FROM audit_log a JOIN users u ON u.id = a.actor_id WHERE a.tenant_id = $1 ORDER BY name`,
+      [tenantId],
+    );
+    res.json({ entries: rows, actors: actors.rows, hasMore: rows.length === q.limit });
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.get("/audit/export.csv", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    await assertFeature(tenantId, "audit_log");
+    const q = auditQuerySchema.parse(req.query);
+    const rows = await listAudit({ tenantId, ...q, limit: 1000 });
+    res.type("text/csv").attachment(`audit-log-${new Date().toISOString().slice(0, 10)}.csv`).send(auditCsv(rows));
   } catch (err) {
     next(err);
   }

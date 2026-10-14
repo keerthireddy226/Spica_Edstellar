@@ -581,7 +581,20 @@ export function AdminOrganizations() {
         />
       )}
 
-      {viewingOrg && <OrganizationDetailModal org={viewingOrg} onClose={() => setViewingOrg(null)} />}
+      {viewingOrg && (
+        <OrganizationDetailModal
+          org={viewingOrg}
+          onClose={() => setViewingOrg(null)}
+          onChanged={() =>
+            getAdminConsoleOverview()
+              .then((o) => {
+                setOverview(o);
+                setViewingOrg(o.organizations.find((x) => x.id === viewingOrg.id) ?? null);
+              })
+              .catch(() => {})
+          }
+        />
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   getOrgLearnerDetail,
   deleteLearner,
   deactivateLearner,
+  resendInvite,
   reactivateLearner,
   getBatches,
   moveLearner,
@@ -55,8 +56,9 @@ export function OrgAdminLearners() {
   async function handleDelete(learner: OrgLearner) {
     setBusyId(learner.id);
     try {
-      await deleteLearner(learner.id);
+      const r = await deleteLearner(learner.id);
       setDeletingLearner(null);
+      if (r.reclaimedMonths) setNotice(`${r.reclaimedMonths} unused month${r.reclaimedMonths === 1 ? "" : "s"} went back to your license pool.`);
       load();
     } catch {
       setError("Could not delete that learner.");
@@ -65,11 +67,25 @@ export function OrgAdminLearners() {
     }
   }
 
+  async function handleResend(learner: OrgLearner) {
+    setBusyId(learner.id);
+    try {
+      const r = await resendInvite("learners", learner.id);
+      setNotice(`A new invite link was sent to ${r.email}.`);
+    } catch {
+      setError("Could not resend the invite.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   async function handleToggleActive(learner: OrgLearner) {
     setBusyId(learner.id);
     try {
-      if (learner.active) await deactivateLearner(learner.id);
-      else await reactivateLearner(learner.id);
+      if (learner.active) {
+        const r = await deactivateLearner(learner.id);
+        if (r.reclaimedMonths) setNotice(`${r.reclaimedMonths} unused month${r.reclaimedMonths === 1 ? "" : "s"} went back to your license pool.`);
+      } else await reactivateLearner(learner.id);
       load();
     } catch {
       setError("Could not update that learner's status.");
@@ -141,6 +157,18 @@ export function OrgAdminLearners() {
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
                       {l.active ? "Active" : "Deactivated"}
                     </span>
+                    {l.active && l.hasLoggedIn === false && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleResend(l);
+                        }}
+                        disabled={busyId === l.id}
+                        className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer disabled:opacity-50"
+                      >
+                        Invite pending · resend
+                      </button>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
@@ -214,7 +242,7 @@ export function OrgAdminLearners() {
       {deletingLearner && (
         <ConfirmActionModal
           title="Delete learner"
-          message={`Delete ${[deletingLearner.firstName, deletingLearner.lastName].filter(Boolean).join(" ") || deletingLearner.email}? All their progress and session history are removed. This cannot be undone.`}
+          message={`Delete ${[deletingLearner.firstName, deletingLearner.lastName].filter(Boolean).join(" ") || deletingLearner.email}? All their progress and session history are removed, and any months that haven't started go back to your license pool. This cannot be undone.`}
           confirmLabel="Delete"
           destructive
           submitting={busyId === deletingLearner.id}

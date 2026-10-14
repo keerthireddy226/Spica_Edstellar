@@ -128,11 +128,11 @@ export function getOrgManagerDetail(id: string): Promise<{ manager: ManagerDetai
   return api(`/org-admin/managers/${id}`);
 }
 
-export function deleteManager(id: string): Promise<{ id: string }> {
+export function deleteManager(id: string): Promise<{ id: string; releasedLicenses?: number }> {
   return api(`/org-admin/managers/${id}`, { method: "DELETE" });
 }
 
-export function deactivateManager(id: string): Promise<{ id: string }> {
+export function deactivateManager(id: string): Promise<{ id: string; releasedLicenses?: number }> {
   return api(`/org-admin/managers/${id}/deactivate`, { method: "POST" });
 }
 
@@ -151,6 +151,7 @@ export interface OrgLearner {
   batchName: string | null;
   sessionCount: number;
   active: boolean;
+  hasLoggedIn?: boolean;
   createdAt: string;
 }
 
@@ -177,11 +178,11 @@ export function getOrgLearnerDetail(id: string): Promise<LearnerProfile> {
   return api(`/org-admin/learners/${id}`);
 }
 
-export function deleteLearner(id: string): Promise<{ id: string }> {
+export function deleteLearner(id: string): Promise<{ id: string; reclaimedMonths?: number }> {
   return api(`/org-admin/learners/${id}`, { method: "DELETE" });
 }
 
-export function deactivateLearner(id: string): Promise<{ id: string }> {
+export function deactivateLearner(id: string): Promise<{ id: string; reclaimedMonths?: number }> {
   return api(`/org-admin/learners/${id}/deactivate`, { method: "POST" });
 }
 
@@ -270,4 +271,48 @@ export interface EditBatchPayload {
 
 export function updateBatch(id: string, payload: EditBatchPayload): Promise<{ id: string }> {
   return api(`/org-admin/batches/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function resendInvite(kind: "managers" | "learners", id: string): Promise<{ id: string; email: string }> {
+  return api(`/org-admin/${kind}/${id}/resend-invite`, { method: "POST" });
+}
+
+export function handOverOrgAdmin(body: { email: string; firstName: string; lastName: string; jobTitle?: string; phone?: string }) {
+  return api<{ id: string }>("/org-admin/handover", { method: "POST", body: JSON.stringify({ ...body, confirm: true }) });
+}
+
+export interface AuditEntry {
+  id: string;
+  source: "action" | "license" | "plan";
+  action: string;
+  actorLabel: string | null;
+  actorRole: string | null;
+  targetType: string | null;
+  targetLabel: string | null;
+  details: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AuditFilters {
+  action?: string;
+  actorId?: string;
+  from?: string;
+  to?: string;
+  before?: string;
+}
+
+function auditQuery(f: AuditFilters & { limit?: number }): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(f)) if (v !== undefined && v !== "") p.set(k, String(v));
+  return p.toString();
+}
+
+export function getAuditLog(f: AuditFilters & { limit?: number }) {
+  return api<{ entries: AuditEntry[]; actors: { id: string; name: string; role: string }[]; hasMore: boolean }>(
+    `/org-admin/audit?${auditQuery(f)}`,
+  );
+}
+
+export function auditExportPath(f: AuditFilters): string {
+  return `/org-admin/audit/export.csv?${auditQuery(f)}`;
 }

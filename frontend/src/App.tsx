@@ -50,6 +50,7 @@ import { CheckoutReturn } from "@/pages/CheckoutReturn";
 import { InvoiceView } from "@/pages/InvoiceView";
 import { OrgAdminLicenses } from "@/pages/orgAdmin/OrgAdminLicenses";
 import { OrgAdminPlan } from "@/pages/orgAdmin/OrgAdminPlan";
+import { OrgAdminAudit } from "@/pages/orgAdmin/OrgAdminAudit";
 import { OrgAdminLearners } from "@/pages/orgAdmin/OrgAdminLearners";
 import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
 import { ManagerLearners } from "@/pages/manager/ManagerLearners";
@@ -197,6 +198,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
           <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
+          <Route path={ROUTES.ORG_ADMIN_AUDIT} element={<OrgAdminAudit />} />
           <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ORG_ADMIN_ANALYTICS} element={<AnalyticsPage />} />
         </Route>
