@@ -70,13 +70,13 @@ function ActionButton({
   tone?: "danger" | "success";
   disabled?: boolean;
 }) {
-  const color = tone === "danger" ? "hover:border-error/40 hover:text-error" : tone === "success" ? "text-success hover:border-success/40" : "hover:border-rule-strong hover:text-ink";
+  const color = tone === "danger" ? "hover:bg-red-900/30" : tone === "success" ? "bg-white/20" : "hover:bg-white/20";
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title ?? label}
-      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill border border-rule text-xs font-semibold text-muted transition-colors cursor-pointer disabled:opacity-50 ${color}`}
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill border border-white/35 text-xs font-semibold text-white transition-colors cursor-pointer disabled:opacity-50 ${color}`}
     >
       <Icon size={13} /> {label}
     </button>
@@ -452,33 +452,30 @@ export function OrgAdminManagers() {
           {shown.length === 0 && <p className="text-sm text-muted">No managers match.</p>}
 
           <div className="grid lg:grid-cols-2 gap-4">
-            {shown.map((m) => {
+            {shown.map((m, i) => {
               const status = statusOf(m);
               const name = [m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet";
               const left = m.licensesAllotted != null ? Math.max(0, m.licensesAllotted - m.licensesUsed) : null;
               return (
                 <div
                   key={m.id}
-                  className={`bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-shadow ${
-                    status === "deactivated" ? "opacity-70" : ""
+                  style={cardGradient(i)}
+                  className={`rounded-card shadow-sm p-5 flex flex-col gap-4 hover:shadow-md transition-shadow text-white ${
+                    status === "deactivated" ? "opacity-60 grayscale-[40%]" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="h-11 w-11 rounded-full bg-navy text-lime flex items-center justify-center text-sm font-bold shrink-0">
+                    <span className="h-11 w-11 rounded-full bg-white/25 text-white flex items-center justify-center text-sm font-bold shrink-0">
                       {initials(m.firstName, m.lastName, m.email)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-display font-bold text-ink truncate">{name}</p>
-                        <span
-                          className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${
-                            status === "active" ? "bg-success/15 text-success" : status === "pending" ? "bg-warning/15 text-navy-deep" : "bg-error/15 text-error"
-                          }`}
-                        >
+                        <p className="font-display font-bold text-white truncate">{name}</p>
+                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 text-white uppercase tracking-wide">
                           {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
                         </span>
                       </div>
-                      <p className="text-xs text-muted truncate">
+                      <p className="text-xs text-white/75 truncate">
                         {m.jobTitle ? `${m.jobTitle} · ` : ""}
                         {m.email}
                         {m.phone ? ` · ${m.phone}` : ""}
@@ -486,7 +483,7 @@ export function OrgAdminManagers() {
                     </div>
                     <button
                       onClick={() => setViewingManagerId(m.id)}
-                      className="text-xs font-semibold text-navy hover:underline cursor-pointer shrink-0"
+                      className="text-xs font-semibold text-white underline-offset-2 hover:underline cursor-pointer shrink-0"
                     >
                       View details
                     </button>
@@ -494,40 +491,40 @@ export function OrgAdminManagers() {
 
                   <div className="flex flex-wrap gap-1.5">
                     {m.batchNames.length === 0 ? (
-                      <span className="text-xs text-muted italic">No batches yet — they can create their own.</span>
+                      <span className="text-xs text-white/75 italic">No batches yet — they can create their own.</span>
                     ) : (
                       m.batchNames.map((b) => (
-                        <span key={b} className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-navy/10 text-navy">
+                        <span key={b} className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white">
                           {b}
                         </span>
                       ))
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3 border-y border-rule py-3">
+                  <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
                     <div>
-                      <p className="font-display font-bold text-xl text-ink">{m.learnerCount ?? 0}</p>
-                      <p className="text-[11px] text-muted">Learners</p>
+                      <p className="font-display font-bold text-xl text-white">{m.learnerCount ?? 0}</p>
+                      <p className="text-[11px] text-white/75">Learners</p>
                     </div>
                     <div>
-                      <p className="font-display font-bold text-xl text-ink">{m.activeLearners7d ?? 0}</p>
-                      <p className="text-[11px] text-muted">Practised this week</p>
+                      <p className="font-display font-bold text-xl text-white">{m.activeLearners7d ?? 0}</p>
+                      <p className="text-[11px] text-white/75">Practised this week</p>
                     </div>
                     <div>
                       {m.licensesAllotted == null ? (
                         <>
-                          <p className="font-display font-bold text-xl text-muted">—</p>
-                          <p className="text-[11px] text-muted">No license pool</p>
+                          <p className="font-display font-bold text-xl text-white/60">—</p>
+                          <p className="text-[11px] text-white/75">No license pool</p>
                         </>
                       ) : (
                         <>
-                          <p className="font-display font-bold text-xl text-ink">
+                          <p className="font-display font-bold text-xl text-white">
                             {left}
-                            <span className="text-xs font-normal text-muted"> / {m.licensesAllotted} left</span>
+                            <span className="text-xs font-normal text-white/75"> / {m.licensesAllotted} left</span>
                           </p>
-                          <div className="h-1.5 rounded-full bg-rule overflow-hidden mt-1">
+                          <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
                             <div
-                              className={`h-full rounded-full ${left === 0 ? "bg-error" : "bg-navy"}`}
+                              className={`h-full rounded-full ${left === 0 ? "bg-red-200" : "bg-white"}`}
                               style={{ width: `${m.licensesAllotted ? Math.min(100, (m.licensesUsed / m.licensesAllotted) * 100) : 0}%` }}
                             />
                           </div>
@@ -536,14 +533,14 @@ export function OrgAdminManagers() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 flex-wrap text-xs text-muted">
+                  <div className="flex items-center justify-between gap-3 flex-wrap text-xs text-white/80">
                     <span>
                       {status === "pending" ? "Hasn't signed in yet" : `Last active ${relative(m.lastLoginAt)}`}
                       {" · "}Added {new Date(m.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                       {m.invitedByName ? ` by ${m.invitedByName}` : ""}
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (
-                      <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-navy hover:underline">
+                      <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
                         {m.pendingRequests} license request{m.pendingRequests === 1 ? "" : "s"} waiting
                       </Link>
                     )}

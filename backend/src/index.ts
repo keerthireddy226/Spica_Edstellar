@@ -127,8 +127,23 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const port = process.env.PORT ?? 4000;
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Spica backend listening on :${port}`);
   registerJobs();
   startScheduler();
 });
+
+// Exit promptly when asked to stop (deploys, and tsx watch restarting on a
+// file change). Without this the job timers and the database pool keep the
+// process alive and the restart hangs.
+let stopping = false;
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.on(signal, () => {
+    if (stopping) return;
+    stopping = true;
+    server.close();
+    server.closeAllConnections?.();
+    pool.end().finally(() => process.exit(0));
+    setTimeout(() => process.exit(0), 3000).unref();
+  });
+}
