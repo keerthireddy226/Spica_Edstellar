@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Router, type NextFunction, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
+import { requirePermission, requireStaff, staffOwnsTenant } from "../admin/staff.js";
 import {
   LicenseError,
   assignMonths,
@@ -208,14 +209,11 @@ licensesRouter.post("/manager/learners/:id/assign", requireAuth, async (req: Aut
 
 // ---- Admin / Super Admin: any org they can see; sales-led credits ----
 
-async function adminOrg(req: AuthedRequest, res: Response): Promise<string | null> {
-  if (!role(req, res, ["admin", "super_admin"])) return null;
+// An organization staff may see; `write` also needs "Manage organizations".
+async function adminOrg(req: AuthedRequest, res: Response, write = false): Promise<string | null> {
+  if (!(write ? await requirePermission(req, res, "manageOrganizations") : requireStaff(req, res))) return null;
   const tenantId = String(req.params.tenantId);
-  const result = await pool.query(
-    `SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3)`,
-    [tenantId, req.user!.role === "super_admin", req.user!.id],
-  );
-  if (result.rowCount === 0) {
+  if (!(await staffOwnsTenant(req, tenantId))) {
     res.status(404).json({ error: "organization_not_found" });
     return null;
   }
@@ -240,7 +238,7 @@ licensesRouter.get("/admin/orgs/:tenantId", requireAuth, async (req: AuthedReque
 
 licensesRouter.post("/admin/orgs/:tenantId/credit", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await adminOrg(req, res);
+    const tenantId = await adminOrg(req, res, true);
     if (!tenantId) return;
     const body = z
       .object({

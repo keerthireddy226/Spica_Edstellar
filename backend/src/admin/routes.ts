@@ -12,6 +12,8 @@ import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { queueStats, retryJob } from "../queue/queue.js";
 import { orgHealth } from "./health.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
+import { orgScope, requirePermission, staffCanSeeUser, staffOwnsTenant } from "./staff.js";
+import { learnerAccessMap } from "../licenses/service.js";
 
 export const adminRouter = Router();
 
@@ -143,7 +145,7 @@ const GENUINELY_PARTIAL = `
 `;
 
 adminRouter.get("/stats", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
+  if (!requireSuperAdmin(req, res)) return;
   try {
     const [learners, orgs, admins, sessionsToday, partialToday, signupsThisWeek, activeNow] = await Promise.all([
       pool.query(`SELECT count(*)::int AS n FROM users WHERE role = 'learner' AND deleted_at IS NULL`),
@@ -180,7 +182,7 @@ adminRouter.get("/stats", requireAuth, async (req: AuthedRequest, res, next) => 
 
 // Dashboard's two charts + recent-activity table — one combined round trip.
 adminRouter.get("/activity", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
+  if (!requireSuperAdmin(req, res)) return;
   try {
     const [needsAttention, activityFeed, sessionsByType, recentSignups] = await Promise.all([
       // The one real action item on this dashboard — a flagged placement
@@ -255,13 +257,15 @@ adminRouter.get("/activity", requireAuth, async (req: AuthedRequest, res, next) 
 
 // Internal Edstellar staff (role='admin') — Super Admin manages these directly.
 adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
+  if (!requireSuperAdmin(req, res)) return;
   try {
     const result = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.department, u.permissions, u.created_at, u.deleted_at,
          count(t.id)::int AS managed_org_count,
          coalesce(array_agg(t.name ORDER BY t.name) FILTER (WHERE t.id IS NOT NULL), '{}') AS managed_org_names,
-         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
+         (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
+         u.phone, u.job_title
        FROM users u LEFT JOIN tenants t ON t.managed_by = u.id
        WHERE u.role = 'admin'
        GROUP BY u.id
@@ -280,6 +284,9 @@ adminRouter.get("/admins", requireAuth, async (req: AuthedRequest, res, next) =>
         managedOrgNames: r.managed_org_names,
         active: !r.deleted_at,
         hasLoggedIn: r.has_logged_in,
+        lastLoginAt: r.last_login_at,
+        phone: r.phone,
+        jobTitle: r.job_title,
         createdAt: r.created_at,
       })),
     });
@@ -454,9 +461,13 @@ adminRouter.post("/admins/:id/reactivate", requireAuth, async (req: AuthedReques
 adminRouter.get("/org-admins", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requirePlatformAdmin(req, res)) return;
   try {
+    const scope = orgScope(req);
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at,
-         t.id AS tenant_id, t.name AS tenant_name, t.category AS tenant_category,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.phone, u.job_title,
+         t.id AS tenant_id, t.name AS tenant_name, t.category AS tenant_category, t.plan_tier, t.deactivated_at AS org_deactivated_at,
+         (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
+         (SELECT count(*)::int FROM batches b WHERE b.tenant_id = t.id AND b.status = 'active') AS active_batches,
+         (SELECT coalesce(nullif(concat_ws(' ', m.first_name, m.last_name), ''), m.email) FROM users m WHERE m.id = coalesce(t.account_manager_id, t.managed_by)) AS owner_name,
          count(l.id)::int AS learner_count,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          (SELECT coalesce(json_agg(mgr), '[]'::json) FROM (
@@ -472,9 +483,10 @@ adminRouter.get("/org-admins", requireAuth, async (req: AuthedRequest, res, next
        FROM users u
        JOIN tenants t ON t.id = u.tenant_id
        LEFT JOIN users l ON l.tenant_id = t.id AND l.role = 'learner' AND l.deleted_at IS NULL
-       WHERE u.role = 'org_admin'
+       WHERE u.role = 'org_admin' ${scope.sql}
        GROUP BY u.id, t.id
        ORDER BY u.created_at DESC`,
+      scope.params,
     );
     res.json({
       orgAdmins: result.rows.map((r) => ({
@@ -491,6 +503,13 @@ adminRouter.get("/org-admins", requireAuth, async (req: AuthedRequest, res, next
         hasLoggedIn: r.has_logged_in,
         managers: r.managers,
         createdAt: r.created_at,
+        phone: r.phone,
+        jobTitle: r.job_title,
+        planTier: r.plan_tier,
+        orgActive: !r.org_deactivated_at,
+        lastLoginAt: r.last_login_at,
+        activeBatches: r.active_batches,
+        ownerName: r.owner_name,
       })),
     });
   } catch (err) {
@@ -511,7 +530,7 @@ adminRouter.get("/org-admins/:id/activity", requireAuth, async (req: AuthedReque
        WHERE u.id = $1 AND u.role = 'org_admin'`,
       [req.params.id],
     );
-    if (orgAdmin.rowCount === 0) return res.status(404).json({ error: "org_admin_not_found" });
+    if (orgAdmin.rowCount === 0 || !(await staffOwnsTenant(req, orgAdmin.rows[0].tenant_id))) return res.status(404).json({ error: "org_admin_not_found" });
     const oa = orgAdmin.rows[0];
     const tenantId = oa.tenant_id;
 
@@ -567,9 +586,13 @@ adminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, next) 
   try {
     const { clause, params } = orgScopeClause(req);
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at,
-         t.name AS tenant_name, t.category AS tenant_category,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.job_title, u.license_allotment,
+         t.id AS tenant_id, t.name AS tenant_name, t.category AS tenant_category,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
+         (SELECT max(le.created_at) FROM login_events le WHERE le.user_id = u.id) AS last_login_at,
+         (SELECT count(*)::int FROM license_assignments a WHERE a.source = 'manager' AND a.source_manager_id = u.id AND a.reclaimed_at IS NULL) AS licenses_used,
+         (SELECT count(DISTINCT d.user_id)::int FROM learner_activity_daily d JOIN users x ON x.id = d.user_id
+            WHERE x.batch_id IN (SELECT y.batch_id FROM batch_managers y WHERE y.user_id = u.id) AND d.sessions > 0 AND d.day > current_date - 7) AS active7,
          coalesce(array_agg(DISTINCT b.name) FILTER (WHERE b.id IS NOT NULL), '{}') AS batch_names,
          count(DISTINCT l.id)::int AS learner_count
        FROM users u
@@ -596,6 +619,12 @@ adminRouter.get("/managers", requireAuth, async (req: AuthedRequest, res, next) 
         active: !r.deleted_at,
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
+        tenantId: r.tenant_id,
+        jobTitle: r.job_title,
+        lastLoginAt: r.last_login_at,
+        licensesAllotted: r.license_allotment,
+        licensesUsed: r.licenses_used,
+        activeLearners7d: r.active7,
       })),
     });
   } catch (err) {
@@ -610,7 +639,7 @@ adminRouter.get("/managers/:id/activity", requireAuth, async (req: AuthedRequest
   if (!requirePlatformAdmin(req, res)) return;
   try {
     const manager = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.tenant_id,
          t.name AS tenant_name, t.category AS tenant_category,
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
          coalesce(array_agg(DISTINCT b.name) FILTER (WHERE b.id IS NOT NULL), '{}') AS batch_names
@@ -622,7 +651,7 @@ adminRouter.get("/managers/:id/activity", requireAuth, async (req: AuthedRequest
        GROUP BY u.id, t.id`,
       [req.params.id],
     );
-    if (manager.rowCount === 0) return res.status(404).json({ error: "manager_not_found" });
+    if (manager.rowCount === 0 || !(await staffOwnsTenant(req, manager.rows[0].tenant_id))) return res.status(404).json({ error: "manager_not_found" });
     const mgr = manager.rows[0];
 
     const result = await pool.query(
@@ -710,8 +739,9 @@ adminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next) 
 // org/batch), not just the Individual Learners list — a Manager's or Org
 // Admin's learner rows open the same view.
 adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "viewLearnerInfo"))) return;
   try {
+    if (!(await staffCanSeeUser(req, String(req.params.id)))) return res.status(404).json({ error: "learner_not_found" });
     const learnerResult = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.created_at, u.deleted_at, u.participant_id,
          t.name AS tenant_name, t.type AS tenant_type, t.category AS tenant_category, b.name AS batch_name
@@ -842,8 +872,8 @@ adminRouter.get("/learners/:id/profile", requireAuth, async (req: AuthedRequest,
 // Orgs with no owning admin (pre-dating this feature) show to nobody in
 // the Admin console, only to Super Admin.
 function orgScopeClause(req: AuthedRequest): { clause: string; params: string[] } {
-  if (req.user!.role === "super_admin") return { clause: "", params: [] };
-  return { clause: "AND t.managed_by = $1", params: [req.user!.id] };
+  const s = orgScope(req);
+  return { clause: s.sql, params: s.params };
 }
 
 // An Admin's own dashboard — much smaller than Super Admin's, matching the
@@ -998,7 +1028,7 @@ const onboardOrgSchema = z.object({
 // least attributed to the Admin who created them, even though nothing
 // filters by it yet.
 adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res)) return;
+  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const body = onboardOrgSchema.parse(req.body);
     const taxProblem = taxIdProblem(body.country, body.taxId);
@@ -1056,7 +1086,7 @@ const editOrgSchema = z.object({
 });
 
 adminRouter.patch("/organizations/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res)) return;
+  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const body = editOrgSchema.parse(req.body);
     const result = await pool.query(
@@ -1073,7 +1103,7 @@ adminRouter.patch("/organizations/:id", requireAuth, async (req: AuthedRequest, 
 // Deactivating reuses tenants.deactivated_at (already sat there unused since
 // the roles migration) rather than inventing a second soft-delete field.
 adminRouter.delete("/organizations/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res)) return;
+  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const result = await pool.query(
       `UPDATE tenants SET deactivated_at = now() WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NULL AND managed_by = $2 RETURNING id`,
@@ -1092,7 +1122,7 @@ adminRouter.delete("/organizations/:id", requireAuth, async (req: AuthedRequest,
 });
 
 adminRouter.post("/organizations/:id/reactivate", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdminOnly(req, res)) return;
+  if (!requireAdminOnly(req, res) || !(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const result = await pool.query(
       `UPDATE tenants SET deactivated_at = NULL WHERE id = $1 AND type = 'cohort' AND deactivated_at IS NOT NULL AND managed_by = $2 RETURNING id`,
@@ -1100,27 +1130,6 @@ adminRouter.post("/organizations/:id/reactivate", requireAuth, async (req: Authe
     );
     if (result.rowCount === 0) return res.status(404).json({ error: "organization_not_found" });
     res.json({ id: req.params.id });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Every batch across every organization, for the learner-invite picker below
-// — platform-wide for now, same caveat as the rest of this console.
-adminRouter.get("/console/batches", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
-  try {
-    const { clause, params } = orgScopeClause(req);
-    const result = await pool.query(
-      `SELECT b.id, b.name, t.name AS org_name
-       FROM batches b JOIN tenants t ON t.id = b.tenant_id
-       WHERE t.deactivated_at IS NULL ${clause}
-       ORDER BY t.name, b.name`,
-      params,
-    );
-    res.json({
-      batches: result.rows.map((r) => ({ id: r.id, name: r.name, orgName: r.org_name })),
-    });
   } catch (err) {
     next(err);
   }
@@ -1135,20 +1144,25 @@ adminRouter.get("/console/learners", requireAuth, async (req: AuthedRequest, res
   try {
     const { clause, params } = orgScopeClause(req);
     const result = await pool.query(
-      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id,
-         t.name AS org_name, t.type AS tenant_type, t.category AS org_category, b.name AS batch_name,
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, u.department, u.employee_id,
+         t.id AS tenant_id, t.name AS org_name, t.type AS tenant_type, t.category AS org_category, b.id AS batch_id, b.name AS batch_name,
+         EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
+         (SELECT max(d.day) FROM learner_activity_daily d WHERE d.user_id = u.id AND d.sessions > 0) AS last_active,
+         (SELECT pl.cefr_level FROM placements pl WHERE pl.user_id = u.id ORDER BY pl.taken_at DESC LIMIT 1) AS cefr,
          count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
        FROM users u
        JOIN tenants t ON t.id = u.tenant_id
        LEFT JOIN batches b ON b.id = u.batch_id
        LEFT JOIN sessions s ON s.user_id = u.id
-       WHERE u.role = 'learner' AND (t.type != 'cohort' OR (true ${clause}))
-       GROUP BY u.id, t.name, t.type, t.category, b.name
+       WHERE u.role = 'learner' AND t.type = 'cohort' AND u.erased_at IS NULL ${clause}
+       GROUP BY u.id, t.id, b.id
        ORDER BY u.created_at DESC`,
       params,
     );
+    const access = await learnerAccessMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
+        license: access.get(r.id),
         id: r.id,
         participantId: r.participant_id ?? null,
         email: r.email,
@@ -1160,98 +1174,15 @@ adminRouter.get("/console/learners", requireAuth, async (req: AuthedRequest, res
         sessionCount: r.session_count,
         active: !r.deleted_at,
         createdAt: r.created_at,
+        tenantId: r.tenant_id,
+        batchId: r.batch_id,
+        department: r.department,
+        employeeId: r.employee_id,
+        hasLoggedIn: r.has_logged_in,
+        lastActiveOn: r.last_active,
+        cefr: r.cefr,
       })),
     });
-  } catch (err) {
-    next(err);
-  }
-});
-
-const onboardOrgLearnerSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  batchId: z.string().uuid(),
-});
-
-adminRouter.post("/console/learners", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
-  try {
-    const body = onboardOrgLearnerSchema.parse(req.body);
-    const batch = await pool.query(
-      `SELECT b.tenant_id FROM batches b JOIN tenants t ON t.id = b.tenant_id
-       WHERE b.id = $1 AND (t.managed_by = $2 OR $3)`,
-      [body.batchId, req.user!.id, req.user!.role === "super_admin"],
-    );
-    if (batch.rowCount === 0) return res.status(400).json({ error: "invalid_batch" });
-
-    const { id } = await createAndInviteUser({
-      role: "learner",
-      tenantId: batch.rows[0].tenant_id,
-      batchId: body.batchId,
-      email: body.email,
-      firstName: body.firstName,
-      lastName: body.lastName,
-      roleLabel: "a Learner",
-      invitedBy: req.user!.id,
-    });
-    res.status(201).json({ id, email: body.email });
-  } catch (err) {
-    if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
-      return res.status(409).json({ error: "email_already_registered" });
-    }
-    next(err);
-  }
-});
-
-const bulkOrgLearnerRowSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-});
-
-adminRouter.post("/console/learners/bulk", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requirePlatformAdmin(req, res)) return;
-  try {
-    const body = z.object({ batchId: z.string().uuid(), rows: z.array(z.unknown()).max(MAX_BULK_ROWS) }).parse(req.body);
-    const batch = await pool.query(
-      `SELECT b.tenant_id FROM batches b JOIN tenants t ON t.id = b.tenant_id
-       WHERE b.id = $1 AND (t.managed_by = $2 OR $3)`,
-      [body.batchId, req.user!.id, req.user!.role === "super_admin"],
-    );
-    if (batch.rowCount === 0) return res.status(400).json({ error: "invalid_batch" });
-    const tenantId = batch.rows[0].tenant_id;
-
-    const results: { email: string; status: "created" | "duplicate" | "invalid"; message?: string }[] = [];
-    for (const raw of body.rows) {
-      const parsed = bulkOrgLearnerRowSchema.safeParse(raw);
-      if (!parsed.success) {
-        const emailGuess = typeof (raw as Record<string, unknown>)?.email === "string" ? (raw as { email: string }).email : "(unknown)";
-        results.push({ email: emailGuess, status: "invalid", message: parsed.error.issues[0]?.message ?? "Invalid row" });
-        continue;
-      }
-      try {
-        await createAndInviteUser({
-          role: "learner",
-          tenantId,
-          batchId: body.batchId,
-          email: parsed.data.email,
-          firstName: parsed.data.firstName,
-          lastName: parsed.data.lastName,
-          roleLabel: "a Learner",
-          invitedBy: req.user!.id,
-        });
-        results.push({ email: parsed.data.email, status: "created" });
-      } catch (err) {
-        if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
-          results.push({ email: parsed.data.email, status: "duplicate" });
-        } else {
-          results.push({ email: parsed.data.email, status: "invalid", message: "Something went wrong creating this account." });
-        }
-      }
-    }
-
-    res.status(201).json({ results });
   } catch (err) {
     next(err);
   }
@@ -1263,7 +1194,7 @@ adminRouter.post("/console/learners/bulk", requireAuth, async (req: AuthedReques
 async function staffOrg(req: AuthedRequest, res: import("express").Response): Promise<string | null> {
   if (!requirePlatformAdmin(req, res)) return null;
   const id = String(req.params.id);
-  const r = await pool.query(`SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3)`, [
+  const r = await pool.query(`SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3 OR account_manager_id = $3)`, [
     id,
     req.user!.role === "super_admin",
     req.user!.id,
@@ -1278,6 +1209,7 @@ async function staffOrg(req: AuthedRequest, res: import("express").Response): Pr
 // Replace the Org Admin — they left, or the account is unrecoverable.
 adminRouter.post("/organizations/:id/org-admin", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    if (!(await requirePermission(req, res, "manageOrganizations"))) return;
     const tenantId = await staffOrg(req, res);
     if (!tenantId) return;
     const body = newOrgAdminSchema.parse(req.body);
@@ -1304,6 +1236,7 @@ adminRouter.post("/organizations/:id/org-admin", requireAuth, async (req: Authed
 // or they're locked out.
 adminRouter.post("/organizations/:id/org-admin/resend", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    if (!(await requirePermission(req, res, "manageOrganizations"))) return;
     const tenantId = await staffOrg(req, res);
     if (!tenantId) return;
     const oa = await pool.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [tenantId]);

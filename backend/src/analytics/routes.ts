@@ -1,6 +1,7 @@
 import { Router, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
+import { requirePermission } from "../admin/staff.js";
 import { assertFeature } from "../plans/service.js";
 import { TtlCache } from "../lib/ttlCache.js";
 import { batchAnalytics, batchCsv, batchesInScope, learnersCsv, overview, type Scope } from "./service.js";
@@ -18,8 +19,10 @@ async function resolveScope(req: AuthedRequest, res: Response): Promise<(Scope &
   const u = req.user!;
   if (u.role === "super_admin") return { tenantIds: null, includeIndividuals: true, label: "All learners", tenantId: null, role: u.role };
   if (u.role === "admin") {
-    const r = await pool.query(`SELECT id FROM tenants WHERE managed_by = $1 AND type = 'cohort'`, [u.id]);
-    return { tenantIds: r.rows.map((x) => x.id), includeIndividuals: false, label: "Organizations you onboarded", tenantId: null, role: u.role };
+    // Reports need the "View reports" permission.
+    if (!(await requirePermission(req, res, "viewReports"))) return null;
+    const r = await pool.query(`SELECT id FROM tenants WHERE (managed_by = $1 OR account_manager_id = $1) AND type = 'cohort'`, [u.id]);
+    return { tenantIds: r.rows.map((x) => x.id), includeIndividuals: false, label: "Your organizations", tenantId: null, role: u.role };
   }
   if (u.role === "org_admin" && u.tenantId) {
     return { tenantIds: [u.tenantId], includeIndividuals: false, label: "Your organization", tenantId: u.tenantId, role: u.role };

@@ -7,7 +7,10 @@ interface Rule {
   method: "POST" | "PATCH" | "PUT" | "DELETE";
   path: string; // relative to where the router is mounted, e.g. "/batches/:id"
   action: string;
-  targetType: "batch" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user" | "certificate";
+  targetType: "batch" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user" | "certificate" | "admin";
+  // Staff routes act on an organization named in the path, or created by
+  // the request; the entry belongs to that organization's log.
+  tenant?: "target" | "response";
 }
 
 const SECRET_KEYS = /pass|token|secret|code|otp/i;
@@ -41,6 +44,7 @@ async function labelFor(id: string): Promise<string | null> {
   const r = await pool.query(
     `SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS l FROM users WHERE id = $1
      UNION ALL SELECT name FROM batches WHERE id = $1
+     UNION ALL SELECT name FROM tenants WHERE id = $1
      LIMIT 1`,
     [id],
   );
@@ -78,8 +82,9 @@ export function auditTrail(rules: Rule[]) {
           label ??
           (id ? await labelFor(id).catch(() => null) : null) ??
           ((body.name as string) || (body.email as string) || null);
+        const responseTenant = (responseBody as { tenantId?: string } | null)?.tenantId;
         await recordAudit({
-          tenantId: req.user!.tenantId,
+          tenantId: rule.tenant === "target" ? targetId : rule.tenant === "response" && typeof responseTenant === "string" ? responseTenant : req.user!.tenantId,
           actorId: req.user!.id,
           actorRole: req.user!.role,
           action: rule.action,
@@ -156,4 +161,24 @@ export const CERTIFICATE_AUDIT: Rule[] = [
   { method: "DELETE", path: "/org/:id", action: "certificate.revoked", targetType: "certificate" },
   { method: "POST", path: "/manager/issue", action: "certificate.issued", targetType: "certificate" },
   { method: "DELETE", path: "/manager/:id", action: "certificate.revoked", targetType: "certificate" },
+];
+
+// Edstellar staff actions, relative to /api/admin.
+export const STAFF_AUDIT: Rule[] = [
+  { method: "POST", path: "/admins", action: "staff.admin_invited", targetType: "admin" },
+  { method: "PATCH", path: "/admins/:id", action: "staff.admin_updated", targetType: "admin" },
+  { method: "DELETE", path: "/admins/:id", action: "staff.admin_deactivated", targetType: "admin" },
+  { method: "POST", path: "/admins/:id/reactivate", action: "staff.admin_reactivated", targetType: "admin" },
+  { method: "POST", path: "/organizations", action: "organization.onboarded", targetType: "organization", tenant: "response" },
+  { method: "PATCH", path: "/organizations/:id", action: "organization.updated", targetType: "organization", tenant: "target" },
+  { method: "DELETE", path: "/organizations/:id", action: "organization.deactivated", targetType: "organization", tenant: "target" },
+  { method: "POST", path: "/organizations/:id/reactivate", action: "organization.reactivated", targetType: "organization", tenant: "target" },
+  { method: "PATCH", path: "/organizations/:id/owner", action: "organization.owner_changed", targetType: "organization", tenant: "target" },
+  { method: "PATCH", path: "/organizations/:id/commercial", action: "organization.contract_updated", targetType: "organization", tenant: "target" },
+  { method: "POST", path: "/individuals", action: "learner.invited", targetType: "learner" },
+  { method: "POST", path: "/individuals/bulk", action: "learner.bulk_invited", targetType: "learner" },
+  { method: "POST", path: "/individuals/:id/access", action: "license.comp", targetType: "learner" },
+  { method: "POST", path: "/individuals/:id/deactivate", action: "learner.deactivated", targetType: "learner" },
+  { method: "POST", path: "/individuals/:id/reactivate", action: "learner.reactivated", targetType: "learner" },
+  { method: "POST", path: "/individuals/:id/resend-invite", action: "learner.invite_resent", targetType: "learner" },
 ];

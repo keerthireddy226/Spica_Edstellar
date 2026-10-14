@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Router, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
+import { requirePermission, requireStaff, staffOwnsTenant } from "../admin/staff.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { PILOT_DEFAULT_DAYS, PILOT_DEFAULT_LICENSES, PLAN_TIERS, TIER_LABELS } from "./config.js";
 import {
@@ -46,17 +47,11 @@ plansRouter.post("/enterprise-inquiry", requireAuth, async (req: AuthedRequest, 
 
 // ---- Admin / Super Admin: set tier, negotiated price, pilots ----
 
-async function adminOrg(req: AuthedRequest, res: Response): Promise<string | null> {
-  if (!req.user || !["admin", "super_admin"].includes(req.user.role)) {
-    res.status(403).json({ error: "forbidden" });
-    return null;
-  }
+// An organization staff may see; `write` also needs "Manage organizations".
+async function adminOrg(req: AuthedRequest, res: Response, write = false): Promise<string | null> {
+  if (!(write ? await requirePermission(req, res, "manageOrganizations") : requireStaff(req, res))) return null;
   const tenantId = String(req.params.tenantId);
-  const result = await pool.query(
-    `SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3)`,
-    [tenantId, req.user.role === "super_admin", req.user.id],
-  );
-  if (result.rowCount === 0) {
+  if (!(await staffOwnsTenant(req, tenantId))) {
     res.status(404).json({ error: "organization_not_found" });
     return null;
   }
@@ -76,7 +71,7 @@ plansRouter.get("/admin/orgs/:tenantId", requireAuth, async (req: AuthedRequest,
 
 plansRouter.patch("/admin/orgs/:tenantId", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await adminOrg(req, res);
+    const tenantId = await adminOrg(req, res, true);
     if (!tenantId) return;
     const body = z
       .object({
@@ -123,7 +118,7 @@ plansRouter.patch("/admin/orgs/:tenantId", requireAuth, async (req: AuthedReques
 
 plansRouter.post("/admin/orgs/:tenantId/pilot", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await adminOrg(req, res);
+    const tenantId = await adminOrg(req, res, true);
     if (!tenantId) return;
     const body = z
       .object({
@@ -141,7 +136,7 @@ plansRouter.post("/admin/orgs/:tenantId/pilot", requireAuth, async (req: AuthedR
 
 plansRouter.post("/admin/orgs/:tenantId/pilot/end", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await adminOrg(req, res);
+    const tenantId = await adminOrg(req, res, true);
     if (!tenantId) return;
     const ok = await endPilot({ tenantId, actorId: req.user!.id, note: "Ended by Admin" });
     if (!ok) return res.status(400).json({ error: "no_active_pilot" });

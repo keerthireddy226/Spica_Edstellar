@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
 import { requireAuth, requireAdmin, type AuthedRequest } from "../auth/middleware.js";
+import { orgScope, requirePermission, staffCanSeeUser } from "../admin/staff.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendPlacementReminderEmail } from "../auth/mailer.js";
 import { submitAttemptSchema } from "./schemas.js";
@@ -596,21 +597,27 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
 
 // --- Admin review surface (Phase 2 async certification) ---
 
+// Edstellar staff with "Score review" only. An Admin sees learners in their
+// own organizations plus individual learners; a Super Admin sees everyone.
 placementRouter.get("/admin/pending-review", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "scoreReview"))) return;
   try {
+    const scope = orgScope(req, "t", 1);
     const result = await pool.query(
-      `SELECT p.id, p.user_id, u.email, p.taken_at, p.overall_percent, p.cefr_level,
+      `SELECT p.id, p.user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name, p.taken_at, p.overall_percent, p.cefr_level,
+              CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
               json_agg(json_build_object(
                 'decision', fcr.decision, 'similarityScore', fcr.similarity_score,
                 'sampleUri', fcr.sample_uri, 'createdAt', fcr.created_at
               ) ORDER BY fcr.created_at) AS flagged_checks
        FROM placements p
        JOIN users u ON u.id = p.user_id
+       JOIN tenants t ON t.id = u.tenant_id
        JOIN face_check_results fcr ON fcr.session_id = p.session_id AND fcr.flagged_for_review
-       WHERE p.status = 'pending_review'
-       GROUP BY p.id, u.email
+       WHERE p.status = 'pending_review' ${scope.sql ? `AND (t.type <> 'cohort' OR (true ${scope.sql}))` : ""}
+       GROUP BY p.id, u.id, t.id
        ORDER BY p.taken_at ASC`,
+      scope.params,
     );
     res.json({ placements: result.rows });
   } catch (err) {
@@ -624,9 +631,11 @@ const placementReviewSchema = z.object({
 });
 
 placementRouter.post("/admin/:id/review", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireAdmin(req, res)) return;
+  if (!(await requirePermission(req, res, "scoreReview"))) return;
   try {
     const body = placementReviewSchema.parse(req.body);
+    const owner = await pool.query(`SELECT user_id FROM placements WHERE id = $1`, [req.params.id]);
+    if (!owner.rows[0] || !(await staffCanSeeUser(req, owner.rows[0].user_id))) return res.status(404).json({ error: "not_pending_review" });
     const result = await pool.query(
       `UPDATE placements SET status = $1, reviewed_by = $2, reviewed_at = now(), review_note = $3
        WHERE id = $4 AND status = 'pending_review'

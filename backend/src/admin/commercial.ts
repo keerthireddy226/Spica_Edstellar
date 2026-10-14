@@ -7,6 +7,7 @@ import { recordAudit } from "../audit/service.js";
 import { PaymentError } from "../payments/service.js";
 import { CreditNoteError, cancelInvoiceOrder, issueCreditNote, listCreditNotes, markInvoiceOrderPaid } from "../payments/invoiceOrders.js";
 import { orgHealth } from "./health.js";
+import { requirePermission } from "./staff.js";
 
 // Edstellar-side account management for organizations: contracts, account
 // managers, invoice payments and credit notes, health, and "view as".
@@ -21,8 +22,8 @@ function staff(req: AuthedRequest, res: Response): boolean {
 }
 
 // Organizations this person may act on: an Admin's own, or any for Super Admin.
-async function staffOrg(req: AuthedRequest, res: Response): Promise<string | null> {
-  if (!staff(req, res)) return null;
+async function staffOrg(req: AuthedRequest, res: Response, write = false): Promise<string | null> {
+  if (!(write ? await requirePermission(req, res, "manageOrganizations") : staff(req, res))) return null;
   const id = String(req.params.id);
   const r = await pool.query(
     `SELECT 1 FROM tenants WHERE id = $1 AND type = 'cohort' AND ($2::boolean OR managed_by = $3 OR account_manager_id = $3)`,
@@ -97,7 +98,7 @@ commercialRouter.get("/organizations/:id/commercial", requireAuth, async (req: A
 
 commercialRouter.patch("/organizations/:id/commercial", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await staffOrg(req, res);
+    const tenantId = await staffOrg(req, res, true);
     if (!tenantId) return;
     const body = z
       .object({
@@ -155,7 +156,7 @@ commercialRouter.patch("/organizations/:id/commercial", requireAuth, async (req:
 
 commercialRouter.post("/organizations/:id/orders/:orderId/mark-paid", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await staffOrg(req, res);
+    const tenantId = await staffOrg(req, res, true);
     if (!tenantId) return;
     const body = z.object({ reference: z.string().trim().min(1).max(100) }).parse(req.body);
     const r = await markInvoiceOrderPaid({ orderId: String(req.params.orderId), tenantId, reference: body.reference, actorId: req.user!.id });
@@ -177,7 +178,7 @@ commercialRouter.post("/organizations/:id/orders/:orderId/mark-paid", requireAut
 
 commercialRouter.post("/organizations/:id/orders/:orderId/cancel", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await staffOrg(req, res);
+    const tenantId = await staffOrg(req, res, true);
     if (!tenantId) return;
     const ok = await cancelInvoiceOrder(String(req.params.orderId), tenantId);
     if (!ok) return res.status(404).json({ error: "order_not_found" });
@@ -189,7 +190,7 @@ commercialRouter.post("/organizations/:id/orders/:orderId/cancel", requireAuth, 
 
 commercialRouter.post("/organizations/:id/invoices/:invoiceId/credit-notes", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await staffOrg(req, res);
+    const tenantId = await staffOrg(req, res, true);
     if (!tenantId) return;
     const body = z
       .object({
@@ -255,7 +256,7 @@ commercialRouter.get("/health", requireAuth, async (req: AuthedRequest, res, nex
 // staff member's own session is kept and restored on exit.
 commercialRouter.post("/organizations/:id/view-as", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const tenantId = await staffOrg(req, res);
+    const tenantId = await staffOrg(req, res, true);
     if (!tenantId) return;
     const oa = (await pool.query(`SELECT id, email FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [tenantId])).rows[0];
     if (!oa) return res.status(404).json({ error: "org_admin_not_found" });
