@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
-export type Role = "learner" | "org_admin" | "admin" | "super_admin";
+export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager";
 
 type AuthUser = {
   id: string;
@@ -11,7 +11,36 @@ type AuthUser = {
   tenantId?: string;
   firstName?: string;
   lastName?: string;
+  createdAt?: string;
+  lastLoginAt?: string | null;
+  department?: string | null;
+  permissions?: Record<string, unknown>;
 };
+
+export interface LoginHistoryEntry {
+  ipAddress: string | null;
+  device: string;
+  occurredAt: string;
+}
+
+export interface ActiveSession {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
+export function getLoginHistory(): Promise<{ logins: LoginHistoryEntry[] }> {
+  return api("/auth/me/login-history");
+}
+
+export function getActiveSessions(): Promise<{ sessions: ActiveSession[] }> {
+  return api("/auth/me/sessions");
+}
+
+export function revokeSession(id: string): Promise<void> {
+  return api(`/auth/me/sessions/${id}`, { method: "DELETE" });
+}
 
 type AuthState = {
   user: AuthUser | null;

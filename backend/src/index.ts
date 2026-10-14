@@ -14,6 +14,9 @@ import { roadmapRouter } from "./roadmap/routes.js";
 import { dashboardRouter } from "./dashboard/routes.js";
 import { practiceRouter } from "./practice/routes.js";
 import { practiceTestsRouter } from "./practiceTests/routes.js";
+import { adminRouter } from "./admin/routes.js";
+import { orgAdminRouter } from "./orgAdmin/routes.js";
+import { managerRouter } from "./manager/routes.js";
 import { coachRouter } from "./coach/routes.js";
 import { faceRouter } from "./face/routes.js";
 import { requireAuth } from "./auth/middleware.js";
@@ -65,6 +68,9 @@ app.use("/api/practice", practiceRouter);
 app.use("/api/practice-tests", practiceTestsRouter);
 app.use("/api/coach", coachRouter);
 app.use("/api/face", faceRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/org-admin", orgAdminRouter);
+app.use("/api/manager", managerRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {

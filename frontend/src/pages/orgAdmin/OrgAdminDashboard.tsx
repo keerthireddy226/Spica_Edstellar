@@ -1,0 +1,175 @@
+import { useEffect, useState } from "react";
+import { Layers, ShieldCheck, Users, CalendarCheck, Pencil, Check, X, UserPlus, CheckCircle2, Award } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { cardGradient } from "@/lib/cardGradients";
+import { getOrgOverview, updateOrganizationName, type OrgAdminOverview } from "@/api/orgAdmin";
+import type { ActivityKind } from "@/api/admin";
+
+const SESSION_TYPE_LABEL: Record<string, string> = {
+  practice: "Practice",
+  mocktest: "Mock Test",
+  placement: "Placement",
+  coach: "Coach Mode",
+};
+
+const ACTIVITY_ICON: Record<ActivityKind, LucideIcon> = {
+  signup: UserPlus,
+  admin_created: UserPlus,
+  session_completed: CheckCircle2,
+  placement: Award,
+};
+
+function activitySentence(item: OrgAdminOverview["activityFeed"][number]): string {
+  const who = item.who.trim() || "Someone";
+  switch (item.kind) {
+    case "signup":
+      return `${who} — ${item.detail === "manager" ? "Manager" : "Learner"} onboarded`;
+    case "session_completed":
+      return `${who} completed a ${SESSION_TYPE_LABEL[item.detail ?? ""] ?? item.detail} session`;
+    case "placement":
+      return `${who}'s placement result: ${item.detail === "certified" ? "Certified" : item.detail === "fraud_confirmed" ? "Fraud flagged" : "Pending review"}`;
+    default:
+      return who;
+  }
+}
+
+function timeAgo(iso: string): string {
+  const ms = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(ms / 60000);
+  if (mins < 60) return `${Math.max(mins, 0)}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
+function RecentActivity({ data }: { data: OrgAdminOverview["activityFeed"] }) {
+  return (
+    <div className="bg-navy/5 border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+      <h3 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">Recent activity</h3>
+      {data.length === 0 ? (
+        <p className="text-sm text-muted">Nothing has happened yet.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {data.map((item, i) => {
+            const Icon = ACTIVITY_ICON[item.kind];
+            return (
+              <div key={i} className="flex items-center gap-3 text-sm">
+                <span className="h-8 w-8 rounded-full bg-navy/10 text-navy flex items-center justify-center shrink-0">
+                  <Icon size={16} strokeWidth={1.8} />
+                </span>
+                <span className="text-ink flex-1">{activitySentence(item)}</span>
+                <span className="text-muted text-xs shrink-0">{timeAgo(item.occurredAt)}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function OrgNameEditor({ overview, onRenamed }: { overview: OrgAdminOverview; onRenamed: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(overview.organizationName ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      await updateOrganizationName(name.trim());
+      onRenamed(name.trim());
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => {
+          setName(overview.organizationName ?? "");
+          setEditing(true);
+        }}
+        className="flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors cursor-pointer"
+      >
+        <Pencil size={13} /> Rename organization
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm text-ink focus:border-navy focus:outline-none"
+      />
+      <button onClick={handleSave} disabled={saving} className="text-success hover:text-success/80 cursor-pointer disabled:opacity-50">
+        <Check size={18} />
+      </button>
+      <button onClick={() => setEditing(false)} className="text-muted hover:text-ink cursor-pointer">
+        <X size={18} />
+      </button>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, index }: { label: string; value: number; icon: LucideIcon; index: number }) {
+  return (
+    <div style={cardGradient(index)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4">
+      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
+        <Icon size={22} strokeWidth={1.8} />
+      </span>
+      <div>
+        <p className="text-2xl font-display font-bold text-white">{value}</p>
+        <p className="text-xs text-white/80">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+export function OrgAdminDashboard() {
+  const [overview, setOverview] = useState<OrgAdminOverview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getOrgOverview()
+      .then(setOverview)
+      .catch(() => setError("Could not load your organization."));
+  }, []);
+
+  if (error) return <p className="text-sm text-error">{error}</p>;
+  if (!overview) return <p className="text-sm text-muted">Loading…</p>;
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <div>
+        <h1 className="font-display font-bold text-2xl text-ink">{overview.organizationName ?? "Your organization"}</h1>
+        <div className="mt-1 flex items-center gap-3 flex-wrap">
+          <OrgNameEditor overview={overview} onRenamed={(name) => setOverview({ ...overview, organizationName: name })} />
+          {overview.onboardedBy && (
+            <span className="text-sm text-muted">· Onboarded by {overview.onboardedBy.name} ({overview.onboardedBy.email})</span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Batches" value={overview.totalBatches} icon={Layers} index={0} />
+        <StatCard label="Managers" value={overview.totalManagers} icon={ShieldCheck} index={1} />
+        <StatCard label="Learners" value={overview.totalLearners} icon={Users} index={2} />
+        <StatCard label="Sessions completed today" value={overview.sessionsCompletedToday} icon={CalendarCheck} index={3} />
+      </div>
+
+      {overview.totalBatches === 0 && (
+        <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
+          No batches yet — create one from the Batches page, then invite learners into it.
+        </p>
+      )}
+
+      <RecentActivity data={overview.activityFeed} />
+    </div>
+  );
+}

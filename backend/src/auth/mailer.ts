@@ -34,6 +34,19 @@ export async function sendFaceFallbackOtpEmail(email: string, code: string) {
   );
 }
 
+// New Admin/Org Admin accounts are created by a Super Admin, not self-signup —
+// reuses the same reset-password link/page, just with onboarding-appropriate
+// copy and a longer window than a real password reset (they may not check
+// email right away).
+export async function sendAdminInviteEmail(email: string, token: string, roleLabel: string) {
+  const link = `${FRONTEND_URL}/reset-password?token=${token}`;
+  await sendMail(
+    email,
+    "You've been added to Spica — Spica",
+    `You've been added as ${roleLabel} on Spica. Set your password to get started (this link expires in 24 hours):\n\n${link}\n\nIf you weren't expecting this, you can ignore this message.`,
+  );
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const link = `${FRONTEND_URL}/reset-password?token=${token}`;
   await sendMail(email, "Reset your password — Spica", `Reset your password by opening this link (expires in 30 minutes):\n\n${link}\n\nIf you didn't request this, ignore this message.`);

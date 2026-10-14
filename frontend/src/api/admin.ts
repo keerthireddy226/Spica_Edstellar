@@ -1,0 +1,421 @@
+import { api } from "@/lib/api";
+import type { BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
+
+export interface AdminStats {
+  totalLearners: number;
+  totalOrganizations: number;
+  totalUniversities: number;
+  totalAdmins: number;
+  sessionsCompletedToday: number;
+  partialSessionsToday: number;
+  signupsThisWeek: number;
+  activeNow: number;
+}
+
+export interface AdminPermissions {
+  manageOrganizations?: boolean;
+  inviteLearners?: boolean;
+  viewLearnerInfo?: boolean;
+  contentReview?: boolean;
+  scoreReview?: boolean;
+  viewReports?: boolean;
+}
+
+export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
+  manageOrganizations: "Manage organizations",
+  inviteLearners: "Invite / bulk-upload learners",
+  viewLearnerInfo: "View learner information",
+  contentReview: "Content review",
+  scoreReview: "Score review",
+  viewReports: "View reports",
+};
+
+export interface AdminAccount {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  department: string | null;
+  permissions: AdminPermissions;
+  managedOrgCount: number;
+  managedOrgNames: string[];
+  active: boolean;
+  hasLoggedIn: boolean;
+  createdAt: string;
+}
+
+export interface OnboardAdminPayload {
+  email: string;
+  firstName: string;
+  lastName: string;
+  department?: string;
+  permissions: AdminPermissions;
+}
+
+export interface EditAdminPayload {
+  firstName: string;
+  lastName: string;
+  department?: string;
+  permissions: AdminPermissions;
+}
+
+export interface OrgAdminAccount {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  tenantId: string;
+  tenantName: string;
+  tenantCategory: string | null;
+  learnerCount: number;
+  active: boolean;
+  hasLoggedIn: boolean;
+  managers: { id: string; name: string; learnerCount: number }[];
+  createdAt: string;
+}
+
+export interface ManagerAccount {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  tenantName: string;
+  tenantCategory: string | null;
+  batchNames: string[];
+  learnerCount: number;
+  active: boolean;
+  hasLoggedIn: boolean;
+  createdAt: string;
+}
+
+export interface IndividualLearnerAccount {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  plan: string;
+  sessionCount: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export type ActivityKind = "signup" | "admin_created" | "session_completed" | "placement";
+
+export interface AdminActivity {
+  needsAttention: number;
+  activityFeed: { kind: ActivityKind; who: string; detail: string | null; occurredAt: string }[];
+  sessionsByType: { type: string; count: number }[];
+  recentSignups: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    tenantName: string | null;
+    tenantType: string | null;
+    createdAt: string;
+    active: boolean;
+  }[];
+}
+
+export function getAdminStats(): Promise<AdminStats> {
+  return api("/admin/stats");
+}
+
+export function getAdminActivity(): Promise<AdminActivity> {
+  return api("/admin/activity");
+}
+
+export function getAdmins(): Promise<{ admins: AdminAccount[] }> {
+  return api("/admin/admins");
+}
+
+export function onboardAdmin(payload: OnboardAdminPayload): Promise<{ id: string; email: string }> {
+  return api("/admin/admins", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function editAdmin(id: string, payload: EditAdminPayload): Promise<{ id: string }> {
+  return api(`/admin/admins/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function deleteAdmin(id: string): Promise<void> {
+  return api(`/admin/admins/${id}`, { method: "DELETE" });
+}
+
+export function reactivateAdmin(id: string): Promise<{ id: string }> {
+  return api(`/admin/admins/${id}/reactivate`, { method: "POST" });
+}
+
+export interface BulkAdminRow {
+  email: string;
+  firstName: string;
+  lastName: string;
+  department?: string;
+}
+
+export interface BulkAdminResult {
+  email: string;
+  status: "created" | "duplicate" | "invalid";
+  message?: string;
+}
+
+export function onboardAdminsBulk(rows: BulkAdminRow[]): Promise<{ results: BulkAdminResult[] }> {
+  return api("/admin/admins/bulk", { method: "POST", body: JSON.stringify({ rows }) });
+}
+
+export function getOrgAdmins(): Promise<{ orgAdmins: OrgAdminAccount[] }> {
+  return api("/admin/org-admins");
+}
+
+export function getManagers(): Promise<{ managers: ManagerAccount[] }> {
+  return api("/admin/managers");
+}
+
+export interface AdminOnboardedOrg {
+  id: string;
+  name: string;
+  category: string | null;
+  learnerCount: number;
+  orgAdmin: { id: string; email: string; name: string } | null;
+  orgAdminStatus: "none" | "pending" | "active";
+  active: boolean;
+  managers: { id: string; name: string; email: string; learnerCount: number }[];
+  createdAt: string;
+}
+
+export function getAdminActivityDetail(id: string): Promise<{ organizations: AdminOnboardedOrg[] }> {
+  return api(`/admin/admins/${id}/activity`);
+}
+
+export interface OrgAdminDetail {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  tenantName: string;
+  tenantCategory: string | null;
+  active: boolean;
+  hasLoggedIn: boolean;
+  createdAt: string;
+}
+
+export interface OrgAdminOnboardedManager {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  batchNames: string[];
+  learnerCount: number;
+  active: boolean;
+  hasLoggedIn: boolean;
+  createdAt: string;
+}
+
+export function getOrgAdminActivityDetail(id: string): Promise<{ orgAdmin: OrgAdminDetail; managers: OrgAdminOnboardedManager[] }> {
+  return api(`/admin/org-admins/${id}/activity`);
+}
+
+export interface ManagerDetail {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  tenantName: string;
+  tenantCategory: string | null;
+  batchNames: string[];
+  active: boolean;
+  hasLoggedIn: boolean;
+  createdAt: string;
+}
+
+export interface ManagerOnboardedLearner {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  batchName: string | null;
+  sessionCount: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export function getManagerActivityDetail(id: string): Promise<{ manager: ManagerDetail; learners: ManagerOnboardedLearner[] }> {
+  return api(`/admin/managers/${id}/activity`);
+}
+
+export function getIndividualLearners(): Promise<{ learners: IndividualLearnerAccount[] }> {
+  return api("/admin/learners");
+}
+
+export interface AdminConsoleOrg {
+  id: string;
+  name: string;
+  category: string | null;
+  learnerCount: number;
+  hasOrgAdmin: boolean;
+  orgAdminStatus: "none" | "pending" | "active";
+  orgAdmin: { id: string; email: string; name: string } | null;
+  managers: { id: string; name: string; email: string; learnerCount: number }[];
+  active: boolean;
+}
+
+export interface AdminConsoleOverview {
+  organizations: AdminConsoleOrg[];
+  totalOrganizations: number;
+  totalLearners: number;
+  pendingInvitations: number;
+  scopedToAssignedOrgs: boolean;
+}
+
+export function getAdminConsoleOverview(): Promise<AdminConsoleOverview> {
+  return api("/admin/console/overview");
+}
+
+export interface ConsoleUserBreakdown {
+  companyLearners: number;
+  universityLearners: number;
+  otherOrgLearners: number;
+  individualLearners: number;
+}
+
+export function getConsoleUserBreakdown(): Promise<ConsoleUserBreakdown> {
+  return api("/admin/console/user-breakdown");
+}
+
+export interface OnboardOrgPayload {
+  name: string;
+  category: "company" | "university";
+  industry?: string;
+  expectedLearnerCount?: number;
+  orgAdmin: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  };
+}
+
+export function onboardOrganization(payload: OnboardOrgPayload): Promise<{ tenantId: string; orgAdminId: string }> {
+  return api("/admin/organizations", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export interface EditOrgPayload {
+  name: string;
+  category: "company" | "university";
+}
+
+export function editOrganization(id: string, payload: EditOrgPayload): Promise<{ id: string }> {
+  return api(`/admin/organizations/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+}
+
+export function deactivateOrganization(id: string): Promise<void> {
+  return api(`/admin/organizations/${id}`, { method: "DELETE" });
+}
+
+export function reactivateOrganization(id: string): Promise<{ id: string }> {
+  return api(`/admin/organizations/${id}/reactivate`, { method: "POST" });
+}
+
+export interface ConsoleBatch {
+  id: string;
+  name: string;
+  orgName: string;
+}
+
+export function getConsoleBatches(): Promise<{ batches: ConsoleBatch[] }> {
+  return api("/admin/console/batches");
+}
+
+export interface ConsoleLearner {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  type: "organization" | "university" | "individual";
+  orgName: string;
+  batchName: string | null;
+  sessionCount: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export function getConsoleLearners(): Promise<{ learners: ConsoleLearner[] }> {
+  return api("/admin/console/learners");
+}
+
+export interface OnboardConsoleLearnerPayload {
+  email: string;
+  firstName: string;
+  lastName: string;
+  batchId: string;
+}
+
+export function onboardConsoleLearner(payload: OnboardConsoleLearnerPayload): Promise<{ id: string; email: string }> {
+  return api("/admin/console/learners", { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function onboardConsoleLearnersBulk(batchId: string, rows: BulkLearnerRow[]): Promise<{ results: BulkLearnerResult[] }> {
+  return api("/admin/console/learners/bulk", { method: "POST", body: JSON.stringify({ batchId, rows }) });
+}
+
+export interface LearnerProfile {
+  learner: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    tenantName: string | null;
+    tenantType: string | null;
+    tenantCategory: string | null;
+    batchName: string | null;
+    active: boolean;
+    createdAt: string;
+  };
+  onboarding: {
+    complete: boolean;
+    examPreference: string | null;
+    goalLevel: string | null;
+    scoreTarget: string | null;
+    examReason: string | null;
+    hasAppliedForExam: boolean | null;
+    examDate: string | null;
+    targetPrepDays: number | null;
+    pastAttemptsStatus: string | null;
+    prevScore: string | null;
+    prevDate: string | null;
+    dailyMinutesPreference: number | null;
+  } | null;
+  placement: {
+    cefrLevel: string;
+    overallPercent: string;
+    status: string;
+    takenAt: string;
+    skillPercents: Record<string, number>;
+  } | null;
+  roadmap: {
+    pace: string;
+    minutesPerDay: number;
+    totalHoursEstimate: string;
+    generatedAt: string;
+  } | null;
+  progress: {
+    sessionsCount: number;
+    questionsCompleted: number;
+    practiceMinutes: string;
+    streakDays: number;
+    lastPracticeDate: string | null;
+    totalXp: number;
+    accuracyGraded: number;
+    accuracyCorrect: number;
+  } | null;
+  skillStats: { skill: string; minutes: string; accuracyCorrect: number; accuracyGraded: number }[];
+  activity: {
+    totalSessions: number;
+    genuinelyCompletedSessions: number;
+    lastSessionAt: string | null;
+    sessionsByType: { type: string; count: number }[];
+  };
+}
+
+export function getLearnerProfile(id: string): Promise<LearnerProfile> {
+  return api(`/admin/learners/${id}/profile`);
+}

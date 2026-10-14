@@ -22,6 +22,7 @@
       "errorEmailNotVerified": "Por favor verifica tu correo electrónico antes de iniciar sesión — revisa tu bandeja de entrada para el enlace de verificación.",
       "errorWrongPortal": "Esta cuenta no tiene acceso a través de esta página de inicio de sesión.",
       "errorAlreadyLoggedIn": "Esta cuenta ya tiene sesión iniciada en otro dispositivo. Cierra sesión allí primero.",
+      "errorOrganizationDeactivated": "Esta organización ha sido desactivada. Contacta a tu administrador.",
       "errorTooManyAttempts": "Demasiados intentos de inicio de sesión. Espera unos minutos e intenta de nuevo.",
       "errorGeneric": "Algo salió mal. Por favor verifica tu conexión e intenta de nuevo.",
       "forgotPassword": "¿Olvidaste tu contraseña?",

@@ -35,6 +35,8 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
         setError(t("auth.login.errorWrongPortal"));
       } else if (err instanceof Error && err.message === "already_logged_in") {
         setError(t("auth.login.errorAlreadyLoggedIn"));
+      } else if (err instanceof Error && err.message === "organization_deactivated") {
+        setError(t("auth.login.errorOrganizationDeactivated"));
       } else if (err instanceof Error && err.message === "too_many_attempts") {
         setError(t("auth.login.errorTooManyAttempts"));
       } else {

@@ -114,8 +114,9 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body);
     const result = await pool.query(
-      `SELECT id, password_hash, role, email_verified, first_name, last_name
-       FROM users WHERE email = $1 AND deleted_at IS NULL`,
+      `SELECT u.id, u.password_hash, u.role, u.email_verified, u.first_name, u.last_name, t.deactivated_at AS tenant_deactivated_at
+       FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id
+       WHERE u.email = $1 AND u.deleted_at IS NULL`,
       [body.email],
     );
     const user = result.rows[0];
@@ -124,6 +125,12 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
     }
     if (!user.email_verified) {
       return res.status(403).json({ error: "email_not_verified" });
+    }
+    // A deactivated organization blocks everyone in it — its Org Admin,
+    // its Managers, and its learners — the same way a soft-deleted account
+    // blocks login, without destroying anyone's history.
+    if (user.tenant_deactivated_at) {
+      return res.status(403).json({ error: "organization_deactivated" });
     }
     // Enforces the login portal as a real access boundary, not just a
     // different-looking page — a learner's credentials don't work at
@@ -191,7 +198,7 @@ authRouter.get("/me", async (req, res, next) => {
     if (!token) return res.status(401).json({ error: "not_authenticated" });
 
     const result = await pool.query(
-      `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name
+      `SELECT u.id, u.email, u.role, u.email_verified, u.tenant_id, u.first_name, u.last_name, u.created_at, u.department, u.permissions
        FROM auth_sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.session_token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now() AND u.deleted_at IS NULL`,
@@ -199,6 +206,12 @@ authRouter.get("/me", async (req, res, next) => {
     );
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: "not_authenticated" });
+
+    // Second-most-recent login — the most recent one is this very session.
+    const lastLogin = await pool.query(
+      `SELECT created_at FROM login_events WHERE user_id = $1 ORDER BY created_at DESC OFFSET 1 LIMIT 1`,
+      [user.id],
+    );
 
     res.json({
       id: user.id,
@@ -208,6 +221,10 @@ authRouter.get("/me", async (req, res, next) => {
       tenantId: user.tenant_id,
       firstName: user.first_name,
       lastName: user.last_name,
+      createdAt: user.created_at,
+      lastLoginAt: lastLogin.rows[0]?.created_at ?? null,
+      department: user.department,
+      permissions: user.permissions ?? {},
     });
   } catch (err) {
     next(err);
@@ -224,6 +241,94 @@ authRouter.patch("/me", requireAuth, async (req: AuthedRequest, res, next) => {
       body.lastName,
       req.user!.id,
     ]);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Crude device/browser label from the stored user agent — no new dependency,
+// just enough for a human skimming their own login history to recognize it.
+function describeUserAgent(ua: string | null): string {
+  if (!ua) return "Unknown device";
+  const browser = /Edg\//.test(ua)
+    ? "Edge"
+    : /Chrome\//.test(ua)
+      ? "Chrome"
+      : /Firefox\//.test(ua)
+        ? "Firefox"
+        : /Safari\//.test(ua)
+          ? "Safari"
+          : "Unknown browser";
+  const os = /Windows/.test(ua)
+    ? "Windows"
+    : /Mac OS X/.test(ua)
+      ? "macOS"
+      : /Android/.test(ua)
+        ? "Android"
+        : /Linux/.test(ua)
+          ? "Linux"
+          : /iPhone|iPad/.test(ua)
+            ? "iOS"
+            : "Unknown OS";
+  return `${browser} on ${os}`;
+}
+
+// Own login history only — never another account's, even for a Super Admin.
+authRouter.get("/me/login-history", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT ip_address, user_agent, created_at FROM login_events WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10`,
+      [req.user!.id],
+    );
+    res.json({
+      logins: result.rows.map((r) => ({
+        ipAddress: r.ip_address,
+        device: describeUserAgent(r.user_agent),
+        occurredAt: r.created_at,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Currently-active sessions only — the login flow already enforces one
+// active session per account, but this is also the view that lets someone
+// kill a stray session themselves instead of asking for a manual DB fix.
+authRouter.get("/me/sessions", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const currentToken = req.cookies?.[SESSION_COOKIE];
+    const currentHash = currentToken ? hashToken(currentToken) : null;
+    const result = await pool.query(
+      `SELECT id, session_token_hash, created_at, expires_at
+       FROM auth_sessions
+       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+       ORDER BY created_at DESC`,
+      [req.user!.id],
+    );
+    res.json({
+      sessions: result.rows.map((r) => ({
+        id: r.id,
+        createdAt: r.created_at,
+        expiresAt: r.expires_at,
+        isCurrent: r.session_token_hash === currentHash,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+authRouter.delete("/me/sessions/:id", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const result = await pool.query(
+      `UPDATE auth_sessions SET revoked_at = now()
+       WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL
+       RETURNING id`,
+      [req.params.id, req.user!.id],
+    );
+    if (!result.rows[0]) return res.status(404).json({ error: "session_not_found" });
     res.status(204).send();
   } catch (err) {
     next(err);

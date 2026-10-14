@@ -2,11 +2,16 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AuthContext, useAuth, useAuthState } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
+  ADMIN_CONSOLE_ONLY_ROLES,
   ADMIN_LOGIN_ALLOWED_ROLES,
   LANDING_ROUTE_BY_ROLE,
   LEARNER_LOGIN_ALLOWED_ROLES,
+  MANAGER_LOGIN_ALLOWED_ROLES,
+  MANAGER_ONLY_ROLES,
   ORG_ADMIN_LOGIN_ALLOWED_ROLES,
+  ORG_ADMIN_ONLY_ROLES,
   ROUTES,
+  SUPER_ADMIN_ONLY_ROLES,
 } from "@/constants/routes";
 import { Login } from "@/pages/Login";
 import { Signup } from "@/pages/Signup";
@@ -25,7 +30,24 @@ import { PracticeTests } from "@/pages/PracticeTests";
 import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
+import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { AdminsList } from "@/pages/admin/AdminsList";
+import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
+import { ManagersList } from "@/pages/admin/ManagersList";
+import { IndividualLearnersList } from "@/pages/admin/IndividualLearnersList";
+import { AdminProfile } from "@/pages/admin/AdminProfile";
+import { AdminConsoleDashboard } from "@/pages/admin/AdminConsoleDashboard";
+import { AdminOrganizations } from "@/pages/admin/AdminOrganizations";
+import { AdminUsers } from "@/pages/admin/AdminUsers";
+import { AdminManagersList } from "@/pages/admin/AdminManagersList";
+import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
+import { OrgAdminBatches } from "@/pages/orgAdmin/OrgAdminBatches";
+import { OrgAdminManagers } from "@/pages/orgAdmin/OrgAdminManagers";
+import { OrgAdminLearners } from "@/pages/orgAdmin/OrgAdminLearners";
+import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
+import { ManagerLearners } from "@/pages/manager/ManagerLearners";
 import { AppLayout } from "@/components/AppShell/AppLayout";
+import { AdminLayout } from "@/components/AppShell/AdminLayout";
 
 // Unmatched path: logged-in goes to their landing page, logged-out to learner login.
 function DefaultRedirect() {
@@ -46,6 +68,7 @@ function App() {
           path={ROUTES.ORG_ADMIN_LOGIN}
           element={<Login allowedRoles={ORG_ADMIN_LOGIN_ALLOWED_ROLES} />}
         />
+        <Route path={ROUTES.MANAGER_LOGIN} element={<Login allowedRoles={MANAGER_LOGIN_ALLOWED_ROLES} />} />
         <Route path={ROUTES.ADMIN_LOGIN} element={<Login allowedRoles={ADMIN_LOGIN_ALLOWED_ROLES} />} />
         <Route path="/superadmin/login" element={<Navigate to={ROUTES.ADMIN_LOGIN} replace />} />
         <Route path="/login" element={<Navigate to={ROUTES.LOGIN} replace />} />
@@ -99,7 +122,62 @@ function App() {
           <Route path={ROUTES.PRACTICE_TESTS} element={<PracticeTests />} />
           <Route path={ROUTES.TUTOR} element={<Tutor />} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
+        </Route>
+        {/* Super Admin's own console — every organization, manages other Admins. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={SUPER_ADMIN_ONLY_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboard />} />
+          <Route path={ROUTES.ADMIN_ADMINS} element={<AdminsList />} />
+          <Route path={ROUTES.ADMIN_ORG_ADMINS} element={<OrgAdminsList />} />
+          <Route path={ROUTES.ADMIN_MANAGERS} element={<ManagersList />} />
+          <Route path={ROUTES.ADMIN_LEARNERS} element={<IndividualLearnersList />} />
+          <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ADMIN_REVIEW} element={<AdminReview />} />
+        </Route>
+        {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={ADMIN_CONSOLE_ONLY_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.ADMIN_CONSOLE_DASHBOARD} element={<AdminConsoleDashboard />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} element={<AdminOrganizations />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<AdminManagersList />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_USERS} element={<AdminUsers />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_PROFILE} element={<AdminProfile />} />
+        </Route>
+        {/* Org Admin's own console — their one organization only: every batch, every Manager. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={ORG_ADMIN_ONLY_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.ORG_ADMIN_DASHBOARD} element={<OrgAdminDashboard />} />
+          <Route path={ROUTES.ORG_ADMIN_BATCHES} element={<OrgAdminBatches />} />
+          <Route path={ROUTES.ORG_ADMIN_MANAGERS} element={<OrgAdminManagers />} />
+          <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
+          <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
+        </Route>
+        {/* Manager's own console — only the batch(es) assigned to them. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={MANAGER_ONLY_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
+          <Route path={ROUTES.MANAGER_LEARNERS} element={<ManagerLearners />} />
+          <Route path={ROUTES.MANAGER_PROFILE} element={<AdminProfile />} />
         </Route>
         <Route path="*" element={<DefaultRedirect />} />
       </Routes>
