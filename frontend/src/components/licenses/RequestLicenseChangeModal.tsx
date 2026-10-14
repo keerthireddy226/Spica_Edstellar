@@ -26,8 +26,11 @@ export function RequestLicenseChangeModal({
   onSent: () => void;
 }) {
   const [kind, setKind] = useState<LicenseRequestKind>(learner ? "unassign_learner" : "increase_allotment");
-  const fixedBatches = batches.filter((b) => b.budget !== null);
-  const [batchId, setBatchId] = useState(initialBatchId && fixedBatches.some((b) => b.batchId === initialBatchId) ? initialBatchId : "");
+  // Any batch can ask for fixed licenses (approving the first request gives
+  // it some); only batches that already have them can give some back.
+  const [batchId, setBatchId] = useState(initialBatchId && batches.some((b) => b.batchId === initialBatchId) ? initialBatchId : "");
+  const fixedBatches =
+    kind === "increase_allotment" ? batches.filter((b) => (b.status ?? "active") === "active") : batches.filter((b) => b.budget !== null);
   const [quantity, setQuantity] = useState(learner ? String(learner.queuedMonths) : "5");
   const [reason, setReason] = useState("");
   const [sending, setSending] = useState(false);
@@ -90,7 +93,11 @@ export function RequestLicenseChangeModal({
                   <button
                     key={k}
                     type="button"
-                    onClick={() => setKind(k)}
+                    onClick={() => {
+                      setKind(k);
+                      // A batch without fixed licenses has none to give back.
+                      if (k === "decrease_allotment" && batches.find((b) => b.batchId === batchId)?.budget === null) setBatchId("");
+                    }}
                     className={`rounded-input border px-3 py-2.5 text-sm font-semibold cursor-pointer transition-colors ${
                       kind === k ? "border-navy bg-paper-warm text-ink" : "border-rule text-muted hover:border-rule-strong"
                     }`}
@@ -105,7 +112,9 @@ export function RequestLicenseChangeModal({
                   <option value="">My license pool — {myPool?.allotment ?? 0} allotted, {myPool?.used ?? 0} assigned</option>
                   {fixedBatches.map((b) => (
                     <option key={b.batchId} value={b.batchId}>
-                      {b.batchName} (fixed) — {b.budget} allotted, {b.used} assigned
+                      {b.budget === null
+                        ? `${b.batchName} — no fixed licenses yet (uses your pool)`
+                        : `${b.batchName} (fixed) — ${b.budget} allotted, ${b.used} assigned`}
                     </option>
                   ))}
                 </select>

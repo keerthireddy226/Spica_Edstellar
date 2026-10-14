@@ -515,7 +515,7 @@ export async function managerPools(tenantId: string, managerIds?: string[]) {
 
 export async function batchBudgets(tenantId: string, batchIds?: string[]) {
   const result = await pool.query(
-    `SELECT b.id, b.name, b.batch_code, b.license_budget,
+    `SELECT b.id, b.name, b.batch_code, b.license_budget, b.status,
        (SELECT count(*)::int FROM license_assignments a WHERE a.batch_id = b.id AND a.source = 'batch' AND a.reclaimed_at IS NULL) AS used
      FROM batches b
      WHERE b.tenant_id = $1 ${batchIds ? "AND b.id = ANY($2::uuid[])" : ""}
@@ -526,6 +526,7 @@ export async function batchBudgets(tenantId: string, batchIds?: string[]) {
     batchId: r.id,
     batchName: r.name,
     batchCode: r.batch_code,
+    status: r.status as "active" | "completed" | "archived",
     budget: r.license_budget as number | null,
     used: r.used as number,
     remaining: r.license_budget === null ? null : Math.max(r.license_budget - r.used, 0),

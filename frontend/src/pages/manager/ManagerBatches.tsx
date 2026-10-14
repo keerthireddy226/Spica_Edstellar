@@ -174,7 +174,7 @@ export function ManagerBatches() {
                   ) : (
                     <span />
                   )}
-                  {b.fixedLicenses != null && b.status === "active" && (
+                  {b.status === "active" && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -182,7 +182,7 @@ export function ManagerBatches() {
                       }}
                       className="text-xs font-semibold text-white underline cursor-pointer"
                     >
-                      Request more
+                      {b.fixedLicenses != null ? "Request more" : "Request fixed licenses"}
                     </button>
                   )}
                 </div>

@@ -74,6 +74,7 @@ export interface BatchBudget {
   batchId: string;
   batchName: string;
   batchCode: string;
+  status?: "active" | "completed" | "archived";
   budget: number | null;
   used: number;
   remaining: number | null;
