@@ -2235,6 +2235,7 @@
  "to the pool ({{queuedMonths}} not started yet).": "a la bolsa ({{queuedMonths}} aún no han empezado).",
  "Token created.": "Token creado.",
  "Took the placement test": "Hizo la prueba de nivelación",
+ "took {{m}} min": "duró {{m}} min",
  "Top 15": "Top 15",
  "Top customers": "Principales clientes",
  "Total": "Total",

@@ -4,7 +4,7 @@ import { Briefcase, Coins, Download, Mail, Plus, Printer, RotateCw, Send, Shield
 import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
 import { EmptyNote, FilterPills, PageHeader, Panel, StatCard, StatusPill } from "@/components/staff/StaffKit";
-import { shortDate } from "@/api/staff";
+import { dateTime, shortDate, timeOfDay } from "@/api/staff";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import { ROUTES } from "@/constants/routes";
@@ -175,7 +175,7 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
         { label: tr("Level"), value: a.result?.cefrLevel ?? "—", hint: a.min_cefr ? tr("Minimum {{l}}", { l: a.min_cefr }) : undefined },
         { label: tr("Score"), value: a.result?.overallPercent !== undefined && a.result?.overallPercent !== null ? `${a.result.overallPercent}%` : "—" },
         { label: tr("Integrity"), value: a.integrity_status ? INTEGRITY_TEXT[a.integrity_status]() : "—", hint: a.risk_level ? tr("Risk {{s}}", { s: a.risk_score ?? 0 }) : undefined },
-        { label: tr("Completed"), value: a.completed_at ? shortDate(a.completed_at) : "—" },
+        { label: tr("Completed"), value: a.completed_at ? shortDate(a.completed_at) : "—", hint: a.completed_at ? timeOfDay(a.completed_at) : undefined },
       ]}
     >
       <div className="flex flex-col gap-5">
@@ -246,16 +246,21 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
               )}
             </div>
             {a.decided_at && (
-              <p className="text-xs text-muted">{tr("Decided by {{who}} on {{date}}.", { who: a.decided_by_name || tr("a colleague"), date: shortDate(a.decided_at) })}</p>
+              <p className="text-xs text-muted">{tr("Decided by {{who}} on {{date}}.", { who: a.decided_by_name || tr("a colleague"), date: dateTime(a.decided_at) })}</p>
             )}
           </Panel>
         )}
         <Panel title={tr("Timeline")}>
           <ul className="text-sm text-ink flex flex-col gap-1">
-            <li>{tr("Invited on {{date}} by {{who}}", { date: shortDate(a.invited_at), who: a.invited_by_name || tr("a colleague") })}</li>
-            {a.started_at && <li>{tr("Started on {{date}}", { date: shortDate(a.started_at) })}</li>}
-            {a.completed_at && <li>{tr("Completed on {{date}}", { date: shortDate(a.completed_at) })}</li>}
-            {!a.completed_at && <li className="text-muted">{tr("Link valid until {{date}}", { date: shortDate(a.expires_at) })}</li>}
+            <li>{tr("Invited on {{date}} by {{who}}", { date: dateTime(a.invited_at), who: a.invited_by_name || tr("a colleague") })}</li>
+            {a.started_at && <li>{tr("Started on {{date}}", { date: dateTime(a.started_at) })}</li>}
+            {a.completed_at && (
+              <li>
+                {tr("Completed on {{date}}", { date: dateTime(a.completed_at) })}
+                {a.started_at && <span className="text-muted"> · {tr("took {{m}} min", { m: Math.max(1, Math.round((new Date(a.completed_at).getTime() - new Date(a.started_at).getTime()) / 60000)) })}</span>}
+              </li>
+            )}
+            {!a.completed_at && <li className="text-muted">{tr("Link valid until {{date}}", { date: dateTime(a.expires_at) })}</li>}
           </ul>
         </Panel>
       </div>
@@ -531,7 +536,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                   <button onClick={() => setReport(c.id)} className="min-w-0 flex-1 text-left cursor-pointer">
                     <p className="text-sm font-semibold text-ink truncate">{personName(c)}</p>
                     <p className="text-xs text-muted truncate">
-                      {c.email} · {c.completed_at ? tr("finished {{d}}", { d: shortDate(c.completed_at) }) : tr("invited {{d}}", { d: shortDate(c.invited_at) })}
+                      {c.email} · {c.completed_at ? tr("finished {{d}}", { d: dateTime(c.completed_at) }) : tr("invited {{d}}", { d: dateTime(c.invited_at) })}
                       {c.test_code ? ` · ${c.test_code}` : ""}
                     </p>
                   </button>
@@ -625,7 +630,7 @@ function TeamPanel({ canManage }: { canManage: boolean }) {
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink truncate">{personName(r)}</p>
                 <p className="text-xs text-muted truncate">
-                  {r.email} · {r.last_login_at ? tr("last signed in {{d}}", { d: shortDate(r.last_login_at) }) : tr("hasn't signed in yet")} · {tr("{{n}} invited", { n: r.invited })}
+                  {r.email} · {r.last_login_at ? tr("last signed in {{d}}", { d: dateTime(r.last_login_at) }) : tr("hasn't signed in yet")} · {tr("{{n}} invited", { n: r.invited })}
                 </p>
               </div>
               {canManage && (
@@ -696,7 +701,7 @@ function CreditsPanel({ overview }: { overview: RecruitmentOverview }) {
                 <span className="min-w-0">
                   <span className="text-ink">{REASON_TEXT[e.reason]()}</span>
                   {e.note && <span className="text-xs text-muted"> · {trServer(e.note)}</span>}
-                  <span className="block text-xs text-muted">{shortDate(e.created_at)}</span>
+                  <span className="block text-xs text-muted">{dateTime(e.created_at)}</span>
                 </span>
                 <span className={`font-mono text-sm ${e.delta > 0 ? "text-success" : "text-error"}`}>
                   {e.delta > 0 ? "+" : ""}
@@ -879,7 +884,7 @@ export function RecruitmentConsole() {
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold text-ink truncate">{personName(r)}</span>
                         <span className="block text-xs text-muted truncate">
-                          {r.job_title} · {shortDate(r.completed_at)}
+                          {r.job_title} · {dateTime(r.completed_at)}
                         </span>
                       </span>
                       <span className="flex items-center gap-2 shrink-0">

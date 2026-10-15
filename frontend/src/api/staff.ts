@@ -243,3 +243,13 @@ export function ago(iso: string | null | undefined): string {
 export function shortDate(iso: string | null | undefined): string {
   return iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
 }
+
+// Date and time of an event, e.g. "9 Oct 2026, 2:35 pm" (in the reader's locale).
+export function dateTime(iso: string | null | undefined): string {
+  return iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+}
+
+// Time of day only, e.g. "2:35 pm".
+export function timeOfDay(iso: string | null | undefined): string {
+  return iso ? new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "";
+}

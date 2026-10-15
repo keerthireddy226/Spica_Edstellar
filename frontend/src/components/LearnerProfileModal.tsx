@@ -7,6 +7,7 @@ import { EditLearnerDetailsModal } from "@/components/EditLearnerDetailsModal";
 import type { LearnerDetails } from "@/api/details";
 
 import { tr } from "@/i18n/tr";
+import { dateTime } from "@/api/staff";
 import { trServer } from "@/i18n/serverText";
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -118,7 +119,7 @@ export function LearnerProfileModal({
         {
           label: tr("Accuracy"),
           value: progress && progress.accuracyGraded > 0 ? `${Math.round((progress.accuracyCorrect / progress.accuracyGraded) * 100)}%` : "—",
-          hint: activity.lastSessionAt ? tr("Last session {{formatDate}}", { formatDate: formatDate(activity.lastSessionAt) }) : tr("No sessions yet"),
+          hint: activity.lastSessionAt ? tr("Last session {{formatDate}}", { formatDate: dateTime(activity.lastSessionAt) }) : tr("No sessions yet"),
         },
       ]}
       onClose={onClose}
@@ -129,7 +130,7 @@ export function LearnerProfileModal({
         <Section title={tr("Account")}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <Field label={tr("Participant ID")} value={learner.participantId ?? "—"} />
-            <Field label={tr("Joined")} value={formatDate(learner.createdAt)} />
+            <Field label={tr("Joined")} value={dateTime(learner.createdAt)} />
             <Field label={tr("Plan / org type")} value={learner.tenantCategory ?? learner.tenantType ?? "—"} />
             <Field label={tr("Status")} value={learner.active ? tr("Active") : tr("Deactivated")} />
           </div>
@@ -208,7 +209,7 @@ export function LearnerProfileModal({
               <Field label={tr("CEFR level")} value={placement.cefrLevel} />
               <Field label={tr("Overall score")} value={`${placement.overallPercent}%`} />
               <Field label={tr("Status")} value={placement.status} />
-              <Field label={tr("Taken")} value={formatDate(placement.takenAt)} />
+              <Field label={tr("Taken")} value={dateTime(placement.takenAt)} />
             </div>
           )}
         </Section>
@@ -221,7 +222,7 @@ export function LearnerProfileModal({
               <Field label={tr("Pace")} value={roadmap.pace} />
               <Field label={tr("Minutes / day")} value={roadmap.minutesPerDay} />
               <Field label={tr("Est. total hours")} value={roadmap.totalHoursEstimate} />
-              <Field label={tr("Generated")} value={formatDate(roadmap.generatedAt)} />
+              <Field label={tr("Generated")} value={dateTime(roadmap.generatedAt)} />
             </div>
           )}
         </Section>
@@ -266,7 +267,7 @@ export function LearnerProfileModal({
                   </span>
                   <span className="text-xs text-muted shrink-0">
                     {m.movedBy ? `${m.movedBy} · ` : ""}
-                    {formatDate(m.movedAt)}
+                    {dateTime(m.movedAt)}
                   </span>
                 </div>
               ))}
@@ -278,7 +279,7 @@ export function LearnerProfileModal({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-3">
             <Field label={tr("Total sessions started")} value={activity.totalSessions} />
             <Field label={tr("Genuinely completed")} value={activity.genuinelyCompletedSessions} />
-            <Field label={tr("Last session")} value={formatDate(activity.lastSessionAt)} />
+            <Field label={tr("Last session")} value={dateTime(activity.lastSessionAt)} />
           </div>
           {activity.sessionsByType.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-2 border-t border-rule">

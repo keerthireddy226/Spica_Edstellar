@@ -4,7 +4,7 @@ import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
 import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { ProctoringSettings } from "@/components/proctoring/ProctoringSettings";
-import { shortDate } from "@/api/staff";
+import { dateTime, shortDate, timeOfDay } from "@/api/staff";
 import { useAuth } from "@/hooks/useAuth";
 import {
   decideIdentity,
@@ -332,7 +332,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
         { label: tr("Risk score"), value: si.risk_score },
         { label: tr("Answers"), value: d.session.answers },
         { label: tr("Snapshots"), value: snapshots.length, hint: flaggedSnaps.length ? tr("{{n}} with issues", { n: flaggedSnaps.length }) : undefined },
-        { label: tr("Started"), value: shortDate(d.session.started_at) },
+        { label: tr("Started"), value: shortDate(d.session.started_at), hint: timeOfDay(d.session.started_at) },
       ]}
       tabs={tabs}
       tab={tab}
@@ -364,7 +364,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
           )}
           {si.reviewed_at ? (
             <p className="text-sm text-muted">
-              {tr("Decided on {{date}}.", { date: shortDate(si.reviewed_at) })} {si.review_note}
+              {tr("Decided on {{date}}.", { date: dateTime(si.reviewed_at) })} {si.review_note}
             </p>
           ) : null}
           <div className="flex flex-col gap-2">
@@ -658,7 +658,7 @@ function IdentityQueue({ onChanged }: { onChanged: () => void }) {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink truncate">{r.name.trim() || r.email}</p>
                   <p className="text-xs text-muted truncate">
-                    {DOC_TEXT[r.document_type]()} · {shortDate(r.created_at)}
+                    {DOC_TEXT[r.document_type]()} · {dateTime(r.created_at)}
                     {r.org_name ? ` · ${r.org_name}` : ""}
                   </p>
                 </div>
@@ -682,7 +682,7 @@ function IdentityQueue({ onChanged }: { onChanged: () => void }) {
                 </div>
               ) : (
                 <p className="text-xs text-muted">
-                  {r.status === "verified" ? tr("Verified") : tr("Rejected")} {r.reviewer ? `· ${r.reviewer}` : ""} {r.reviewed_at ? `· ${shortDate(r.reviewed_at)}` : ""}
+                  {r.status === "verified" ? tr("Verified") : tr("Rejected")} {r.reviewer ? `· ${r.reviewer}` : ""} {r.reviewed_at ? `· ${dateTime(r.reviewed_at)}` : ""}
                 </p>
               )}
             </div>
@@ -782,7 +782,7 @@ export function IntegrityReviews() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-ink truncate">{r.name.trim() || r.email}</p>
                     <p className="text-xs text-muted truncate">
-                      {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {shortDate(r.started_at)}
+                      {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {dateTime(r.started_at)}
                       {r.test_code ? ` · ${r.test_code}` : ""}
                       {r.org_name ? ` · ${r.org_name}` : ""}
                     </p>
