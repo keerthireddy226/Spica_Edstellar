@@ -164,7 +164,7 @@ export function StaffInsights() {
                     </p>
                   </div>
                   <span className={`text-xs font-semibold shrink-0 ${days <= 14 ? "text-error" : "text-muted"}`}>
-                    {shortDate(e.date)} · {days} {tr("days")}</span>
+                    {tr("{{shortDate}}· {{days}} days", { shortDate: shortDate(e.date), days: days })}</span>
                 </div>
               );
             })

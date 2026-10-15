@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { languageForEmail, translateServerText } from "../i18n/translate.js";
 
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 
@@ -12,12 +13,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Every email goes out in the recipient's language: their own setting,
+// else their organization's default, else English.
+async function localize(to: string, subject: string, text: string): Promise<{ subject: string; text: string }> {
+  const lang = await languageForEmail(to).catch(() => "en");
+  return { subject: translateServerText(lang, subject), text: translateServerText(lang, text) };
+}
+
 async function sendMail(to: string, subject: string, text: string) {
+  const l = await localize(to, subject, text);
   await transporter.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to,
-    subject,
-    text,
+    subject: l.subject,
+    text: l.text,
   });
 }
 
@@ -64,11 +73,16 @@ export async function sendPlacementReminderEmail(email: string, token: string) {
 // Generic notification email (reminders, license alerts). Includes a one-click
 // unsubscribe header when the email is something the user can switch off.
 export async function sendNotificationEmail(args: { to: string; subject: string; text: string; unsubscribeUrl?: string }) {
+  const l = await localize(
+    args.to,
+    args.subject,
+    args.unsubscribeUrl ? `${args.text}\n\n—\nDon't want these emails? Turn them off: ${args.unsubscribeUrl}` : args.text,
+  );
   await transporter.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to: args.to,
-    subject: args.subject,
-    text: args.unsubscribeUrl ? `${args.text}\n\n—\nDon't want these emails? Turn them off: ${args.unsubscribeUrl}` : args.text,
+    subject: l.subject,
+    text: l.text,
     headers: args.unsubscribeUrl
       ? { "List-Unsubscribe": `<${args.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
       : undefined,

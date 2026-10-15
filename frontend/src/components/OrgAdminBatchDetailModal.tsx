@@ -146,9 +146,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                     <p className="text-xs text-muted">
-                      {[l.employeeId, l.department, l.jobTitle].filter(Boolean).join(" · ")}
-                      {l.employeeId || l.department || l.jobTitle ? " · " : ""}
-                      {l.sessionCount} {tr("session")}{l.sessionCount === 1 ? "" : "s"} {tr("completed")}</p>
+                      {tr("{{join}} {{v}} {{sessionCount}} session{{v2}} completed", { join: [l.employeeId, l.department, l.jobTitle].filter(Boolean).join(" · "), v: l.employeeId || l.department || l.jobTitle ? " · " : "", sessionCount: l.sessionCount, v2: l.sessionCount === 1 ? "" : "s" })}</p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
                   {certs.get(l.id) ? (

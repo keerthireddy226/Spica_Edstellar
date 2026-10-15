@@ -10,6 +10,7 @@ import {
 } from "@/api/notifications";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const POLL_MS = 60_000;
 
 export function NotificationBell() {
@@ -94,8 +95,8 @@ export function NotificationBell() {
               >
                 <span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${n.read ? "bg-transparent" : "bg-navy"}`} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-ink">{n.title}</span>
-                  <span className="block text-xs text-muted mt-0.5 line-clamp-2">{n.body}</span>
+                  <span className="block text-sm font-medium text-ink">{trServer(n.title)}</span>
+                  <span className="block text-xs text-muted mt-0.5 line-clamp-2">{trServer(n.body)}</span>
                   <span className="block text-[11px] text-muted mt-1">{timeAgo(n.createdAt)}</span>
                 </span>
               </button>

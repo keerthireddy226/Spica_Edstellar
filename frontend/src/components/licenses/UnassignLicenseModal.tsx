@@ -5,12 +5,13 @@ import { Button } from "@/components/Button";
 import { LICENSE_ERROR_TEXT, formatShortDate, type LearnerAccess } from "@/api/licenses";
 
 import { tr } from "@/i18n/tr";
+// Stored with the license history in English; shown translated.
 const REASONS = [
-  tr("Learner left the organization"),
-  tr("Learner no longer needs access"),
-  tr("Assigned by mistake"),
-  tr("Reallocating to another learner"),
-  tr("Other"),
+  "Learner left the organization",
+  "Learner no longer needs access",
+  "Assigned by mistake",
+  "Reallocating to another learner",
+  "Other",
 ];
 
 function addMonths(iso: string, months: number): string {
@@ -41,7 +42,7 @@ export function UnassignLicenseModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const finalReason = reason === tr("Other") ? otherText.trim() : reason;
+  const finalReason = reason === "Other" ? otherText.trim() : reason;
   const newEnd = license.accessEndsAt ? addMonths(license.accessEndsAt, -months) : null;
 
   async function submit() {
@@ -75,8 +76,8 @@ export function UnassignLicenseModal({
         </div>
         <div className="px-6 py-5 flex flex-col gap-4">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{learnerName}</span> {tr("has")}{" "}{license.totalMonths} {tr("month")}{license.totalMonths === 1 ? "" : "s"} {tr("assigned:")}{" "}
-            {license.currentEndsAt ? tr("1 running") : tr("none running")} {tr("and")}{" "}{max} {tr("not started yet.")}</p>
+            <span className="font-semibold">{learnerName}</span> {tr("has {{totalMonths}} month{{v}} assigned:", { totalMonths: license.totalMonths, v: license.totalMonths === 1 ? "" : "s" })}{" "}
+            {license.currentEndsAt ? tr("1 running") : tr("none running")} {tr("and {{max}} not started yet.", { max: max })}</p>
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Months to return to the pool")}</label>
@@ -96,7 +97,7 @@ export function UnassignLicenseModal({
               >
                 <Plus size={15} />
               </button>
-              <span className="text-xs text-muted ml-2">{tr("of")}{" "}{max} {tr("unused")}</span>
+              <span className="text-xs text-muted ml-2">{tr("of {{max}} unused", { max: max })}</span>
             </div>
           </div>
 
@@ -106,17 +107,17 @@ export function UnassignLicenseModal({
               <option value="">{tr("Select a reason…")}</option>
               {REASONS.map((r) => (
                 <option key={r} value={r}>
-                  {r}
+                  {tr(r)}
                 </option>
               ))}
             </select>
-            {reason === tr("Other") && (
+            {reason === "Other" && (
               <input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder={tr("Describe the reason")} className={inputClass} />
             )}
           </div>
 
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
-            {months} {tr("license")}{months === 1 ? "" : "s"} {tr("go back to your pool. Access will now end on")}{" "}
+            {tr("{{months}} license{{v}} go back to your pool. Access will now end on", { months: months, v: months === 1 ? "" : "s" })}{" "}
             <span className="font-semibold">{formatShortDate(newEnd)}</span>.
             <p className="text-xs text-muted mt-1">{tr("The month already running can't be returned.")}</p>
           </div>

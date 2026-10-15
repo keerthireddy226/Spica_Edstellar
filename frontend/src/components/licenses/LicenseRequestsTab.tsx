@@ -67,7 +67,7 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
             <Check size={14} /> {tr("Approve")}</Button>
           <Button variant="secondary" onClick={() => setDeciding("reject")} className="!px-3 !py-1.5 !text-xs flex items-center gap-1.5">
             <X size={14} /> {tr("Decline")}</Button>
-          {after !== null && <span className="text-xs text-muted">{tr("Approving sets")}{" "}{r.batchName}{tr("'s allotment to")}{" "}{after}.</span>}
+          {after !== null && <span className="text-xs text-muted">{tr("Approving sets the allotment of {{batch}} to {{after}}.", { batch: r.batchName ?? tr("this batch"), after })}</span>}
         </div>
       )}
       {deciding && (

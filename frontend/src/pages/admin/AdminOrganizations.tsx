@@ -20,6 +20,7 @@ import {
 } from "@/api/admin";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: (name: string) => void }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<"company" | "university">("company");
@@ -500,7 +501,7 @@ function OwnerModal({ org, current, onClose, onSaved }: { org: AdminConsoleOrg; 
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("Owning Admin ·")}{" "}{org.name}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Owning Admin · {{name}}", { name: org.name })}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer">
             <X size={20} />
           </button>
@@ -714,10 +715,10 @@ export function AdminOrganizations() {
                   </button>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{TIER_LABELS[org.planTier]}</span>
-                    {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{tr("Pilot to")}{" "}{shortDate(org.pilotEndsAt)}</span>}
+                    {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{tr("Pilot to {{shortDate}}", { shortDate: shortDate(org.pilotEndsAt) })}</span>}
                     {org.health && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/15" title={org.health.flags.join("\n")}>
-                        {tr("Health")}{" "}{org.health.score} · {org.health.band === "at_risk" ? tr("At risk") : org.health.band === "watch" ? tr("Watch") : tr("Healthy")}
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/15" title={org.health.flags.map((f) => trServer(f)).join("\n")}>
+                        {tr("Health {{score}}", { score: org.health.score })} · {org.health.band === "at_risk" ? tr("At risk") : org.health.band === "watch" ? tr("Watch") : tr("Healthy")}
                       </span>
                     )}
                     {!org.active && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/25 uppercase">{tr("Deactivated")}</span>}

@@ -32,6 +32,7 @@ import {
 } from "@/api/licenses";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 type Tab = "learners" | "requests" | "budgets" | "purchases" | "invoices" | "activity";
 type StatusFilter = "all" | AccessStatus | "expiring";
 
@@ -56,19 +57,19 @@ function eventSentence(e: LicenseEvent): string {
   const n = `${e.quantity} license${e.quantity === 1 ? "" : "s"}`;
   switch (e.kind) {
     case "purchase":
-      return `${n} purchased${e.note ? ` (${e.note})` : ""}`;
+      return tr("{{n}} purchased{{v}}", { n, v: e.note ? ` (${trServer(e.note)})` : "" });
     case "credit":
-      return tr("{{n}} credited by Edstellar{{v}}", { n: n, v: e.note ? ` (${e.note})` : "" });
+      return tr("{{n}} credited by Edstellar{{v}}", { n: n, v: e.note ? ` (${trServer(e.note)})` : "" });
     case "comp":
-      return tr("{{n}} added complimentary{{v}}", { n: n, v: e.note ? ` (${e.note})` : "" });
+      return tr("{{n}} added complimentary{{v}}", { n: n, v: e.note ? ` (${trServer(e.note)})` : "" });
     case "assign":
-      return tr("{{n}} assigned to {{v}}{{v2}}", { n: n, v: e.learnerEmail ?? "a learner", v2: e.batchName ? ` · ${e.batchName}` : "" });
+      return tr("{{n}} assigned to {{v}}{{v2}}", { n: n, v: e.learnerEmail ?? tr("a learner"), v2: e.batchName ? ` · ${e.batchName}` : "" });
     case "extend":
       return tr("{{v}} extended by {{quantity}} month{{v2}}", { v: e.learnerEmail ?? "A learner", quantity: e.quantity, v2: e.quantity === 1 ? "" : "s" });
     case "reclaim":
-      return tr("{{n}} unassigned from {{v}} back to the pool{{v2}}", { n: n, v: e.learnerEmail ?? "a learner", v2: e.note ? ` — ${e.note}` : "" });
+      return tr("{{n}} unassigned from {{v}} back to the pool{{v2}}", { n: n, v: e.learnerEmail ?? tr("a learner"), v2: e.note ? ` — ${trServer(e.note)}` : "" });
     case "budget":
-      return e.note ?? tr("{{batchName}} budget set to {{quantity}}", { batchName: e.batchName, quantity: e.quantity });
+      return e.note ? trServer(e.note) : tr("{{batchName}} budget set to {{quantity}}", { batchName: e.batchName, quantity: e.quantity });
   }
 }
 
@@ -213,7 +214,7 @@ export function OrgAdminLicenses() {
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
           <p className="text-sm text-muted mt-1">
-            {tr("1 license = 1 learner's access for 1 month, starting when you assign it ·")}{" "}{formatMoney(data.pricePerLicenseCents)} {tr("per license")}</p>
+            {tr("1 license = 1 learner's access for 1 month, starting when you assign it · {{formatMoney}} per license", { formatMoney: formatMoney(data.pricePerLicenseCents) })}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowBuy(true)} className="flex items-center gap-2">
@@ -237,18 +238,18 @@ export function OrgAdminLicenses() {
         <div className="flex flex-col gap-2">
           {poolExpiringSoon && (
             <p className="text-sm text-navy-deep bg-warning/10 border border-warning/25 rounded-input px-3.5 py-2.5">
-              {s.nextPoolExpiryQuantity} {tr("unassigned license")}{s.nextPoolExpiryQuantity === 1 ? "" : "s"} {tr("expire on")}{" "}{formatShortDate(s.nextPoolExpiry)} {tr("— assign them before then.")}</p>
+              {tr("{{nextPoolExpiryQuantity}} unassigned license{{v}} expire on {{formatShortDate}} — assign them before then.", { nextPoolExpiryQuantity: s.nextPoolExpiryQuantity, v: s.nextPoolExpiryQuantity === 1 ? "" : "s", formatShortDate: formatShortDate(s.nextPoolExpiry) })}</p>
           )}
           {s.unlicensedLearners > 0 && s.available > 0 && (
             <p className="text-sm text-ink bg-navy/5 border border-rule rounded-input px-3.5 py-2.5">
-              {s.unlicensedLearners} {tr("learner")}{s.unlicensedLearners === 1 ? " has" : tr("s have")} {tr("no license and can't practice yet.")}{" "}
+              {tr("{{unlicensedLearners}} learner", { unlicensedLearners: s.unlicensedLearners })}{s.unlicensedLearners === 1 ? " has" : tr("s have")} {tr("no license and can't practice yet.")}{" "}
               <button onClick={() => { setTab("learners"); setFilter("none"); }} className="font-semibold underline cursor-pointer">
                 {tr("Show them")}</button>
             </p>
           )}
           {s.expiredUnused > 0 && (
             <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-              {s.expiredUnused} {tr("license")}{s.expiredUnused === 1 ? "" : "s"} {tr("expired unused (pool licenses are valid for 12 months after purchase).")}</p>
+              {tr("{{expiredUnused}} license{{v}} expired unused (pool licenses are valid for 12 months after purchase).", { expiredUnused: s.expiredUnused, v: s.expiredUnused === 1 ? "" : "s" })}</p>
           )}
         </div>
       )}
@@ -374,8 +375,7 @@ export function OrgAdminLicenses() {
         <div className="flex flex-col gap-5">
           <PlanLockNote feature="manager_pools" />
           <p className="text-sm text-muted">
-            {tr("Allotted licenses are set aside from your pool:")}{" "}<span className="text-ink font-medium">{s.unreserved}</span> {tr("unreserved ·")}{" "}
-            {s.reservedForBatches} {tr("set aside for batches ·")}{" "}{s.reservedForManagers} {tr("for Managers. A batch's fixed licenses are used first for its learners; otherwise a Manager uses their own pool, and you use the unreserved licenses.")}</p>
+            {tr("Allotted licenses are set aside from your pool:")}{" "}<span className="text-ink font-medium">{s.unreserved}</span> {tr("unreserved · {{reservedForBatches}} set aside for batches · {{reservedForManagers}} for Managers. A batch's fixed licenses are used first for its learners; otherwise a Manager uses their own pool, and you use the unreserved licenses.", { reservedForBatches: s.reservedForBatches, reservedForManagers: s.reservedForManagers })}</p>
 
           {(
             [
@@ -498,7 +498,7 @@ export function OrgAdminLicenses() {
                   <tr key={o.id} className="border-b border-rule last:border-0">
                     <td className="px-4 py-3 font-mono text-ink">{o.quoteNumber}</td>
                     <td className="px-4 py-3 text-muted">{o.poNumber ? `PO ${o.poNumber}` : "—"}</td>
-                    <td className="px-4 py-3 text-muted">{o.quantity} {tr("licenses")}</td>
+                    <td className="px-4 py-3 text-muted">{tr("{{quantity}} licenses", { quantity: o.quantity })}</td>
                     <td className="px-4 py-3 text-ink">{formatAmount(o.total, o.currency)}</td>
                     <td className="px-4 py-3 text-muted">{o.dueDate ? `due ${formatShortDate(o.dueDate)}` : ""}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">

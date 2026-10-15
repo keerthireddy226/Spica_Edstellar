@@ -132,7 +132,7 @@ export function ManagersList() {
                   </div>
                 </div>
                 <p className="text-xs text-muted">
-                  {s === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(m.lastLoginAt) })} {tr("· Added")}{" "}{shortDate(m.createdAt)}
+                  {s === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(m.lastLoginAt) })} {tr("· Added {{shortDate}}", { shortDate: shortDate(m.createdAt) })}
                 </p>
               </div>
             );

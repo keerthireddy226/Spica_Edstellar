@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Bucket } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 export function Card({ title, subtitle, children, actions }: { title: string; subtitle?: string; children: ReactNode; actions?: ReactNode }) {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4 break-inside-avoid">
@@ -41,8 +42,8 @@ export function BarList({ data, label, emptyText = tr("No data yet.") }: { data:
     <div className="flex flex-col gap-2">
       {shown.map((d) => (
         <div key={d.key} className="flex items-center gap-3 text-sm">
-          <span className="w-36 shrink-0 truncate text-ink" title={label(d.key)}>
-            {label(d.key)}
+          <span className="w-36 shrink-0 truncate text-ink" title={trServer(label(d.key))}>
+            {trServer(label(d.key))}
           </span>
           <div className="flex-1 h-2.5 rounded-full bg-rule overflow-hidden">
             <div className="h-full rounded-full bg-navy" style={{ width: `${((d.count ?? 0) / max) * 100}%` }} />

@@ -311,7 +311,7 @@
   "roadmap": {
     "loading": "Cargando tu plan de estudio…",
     "loadError": "Algo salió mal al cargar tu plan de estudio. Por favor intenta de nuevo.",
-    "pendingReviewBanner": "Your placement result is being reviewed for identity verification. You can keep using everything below in the meantime.",
+    "pendingReviewBanner": "Tu resultado de nivelación se está revisando para verificar la identidad. Mientras tanto, puedes seguir usando todo lo de abajo.",
     "notReadyTitle": "Tu plan de estudio aún no está listo",
     "notReadyBody": "Realiza tu prueba de nivelación para obtener un plan personalizado.",
     "notReadyBodyScheduled": "Programaste tu prueba de nivelación para el {{date}}. Realízala cuando estés listo/a — tu plan se creará justo después.",
@@ -606,8 +606,8 @@
     "statsStreak": "Racha actual",
     "statsStreakValue_one": "{{count}} día",
     "statsStreakValue_other": "{{count}} días",
-    "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevel": "Nivel",
+    "statsLevelValue": "Niv. {{level}} · {{xp}} XP",
     "continuePracticeTitle": "Continúa donde lo dejaste",
     "continuePracticeBody": "{{skill}} — {{answered}} de {{total}} respondidas",
     "achievementsTitle": "Logros"
@@ -679,52 +679,52 @@
     }
   },
   "faceCheck": {
-    "back": "Back",
+    "back": "Atrás",
     "enroll": {
-      "title": "Set up face verification",
-      "success": "Face captured",
-      "proceed": "Continue",
-      "subtitle": "This is a one-time setup. We'll use this photo to confirm it's you before every mocktest, module, and practice test.",
-      "successSubtitle": "Setup done. Next, you'll see the test instructions before your mocktest begins."
+      "title": "Configurar verificación facial",
+      "success": "Rostro capturado",
+      "proceed": "Continuar",
+      "subtitle": "Es una configuración única. Usaremos esta foto para confirmar que eres tú antes de cada examen de práctica, módulo y prueba de práctica.",
+      "successSubtitle": "Configuración lista. A continuación verás las instrucciones antes de que empiece tu examen de práctica."
     },
     "verify": {
-      "title": "Quick face check",
-      "success": "Face verified",
-      "proceed": "Continue",
-      "mismatchError": "Face didn't match your enrolled photo. Please try again.",
+      "title": "Verificación facial rápida",
+      "success": "Rostro verificado",
+      "proceed": "Continuar",
+      "mismatchError": "El rostro no coincide con tu foto registrada. Inténtalo de nuevo.",
       "subtitle": {
-        "placement": "Confirming it's you before your mocktest begins.",
-        "practice": "Confirming it's you before this practice session.",
-        "practice_test": "Confirming it's you before this practice test."
+        "placement": "Confirmando que eres tú antes de que empiece tu examen de práctica.",
+        "practice": "Confirmando que eres tú antes de esta sesión de práctica.",
+        "practice_test": "Confirmando que eres tú antes de esta prueba de práctica."
       },
-      "successSubtitle": "Identity confirmed. Moving on to your test."
+      "successSubtitle": "Identidad confirmada. Pasamos a tu prueba."
     },
     "record": {
-      "capture": "Capture",
-      "checking": "Checking...",
-      "cameraError": "Could not access camera. Check permissions and try again.",
-      "error": "Something went wrong. Please try again.",
-      "tooShort": "Could not read your face clearly. Please try again."
+      "capture": "Capturar",
+      "checking": "Comprobando...",
+      "cameraError": "No se pudo acceder a la cámara. Revisa los permisos e inténtalo de nuevo.",
+      "error": "Algo salió mal. Inténtalo de nuevo.",
+      "tooShort": "No se pudo leer bien tu rostro. Inténtalo de nuevo."
     },
     "fallback": {
-      "otpButton": "Email me a code",
-      "otpSending": "Sending…",
-      "otpSentNotice": "Code sent — check your email.",
-      "otpPlaceholder": "6-digit code",
-      "otpVerify": "Verify code",
-      "otpVerifying": "Verifying…",
-      "otpResend": "Resend code",
-      "otpSuccess": "Code verified",
-      "otpSendError": "Something went wrong sending the code. Please try again.",
-      "otpInvalidError": "That code didn't work. Check it and try again."
+      "otpButton": "Envíame un código por correo",
+      "otpSending": "Enviando…",
+      "otpSentNotice": "Código enviado: revisa tu correo.",
+      "otpPlaceholder": "Código de 6 dígitos",
+      "otpVerify": "Verificar código",
+      "otpVerifying": "Verificando…",
+      "otpResend": "Reenviar código",
+      "otpSuccess": "Código verificado",
+      "otpSendError": "Algo salió mal al enviar el código. Inténtalo de nuevo.",
+      "otpInvalidError": "Ese código no ha funcionado. Revísalo e inténtalo de nuevo."
     },
     "enrollmentConsent": {
-      "title": "Set up face verification",
-      "subtitle": "This helps confirm it's really you taking the test.",
-      "body": "We'll take a photo of your face to create a reference for identity verification. This photo and face scans are used to confirm your identity before, and periodically during, placement tests and practice sessions (Modules) — not just once at the start. Stored securely, used only for this purpose.",
-      "checkboxLabel": "I understand and consent to face identity verification, including periodic checks during tests and practice sessions.",
-      "submit": "Continue",
-      "decline": "Not now"
+      "title": "Configurar verificación facial",
+      "subtitle": "Esto ayuda a confirmar que eres realmente tú quien hace la prueba.",
+      "body": "Tomaremos una foto de tu rostro para crear una referencia de verificación de identidad. Esta foto y los escaneos faciales se usan para confirmar tu identidad antes y, periódicamente, durante las pruebas de nivelación y las sesiones de práctica (Módulos), no solo una vez al principio. Se guarda de forma segura y solo se usa para este fin.",
+      "checkboxLabel": "Entiendo y doy mi consentimiento para la verificación facial de identidad, incluidas comprobaciones periódicas durante las pruebas y las sesiones de práctica.",
+      "submit": "Continuar",
+      "decline": "Ahora no"
     }
   },
   "demographics": {

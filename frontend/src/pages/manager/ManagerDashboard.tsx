@@ -158,8 +158,7 @@ export function ManagerDashboard() {
           ))}
         </div>
         <p className="text-xs text-muted">
-          {overview.licenses.fromFixed} {tr("license-month")}{overview.licenses.fromFixed === 1 ? "" : "s"} {tr("came from batches' fixed licenses and")}{" "}
-          {overview.licenses.fromPool} {tr("from your pool.")}{budgets.some((b) => b.budget != null) &&
+          {tr("{{fromFixed}} license-month{{v}} came from batches' fixed licenses and {{fromPool}} from your pool.", { fromFixed: overview.licenses.fromFixed, v: overview.licenses.fromFixed === 1 ? "" : "s", fromPool: overview.licenses.fromPool })}{budgets.some((b) => b.budget != null) &&
             tr(" Fixed licenses left: {{join}}.", { join: budgets
               .filter((b) => b.budget != null)
               .map((b) => `${b.batchName} ${b.remaining}`)

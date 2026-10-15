@@ -14,6 +14,7 @@ import {
 } from "@/api/plans";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 function eventSentence(e: PlanEvent): string {
   switch (e.kind) {
     case "tier_change":
@@ -122,7 +123,7 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
         <div className="border-t border-rule pt-4">
           {plan.pilotEndsAt ? (
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-sm text-ink">{tr("Pilot running until")}{" "}{formatShortDate(plan.pilotEndsAt)}</p>
+              <p className="text-sm text-ink">{tr("Pilot running until {{formatShortDate}}", { formatShortDate: formatShortDate(plan.pilotEndsAt) })}</p>
               <Button variant="secondary" disabled={busy} onClick={() => run(() => endPilot(tenantId), tr("Pilot ended."))}>
                 {tr("End pilot now")}</Button>
             </div>
@@ -159,7 +160,7 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
               <div key={e.id} className="flex items-start justify-between gap-3 text-sm">
                 <span className="text-ink">
                   {eventSentence(e)}
-                  {e.note && <span className="text-muted"> — {e.note}</span>}
+                  {e.note && <span className="text-muted"> — {trServer(e.note)}</span>}
                 </span>
                 <span className="text-xs text-muted shrink-0">
                   {e.actorName ? `${e.actorName} · ` : ""}

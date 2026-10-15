@@ -89,7 +89,7 @@ function ReminderModal({ learners, onClose, onSent }: { learners: LearnerEngagem
           </div>
           {cooling.length > 0 && (
             <p className="text-xs text-navy-deep bg-warning/10 rounded-input px-3 py-2">
-              {cooling.length} {tr("of them")}{" "}{cooling.length === 1 ? "was" : "were"} {tr("reminded in the last 48 hours and will be skipped.")}</p>
+              {tr("{{length}} of them {{v}} reminded in the last 48 hours and will be skipped.", { length: cooling.length, v: cooling.length === 1 ? "was" : "were" })}</p>
           )}
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export function FollowUpPanel() {
         <div>
           <h2 className="font-display font-bold text-ink">{tr("Follow up with learners")}</h2>
           <p className="text-xs text-muted mt-0.5">
-            {followUpCount} {tr("need a nudge")}{needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: needsAttention }) : ""}
+            {tr("{{followUpCount}} need a nudge", { followUpCount: followUpCount })}{needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: needsAttention }) : ""}
           </p>
         </div>
         {data.batches.length > 0 && (
@@ -190,7 +190,7 @@ export function FollowUpPanel() {
           onClick={() => setFilter("follow_up")}
           className={`px-3 py-1.5 rounded-pill text-xs font-semibold cursor-pointer ${filter === "follow_up" ? "bg-navy text-white" : "bg-paper-warm text-muted hover:text-ink"}`}
         >
-          {tr("Needs a nudge ·")}{" "}{followUpCount}
+          {tr("Needs a nudge · {{followUpCount}}", { followUpCount: followUpCount })}
         </button>
         {ORDER.map((s) => (
           <button
@@ -206,7 +206,7 @@ export function FollowUpPanel() {
             onClick={() => setReminding(data.learners.filter((l) => selected.has(l.id)))}
             className="ml-auto !px-3 !py-1.5 !text-xs flex items-center gap-1.5"
           >
-            <Send size={13} /> {tr("Remind")}{" "}{selected.size}
+            <Send size={13} /> {tr("Remind {{size}}", { size: selected.size })}
           </Button>
         )}
       </div>

@@ -437,11 +437,11 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setGranting(null)}>
           <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-sm p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-display font-bold text-lg text-ink">{tr("Give free months")}</h2>
-            <p className="text-sm text-muted">{tr("Complimentary full access for")}{" "}{granting.email}{tr(", added after any access they already have.")}</p>
+            <p className="text-sm text-muted">{tr("Complimentary full access for {{email}}, added after any access they already have.", { email: granting.email })}</p>
             <select value={grantMonths} onChange={(e) => setGrantMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {MONTHS.slice(1).map((m) => (
                 <option key={m} value={m}>
-                  {m} {tr("month")}{m === 1 ? "" : "s"}
+                  {tr("{{m}} month{{v}}", { m: m, v: m === 1 ? "" : "s" })}
                 </option>
               ))}
             </select>

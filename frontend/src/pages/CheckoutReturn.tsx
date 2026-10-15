@@ -110,7 +110,7 @@ export function CheckoutReturn() {
                 ? tr("We couldn't verify this payment. If money left your account, it will be matched automatically or refunded — contact support with your order reference.")
                 : tr("No payment was taken.")}
             </p>
-            {state === "failed" && <p className="text-xs text-muted font-mono">{tr("Order")}{" "}{orderId.slice(0, 8)}</p>}
+            {state === "failed" && <p className="text-xs text-muted font-mono">{tr("Order {{slice}}", { slice: orderId.slice(0, 8) })}</p>}
             <Link to={backTo}>
               <Button variant="secondary">{backLabel}</Button>
             </Link>

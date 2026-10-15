@@ -80,7 +80,7 @@ export function RequestLicenseChangeModal({
           {!allowed && <PlanLockNote feature="license_requests" compact />}
           {learner ? (
             <p className="text-sm text-ink">
-              {tr("Return unused months from")}{" "}<span className="font-semibold">{learner.name}</span> {tr("to the pool (")}{learner.queuedMonths} {tr("not started yet).")}</p>
+              {tr("Return unused months from")}{" "}<span className="font-semibold">{learner.name}</span> {tr("to the pool ({{queuedMonths}} not started yet).", { queuedMonths: learner.queuedMonths })}</p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2">
@@ -125,7 +125,7 @@ export function RequestLicenseChangeModal({
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{learner ? tr("Months to return") : tr("How many licenses")}</label>
             <input type="number" min={1} max={maxQty || undefined} value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputClass} />
             {kind === "decrease_allotment" && (
-              <p className="text-xs text-muted">{tr("Up to")}{" "}{maxQty} {tr("— licenses already assigned to learners can't be removed this way.")}</p>
+              <p className="text-xs text-muted">{tr("Up to {{maxQty}} — licenses already assigned to learners can't be removed this way.", { maxQty: maxQty })}</p>
             )}
           </div>
           <div className="flex flex-col gap-1.5">

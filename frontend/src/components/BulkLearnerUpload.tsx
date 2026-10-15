@@ -25,21 +25,21 @@ type RowState = BulkRow & { line: number; problem: string | null };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type Column = "email" | "firstName" | "lastName" | keyof LearnerDetails;
 const HEADER_ALIASES: Record<Column, string[]> = {
-  email: ["email", "e-mail", tr("email address"), "mail"],
-  firstName: ["firstname", tr("first name"), "first", tr("given name"), "givenname"],
-  lastName: ["lastname", tr("last name"), "last", "surname", tr("family name"), "familyname"],
-  employeeId: [tr("employee id"), "employeeid", tr("emp id"), "empid", tr("employee number"), tr("employee no"), tr("staff id")],
+  email: ["email", "e-mail", "email address", "mail"],
+  firstName: ["firstname", "first name", "first", "given name", "givenname"],
+  lastName: ["lastname", "last name", "last", "surname", "family name", "familyname"],
+  employeeId: ["employee id", "employeeid", "emp id", "empid", "employee number", "employee no", "staff id"],
   department: ["department", "dept", "team"],
-  jobTitle: [tr("job title"), "jobtitle", "title", "designation", "position"],
-  phone: ["phone", tr("phone number"), "mobile", tr("work phone"), tr("contact number")],
-  country: ["country", tr("country code")],
+  jobTitle: ["job title", "jobtitle", "title", "designation", "position"],
+  phone: ["phone", "phone number", "mobile", "work phone", "contact number"],
+  country: ["country", "country code"],
   city: ["city", "town"],
-  jobRole: [tr("job role"), "jobrole", "role", "function"],
+  jobRole: ["job role", "jobrole", "role", "function"],
   gender: ["gender", "sex"],
-  ageBand: ["age", tr("age band"), "ageband", tr("age group"), tr("age range")],
+  ageBand: ["age", "age band", "ageband", "age group", "age range"],
 };
 const DETAIL_COLUMNS: (keyof LearnerDetails)[] = ["employeeId", "department", "jobTitle", "phone", "country", "city", "jobRole", "gender", "ageBand"];
-const TEMPLATE_HEADER = ["email", tr("first name"), tr("last name"), tr("employee id"), "department", tr("job title"), "phone", "country", "city", tr("job role"), "gender", "age"];
+const TEMPLATE_HEADER = ["email", "first name", "last name", "employee id", "department", "job title", "phone", "country", "city", "job role", "gender", "age"];
 
 const squash = (v: string) => v.toLowerCase().replace(/[^a-z0-9+]/g, "");
 
@@ -225,7 +225,7 @@ export function BulkLearnerUpload({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-sm text-muted">
-          {tr("Up to")}{" "}{maxRows} {tr("learners per file. Columns: email, first name, last name; optionally employee ID, department, job title, phone, country, city, job role, gender, age.")}</p>
+          {tr("Up to {{maxRows}} learners per file. Columns: email, first name, last name; optionally employee ID, department, job title, phone, country, city, job role, gender, age.", { maxRows: maxRows })}</p>
         <button
           type="button"
           onClick={() =>
@@ -301,7 +301,7 @@ export function BulkLearnerUpload({
       {results && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-success">
-            {created} {tr("invited")}{results.length - created > 0 ? tr(" · {{v}} not invited", { v: results.length - created }) : ""}
+            {tr("{{created}} invited", { created: created })}{results.length - created > 0 ? tr(" · {{v}} not invited", { v: results.length - created }) : ""}
             {rows.some((r) => r.problem) ? tr(" · {{length}} skipped", { length: rows.filter((r) => r.problem).length }) : ""}
             {results.some((r) => r.licenseError) ? tr(" · {{length}} without a license (not enough licenses)", { length: results.filter((r) => r.licenseError).length }) : ""}.
           </p>

@@ -227,7 +227,7 @@ export function OrganizationProfileCard() {
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted">{tr("Profile completeness")}</span>
             <span className="font-semibold text-ink">
-              {filled} {tr("of")}{" "}{COMPLETENESS_FIELDS.length} {tr("details ·")}{" "}{completeness}%
+              {tr("{{filled}} of {{length}} details · {{completeness}}", { filled: filled, length: COMPLETENESS_FIELDS.length, completeness: completeness })}%
             </span>
           </div>
           <div className="h-2 rounded-full bg-rule overflow-hidden">

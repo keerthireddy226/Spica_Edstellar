@@ -3,6 +3,7 @@ import { commercialApi, type OrgHealth } from "@/api/admin";
 import { HealthBadge } from "@/components/HealthBadge";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 // Organizations whose health is slipping, worst first.
 export function AtRiskOrganizations() {
   const [orgs, setOrgs] = useState<(OrgHealth & { id: string; name: string })[] | null>(null);
@@ -23,7 +24,7 @@ export function AtRiskOrganizations() {
           <div key={o.id} className="flex items-start justify-between gap-3 border-t border-rule pt-2.5 first:border-0 first:pt-0">
             <div className="min-w-0">
               <p className="text-sm font-medium text-ink truncate">{o.name}</p>
-              <p className="text-xs text-muted">{o.flags.slice(0, 3).join(" · ") || tr("Low activity")}</p>
+              <p className="text-xs text-muted">{o.flags.slice(0, 3).map((f) => trServer(f)).join(" · ") || tr("Low activity")}</p>
             </div>
             <HealthBadge health={o} />
           </div>

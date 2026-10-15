@@ -7,6 +7,7 @@ import { formatUsdCents, sendEnterpriseInquiry, TIER_LABELS, type PlanTier } fro
 import { formatShortDate } from "@/api/licenses";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const TIERS: PlanTier[] = ["starter", "business", "enterprise"];
 const TIER_BLURB: Record<PlanTier, string> = {
   starter: tr("Small teams and pilots"),
@@ -88,7 +89,7 @@ export function OrgAdminPlan() {
               {tr("Pilot —")}{" "}{pilotDaysLeft === 0 ? tr("ends today") : tr("{{pilotDaysLeft}} day{{v}} left", { pilotDaysLeft: pilotDaysLeft, v: pilotDaysLeft === 1 ? "" : "s" })}
             </p>
             <p className="text-sm text-muted">
-              {tr("Your pilot licenses lapse on")}{" "}{formatShortDate(plan.pilotEndsAt)}{tr(". Buy licenses before then so learners keep their access.")}</p>
+              {tr("Your pilot licenses lapse on {{formatShortDate}}. Buy licenses before then so learners keep their access.", { formatShortDate: formatShortDate(plan.pilotEndsAt) })}</p>
           </div>
           <Button onClick={() => setShowBuy(true)}>{tr("Buy licenses")}</Button>
         </div>
@@ -114,7 +115,7 @@ export function OrgAdminPlan() {
             </p>
             {plan.customPriceCents !== null && <p className="text-xs text-muted">{tr("Negotiated price")}</p>}
             {plan.educationDiscountPercent > 0 && plan.customPriceCents === null && (
-              <p className="text-xs text-success">{tr("Includes")}{" "}{plan.educationDiscountPercent}{tr("% education discount")}</p>
+              <p className="text-xs text-success">{tr("Includes {{educationDiscountPercent}}% education discount", { educationDiscountPercent: plan.educationDiscountPercent })}</p>
             )}
           </div>
         </div>
@@ -183,7 +184,7 @@ export function OrgAdminPlan() {
           <div className="flex items-center justify-between gap-3 flex-wrap rounded-input bg-navy/5 px-4 py-3">
             <p className="text-sm text-ink">
               <Sparkles size={15} className="inline text-navy mr-1.5 -mt-0.5" />
-              {tr("Buy")}{" "}{plan.businessQualifyingQuantity} {tr("or more licenses at once and your organization moves to Business automatically.")}</p>
+              {tr("Buy {{businessQualifyingQuantity}} or more licenses at once and your organization moves to Business automatically.", { businessQualifyingQuantity: plan.businessQualifyingQuantity })}</p>
             <Button onClick={() => setShowBuy(true)}>{tr("Buy licenses")}</Button>
           </div>
         )}
@@ -197,7 +198,7 @@ export function OrgAdminPlan() {
               {plan.catalog.map((c) => (
                 <th key={c.tier} className={`px-4 py-4 text-left align-top ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
                   <p className="font-display font-bold text-base text-ink">
-                    {c.label}
+                    {trServer(c.label)}
                     {c.tier === plan.tier && <span className="ml-2 text-[11px] font-semibold text-navy uppercase">{tr("Current")}</span>}
                   </p>
                   <p className="text-xs text-muted font-normal">{TIER_BLURB[c.tier]}</p>
@@ -229,10 +230,10 @@ export function OrgAdminPlan() {
               <tr key={f.key} className="border-b border-rule last:border-0">
                 <td className="px-5 py-3">
                   <p className="text-ink">
-                    {f.label}
+                    {trServer(f.label)}
                     {!f.available && <span className="ml-2 text-[11px] font-semibold text-muted uppercase">{tr("Coming soon")}</span>}
                   </p>
-                  <p className="text-xs text-muted">{f.description}</p>
+                  <p className="text-xs text-muted">{trServer(f.description)}</p>
                 </td>
                 {plan.catalog.map((c) => (
                   <td key={c.tier} className={`px-4 py-3 ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
@@ -259,10 +260,10 @@ export function OrgAdminPlan() {
                     <EnterpriseInquiry />
                   ) : tier === "business" && plan.tier === "starter" ? (
                     <Button onClick={() => setShowBuy(true)} className="w-full">
-                      {tr("Buy")}{" "}{plan.businessQualifyingQuantity}+
+                      {tr("Buy {{businessQualifyingQuantity}}", { businessQualifyingQuantity: plan.businessQualifyingQuantity })}+
                     </Button>
                   ) : (
-                    <span className="text-xs text-muted">{tr("Included in")}{" "}{TIER_LABELS[plan.tier]}</span>
+                    <span className="text-xs text-muted">{tr("Included in {{v}}", { v: TIER_LABELS[plan.tier] })}</span>
                   )}
                 </td>
               ))}

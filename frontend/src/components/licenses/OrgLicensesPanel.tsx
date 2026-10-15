@@ -65,7 +65,7 @@ function CreditModal({
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("Add licenses ·")}{" "}{orgName}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Add licenses · {{orgName}}", { orgName: orgName })}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -107,7 +107,7 @@ function CreditModal({
             <input value={note} onChange={(e) => setNote(e.target.value)} className={inputClass} />
           </div>
           <p className="text-sm text-ink bg-paper-warm rounded-input px-3.5 py-2.5">
-            {qty} {tr("license")}{qty === 1 ? "" : "s"} = {qty} {tr("learner-month")}{qty === 1 ? "" : "s"} ·{" "}
+            {tr("{{qty}} license{{v}}= {{qty2}} learner-month{{v2}}", { qty: qty, v: qty === 1 ? "" : "s", qty2: qty, v2: qty === 1 ? "" : "s" })} ·{" "}
             <span className="font-semibold">{source === "comp" ? tr("no charge") : formatMoney(unitCents * qty)}</span>
             <span className="block text-xs text-muted mt-0.5">
               {tr("Unassigned licenses expire")}{" "}{customValidity ? Math.max(1, Math.floor(Number(validity) || 12)) : 12} {tr("months from today.")}</span>
@@ -189,7 +189,7 @@ export function OrgLicensesPanel({ tenantId, orgName, planTier }: { tenantId: st
                   {p.reference ? <span className="text-muted"> · {p.reference}</span> : null}
                 </span>
                 <span className="text-xs text-muted shrink-0">
-                  {p.source === "comp" ? "free" : formatMoney(p.totalCents, p.currency)} · {formatShortDate(p.purchasedAt)} · {p.remaining} {tr("left")}</span>
+                  {p.source === "comp" ? "free" : formatMoney(p.totalCents, p.currency)} · {tr("{{formatShortDate}}· {{remaining}} left", { formatShortDate: formatShortDate(p.purchasedAt), remaining: p.remaining })}</span>
               </div>
             ))}
           </div>

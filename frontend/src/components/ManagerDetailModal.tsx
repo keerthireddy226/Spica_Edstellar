@@ -94,7 +94,7 @@ export function ManagerDetailModal({
             {status === "active" ? tr("Active") : status === "pending" ? tr("Invite pending") : tr("Deactivated")}
           </Badge>
           <Badge>{categoryLabel(manager.tenantCategory)}</Badge>
-          <Badge>{tr("Joined")}{" "}{formatDate(manager.createdAt)}</Badge>
+          <Badge>{tr("Joined {{formatDate}}", { formatDate: formatDate(manager.createdAt) })}</Badge>
         </>
       }
       stats={[
@@ -128,7 +128,7 @@ export function ManagerDetailModal({
                 onClick={() => setSelectedBatch(null)}
                 className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold border transition-colors cursor-pointer ${selectedBatch === null ? "bg-navy text-white border-navy" : "border-rule text-ink hover:bg-paper-warm"}`}
               >
-                {tr("All ·")}{" "}{learners.length}
+                {tr("All · {{length}}", { length: learners.length })}
               </button>
               {batchGroups.map((g) => (
                 <button

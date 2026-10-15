@@ -12,6 +12,7 @@ import { OrgAuditPanel } from "@/components/OrgAuditPanel";
 import { OrgCommercialPanel } from "@/components/OrgCommercialPanel";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 function categoryLabel(category: string | null): string {
   return category === "university" ? tr("University") : tr("Organization");
 }
@@ -37,7 +38,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
         <>
           <Badge tone={org.active ? "good" : "bad"}>{org.active ? tr("Active") : tr("Deactivated")}</Badge>
           <Badge>{categoryLabel(org.category)}</Badge>
-          <Badge>{tierLabel} {tr("plan")}</Badge>
+          <Badge>{tr("{{tierLabel}} plan", { tierLabel: tierLabel })}</Badge>
           {org.pilotEndsAt && new Date(org.pilotEndsAt).getTime() > Date.now() && <Badge tone="warn">{tr("Pilot")}</Badge>}
         </>
       }
@@ -100,7 +101,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
               <div className="flex flex-col gap-2">
                 {org.health.flags.map((f) => (
                   <div key={f} className="bg-surface border border-rule border-l-4 border-l-warning rounded-input px-4 py-2.5 text-sm text-ink">
-                    {f}
+                    {trServer(f)}
                   </div>
                 ))}
               </div>

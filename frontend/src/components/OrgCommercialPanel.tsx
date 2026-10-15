@@ -7,6 +7,7 @@ import { formatAmount } from "@/api/payments";
 import { HealthBadge } from "@/components/HealthBadge";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 // Edstellar's account view of one organization: health, contract, account
 // manager, invoice payments to record, credit notes, and "view as".
 export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string; hasOrgAdmin: boolean }) {
@@ -83,7 +84,7 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
         {data.health && (
           <div className="flex items-start gap-3">
             <HealthBadge health={data.health} />
-            <p className="text-xs text-muted">{data.health.flags.length ? data.health.flags.join(" · ") : tr("No issues spotted.")}</p>
+            <p className="text-xs text-muted">{data.health.flags.length ? data.health.flags.map((f) => trServer(f)).join(" · ") : tr("No issues spotted.")}</p>
           </div>
         )}
 
@@ -145,7 +146,7 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
                   <a href={`/quote/${o.id}`} target="_blank" rel="noreferrer" className="font-mono text-navy hover:underline">
                     {o.quoteNumber}
                   </a>{" "}
-                  · {o.quantity} {tr("licenses ·")}{" "}{formatAmount(o.total, o.currency)}
+                  · {tr("{{quantity}} licenses · {{formatAmount}}", { quantity: o.quantity, formatAmount: formatAmount(o.total, o.currency) })}
                   {o.poNumber ? tr(" · PO {{poNumber}}", { poNumber: o.poNumber }) : ""}
                 </span>
                 {refFor === o.id ? (
@@ -186,8 +187,7 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
                 {creditFor === o.invoiceId && (
                   <div className="flex gap-2 flex-wrap items-end bg-paper-warm rounded-input p-3">
                     <label className="flex flex-col gap-1 text-xs text-muted">
-                      {tr("Amount (")}{o.currency})
-                      <input type="number" min={0} value={credit.amount} onChange={(e) => setCredit({ ...credit, amount: e.target.value })} className={`${inputClass} w-28`} />
+                      {tr("Amount ({{currency}})", { currency: o.currency })}{" "}<input type="number" min={0} value={credit.amount} onChange={(e) => setCredit({ ...credit, amount: e.target.value })} className={`${inputClass} w-28`} />
                     </label>
                     <label className="flex flex-col gap-1 text-xs text-muted">
                       {tr("Remove unused licenses")}<input type="number" min={0} value={credit.licenses} onChange={(e) => setCredit({ ...credit, licenses: e.target.value })} className={`${inputClass} w-24`} />

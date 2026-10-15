@@ -89,7 +89,7 @@ export function AdminReview() {
               </p>
             </div>
             <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">
-              <ShieldAlert size={14} /> {p.flagged_checks.length} {tr("flagged check")}{p.flagged_checks.length === 1 ? "" : "s"}
+              <ShieldAlert size={14} /> {tr("{{length}} flagged check{{v}}", { length: p.flagged_checks.length, v: p.flagged_checks.length === 1 ? "" : "s" })}
             </span>
           </div>
 
@@ -97,7 +97,7 @@ export function AdminReview() {
             {p.flagged_checks.map((c, i) => (
               <div key={i} className="flex items-center gap-3 text-xs bg-paper-warm rounded-input px-3 py-2">
                 <span className="font-mono uppercase text-error font-semibold">{c.decision}</span>
-                {c.similarityScore !== null && <span className="text-muted">{tr("similarity")}{" "}{Number(c.similarityScore).toFixed(2)}</span>}
+                {c.similarityScore !== null && <span className="text-muted">{tr("similarity {{toFixed}}", { toFixed: Number(c.similarityScore).toFixed(2) })}</span>}
                 <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString()}</span>
                 {c.sampleUri && (
                   <a href={c.sampleUri} target="_blank" rel="noreferrer" className="text-navy-deep hover:underline ml-auto">

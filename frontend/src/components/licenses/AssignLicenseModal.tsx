@@ -138,12 +138,12 @@ export function AssignLicenseModal({
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
             {mode === "assign" ? (
               <>
-                {tr("Uses")}{" "}<span className="font-semibold">{months}</span> {tr("license")}{months === 1 ? "" : "s"} {tr("from the pool. Access")}{" "}
+                {tr("Uses")}{" "}<span className="font-semibold">{months}</span> {tr("license{{v}} from the pool. Access", { v: months === 1 ? "" : "s" })}{" "}
                 {isExtend ? "extends" : tr("starts today and runs")} {tr("until")}{" "}<span className="font-semibold">{formatShortDate(newEnd.toISOString())}</span>.
               </>
             ) : (
               <>
-                {tr("Returns")}{" "}<span className="font-semibold">{Math.min(months, maxReclaim)}</span> {tr("unstarted month")}{months === 1 ? "" : "s"} {tr("to the pool. The month already running isn't refunded.")}</>
+                {tr("Returns")}{" "}<span className="font-semibold">{Math.min(months, maxReclaim)}</span> {tr("unstarted month{{v}} to the pool. The month already running isn't refunded.", { v: months === 1 ? "" : "s" })}</>
             )}
             <p className="text-xs text-muted mt-1">{poolHint}</p>
           </div>

@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 interface ProgressData {
   totals: { sessions: number; questions: number; minutes: number; streak: number; xp: number; accuracy: number | null };
   skills: { skill: string; minutes: number; accuracy: number | null; answered: number }[];
@@ -213,7 +214,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                   return (
                     <div
                       key={a.id}
-                      title={a.description}
+                      title={trServer(a.description)}
                       className={`relative flex flex-col items-center text-center gap-2 rounded-card px-3 pt-4 pb-3 border ${
                         earned ? "shadow-sm" : "bg-paper/50 border-dashed border-rule-strong"
                       }`}
@@ -234,11 +235,11 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                           </span>
                         )}
                       </span>
-                      <p className={`text-sm font-semibold leading-tight ${earned ? "text-ink" : "text-muted"}`}>{a.title}</p>
+                      <p className={`text-sm font-semibold leading-tight ${earned ? "text-ink" : "text-muted"}`}>{trServer(a.title)}</p>
                       <p className="text-[11px] text-muted leading-snug line-clamp-2">
                         {earned
                           ? `Earned ${new Date(a.unlockedAt!).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
-                          : a.description}
+                          : trServer(a.description)}
                       </p>
                     </div>
                   );

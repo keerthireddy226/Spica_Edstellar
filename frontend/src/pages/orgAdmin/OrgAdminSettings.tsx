@@ -235,7 +235,7 @@ export function OrgAdminSettings() {
             >
               {[8, 10, 12, 14, 16, 20].map((n) => (
                 <option key={n} value={n}>
-                  {n} {tr("characters")}</option>
+                  {tr("{{n}} characters", { n: n })}</option>
               ))}
             </select>
           </div>

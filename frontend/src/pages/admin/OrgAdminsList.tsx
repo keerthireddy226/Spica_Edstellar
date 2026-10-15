@@ -87,7 +87,7 @@ function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (m
               </label>
               {org?.hasOrgAdmin && (
                 <p className="text-xs text-navy-deep bg-warning/15 border border-warning/30 rounded-input px-3 py-2">
-                  {org.name} {tr("already has an Org Admin (")}{org.orgAdmin?.name}, {org.orgAdmin?.email}{tr("). Adding a new one replaces them, and they lose access.")}</p>
+                  {tr("{{name}} already has an Org Admin (", { name: org.name })}{org.orgAdmin?.name}, {org.orgAdmin?.email}{tr("). Adding a new one replaces them, and they lose access.")}</p>
               )}
               <div className="grid sm:grid-cols-2 gap-4">
                 {(
@@ -238,7 +238,7 @@ export function OrgAdminsList() {
                     ))}
                   </div>
                   <p className="text-xs text-muted">
-                    {s === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added")}{" "}{shortDate(a.createdAt)}
+                    {s === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added {{shortDate}}", { shortDate: shortDate(a.createdAt) })}
                     {perms.isSuper && a.ownerName ? tr(" · Owner: {{ownerName}}", { ownerName: a.ownerName }) : ""}
                   </p>
                 </div>

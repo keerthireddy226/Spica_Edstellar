@@ -104,7 +104,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
     <div className="flex flex-col gap-5 px-8 py-6">
       <div className="flex flex-col gap-2">
         <p className="text-sm text-muted">
-          {tr("CSV with columns, in order:")}{" "}<code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{tr("email, firstName, lastName, department")}</code>{tr(". A header row is optional. New admins get no permissions by default — grant them individually afterward.")}</p>
+          {tr("CSV with columns, in order:")}{" "}<code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{"email, firstName, lastName, department"}</code>{tr(". A header row is optional. New admins get no permissions by default — grant them individually afterward.")}</p>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -120,7 +120,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
 
       {rows.length > 0 && !results && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{rows.length} {tr("rows found")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("{{length}} rows found", { length: rows.length })}</p>
           <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
             <table className="w-full text-xs">
               <tbody>
@@ -143,7 +143,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
       {results && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-success">
-            {createdCount} {tr("of")}{" "}{results.length} {tr("invites sent.")}</p>
+            {tr("{{createdCount}} of {{length}} invites sent.", { createdCount: createdCount, length: results.length })}</p>
           <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
             <table className="w-full text-xs">
               <tbody>
@@ -499,7 +499,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                 <div>
                   <p className="text-sm font-medium text-ink">{org.name}</p>
                   <p className="text-xs text-muted">
-                    {org.category === "university" ? tr("University") : tr("Organization")} · {org.learnerCount} {tr("learner")}{org.learnerCount === 1 ? "" : "s"}
+                    {org.category === "university" ? tr("University") : tr("Organization")} · {tr("{{learnerCount}} learner{{v}}", { learnerCount: org.learnerCount, v: org.learnerCount === 1 ? "" : "s" })}
                   </p>
                 </div>
                 <span
@@ -556,7 +556,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                           <span className="text-muted text-xs ml-2">{mgr.email}</span>
                         </div>
                         <span className="text-xs text-muted shrink-0">
-                          {mgr.learnerCount} {tr("learner")}{mgr.learnerCount === 1 ? "" : "s"}
+                          {tr("{{learnerCount}} learner{{v}}", { learnerCount: mgr.learnerCount, v: mgr.learnerCount === 1 ? "" : "s" })}
                         </span>
                       </button>
                     ))}
@@ -694,7 +694,7 @@ function AdminsListPage() {
 
       {justInvited && (
         <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
-          {tr("Invite sent to")}{" "}{justInvited} {tr("— they'll receive an email to set their password.")}</p>
+          {tr("Invite sent to {{justInvited}} — they'll receive an email to set their password.", { justInvited: justInvited })}</p>
       )}
       {error && <p className="text-sm text-error">{error}</p>}
       {!admins && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
@@ -733,7 +733,7 @@ function AdminsListPage() {
               <Panel title={tr("By department")}>
                 {(() => {
                   const by = new Map<string, number>();
-                  for (const a of all.filter((x) => x.active)) by.set(a.department || "Not set", (by.get(a.department || "Not set") ?? 0) + 1);
+                  for (const a of all.filter((x) => x.active)) by.set(a.department || tr("Not set"), (by.get(a.department || tr("Not set")) ?? 0) + 1);
                   const total = [...by.values()].reduce((n, v) => n + v, 0) || 1;
                   return [...by.entries()]
                     .sort((x, y) => y[1] - x[1])
@@ -841,7 +841,7 @@ function AdminsListPage() {
 
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">
-                      {tr("Permissions ·")}{" "}{granted.length} {tr("of")}{" "}{totalPerms}
+                      {tr("Permissions · {{length}} of {{totalPerms}}", { length: granted.length, totalPerms: totalPerms })}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((k) => (
@@ -857,7 +857,7 @@ function AdminsListPage() {
 
                   <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-rule">
                     <span className="text-xs text-muted">
-                      {st === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added")}{" "}{shortDate(a.createdAt)}
+                      {st === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added {{shortDate}}", { shortDate: shortDate(a.createdAt) })}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => setViewingActivity(a)} className="text-xs font-semibold text-navy hover:underline cursor-pointer px-1">

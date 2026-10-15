@@ -4,6 +4,7 @@ import { getManagerActivity } from "@/api/manager";
 import type { AuditEntry } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const VERBS: Record<string, string> = {
   "batch.created": tr("created batch"),
   "batch.updated": tr("edited batch"),
@@ -86,7 +87,7 @@ export function ManagerActivity() {
                   <td className="px-4 py-3 text-ink">
                     {VERBS[e.action] ?? e.action.replace(/[._]/g, " ")} {e.targetLabel}
                     {typeof d.quantity === "number" ? ` (${d.quantity})` : ""}
-                    {d.note ? <span className="text-muted"> — {d.note}</span> : null}
+                    {d.note ? <span className="text-muted"> — {trServer(d.note)}</span> : null}
                   </td>
                 </tr>
               );

@@ -44,7 +44,7 @@ export function DataGovernanceSection() {
           <FileCheck2 size={18} className={dpaCurrent ? "text-success mt-0.5" : "text-warning mt-0.5"} />
           <div className="flex-1">
             <p className="text-sm text-ink">
-              {tr("Data processing agreement")}{" "}{data.dpa.currentVersion}
+              {tr("Data processing agreement {{currentVersion}}", { currentVersion: data.dpa.currentVersion })}
               {data.dpa.url && (
                 <>
                   {" · "}
@@ -82,7 +82,7 @@ export function DataGovernanceSection() {
                 <option value="">{tr("Keep while the account exists")}</option>
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    {m} {tr("months")}</option>
+                    {tr("{{m}} months", { m: m })}</option>
                 ))}
               </select>
             </label>
@@ -98,7 +98,7 @@ export function DataGovernanceSection() {
                 <option value="">{tr("Never automatically")}</option>
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    {m} {tr("months")}</option>
+                    {tr("{{m}} months", { m: m })}</option>
                 ))}
               </select>
             </label>
@@ -122,7 +122,7 @@ export function DataGovernanceSection() {
                   onClick={() => downloadCsv(`/org-admin/data-exports/${e.id}/download`, "spica-export.json")}
                   className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline cursor-pointer"
                 >
-                  <Download size={14} /> {tr("Download export of")}{" "}{new Date(e.completedAt!).toLocaleDateString()} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} {tr("KB)")}</button>
+                  <Download size={14} /> {tr("Download export of {{toLocaleDateString}}", { toLocaleDateString: new Date(e.completedAt!).toLocaleDateString() })} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} {tr("KB)")}</button>
               ))}
             {data.exports[0]?.status === "queued" && <span className="text-xs text-muted">{tr("Preparing export…")}</span>}
           </div>

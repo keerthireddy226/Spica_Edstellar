@@ -13,9 +13,7 @@ function Compare({ value, org, unit }: { value: number; org: number; unit: strin
   const diff = value - org;
   return (
     <span className={`text-[11px] ${diff >= 0 ? "text-success" : "text-error"}`}>
-      {diff === 0 ? tr("Same as") : `${diff > 0 ? "+" : ""}${diff}${unit} vs`} {tr("org average (")}{org}
-      {unit})
-    </span>
+      {diff === 0 ? tr("Same as") : `${diff > 0 ? "+" : ""}${diff}${unit} vs`} {tr("org average ({{org}} {{unit}})", { org: org, unit: unit })}{" "}</span>
   );
 }
 
@@ -35,7 +33,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
         </div>
         <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5">
           <p className="text-xs text-muted">{tr("Practice / learner / week")}</p>
-          <p className="text-2xl font-display font-bold text-ink mt-0.5">{s.avgMinutesPerLearnerPerWeek} {tr("min")}</p>
+          <p className="text-2xl font-display font-bold text-ink mt-0.5">{tr("{{avgMinutesPerLearnerPerWeek}} min", { avgMinutesPerLearnerPerWeek: s.avgMinutesPerLearnerPerWeek })}</p>
           <Compare value={s.avgMinutesPerLearnerPerWeek} org={s.orgAvgMinutesPerLearnerPerWeek} unit=" min" />
         </div>
         <Stat
@@ -67,7 +65,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
         />
         {(s.needsAttention > 0 || s.remindedLearners > 0) && (
           <p className="text-xs text-muted">
-            {s.remindedLearners} {tr("learner")}{s.remindedLearners === 1 ? " has" : tr("s have")} {tr("been reminded")}{s.needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: s.needsAttention }) : ""}.
+            {tr("{{remindedLearners}} learner", { remindedLearners: s.remindedLearners })}{s.remindedLearners === 1 ? " has" : tr("s have")} {tr("been reminded")}{s.needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: s.needsAttention }) : ""}.
           </p>
         )}
       </Card>
@@ -122,7 +120,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
                     {sk.skill === weakest && tr(" · weakest")}
                   </p>
                   <p className="text-xl font-display font-bold text-ink">{sk.accuracy === null ? "—" : `${sk.accuracy}%`}</p>
-                  <p className="text-[11px] text-muted">{sk.avgMinutes} {tr("min avg")}</p>
+                  <p className="text-[11px] text-muted">{tr("{{avgMinutes}} min avg", { avgMinutes: sk.avgMinutes })}</p>
                 </div>
               ));
             })()}

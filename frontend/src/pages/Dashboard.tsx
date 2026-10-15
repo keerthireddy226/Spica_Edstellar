@@ -43,6 +43,7 @@ import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const SKILL_ICONS: Record<SkillTag, typeof Headphones> = {
   listening: Headphones,
   speaking: Mic,
@@ -239,11 +240,11 @@ function AchievementBadges({ badges }: { badges: Badge[] }) {
             >
               <Icon size={22} strokeWidth={1.8} />
             </span>
-            <div className={`text-xs font-bold ${b.unlocked ? "text-ink" : "text-muted"}`}>{b.title}</div>
+            <div className={`text-xs font-bold ${b.unlocked ? "text-ink" : "text-muted"}`}>{trServer(b.title)}</div>
             {b.unlocked ? (
               b.unlockedAt && <div className="text-[11px] text-muted">{new Date(b.unlockedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</div>
             ) : (
-              <div className="text-[11px] text-muted leading-snug">{b.description}</div>
+              <div className="text-[11px] text-muted leading-snug">{trServer(b.description)}</div>
             )}
           </div>
         );
@@ -352,7 +353,7 @@ function LearnerDashboard() {
           color="var(--color-accent)"
           action={
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
-              {doneToday}/{todaysTasks.length} {tr("done")}</span>
+              {tr("{{doneToday}}/{{length}} done", { doneToday: doneToday, length: todaysTasks.length })}</span>
           }
         >
           <TodaysTasksList tasks={todaysTasks} />
@@ -377,7 +378,7 @@ function LearnerDashboard() {
         title={t("dashboardHome.achievementsTitle")}
         icon={Trophy}
         color="#c9965c"
-        action={<span className="text-xs text-muted">{unlocked} {tr("of")}{" "}{badges.length} {tr("earned")}</span>}
+        action={<span className="text-xs text-muted">{tr("{{unlocked}} of {{length}} earned", { unlocked: unlocked, length: badges.length })}</span>}
       >
         <AchievementBadges badges={badges} />
       </LearnerCard>

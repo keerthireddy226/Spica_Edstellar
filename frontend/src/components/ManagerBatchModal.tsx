@@ -160,12 +160,12 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
             </div>
             <div>
               <p className="text-xs text-muted">{tr("From your pool")}</p>
-              <p className="text-ink">{b.licenses.fromPool} {tr("license-month")}{b.licenses.fromPool === 1 ? "" : "s"}</p>
+              <p className="text-ink">{tr("{{fromPool}} license-month{{v}}", { fromPool: b.licenses.fromPool, v: b.licenses.fromPool === 1 ? "" : "s" })}</p>
             </div>
             <div>
               <p className="text-xs text-muted">{tr("Learners licensed")}</p>
               <p className="text-ink">
-                {b.licenses.licensed} {tr("of")}{" "}{b.licenses.learners}
+                {tr("{{licensed}} of {{learners}}", { licensed: b.licenses.licensed, learners: b.licenses.learners })}
                 {b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
               </p>
             </div>
@@ -175,7 +175,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
             </div>
             {b.status === "active" && poolLeft !== null && poolLeft > 0 && (
               <div className="col-span-2 sm:col-span-4 flex items-center gap-2 flex-wrap pt-3 border-t border-rule">
-                <span className="text-xs text-muted">{tr("Set aside licenses from your pool (")}{poolLeft} {tr("left) for this batch only:")}</span>
+                <span className="text-xs text-muted">{tr("Set aside licenses from your pool ({{poolLeft}} left) for this batch only:", { poolLeft: poolLeft })}</span>
                 <input
                   type="number"
                   min={1}
@@ -201,7 +201,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Learners (")}{data.learners.length})</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Learners ({{length}})", { length: data.learners.length })}</p>
           {data.learners.length === 0 ? (
             <p className="text-sm text-muted">{tr("No learners in this batch yet.")}</p>
           ) : (
@@ -217,8 +217,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                       <p className="text-xs text-muted">
-                        {[l.employeeId, l.department, l.jobTitle].filter(Boolean).map((x) => `${x} · `).join("")}
-                        {l.sessionCount} {tr("session")}{l.sessionCount === 1 ? "" : "s"}
+                        {tr("{{join}} {{sessionCount}} session{{v}}", { join: [l.employeeId, l.department, l.jobTitle].filter(Boolean).map((x) => `${x} · `).join(""), sessionCount: l.sessionCount, v: l.sessionCount === 1 ? "" : "s" })}
                         {!l.hasLoggedIn ? tr(" · invite pending") : ""}
                         {!l.active ? tr(" · deactivated") : ""}
                       </p>

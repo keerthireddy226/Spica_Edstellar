@@ -8,6 +8,7 @@ import { getPortfolio, money, ago, type Portfolio } from "@/api/staff";
 import { EmptyNote, PageHeader, Panel, StatCard, StatusPill, WeeklyBars, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const BAND_TONE = { healthy: "success", watch: "warning", at_risk: "error" } as const;
 const BAND_LABEL = { healthy: tr("Healthy"), watch: tr("Watch"), at_risk: tr("At risk") } as const;
 
@@ -132,7 +133,7 @@ export function StaffDashboard() {
         <Panel
           className="lg:col-span-2"
           title={tr("Needs attention")}
-          action={<span className="text-xs text-muted">{data.attention.length} {tr("item")}{data.attention.length === 1 ? "" : "s"}</span>}
+          action={<span className="text-xs text-muted">{tr("{{length}} item{{v}}", { length: data.attention.length, v: data.attention.length === 1 ? "" : "s" })}</span>}
         >
           {data.attention.length === 0 ? (
             <EmptyNote>{tr("Nothing needs attention right now.")}</EmptyNote>
@@ -142,8 +143,8 @@ export function StaffDashboard() {
                 <Link key={i} to={attentionLink[a.kind] ?? r.orgs} className="flex items-start gap-3 py-2.5 hover:bg-paper-warm -mx-2 px-2 rounded-input transition-colors">
                   <AlertTriangle size={16} className={`mt-0.5 shrink-0 ${a.kind === "at_risk" || a.kind === "overdue" || a.kind === "jobs" ? "text-error" : "text-warning"}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-ink">{a.title}</p>
-                    {a.detail && <p className="text-xs text-muted truncate">{a.detail}</p>}
+                    <p className="text-sm font-medium text-ink">{trServer(a.title)}</p>
+                    {a.detail && <p className="text-xs text-muted truncate">{trServer(a.detail)}</p>}
                   </div>
                   <ChevronRight size={15} className="text-muted mt-0.5" />
                 </Link>
@@ -171,9 +172,9 @@ export function StaffDashboard() {
           )}
           {owed && (
             <Link to={r.billing} className="mt-1 rounded-input bg-paper-warm px-3 py-2.5 text-sm hover:bg-rule/40 transition-colors">
-              <span className="font-semibold text-ink">{owed.count} {tr("unpaid invoice")}{owed.count === 1 ? "" : "s"}</span>
+              <span className="font-semibold text-ink">{tr("{{v}} unpaid invoice{{v2}}", { v: owed.count, v2: owed.count === 1 ? "" : "s" })}</span>
               <span className="text-muted"> · {money(owed.total, owed.currency)}</span>
-              {owed.overdue > 0 && <span className="text-error font-semibold"> · {owed.overdue} {tr("overdue")}</span>}
+              {owed.overdue > 0 && <span className="text-error font-semibold"> · {tr("{{overdue}} overdue", { overdue: owed.overdue })}</span>}
             </Link>
           )}
         </Panel>
@@ -192,14 +193,14 @@ export function StaffDashboard() {
             })}
           </div>
           <p className="text-xs text-muted">
-            {data.organizations.healthy} {tr("healthy ·")}{" "}{data.organizations.watch} {tr("to watch ·")}{" "}{data.organizations.atRisk} {tr("at risk")}</p>
+            {tr("{{healthy}} healthy · {{watch}} to watch · {{atRisk}} at risk", { healthy: data.organizations.healthy, watch: data.organizations.watch, atRisk: data.organizations.atRisk })}</p>
           <div className="flex flex-col gap-2 mt-1">
             {data.health.slice(0, 5).map((h) => (
               <div key={h.id} className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-sm text-ink truncate">{h.name}</p>
                   <p className="text-[11px] text-muted truncate">
-                    {h.active7}/{h.learners} {tr("practised this week")}{h.flags[0] ? ` · ${h.flags[0]}` : ""}
+                    {tr("{{active7}}/{{learners}} practised this week", { active7: h.active7, learners: h.learners })}{h.flags[0] ? ` · ${h.flags[0]}` : ""}
                   </p>
                 </div>
                 <StatusPill tone={BAND_TONE[h.band]}>
@@ -223,7 +224,7 @@ export function StaffDashboard() {
             </div>
           ))}
           <p className="text-xs text-muted">
-            {data.organizations.pilots} {tr("on pilot")}{data.organizations.deactivated ? tr(" · {{deactivated}} deactivated", { deactivated: data.organizations.deactivated }) : ""}
+            {tr("{{pilots}} on pilot", { pilots: data.organizations.pilots })}{data.organizations.deactivated ? tr(" · {{deactivated}} deactivated", { deactivated: data.organizations.deactivated }) : ""}
           </p>
         </Panel>
 
@@ -243,7 +244,7 @@ export function StaffDashboard() {
               </div>
             ))}
           </div>
-          {revenue && <p className="text-xs text-muted">{tr("This year:")}{" "}{money(revenue.thisYear, revenue.currency)} {tr("paid across organizations and individuals.")}</p>}
+          {revenue && <p className="text-xs text-muted">{tr("This year: {{money}} paid across organizations and individuals.", { money: money(revenue.thisYear, revenue.currency) })}</p>}
         </Panel>
 
         <Panel title={tr("Recent activity")} action={<Link to={r.audit} className="text-xs font-semibold text-navy hover:underline">{tr("Audit log")}</Link>}>
@@ -310,7 +311,7 @@ export function StaffDashboard() {
               </div>
             </div>
             <p className="text-xs text-muted">
-              {data.pendingReviews} {tr("placement")}{data.pendingReviews === 1 ? "" : "s"} {tr("waiting for identity review ·")}{" "}
+              {tr("{{pendingReviews}} placement{{v}} waiting for identity review ·", { pendingReviews: data.pendingReviews, v: data.pendingReviews === 1 ? "" : "s" })}{" "}
               <Link to={r.reviews} className="text-navy font-semibold hover:underline">
                 {tr("Review")}</Link>
             </p>

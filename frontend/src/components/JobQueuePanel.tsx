@@ -20,7 +20,7 @@ export function JobQueuePanel() {
       <div className="flex items-center justify-between">
         <h2 className="font-display font-bold text-lg text-ink">{tr("Background jobs")}</h2>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${stats.readyBacklog > 50 ? "bg-warning/15 text-navy-deep" : "bg-success/15 text-success"}`}>
-          {stats.readyBacklog} {tr("waiting")}</span>
+          {tr("{{readyBacklog}} waiting", { readyBacklog: stats.readyBacklog })}</span>
       </div>
       <table className="w-full text-sm">
         <thead>

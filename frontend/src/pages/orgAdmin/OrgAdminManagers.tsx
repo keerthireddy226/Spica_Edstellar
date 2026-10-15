@@ -265,7 +265,7 @@ function ManagerFormModal({
                               <input type="checkbox" checked={checked} onChange={() => toggleBatch(b.id)} className="h-4 w-4 rounded accent-navy cursor-pointer" />
                               <span className="truncate">{b.name}</span>
                             </label>
-                            {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">{tr("also managed by")}{" "}{others.join(", ")}</p>}
+                            {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">{tr("also managed by {{join}}", { join: others.join(", ") })}</p>}
                           </td>
                           <td className="px-3 py-2.5 text-right text-xs text-muted">
                             {fixed?.budget != null ? `${fixed.used} / ${fixed.budget} used` : tr("None — uses Manager's pool")}
@@ -422,11 +422,11 @@ export function OrgAdminManagers() {
             <div className="flex flex-wrap gap-2 text-sm">
               {counts.pending > 0 && (
                 <span className="bg-warning/15 text-navy-deep border border-warning/30 rounded-pill px-3 py-1">
-                  {counts.pending} {tr("invite")}{counts.pending === 1 ? "" : "s"} {tr("not accepted yet")}</span>
+                  {tr("{{pending}} invite{{v}} not accepted yet", { pending: counts.pending, v: counts.pending === 1 ? "" : "s" })}</span>
               )}
               {counts.requests > 0 && (
                 <Link to={ROUTES.ORG_ADMIN_LICENSES} className="bg-navy/10 text-navy rounded-pill px-3 py-1 font-semibold hover:underline">
-                  {tr("Review")}{" "}{counts.requests} {tr("license request")}{counts.requests === 1 ? "" : "s"} →
+                  {tr("Review {{requests}} license request{{v}}", { requests: counts.requests, v: counts.requests === 1 ? "" : "s" })} →
                 </Link>
               )}
             </div>
@@ -534,7 +534,7 @@ export function OrgAdminManagers() {
                         <>
                           <p className="font-display font-bold text-xl text-white">
                             {left}
-                            <span className="text-xs font-normal text-white/75"> / {m.licensesAllotted} {tr("left")}</span>
+                            <span className="text-xs font-normal text-white/75"> / {tr("{{licensesAllotted}} left", { licensesAllotted: m.licensesAllotted })}</span>
                           </p>
                           <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
                             <div
@@ -555,7 +555,7 @@ export function OrgAdminManagers() {
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (
                       <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
-                        {m.pendingRequests} {tr("license request")}{m.pendingRequests === 1 ? "" : "s"} {tr("waiting")}</Link>
+                        {m.pendingRequests} {tr("license request{{v}} waiting", { v: m.pendingRequests === 1 ? "" : "s" })}</Link>
                     )}
                   </div>
 

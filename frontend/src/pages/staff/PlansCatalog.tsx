@@ -5,6 +5,7 @@ import { money } from "@/api/staff";
 import { PageHeader, Panel, StatCard, paletteColor } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 interface Catalog {
   tiers: { tier: string; label: string; priceFloorCents: number; limits: { managers: number | null; batches: number | null }; support: string; features: { key: string; label: string; available: boolean }[] }[];
   volumeBands: { minQuantity: number; unitPriceCents: number }[];
@@ -40,8 +41,8 @@ export function PlansCatalog() {
         {c.tiers.map((t, i) => (
           <div key={t.tier} className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden flex flex-col">
             <div style={{ background: `linear-gradient(135deg, ${paletteColor("terracotta", i)}, color-mix(in srgb, ${paletteColor("terracotta", i)} 65%, black))` }} className="px-5 py-4 text-white">
-              <p className="font-display font-bold text-xl">{t.label}</p>
-              <p className="text-sm text-white/85">{tr("from")}{" "}{money(t.priceFloorCents, "USD")} {tr("per license-month")}</p>
+              <p className="font-display font-bold text-xl">{trServer(t.label)}</p>
+              <p className="text-sm text-white/85">{tr("from {{money}} per license-month", { money: money(t.priceFloorCents, "USD") })}</p>
             </div>
             <div className="p-5 flex flex-col gap-3 flex-1">
               <p className="text-xs text-muted">
@@ -51,10 +52,10 @@ export function PlansCatalog() {
                 {c.allFeatures.map((f) => {
                   const included = rank[f.minTier] <= rank[t.tier];
                   return (
-                    <li key={f.key} className={`flex items-start gap-2 ${included ? "text-ink" : "text-muted"}`} title={f.description}>
+                    <li key={f.key} className={`flex items-start gap-2 ${included ? "text-ink" : "text-muted"}`} title={trServer(f.description)}>
                       {included ? <Check size={15} className="text-success mt-0.5 shrink-0" /> : <Minus size={15} className="mt-0.5 shrink-0" />}
                       <span>
-                        {f.label}
+                        {trServer(f.label)}
                         {included && !f.available && <span className="ml-1 text-[10px] font-semibold uppercase text-warning">{tr("coming soon")}</span>}
                       </span>
                     </li>

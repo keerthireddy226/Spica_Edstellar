@@ -27,8 +27,8 @@ function ApiKeys() {
       <h2 className="font-display font-bold text-lg text-ink flex items-center gap-2">
         <KeyRound size={18} className="text-navy" /> {tr("API keys")}</h2>
       <p className="text-sm text-muted">
-        {tr("For your LMS or HR system. Send")}{" "}<code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{tr("Authorization: Bearer spk_…")}</code> {tr("to")}{" "}
-        <code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{window.location.origin}{tr("/api/v1")}</code>.{" "}
+        {tr("For your LMS or HR system. Send")}{" "}<code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{"Authorization: Bearer spk_…"}</code> {tr("to")}{" "}
+        <code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{window.location.origin}{"/api/v1"}</code>.{" "}
         <a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="text-navy font-semibold hover:underline">
           {tr("API reference (OpenAPI)")}</a>
       </p>
@@ -125,7 +125,7 @@ function WebhookRow({ hook, onChanged }: { hook: WebhookInfo; onChanged: () => v
           </button>
         </div>
       </div>
-      {hook.disabledReason && <p className="text-xs text-error">{tr("Turned off:")}{" "}{hook.disabledReason}.</p>}
+      {hook.disabledReason && <p className="text-xs text-error">{tr("Turned off: {{disabledReason}}.", { disabledReason: hook.disabledReason })}</p>}
       <div className="flex items-center gap-2 text-xs">
         <span className="text-muted">{tr("Signing secret")}</span>
         <code className="bg-paper-warm px-1.5 py-0.5 rounded font-mono">{reveal ? hook.secret : "whsec_••••••••"}</code>
@@ -176,8 +176,8 @@ function Webhooks() {
       <h2 className="font-display font-bold text-lg text-ink flex items-center gap-2">
         <Webhook size={18} className="text-navy" /> {tr("Webhooks")}</h2>
       <p className="text-sm text-muted">
-        {tr("Spica sends a signed POST to your URL when these things happen. Check")}{" "}<code className="text-xs bg-paper-warm px-1 rounded">{tr("X-Spica-Signature")}</code>{tr(": it's")}{" "}
-        <code className="text-xs bg-paper-warm px-1 rounded">{tr("t=<time>,v1=HMAC-SHA256(secret, \"<time>.<body>\")")}</code>{tr(". Failed deliveries retry six times; a webhook that fails 20 times in a row is turned off.")}</p>
+        {tr("Spica sends a signed POST to your URL when these things happen. Check")}{" "}<code className="text-xs bg-paper-warm px-1 rounded">{"X-Spica-Signature"}</code>{tr(": it's")}{" "}
+        <code className="text-xs bg-paper-warm px-1 rounded">{"t=<time>,v1=HMAC-SHA256(secret, \"<time>.<body>\")"}</code>{tr(". Failed deliveries retry six times; a webhook that fails 20 times in a row is turned off.")}</p>
       <div className="flex flex-col gap-2">
         <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder={tr("https://hr.example.com/spica-webhook")} className={inputClass} />
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">

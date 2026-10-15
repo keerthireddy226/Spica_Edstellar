@@ -18,6 +18,7 @@ import {
 } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 // One analytics page for every console; the server decides the scope by role.
 export function AnalyticsPage() {
   const { user } = useAuth();
@@ -82,7 +83,7 @@ export function AnalyticsPage() {
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Analytics")}</h1>
           <p className="text-sm text-muted mt-1">
-            {overview?.scope ?? tr("Loading…")} {tr("· generated")}{" "}{new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+            {overview?.scope ? trServer(overview.scope) : tr("Loading…")} {tr("· generated")}{" "}{new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
           </p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
@@ -142,7 +143,7 @@ export function AnalyticsPage() {
               >
                 {batches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} · {b.batchCode} · {b.learners} {tr("learner")}{b.learners === 1 ? "" : "s"}
+                    {tr("{{name}}· {{batchCode}}· {{learners}} learner{{v}}", { name: b.name, batchCode: b.batchCode, learners: b.learners, v: b.learners === 1 ? "" : "s" })}
                   </option>
                 ))}
               </select>

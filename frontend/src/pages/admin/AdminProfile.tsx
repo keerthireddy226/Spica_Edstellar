@@ -319,7 +319,7 @@ export function ActiveSessionsSection() {
               <div className="flex-1 min-w-0">
                 <p className="text-ink truncate">{s.isCurrent ? tr("This device") : tr("Other session")}</p>
                 <p className="text-xs text-muted truncate">
-                  {tr("Started")}{" "}{formatDateTime(s.createdAt)} {tr("· Expires")}{" "}{formatDateTime(s.expiresAt)}
+                  {tr("Started {{formatDateTime}} · Expires {{formatDateTime2}}", { formatDateTime: formatDateTime(s.createdAt), formatDateTime2: formatDateTime(s.expiresAt) })}
                 </p>
               </div>
               {s.isCurrent ? (
@@ -426,11 +426,11 @@ export function AdminProfile() {
                 <ShieldCheck size={13} /> {role ? (ROLE_LABEL[role] ?? role) : "—"}
               </span>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                {tr("Member since")}{" "}{formatDate(user?.createdAt)}
+                {tr("Member since {{formatDate}}", { formatDate: formatDate(user?.createdAt) })}
               </span>
               {onboardedBy && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                  {tr("Onboarded by")}{" "}{onboardedBy.name}
+                  {tr("Onboarded by {{name}}", { name: onboardedBy.name })}
                 </span>
               )}
             </div>

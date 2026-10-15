@@ -190,7 +190,7 @@ export function ManagerBatches() {
         <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
           {tr("No batches yet — create one, or ask your Org Admin to assign you one.")}</p>
       )}
-      {batches && batches.length > 0 && shown.length === 0 && <p className="text-sm text-muted">{tr("No")}{" "}{BATCH_STATUS_LABEL[status].toLowerCase()} {tr("batches.")}</p>}
+      {batches && batches.length > 0 && shown.length === 0 && <p className="text-sm text-muted">{tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[status].toLowerCase() })}</p>}
 
       {shown.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -229,7 +229,7 @@ export function ManagerBatches() {
                 )}
                 <div className="flex items-center gap-1.5 text-white/85 text-xs">
                   <Users size={13} /> {L.learners}
-                  {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner")}{(b.capacity ?? L.learners) === 1 ? "" : "s"}
+                  {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner{{v}}", { v: (b.capacity ?? L.learners) === 1 ? "" : "s" })}
                   {b.capacity && L.learners >= b.capacity ? tr(" · full") : ""}
                 </div>
                 {(b.startDate || b.endDate) && (
@@ -245,11 +245,11 @@ export function ManagerBatches() {
                     {L.fromPool ? tr(" · {{fromPool}} from your pool", { fromPool: L.fromPool }) : ""}
                   </span>
                   <span>
-                    {L.licensed} {tr("licensed ·")}{" "}{L.unlicensed} {tr("without a license")}{L.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: L.endingSoon }) : ""}
+                    {tr("{{licensed}} licensed · {{unlicensed}} without a license", { licensed: L.licensed, unlicensed: L.unlicensed })}{L.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: L.endingSoon }) : ""}
                   </span>
                   {b.defaultLicenseMonths != null && (
                     <span className="text-white/70">
-                      {tr("New learners get")}{" "}{b.defaultLicenseMonths} {tr("month")}{b.defaultLicenseMonths === 1 ? "" : "s"}
+                      {tr("New learners get {{defaultLicenseMonths}} month{{v}}", { defaultLicenseMonths: b.defaultLicenseMonths, v: b.defaultLicenseMonths === 1 ? "" : "s" })}
                     </span>
                   )}
                 </div>

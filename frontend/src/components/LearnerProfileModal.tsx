@@ -7,6 +7,7 @@ import { EditLearnerDetailsModal } from "@/components/EditLearnerDetailsModal";
 import type { LearnerDetails } from "@/api/details";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -261,7 +262,7 @@ export function LearnerProfileModal({
                 <div key={i} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-ink">
                     {m.fromBatch ?? tr("No batch")} → {m.toBatch ?? tr("No batch")}
-                    {m.reason ? <span className="text-muted"> · {m.reason}</span> : null}
+                    {m.reason ? <span className="text-muted"> · {trServer(m.reason)}</span> : null}
                   </span>
                   <span className="text-xs text-muted shrink-0">
                     {m.movedBy ? `${m.movedBy} · ` : ""}

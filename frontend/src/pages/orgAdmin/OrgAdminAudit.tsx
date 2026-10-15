@@ -7,6 +7,7 @@ import { AUDIT_VERBS as VERBS } from "@/lib/auditVerbs";
 import { auditExportPath, getAuditLog, type AuditEntry, type AuditFilters } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 const ACTION_GROUPS: [string, string][] = [
   ["", tr("All activity")],
   ["batch.", tr("Batches")],
@@ -29,7 +30,7 @@ function describe(e: AuditEntry): string {
   const d = e.details as Record<string, unknown>;
   if (typeof d.quantity === "number") extra.push(`${d.quantity}`);
   if (d.fromTier && d.toTier) extra.push(`${d.fromTier} → ${d.toTier}`);
-  if (typeof d.note === "string" && d.note) extra.push(d.note);
+  if (typeof d.note === "string" && d.note) extra.push(trServer(d.note));
   if (d.learners && typeof d.learners === "object" && "count" in (d.learners as object)) extra.push(`${(d.learners as { count: number }).count} rows`);
   return [verb, e.targetLabel, extra.length ? `(${extra.join(" · ")})` : ""].filter(Boolean).join(" ");
 }

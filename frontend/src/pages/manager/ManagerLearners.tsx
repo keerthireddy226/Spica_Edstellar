@@ -179,7 +179,7 @@ function OnboardLearnerModal({
             )}
             {seatsLeft !== null && (
               <p className="mt-0.5">
-                {seatsLeft} {tr("of")}{" "}{batch!.capacity} {tr("seats left in this batch.")}</p>
+                {tr("{{seatsLeft}} of", { seatsLeft: seatsLeft })}{" "}{batch!.capacity} {tr("seats left in this batch.")}</p>
             )}
           </div>
         </div>

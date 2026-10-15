@@ -70,7 +70,7 @@ export function OrgAdminDetailModal({
             {status === "active" ? tr("Active") : status === "pending" ? tr("Invite pending") : tr("Deactivated")}
           </Badge>
           <Badge>{categoryLabel(orgAdmin.tenantCategory)}</Badge>
-          <Badge>{tr("Joined")}{" "}{formatDate(orgAdmin.createdAt)}</Badge>
+          <Badge>{tr("Joined {{formatDate}}", { formatDate: formatDate(orgAdmin.createdAt) })}</Badge>
         </>
       }
       stats={[

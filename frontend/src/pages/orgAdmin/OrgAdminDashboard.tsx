@@ -159,7 +159,7 @@ export function OrgAdminDashboard() {
         <div className="mt-1 flex items-center gap-3 flex-wrap">
           <OrgNameEditor overview={overview} onRenamed={(name) => setOverview({ ...overview, organizationName: name })} />
           {overview.onboardedBy && (
-            <span className="text-sm text-muted">{tr("· Onboarded by")}{" "}{overview.onboardedBy.name} ({overview.onboardedBy.email})</span>
+            <span className="text-sm text-muted">{tr("· Onboarded by {{name}}({{email}})", { name: overview.onboardedBy.name, email: overview.onboardedBy.email })}</span>
           )}
         </div>
       </div>

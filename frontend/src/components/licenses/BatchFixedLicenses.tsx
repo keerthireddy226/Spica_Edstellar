@@ -106,7 +106,7 @@ export function BatchFixedLicenses({
                   <div className="h-full bg-navy rounded-full" style={{ width: `${allotted ? Math.min(100, (used / allotted) * 100) : 0}%` }} />
                 </div>
                 <span className="text-xs text-muted whitespace-nowrap">
-                  {used} {tr("of")}{" "}{allotted} {tr("fixed licenses assigned")}</span>
+                  {tr("{{used}} of {{allotted}} fixed licenses assigned", { used: used, allotted: allotted })}</span>
               </div>
             )}
             <p className="text-xs text-muted">
@@ -146,7 +146,7 @@ export function BatchFixedLicenses({
               </span>
             </div>
             <p className="text-xs text-muted">
-              {used} {tr("already assigned, so it can't go below")}{" "}{used}.{max !== null ? tr(" Up to {{max}} ({{unreserved}} unreserved).", { max: max, unreserved: unreserved }) : ""}
+              {tr("{{used}} already assigned, so it can't go below {{used2}}.", { used: used, used2: used })}{max !== null ? tr(" Up to {{max}} ({{unreserved}} unreserved).", { max: max, unreserved: unreserved }) : ""}
             </p>
             {error && <p className="text-sm text-error">{error}</p>}
             <div className="flex items-center gap-2">

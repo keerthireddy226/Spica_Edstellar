@@ -123,7 +123,7 @@ export function OrgAdminBatches() {
 
       {batches?.length === 0 && <p className="text-sm text-muted">{tr("No batches yet — create your first one.")}</p>}
       {batches && batches.length > 0 && batches.filter((b) => b.status === statusFilter).length === 0 && (
-        <p className="text-sm text-muted">{tr("No")}{" "}{BATCH_STATUS_LABEL[statusFilter].toLowerCase()} {tr("batches.")}</p>
+        <p className="text-sm text-muted">{tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[statusFilter].toLowerCase() })}</p>
       )}
 
       {batches && batches.length > 0 && (
@@ -170,12 +170,12 @@ export function OrgAdminBatches() {
               )}
               <div className="flex items-center gap-1.5 text-white/80 text-xs">
                 <Users size={13} /> {b.learnerCount}
-                {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner")}{(b.capacity ?? b.learnerCount) === 1 ? "" : "s"}
+                {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner{{v}}", { v: (b.capacity ?? b.learnerCount) === 1 ? "" : "s" })}
                 {b.capacity && b.learnerCount >= b.capacity ? tr(" · full") : ""}
               </div>
               {b.durationMonths && (
                 <p className="text-xs text-white/70">
-                  {b.durationMonths} {tr("month")}{b.durationMonths === 1 ? "" : "s"}
+                  {tr("{{durationMonths}} month{{v}}", { durationMonths: b.durationMonths, v: b.durationMonths === 1 ? "" : "s" })}
                   {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }) : ""}
                   {b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
                 </p>
@@ -196,7 +196,7 @@ export function OrgAdminBatches() {
                     : tr("No fixed licenses — uses Manager's pool")}
                 </span>
                 <span>
-                  {b.licenses.licensed} {tr("licensed ·")}{" "}{b.licenses.unlicensed} {tr("without a license")}{b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
+                  {tr("{{licensed}} licensed · {{unlicensed}} without a license", { licensed: b.licenses.licensed, unlicensed: b.licenses.unlicensed })}{b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
                 </span>
               </div>
             </div>

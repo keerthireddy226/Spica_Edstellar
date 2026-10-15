@@ -57,7 +57,7 @@ export function PlanLockNote({ feature, compact = false }: { feature: PlanFeatur
     >
       <Lock size={15} className="text-navy mt-0.5 shrink-0" />
       <span>
-        {info.label} {info.label.endsWith("s") ? "are" : "is"} {tr("on the")}{" "}{tier} {tr("plan.")}{" "}
+        {tr("{{label}} {{v}} on the {{tier}} plan.", { label: info.label, v: info.label.endsWith("s") ? "are" : "is", tier: tier })}{" "}
         {user?.role === "org_admin" ? (
           <Link to={ROUTES.ORG_ADMIN_PLAN} className="text-navy font-semibold hover:underline">
             {tr("See plans")}</Link>
@@ -78,7 +78,7 @@ export function PlanLimitHint({ limit }: { limit: "managers" | "batches" }) {
   const full = l.used >= l.max;
   return (
     <p className={`text-xs ${full ? "text-error" : "text-muted"}`}>
-      {l.used} {tr("of")}{" "}{l.max} {limit} {tr("on")}{" "}{plan.tierLabel}
+      {tr("{{used}} of {{max}} {{limit}} on {{tierLabel}}", { used: l.used, max: l.max, limit: limit, tierLabel: plan.tierLabel })}
       {full &&
         (user?.role === "org_admin" ? (
           <>

@@ -20,7 +20,7 @@ export function LicenseStatusPill({ license }: { license: LearnerAccess }) {
     <span className="inline-flex items-center gap-1.5 flex-wrap">
       <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill whitespace-nowrap ${cls}`}>{label}</span>
       {license.queuedMonths > 0 && (
-        <span className="text-[11px] text-muted whitespace-nowrap">+{license.queuedMonths} {tr("queued")}</span>
+        <span className="text-[11px] text-muted whitespace-nowrap">+{tr("{{queuedMonths}} queued", { queuedMonths: license.queuedMonths })}</span>
       )}
     </span>
   );

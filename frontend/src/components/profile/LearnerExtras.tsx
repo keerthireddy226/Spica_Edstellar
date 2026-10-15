@@ -61,7 +61,7 @@ export function ProgressSnapshot({ data }: { data: MyLearning }) {
       </div>
       <div className="flex items-center gap-2 text-xs text-muted flex-wrap">
         <Flame size={14} className="text-warning" />
-        {p.xp} {tr("XP")}{p.lastPractice ? tr(" · last practised {{shortDate}}", { shortDate: shortDate(p.lastPractice) }) : ""}
+        {tr("{{xp}} XP", { xp: p.xp })}{p.lastPractice ? tr(" · last practised {{shortDate}}", { shortDate: shortDate(p.lastPractice) }) : ""}
         {p.placedAt ? tr(" · placement {{v}}% on {{shortDate}}", { v: p.placementPercent ?? "", shortDate: shortDate(p.placedAt) }) : ""}
       </div>
       <p className="text-xs text-muted">
@@ -85,11 +85,11 @@ export function MyOrganization({ data }: { data: MyLearning }) {
       <Head icon={Building2} tint="bg-navy/15 text-navy" title={tr("Your organization")} />
       <div>
         <p className="text-sm font-semibold text-ink">{data.organization.name}</p>
-        <p className="text-xs text-muted">{data.organization.category === "university" ? tr("University") : tr("Organization")} {tr("· member since")}{" "}{shortDate(data.memberSince)}</p>
+        <p className="text-xs text-muted">{data.organization.category === "university" ? tr("University") : tr("Organization")} {tr("· member since {{shortDate}}", { shortDate: shortDate(data.memberSince) })}</p>
       </div>
       {b ? (
         <div className="rounded-input bg-paper-warm px-4 py-3 flex flex-col gap-2">
-          <p className="text-sm font-semibold text-ink">{tr("Batch:")}{" "}{b.name}</p>
+          <p className="text-sm font-semibold text-ink">{tr("Batch: {{name}}", { name: b.name })}</p>
           {b.description && <p className="text-xs text-muted">{b.description}</p>}
           <div className="grid grid-cols-2 gap-2 text-xs">
             <p>
@@ -122,7 +122,7 @@ export function MyOrganization({ data }: { data: MyLearning }) {
       <div className="flex flex-col gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
           <Users size={13} /> {tr("Need help? Contact")}</p>
-        {[...(b?.managers ?? []).map((m) => ({ ...m, role: "Manager" })), ...(data.organization.orgAdmin ? [{ ...data.organization.orgAdmin, role: "Org Admin" }] : [])].map((c) => (
+        {[...(b?.managers ?? []).map((m) => ({ ...m, role: tr("Manager") })), ...(data.organization.orgAdmin ? [{ ...data.organization.orgAdmin, role: tr("Org Admin") }] : [])].map((c) => (
           <a key={c.email + c.role} href={`mailto:${c.email}`} className="flex items-center justify-between gap-3 text-sm hover:bg-paper-warm rounded-input px-2 py-1.5 -mx-2">
             <span className="text-ink">
               {c.name.trim() || c.email} <span className="text-xs text-muted">· {c.role}</span>
@@ -191,7 +191,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               [tr("Goal level"), g.goalLevel === "unsure" ? tr("Not sure yet") : (g.goalLevel ?? "—")],
               [tr("Target score"), g.scoreTarget || "—"],
               [tr("Exam date"), g.examDate ? `${shortDate(g.examDate)}${days != null && days >= 0 ? tr(" · in {{days}} days", { days: days }) : ""}` : tr("Not booked")],
-              [tr("Daily practice"), g.dailyMinutes ? `${g.dailyMinutes} minutes` : "—"],
+              [tr("Daily practice"), g.dailyMinutes ? tr("{{n}} minutes", { n: g.dailyMinutes }) : "—"],
               [tr("Why"), REASONS.find(([k]) => k === g.examReason)?.[1] ?? "—"],
             ] as const
           ).map(([l, v]) => (

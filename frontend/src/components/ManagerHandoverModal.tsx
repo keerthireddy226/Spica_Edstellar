@@ -31,7 +31,7 @@ export function ManagerHandoverModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("Hand over")}{" "}{name(from)}{tr("'s work")}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Hand over {{name}}'s work", { name: name(from) })}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer">
             <X size={20} />
           </button>
@@ -55,11 +55,11 @@ export function ManagerHandoverModal({
               {unused > 0 && (
                 <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                   <input type="checkbox" checked={movePool} onChange={(e) => setMovePool(e.target.checked)} className="h-4 w-4 accent-navy" />
-                  {tr("Move their")}{" "}{unused} {tr("unused license")}{unused === 1 ? "" : "s"} {tr("to the new Manager's pool")}</label>
+                  {tr("Move their {{unused}} unused license{{v}} to the new Manager's pool", { unused: unused, v: unused === 1 ? "" : "s" })}</label>
               )}
               <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                 <input type="checkbox" checked={deactivate} onChange={(e) => setDeactivate(e.target.checked)} className="h-4 w-4 accent-navy" />
-                {tr("Deactivate")}{" "}{name(from)} {tr("afterwards")}</label>
+                {tr("Deactivate {{name}} afterwards", { name: name(from) })}</label>
             </>
           )}
           {error && <p className="text-sm text-error">{error}</p>}

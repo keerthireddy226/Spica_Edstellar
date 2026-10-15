@@ -24,7 +24,7 @@ export function OrgAuditPanel({ tenantId }: { tenantId: string }) {
     <div>
       <div className="flex items-center justify-between mb-2">
         <button onClick={() => setOpen((o) => !o)} className="text-[11px] font-semibold uppercase tracking-wide text-muted hover:text-ink cursor-pointer">
-          {tr("Audit log")}{" "}{open ? "▾" : "▸"}
+          {tr("Audit log {{v}}", { v: open ? "▾" : "▸" })}
         </button>
         {open && (
           <button
