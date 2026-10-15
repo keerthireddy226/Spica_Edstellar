@@ -6,6 +6,7 @@ import { planErrorMessage } from "@/api/plans";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { requestLicenseChange, type BatchBudget, type LicenseRequestKind, type ManagerPool } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 // Managers can't change allotments themselves — this sends the Org Admin a
 // request they approve or decline.
 export function RequestLicenseChangeModal({
@@ -58,7 +59,7 @@ export function RequestLicenseChangeModal({
     } catch (err) {
       setError(
         planErrorMessage(err) ??
-          (err instanceof ApiError && err.message === "invalid_batch" ? "You don't manage that batch." : "Couldn't send the request."),
+          (err instanceof ApiError && err.message === "invalid_batch" ? tr("You don't manage that batch.") : tr("Couldn't send the request.")),
       );
       setSending(false);
     }
@@ -70,7 +71,7 @@ export function RequestLicenseChangeModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">{learner ? "Request to return licenses" : "Request a license change"}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{learner ? tr("Request to return licenses") : tr("Request a license change")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -79,15 +80,14 @@ export function RequestLicenseChangeModal({
           {!allowed && <PlanLockNote feature="license_requests" compact />}
           {learner ? (
             <p className="text-sm text-ink">
-              Return unused months from <span className="font-semibold">{learner.name}</span> to the pool ({learner.queuedMonths} not started yet).
-            </p>
+              {tr("Return unused months from")}{" "}<span className="font-semibold">{learner.name}</span> {tr("to the pool (")}{learner.queuedMonths} {tr("not started yet).")}</p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-2">
                 {(
                   [
-                    ["increase_allotment", "Add licenses"],
-                    ["decrease_allotment", "Remove licenses"],
+                    ["increase_allotment", tr("Add licenses")],
+                    ["decrease_allotment", tr("Remove licenses")],
                   ] as const
                 ).map(([k, label]) => (
                   <button
@@ -107,13 +107,13 @@ export function RequestLicenseChangeModal({
                 ))}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">For</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("For")}</label>
                 <select value={batchId} onChange={(e) => setBatchId(e.target.value)} className={`${inputClass} cursor-pointer`}>
-                  <option value="">My license pool — {myPool?.allotment ?? 0} allotted, {myPool?.used ?? 0} assigned</option>
+                  <option value="">{tr("My license pool —")}{" "}{myPool?.allotment ?? 0} {tr("allotted,")}{" "}{myPool?.used ?? 0} {tr("assigned")}</option>
                   {fixedBatches.map((b) => (
                     <option key={b.batchId} value={b.batchId}>
                       {b.budget === null
-                        ? `${b.batchName} — no fixed licenses yet (uses your pool)`
+                        ? tr("{{batchName}} — no fixed licenses yet (uses your pool)", { batchName: b.batchName })
                         : `${b.batchName} (fixed) — ${b.budget} allotted, ${b.used} assigned`}
                     </option>
                   ))}
@@ -122,32 +122,31 @@ export function RequestLicenseChangeModal({
             </>
           )}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{learner ? "Months to return" : "How many licenses"}</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{learner ? tr("Months to return") : tr("How many licenses")}</label>
             <input type="number" min={1} max={maxQty || undefined} value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputClass} />
             {kind === "decrease_allotment" && (
-              <p className="text-xs text-muted">Up to {maxQty} — licenses already assigned to learners can't be removed this way.</p>
+              <p className="text-xs text-muted">{tr("Up to")}{" "}{maxQty} {tr("— licenses already assigned to learners can't be removed this way.")}</p>
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Reason</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Reason")}</label>
             <textarea
               rows={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={kind === "increase_allotment" ? "e.g. 8 new joiners starting next week" : "e.g. Learner left the company"}
+              placeholder={kind === "increase_allotment" ? tr("e.g. 8 new joiners starting next week") : tr("e.g. Learner left the company")}
               className={inputClass}
             />
           </div>
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={send} disabled={!allowed || sending || qty < 1 || !reason.trim() || (maxQty === 0 && kind !== "increase_allotment")} className="flex-1">
-              {sending ? "Sending…" : "Send to Org Admin"}
+              {sending ? tr("Sending…") : tr("Send to Org Admin")}
             </Button>
             <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
-          <p className="text-xs text-muted">Your Org Admin is notified and approves or declines it. You'll get a notification either way.</p>
+          <p className="text-xs text-muted">{tr("Your Org Admin is notified and approves or declines it. You'll get a notification either way.")}</p>
         </div>
       </div>
     </div>

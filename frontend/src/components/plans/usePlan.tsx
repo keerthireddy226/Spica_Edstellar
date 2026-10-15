@@ -5,6 +5,7 @@ import { getMyPlan, TIER_LABELS, type PlanFeatureKey, type PlanSummary, type Cat
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 
+import { tr } from "@/i18n/tr";
 type MyPlan = PlanSummary & { catalog: CatalogTier[] };
 
 // One fetch shared by every component on the page; refreshPlan() after
@@ -56,13 +57,12 @@ export function PlanLockNote({ feature, compact = false }: { feature: PlanFeatur
     >
       <Lock size={15} className="text-navy mt-0.5 shrink-0" />
       <span>
-        {info.label} {info.label.endsWith("s") ? "are" : "is"} on the {tier} plan.{" "}
+        {info.label} {info.label.endsWith("s") ? "are" : "is"} {tr("on the")}{" "}{tier} {tr("plan.")}{" "}
         {user?.role === "org_admin" ? (
           <Link to={ROUTES.ORG_ADMIN_PLAN} className="text-navy font-semibold hover:underline">
-            See plans
-          </Link>
+            {tr("See plans")}</Link>
         ) : (
-          <span className="text-muted">Ask your Org Admin about upgrading.</span>
+          <span className="text-muted">{tr("Ask your Org Admin about upgrading.")}</span>
         )}
       </span>
     </div>
@@ -78,17 +78,16 @@ export function PlanLimitHint({ limit }: { limit: "managers" | "batches" }) {
   const full = l.used >= l.max;
   return (
     <p className={`text-xs ${full ? "text-error" : "text-muted"}`}>
-      {l.used} of {l.max} {limit} on {plan.tierLabel}
+      {l.used} {tr("of")}{" "}{l.max} {limit} {tr("on")}{" "}{plan.tierLabel}
       {full &&
         (user?.role === "org_admin" ? (
           <>
             {" · "}
             <Link to={ROUTES.ORG_ADMIN_PLAN} className="text-navy font-semibold hover:underline">
-              Upgrade for unlimited
-            </Link>
+              {tr("Upgrade for unlimited")}</Link>
           </>
         ) : (
-          " · ask your Org Admin about upgrading"
+          tr(" · ask your Org Admin about upgrading")
         ))}
     </p>
   );

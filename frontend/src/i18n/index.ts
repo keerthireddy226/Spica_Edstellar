@@ -28,6 +28,9 @@ export const LANGUAGES = [
 export const SUPPORTED_LANGUAGE_CODES: string[] = LANGUAGES.map((l) => l.code);
 
 const loaders = import.meta.glob<{ default: Record<string, unknown> }>("../locales/*/translation.json");
+// Screen text written as plain English in the code (wrapped in tr()) is
+// translated through a second namespace keyed by the English text itself.
+const uiLoaders = import.meta.glob<{ default: Record<string, string> }>("../locales/*/ui.json");
 
 export function isSupportedLanguage(code: string | null | undefined): code is string {
   return !!code && SUPPORTED_LANGUAGE_CODES.includes(code);
@@ -36,23 +39,32 @@ export function isSupportedLanguage(code: string | null | undefined): code is st
 async function loadLanguage(code: string): Promise<void> {
   if (code === "en" || i18n.hasResourceBundle(code, "translation")) return;
   const load = loaders[`../locales/${code}/translation.json`];
-  if (!load) return;
-  const mod = await load();
-  i18n.addResourceBundle(code, "translation", mod.default, true, true);
+  const loadUi = uiLoaders[`../locales/${code}/ui.json`];
+  const [mod, ui] = await Promise.all([load?.(), loadUi?.()]);
+  if (mod) i18n.addResourceBundle(code, "translation", mod.default, true, true);
+  if (ui) i18n.addResourceBundle(code, "ui", ui.default, true, true);
 }
 
+let started = false;
+
 // The one way to switch language: makes sure the bundle is loaded first.
+// Once the app is running, the page reloads so every screen (including text
+// worked out when a module first loads) comes back in the new language.
 export async function changeAppLanguage(code: string): Promise<void> {
   const target = isSupportedLanguage(code) ? code : "en";
+  const current = i18n.language?.split("-")[0];
   await loadLanguage(target);
   await i18n.changeLanguage(target);
+  if (started && current !== target) window.location.reload();
 }
 
 i18n.on("languageChanged", (lng) => {
   document.documentElement.lang = lng;
 });
 
-i18n
+// Resolves once the starting language is loaded; main.tsx waits for it
+// before loading the app, so every screen starts in the right language.
+export const i18nReady: Promise<void> = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -65,12 +77,13 @@ i18n
     fallbackLng: "en",
     interpolation: { escapeValue: false },
   })
-  .then(() => {
+  .then(async () => {
     // The detector may pick a language whose bundle isn't loaded yet (or a
     // stale/unsupported one cached from an earlier session) — load it, or
     // fall back to English.
     const detected = i18n.language?.split("-")[0];
-    if (detected !== "en") changeAppLanguage(isSupportedLanguage(detected) ? detected : "en");
+    if (detected !== "en") await changeAppLanguage(isSupportedLanguage(detected) ? detected : "en");
+    started = true;
   });
 
 export default i18n;

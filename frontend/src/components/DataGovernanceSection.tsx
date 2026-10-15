@@ -6,6 +6,7 @@ import { planErrorMessage } from "@/api/plans";
 import { governanceApi, type DataGovernance } from "@/api/developers";
 import { downloadCsv } from "@/api/analytics";
 
+import { tr } from "@/i18n/tr";
 const MONTHS = [3, 6, 12, 24, 36];
 
 // Data processing agreement, retention rules and full data export.
@@ -28,43 +29,41 @@ export function DataGovernanceSection() {
       setMsg({ ok: true, text: ok });
       load();
     } catch (err) {
-      setMsg({ ok: false, text: planErrorMessage(err) ?? "That didn't work. Please try again." });
+      setMsg({ ok: false, text: planErrorMessage(err) ?? tr("That didn't work. Please try again.") });
     }
   }
 
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-6 grid md:grid-cols-[260px_1fr] gap-5">
       <div>
-        <h2 className="font-display font-bold text-base text-ink">Data</h2>
-        <p className="text-sm text-muted mt-1">The data processing agreement, how long personal data is kept, and a full export of everything your organization has in Spica.</p>
+        <h2 className="font-display font-bold text-base text-ink">{tr("Data")}</h2>
+        <p className="text-sm text-muted mt-1">{tr("The data processing agreement, how long personal data is kept, and a full export of everything your organization has in Spica.")}</p>
       </div>
       <div className="flex flex-col gap-5">
         <div className="flex items-start gap-3">
           <FileCheck2 size={18} className={dpaCurrent ? "text-success mt-0.5" : "text-warning mt-0.5"} />
           <div className="flex-1">
             <p className="text-sm text-ink">
-              Data processing agreement {data.dpa.currentVersion}
+              {tr("Data processing agreement")}{" "}{data.dpa.currentVersion}
               {data.dpa.url && (
                 <>
                   {" · "}
                   <a href={data.dpa.url} target="_blank" rel="noreferrer" className="text-navy font-semibold hover:underline">
-                    Read it
-                  </a>
+                    {tr("Read it")}</a>
                 </>
               )}
             </p>
             <p className="text-xs text-muted">
               {dpaCurrent
-                ? `Accepted by ${data.dpa.acceptedBy ?? "your organization"} on ${new Date(data.dpa.acceptedAt!).toLocaleDateString()}.`
+                ? tr("Accepted by {{v}} on {{toLocaleDateString}}.", { v: data.dpa.acceptedBy ?? "your organization", toLocaleDateString: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
                 : data.dpa.acceptedVersion
-                  ? `You accepted version ${data.dpa.acceptedVersion}; a newer version needs accepting.`
-                  : "Not accepted yet."}
+                  ? tr("You accepted version {{acceptedVersion}}; a newer version needs accepting.", { acceptedVersion: data.dpa.acceptedVersion })
+                  : tr("Not accepted yet.")}
             </p>
           </div>
           {!dpaCurrent && (
-            <Button variant="secondary" onClick={() => run(governanceApi.acceptDpa, "Agreement accepted.")} className="!px-3.5 !py-2">
-              Accept on behalf of my organization
-            </Button>
+            <Button variant="secondary" onClick={() => run(governanceApi.acceptDpa, tr("Agreement accepted."))} className="!px-3.5 !py-2">
+              {tr("Accept on behalf of my organization")}</Button>
           )}
         </div>
 
@@ -72,53 +71,48 @@ export function DataGovernanceSection() {
           <PlanLockNote feature="data_governance" compact />
           <div className="grid sm:grid-cols-2 gap-3">
             <label className="flex flex-col gap-1.5 text-xs text-muted">
-              Delete voice recordings and face images after
-              <select
+              {tr("Delete voice recordings and face images after")}<select
                 disabled={allowed === false}
                 value={data.retention.recordingsMonths ?? ""}
                 onChange={(e) =>
-                  run(() => governanceApi.setRetention({ ...data.retention, recordingsMonths: e.target.value ? Number(e.target.value) : null }), "Retention saved.")
+                  run(() => governanceApi.setRetention({ ...data.retention, recordingsMonths: e.target.value ? Number(e.target.value) : null }), tr("Retention saved."))
                 }
                 className={inputClass}
               >
-                <option value="">Keep while the account exists</option>
+                <option value="">{tr("Keep while the account exists")}</option>
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    {m} months
-                  </option>
+                    {m} {tr("months")}</option>
                 ))}
               </select>
             </label>
             <label className="flex flex-col gap-1.5 text-xs text-muted">
-              Erase learners deactivated for
-              <select
+              {tr("Erase learners deactivated for")}<select
                 disabled={allowed === false}
                 value={data.retention.inactiveLearnerMonths ?? ""}
                 onChange={(e) =>
-                  run(() => governanceApi.setRetention({ ...data.retention, inactiveLearnerMonths: e.target.value ? Number(e.target.value) : null }), "Retention saved.")
+                  run(() => governanceApi.setRetention({ ...data.retention, inactiveLearnerMonths: e.target.value ? Number(e.target.value) : null }), tr("Retention saved."))
                 }
                 className={inputClass}
               >
-                <option value="">Never automatically</option>
+                <option value="">{tr("Never automatically")}</option>
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
-                    {m} months
-                  </option>
+                    {m} {tr("months")}</option>
                 ))}
               </select>
             </label>
           </div>
-          <p className="text-xs text-muted">Erasing keeps anonymous practice statistics and license records, and removes everything that identifies the person.</p>
+          <p className="text-xs text-muted">{tr("Erasing keeps anonymous practice statistics and license records, and removes everything that identifies the person.")}</p>
 
           <div className="flex items-center gap-3 flex-wrap">
             <Button
               variant="secondary"
               disabled={allowed === false || data.exports.some((e) => e.status === "queued")}
-              onClick={() => run(governanceApi.requestExport, "Export started — you'll get a notification when it's ready.")}
+              onClick={() => run(governanceApi.requestExport, tr("Export started — you'll get a notification when it's ready."))}
               className="!px-3.5 !py-2"
             >
-              Export all data
-            </Button>
+              {tr("Export all data")}</Button>
             {data.exports
               .filter((e) => e.status === "ready")
               .slice(0, 1)
@@ -128,10 +122,9 @@ export function DataGovernanceSection() {
                   onClick={() => downloadCsv(`/org-admin/data-exports/${e.id}/download`, "spica-export.json")}
                   className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline cursor-pointer"
                 >
-                  <Download size={14} /> Download export of {new Date(e.completedAt!).toLocaleDateString()} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} KB)
-                </button>
+                  <Download size={14} /> {tr("Download export of")}{" "}{new Date(e.completedAt!).toLocaleDateString()} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} {tr("KB)")}</button>
               ))}
-            {data.exports[0]?.status === "queued" && <span className="text-xs text-muted">Preparing export…</span>}
+            {data.exports[0]?.status === "queued" && <span className="text-xs text-muted">{tr("Preparing export…")}</span>}
           </div>
         </div>
         {msg && <p className={`text-sm ${msg.ok ? "text-success" : "text-error"}`}>{msg.text}</p>}

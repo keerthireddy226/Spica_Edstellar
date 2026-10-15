@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 
+import { tr } from "@/i18n/tr";
 export type AccessStatus = "active" | "grace" | "expired" | "none";
 
 export interface LearnerAccess {
@@ -165,13 +166,13 @@ export function creditOrgLicenses(
 }
 
 export const LICENSE_ERROR_TEXT: Record<string, string> = {
-  insufficient_licenses: "Not enough licenses in the pool.",
-  insufficient_unreserved: "Not enough unreserved licenses — the rest are set aside for batches and Managers. Buy more or reduce an allotment.",
-  below_used: "Can't go below what's already been assigned from it.",
-  no_budget: "No licenses allotted to you or this batch yet — request some from your Org Admin.",
-  budget_exceeded: "Not enough licenses left in this batch's allotment or your pool — request more from your Org Admin.",
-  nothing_to_reclaim: "No unstarted months to reclaim — the current month can't be returned.",
-  learner_not_found: "Learner not found.",
+  insufficient_licenses: tr("Not enough licenses in the pool."),
+  insufficient_unreserved: tr("Not enough unreserved licenses — the rest are set aside for batches and Managers. Buy more or reduce an allotment."),
+  below_used: tr("Can't go below what's already been assigned from it."),
+  no_budget: tr("No licenses allotted to you or this batch yet — request some from your Org Admin."),
+  budget_exceeded: tr("Not enough licenses left in this batch's allotment or your pool — request more from your Org Admin."),
+  nothing_to_reclaim: tr("No unstarted months to reclaim — the current month can't be returned."),
+  learner_not_found: tr("Learner not found."),
 };
 
 export function formatMoney(cents: number, currency = "USD"): string {
@@ -233,10 +234,10 @@ export function decideLicenseRequest(id: string, approve: boolean, note?: string
 
 export function describeLicenseRequest(r: Pick<LicenseRequest, "kind" | "quantity" | "batchName" | "learnerName">): string {
   const n = `${r.quantity} license${r.quantity === 1 ? "" : "s"}`;
-  const target = r.batchName ?? "the Manager's own pool";
-  if (r.kind === "increase_allotment") return `${n} more for ${target}`;
-  if (r.kind === "decrease_allotment") return `${n} fewer for ${target}`;
-  return `Return ${r.quantity} unused month${r.quantity === 1 ? "" : "s"} from ${r.learnerName ?? "a learner"}`;
+  const target = r.batchName ?? tr("the Manager's own pool");
+  if (r.kind === "increase_allotment") return tr("{{n}} more for {{target}}", { n: n, target: target });
+  if (r.kind === "decrease_allotment") return tr("{{n}} fewer for {{target}}", { n: n, target: target });
+  return tr("Return {{quantity}} unused month{{v}} from {{v2}}", { quantity: r.quantity, v: r.quantity === 1 ? "" : "s", v2: r.learnerName ?? "a learner" });
 }
 
 export const REQUEST_STATUS_CLASS: Record<LicenseRequest["status"], string> = {

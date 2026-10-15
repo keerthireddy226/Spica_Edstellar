@@ -6,6 +6,7 @@ import { LICENSE_ERROR_TEXT, getOrgLicenseSummary, setBatchBudget } from "@/api/
 import { planErrorMessage } from "@/api/plans";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 
+import { tr } from "@/i18n/tr";
 // A batch's fixed license allotment, with an inline editor for the Org Admin.
 export function BatchFixedLicenses({
   batchId,
@@ -52,7 +53,7 @@ export function BatchFixedLicenses({
       setEditing(false);
       onChanged();
     } catch (err) {
-      setError(planErrorMessage(err) ?? LICENSE_ERROR_TEXT[err instanceof ApiError ? err.message : ""] ?? "Couldn't save.");
+      setError(planErrorMessage(err) ?? LICENSE_ERROR_TEXT[err instanceof ApiError ? err.message : ""] ?? tr("Couldn't save."));
     } finally {
       setSaving(false);
     }
@@ -61,7 +62,7 @@ export function BatchFixedLicenses({
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Licenses</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Licenses")}</p>
         {!editing && (allowed || allotted !== null) && (
           <button
             onClick={() => {
@@ -70,7 +71,7 @@ export function BatchFixedLicenses({
             }}
             className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline cursor-pointer"
           >
-            <Pencil size={12} /> {allotted === null ? "Set fixed licenses" : "Change fixed licenses"}
+            <Pencil size={12} /> {allotted === null ? tr("Set fixed licenses") : tr("Change fixed licenses")}
           </button>
         )}
       </div>
@@ -85,12 +86,12 @@ export function BatchFixedLicenses({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {(
                 [
-                  ["Fixed allotted", allotted === null ? "None" : allotted, "Set aside only for this batch"],
-                  ["Fixed left", left === null ? "—" : left, "Still unassigned from the fixed allotment"],
-                  ["Assigned", stats?.total ?? 0, "License-months given to this batch's learners"],
-                  ["Used", stats?.used ?? 0, "Months already started or finished"],
-                  ["Not started", stats?.notStarted ?? 0, "Assigned months still queued — can be returned"],
-                  ["Learners licensed", `${learnersLicensed} / ${learnersTotal}`, "Learners with active access right now"],
+                  [tr("Fixed allotted"), allotted === null ? tr("None") : allotted, tr("Set aside only for this batch")],
+                  [tr("Fixed left"), left === null ? "—" : left, tr("Still unassigned from the fixed allotment")],
+                  [tr("Assigned"), stats?.total ?? 0, tr("License-months given to this batch's learners")],
+                  [tr("Used"), stats?.used ?? 0, tr("Months already started or finished")],
+                  [tr("Not started"), stats?.notStarted ?? 0, tr("Assigned months still queued — can be returned")],
+                  [tr("Learners licensed"), `${learnersLicensed} / ${learnersTotal}`, tr("Learners with active access right now")],
                 ] as const
               ).map(([label, v, hint]) => (
                 <div key={label} className="rounded-input bg-paper-warm/60 px-3 py-2.5" title={hint}>
@@ -105,15 +106,14 @@ export function BatchFixedLicenses({
                   <div className="h-full bg-navy rounded-full" style={{ width: `${allotted ? Math.min(100, (used / allotted) * 100) : 0}%` }} />
                 </div>
                 <span className="text-xs text-muted whitespace-nowrap">
-                  {used} of {allotted} fixed licenses assigned
-                </span>
+                  {used} {tr("of")}{" "}{allotted} {tr("fixed licenses assigned")}</span>
               </div>
             )}
             <p className="text-xs text-muted">
               {stats && stats.total > 0
-                ? `Assigned licenses came from: ${stats.fromFixed} fixed · ${stats.fromManagerPools} Manager pools · ${stats.fromOrgPool} your unreserved pool.`
-                : "No licenses assigned to this batch's learners yet."}
-              {allotted === null && " This batch has no fixed licenses — learners get them from their Manager's pool, or your unreserved pool when you assign."}
+                ? tr("Assigned licenses came from: {{fromFixed}} fixed · {{fromManagerPools}} Manager pools · {{fromOrgPool}} your unreserved pool.", { fromFixed: stats.fromFixed, fromManagerPools: stats.fromManagerPools, fromOrgPool: stats.fromOrgPool })
+                : tr("No licenses assigned to this batch's learners yet.")}
+              {allotted === null && tr(" This batch has no fixed licenses — learners get them from their Manager's pool, or your unreserved pool when you assign.")}
             </p>
           </div>
         ) : (
@@ -142,25 +142,23 @@ export function BatchFixedLicenses({
                 <Plus size={15} />
               </button>
               <span className="text-xs text-muted ml-2">
-                {value > current ? `+${value - current} from unreserved` : value < current ? `${current - value} back to unreserved` : "No change"}
+                {value > current ? tr("+{{v}} from unreserved", { v: value - current }) : value < current ? tr("{{v}} back to unreserved", { v: current - value }) : tr("No change")}
               </span>
             </div>
             <p className="text-xs text-muted">
-              {used} already assigned, so it can't go below {used}.{max !== null ? ` Up to ${max} (${unreserved} unreserved).` : ""}
+              {used} {tr("already assigned, so it can't go below")}{" "}{used}.{max !== null ? tr(" Up to {{max}} ({{unreserved}} unreserved).", { max: max, unreserved: unreserved }) : ""}
             </p>
             {error && <p className="text-sm text-error">{error}</p>}
             <div className="flex items-center gap-2">
               <Button onClick={() => save(value)} disabled={saving || value === current || value < used} className="!px-3 !py-1.5 !text-xs">
-                {saving ? "Saving…" : "Save"}
+                {saving ? tr("Saving…") : tr("Save")}
               </Button>
               {allotted !== null && used === 0 && (
                 <Button variant="secondary" onClick={() => save(null)} disabled={saving} className="!px-3 !py-1.5 !text-xs">
-                  Remove fixed licenses
-                </Button>
+                  {tr("Remove fixed licenses")}</Button>
               )}
               <Button variant="secondary" onClick={() => setEditing(false)} disabled={saving} className="!px-3 !py-1.5 !text-xs">
-                Cancel
-              </Button>
+                {tr("Cancel")}</Button>
             </div>
           </div>
         )}

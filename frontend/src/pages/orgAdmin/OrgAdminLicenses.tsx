@@ -31,10 +31,11 @@ import {
   type AccessStatus,
 } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 type Tab = "learners" | "requests" | "budgets" | "purchases" | "invoices" | "activity";
 type StatusFilter = "all" | AccessStatus | "expiring";
 
-const SOURCE_LABEL = { purchase: "Purchase", credit: "Credit", comp: "Complimentary" } as const;
+const SOURCE_LABEL = { purchase: tr("Purchase"), credit: tr("Credit"), comp: tr("Complimentary") } as const;
 
 function StatCard({ label, value, hint, icon: Icon, index }: { label: string; value: number; hint?: string; icon: LucideIcon; index: number }) {
   return (
@@ -57,17 +58,17 @@ function eventSentence(e: LicenseEvent): string {
     case "purchase":
       return `${n} purchased${e.note ? ` (${e.note})` : ""}`;
     case "credit":
-      return `${n} credited by Edstellar${e.note ? ` (${e.note})` : ""}`;
+      return tr("{{n}} credited by Edstellar{{v}}", { n: n, v: e.note ? ` (${e.note})` : "" });
     case "comp":
-      return `${n} added complimentary${e.note ? ` (${e.note})` : ""}`;
+      return tr("{{n}} added complimentary{{v}}", { n: n, v: e.note ? ` (${e.note})` : "" });
     case "assign":
-      return `${n} assigned to ${e.learnerEmail ?? "a learner"}${e.batchName ? ` · ${e.batchName}` : ""}`;
+      return tr("{{n}} assigned to {{v}}{{v2}}", { n: n, v: e.learnerEmail ?? "a learner", v2: e.batchName ? ` · ${e.batchName}` : "" });
     case "extend":
-      return `${e.learnerEmail ?? "A learner"} extended by ${e.quantity} month${e.quantity === 1 ? "" : "s"}`;
+      return tr("{{v}} extended by {{quantity}} month{{v2}}", { v: e.learnerEmail ?? "A learner", quantity: e.quantity, v2: e.quantity === 1 ? "" : "s" });
     case "reclaim":
-      return `${n} unassigned from ${e.learnerEmail ?? "a learner"} back to the pool${e.note ? ` — ${e.note}` : ""}`;
+      return tr("{{n}} unassigned from {{v}} back to the pool{{v2}}", { n: n, v: e.learnerEmail ?? "a learner", v2: e.note ? ` — ${e.note}` : "" });
     case "budget":
-      return e.note ?? `${e.batchName} budget set to ${e.quantity}`;
+      return e.note ?? tr("{{batchName}} budget set to {{quantity}}", { batchName: e.batchName, quantity: e.quantity });
   }
 }
 
@@ -96,7 +97,7 @@ function AllotmentRow({
     try {
       await onSave(value.trim() === "" ? null : Number(value));
     } catch (err) {
-      setError(planErrorMessage(err) ?? LICENSE_ERROR_TEXT[err instanceof ApiError ? err.message : ""] ?? "Couldn't save.");
+      setError(planErrorMessage(err) ?? LICENSE_ERROR_TEXT[err instanceof ApiError ? err.message : ""] ?? tr("Couldn't save."));
     } finally {
       setSaving(false);
     }
@@ -115,14 +116,14 @@ function AllotmentRow({
             min={used}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="None"
+            placeholder={tr("None")}
             className="w-24 rounded-input border border-rule bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-navy focus:outline-none"
           />
           {dirty && (
             <button
               onClick={save}
               disabled={saving}
-              title="Save"
+              title={tr("Save")}
               className="p-1.5 rounded-input text-success hover:bg-success/10 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Check size={16} />
@@ -156,7 +157,7 @@ export function OrgAdminLicenses() {
   function load() {
     getOrgLicenseOverview()
       .then(setData)
-      .catch(() => setError("Could not load licenses."));
+      .catch(() => setError(tr("Could not load licenses.")));
     getInvoices()
       .then((r) => setInvoices(r.invoices))
       .catch(() => {});
@@ -192,67 +193,62 @@ export function OrgAdminLicenses() {
   }, [data, filter, query]);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">Loading…</p>;
+  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
 
   const s = data.summary;
   const poolExpiringSoon = s.nextPoolExpiry && new Date(s.nextPoolExpiry).getTime() - Date.now() < 30 * 86400000;
 
   const FILTERS: { key: StatusFilter; label: string; count: number }[] = [
-    { key: "all", label: "All", count: data.learners.length },
-    { key: "active", label: "Active", count: s.activeLearners },
-    { key: "expiring", label: "Ending ≤ 7 days", count: s.expiringSoonLearners },
-    { key: "grace", label: "Grace", count: s.graceLearners },
-    { key: "expired", label: "Expired", count: s.expiredLearners },
-    { key: "none", label: "No license", count: s.unlicensedLearners },
+    { key: "all", label: tr("All"), count: data.learners.length },
+    { key: "active", label: tr("Active"), count: s.activeLearners },
+    { key: "expiring", label: tr("Ending ≤ 7 days"), count: s.expiringSoonLearners },
+    { key: "grace", label: tr("Grace"), count: s.graceLearners },
+    { key: "expired", label: tr("Expired"), count: s.expiredLearners },
+    { key: "none", label: tr("No license"), count: s.unlicensedLearners },
   ];
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Licenses</h1>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
           <p className="text-sm text-muted mt-1">
-            1 license = 1 learner's access for 1 month, starting when you assign it · {formatMoney(data.pricePerLicenseCents)} per license
-          </p>
+            {tr("1 license = 1 learner's access for 1 month, starting when you assign it ·")}{" "}{formatMoney(data.pricePerLicenseCents)} {tr("per license")}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowBuy(true)} className="flex items-center gap-2">
-            <KeyRound size={16} /> Buy licenses
-          </Button>
+            <KeyRound size={16} /> {tr("Buy licenses")}</Button>
           <p className="text-[11px] text-muted max-w-xs text-right">
-            Large order or paying by PO? Contact {contact ? `${contact.name} (${contact.email})` : "your Edstellar account manager"}.
+            {tr("Large order or paying by PO? Contact")}{" "}{contact ? `${contact.name} (${contact.email})` : tr("your Edstellar account manager")}.
           </p>
         </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard label="Unreserved in pool" value={s.unreserved} hint={s.reservedForBatches + s.reservedForManagers ? `${s.reservedForBatches + s.reservedForManagers} set aside` : undefined} icon={PackageCheck} index={0} />
-        <StatCard label="Purchased (all time)" value={s.purchased} hint={`${s.assigned} assigned`} icon={KeyRound} index={1} />
-        <StatCard label="Learners active" value={s.activeLearners} hint={s.queuedMonths ? `${s.queuedMonths} months queued` : undefined} icon={Users} index={2} />
-        <StatCard label="Ending in 7 days" value={s.expiringSoonLearners} icon={CalendarClock} index={3} />
-        <StatCard label="Expired / grace" value={s.expiredLearners + s.graceLearners} icon={AlertTriangle} index={4} />
-        <StatCard label="No license yet" value={s.unlicensedLearners} icon={UserX} index={5} />
+        <StatCard label={tr("Unreserved in pool")} value={s.unreserved} hint={s.reservedForBatches + s.reservedForManagers ? tr("{{v}} set aside", { v: s.reservedForBatches + s.reservedForManagers }) : undefined} icon={PackageCheck} index={0} />
+        <StatCard label={tr("Purchased (all time)")} value={s.purchased} hint={`${s.assigned} assigned`} icon={KeyRound} index={1} />
+        <StatCard label={tr("Learners active")} value={s.activeLearners} hint={s.queuedMonths ? tr("{{queuedMonths}} months queued", { queuedMonths: s.queuedMonths }) : undefined} icon={Users} index={2} />
+        <StatCard label={tr("Ending in 7 days")} value={s.expiringSoonLearners} icon={CalendarClock} index={3} />
+        <StatCard label={tr("Expired / grace")} value={s.expiredLearners + s.graceLearners} icon={AlertTriangle} index={4} />
+        <StatCard label={tr("No license yet")} value={s.unlicensedLearners} icon={UserX} index={5} />
       </div>
 
       {(poolExpiringSoon || s.expiredUnused > 0 || (s.unlicensedLearners > 0 && s.available > 0)) && (
         <div className="flex flex-col gap-2">
           {poolExpiringSoon && (
             <p className="text-sm text-navy-deep bg-warning/10 border border-warning/25 rounded-input px-3.5 py-2.5">
-              {s.nextPoolExpiryQuantity} unassigned license{s.nextPoolExpiryQuantity === 1 ? "" : "s"} expire on {formatShortDate(s.nextPoolExpiry)} — assign them before then.
-            </p>
+              {s.nextPoolExpiryQuantity} {tr("unassigned license")}{s.nextPoolExpiryQuantity === 1 ? "" : "s"} {tr("expire on")}{" "}{formatShortDate(s.nextPoolExpiry)} {tr("— assign them before then.")}</p>
           )}
           {s.unlicensedLearners > 0 && s.available > 0 && (
             <p className="text-sm text-ink bg-navy/5 border border-rule rounded-input px-3.5 py-2.5">
-              {s.unlicensedLearners} learner{s.unlicensedLearners === 1 ? " has" : "s have"} no license and can't practice yet.{" "}
+              {s.unlicensedLearners} {tr("learner")}{s.unlicensedLearners === 1 ? " has" : tr("s have")} {tr("no license and can't practice yet.")}{" "}
               <button onClick={() => { setTab("learners"); setFilter("none"); }} className="font-semibold underline cursor-pointer">
-                Show them
-              </button>
+                {tr("Show them")}</button>
             </p>
           )}
           {s.expiredUnused > 0 && (
             <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-              {s.expiredUnused} license{s.expiredUnused === 1 ? "" : "s"} expired unused (pool licenses are valid for 12 months after purchase).
-            </p>
+              {s.expiredUnused} {tr("license")}{s.expiredUnused === 1 ? "" : "s"} {tr("expired unused (pool licenses are valid for 12 months after purchase).")}</p>
           )}
         </div>
       )}
@@ -260,12 +256,12 @@ export function OrgAdminLicenses() {
       <div className="flex items-center gap-1 border-b border-rule">
         {(
           [
-            ["learners", "Learners"],
-            ["requests", pendingRequests ? `Requests (${pendingRequests})` : "Requests"],
-            ["budgets", "Allotments"],
-            ["purchases", "Purchases"],
-            ["invoices", "Invoices"],
-            ["activity", "Activity"],
+            ["learners", tr("Learners")],
+            ["requests", pendingRequests ? tr("Requests ({{pendingRequests}})", { pendingRequests: pendingRequests }) : tr("Requests")],
+            ["budgets", tr("Allotments")],
+            ["purchases", tr("Purchases")],
+            ["invoices", tr("Invoices")],
+            ["activity", tr("Activity")],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -301,7 +297,7 @@ export function OrgAdminLicenses() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name, email, ID, batch"
+                placeholder={tr("Search name, email, ID, batch")}
                 className="w-64 rounded-input border border-rule bg-paper pl-8 pr-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
             </div>
@@ -311,10 +307,10 @@ export function OrgAdminLicenses() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3">Learner</th>
-                  <th className="px-4 py-3">Batch</th>
-                  <th className="px-4 py-3">License</th>
-                  <th className="px-4 py-3">Months used</th>
+                  <th className="px-4 py-3">{tr("Learner")}</th>
+                  <th className="px-4 py-3">{tr("Batch")}</th>
+                  <th className="px-4 py-3">{tr("License")}</th>
+                  <th className="px-4 py-3">{tr("Months used")}</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -322,8 +318,7 @@ export function OrgAdminLicenses() {
                 {learners.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-6 text-center text-muted">
-                      No learners match.
-                    </td>
+                      {tr("No learners match.")}</td>
                   </tr>
                 )}
                 {learners.map((l) => {
@@ -348,8 +343,7 @@ export function OrgAdminLicenses() {
                             onClick={() => setUnassigning(l)}
                             className="text-xs font-semibold text-error hover:underline cursor-pointer mr-3"
                           >
-                            Unassign
-                          </button>
+                            {tr("Unassign")}</button>
                         )}
                         <Button
                           variant={live ? "secondary" : "primary"}
@@ -357,7 +351,7 @@ export function OrgAdminLicenses() {
                           disabled={!l.active}
                           className="!px-3 !py-1.5 !text-xs"
                         >
-                          {live ? "Extend" : l.license.status === "none" ? "Assign" : "Renew"}
+                          {live ? tr("Extend") : l.license.status === "none" ? tr("Assign") : tr("Renew")}
                         </Button>
                       </td>
                     </tr>
@@ -380,17 +374,15 @@ export function OrgAdminLicenses() {
         <div className="flex flex-col gap-5">
           <PlanLockNote feature="manager_pools" />
           <p className="text-sm text-muted">
-            Allotted licenses are set aside from your pool: <span className="text-ink font-medium">{s.unreserved}</span> unreserved ·{" "}
-            {s.reservedForBatches} set aside for batches · {s.reservedForManagers} for Managers. A batch's fixed licenses are used first for its
-            learners; otherwise a Manager uses their own pool, and you use the unreserved licenses.
-          </p>
+            {tr("Allotted licenses are set aside from your pool:")}{" "}<span className="text-ink font-medium">{s.unreserved}</span> {tr("unreserved ·")}{" "}
+            {s.reservedForBatches} {tr("set aside for batches ·")}{" "}{s.reservedForManagers} {tr("for Managers. A batch's fixed licenses are used first for its learners; otherwise a Manager uses their own pool, and you use the unreserved licenses.")}</p>
 
           {(
             [
               {
-                heading: "Manager pools",
-                hint: "Usable by the Manager in any batch they manage, including ones they create.",
-                firstCol: "Manager",
+                heading: tr("Manager pools"),
+                hint: tr("Usable by the Manager in any batch they manage, including ones they create."),
+                firstCol: tr("Manager"),
                 rows: data.managers.map((m) => ({
                   key: m.managerId,
                   title: m.name,
@@ -399,12 +391,12 @@ export function OrgAdminLicenses() {
                   used: m.used,
                   save: (v: number | null) => setManagerPoolAllotment(m.managerId, v).then(load),
                 })),
-                empty: "No Managers yet.",
+                empty: tr("No Managers yet."),
               },
               {
-                heading: "Fixed batch licenses",
-                hint: "Reserved for one batch's learners, whoever assigns them.",
-                firstCol: "Batch",
+                heading: tr("Fixed batch licenses"),
+                hint: tr("Reserved for one batch's learners, whoever assigns them."),
+                firstCol: tr("Batch"),
                 rows: data.batches.map((b) => ({
                   key: b.batchId,
                   title: b.batchName,
@@ -413,7 +405,7 @@ export function OrgAdminLicenses() {
                   used: b.used,
                   save: (v: number | null) => setBatchBudget(b.batchId, v).then(load),
                 })),
-                empty: "No batches yet.",
+                empty: tr("No batches yet."),
               },
             ] as const
           ).map((section) => (
@@ -427,9 +419,9 @@ export function OrgAdminLicenses() {
                   <thead>
                     <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
                       <th className="px-4 py-3">{section.firstCol}</th>
-                      <th className="px-4 py-3">Allotted</th>
-                      <th className="px-4 py-3">Assigned</th>
-                      <th className="px-4 py-3">Left</th>
+                      <th className="px-4 py-3">{tr("Allotted")}</th>
+                      <th className="px-4 py-3">{tr("Assigned")}</th>
+                      <th className="px-4 py-3">{tr("Left")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -456,21 +448,20 @@ export function OrgAdminLicenses() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Licenses</th>
-                <th className="px-4 py-3">Assigned / left</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Reference</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Unassigned expire</th>
+                <th className="px-4 py-3">{tr("Date")}</th>
+                <th className="px-4 py-3">{tr("Licenses")}</th>
+                <th className="px-4 py-3">{tr("Assigned / left")}</th>
+                <th className="px-4 py-3">{tr("Type")}</th>
+                <th className="px-4 py-3">{tr("Reference")}</th>
+                <th className="px-4 py-3">{tr("Amount")}</th>
+                <th className="px-4 py-3">{tr("Unassigned expire")}</th>
               </tr>
             </thead>
             <tbody>
               {data.purchases.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-6 text-center text-muted">
-                    No licenses purchased yet.
-                  </td>
+                    {tr("No licenses purchased yet.")}</td>
                 </tr>
               )}
               {data.purchases.map((p) => (
@@ -485,7 +476,7 @@ export function OrgAdminLicenses() {
                   <td className="px-4 py-3 text-muted">{p.source === "comp" ? "—" : formatMoney(p.totalCents, p.currency)}</td>
                   <td className="px-4 py-3">
                     <span className={p.poolExpired ? "text-error" : "text-muted"}>
-                      {p.poolExpired ? "Expired " : ""}
+                      {p.poolExpired ? tr("Expired ") : ""}
                       {formatShortDate(p.poolExpiresAt)}
                     </span>
                   </td>
@@ -498,7 +489,7 @@ export function OrgAdminLicenses() {
 
       {tab === "invoices" && invoiceOrders.filter((o) => o.status === "created").length > 0 && (
         <div className="bg-surface border border-warning/40 rounded-card shadow-sm overflow-hidden">
-          <p className="px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">Awaiting payment</p>
+          <p className="px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">{tr("Awaiting payment")}</p>
           <table className="w-full text-sm">
             <tbody>
               {invoiceOrders
@@ -507,19 +498,17 @@ export function OrgAdminLicenses() {
                   <tr key={o.id} className="border-b border-rule last:border-0">
                     <td className="px-4 py-3 font-mono text-ink">{o.quoteNumber}</td>
                     <td className="px-4 py-3 text-muted">{o.poNumber ? `PO ${o.poNumber}` : "—"}</td>
-                    <td className="px-4 py-3 text-muted">{o.quantity} licenses</td>
+                    <td className="px-4 py-3 text-muted">{o.quantity} {tr("licenses")}</td>
                     <td className="px-4 py-3 text-ink">{formatAmount(o.total, o.currency)}</td>
                     <td className="px-4 py-3 text-muted">{o.dueDate ? `due ${formatShortDate(o.dueDate)}` : ""}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <Link to={`/quote/${o.id}`} target="_blank" className="text-xs font-semibold text-navy hover:underline mr-3">
-                        Proforma
-                      </Link>
+                        {tr("Proforma")}</Link>
                       <button
                         onClick={() => cancelInvoiceOrder(o.id).then(load)}
                         className="text-xs font-semibold text-muted hover:text-error cursor-pointer"
                       >
-                        Cancel
-                      </button>
+                        {tr("Cancel")}</button>
                     </td>
                   </tr>
                 ))}
@@ -533,10 +522,10 @@ export function OrgAdminLicenses() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Invoice</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Licenses</th>
-                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">{tr("Invoice")}</th>
+                <th className="px-4 py-3">{tr("Date")}</th>
+                <th className="px-4 py-3">{tr("Licenses")}</th>
+                <th className="px-4 py-3">{tr("Total")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -544,8 +533,7 @@ export function OrgAdminLicenses() {
               {invoices.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-muted">
-                    No invoices yet — online purchases appear here. Licenses added by Edstellar directly are invoiced outside the platform.
-                  </td>
+                    {tr("No invoices yet — online purchases appear here. Licenses added by Edstellar directly are invoiced outside the platform.")}</td>
                 </tr>
               )}
               {invoices.map((inv) => (
@@ -556,8 +544,7 @@ export function OrgAdminLicenses() {
                   <td className="px-4 py-3 text-ink">{formatAmount(inv.total, inv.currency)}</td>
                   <td className="px-4 py-3 text-right">
                     <Link to={`/invoice/${inv.id}`} target="_blank" className="text-xs font-semibold text-navy hover:underline">
-                      View / print
-                    </Link>
+                      {tr("View / print")}</Link>
                   </td>
                 </tr>
               ))}
@@ -577,12 +564,12 @@ export function OrgAdminLicenses() {
 
       {tab === "activity" && (
         <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
-          {data.events.length === 0 && <p className="text-sm text-muted">No license activity yet.</p>}
+          {data.events.length === 0 && <p className="text-sm text-muted">{tr("No license activity yet.")}</p>}
           {data.events.map((e) => (
             <div key={e.id} className="flex items-start justify-between gap-4 text-sm">
               <span className="text-ink">{eventSentence(e)}</span>
               <span className="text-xs text-muted shrink-0 text-right">
-                {e.actor ?? "System"} · {formatShortDate(e.createdAt)}
+                {e.actor ?? tr("System")} · {formatShortDate(e.createdAt)}
               </span>
             </div>
           ))}
@@ -606,7 +593,7 @@ export function OrgAdminLicenses() {
         <AssignLicenseModal
           learnerName={[assigning.firstName, assigning.lastName].filter(Boolean).join(" ") || assigning.email}
           license={assigning.license}
-          poolHint={`Uses the batch's fixed licenses if it has any left, otherwise your unreserved pool (${s.unreserved} available).`}
+          poolHint={tr("Uses the batch's fixed licenses if it has any left, otherwise your unreserved pool ({{unreserved}} available).", { unreserved: s.unreserved })}
           onAssign={(months) => orgAssignLicenses(assigning.id, months)}
           onClose={() => setAssigning(null)}
           onDone={() => {

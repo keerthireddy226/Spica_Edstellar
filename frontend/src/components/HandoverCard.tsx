@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api";
 import { handOverOrgAdmin } from "@/api/orgAdmin";
 import { ROUTES } from "@/constants/routes";
 
+import { tr } from "@/i18n/tr";
 // An organization has exactly one Org Admin. Handing over replaces this
 // account with the successor's, and signs this account out.
 export function HandoverCard() {
@@ -26,7 +27,7 @@ export function HandoverCard() {
       });
       window.location.href = ROUTES.ORG_ADMIN_LOGIN;
     } catch (err) {
-      setError(err instanceof ApiError && err.message === "email_already_registered" ? "That email already has a Spica account." : "Couldn't hand over. Please try again.");
+      setError(err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has a Spica account.") : tr("Couldn't hand over. Please try again."));
       setBusy(false);
     }
   }
@@ -41,37 +42,32 @@ export function HandoverCard() {
           <UserCog size={20} />
         </span>
         <div>
-          <h2 className="font-display font-bold text-lg text-ink">Hand over the Org Admin role</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Hand over the Org Admin role")}</h2>
           <p className="text-sm text-muted">
-            Leaving, or someone else taking over? Your organization can have only one Org Admin, so this account is deactivated and the new person
-            gets an invite.
-          </p>
+            {tr("Leaving, or someone else taking over? Your organization can have only one Org Admin, so this account is deactivated and the new person gets an invite.")}</p>
         </div>
       </div>
       {!open ? (
         <Button variant="secondary" onClick={() => setOpen(true)} className="self-start">
-          Hand over…
-        </Button>
+          {tr("Hand over…")}</Button>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input placeholder="First name" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className={inputClass} />
-            <input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className={inputClass} />
-            <input placeholder="Work email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
-            <input placeholder="Job title (optional)" value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} className={inputClass} />
+            <input placeholder={tr("First name")} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Last name")} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Work email")} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Job title (optional)")} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} className={inputClass} />
           </div>
           <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-navy" />
-            I understand I'll be signed out and lose access to this organization's console.
-          </label>
+            {tr("I understand I'll be signed out and lose access to this organization's console.")}</label>
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex gap-3">
             <Button onClick={submit} disabled={!ready || busy}>
-              {busy ? "Handing over…" : "Hand over and sign out"}
+              {busy ? tr("Handing over…") : tr("Hand over and sign out")}
             </Button>
             <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       )}

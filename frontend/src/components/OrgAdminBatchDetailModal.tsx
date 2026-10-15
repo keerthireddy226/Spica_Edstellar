@@ -10,6 +10,7 @@ import { Award, Layers, Pencil } from "lucide-react";
 import { issueCertificate, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
@@ -44,22 +45,22 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
         setBatch(res.batch);
         setLearners(res.learners);
       })
-      .catch(() => setError("Could not load this batch's details."));
+      .catch(() => setError(tr("Could not load this batch's details.")));
   }
 
   useEffect(load, [batchId]);
 
   if (error) {
     return (
-      <DetailModal title="Batch details" onClose={onClose}>
+      <DetailModal title={tr("Batch details")} onClose={onClose}>
         <p className="text-sm text-error">{error}</p>
       </DetailModal>
     );
   }
   if (!batch || !learners) {
     return (
-      <DetailModal title="Batch details" onClose={onClose}>
-        <p className="text-sm text-muted">Loading…</p>
+      <DetailModal title={tr("Batch details")} onClose={onClose}>
+        <p className="text-sm text-muted">{tr("Loading…")}</p>
       </DetailModal>
     );
   }
@@ -67,9 +68,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   return (
     <DetailModal
       title={batch.name}
-      subtitle={`${batch.batchCode} · ${BATCH_STATUS_LABEL[batch.status]} · Created ${formatDate(batch.createdAt)}${
-        batch.endDate ? ` · ${batch.status === "active" ? "Ends" : "Ended"} ${formatDate(batch.endDate)}` : ""
-      }`}
+      subtitle={tr("{{batchCode}} · {{v}} · Created {{formatDate}}{{v2}}", { batchCode: batch.batchCode, v: BATCH_STATUS_LABEL[batch.status], formatDate: formatDate(batch.createdAt), v2: batch.endDate ? ` · ${batch.status === "active" ? "Ends" : "Ended"} ${formatDate(batch.endDate)}` : "" })}
       icon={Layers}
       badges={
         <>
@@ -79,10 +78,10 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
         </>
       }
       stats={[
-        { label: "Learners", value: batch.capacity ? `${learners.filter((l) => l.active).length} / ${batch.capacity}` : learners.filter((l) => l.active).length },
-        { label: "Licensed now", value: batch.licenses?.licensed ?? 0, hint: `${batch.licenses?.unlicensed ?? 0} without a license` },
-        { label: "Fixed licenses left", value: batch.fixedLicenses == null ? "—" : Math.max(0, batch.fixedLicenses - batch.fixedLicensesUsed), hint: batch.fixedLicenses == null ? "Uses Managers' pools" : `of ${batch.fixedLicenses}` },
-        { label: "Sessions completed", value: learners.reduce((n, l) => n + l.sessionCount, 0) },
+        { label: tr("Learners"), value: batch.capacity ? `${learners.filter((l) => l.active).length} / ${batch.capacity}` : learners.filter((l) => l.active).length },
+        { label: tr("Licensed now"), value: batch.licenses?.licensed ?? 0, hint: tr("{{v}} without a license", { v: batch.licenses?.unlicensed ?? 0 }) },
+        { label: tr("Fixed licenses left"), value: batch.fixedLicenses == null ? "—" : Math.max(0, batch.fixedLicenses - batch.fixedLicensesUsed), hint: batch.fixedLicenses == null ? tr("Uses Managers' pools") : `of ${batch.fixedLicenses}` },
+        { label: tr("Sessions completed"), value: learners.reduce((n, l) => n + l.sessionCount, 0) },
       ]}
       onClose={onClose}
       wide
@@ -93,8 +92,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
               onClick={() => setEditing(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer"
             >
-              <Pencil size={14} /> Edit
-            </button>
+              <Pencil size={14} /> {tr("Edit")}</button>
           )}
           <BatchLifecycleActions
             batchId={batch.id}
@@ -114,7 +112,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
         <BatchDetailsGrid
           batch={batch}
           learnerCount={learners.filter((l) => l.active).length}
-          managedBy={batch.managerNames.length === 0 ? "No manager assigned yet" : batch.managerNames.join(", ")}
+          managedBy={batch.managerNames.length === 0 ? tr("No manager assigned yet") : batch.managerNames.join(", ")}
         />
 
         <BatchFixedLicenses
@@ -131,9 +129,9 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
         />
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Learners</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Learners")}</p>
           {learners.length === 0 ? (
-            <p className="text-sm text-muted">No learners in this batch yet.</p>
+            <p className="text-sm text-muted">{tr("No learners in this batch yet.")}</p>
           ) : (
             <div className="flex flex-col gap-2">
               {learners.map((l) => (
@@ -150,8 +148,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                     <p className="text-xs text-muted">
                       {[l.employeeId, l.department, l.jobTitle].filter(Boolean).join(" · ")}
                       {l.employeeId || l.department || l.jobTitle ? " · " : ""}
-                      {l.sessionCount} session{l.sessionCount === 1 ? "" : "s"} completed
-                    </p>
+                      {l.sessionCount} {tr("session")}{l.sessionCount === 1 ? "" : "s"} {tr("completed")}</p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
                   {certs.get(l.id) ? (
@@ -160,14 +157,13 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                         href={`/certificate/${certs.get(l.id)!.code}`}
                         target="_blank"
                         rel="noreferrer"
-                        title="View certificate"
+                        title={tr("View certificate")}
                         className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline"
                       >
-                        <Award size={14} /> Certificate
-                      </a>
+                        <Award size={14} /> {tr("Certificate")}</a>
                       <span
                         role="button"
-                        title="Revoke certificate"
+                        title={tr("Revoke certificate")}
                         onClick={() => revokeCertificate(certs.get(l.id)!.id).then(loadCerts)}
                         className="text-muted hover:text-error cursor-pointer px-1"
                       >
@@ -183,11 +179,10 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                       }}
                       className="text-xs font-semibold text-navy hover:underline shrink-0 cursor-pointer"
                     >
-                      Issue certificate
-                    </span>
+                      {tr("Issue certificate")}</span>
                   )}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                    {l.active ? "Active" : "Deactivated"}
+                    {l.active ? tr("Active") : tr("Deactivated")}
                   </span>
                 </button>
               ))}
@@ -198,10 +193,10 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
 
       {editing && (
         <BatchFormModal
-          title="Edit batch"
-          submitLabel="Save changes"
+          title={tr("Edit batch")}
+          submitLabel={tr("Save changes")}
           initial={{ ...batch, targetCutScore: batch.targetCutScore != null ? Number(batch.targetCutScore) : null }}
-          note="Fixed licenses are changed in the Licenses section of the batch."
+          note={tr("Fixed licenses are changed in the Licenses section of the batch.")}
           onClose={() => setEditing(false)}
           onSubmit={async (d) => {
             await updateBatch(batch.id, d);

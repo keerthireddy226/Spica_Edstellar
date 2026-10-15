@@ -1,5 +1,6 @@
 import { useId } from "react";
 
+import { tr } from "@/i18n/tr";
 export function Mascot({ variant, size = 140 }: { variant: "hero" | "coach"; size?: number }) {
   const gradId = useId();
   const isHero = variant === "hero";
@@ -22,15 +23,15 @@ export function Mascot({ variant, size = 140 }: { variant: "hero" | "coach"; siz
       <path
         d={
           isHero
-            ? "M70 108 Q66 150 78 178 L142 178 Q154 150 150 108 Q142 82 110 80 Q78 82 70 108 Z"
-            : "M70 120 Q66 162 78 190 L142 190 Q154 162 150 120 Q142 94 110 92 Q78 94 70 120 Z"
+            ? tr("M70 108 Q66 150 78 178 L142 178 Q154 150 150 108 Q142 82 110 80 Q78 82 70 108 Z")
+            : tr("M70 120 Q66 162 78 190 L142 190 Q154 162 150 120 Q142 94 110 92 Q78 94 70 120 Z")
         }
         fill={`url(#${gradId})`}
       />
       {isHero && <rect x="98" y="66" width="24" height="20" rx="8" fill="var(--color-writing)" />}
       <circle cx="110" cy={isHero ? 48 : 60} r="34" fill="var(--color-writing)" />
       <path
-        d={isHero ? "M78 44 Q110 6 142 44" : "M78 56 Q110 18 142 56"}
+        d={isHero ? tr("M78 44 Q110 6 142 44") : tr("M78 56 Q110 18 142 56")}
         fill="none"
         stroke="var(--color-ink)"
         strokeWidth={6}

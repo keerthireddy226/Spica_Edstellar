@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api";
 import { MotivationalBar } from "@/components/MotivationalBar";
 import { ProgressExtras } from "@/components/progress/ProgressExtras";
 
+import { tr } from "@/i18n/tr";
 function isToday(dateStr: string): boolean {
   return dateStr === new Date().toISOString().slice(0, 10);
 }
@@ -98,7 +99,7 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
     const today = isToday(d.date);
     return { x, y, day: d, today };
   });
-  const linePath = "M " + points.map((p) => `${p.x} ${p.y}`).join(" L ");
+  const linePath = tr("M ") + points.map((p) => `${p.x} ${p.y}`).join(" L ");
   const areaPath = `${linePath} L ${W} ${bottom} L 0 ${bottom} Z`;
   const bestIsToday = isToday(bestDay.date);
 

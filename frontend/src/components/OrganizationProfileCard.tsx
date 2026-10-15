@@ -14,6 +14,7 @@ import {
   type EmployeeCountBand,
 } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 type Draft = Omit<OrganizationProfile, "category" | "createdAt" | "expectedLearnerCount"> & {
   expectedLearnerCount: string;
   jobTitle: string;
@@ -79,7 +80,8 @@ const GROUP_ICON: Record<string, { icon: LucideIcon; color: string }> = {
 };
 
 function Group({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
-  const g = GROUP_ICON[title] ?? { icon: Building2, color: "var(--color-navy)" };
+  // Titles arrive translated; the icon table is keyed by the English names.
+  const g = Object.entries(GROUP_ICON).find(([k]) => tr(k) === title)?.[1] ?? { icon: Building2, color: "var(--color-navy)" };
   return (
     <div className={`rounded-card border border-rule bg-paper/40 p-4 flex flex-col gap-3 ${wide ? "lg:col-span-2" : ""}`}>
       <p className="flex items-center gap-2 text-sm font-display font-bold text-ink">
@@ -141,7 +143,7 @@ export function OrganizationProfileCard() {
         setOrg(o);
         setContact(c);
       })
-      .catch(() => setError("Could not load organization details."));
+      .catch(() => setError(tr("Could not load organization details.")));
   }, []);
 
   if (error && !org) return <p className="text-sm text-error">{error}</p>;
@@ -158,7 +160,7 @@ export function OrganizationProfileCard() {
   async function handleSave() {
     if (!draft) return;
     if (!draft.name.trim()) {
-      setError("Organization name is required.");
+      setError(tr("Organization name is required."));
       return;
     }
     setSaving(true);
@@ -192,7 +194,7 @@ export function OrganizationProfileCard() {
       setDraft(null);
     } catch (err) {
       // A tax ID that doesn't match the country's format gets the reason back.
-      setError(err instanceof ApiError && err.message === "invalid_tax_id" ? ((err.body as { message?: string })?.message ?? "Check the tax ID.") : "Couldn't save — check the email and number fields and try again.");
+      setError(err instanceof ApiError && err.message === "invalid_tax_id" ? ((err.body as { message?: string })?.message ?? tr("Check the tax ID.")) : tr("Couldn't save — check the email and number fields and try again."));
     } finally {
       setSaving(false);
     }
@@ -208,25 +210,24 @@ export function OrganizationProfileCard() {
             <Building2 size={18} />
           </span>
           <div>
-            <h2 className="font-display font-bold text-ink">Organization details</h2>
+            <h2 className="font-display font-bold text-ink">{tr("Organization details")}</h2>
             <p className="text-xs text-muted">
-              {org.name} · {org.category === "university" ? "University" : "Organization"}
+              {org.name} · {org.category === "university" ? tr("University") : tr("Organization")}
             </p>
           </div>
         </div>
         {!draft && (
           <Button variant="secondary" onClick={() => setDraft(current)} className="flex items-center gap-2 !px-3.5 !py-1.5 !text-xs shrink-0">
-            <Pencil size={13} /> Edit details
-          </Button>
+            <Pencil size={13} /> {tr("Edit details")}</Button>
         )}
       </div>
 
       {!draft && (
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted">Profile completeness</span>
+            <span className="text-muted">{tr("Profile completeness")}</span>
             <span className="font-semibold text-ink">
-              {filled} of {COMPLETENESS_FIELDS.length} details · {completeness}%
+              {filled} {tr("of")}{" "}{COMPLETENESS_FIELDS.length} {tr("details ·")}{" "}{completeness}%
             </span>
           </div>
           <div className="h-2 rounded-full bg-rule overflow-hidden">
@@ -235,24 +236,24 @@ export function OrganizationProfileCard() {
               style={{ width: `${Math.max(completeness, 2)}%`, background: completeness === 100 ? "var(--color-success)" : "linear-gradient(90deg, var(--color-navy), #c9965c)" }}
             />
           </div>
-          {completeness < 100 && <p className="text-xs text-muted">Add the missing details so invoices and reports are correct. Click Edit details.</p>}
+          {completeness < 100 && <p className="text-xs text-muted">{tr("Add the missing details so invoices and reports are correct. Click Edit details.")}</p>}
         </div>
       )}
 
       {draft ? (
         <div className="grid lg:grid-cols-2 gap-4 items-start">
-          <Group title="Company">
-            <Input label="Display name" value={draft.name} onChange={(v) => patch({ name: v })} />
-            <Input label="Registered legal name" value={draft.legalName ?? ""} onChange={(v) => patch({ legalName: v })} />
-            <Input label="Industry" value={draft.industry ?? ""} onChange={(v) => patch({ industry: v })} placeholder="e.g. IT services" />
+          <Group title={tr("Company")}>
+            <Input label={tr("Display name")} value={draft.name} onChange={(v) => patch({ name: v })} />
+            <Input label={tr("Registered legal name")} value={draft.legalName ?? ""} onChange={(v) => patch({ legalName: v })} />
+            <Input label={tr("Industry")} value={draft.industry ?? ""} onChange={(v) => patch({ industry: v })} placeholder={tr("e.g. IT services")} />
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">Employees</label>
+              <label className="text-xs text-muted">{tr("Employees")}</label>
               <select
                 value={draft.employeeCountBand ?? ""}
                 onChange={(e) => patch({ employeeCountBand: (e.target.value || null) as EmployeeCountBand | null })}
                 className={`${inputClass} cursor-pointer`}
               >
-                <option value="">Select…</option>
+                <option value="">{tr("Select…")}</option>
                 {EMPLOYEE_COUNT_BANDS.map((b) => (
                   <option key={b.value} value={b.value}>
                     {b.label}
@@ -260,19 +261,19 @@ export function OrganizationProfileCard() {
                 ))}
               </select>
             </div>
-            <Input label="Website" value={draft.website ?? ""} onChange={(v) => patch({ website: v })} placeholder="https://" />
-            <Input label="Main phone" type="tel" value={draft.phone ?? ""} onChange={(v) => patch({ phone: v })} />
+            <Input label={tr("Website")} value={draft.website ?? ""} onChange={(v) => patch({ website: v })} placeholder={tr("https://")} />
+            <Input label={tr("Main phone")} type="tel" value={draft.phone ?? ""} onChange={(v) => patch({ phone: v })} />
           </Group>
 
-          <Group title="Address">
-            <Input label="Street address" value={draft.addressLine ?? ""} onChange={(v) => patch({ addressLine: v })} wide />
-            <Input label="City" value={draft.city ?? ""} onChange={(v) => patch({ city: v })} />
-            <Input label="State / province" value={draft.state ?? ""} onChange={(v) => patch({ state: v })} />
-            <Input label="Postal code" value={draft.postalCode ?? ""} onChange={(v) => patch({ postalCode: v })} />
+          <Group title={tr("Address")}>
+            <Input label={tr("Street address")} value={draft.addressLine ?? ""} onChange={(v) => patch({ addressLine: v })} wide />
+            <Input label={tr("City")} value={draft.city ?? ""} onChange={(v) => patch({ city: v })} />
+            <Input label={tr("State / province")} value={draft.state ?? ""} onChange={(v) => patch({ state: v })} />
+            <Input label={tr("Postal code")} value={draft.postalCode ?? ""} onChange={(v) => patch({ postalCode: v })} />
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">Country</label>
+              <label className="text-xs text-muted">{tr("Country")}</label>
               <select value={draft.country ?? ""} onChange={(e) => patch({ country: e.target.value })} className={`${inputClass} cursor-pointer`}>
-                <option value="">Select…</option>
+                <option value="">{tr("Select…")}</option>
                 {sortedCountries("en").map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.name}
@@ -282,52 +283,52 @@ export function OrganizationProfileCard() {
             </div>
           </Group>
 
-          <Group title="Training">
+          <Group title={tr("Training")}>
             <Input
-              label="Learners expected"
+              label={tr("Learners expected")}
               type="number"
               value={draft.expectedLearnerCount}
               onChange={(v) => patch({ expectedLearnerCount: v })}
             />
             <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className="text-xs text-muted">What do you want learners to achieve?</label>
+              <label className="text-xs text-muted">{tr("What do you want learners to achieve?")}</label>
               <textarea
                 rows={3}
                 value={draft.trainingGoal ?? ""}
                 onChange={(e) => patch({ trainingGoal: e.target.value })}
-                placeholder="e.g. Customer-facing staff to reach B2 speaking before the Q1 client rollout"
+                placeholder={tr("e.g. Customer-facing staff to reach B2 speaking before the Q1 client rollout")}
                 className={inputClass}
               />
             </div>
           </Group>
 
-          <Group title="Billing">
-            <Input label="Tax ID (GST / VAT)" value={draft.taxId ?? ""} onChange={(v) => patch({ taxId: v })} />
-            <Input label="PO / reference number" value={draft.purchaseOrderRef ?? ""} onChange={(v) => patch({ purchaseOrderRef: v })} />
-            <Input label="Billing contact name" value={draft.billingContactName ?? ""} onChange={(v) => patch({ billingContactName: v })} />
+          <Group title={tr("Billing")}>
+            <Input label={tr("Tax ID (GST / VAT)")} value={draft.taxId ?? ""} onChange={(v) => patch({ taxId: v })} />
+            <Input label={tr("PO / reference number")} value={draft.purchaseOrderRef ?? ""} onChange={(v) => patch({ purchaseOrderRef: v })} />
+            <Input label={tr("Billing contact name")} value={draft.billingContactName ?? ""} onChange={(v) => patch({ billingContactName: v })} />
             <Input
-              label="Billing contact email"
+              label={tr("Billing contact email")}
               type="email"
               value={draft.billingContactEmail ?? ""}
               onChange={(v) => patch({ billingContactEmail: v })}
             />
             <Input
-              label="Billing contact phone"
+              label={tr("Billing contact phone")}
               type="tel"
               value={draft.billingContactPhone ?? ""}
               onChange={(v) => patch({ billingContactPhone: v })}
             />
           </Group>
 
-          <Group title="You (primary contact)" wide>
-            <Input label="Your designation" value={draft.jobTitle} onChange={(v) => patch({ jobTitle: v })} placeholder="e.g. L&D Manager" />
-            <Input label="Your phone" type="tel" value={draft.contactPhone} onChange={(v) => patch({ contactPhone: v })} />
+          <Group title={tr("You (primary contact)")} wide>
+            <Input label={tr("Your designation")} value={draft.jobTitle} onChange={(v) => patch({ jobTitle: v })} placeholder={tr("e.g. L&D Manager")} />
+            <Input label={tr("Your phone")} type="tel" value={draft.contactPhone} onChange={(v) => patch({ contactPhone: v })} />
           </Group>
 
           {error && <p className="text-sm text-error lg:col-span-2">{error}</p>}
           <div className="flex items-center gap-3 lg:col-span-2">
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save details"}
+              {saving ? tr("Saving…") : tr("Save details")}
             </Button>
             <Button
               variant="secondary"
@@ -337,35 +338,34 @@ export function OrganizationProfileCard() {
               }}
               disabled={saving}
             >
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-4 items-start">
-          <Group title="Company">
-            <View label="Registered legal name" value={org.legalName} />
-            <View label="Industry" value={org.industry} />
-            <View label="Employees" value={org.employeeCountBand ? employeeCountLabel(org.employeeCountBand) : null} />
-            <View label="Website" value={org.website} />
-            <View label="Main phone" value={org.phone} />
+          <Group title={tr("Company")}>
+            <View label={tr("Registered legal name")} value={org.legalName} />
+            <View label={tr("Industry")} value={org.industry} />
+            <View label={tr("Employees")} value={org.employeeCountBand ? employeeCountLabel(org.employeeCountBand) : null} />
+            <View label={tr("Website")} value={org.website} />
+            <View label={tr("Main phone")} value={org.phone} />
           </Group>
-          <Group title="Address">
-            <View label="Address" value={addressText} wide />
-            <View label="Country" value={org.country ? countryName(org.country, "en") : null} />
+          <Group title={tr("Address")}>
+            <View label={tr("Address")} value={addressText} wide />
+            <View label={tr("Country")} value={org.country ? countryName(org.country, "en") : null} />
           </Group>
-          <Group title="Training">
-            <View label="Learners expected" value={org.expectedLearnerCount?.toString()} />
-            <View label="Goal" value={org.trainingGoal} wide />
+          <Group title={tr("Training")}>
+            <View label={tr("Learners expected")} value={org.expectedLearnerCount?.toString()} />
+            <View label={tr("Goal")} value={org.trainingGoal} wide />
           </Group>
-          <Group title="Billing">
-            <View label="Tax ID" value={org.taxId} />
-            <View label="PO / reference" value={org.purchaseOrderRef} />
-            <View label="Billing contact" value={[org.billingContactName, org.billingContactEmail, org.billingContactPhone].filter(Boolean).join(" · ")} wide />
+          <Group title={tr("Billing")}>
+            <View label={tr("Tax ID")} value={org.taxId} />
+            <View label={tr("PO / reference")} value={org.purchaseOrderRef} />
+            <View label={tr("Billing contact")} value={[org.billingContactName, org.billingContactEmail, org.billingContactPhone].filter(Boolean).join(" · ")} wide />
           </Group>
-          <Group title="You (primary contact)" wide>
-            <View label="Designation" value={contact.jobTitle} />
-            <View label="Phone" value={contact.phone} />
+          <Group title={tr("You (primary contact)")} wide>
+            <View label={tr("Designation")} value={contact.jobTitle} />
+            <View label={tr("Phone")} value={contact.phone} />
           </Group>
         </div>
       )}

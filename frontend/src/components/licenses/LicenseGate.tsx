@@ -7,6 +7,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 
+import { tr } from "@/i18n/tr";
 export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 
 // Fresh on every mount: free-tier usage changes as the learner practises,
@@ -59,16 +60,15 @@ export function LicenseGate({ feature, children }: { feature: GatedFeature; chil
     return (
       <LockCard
         icon={<Lock size={26} strokeWidth={1.8} />}
-        title={expired ? "Your access has ended" : "Your access isn't active yet"}
+        title={expired ? tr("Your access has ended") : tr("Your access isn't active yet")}
         body={
           expired
-            ? `Your license ended on ${formatShortDate(license.accessEndsAt)}. Ask your organization's admin or manager to extend it — your progress and reports are saved.`
-            : "Your organization hasn't assigned you a license yet. Ask your admin or manager to assign one, then come back here."
+            ? tr("Your license ended on {{formatShortDate}}. Ask your organization's admin or manager to extend it — your progress and reports are saved.", { formatShortDate: formatShortDate(license.accessEndsAt) })
+            : tr("Your organization hasn't assigned you a license yet. Ask your admin or manager to assign one, then come back here.")
         }
         action={
           <Link to={ROUTES.PROGRESS} className="text-sm font-semibold text-navy hover:underline mt-1">
-            View your progress
-          </Link>
+            {tr("View your progress")}</Link>
         }
       />
     );
@@ -115,14 +115,14 @@ export function LicenseBanner() {
   const endsSoon =
     license.status === "active" && license.accessEndsAt && new Date(license.accessEndsAt).getTime() - Date.now() < 7 * 86400000;
   if (license.status !== "grace" && !endsSoon) return null;
-  const who = license.individual ? "Renew from Plans" : "Ask your admin or manager";
+  const who = license.individual ? tr("Renew from Plans") : tr("Ask your admin or manager");
   return (
     <div className="mb-4 flex items-center gap-2.5 text-sm text-navy-deep bg-warning/10 border border-warning/25 rounded-input px-3.5 py-2.5">
       <AlertTriangle size={16} className="shrink-0" />
       <span className="flex-1">
         {license.status === "grace"
-          ? `Your access ended on ${formatShortDate(license.accessEndsAt)}. You can keep practicing until ${formatShortDate(license.graceEndsAt)}. ${who} to extend it.`
-          : `Your access ends on ${formatShortDate(license.accessEndsAt)}. ${who} if you need more time.`}
+          ? tr("Your access ended on {{formatShortDate}}. You can keep practicing until {{formatShortDate2}}. {{who}} to extend it.", { formatShortDate: formatShortDate(license.accessEndsAt), formatShortDate2: formatShortDate(license.graceEndsAt), who: who })
+          : tr("Your access ends on {{formatShortDate}}. {{who}} if you need more time.", { formatShortDate: formatShortDate(license.accessEndsAt), who: who })}
       </span>
       {license.individual && (
         <Link to={ROUTES.PLANS} className="font-semibold hover:underline shrink-0">

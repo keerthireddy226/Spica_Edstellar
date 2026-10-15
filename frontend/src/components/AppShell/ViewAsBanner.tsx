@@ -2,6 +2,7 @@ import { Eye } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
+import { tr } from "@/i18n/tr";
 // Shown while Edstellar staff are looking at an account read-only.
 export function ViewAsBanner() {
   const { user } = useAuth();
@@ -15,11 +16,9 @@ export function ViewAsBanner() {
     <div className="flex items-center justify-center gap-3 bg-warning text-navy-deep text-sm font-semibold px-4 py-2 shrink-0">
       <Eye size={16} />
       <span>
-        {user.viewAs.impersonatorName}, you're viewing this account read-only. Nothing can be changed.
-      </span>
+        {user.viewAs.impersonatorName}{tr(", you're viewing this account read-only. Nothing can be changed.")}</span>
       <button onClick={exit} className="underline cursor-pointer">
-        Exit
-      </button>
+        {tr("Exit")}</button>
     </div>
   );
 }

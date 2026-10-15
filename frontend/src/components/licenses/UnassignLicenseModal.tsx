@@ -4,12 +4,13 @@ import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { LICENSE_ERROR_TEXT, formatShortDate, type LearnerAccess } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 const REASONS = [
-  "Learner left the organization",
-  "Learner no longer needs access",
-  "Assigned by mistake",
-  "Reallocating to another learner",
-  "Other",
+  tr("Learner left the organization"),
+  tr("Learner no longer needs access"),
+  tr("Assigned by mistake"),
+  tr("Reallocating to another learner"),
+  tr("Other"),
 ];
 
 function addMonths(iso: string, months: number): string {
@@ -40,12 +41,12 @@ export function UnassignLicenseModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const finalReason = reason === "Other" ? otherText.trim() : reason;
+  const finalReason = reason === tr("Other") ? otherText.trim() : reason;
   const newEnd = license.accessEndsAt ? addMonths(license.accessEndsAt, -months) : null;
 
   async function submit() {
     if (!finalReason) {
-      setError("Pick a reason.");
+      setError(tr("Pick a reason."));
       return;
     }
     setSubmitting(true);
@@ -55,7 +56,7 @@ export function UnassignLicenseModal({
       onDone();
     } catch (err) {
       const code = err instanceof ApiError ? err.message : "";
-      setError(LICENSE_ERROR_TEXT[code] ?? "Something went wrong. Please try again.");
+      setError(LICENSE_ERROR_TEXT[code] ?? tr("Something went wrong. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -67,19 +68,18 @@ export function UnassignLicenseModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Unassign licenses</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Unassign licenses")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <div className="px-6 py-5 flex flex-col gap-4">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{learnerName}</span> has {license.totalMonths} month{license.totalMonths === 1 ? "" : "s"} assigned:{" "}
-            {license.currentEndsAt ? "1 running" : "none running"} and {max} not started yet.
-          </p>
+            <span className="font-semibold">{learnerName}</span> {tr("has")}{" "}{license.totalMonths} {tr("month")}{license.totalMonths === 1 ? "" : "s"} {tr("assigned:")}{" "}
+            {license.currentEndsAt ? tr("1 running") : tr("none running")} {tr("and")}{" "}{max} {tr("not started yet.")}</p>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Months to return to the pool</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Months to return to the pool")}</label>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -96,39 +96,38 @@ export function UnassignLicenseModal({
               >
                 <Plus size={15} />
               </button>
-              <span className="text-xs text-muted ml-2">of {max} unused</span>
+              <span className="text-xs text-muted ml-2">{tr("of")}{" "}{max} {tr("unused")}</span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Reason</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Reason")}</label>
             <select value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputClass} cursor-pointer`}>
-              <option value="">Select a reason…</option>
+              <option value="">{tr("Select a reason…")}</option>
               {REASONS.map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
               ))}
             </select>
-            {reason === "Other" && (
-              <input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder="Describe the reason" className={inputClass} />
+            {reason === tr("Other") && (
+              <input value={otherText} onChange={(e) => setOtherText(e.target.value)} placeholder={tr("Describe the reason")} className={inputClass} />
             )}
           </div>
 
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
-            {months} license{months === 1 ? "" : "s"} go back to your pool. Access will now end on{" "}
+            {months} {tr("license")}{months === 1 ? "" : "s"} {tr("go back to your pool. Access will now end on")}{" "}
             <span className="font-semibold">{formatShortDate(newEnd)}</span>.
-            <p className="text-xs text-muted mt-1">The month already running can't be returned.</p>
+            <p className="text-xs text-muted mt-1">{tr("The month already running can't be returned.")}</p>
           </div>
 
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={submit} disabled={submitting || !finalReason} className="flex-1 !bg-error hover:!bg-error/90">
-              {submitting ? "Unassigning…" : `Unassign ${months}`}
+              {submitting ? tr("Unassigning…") : `Unassign ${months}`}
             </Button>
             <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>

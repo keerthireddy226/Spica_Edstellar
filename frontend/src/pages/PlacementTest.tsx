@@ -26,6 +26,7 @@ import {
   getPassageAndQuestion,
 } from "@/lib/testItemDisplay";
 
+import { tr } from "@/i18n/tr";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
 const TOTAL_QUESTIONS = 20;
 
@@ -389,8 +390,8 @@ export function PlacementTest() {
         </div>
 
         <span className="absolute left-1/2 -translate-x-1/2 font-logo tracking-tight flex items-baseline gap-1.5">
-          <span className="font-bold text-base text-logo-primary">Spica</span>
-          <span className="italic text-xs text-logo-accent">by Edstellar</span>
+          <span className="font-bold text-base text-logo-primary">{tr("Spica")}</span>
+          <span className="italic text-xs text-logo-accent">{tr("by Edstellar")}</span>
         </span>
 
         <div className="flex items-center gap-3">
@@ -399,7 +400,7 @@ export function PlacementTest() {
           </span>
           <button
             onClick={handleExit}
-            aria-label="Exit test"
+            aria-label={tr("Exit test")}
             className="h-7 w-7 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-paper-warm transition-colors cursor-pointer"
           >
             <X size={16} />

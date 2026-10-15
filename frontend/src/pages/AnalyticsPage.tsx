@@ -17,6 +17,7 @@ import {
   type BatchAnalytics,
 } from "@/api/analytics";
 
+import { tr } from "@/i18n/tr";
 // One analytics page for every console; the server decides the scope by role.
 export function AnalyticsPage() {
   const { user } = useAuth();
@@ -37,7 +38,7 @@ export function AnalyticsPage() {
   useEffect(() => {
     getAnalyticsOverview()
       .then(setOverview)
-      .catch(() => setError("Could not load analytics."));
+      .catch(() => setError(tr("Could not load analytics.")));
     if (hasBatches) {
       getAnalyticsBatches()
         .then((r) => {
@@ -53,7 +54,7 @@ export function AnalyticsPage() {
     setBatch(null);
     getBatchAnalytics(batchId)
       .then(setBatch)
-      .catch((err) => !planErrorMessage(err) && setError("Could not load batch analytics."));
+      .catch((err) => !planErrorMessage(err) && setError(tr("Could not load batch analytics.")));
   }, [tab, batchId, batchAnalyticsAllowed]);
 
   function setTab(next: "overview" | "batches") {
@@ -69,7 +70,7 @@ export function AnalyticsPage() {
       if (tab === "batches" && batchId) await downloadCsv(`/analytics/batches/${batchId}/export.csv`, "batch.csv");
       else await downloadCsv("/analytics/learners/export.csv", "learners.csv");
     } catch {
-      setError("Export failed.");
+      setError(tr("Export failed."));
     } finally {
       setExporting(false);
     }
@@ -79,18 +80,17 @@ export function AnalyticsPage() {
     <div className="flex flex-col gap-5 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Analytics</h1>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Analytics")}</h1>
           <p className="text-sm text-muted mt-1">
-            {overview?.scope ?? "Loading…"} · generated {new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+            {overview?.scope ?? tr("Loading…")} {tr("· generated")}{" "}{new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
           </p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
           <Button variant="secondary" onClick={exportCsv} disabled={exporting || (tab === "batches" && batchAnalyticsAllowed === false)} className="flex items-center gap-2 !px-3.5 !py-2 !text-sm">
-            <Download size={15} /> {exporting ? "Exporting…" : tab === "batches" ? "Export batch CSV" : "Export learners CSV"}
+            <Download size={15} /> {exporting ? tr("Exporting…") : tab === "batches" ? tr("Export batch CSV") : tr("Export learners CSV")}
           </Button>
           <Button variant="secondary" onClick={() => window.print()} className="flex items-center gap-2 !px-3.5 !py-2 !text-sm">
-            <Printer size={15} /> Print / PDF
-          </Button>
+            <Printer size={15} /> {tr("Print / PDF")}</Button>
         </div>
       </div>
 
@@ -98,8 +98,8 @@ export function AnalyticsPage() {
         <div className="flex items-center gap-1 border-b border-rule print:hidden">
           {(
             [
-              ["overview", role === "manager" ? "Your batches overview" : "Organization overview"],
-              ["batches", "Batch analytics"],
+              ["overview", role === "manager" ? tr("Your batches overview") : tr("Organization overview")],
+              ["batches", tr("Batch analytics")],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -119,17 +119,17 @@ export function AnalyticsPage() {
 
       {hasBatches && tab === "overview" && <ReportSubscriptionCard />}
 
-      {tab === "overview" && (overview ? <OverviewView data={overview} showCompanies={role === "super_admin" || role === "admin"} /> : !error && <p className="text-sm text-muted">Loading…</p>)}
+      {tab === "overview" && (overview ? <OverviewView data={overview} showCompanies={role === "super_admin" || role === "admin"} /> : !error && <p className="text-sm text-muted">{tr("Loading…")}</p>)}
 
       {tab === "batches" && batchAnalyticsAllowed === false && <PlanLockNote feature="batch_analytics" />}
 
       {tab === "batches" && batchAnalyticsAllowed !== false && (
         <div className="flex flex-col gap-4">
           {batches.length === 0 ? (
-            <p className="text-sm text-muted">No batches yet.</p>
+            <p className="text-sm text-muted">{tr("No batches yet.")}</p>
           ) : (
             <div className="flex items-center gap-3 print:hidden">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batch</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Batch")}</label>
               <select
                 value={batchId}
                 onChange={(e) => {
@@ -142,7 +142,7 @@ export function AnalyticsPage() {
               >
                 {batches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} · {b.batchCode} · {b.learners} learner{b.learners === 1 ? "" : "s"}
+                    {b.name} · {b.batchCode} · {b.learners} {tr("learner")}{b.learners === 1 ? "" : "s"}
                   </option>
                 ))}
               </select>
@@ -156,7 +156,7 @@ export function AnalyticsPage() {
               <BatchView data={batch} />
             </>
           )}
-          {batchId && !batch && !error && <p className="text-sm text-muted">Loading…</p>}
+          {batchId && !batch && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
         </div>
       )}
     </div>

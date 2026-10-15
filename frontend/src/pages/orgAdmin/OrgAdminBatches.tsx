@@ -11,13 +11,14 @@ import { BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { getOrgLicenseOverview } from "@/api/licenses";
 import { PlanLimitHint, PlanLockNote, refreshPlan, useHasFeature } from "@/components/plans/usePlan";
 
+import { tr } from "@/i18n/tr";
 function CreateBatchModal({ onClose, onCreated, unreserved }: { onClose: () => void; onCreated: () => void; unreserved: number | null }) {
   const [fixedLicenses, setFixedLicenses] = useState("");
   const allotmentsAllowed = useHasFeature("batch_allotments") !== false;
   return (
     <BatchFormModal
-      title="New batch"
-      submitLabel="Create batch"
+      title={tr("New batch")}
+      submitLabel={tr("Create batch")}
       onClose={onClose}
       onSubmit={async (d) => {
         await createBatch({ ...d, licenseAllotment: allotmentsAllowed && fixedLicenses.trim() ? Number(fixedLicenses) : undefined });
@@ -25,7 +26,7 @@ function CreateBatchModal({ onClose, onCreated, unreserved }: { onClose: () => v
       }}
       extra={
         <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label className="text-xs font-semibold uppercase tracking-wide text-muted">Fixed licenses for this batch (optional)</label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Fixed licenses for this batch (optional)")}</label>
           {!allotmentsAllowed ? (
             <PlanLockNote feature="batch_allotments" compact />
           ) : (
@@ -36,11 +37,11 @@ function CreateBatchModal({ onClose, onCreated, unreserved }: { onClose: () => v
                 max={unreserved ?? undefined}
                 value={fixedLicenses}
                 onChange={(e) => setFixedLicenses(e.target.value)}
-                placeholder="None — learners use their Manager's pool"
+                placeholder={tr("None — learners use their Manager's pool")}
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
               <p className="text-xs text-muted">
-                Set aside only for this batch's learners{unreserved !== null ? ` · ${unreserved} unreserved licenses available` : ""}.
+                {tr("Set aside only for this batch's learners")}{unreserved !== null ? tr(" · {{unreserved}} unreserved licenses available", { unreserved: unreserved }) : ""}.
               </p>
             </>
           )}
@@ -63,7 +64,7 @@ export function OrgAdminBatches() {
   function load() {
     getBatches()
       .then((res) => setBatches(res.batches))
-      .catch(() => setError("Could not load batches."));
+      .catch(() => setError(tr("Could not load batches.")));
     getOrgLicenseOverview()
       .then((res) => setUnreserved(res.summary.unreserved))
       .catch(() => {});
@@ -79,7 +80,7 @@ export function OrgAdminBatches() {
       setDeletingBatch(null);
       load();
     } catch {
-      setError("Could not delete that batch.");
+      setError(tr("Could not delete that batch."));
     } finally {
       setBusyId(null);
     }
@@ -89,19 +90,18 @@ export function OrgAdminBatches() {
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Batches</h1>
-          <p className="text-sm text-muted mt-1">Sub-groups inside your organization — e.g. "2026 Intake".</p>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Batches")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("Sub-groups inside your organization — e.g. \"2026 Intake\".")}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2 shrink-0">
-            <Plus size={18} /> New Batch
-          </Button>
+            <Plus size={18} /> {tr("New Batch")}</Button>
           <PlanLimitHint limit="batches" />
         </div>
       </div>
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {!batches && !error && <p className="text-sm text-muted">Loading…</p>}
+      {!batches && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
       {batches && batches.length > 0 && (
         <div className="flex items-center gap-1 border-b border-rule">
           {(["active", "completed", "archived"] as BatchStatus[]).map((st) => {
@@ -121,9 +121,9 @@ export function OrgAdminBatches() {
         </div>
       )}
 
-      {batches?.length === 0 && <p className="text-sm text-muted">No batches yet — create your first one.</p>}
+      {batches?.length === 0 && <p className="text-sm text-muted">{tr("No batches yet — create your first one.")}</p>}
       {batches && batches.length > 0 && batches.filter((b) => b.status === statusFilter).length === 0 && (
-        <p className="text-sm text-muted">No {BATCH_STATUS_LABEL[statusFilter].toLowerCase()} batches.</p>
+        <p className="text-sm text-muted">{tr("No")}{" "}{BATCH_STATUS_LABEL[statusFilter].toLowerCase()} {tr("batches.")}</p>
       )}
 
       {batches && batches.length > 0 && (
@@ -143,7 +143,7 @@ export function OrgAdminBatches() {
                   e.stopPropagation();
                   setDeletingBatch(b);
                 }}
-                title="Delete batch"
+                title={tr("Delete batch")}
                 className="absolute top-3 right-3 p-1.5 rounded-input text-white/70 hover:bg-black/15 hover:text-white transition-colors cursor-pointer"
               >
                 <Trash2 size={15} />
@@ -159,7 +159,7 @@ export function OrgAdminBatches() {
               </div>
               {(b.startCefr || b.targetCefr) && (
                 <span className="self-start text-xs font-semibold px-2 py-0.5 rounded-pill bg-white/20 text-white">
-                  Goal: {b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
+                  {tr("Goal:")}{" "}{b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
                 </span>
               )}
               {(b.department || b.location || b.examFocus) && (
@@ -170,13 +170,13 @@ export function OrgAdminBatches() {
               )}
               <div className="flex items-center gap-1.5 text-white/80 text-xs">
                 <Users size={13} /> {b.learnerCount}
-                {b.capacity ? ` of ${b.capacity}` : ""} learner{(b.capacity ?? b.learnerCount) === 1 ? "" : "s"}
-                {b.capacity && b.learnerCount >= b.capacity ? " · full" : ""}
+                {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner")}{(b.capacity ?? b.learnerCount) === 1 ? "" : "s"}
+                {b.capacity && b.learnerCount >= b.capacity ? tr(" · full") : ""}
               </div>
               {b.durationMonths && (
                 <p className="text-xs text-white/70">
-                  {b.durationMonths} month{b.durationMonths === 1 ? "" : "s"}
-                  {b.startDate ? ` · starts ${new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                  {b.durationMonths} {tr("month")}{b.durationMonths === 1 ? "" : "s"}
+                  {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }) : ""}
                   {b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
                 </p>
               )}
@@ -186,18 +186,17 @@ export function OrgAdminBatches() {
                 </span>
               )}
               <p className="text-xs text-white/70">
-                {b.managerNames.length === 0 ? "No manager assigned yet" : `Managed by ${b.managerNames.join(", ")}`}
-                {b.createdBy?.role === "manager" ? ` · created by ${b.createdBy.name}` : ""}
+                {b.managerNames.length === 0 ? tr("No manager assigned yet") : tr("Managed by {{join}}", { join: b.managerNames.join(", ") })}
+                {b.createdBy?.role === "manager" ? tr(" · created by {{name}}", { name: b.createdBy.name }) : ""}
               </p>
               <div className="text-xs text-white/85 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
                 <span>
                   {b.fixedLicenses != null
-                    ? `Fixed licenses: ${b.licenses.fixedUsed} used of ${b.fixedLicenses} · ${Math.max(0, b.fixedLicenses - b.licenses.fixedUsed)} left`
-                    : "No fixed licenses — uses Manager's pool"}
+                    ? tr("Fixed licenses: {{fixedUsed}} used of {{fixedLicenses}} · {{max}} left", { fixedUsed: b.licenses.fixedUsed, fixedLicenses: b.fixedLicenses, max: Math.max(0, b.fixedLicenses - b.licenses.fixedUsed) })
+                    : tr("No fixed licenses — uses Manager's pool")}
                 </span>
                 <span>
-                  {b.licenses.licensed} licensed · {b.licenses.unlicensed} without a license
-                  {b.licenses.endingSoon ? ` · ${b.licenses.endingSoon} ending soon` : ""}
+                  {b.licenses.licensed} {tr("licensed ·")}{" "}{b.licenses.unlicensed} {tr("without a license")}{b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
                 </span>
               </div>
             </div>
@@ -221,9 +220,9 @@ export function OrgAdminBatches() {
 
       {deletingBatch && (
         <ConfirmActionModal
-          title="Delete batch"
-          message={`Delete "${deletingBatch.name}"? Its learners are removed from the batch (not deleted) and any manager loses this assignment. This cannot be undone.`}
-          confirmLabel="Delete"
+          title={tr("Delete batch")}
+          message={tr("Delete \"{{name}}\"? Its learners are removed from the batch (not deleted) and any manager loses this assignment. This cannot be undone.", { name: deletingBatch.name })}
+          confirmLabel={tr("Delete")}
           destructive
           submitting={busyId === deletingBatch.id}
           onClose={() => setDeletingBatch(null)}

@@ -6,6 +6,7 @@ import { createPaymentOrder, formatAmount, getQuote, requestInvoiceOrder, startC
 import { useHasFeature } from "@/components/plans/usePlan";
 import { planErrorMessage } from "@/api/plans";
 
+import { tr } from "@/i18n/tr";
 // Org Admin self-serve purchase. The calculator mirrors how orgs think about
 // it ("20 learners for 3 months") and turns it into a license count.
 export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
@@ -36,7 +37,7 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
           setQuote(q);
           setError(null);
         })
-        .catch(() => setError("Checkout isn't available right now."));
+        .catch(() => setError(tr("Checkout isn't available right now.")));
     }, 250);
     return () => clearTimeout(handle);
   }, [quantity]);
@@ -48,7 +49,7 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
       try {
         setRequested(await requestInvoiceOrder(quantity, poNumber.trim() || undefined));
       } catch (err) {
-        setError(planErrorMessage(err) ?? "Couldn't create the quote. Please try again.");
+        setError(planErrorMessage(err) ?? tr("Couldn't create the quote. Please try again."));
       } finally {
         setPaying(false);
       }
@@ -57,7 +58,7 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
     try {
       await startCheckout(await createPaymentOrder(quantity), navigate);
     } catch {
-      setError("Couldn't start checkout. Please try again.");
+      setError(tr("Couldn't start checkout. Please try again."));
       setPaying(false);
     }
   }
@@ -68,7 +69,7 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Buy licenses</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Buy licenses")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -76,16 +77,16 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Learners</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Learners")}</label>
               <input type="number" min={1} value={learners} onChange={(e) => setLearners(e.target.value)} className={inputClass} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Months each</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Months each")}</label>
               <input type="number" min={1} value={months} onChange={(e) => setMonths(e.target.value)} className={inputClass} />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Licenses to buy</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Licenses to buy")}</label>
             <input
               type="number"
               min={1}
@@ -94,8 +95,7 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
               className={inputClass}
             />
             <p className="text-xs text-muted">
-              1 license = 1 learner for 1 month. Unassigned licenses stay valid for 12 months. Buying 50 or more lowers the price per license.
-            </p>
+              {tr("1 license = 1 learner for 1 month. Unassigned licenses stay valid for 12 months. Buying 50 or more lowers the price per license.")}</p>
           </div>
 
           {quote && (
@@ -110,22 +110,21 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
                 <span className="text-ink">{formatAmount(quote.subtotal, quote.currency)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted">{quote.taxLabel ?? "Tax"}</span>
+                <span className="text-muted">{quote.taxLabel ?? tr("Tax")}</span>
                 <span className="text-ink">{formatAmount(quote.taxAmount, quote.currency)}</span>
               </div>
               <div className="flex justify-between font-semibold">
-                <span>Total</span>
+                <span>{tr("Total")}</span>
                 <span>{formatAmount(quote.total, quote.currency)}</span>
               </div>
               {!quote.billingCountry && (
-                <p className="text-xs text-muted mt-1">Add your organization's country in Profile so tax and currency are right on the invoice.</p>
+                <p className="text-xs text-muted mt-1">{tr("Add your organization's country in Profile so tax and currency are right on the invoice.")}</p>
               )}
               {quote.upgradesTo && (
                 <p className="text-xs text-success mt-1">
-                  This purchase moves your organization to the Business plan: lower prices on future purchases, unlimited managers and batches.
-                </p>
+                  {tr("This purchase moves your organization to the Business plan: lower prices on future purchases, unlimited managers and batches.")}</p>
               )}
-              {quote.testMode && <p className="text-xs text-navy-deep mt-1">Test mode — payment is simulated, no real charge.</p>}
+              {quote.testMode && <p className="text-xs text-navy-deep mt-1">{tr("Test mode — payment is simulated, no real charge.")}</p>}
             </div>
           )}
 
@@ -134,8 +133,8 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
               <div className="flex gap-2">
                 {(
                   [
-                    ["card", "Pay now by card"],
-                    ["invoice", "Pay by invoice (PO)"],
+                    ["card", tr("Pay now by card")],
+                    ["invoice", tr("Pay by invoice (PO)")],
                   ] as const
                 ).map(([m, label]) => (
                   <button
@@ -151,8 +150,8 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
               </div>
               {method === "invoice" && (
                 <>
-                  <input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="Your PO number (optional)" className={inputClass} />
-                  <p className="text-xs text-muted">You'll get a proforma to pay by bank transfer within 30 days. Licenses are added when payment arrives.</p>
+                  <input value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder={tr("Your PO number (optional)")} className={inputClass} />
+                  <p className="text-xs text-muted">{tr("You'll get a proforma to pay by bank transfer within 30 days. Licenses are added when payment arrives.")}</p>
                 </>
               )}
             </div>
@@ -161,11 +160,9 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
           {requested && (
             <div className="text-sm bg-success/10 border border-success/25 rounded-input px-3.5 py-3 flex flex-col gap-1.5">
               <p className="text-ink">
-                Proforma <span className="font-mono font-semibold">{requested.quoteNumber}</span> is ready. Your Edstellar contact has been notified.
-              </p>
+                {tr("Proforma")}{" "}<span className="font-mono font-semibold">{requested.quoteNumber}</span> {tr("is ready. Your Edstellar contact has been notified.")}</p>
               <a href={`/quote/${requested.orderId}`} target="_blank" rel="noreferrer" className="text-navy font-semibold hover:underline self-start">
-                Open proforma to download or print
-              </a>
+                {tr("Open proforma to download or print")}</a>
             </div>
           )}
 
@@ -175,18 +172,17 @@ export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
               <Button onClick={pay} disabled={paying || !quote} className="flex-1">
                 {method === "invoice"
                   ? paying
-                    ? "Creating proforma…"
-                    : "Get proforma invoice"
+                    ? tr("Creating proforma…")
+                    : tr("Get proforma invoice")
                   : paying
-                    ? "Opening checkout…"
+                    ? tr("Opening checkout…")
                     : quote
                       ? `Pay ${formatAmount(quote.total, quote.currency)}`
-                      : "Pay"}
+                      : tr("Pay")}
               </Button>
             )}
             <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>

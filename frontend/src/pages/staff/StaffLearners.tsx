@@ -26,6 +26,7 @@ import {
 } from "@/api/staff";
 import { Avatar, EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 
+import { tr } from "@/i18n/tr";
 const MONTHS = [0, 1, 2, 3, 6, 12];
 const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
@@ -56,12 +57,10 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
         jobRole: (more.jobRole || undefined) as JobRole | undefined,
       });
       onDone(
-        `Invite sent to ${r.email}${compMonths && !r.accessError ? ` with ${compMonths} free month${compMonths === 1 ? "" : "s"} of full access` : ""}.${
-          r.accessError ? " The free months couldn't be added." : ""
-        }`,
+        tr("Invite sent to {{email}}{{v}}.{{v2}}", { email: r.email, v: compMonths && !r.accessError ? ` with ${compMonths} free month${compMonths === 1 ? "" : "s"} of full access` : "", v2: r.accessError ? " The free months couldn't be added." : "" }),
       );
     } catch (err) {
-      setError(err instanceof ApiError && err.message === "email_already_registered" ? "That email already has an account." : "Something went wrong.");
+      setError(err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has an account.") : tr("Something went wrong."));
       setBusy(false);
     }
   }
@@ -71,8 +70,8 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
           <div>
-            <h2 className="font-display font-bold text-lg text-ink">Invite individual learners</h2>
-            <p className="text-xs text-muted">Their own account, not part of any organization. Organization learners are added by their Org Admin or Manager.</p>
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Invite individual learners")}</h2>
+            <p className="text-xs text-muted">{tr("Their own account, not part of any organization. Organization learners are added by their Org Admin or Manager.")}</p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer">
             <X size={20} />
@@ -86,16 +85,16 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
                 onClick={() => setMode(m)}
                 className={`px-4 py-2 text-sm font-semibold rounded-input cursor-pointer ${mode === m ? "bg-navy/10 text-navy" : "text-muted hover:text-ink"}`}
               >
-                {m === "single" ? "Single learner" : "Bulk upload (CSV)"}
+                {m === "single" ? tr("Single learner") : tr("Bulk upload (CSV)")}
               </button>
             ))}
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Free full access to give now</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Free full access to give now")}</label>
             <select value={compMonths} onChange={(e) => setCompMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {MONTHS.map((m) => (
                 <option key={m} value={m}>
-                  {m === 0 ? "None — free plan (they can upgrade themselves)" : `${m} month${m === 1 ? "" : "s"} complimentary`}
+                  {m === 0 ? tr("None — free plan (they can upgrade themselves)") : tr("{{m}} month{{v}} complimentary", { m: m, v: m === 1 ? "" : "s" })}
                 </option>
               ))}
             </select>
@@ -104,14 +103,14 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
         {mode === "single" ? (
           <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <input required placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
-              <input required placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
+              <input required placeholder={tr("First name")} value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
+              <input required placeholder={tr("Last name")} value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
-            <input required type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
+            <input required type="email" placeholder={tr("Email")} value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-3">
-              <input placeholder="Phone (optional)" value={more.phone} onChange={(e) => setMore((m) => ({ ...m, phone: e.target.value }))} className={inputClass} />
+              <input placeholder={tr("Phone (optional)")} value={more.phone} onChange={(e) => setMore((m) => ({ ...m, phone: e.target.value }))} className={inputClass} />
               <select value={more.jobRole} onChange={(e) => setMore((m) => ({ ...m, jobRole: e.target.value }))} className={`${inputClass} cursor-pointer`}>
-                <option value="">Job role (optional)</option>
+                <option value="">{tr("Job role (optional)")}</option>
                 {JOB_ROLES.map((r) => (
                   <option key={r} value={r}>
                     {t(`demographics.jobRole.${r}`)}
@@ -119,25 +118,24 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
                 ))}
               </select>
               <select value={more.country} onChange={(e) => setMore((m) => ({ ...m, country: e.target.value }))} className={`${inputClass} cursor-pointer`}>
-                <option value="">Country (optional)</option>
+                <option value="">{tr("Country (optional)")}</option>
                 {sortedCountries(i18n.language).map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.name}
                   </option>
                 ))}
               </select>
-              <input placeholder="City (optional)" value={more.city} onChange={(e) => setMore((m) => ({ ...m, city: e.target.value }))} className={inputClass} />
+              <input placeholder={tr("City (optional)")} value={more.city} onChange={(e) => setMore((m) => ({ ...m, city: e.target.value }))} className={inputClass} />
             </div>
-            <p className="text-xs text-muted">These are pre-filled in their onboarding; they can change them.</p>
+            <p className="text-xs text-muted">{tr("These are pre-filled in their onboarding; they can change them.")}</p>
             {error && <p className="text-sm text-error">{error}</p>}
-            <p className="text-xs text-muted">They'll get an email to set their password.</p>
+            <p className="text-xs text-muted">{tr("They'll get an email to set their password.")}</p>
             <div className="flex gap-3">
               <Button type="submit" disabled={busy} className="flex-1">
-                {busy ? "Sending…" : "Send invite"}
+                {busy ? tr("Sending…") : tr("Send invite")}
               </Button>
               <Button type="button" variant="secondary" onClick={onClose}>
-                Cancel
-              </Button>
+                {tr("Cancel")}</Button>
             </div>
           </form>
         ) : (
@@ -146,8 +144,8 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
               maxRows={200}
               checkExisting={(emails) => validateIndividualEmails(emails).then((r) => r.existing)}
               submit={async (rows) => (await inviteIndividualsBulk(compMonths, rows.map(({ email, firstName, lastName }) => ({ email, firstName, lastName })))).results}
-              extraNote={compMonths ? `${compMonths} free month${compMonths === 1 ? "" : "s"} each` : null}
-              onDone={(n) => onDone(`${n} individual learner${n === 1 ? "" : "s"} invited.`)}
+              extraNote={compMonths ? tr("{{compMonths}} free month{{v}} each", { compMonths: compMonths, v: compMonths === 1 ? "" : "s" }) : null}
+              onDone={(n) => onDone(tr("{{n}} individual learner{{v}} invited.", { n: n, v: n === 1 ? "" : "s" }))}
             />
           </div>
         )}
@@ -167,7 +165,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
       .then((r) => setRows(r.learners))
       .catch(() => setRows([]));
   }, []);
-  if (!rows) return <p className="text-sm text-muted">Loading…</p>;
+  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
   const orgs = [...new Map(rows.map((r) => [r.tenantId, r.orgName])).entries()];
   const stale = (r: OrgLearnerRow) => !r.lastActiveOn || Date.now() - new Date(r.lastActiveOn).getTime() > 14 * 86400000;
   const st = (r: OrgLearnerRow) => (!r.active ? "deactivated" : !r.hasLoggedIn ? "pending" : stale(r) ? "inactive" : "active");
@@ -181,37 +179,37 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-        Organization learners are added and managed by their Org Admin and Managers. Here you can see them{canView ? " and open their full profile" : ""}.
+        {tr("Organization learners are added and managed by their Org Admin and Managers. Here you can see them")}{canView ? tr(" and open their full profile") : ""}.
       </p>
       <div className="flex items-center gap-3 flex-wrap">
-        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, batch, department or ID" />
-        <SelectFilter label="Organization" value={org} onChange={setOrg} options={[["all", "All organizations"], ...orgs]} />
+        <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email, batch, department or ID")} />
+        <SelectFilter label={tr("Organization")} value={org} onChange={setOrg} options={[["all", tr("All organizations")], ...orgs]} />
       </div>
       <FilterPills
         value={status}
         onChange={setStatus}
         options={[
-          ["all", "All", rows.length],
-          ["active", "Practising", rows.filter((r) => st(r) === "active").length],
-          ["inactive", "Inactive 14+ days", rows.filter((r) => st(r) === "inactive").length],
-          ["pending", "Invite pending", rows.filter((r) => st(r) === "pending").length],
-          ["deactivated", "Deactivated", rows.filter((r) => st(r) === "deactivated").length],
+          ["all", tr("All"), rows.length],
+          ["active", tr("Practising"), rows.filter((r) => st(r) === "active").length],
+          ["inactive", tr("Inactive 14+ days"), rows.filter((r) => st(r) === "inactive").length],
+          ["pending", tr("Invite pending"), rows.filter((r) => st(r) === "pending").length],
+          ["deactivated", tr("Deactivated"), rows.filter((r) => st(r) === "deactivated").length],
         ]}
       />
       {shown.length === 0 ? (
-        <EmptyNote>No learners match.</EmptyNote>
+        <EmptyNote>{tr("No learners match.")}</EmptyNote>
       ) : (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Learner</th>
-                <th className="px-4 py-3">Organization · batch</th>
-                <th className="px-4 py-3">Level</th>
-                <th className="px-4 py-3">Sessions</th>
-                <th className="px-4 py-3">Last practised</th>
-                <th className="px-4 py-3">License</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">{tr("Learner")}</th>
+                <th className="px-4 py-3">{tr("Organization · batch")}</th>
+                <th className="px-4 py-3">{tr("Level")}</th>
+                <th className="px-4 py-3">{tr("Sessions")}</th>
+                <th className="px-4 py-3">{tr("Last practised")}</th>
+                <th className="px-4 py-3">{tr("License")}</th>
+                <th className="px-4 py-3">{tr("Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -227,7 +225,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
                         <div className="min-w-0">
-                          <p className="text-ink font-medium truncate">{[r.firstName, r.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                          <p className="text-ink font-medium truncate">{[r.firstName, r.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
                           <p className="text-xs text-muted truncate">
                             {r.participantId ? `${r.participantId} · ` : ""}
                             {r.email}
@@ -238,17 +236,17 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                     <td className="px-4 py-3">
                       <p className="text-ink">{r.orgName}</p>
                       <p className="text-xs text-muted">
-                        {r.batchName ?? "No batch"}
+                        {r.batchName ?? tr("No batch")}
                         {r.department ? ` · ${r.department}` : ""}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
                     <td className="px-4 py-3 text-muted">{r.sessionCount}</td>
-                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : "Never"}</td>
+                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
                     <td className="px-4 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
                     <td className="px-4 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : s === "inactive" ? "muted" : "error"}>
-                        {s === "active" ? "Practising" : s === "pending" ? "Invite pending" : s === "inactive" ? "Inactive" : "Deactivated"}
+                        {s === "active" ? tr("Practising") : s === "pending" ? tr("Invite pending") : s === "inactive" ? tr("Inactive") : tr("Deactivated")}
                       </StatusPill>
                     </td>
                   </tr>
@@ -281,7 +279,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
   useEffect(() => {
     load();
   }, []);
-  if (!rows) return <p className="text-sm text-muted">Loading…</p>;
+  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
 
   const q = query.trim().toLowerCase();
   const st = (r: IndividualLearner) => (!r.active ? "deactivated" : !r.hasLoggedIn ? "pending" : "active");
@@ -300,54 +298,53 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
       setNotice(msg);
       load();
     } catch {
-      setError("That didn't work. Please try again.");
+      setError(tr("That didn't work. Please try again."));
     }
   };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="glass" palette="sage" index={0} icon={Users} value={rows.length} label="Individual learners" sub={`${rows.filter((r) => Date.now() - new Date(r.createdAt).getTime() < 7 * 86400000).length} joined this week`} />
-        <StatCard variant="glass" palette="sage" index={1} icon={CreditCard} value={rows.filter((r) => r.plan === "paid").length} label="Paid" sub={revenue ? `${money(revenue, currency)} paid in total` : "No payments yet"} />
-        <StatCard variant="glass" palette="sage" index={2} icon={Gift} value={rows.filter((r) => r.plan === "complimentary").length} label="Complimentary" sub={`${rows.filter((r) => r.plan === "free").length} on the free plan`} />
-        <StatCard variant="glass" palette="sage" index={3} icon={User} value={rows.filter((r) => r.source === "invited").length} label="Invited by Edstellar" sub={`${rows.filter((r) => r.source === "signup").length} signed up themselves`} />
+        <StatCard variant="glass" palette="sage" index={0} icon={Users} value={rows.length} label={tr("Individual learners")} sub={tr("{{length}} joined this week", { length: rows.filter((r) => Date.now() - new Date(r.createdAt).getTime() < 7 * 86400000).length })} />
+        <StatCard variant="glass" palette="sage" index={1} icon={CreditCard} value={rows.filter((r) => r.plan === "paid").length} label={tr("Paid")} sub={revenue ? tr("{{money}} paid in total", { money: money(revenue, currency) }) : tr("No payments yet")} />
+        <StatCard variant="glass" palette="sage" index={2} icon={Gift} value={rows.filter((r) => r.plan === "complimentary").length} label={tr("Complimentary")} sub={tr("{{length}} on the free plan", { length: rows.filter((r) => r.plan === "free").length })} />
+        <StatCard variant="glass" palette="sage" index={3} icon={User} value={rows.filter((r) => r.source === "invited").length} label={tr("Invited by Edstellar")} sub={tr("{{length}} signed up themselves", { length: rows.filter((r) => r.source === "signup").length })} />
       </div>
       {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
       {error && <p className="text-sm text-error">{error}</p>}
       <div className="flex items-center gap-3 flex-wrap">
-        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email or ID" />
-        <SelectFilter label="Status" value={status} onChange={setStatus} options={[["all", "Any status"], ["active", "Active"], ["pending", "Invite pending"], ["deactivated", "Deactivated"]]} />
+        <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email or ID")} />
+        <SelectFilter label={tr("Status")} value={status} onChange={setStatus} options={[["all", tr("Any status")], ["active", tr("Active")], ["pending", tr("Invite pending")], ["deactivated", tr("Deactivated")]]} />
         <span className="flex-1" />
         {canInvite && (
           <Button onClick={() => setInviting(true)} className="flex items-center gap-2">
-            <UserPlus size={17} /> Invite individual learner
-          </Button>
+            <UserPlus size={17} /> {tr("Invite individual learner")}</Button>
         )}
       </div>
       <FilterPills
         value={plan}
         onChange={setPlan}
         options={[
-          ["all", "All plans", rows.length],
-          ["free", "Free", rows.filter((r) => r.plan === "free").length],
-          ["paid", "Paid", rows.filter((r) => r.plan === "paid").length],
-          ["complimentary", "Complimentary", rows.filter((r) => r.plan === "complimentary").length],
+          ["all", tr("All plans"), rows.length],
+          ["free", tr("Free"), rows.filter((r) => r.plan === "free").length],
+          ["paid", tr("Paid"), rows.filter((r) => r.plan === "paid").length],
+          ["complimentary", tr("Complimentary"), rows.filter((r) => r.plan === "complimentary").length],
         ]}
       />
       {shown.length === 0 ? (
-        <EmptyNote>No individual learners match.</EmptyNote>
+        <EmptyNote>{tr("No individual learners match.")}</EmptyNote>
       ) : (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Learner</th>
-                <th className="px-4 py-3">Plan</th>
-                <th className="px-4 py-3">Level</th>
-                <th className="px-4 py-3">Sessions</th>
-                <th className="px-4 py-3">Last practised</th>
-                <th className="px-4 py-3">Joined</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">{tr("Learner")}</th>
+                <th className="px-4 py-3">{tr("Plan")}</th>
+                <th className="px-4 py-3">{tr("Level")}</th>
+                <th className="px-4 py-3">{tr("Sessions")}</th>
+                <th className="px-4 py-3">{tr("Last practised")}</th>
+                <th className="px-4 py-3">{tr("Joined")}</th>
+                <th className="px-4 py-3">{tr("Status")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -364,53 +361,53 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
                         <div className="min-w-0">
-                          <p className="text-ink font-medium truncate">{[r.firstName, r.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                          <p className="text-ink font-medium truncate">{[r.firstName, r.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
                           <p className="text-xs text-muted truncate">{r.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <StatusPill tone={r.plan === "paid" ? "success" : r.plan === "complimentary" ? "navy" : "muted"}>
-                        {r.plan === "paid" ? "Paid" : r.plan === "complimentary" ? "Complimentary" : "Free"}
+                        {r.plan === "paid" ? tr("Paid") : r.plan === "complimentary" ? tr("Complimentary") : tr("Free")}
                       </StatusPill>
                       {r.license && r.license.status !== "none" && <div className="mt-1"><LicenseStatusPill license={r.license} /></div>}
                     </td>
                     <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
                     <td className="px-4 py-3 text-muted">{r.sessions}</td>
-                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : "Never"}</td>
+                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
                     <td className="px-4 py-3 text-muted">
                       <p>{shortDate(r.createdAt)}</p>
-                      <p className="text-xs">{r.invitedByName ? `Invited by ${r.invitedByName}` : "Signed up"}</p>
+                      <p className="text-xs">{r.invitedByName ? tr("Invited by {{invitedByName}}", { invitedByName: r.invitedByName }) : tr("Signed up")}</p>
                     </td>
                     <td className="px-4 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : "error"}>
-                        {s === "active" ? `Active · ${ago(r.lastActiveOn)}` : s === "pending" ? "Invite pending" : "Deactivated"}
+                        {s === "active" ? tr("Active · {{ago}}", { ago: ago(r.lastActiveOn) }) : s === "pending" ? tr("Invite pending") : tr("Deactivated")}
                       </StatusPill>
                     </td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-end">
                         {canView && (
-                          <IconBtn title="View profile" onClick={() => setViewing(r.id)}>
+                          <IconBtn title={tr("View profile")} onClick={() => setViewing(r.id)}>
                             <Eye size={15} />
                           </IconBtn>
                         )}
                         {canInvite && r.active && (
-                          <IconBtn title="Give free months" onClick={() => setGranting(r)}>
+                          <IconBtn title={tr("Give free months")} onClick={() => setGranting(r)}>
                             <Gift size={15} />
                           </IconBtn>
                         )}
                         {canInvite && s === "pending" && (
-                          <IconBtn title="Resend invite" onClick={() => act(() => resendIndividualInvite(r.id), `A new invite link was sent to ${r.email}.`)}>
+                          <IconBtn title={tr("Resend invite")} onClick={() => act(() => resendIndividualInvite(r.id), tr("A new invite link was sent to {{email}}.", { email: r.email }))}>
                             <Mail size={15} />
                           </IconBtn>
                         )}
                         {canInvite &&
                           (r.active ? (
-                            <IconBtn title="Deactivate" danger onClick={() => act(() => deactivateIndividual(r.id), `${r.email} deactivated.`)}>
+                            <IconBtn title={tr("Deactivate")} danger onClick={() => act(() => deactivateIndividual(r.id), `${r.email} deactivated.`)}>
                               <Ban size={15} />
                             </IconBtn>
                           ) : (
-                            <IconBtn title="Reactivate" onClick={() => act(() => reactivateIndividual(r.id), `${r.email} reactivated.`)}>
+                            <IconBtn title={tr("Reactivate")} onClick={() => act(() => reactivateIndividual(r.id), `${r.email} reactivated.`)}>
                               <RotateCcw size={15} />
                             </IconBtn>
                           ))}
@@ -439,12 +436,12 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
       {granting && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setGranting(null)}>
           <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-sm p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-display font-bold text-lg text-ink">Give free months</h2>
-            <p className="text-sm text-muted">Complimentary full access for {granting.email}, added after any access they already have.</p>
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Give free months")}</h2>
+            <p className="text-sm text-muted">{tr("Complimentary full access for")}{" "}{granting.email}{tr(", added after any access they already have.")}</p>
             <select value={grantMonths} onChange={(e) => setGrantMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {MONTHS.slice(1).map((m) => (
                 <option key={m} value={m}>
-                  {m} month{m === 1 ? "" : "s"}
+                  {m} {tr("month")}{m === 1 ? "" : "s"}
                 </option>
               ))}
             </select>
@@ -454,14 +451,12 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                 onClick={() => {
                   const g = granting;
                   setGranting(null);
-                  act(() => grantIndividualAccess(g.id, grantMonths), `${grantMonths} free month${grantMonths === 1 ? "" : "s"} given to ${g.email}.`);
+                  act(() => grantIndividualAccess(g.id, grantMonths), tr("{{grantMonths}} free month{{v}} given to {{email}}.", { grantMonths: grantMonths, v: grantMonths === 1 ? "" : "s", email: g.email }));
                 }}
               >
-                Give access
-              </Button>
+                {tr("Give access")}</Button>
               <Button variant="secondary" onClick={() => setGranting(null)}>
-                Cancel
-              </Button>
+                {tr("Cancel")}</Button>
             </div>
           </div>
         </div>
@@ -491,14 +486,14 @@ export function StaffLearners() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title="Learners"
-        subtitle={perms.isSuper ? "Every learner on Spica: in organizations, and on their own." : "Learners in your organizations, and individual learners."}
+        title={tr("Learners")}
+        subtitle={perms.isSuper ? tr("Every learner on Spica: in organizations, and on their own.") : tr("Learners in your organizations, and individual learners.")}
       />
       <div className="flex items-center gap-1 border-b border-rule">
         {(
           [
-            ["individual", "Individual learners", User],
-            ["org", "Organization learners", Building2],
+            ["individual", tr("Individual learners"), User],
+            ["org", tr("Organization learners"), Building2],
           ] as const
         ).map(([k, label, Icon]) => (
           <button

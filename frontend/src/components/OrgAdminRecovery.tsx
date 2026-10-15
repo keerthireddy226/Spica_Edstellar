@@ -3,6 +3,7 @@ import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { replaceOrgAdmin, resendOrgAdminLink } from "@/api/admin";
 
+import { tr } from "@/i18n/tr";
 // Edstellar-side recovery for an organization's one Org Admin: a fresh
 // set-password link, or replacing the person entirely.
 export function OrgAdminRecovery({ tenantId, hasOrgAdmin, onReplaced }: { tenantId: string; hasOrgAdmin: boolean; onReplaced: () => void }) {
@@ -16,9 +17,9 @@ export function OrgAdminRecovery({ tenantId, hasOrgAdmin, onReplaced }: { tenant
     setMessage(null);
     try {
       const r = await resendOrgAdminLink(tenantId);
-      setMessage({ ok: true, text: `A new set-password link was sent to ${r.email}.` });
+      setMessage({ ok: true, text: tr("A new set-password link was sent to {{email}}.", { email: r.email }) });
     } catch {
-      setMessage({ ok: false, text: "Couldn't send the link." });
+      setMessage({ ok: false, text: tr("Couldn't send the link.") });
     } finally {
       setBusy(false);
     }
@@ -35,11 +36,11 @@ export function OrgAdminRecovery({ tenantId, hasOrgAdmin, onReplaced }: { tenant
         jobTitle: form.jobTitle.trim() || undefined,
         phone: form.phone.trim() || undefined,
       });
-      setMessage({ ok: true, text: `${form.firstName.trim()} is now the Org Admin — their invite is on its way.` });
+      setMessage({ ok: true, text: tr("{{trim}} is now the Org Admin — their invite is on its way.", { trim: form.firstName.trim() }) });
       setMode("idle");
       onReplaced();
     } catch (err) {
-      setMessage({ ok: false, text: err instanceof ApiError && err.message === "email_already_registered" ? "That email already has a Spica account." : "Couldn't replace the Org Admin." });
+      setMessage({ ok: false, text: err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has a Spica account.") : tr("Couldn't replace the Org Admin.") });
     } finally {
       setBusy(false);
     }
@@ -54,31 +55,28 @@ export function OrgAdminRecovery({ tenantId, hasOrgAdmin, onReplaced }: { tenant
         <div className="flex gap-2 flex-wrap">
           {hasOrgAdmin && (
             <Button variant="secondary" onClick={resend} disabled={busy} className="!px-3.5 !py-2">
-              Send set-password link
-            </Button>
+              {tr("Send set-password link")}</Button>
           )}
           <Button variant="secondary" onClick={() => setMode("replace")} disabled={busy} className="!px-3.5 !py-2">
-            {hasOrgAdmin ? "Replace Org Admin" : "Assign Org Admin"}
+            {hasOrgAdmin ? tr("Replace Org Admin") : tr("Assign Org Admin")}
           </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-muted">
-            {hasOrgAdmin ? "The current Org Admin is deactivated and signed out; " : ""}the new person gets an invite to set their password.
-          </p>
+            {hasOrgAdmin ? tr("The current Org Admin is deactivated and signed out; ") : ""}{tr("the new person gets an invite to set their password.")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input placeholder="First name" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className={inputClass} />
-            <input placeholder="Last name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className={inputClass} />
-            <input placeholder="Work email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
-            <input placeholder="Job title (optional)" value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} className={inputClass} />
+            <input placeholder={tr("First name")} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Last name")} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Work email")} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
+            <input placeholder={tr("Job title (optional)")} value={form.jobTitle} onChange={(e) => setForm({ ...form, jobTitle: e.target.value })} className={inputClass} />
           </div>
           <div className="flex gap-2">
             <Button onClick={replace} disabled={!ready || busy}>
-              {busy ? "Saving…" : hasOrgAdmin ? "Replace" : "Assign"}
+              {busy ? tr("Saving…") : hasOrgAdmin ? tr("Replace") : tr("Assign")}
             </Button>
             <Button variant="secondary" onClick={() => setMode("idle")} disabled={busy}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       )}

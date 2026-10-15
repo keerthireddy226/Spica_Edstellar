@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/Button";
 
+import { tr } from "@/i18n/tr";
 // One generic "are you sure" modal for every destructive/state-changing
 // action across the Org Admin console (delete/deactivate a batch, manager,
 // or learner) instead of a near-identical bespoke modal per entity.
@@ -39,11 +40,10 @@ export function ConfirmActionModal({
               disabled={submitting}
               className={`flex-1 ${destructive ? "!bg-error hover:!bg-error/90" : ""}`}
             >
-              {submitting ? "Working…" : confirmLabel}
+              {submitting ? tr("Working…") : confirmLabel}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>

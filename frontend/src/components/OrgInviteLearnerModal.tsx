@@ -8,10 +8,11 @@ import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
 import { LearnerDetailsFields } from "@/components/LearnerDetailsFields";
 import { EMPTY_LEARNER_DETAILS, detailsErrorMessage, filledDetails, type LearnerDetails } from "@/api/details";
 
+import { tr } from "@/i18n/tr";
 export const LICENSE_CHOICES = [0, 1, 2, 3, 6, 9, 12, 18, 24];
 
 export function batchLabel(b: OrgBatch): string {
-  return b.managerNames.length > 0 ? `${b.name} — ${b.managerNames.join(", ")}` : `${b.name} — no manager yet`;
+  return b.managerNames.length > 0 ? `${b.name} — ${b.managerNames.join(", ")}` : tr("{{name}} — no manager yet", { name: b.name });
 }
 
 // Org Admin adds learners directly: into any batch, or with no batch for now
@@ -60,12 +61,12 @@ export function OrgInviteLearnerModal({
       const r = await inviteLearner({ ...options, email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), details: filledDetails(details) });
       onDone(
         r.licenseError
-          ? `Invite sent to ${r.email}, but no license was assigned: ${LICENSE_ERROR_TEXT[r.licenseError] ?? r.licenseError}`
-          : `Invite sent to ${r.email}${licenseMonths ? ` with ${licenseMonths} month${licenseMonths === 1 ? "" : "s"} of access` : ""}.`,
+          ? tr("Invite sent to {{email}}, but no license was assigned: {{v}}", { email: r.email, v: LICENSE_ERROR_TEXT[r.licenseError] ?? r.licenseError })
+          : tr("Invite sent to {{email}}{{v}}.", { email: r.email, v: licenseMonths ? ` with ${licenseMonths} month${licenseMonths === 1 ? "" : "s"} of access` : "" }),
       );
     } catch (err) {
       const code = err instanceof ApiError ? err.message : undefined;
-      setError(code === "email_already_registered" ? "That email is already registered." : (detailsErrorMessage(code) ?? "Something went wrong."));
+      setError(code === "email_already_registered" ? tr("That email is already registered.") : (detailsErrorMessage(code) ?? tr("Something went wrong.")));
     } finally {
       setSubmitting(false);
     }
@@ -77,7 +78,7 @@ export function OrgInviteLearnerModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Invite learners</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Invite learners")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -93,16 +94,16 @@ export function OrgInviteLearnerModal({
                 mode === m ? "bg-navy/10 text-navy" : "text-muted hover:text-ink"
               }`}
             >
-              {m === "single" ? "Single learner" : "Bulk upload (CSV)"}
+              {m === "single" ? tr("Single learner") : tr("Bulk upload (CSV)")}
             </button>
           ))}
         </div>
 
         <div className="px-8 pt-4 grid sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batch</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Batch")}</label>
             <select value={batchId} onChange={(e) => chooseBatch(e.target.value)} className={`${inputClass} cursor-pointer`}>
-              <option value="">No batch yet (assign later)</option>
+              <option value="">{tr("No batch yet (assign later)")}</option>
               {batches.filter((b) => (b.status ?? "active") === "active").map((b) => (
                 <option key={b.id} value={b.id}>
                   {batchLabel(b)}
@@ -111,11 +112,11 @@ export function OrgInviteLearnerModal({
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Access to give now</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Access to give now")}</label>
             <select value={licenseMonths} onChange={(e) => setLicenseMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {(LICENSE_CHOICES.includes(licenseMonths) ? LICENSE_CHOICES : [...LICENSE_CHOICES, licenseMonths].sort((a, b) => a - b)).map((m) => (
                 <option key={m} value={m}>
-                  {m === 0 ? "None — assign later" : `${m} month${m === 1 ? "" : "s"} (${m} license${m === 1 ? "" : "s"} each)`}
+                  {m === 0 ? tr("None — assign later") : tr("{{m}} month{{v}} ({{m2}} license{{v2}} each)", { m: m, v: m === 1 ? "" : "s", m2: m, v2: m === 1 ? "" : "s" })}
                 </option>
               ))}
             </select>
@@ -124,10 +125,10 @@ export function OrgInviteLearnerModal({
             {poolAvailable === null
               ? ""
               : shortOfLicenses
-                ? `Needs ${needed} licenses but your pool has ${poolAvailable}. Learners beyond that are invited without access.`
-                : `${poolAvailable} licenses available in your pool.`}
-            {!batchId && " Without a batch, no Manager sees this learner until you move them into one."}
-            {seatsLeft !== null && ` ${batch!.name} has ${seatsLeft} of ${batch!.capacity} seats left.`}
+                ? tr("Needs {{needed}} licenses but your pool has {{poolAvailable}}. Learners beyond that are invited without access.", { needed: needed, poolAvailable: poolAvailable })
+                : tr("{{poolAvailable}} licenses available in your pool.", { poolAvailable: poolAvailable })}
+            {!batchId && tr(" Without a batch, no Manager sees this learner until you move them into one.")}
+            {seatsLeft !== null && tr(" {{name}} has {{seatsLeft}} of {{capacity}} seats left.", { name: batch!.name, seatsLeft: seatsLeft, capacity: batch!.capacity })}
           </p>
         </div>
 
@@ -135,18 +136,17 @@ export function OrgInviteLearnerModal({
           <form onSubmit={submitSingle} className="flex flex-col gap-4 px-8 py-6">
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
                 <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
                 <input required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-                <Mail size={13} /> Email
-              </label>
+                <Mail size={13} /> {tr("Email")}</label>
               <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             </div>
             <div className="border border-rule rounded-input">
@@ -155,8 +155,7 @@ export function OrgInviteLearnerModal({
                 onClick={() => setShowDetails((v) => !v)}
                 className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-ink cursor-pointer"
               >
-                Employee details (optional)
-                <span className="text-xs text-muted">{showDetails ? "Hide" : "Employee ID, department, gender, age…"}</span>
+                {tr("Employee details (optional)")}<span className="text-xs text-muted">{showDetails ? tr("Hide") : tr("Employee ID, department, gender, age…")}</span>
               </button>
               {showDetails && (
                 <div className="px-4 pb-4">
@@ -165,14 +164,13 @@ export function OrgInviteLearnerModal({
               )}
             </div>
             {error && <p className="text-sm text-error">{error}</p>}
-            <p className="text-xs text-muted">They'll get an email to set their own password.</p>
+            <p className="text-xs text-muted">{tr("They'll get an email to set their own password.")}</p>
             <div className="flex items-center gap-3">
               <Button type="submit" disabled={submitting} className="flex-1">
-                {submitting ? "Sending invite…" : "Send invite"}
+                {submitting ? tr("Sending invite…") : tr("Send invite")}
               </Button>
               <Button type="button" variant="secondary" onClick={onClose}>
-                Cancel
-              </Button>
+                {tr("Cancel")}</Button>
             </div>
           </form>
         ) : (
@@ -184,12 +182,12 @@ export function OrgInviteLearnerModal({
               extraNote={
                 licenseMonths
                   ? shortOfLicenses
-                    ? `needs ${needed} licenses, only ${poolAvailable} available — some learners won't get one`
-                    : `${licenseMonths} month${licenseMonths === 1 ? "" : "s"} of access each`
+                    ? tr("needs {{needed}} licenses, only {{poolAvailable}} available — some learners won't get one", { needed: needed, poolAvailable: poolAvailable })
+                    : tr("{{licenseMonths}} month{{v}} of access each", { licenseMonths: licenseMonths, v: licenseMonths === 1 ? "" : "s" })
                   : null
               }
               onReadyChange={setBulkCount}
-              onDone={(created) => onDone(`${created} learner${created === 1 ? "" : "s"} invited.`)}
+              onDone={(created) => onDone(tr("{{created}} learner{{v}} invited.", { created: created, v: created === 1 ? "" : "s" }))}
             />
           </div>
         )}

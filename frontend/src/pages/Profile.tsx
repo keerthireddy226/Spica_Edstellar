@@ -46,6 +46,7 @@ import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/p
 import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 // Colored icon-in-squircle badge, reused as the visual anchor for every card header/row here.
 function IconBadge({ icon: Icon, tint, size = 36 }: { icon: typeof GraduationCap; tint: string; size?: number }) {
   return (
@@ -514,10 +515,10 @@ export function Profile() {
   }
 
   const tabs: [string, string][] = [
-    ["learning", "Learning"],
-    ["account", "Account"],
-    ["settings", "Settings"],
-    ["security", "Security"],
+    ["learning", tr("Learning")],
+    ["account", tr("Account")],
+    ["settings", tr("Settings")],
+    ["security", tr("Security")],
   ];
   const p = learning?.progress;
 
@@ -543,12 +544,12 @@ export function Profile() {
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white text-navy-deep">{accountType}</span>
               {learning?.access && (learning.access.status === "active" || learning.access.status === "grace") && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">Full access</span>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">{tr("Full access")}</span>
               )}
               {learning?.goals.examPreference && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
-                  Preparing for {learning.goals.examPreference.toUpperCase()}
-                  {learning.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? ` · goal ${learning.goals.goalLevel}` : ""}
+                  {tr("Preparing for")}{" "}{learning.goals.examPreference.toUpperCase()}
+                  {learning.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
                 </span>
               )}
             </div>
@@ -565,10 +566,10 @@ export function Profile() {
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 px-6 sm:px-8 pb-6">
             {(
               [
-                ["Current level", p.level ?? "Not placed", "var(--color-navy)"],
-                ["Day streak", p.streak, "var(--color-accent)"],
-                ["Sessions", p.sessions, "#c9965c"],
-                ["Minutes practised", p.minutes, "#b97a62"],
+                [tr("Current level"), p.level ?? tr("Not placed"), "var(--color-navy)"],
+                [tr("Day streak"), p.streak, "var(--color-accent)"],
+                [tr("Sessions"), p.sessions, "#c9965c"],
+                [tr("Minutes practised"), p.minutes, "#b97a62"],
               ] as const
             ).map(([label, value, c]) => (
               <div key={label} className="bg-surface rounded-input px-4 py-3 shadow-sm border-l-4" style={{ borderLeftColor: c }}>

@@ -19,11 +19,12 @@ import { MfaCard } from "@/components/MfaCard";
 import { MyRecentActions, RoleSummary, WorkDetailsCard } from "@/components/profile/ProfileExtras";
 import { ManagerPreferencesCard } from "@/components/ManagerPreferencesCard";
 
+import { tr } from "@/i18n/tr";
 const ROLE_LABEL: Record<string, string> = {
-  admin: "Admin",
-  super_admin: "Super Admin",
-  org_admin: "Org Admin",
-  manager: "Manager",
+  admin: tr("Admin"),
+  super_admin: tr("Super Admin"),
+  org_admin: tr("Org Admin"),
+  manager: tr("Manager"),
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -32,7 +33,7 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 function formatDateTime(iso: string | null | undefined): string {
-  if (!iso) return "First login";
+  if (!iso) return tr("First login");
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
@@ -72,26 +73,26 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
   }
 
   return (
-    <SectionCard title="Account details" icon={UserCircle2} color="var(--color-navy)">
+    <SectionCard title={tr("Account details")} icon={UserCircle2} color="var(--color-navy)">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
         <div className="flex items-start gap-2 text-sm">
           <UserCircle2 size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted">Name</p>
-            <p className="text-ink">{[origFirstName, origLastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+            <p className="text-xs text-muted">{tr("Name")}</p>
+            <p className="text-ink">{[origFirstName, origLastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 text-sm">
           <Mail size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted">Email</p>
+            <p className="text-xs text-muted">{tr("Email")}</p>
             <p className="text-ink">{user?.email}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 text-sm">
           <BadgeCheck size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted">Role</p>
+            <p className="text-xs text-muted">{tr("Role")}</p>
             <p className="text-ink">{user ? (ROLE_LABEL[user.role] ?? user.role) : "—"}</p>
           </div>
         </div>
@@ -99,7 +100,7 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
           <div className="flex items-start gap-2 text-sm">
             <Briefcase size={16} className="text-muted mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted">Department</p>
+              <p className="text-xs text-muted">{tr("Department")}</p>
               <p className="text-ink">{user.department}</p>
             </div>
           </div>
@@ -107,14 +108,14 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
         <div className="flex items-start gap-2 text-sm">
           <CalendarDays size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted">Member since</p>
+            <p className="text-xs text-muted">{tr("Member since")}</p>
             <p className="text-ink">{formatDate(user?.createdAt)}</p>
           </div>
         </div>
         <div className="flex items-start gap-2 text-sm">
           <Clock size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs text-muted">Last login</p>
+            <p className="text-xs text-muted">{tr("Last login")}</p>
             <p className="text-ink">{formatDateTime(user?.lastLoginAt)}</p>
           </div>
         </div>
@@ -122,7 +123,7 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
           <div className="flex items-start gap-2 text-sm">
             <UserCog size={16} className="text-muted mt-0.5 shrink-0" />
             <div>
-              <p className="text-xs text-muted">Onboarded by</p>
+              <p className="text-xs text-muted">{tr("Onboarded by")}</p>
               <p className="text-ink">
                 {onboardedBy.name}
                 {onboardedBy.role ? `, ${ROLE_LABEL[onboardedBy.role] ?? onboardedBy.role}` : ""}
@@ -140,13 +141,12 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
             onClick={() => setEditing(true)}
             className="self-start flex items-center gap-2 !px-3.5 !py-1.5 !text-xs"
           >
-            <Pencil size={13} /> Edit name
-          </Button>
+            <Pencil size={13} /> {tr("Edit name")}</Button>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
                 <input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -155,7 +155,7 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
                 <input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -165,12 +165,11 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
             </div>
             <div className="flex items-center gap-3">
               <Button onClick={handleSave} disabled={saving || !isDirty || !firstName.trim() || !lastName.trim()}>
-                {saving ? "Saving…" : "Save changes"}
+                {saving ? tr("Saving…") : tr("Save changes")}
               </Button>
               <Button variant="secondary" onClick={handleCancel} disabled={saving}>
-                Cancel
-              </Button>
-              {saved && <span className="text-xs text-success">Saved.</span>}
+                {tr("Cancel")}</Button>
+              {saved && <span className="text-xs text-success">{tr("Saved.")}</span>}
             </div>
           </>
         )}
@@ -196,20 +195,20 @@ export function SecuritySection({ email }: { email: string | undefined }) {
   }
 
   return (
-    <SectionCard title="Password" icon={KeyRound} color="#c9965c">
+    <SectionCard title={tr("Password")} icon={KeyRound} color="#c9965c">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-2 text-sm">
           <KeyRound size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-ink">Change your password with a link sent to your email.</p>
-            <p className="text-xs text-muted">You don't need your current password.</p>
+            <p className="text-ink">{tr("Change your password with a link sent to your email.")}</p>
+            <p className="text-xs text-muted">{tr("You don't need your current password.")}</p>
           </div>
         </div>
         <Button variant="secondary" onClick={handleResetPassword} disabled={sending || sent}>
-          {sent ? "Email sent" : sending ? "Sending…" : "Send reset link"}
+          {sent ? tr("Email sent") : sending ? tr("Sending…") : tr("Send reset link")}
         </Button>
       </div>
-      {sent && <p className="text-xs text-success">Check {email} for a link to set a new password.</p>}
+      {sent && <p className="text-xs text-success">{tr("Check")}{" "}{email} {tr("for a link to set a new password.")}</p>}
     </SectionCard>
   );
 }
@@ -224,9 +223,9 @@ export function LoginHistorySection() {
   }, []);
 
   return (
-    <SectionCard title="Recent sign-ins" icon={Monitor} color="#b97a62">
-      {!logins && <p className="text-sm text-muted">Loading…</p>}
-      {logins?.length === 0 && <p className="text-sm text-muted">No login history yet.</p>}
+    <SectionCard title={tr("Recent sign-ins")} icon={Monitor} color="#b97a62">
+      {!logins && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {logins?.length === 0 && <p className="text-sm text-muted">{tr("No login history yet.")}</p>}
       {logins && logins.length > 0 && (
         <div className="flex flex-col gap-3">
           {logins.map((l, i) => (
@@ -236,7 +235,7 @@ export function LoginHistorySection() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-ink truncate">{l.device}</p>
-                <p className="text-xs text-muted truncate">{l.ipAddress ?? "Unknown IP"}</p>
+                <p className="text-xs text-muted truncate">{l.ipAddress ?? tr("Unknown IP")}</p>
               </div>
               <span className="text-muted text-xs shrink-0">{formatDateTime(l.occurredAt)}</span>
             </div>
@@ -254,10 +253,10 @@ function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"]
 
   if (user?.role === "super_admin") {
     return (
-      <SectionCard title="Your permissions" icon={ShieldCheck} color="var(--color-success)">
+      <SectionCard title={tr("Your permissions")} icon={ShieldCheck} color="var(--color-success)">
         <div className="flex items-center gap-2 text-sm">
           <ShieldCheck size={16} className="text-success shrink-0" />
-          <span className="text-ink">Full platform access — Super Admin isn't gated by individual permissions.</span>
+          <span className="text-ink">{tr("Full platform access — Super Admin isn't gated by individual permissions.")}</span>
         </div>
       </SectionCard>
     );
@@ -267,9 +266,9 @@ function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"]
   const granted = (Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).filter((k) => permissions[k]);
 
   return (
-    <SectionCard title="Your permissions" icon={ShieldCheck} color="var(--color-success)">
+    <SectionCard title={tr("Your permissions")} icon={ShieldCheck} color="var(--color-success)">
       {granted.length === 0 ? (
-        <p className="text-sm text-muted">No permissions granted yet — ask a Super Admin to grant you some.</p>
+        <p className="text-sm text-muted">{tr("No permissions granted yet — ask a Super Admin to grant you some.")}</p>
       ) : (
         <div className="flex flex-col gap-2">
           {granted.map((key) => (
@@ -307,9 +306,9 @@ export function ActiveSessionsSection() {
   }
 
   return (
-    <SectionCard title="Active sessions" icon={Lock} color="#8a8f4f">
-      {!sessions && <p className="text-sm text-muted">Loading…</p>}
-      {sessions?.length === 0 && <p className="text-sm text-muted">No active sessions.</p>}
+    <SectionCard title={tr("Active sessions")} icon={Lock} color="#8a8f4f">
+      {!sessions && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {sessions?.length === 0 && <p className="text-sm text-muted">{tr("No active sessions.")}</p>}
       {sessions && sessions.length > 0 && (
         <div className="flex flex-col gap-3">
           {sessions.map((s) => (
@@ -318,13 +317,13 @@ export function ActiveSessionsSection() {
                 {s.isCurrent ? <LockOpen size={15} strokeWidth={1.8} /> : <Lock size={15} strokeWidth={1.8} />}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-ink truncate">{s.isCurrent ? "This device" : "Other session"}</p>
+                <p className="text-ink truncate">{s.isCurrent ? tr("This device") : tr("Other session")}</p>
                 <p className="text-xs text-muted truncate">
-                  Started {formatDateTime(s.createdAt)} · Expires {formatDateTime(s.expiresAt)}
+                  {tr("Started")}{" "}{formatDateTime(s.createdAt)} {tr("· Expires")}{" "}{formatDateTime(s.expiresAt)}
                 </p>
               </div>
               {s.isCurrent ? (
-                <span className="text-xs text-muted shrink-0">Current</span>
+                <span className="text-xs text-muted shrink-0">{tr("Current")}</span>
               ) : (
                 <Button
                   variant="secondary"
@@ -332,7 +331,7 @@ export function ActiveSessionsSection() {
                   disabled={revoking === s.id}
                   className="!px-3 !py-1.5 !text-xs shrink-0"
                 >
-                  {revoking === s.id ? "Logging out…" : "Log out"}
+                  {revoking === s.id ? tr("Logging out…") : tr("Log out")}
                 </Button>
               )}
             </div>
@@ -384,13 +383,13 @@ export function AdminProfile() {
   }
 
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || user?.email.slice(0, 2).toUpperCase() || "?";
-  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Not named yet";
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || tr("Not named yet");
   const role = user?.role;
   const tabs: [ProfileTab, string][] = [
-    ["account", "Account"],
-    ...(role === "org_admin" ? ([["organization", "Organization"]] as [ProfileTab, string][]) : []),
-    ["security", "Security"],
-    ["activity", "Activity"],
+    ["account", tr("Account")],
+    ...(role === "org_admin" ? ([["organization", tr("Organization")]] as [ProfileTab, string][]) : []),
+    ["security", tr("Security")],
+    ["activity", tr("Activity")],
   ];
 
   const account = (
@@ -427,11 +426,11 @@ export function AdminProfile() {
                 <ShieldCheck size={13} /> {role ? (ROLE_LABEL[role] ?? role) : "—"}
               </span>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                Member since {formatDate(user?.createdAt)}
+                {tr("Member since")}{" "}{formatDate(user?.createdAt)}
               </span>
               {onboardedBy && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
-                  Onboarded by {onboardedBy.name}
+                  {tr("Onboarded by")}{" "}{onboardedBy.name}
                 </span>
               )}
             </div>
@@ -440,8 +439,7 @@ export function AdminProfile() {
             onClick={logout}
             className="flex items-center gap-2 px-4 py-2 rounded-pill bg-white text-navy-deep text-sm font-semibold hover:bg-white/90 transition-colors cursor-pointer shrink-0"
           >
-            <LogOut size={16} /> Log out
-          </button>
+            <LogOut size={16} /> {tr("Log out")}</button>
         </div>
         <div className="relative flex items-center gap-1 px-4 sm:px-6 bg-surface border-b border-rule overflow-x-auto">
           {tabs.map(([key, label]) => (

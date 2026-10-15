@@ -5,8 +5,9 @@ import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { getManagerActivityDetail, type ManagerDetail, type ManagerOnboardedLearner } from "@/api/admin";
 
 
+import { tr } from "@/i18n/tr";
 function categoryLabel(category: string | null): string {
-  return category === "university" ? "University" : "Organization";
+  return category === "university" ? tr("University") : tr("Organization");
 }
 
 function formatDate(iso: string): string {
@@ -45,7 +46,7 @@ export function ManagerDetailModal({
     if (!learners) return [];
     const groups = new Map<string, ManagerOnboardedLearner[]>();
     for (const l of learners) {
-      const key = l.batchName ?? "No batch";
+      const key = l.batchName ?? tr("No batch");
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(l);
     }
@@ -58,25 +59,25 @@ export function ManagerDetailModal({
         setManager(res.manager);
         setLearners(res.learners);
       })
-      .catch(() => setError("Could not load this manager's details."));
+      .catch(() => setError(tr("Could not load this manager's details.")));
   }, [managerId, fetcher]);
 
   if (error) {
     return (
-      <DetailModal title="Manager details" onClose={onClose} onBack={onBack}>
+      <DetailModal title={tr("Manager details")} onClose={onClose} onBack={onBack}>
         <p className="text-sm text-error">{error}</p>
       </DetailModal>
     );
   }
   if (!manager || !learners) {
     return (
-      <DetailModal title="Manager details" onClose={onClose} onBack={onBack}>
-        <p className="text-sm text-muted">Loading…</p>
+      <DetailModal title={tr("Manager details")} onClose={onClose} onBack={onBack}>
+        <p className="text-sm text-muted">{tr("Loading…")}</p>
       </DetailModal>
     );
   }
 
-  const name = [manager.firstName, manager.lastName].filter(Boolean).join(" ") || "Not named yet";
+  const name = [manager.firstName, manager.lastName].filter(Boolean).join(" ") || tr("Not named yet");
   const status = !manager.active ? "deactivated" : !manager.hasLoggedIn ? "pending" : "active";
   const sessions = learners.reduce((n, l) => n + l.sessionCount, 0);
   const activeLearners = learners.filter((l) => l.active).length;
@@ -85,49 +86,49 @@ export function ManagerDetailModal({
   return (
     <DetailModal
       title={name}
-      subtitle={`${manager.email} · Manager at ${manager.tenantName}`}
+      subtitle={tr("{{email}} · Manager at {{tenantName}}", { email: manager.email, tenantName: manager.tenantName })}
       initials={personInitials(manager.firstName, manager.lastName, manager.email)}
       badges={
         <>
           <Badge tone={status === "active" ? "good" : status === "pending" ? "warn" : "bad"}>
-            {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
+            {status === "active" ? tr("Active") : status === "pending" ? tr("Invite pending") : tr("Deactivated")}
           </Badge>
           <Badge>{categoryLabel(manager.tenantCategory)}</Badge>
-          <Badge>Joined {formatDate(manager.createdAt)}</Badge>
+          <Badge>{tr("Joined")}{" "}{formatDate(manager.createdAt)}</Badge>
         </>
       }
       stats={[
-        { label: "Batches", value: manager.batchNames.length },
-        { label: "Learners", value: learners.length, hint: `${activeLearners} active` },
-        { label: "Sessions completed", value: sessions },
-        { label: "Avg sessions per learner", value: learners.length ? (sessions / learners.length).toFixed(1) : "—" },
+        { label: tr("Batches"), value: manager.batchNames.length },
+        { label: tr("Learners"), value: learners.length, hint: `${activeLearners} active` },
+        { label: tr("Sessions completed"), value: sessions },
+        { label: tr("Avg sessions per learner"), value: learners.length ? (sessions / learners.length).toFixed(1) : "—" },
       ]}
       onClose={onClose}
       onBack={onBack}
       wide
     >
       <div className="flex flex-col gap-6">
-        <ModalSection title="Details" icon={UserRound}>
+        <ModalSection title={tr("Details")} icon={UserRound}>
           <InfoGrid
             items={[
-              ["Email", manager.email],
-              ["Organization", `${manager.tenantName} (${categoryLabel(manager.tenantCategory)})`],
-              ["Batches", manager.batchNames.length === 0 ? "None assigned" : manager.batchNames.join(", ")],
-              ["Joined", formatDate(manager.createdAt)],
+              [tr("Email"), manager.email],
+              [tr("Organization"), `${manager.tenantName} (${categoryLabel(manager.tenantCategory)})`],
+              [tr("Batches"), manager.batchNames.length === 0 ? tr("None assigned") : manager.batchNames.join(", ")],
+              [tr("Joined"), formatDate(manager.createdAt)],
             ]}
           />
         </ModalSection>
 
-        <ModalSection title="Batches" icon={Layers}>
+        <ModalSection title={tr("Batches")} icon={Layers}>
           {batchGroups.length === 0 ? (
-            <ModalEmpty icon={Layers}>No learners in their batches yet.</ModalEmpty>
+            <ModalEmpty icon={Layers}>{tr("No learners in their batches yet.")}</ModalEmpty>
           ) : (
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedBatch(null)}
                 className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold border transition-colors cursor-pointer ${selectedBatch === null ? "bg-navy text-white border-navy" : "border-rule text-ink hover:bg-paper-warm"}`}
               >
-                All · {learners.length}
+                {tr("All ·")}{" "}{learners.length}
               </button>
               {batchGroups.map((g) => (
                 <button
@@ -143,15 +144,15 @@ export function ManagerDetailModal({
         </ModalSection>
 
         {learners.length > 0 && (
-          <ModalSection title={selectedBatch ? `Learners in ${selectedBatch}` : "Learners"} icon={Users}>
+          <ModalSection title={selectedBatch ? tr("Learners in {{selectedBatch}}", { selectedBatch: selectedBatch }) : tr("Learners")} icon={Users}>
             <div className="grid md:grid-cols-2 gap-2">
               {shown.map((l) => (
                 <ModalRow
                   key={l.id}
                   initials={personInitials(l.firstName, l.lastName, l.email)}
                   title={[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}
-                  subtitle={`${l.batchName ?? "No batch"} · ${l.sessionCount} session${l.sessionCount === 1 ? "" : "s"} completed`}
-                  right={<Pill tone={l.active ? "good" : "bad"}>{l.active ? "Active" : "Deactivated"}</Pill>}
+                  subtitle={tr("{{v}} · {{sessionCount}} session{{v2}} completed", { v: l.batchName ?? "No batch", sessionCount: l.sessionCount, v2: l.sessionCount === 1 ? "" : "s" })}
+                  right={<Pill tone={l.active ? "good" : "bad"}>{l.active ? tr("Active") : tr("Deactivated")}</Pill>}
                   onClick={() => setViewingLearnerId(l.id)}
                 />
               ))}

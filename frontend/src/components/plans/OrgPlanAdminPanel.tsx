@@ -13,18 +13,19 @@ import {
   type PlanTier,
 } from "@/api/plans";
 
+import { tr } from "@/i18n/tr";
 function eventSentence(e: PlanEvent): string {
   switch (e.kind) {
     case "tier_change":
       return `${e.fromTier ? TIER_LABELS[e.fromTier] : "—"} → ${e.toTier ? TIER_LABELS[e.toTier] : "—"}`;
     case "price_change":
-      return e.customPriceCents === null ? "Back to the standard rate card" : `Negotiated price set to ${formatUsdCents(e.customPriceCents)}`;
+      return e.customPriceCents === null ? tr("Back to the standard rate card") : tr("Negotiated price set to {{formatUsdCents}}", { formatUsdCents: formatUsdCents(e.customPriceCents) });
     case "pilot_started":
-      return "Pilot started";
+      return tr("Pilot started");
     case "pilot_ended":
-      return "Pilot ended";
+      return tr("Pilot ended");
     case "enterprise_inquiry":
-      return "Asked about Enterprise";
+      return tr("Asked about Enterprise");
   }
 }
 
@@ -48,7 +49,7 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
         onTier?.(p.tier);
         setPrice(p.customPriceCents === null ? "" : String(p.customPriceCents / 100));
       })
-      .catch(() => setMessage({ ok: false, text: "Could not load the plan." }));
+      .catch(() => setMessage({ ok: false, text: tr("Could not load the plan.") }));
   }
   useEffect(load, [tenantId]);
 
@@ -61,7 +62,7 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
       setNote("");
       load();
     } catch {
-      setMessage({ ok: false, text: "That didn't save. Please try again." });
+      setMessage({ ok: false, text: tr("That didn't save. Please try again.") });
     } finally {
       setBusy(false);
     }
@@ -74,11 +75,11 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
 
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Plan</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Plan")}</p>
       <div className="border border-rule rounded-input px-4 py-4 flex flex-col gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-muted">Tier</label>
+            <label className="text-xs text-muted">{tr("Tier")}</label>
             <select value={tier} onChange={(e) => setTier(e.target.value as PlanTier)} className={`${inputClass} cursor-pointer`}>
               {(Object.keys(TIER_LABELS) as PlanTier[]).map((t) => (
                 <option key={t} value={t}>
@@ -88,18 +89,18 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
             </select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-muted">Negotiated price (USD / license)</label>
-            <input type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Rate card" className={inputClass} />
+            <label className="text-xs text-muted">{tr("Negotiated price (USD / license)")}</label>
+            <input type="number" min={0} step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={tr("Rate card")} className={inputClass} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-muted">Note (shown in history)</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Annual contract signed" className={inputClass} />
+            <label className="text-xs text-muted">{tr("Note (shown in history)")}</label>
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("e.g. Annual contract signed")} className={inputClass} />
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <p className="text-xs text-muted">
             {plan.limits.map((l) => `${l.used} ${l.key}${l.max !== null ? ` of ${l.max}` : ""}`).join(" · ")}
-            {plan.educationDiscountPercent > 0 && ` · ${plan.educationDiscountPercent}% education discount`}
+            {plan.educationDiscountPercent > 0 && tr(" · {{educationDiscountPercent}}% education discount", { educationDiscountPercent: plan.educationDiscountPercent })}
           </p>
           <Button
             disabled={busy || !dirty}
@@ -111,30 +112,28 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
                     ...(priceCents !== plan.customPriceCents ? { customPriceCents: priceCents } : {}),
                     note: note.trim() || undefined,
                   }),
-                "Plan updated. The Org Admin has been notified.",
+                tr("Plan updated. The Org Admin has been notified."),
               )
             }
           >
-            Save plan
-          </Button>
+            {tr("Save plan")}</Button>
         </div>
 
         <div className="border-t border-rule pt-4">
           {plan.pilotEndsAt ? (
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-sm text-ink">Pilot running until {formatShortDate(plan.pilotEndsAt)}</p>
-              <Button variant="secondary" disabled={busy} onClick={() => run(() => endPilot(tenantId), "Pilot ended.")}>
-                End pilot now
-              </Button>
+              <p className="text-sm text-ink">{tr("Pilot running until")}{" "}{formatShortDate(plan.pilotEndsAt)}</p>
+              <Button variant="secondary" disabled={busy} onClick={() => run(() => endPilot(tenantId), tr("Pilot ended."))}>
+                {tr("End pilot now")}</Button>
             </div>
           ) : (
             <div className="flex items-end gap-3 flex-wrap">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted">Pilot licenses</label>
+                <label className="text-xs text-muted">{tr("Pilot licenses")}</label>
                 <input type="number" min={1} max={500} value={pilotLicenses} onChange={(e) => setPilotLicenses(e.target.value)} className={`${inputClass} w-28`} />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted">Days</label>
+                <label className="text-xs text-muted">{tr("Days")}</label>
                 <input type="number" min={1} max={180} value={pilotDays} onChange={(e) => setPilotDays(e.target.value)} className={`${inputClass} w-24`} />
               </div>
               <Button
@@ -143,12 +142,11 @@ export function OrgPlanAdminPanel({ tenantId, onTier }: { tenantId: string; onTi
                 onClick={() =>
                   run(
                     () => startPilot(tenantId, { licenses: Number(pilotLicenses) || 10, days: Number(pilotDays) || 30 }),
-                    "Pilot started. The free licenses lapse when it ends.",
+                    tr("Pilot started. The free licenses lapse when it ends."),
                   )
                 }
               >
-                Start pilot
-              </Button>
+                {tr("Start pilot")}</Button>
             </div>
           )}
         </div>

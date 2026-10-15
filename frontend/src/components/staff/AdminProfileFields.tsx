@@ -4,6 +4,7 @@ import { PERMISSION_LABELS, getAdminConsoleOverview, type AdminPermissions } fro
 import { sortedCountries } from "@/constants/demographics";
 import { useStaffPermissions } from "@/components/staff/StaffKit";
 
+import { tr } from "@/i18n/tr";
 export interface AdminProfile {
   department: string;
   jobTitle: string;
@@ -16,25 +17,25 @@ export interface AdminProfile {
   permissions: AdminPermissions;
 }
 
-const DEPARTMENTS = ["Sales", "Delivery", "L&D", "Customer Success", "Account Management", "Finance", "Operations", "Support"];
+const DEPARTMENTS = [tr("Sales"), tr("Delivery"), tr("L&D"), tr("Customer Success"), tr("Account Management"), tr("Finance"), tr("Operations"), tr("Support")];
 
 // What each kind of Admin usually needs; the boxes can still be changed.
 const PRESETS: { label: string; perms: (keyof AdminPermissions)[] }[] = [
-  { label: "Sales / Account manager", perms: ["manageOrganizations", "inviteLearners", "viewReports"] },
-  { label: "Delivery / L&D", perms: ["inviteLearners", "viewLearnerInfo", "viewReports", "contentReview"] },
-  { label: "Assessment reviewer", perms: ["viewLearnerInfo", "scoreReview", "contentReview"] },
-  { label: "Team lead", perms: ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "viewReports", "manageAdmins"] },
-  { label: "Full access", perms: Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[] },
+  { label: tr("Sales / Account manager"), perms: ["manageOrganizations", "inviteLearners", "viewReports"] },
+  { label: tr("Delivery / L&D"), perms: ["inviteLearners", "viewLearnerInfo", "viewReports", "contentReview"] },
+  { label: tr("Assessment reviewer"), perms: ["viewLearnerInfo", "scoreReview", "contentReview"] },
+  { label: tr("Team lead"), perms: ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "viewReports", "manageAdmins"] },
+  { label: tr("Full access"), perms: Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[] },
 ];
 
 const PERMISSION_HELP: Record<keyof AdminPermissions, string> = {
-  manageOrganizations: "Onboard, edit and deactivate organizations; plans, licenses, contracts and invoices",
-  inviteLearners: "Invite individual learners and give them free months",
-  viewLearnerInfo: "Open learners' full profiles",
-  contentReview: "Review practice content",
-  scoreReview: "Decide flagged placement tests",
-  viewReports: "Analytics, insights and reports",
-  manageAdmins: "Onboard and edit other Admins (team lead)",
+  manageOrganizations: tr("Onboard, edit and deactivate organizations; plans, licenses, contracts and invoices"),
+  inviteLearners: tr("Invite individual learners and give them free months"),
+  viewLearnerInfo: tr("Open learners' full profiles"),
+  contentReview: tr("Review practice content"),
+  scoreReview: tr("Decide flagged placement tests"),
+  viewReports: tr("Analytics, insights and reports"),
+  manageAdmins: tr("Onboard and edit other Admins (team lead)"),
 };
 
 const input = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -57,38 +58,38 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
   return (
     <div className="flex flex-col gap-5">
       <fieldset className="grid sm:grid-cols-2 gap-3">
-        <legend className="text-sm font-semibold text-ink mb-2">Role and contact</legend>
+        <legend className="text-sm font-semibold text-ink mb-2">{tr("Role and contact")}</legend>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>Department</label>
+          <label className={label}>{tr("Department")}</label>
           <select value={customDept ? "__other" : value.department} onChange={(e) => set("department", e.target.value === "__other" ? " " : e.target.value)} className={`${input} cursor-pointer`}>
-            <option value="">Not set</option>
+            <option value="">{tr("Not set")}</option>
             {DEPARTMENTS.map((d) => (
               <option key={d}>{d}</option>
             ))}
-            <option value="__other">Other…</option>
+            <option value="__other">{tr("Other…")}</option>
           </select>
-          {customDept && <input autoFocus value={value.department.trim()} onChange={(e) => set("department", e.target.value || " ")} placeholder="Department name" className={input} />}
+          {customDept && <input autoFocus value={value.department.trim()} onChange={(e) => set("department", e.target.value || " ")} placeholder={tr("Department name")} className={input} />}
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>Job title</label>
-          <input value={value.jobTitle} onChange={(e) => set("jobTitle", e.target.value)} placeholder="e.g. Key Account Manager" className={input} />
+          <label className={label}>{tr("Job title")}</label>
+          <input value={value.jobTitle} onChange={(e) => set("jobTitle", e.target.value)} placeholder={tr("e.g. Key Account Manager")} className={input} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>Phone</label>
-          <input value={value.phone} onChange={(e) => set("phone", e.target.value)} placeholder="e.g. +91 98765 43210" className={input} />
+          <label className={label}>{tr("Phone")}</label>
+          <input value={value.phone} onChange={(e) => set("phone", e.target.value)} placeholder={tr("e.g. +91 98765 43210")} className={input} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>Region or territory</label>
-          <input value={value.region} onChange={(e) => set("region", e.target.value)} placeholder="e.g. India South, EMEA" className={input} />
+          <label className={label}>{tr("Region or territory")}</label>
+          <input value={value.region} onChange={(e) => set("region", e.target.value)} placeholder={tr("e.g. India South, EMEA")} className={input} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>City</label>
-          <input value={value.city} onChange={(e) => set("city", e.target.value)} placeholder="e.g. Hyderabad" className={input} />
+          <label className={label}>{tr("City")}</label>
+          <input value={value.city} onChange={(e) => set("city", e.target.value)} placeholder={tr("e.g. Hyderabad")} className={input} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>Country</label>
+          <label className={label}>{tr("Country")}</label>
           <select value={value.country} onChange={(e) => set("country", e.target.value)} className={`${input} cursor-pointer`}>
-            <option value="">Not set</option>
+            <option value="">{tr("Not set")}</option>
             {sortedCountries(i18n.language).map((c) => (
               <option key={c.code} value={c.code}>
                 {c.name}
@@ -97,13 +98,13 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
           </select>
         </div>
         <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label className={label}>Notes</label>
-          <textarea rows={2} value={value.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Anything the team should know" className={input} />
+          <label className={label}>{tr("Notes")}</label>
+          <textarea rows={2} value={value.notes} onChange={(e) => set("notes", e.target.value)} placeholder={tr("Anything the team should know")} className={input} />
         </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm font-semibold text-ink mb-1">Permissions</legend>
+        <legend className="text-sm font-semibold text-ink mb-1">{tr("Permissions")}</legend>
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map((p) => (
             <button
@@ -131,8 +132,8 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
 
       {orgs.length > 0 && (
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-semibold text-ink mb-1">Organizations they own</legend>
-          <p className="text-xs text-muted">They'll see and manage these in their console. Ticking one moves it from its current owner.</p>
+          <legend className="text-sm font-semibold text-ink mb-1">{tr("Organizations they own")}</legend>
+          <p className="text-xs text-muted">{tr("They'll see and manage these in their console. Ticking one moves it from its current owner.")}</p>
           <div className="grid sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
             {orgs.map((o) => (
               <label key={o.id} className="flex items-center gap-2 text-sm text-ink cursor-pointer">

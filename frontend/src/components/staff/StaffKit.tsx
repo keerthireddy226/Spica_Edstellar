@@ -5,6 +5,7 @@ import { cardGradient } from "@/lib/cardGradients";
 import { useAuth } from "@/hooks/useAuth";
 import type { StaffPermissions } from "@/api/staff";
 
+import { tr } from "@/i18n/tr";
 // Small building blocks shared by the Super Admin and Admin consoles.
 
 const ALL: StaffPermissions = {
@@ -267,7 +268,7 @@ export function WeeklyBars({ data }: { data: { week: string; signups: number; ac
     <div className="flex flex-col gap-2">
       <div className="flex items-end gap-2 h-40">
         {data.map((d) => (
-          <div key={d.week} className="flex-1 flex items-end justify-center gap-1 h-full" title={`Week of ${d.week}: ${d.signups} new, ${d.active} active`}>
+          <div key={d.week} className="flex-1 flex items-end justify-center gap-1 h-full" title={tr("Week of {{week}}: {{signups}} new, {{active}} active", { week: d.week, signups: d.signups, active: d.active })}>
             <div className="w-1/2 max-w-4 rounded-t bg-navy/80" style={{ height: `${(d.signups / max) * 100}%`, minHeight: d.signups ? 3 : 0 }} />
             <div className="w-1/2 max-w-4 rounded-t bg-accent" style={{ height: `${(d.active / max) * 100}%`, minHeight: d.active ? 3 : 0 }} />
           </div>
@@ -282,11 +283,9 @@ export function WeeklyBars({ data }: { data: { week: string; signups: number; ac
       </div>
       <div className="flex gap-4 text-xs text-muted">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-navy/80" /> New learners
-        </span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-navy/80" /> {tr("New learners")}</span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-accent" /> Learners who practised
-        </span>
+          <span className="h-2.5 w-2.5 rounded-sm bg-accent" /> {tr("Learners who practised")}</span>
       </div>
     </div>
   );

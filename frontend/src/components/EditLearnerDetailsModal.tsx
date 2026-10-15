@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api";
 import { LearnerDetailsFields } from "@/components/LearnerDetailsFields";
 import { detailsErrorMessage, type LearnerDetails } from "@/api/details";
 
+import { tr } from "@/i18n/tr";
 export function EditLearnerDetailsModal({
   name,
   initial,
@@ -30,7 +31,7 @@ export function EditLearnerDetailsModal({
       await save(details);
       onSaved();
     } catch (err) {
-      setError(detailsErrorMessage(err instanceof ApiError ? err.message : undefined) ?? "Couldn't save the details.");
+      setError(detailsErrorMessage(err instanceof ApiError ? err.message : undefined) ?? tr("Couldn't save the details."));
       setSaving(false);
     }
   }
@@ -40,7 +41,7 @@ export function EditLearnerDetailsModal({
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-xl max-h-[92vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule shrink-0">
           <div>
-            <h2 className="font-display font-bold text-lg text-ink">Employee details</h2>
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Employee details")}</h2>
             <p className="text-xs text-muted">{name}</p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
@@ -52,11 +53,10 @@ export function EditLearnerDetailsModal({
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={saving} className="flex-1">
-              {saving ? "Saving…" : "Save details"}
+              {saving ? tr("Saving…") : tr("Save details")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>

@@ -2,6 +2,7 @@ import { ArrowLeft, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { tr } from "@/i18n/tr";
 // Earthy accents that sit with the clay brand.
 const ACCENTS = ["var(--color-navy)", "var(--color-accent)", "#c9965c", "#b97a62", "#8a8f4f", "#a8613f"];
 const accent = (i: number) => ACCENTS[i % ACCENTS.length];
@@ -73,7 +74,7 @@ export function DetailModal({
             {onBack && (
               <button
                 onClick={onBack}
-                title="Back"
+                title={tr("Back")}
                 className="mt-1 h-9 w-9 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors cursor-pointer shrink-0"
               >
                 <ArrowLeft size={18} />
@@ -93,7 +94,7 @@ export function DetailModal({
               {actions && <div className="hidden sm:flex items-center gap-2 [&_button]:bg-white [&_button]:text-ink [&_button]:border-white [&_button:hover]:bg-white/90 [&_a]:text-white">{actions}</div>}
               <button
                 onClick={onClose}
-                title="Close"
+                title={tr("Close")}
                 className="h-9 w-9 rounded-full flex items-center justify-center text-white/85 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
               >
                 <X size={20} />

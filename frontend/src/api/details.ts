@@ -1,6 +1,7 @@
 import type { AgeBand, Gender, JobRole } from "@/api/onboarding";
 import type { CefrLevel } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 // What an Org Admin or Manager records about a batch, beyond its name.
 export type ExamFocus =
   | "general"
@@ -15,16 +16,16 @@ export type ExamFocus =
   | "cambridge";
 
 export const EXAM_FOCUS_LABEL: Record<ExamFocus, string> = {
-  general: "General English",
-  versant_four_skills: "Versant 4 Skills Essential",
-  versant_speaking_listening: "Versant Speaking & Listening",
-  versant_writing: "Versant Writing",
-  versant_professional: "Versant Professional English",
-  versant_placement: "Versant English Placement Test",
-  ielts: "IELTS",
-  toefl: "TOEFL",
-  pte: "PTE Academic",
-  cambridge: "Cambridge English",
+  general: tr("General English"),
+  versant_four_skills: tr("Versant 4 Skills Essential"),
+  versant_speaking_listening: tr("Versant Speaking & Listening"),
+  versant_writing: tr("Versant Writing"),
+  versant_professional: tr("Versant Professional English"),
+  versant_placement: tr("Versant English Placement Test"),
+  ielts: tr("IELTS"),
+  toefl: tr("TOEFL"),
+  pte: tr("PTE Academic"),
+  cambridge: tr("Cambridge English"),
 };
 
 export interface BatchDetails {
@@ -88,8 +89,8 @@ export function filledDetails(d: LearnerDetails): Partial<LearnerDetails> | unde
 }
 
 export function detailsErrorMessage(code: string | undefined): string | null {
-  if (code === "employee_id_taken") return "Another learner in your organization already has this employee ID.";
-  if (code === "batch_full") return "This batch is full. Raise its capacity or choose another batch.";
-  if (code === "not_enough_licenses") return "You don't have enough licenses for that many months.";
+  if (code === "employee_id_taken") return tr("Another learner in your organization already has this employee ID.");
+  if (code === "batch_full") return tr("This batch is full. Raise its capacity or choose another batch.");
+  if (code === "not_enough_licenses") return tr("You don't have enough licenses for that many months.");
   return null;
 }

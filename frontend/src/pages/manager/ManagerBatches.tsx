@@ -11,6 +11,7 @@ import { EXAM_FOCUS_LABEL } from "@/api/details";
 import { getManagerBatches, managerCreateBatch, type ManagerBatch } from "@/api/manager";
 import { getManagerLicenseOverview, type BatchBudget, type ManagerPool } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 type Status = ManagerBatch["status"];
 
 function fmt(d: string) {
@@ -35,9 +36,9 @@ function NewBatchModal({ poolLeft, onClose, onCreated }: { poolLeft: number | nu
 
   return (
     <BatchFormModal
-      title="New batch"
-      submitLabel="Create batch"
-      note="You manage this batch automatically and it shows on your Org Admin's Batches page. Learners use its fixed licenses first, then your pool."
+      title={tr("New batch")}
+      submitLabel={tr("Create batch")}
+      note={tr("You manage this batch automatically and it shows on your Org Admin's Batches page. Learners use its fixed licenses first, then your pool.")}
       onClose={onClose}
       extra={
         !allotmentsAllowed ? (
@@ -47,38 +48,37 @@ function NewBatchModal({ poolLeft, onClose, onCreated }: { poolLeft: number | nu
         ) : (
           <>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <label className={labelClass}>Fixed licenses from your pool</label>
+              <label className={labelClass}>{tr("Fixed licenses from your pool")}</label>
               <input
                 type="number"
                 min={0}
                 max={poolLeft ?? 0}
                 value={fromPool}
                 onChange={(e) => setFromPool(e.target.value)}
-                placeholder={poolLeft ? `Up to ${poolLeft}` : "None"}
+                placeholder={poolLeft ? tr("Up to {{poolLeft}}", { poolLeft: poolLeft }) : tr("None")}
                 disabled={!poolLeft}
                 className={fieldClass}
               />
               <p className={`text-xs ${tooMany ? "text-error" : "text-muted"}`}>
                 {poolLeft === null
-                  ? "You have no license pool yet — ask your Org Admin for licenses below."
+                  ? tr("You have no license pool yet — ask your Org Admin for licenses below.")
                   : tooMany
-                    ? `Only ${poolLeft} left in your pool.`
-                    : `${poolLeft} left in your pool. These move into the batch and are kept for its learners only.`}
+                    ? tr("Only {{poolLeft}} left in your pool.", { poolLeft: poolLeft })
+                    : tr("{{poolLeft}} left in your pool. These move into the batch and are kept for its learners only.", { poolLeft: poolLeft })}
               </p>
             </div>
             {requestsAllowed && (
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                   <input type="checkbox" checked={askMore} onChange={(e) => setAskMore(e.target.checked)} className="h-4 w-4 accent-navy" />
-                  Also ask my Org Admin for fixed licenses for this batch
-                </label>
+                  {tr("Also ask my Org Admin for fixed licenses for this batch")}</label>
                 {askMore && (
                   <div className="grid sm:grid-cols-3 gap-3">
-                    <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} placeholder="How many" className={fieldClass} />
+                    <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} placeholder={tr("How many")} className={fieldClass} />
                     <input
                       value={askReason}
                       onChange={(e) => setAskReason(e.target.value)}
-                      placeholder="Reason, e.g. 12 new joiners"
+                      placeholder={tr("Reason, e.g. 12 new joiners")}
                       className={`${fieldClass} sm:col-span-2`}
                     />
                   </div>
@@ -95,10 +95,10 @@ function NewBatchModal({ poolLeft, onClose, onCreated }: { poolLeft: number | nu
         onCreated(
           [
             `${d.name} created.`,
-            r.fixedLicenses ? `${r.fixedLicenses} licenses set aside from your pool.` : "",
-            r.requestId ? `Request for ${ask!.quantity} more sent to your Org Admin.` : "",
-            r.requestError ? "The license request couldn't be sent — try again from the batch." : "",
-            "Invite learners into it from Learners.",
+            r.fixedLicenses ? tr("{{fixedLicenses}} licenses set aside from your pool.", { fixedLicenses: r.fixedLicenses }) : "",
+            r.requestId ? tr("Request for {{quantity}} more sent to your Org Admin.", { quantity: ask!.quantity }) : "",
+            r.requestError ? tr("The license request couldn't be sent — try again from the batch.") : "",
+            tr("Invite learners into it from Learners."),
           ]
             .filter(Boolean)
             .join(" "),
@@ -124,7 +124,7 @@ export function ManagerBatches() {
   function load() {
     getManagerBatches()
       .then((r) => setBatches(r.batches))
-      .catch(() => setError("Could not load your batches."));
+      .catch(() => setError(tr("Could not load your batches.")));
     getManagerLicenseOverview()
       .then((r) => {
         setMyPool(r.myPool);
@@ -140,13 +140,12 @@ export function ManagerBatches() {
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Batches</h1>
-          <p className="text-sm text-muted mt-1">The batches you manage — never the whole organization.</p>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Batches")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("The batches you manage — never the whole organization.")}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setCreating(true)} className="flex items-center gap-2 shrink-0">
-            <Plus size={18} /> New batch
-          </Button>
+            <Plus size={18} /> {tr("New batch")}</Button>
           <PlanLimitHint limit="batches" />
         </div>
       </div>
@@ -156,21 +155,20 @@ export function ManagerBatches() {
           <KeyRound size={20} strokeWidth={1.8} />
         </span>
         <div className="flex-1 min-w-48">
-          <p className="font-semibold text-ink text-sm">Your license pool</p>
+          <p className="font-semibold text-ink text-sm">{tr("Your license pool")}</p>
           <p className="text-xs text-muted">
             {myPool?.allotment != null
-              ? `${myPool.remaining ?? 0} left of ${myPool.allotment} · used for learners in batches without fixed licenses, or once those run out.`
-              : "None allotted yet — learners can only get licenses from a batch's fixed licenses."}
+              ? tr("{{v}} left of {{allotment}} · used for learners in batches without fixed licenses, or once those run out.", { v: myPool.remaining ?? 0, allotment: myPool.allotment })
+              : tr("None allotted yet — learners can only get licenses from a batch's fixed licenses.")}
           </p>
         </div>
         <button onClick={() => setRequestingFor("")} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-          Request licenses
-        </button>
+          {tr("Request licenses")}</button>
       </div>
 
       {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
       {error && <p className="text-sm text-error">{error}</p>}
-      {!batches && !error && <p className="text-sm text-muted">Loading…</p>}
+      {!batches && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
 
       {batches && batches.length > 0 && (
         <div className="flex items-center gap-1 border-b border-rule">
@@ -190,10 +188,9 @@ export function ManagerBatches() {
 
       {batches?.length === 0 && (
         <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-          No batches yet — create one, or ask your Org Admin to assign you one.
-        </p>
+          {tr("No batches yet — create one, or ask your Org Admin to assign you one.")}</p>
       )}
-      {batches && batches.length > 0 && shown.length === 0 && <p className="text-sm text-muted">No {BATCH_STATUS_LABEL[status].toLowerCase()} batches.</p>}
+      {batches && batches.length > 0 && shown.length === 0 && <p className="text-sm text-muted">{tr("No")}{" "}{BATCH_STATUS_LABEL[status].toLowerCase()} {tr("batches.")}</p>}
 
       {shown.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,13 +224,13 @@ export function ManagerBatches() {
                 )}
                 {(b.startCefr || b.targetCefr) && (
                   <span className="self-start text-xs font-semibold px-2 py-0.5 rounded-pill bg-white/20 text-white">
-                    Goal: {b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
+                    {tr("Goal:")}{" "}{b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
                   </span>
                 )}
                 <div className="flex items-center gap-1.5 text-white/85 text-xs">
                   <Users size={13} /> {L.learners}
-                  {b.capacity ? ` of ${b.capacity}` : ""} learner{(b.capacity ?? L.learners) === 1 ? "" : "s"}
-                  {b.capacity && L.learners >= b.capacity ? " · full" : ""}
+                  {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner")}{(b.capacity ?? L.learners) === 1 ? "" : "s"}
+                  {b.capacity && L.learners >= b.capacity ? tr(" · full") : ""}
                 </div>
                 {(b.startDate || b.endDate) && (
                   <p className="text-xs text-white/70">
@@ -244,16 +241,15 @@ export function ManagerBatches() {
                 )}
                 <div className="text-xs text-white/90 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
                   <span>
-                    {fixedLeft !== null ? `Fixed licenses: ${fixedLeft} left of ${b.fixedLicenses}` : "No fixed licenses — uses your pool"}
-                    {L.fromPool ? ` · ${L.fromPool} from your pool` : ""}
+                    {fixedLeft !== null ? tr("Fixed licenses: {{fixedLeft}} left of {{fixedLicenses}}", { fixedLeft: fixedLeft, fixedLicenses: b.fixedLicenses }) : tr("No fixed licenses — uses your pool")}
+                    {L.fromPool ? tr(" · {{fromPool}} from your pool", { fromPool: L.fromPool }) : ""}
                   </span>
                   <span>
-                    {L.licensed} licensed · {L.unlicensed} without a license
-                    {L.endingSoon ? ` · ${L.endingSoon} ending soon` : ""}
+                    {L.licensed} {tr("licensed ·")}{" "}{L.unlicensed} {tr("without a license")}{L.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: L.endingSoon }) : ""}
                   </span>
                   {b.defaultLicenseMonths != null && (
                     <span className="text-white/70">
-                      New learners get {b.defaultLicenseMonths} month{b.defaultLicenseMonths === 1 ? "" : "s"}
+                      {tr("New learners get")}{" "}{b.defaultLicenseMonths} {tr("month")}{b.defaultLicenseMonths === 1 ? "" : "s"}
                     </span>
                   )}
                 </div>
@@ -273,7 +269,7 @@ export function ManagerBatches() {
                       }}
                       className="text-xs font-semibold text-white underline cursor-pointer"
                     >
-                      {b.fixedLicenses != null ? "Request more" : "Request fixed licenses"}
+                      {b.fixedLicenses != null ? tr("Request more") : tr("Request fixed licenses")}
                     </button>
                   )}
                 </div>
@@ -306,7 +302,7 @@ export function ManagerBatches() {
           onClose={() => setRequestingFor(null)}
           onSent={() => {
             setRequestingFor(null);
-            setNotice("Request sent to your Org Admin.");
+            setNotice(tr("Request sent to your Org Admin."));
           }}
         />
       )}

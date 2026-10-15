@@ -39,6 +39,7 @@ import { AdminProfileFields, toAdminPayloadExtras, type AdminProfile } from "@/c
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
 
+import { tr } from "@/i18n/tr";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
@@ -79,7 +80,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
     const text = await file.text();
     const parsed = parseAdminCsv(text);
     if (parsed.length === 0) {
-      setError("Couldn't find any rows in that file. Expected columns: email, firstName, lastName, department.");
+      setError(tr("Couldn't find any rows in that file. Expected columns: email, firstName, lastName, department."));
     }
     setRows(parsed);
   }
@@ -91,7 +92,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
       const res = await onboardAdminsBulk(rows);
       setResults(res.results);
     } catch {
-      setError("Something went wrong uploading that batch.");
+      setError(tr("Something went wrong uploading that batch."));
     } finally {
       setSubmitting(false);
     }
@@ -103,16 +104,14 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
     <div className="flex flex-col gap-5 px-8 py-6">
       <div className="flex flex-col gap-2">
         <p className="text-sm text-muted">
-          CSV with columns, in order: <code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">email, firstName, lastName, department</code>.
-          A header row is optional. New admins get no permissions by default — grant them individually afterward.
-        </p>
+          {tr("CSV with columns, in order:")}{" "}<code className="text-xs bg-paper-warm px-1.5 py-0.5 rounded">{tr("email, firstName, lastName, department")}</code>{tr(". A header row is optional. New admins get no permissions by default — grant them individually afterward.")}</p>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           className="flex items-center justify-center gap-2 border-2 border-dashed border-rule rounded-card px-4 py-6 text-sm text-muted hover:border-navy hover:text-navy transition-colors cursor-pointer"
         >
           <Upload size={18} />
-          {fileName ? `Selected: ${fileName}` : "Choose a CSV file"}
+          {fileName ? `Selected: ${fileName}` : tr("Choose a CSV file")}
         </button>
         <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
       </div>
@@ -121,7 +120,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
 
       {rows.length > 0 && !results && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{rows.length} rows found</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{rows.length} {tr("rows found")}</p>
           <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
             <table className="w-full text-xs">
               <tbody>
@@ -136,7 +135,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
             </table>
           </div>
           <Button onClick={handleUpload} disabled={submitting} className="self-start flex items-center gap-2">
-            <FileText size={16} /> {submitting ? "Uploading…" : `Send ${rows.length} invites`}
+            <FileText size={16} /> {submitting ? tr("Uploading…") : tr("Send {{length}} invites", { length: rows.length })}
           </Button>
         </div>
       )}
@@ -144,8 +143,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
       {results && (
         <div className="flex flex-col gap-2">
           <p className="text-sm text-success">
-            {createdCount} of {results.length} invites sent.
-          </p>
+            {createdCount} {tr("of")}{" "}{results.length} {tr("invites sent.")}</p>
           <div className="max-h-48 overflow-y-auto border border-rule rounded-card">
             <table className="w-full text-xs">
               <tbody>
@@ -162,7 +160,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
                               : "bg-error/15 text-error"
                         }`}
                       >
-                        {r.status === "created" ? "Invited" : r.status === "duplicate" ? "Already exists" : r.message ?? "Invalid"}
+                        {r.status === "created" ? tr("Invited") : r.status === "duplicate" ? tr("Already exists") : r.message ?? tr("Invalid")}
                       </span>
                     </td>
                   </tr>
@@ -171,8 +169,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
             </table>
           </div>
           <Button onClick={onDone} className="self-start">
-            Done
-          </Button>
+            {tr("Done")}</Button>
         </div>
       )}
     </div>
@@ -213,9 +210,9 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
       onCreated(payload.email);
     } catch (err) {
       if (err instanceof ApiError && err.message === "email_already_registered") {
-        setError("That email is already registered.");
+        setError(tr("That email is already registered."));
       } else {
-        setError("Something went wrong onboarding that admin.");
+        setError(tr("Something went wrong onboarding that admin."));
       }
     } finally {
       setSubmitting(false);
@@ -229,7 +226,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Onboard Admin</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Onboard Admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -245,7 +242,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
                 mode === m ? "bg-navy/10 text-navy" : "text-muted hover:text-ink"
               }`}
             >
-              {m === "single" ? "Single admin" : "Bulk upload (CSV)"}
+              {m === "single" ? tr("Single admin") : tr("Bulk upload (CSV)")}
             </button>
           ))}
         </div>
@@ -256,7 +253,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
               <input
                 required
                 value={firstName}
@@ -265,7 +262,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
               <input
                 required
                 value={lastName}
@@ -277,8 +274,7 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-              <Mail size={13} /> Email
-            </label>
+              <Mail size={13} /> {tr("Email")}</label>
             <input
               required
               type="email"
@@ -293,16 +289,14 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
           {error && <p className="text-sm text-error">{error}</p>}
 
           <p className="text-xs text-muted">
-            They'll get an email to set their own password — no password is created or shared here.
-          </p>
+            {tr("They'll get an email to set their own password — no password is created or shared here.")}</p>
 
           <div className="flex items-center gap-3 pt-2">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? "Sending invite…" : "Send invite"}
+              {submitting ? tr("Sending invite…") : tr("Send invite")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
         )}
@@ -349,7 +343,7 @@ function EditAdminModal({
       await editAdmin(admin.id, payload);
       onSaved();
     } catch {
-      setError("Something went wrong saving those changes.");
+      setError(tr("Something went wrong saving those changes."));
     } finally {
       setSubmitting(false);
     }
@@ -362,7 +356,7 @@ function EditAdminModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Edit Admin</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Edit Admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -371,7 +365,7 @@ function EditAdminModal({
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
               <input
                 required
                 value={firstName}
@@ -380,7 +374,7 @@ function EditAdminModal({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
               <input
                 required
                 value={lastName}
@@ -391,7 +385,7 @@ function EditAdminModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Email</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Email")}</label>
             <input
               disabled
               value={admin.email}
@@ -405,11 +399,10 @@ function EditAdminModal({
 
           <div className="flex items-center gap-3 pt-2">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? "Saving…" : "Save changes"}
+              {submitting ? tr("Saving…") : tr("Save changes")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>
@@ -435,22 +428,20 @@ function DeactivateAdminModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Deactivate admin</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Deactivate admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <div className="px-6 py-5 flex flex-col gap-5">
           <p className="text-sm text-ink">
-            Deactivate <span className="font-semibold">{admin.email}</span>? They'll immediately lose access.
-          </p>
+            {tr("Deactivate")}{" "}<span className="font-semibold">{admin.email}</span>{tr("? They'll immediately lose access.")}</p>
           <div className="flex items-center gap-3">
             <Button type="button" onClick={onConfirm} disabled={submitting} className="flex-1 !bg-error hover:!bg-error/90">
-              {submitting ? "Deactivating…" : "Deactivate"}
+              {submitting ? tr("Deactivating…") : tr("Deactivate")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>
@@ -467,7 +458,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
   useEffect(() => {
     getAdminActivityDetail(admin.id)
       .then((res) => setOrganizations(res.organizations))
-      .catch(() => setError("Could not load this admin's activity."));
+      .catch(() => setError(tr("Could not load this admin's activity.")));
   }, [admin.id]);
 
   const name = [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email;
@@ -475,11 +466,11 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
   return (
     <DetailModal
       title={name}
-      subtitle={`${admin.email}${admin.department ? ` · ${admin.department}` : ""} · organizations they own`}
+      subtitle={tr("{{email}}{{v}} · organizations they own", { email: admin.email, v: admin.department ? ` · ${admin.department}` : "" })}
       initials={initials(admin.firstName, admin.lastName, admin.email)}
       badges={
         <>
-          <Badge tone={!admin.active ? "bad" : admin.hasLoggedIn ? "good" : "warn"}>{!admin.active ? "Deactivated" : admin.hasLoggedIn ? "Active" : "Invite pending"}</Badge>
+          <Badge tone={!admin.active ? "bad" : admin.hasLoggedIn ? "good" : "warn"}>{!admin.active ? tr("Deactivated") : admin.hasLoggedIn ? tr("Active") : tr("Invite pending")}</Badge>
           {admin.jobTitle && <Badge>{admin.jobTitle}</Badge>}
           {admin.region && <Badge>{admin.region}</Badge>}
         </>
@@ -487,10 +478,10 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
       stats={
         organizations
           ? [
-              { label: "Organizations", value: organizations.length },
-              { label: "Learners", value: organizations.reduce((n, o) => n + (o.learnerCount ?? 0), 0) },
-              { label: "Managers", value: organizations.reduce((n, o) => n + (o.managers?.length ?? 0), 0) },
-              { label: "Permissions", value: `${Object.values(admin.permissions).filter(Boolean).length} of ${Object.keys(PERMISSION_LABELS).length}` },
+              { label: tr("Organizations"), value: organizations.length },
+              { label: tr("Learners"), value: organizations.reduce((n, o) => n + (o.learnerCount ?? 0), 0) },
+              { label: tr("Managers"), value: organizations.reduce((n, o) => n + (o.managers?.length ?? 0), 0) },
+              { label: tr("Permissions"), value: `${Object.values(admin.permissions).filter(Boolean).length} of ${Object.keys(PERMISSION_LABELS).length}` },
             ]
           : undefined
       }
@@ -498,8 +489,8 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
       wide
     >
       {error && <p className="text-sm text-error">{error}</p>}
-      {!organizations && !error && <p className="text-sm text-muted">Loading…</p>}
-      {organizations?.length === 0 && <p className="text-sm text-muted">Hasn't onboarded any organizations yet.</p>}
+      {!organizations && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {organizations?.length === 0 && <p className="text-sm text-muted">{tr("Hasn't onboarded any organizations yet.")}</p>}
       {organizations && organizations.length > 0 && (
         <div className="flex flex-col gap-4">
           {organizations.map((org) => (
@@ -508,7 +499,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                 <div>
                   <p className="text-sm font-medium text-ink">{org.name}</p>
                   <p className="text-xs text-muted">
-                    {org.category === "university" ? "University" : "Organization"} · {org.learnerCount} learner{org.learnerCount === 1 ? "" : "s"}
+                    {org.category === "university" ? tr("University") : tr("Organization")} · {org.learnerCount} {tr("learner")}{org.learnerCount === 1 ? "" : "s"}
                   </p>
                 </div>
                 <span
@@ -520,14 +511,14 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                         : "bg-warning/15 text-navy-deep"
                   }`}
                 >
-                  {!org.active ? "Deactivated" : org.orgAdminStatus === "active" ? "Org Admin active" : org.orgAdminStatus === "pending" ? "Invite pending" : "No Org Admin"}
+                  {!org.active ? tr("Deactivated") : org.orgAdminStatus === "active" ? tr("Org Admin active") : org.orgAdminStatus === "pending" ? tr("Invite pending") : tr("No Org Admin")}
                 </span>
               </div>
 
               <div className="px-4 py-3 border-t border-rule">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Org Admin</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Org Admin")}</p>
                 {!org.orgAdmin ? (
-                  <p className="text-xs text-muted">No Org Admin assigned yet.</p>
+                  <p className="text-xs text-muted">{tr("No Org Admin assigned yet.")}</p>
                 ) : (
                   <button
                     onClick={() => setViewingOrgAdminId(org.orgAdmin!.id)}
@@ -537,7 +528,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                       {(org.orgAdmin.name.trim() || org.orgAdmin.email).slice(0, 2).toUpperCase()}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <span className="text-ink">{org.orgAdmin.name.trim() || "Not named yet"}</span>
+                      <span className="text-ink">{org.orgAdmin.name.trim() || tr("Not named yet")}</span>
                       <span className="text-muted text-xs ml-2">{org.orgAdmin.email}</span>
                     </div>
                   </button>
@@ -546,10 +537,9 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
 
               <div className="px-4 py-3 border-t border-rule">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">
-                  Managers onboarded by this org's Org Admin
-                </p>
+                  {tr("Managers onboarded by this org's Org Admin")}</p>
                 {org.managers.length === 0 ? (
-                  <p className="text-xs text-muted">None yet.</p>
+                  <p className="text-xs text-muted">{tr("None yet.")}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {org.managers.map((mgr) => (
@@ -566,7 +556,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                           <span className="text-muted text-xs ml-2">{mgr.email}</span>
                         </div>
                         <span className="text-xs text-muted shrink-0">
-                          {mgr.learnerCount} learner{mgr.learnerCount === 1 ? "" : "s"}
+                          {mgr.learnerCount} {tr("learner")}{mgr.learnerCount === 1 ? "" : "s"}
                         </span>
                       </button>
                     ))}
@@ -615,8 +605,8 @@ export function AdminsList() {
   if (!perms.isSuper && !perms.manageAdmins) {
     return (
       <div className="flex flex-col gap-6 w-full">
-        <PageHeader title="Admins" subtitle="Edstellar staff accounts." />
-        <EmptyNote>You don't have permission to manage Admins. Ask a Super Admin if you need it.</EmptyNote>
+        <PageHeader title={tr("Admins")} subtitle={tr("Edstellar staff accounts.")} />
+        <EmptyNote>{tr("You don't have permission to manage Admins. Ask a Super Admin if you need it.")}</EmptyNote>
       </div>
     );
   }
@@ -641,7 +631,7 @@ function AdminsListPage() {
   function load() {
     getAdmins()
       .then((res) => setAdmins(res.admins))
-      .catch(() => setError("Could not load admins."));
+      .catch(() => setError(tr("Could not load admins.")));
     getPortfolio()
       .then((p) => setPortfolio(new Map((p.admins ?? []).map((a) => [a.id, { learners: a.learners, atRisk: a.atRisk, organizations: a.organizations }]))))
       .catch(() => {});
@@ -656,7 +646,7 @@ function AdminsListPage() {
       setConfirmingDelete(null);
       load();
     } catch {
-      setError("Could not deactivate that admin.");
+      setError(tr("Could not deactivate that admin."));
     } finally {
       setDeletingId(null);
     }
@@ -668,7 +658,7 @@ function AdminsListPage() {
       await reactivateAdmin(admin.id);
       load();
     } catch {
-      setError("Could not reactivate that admin.");
+      setError(tr("Could not reactivate that admin."));
     } finally {
       setReactivatingId(null);
     }
@@ -694,35 +684,33 @@ function AdminsListPage() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title="Admins"
-        subtitle="Edstellar staff who onboard and look after organizations — Sales, Delivery, L&D — and what each may do."
+        title={tr("Admins")}
+        subtitle={tr("Edstellar staff who onboard and look after organizations — Sales, Delivery, L&D — and what each may do.")}
         actions={
           <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-            <UserPlus size={18} /> Onboard Admin
-          </Button>
+            <UserPlus size={18} /> {tr("Onboard Admin")}</Button>
         }
       />
 
       {justInvited && (
         <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
-          Invite sent to {justInvited} — they'll receive an email to set their password.
-        </p>
+          {tr("Invite sent to")}{" "}{justInvited} {tr("— they'll receive an email to set their password.")}</p>
       )}
       {error && <p className="text-sm text-error">{error}</p>}
-      {!admins && !error && <p className="text-sm text-muted">Loading…</p>}
+      {!admins && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
 
       {admins && (
         <>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard variant="outline" palette="rose" index={0} icon={Users} value={all.filter((a) => adminStatus(a) === "active").length} label="Active Admins" sub={`${all.filter((a) => isWithinDays(a.createdAt, 7)).length} added this week`} />
-            <StatCard variant="outline" palette="rose" index={1} icon={UserX} value={all.filter((a) => adminStatus(a) === "pending").length} label="Invite not accepted" sub={`${all.filter(isQuiet).length} quiet for 14+ days`} />
-            <StatCard variant="outline" palette="rose" index={2} icon={CalendarClock} value={[...portfolio.values()].reduce((n, p) => n + p.organizations, 0)} label="Organizations owned" sub={`${all.filter((a) => a.active && a.managedOrgCount === 0).length} Admins own none`} />
-            <StatCard variant="outline" palette="rose" index={3} icon={UserCheck} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label="Accounts at risk" sub={`${[...portfolio.values()].reduce((n, p) => n + p.learners, 0)} learners in their portfolios`} />
+            <StatCard variant="outline" palette="rose" index={0} icon={Users} value={all.filter((a) => adminStatus(a) === "active").length} label={tr("Active Admins")} sub={tr("{{length}} added this week", { length: all.filter((a) => isWithinDays(a.createdAt, 7)).length })} />
+            <StatCard variant="outline" palette="rose" index={1} icon={UserX} value={all.filter((a) => adminStatus(a) === "pending").length} label={tr("Invite not accepted")} sub={tr("{{length}} quiet for 14+ days", { length: all.filter(isQuiet).length })} />
+            <StatCard variant="outline" palette="rose" index={2} icon={CalendarClock} value={[...portfolio.values()].reduce((n, p) => n + p.organizations, 0)} label={tr("Organizations owned")} sub={tr("{{length}} Admins own none", { length: all.filter((a) => a.active && a.managedOrgCount === 0).length })} />
+            <StatCard variant="outline" palette="rose" index={3} icon={UserCheck} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label={tr("Accounts at risk")} sub={tr("{{reduce}} learners in their portfolios", { reduce: [...portfolio.values()].reduce((n, p) => n + p.learners, 0) })} />
           </div>
 
           {all.length > 0 && (
             <div className="grid lg:grid-cols-3 gap-4 items-start">
-              <Panel className="lg:col-span-2" title="Portfolio comparison">
+              <Panel className="lg:col-span-2" title={tr("Portfolio comparison")}>
                 {(() => {
                   const rows = all
                     .filter((a) => a.active)
@@ -736,13 +724,13 @@ function AdminsListPage() {
                         <div className="h-full rounded-full" style={{ width: `${((p?.learners ?? 0) / max) * 100}%`, background: paletteColor("rose", i), minWidth: p?.learners ? 6 : 0 }} />
                       </div>
                       <span className="text-xs text-muted w-48 text-right">
-                        {p?.organizations ?? a.managedOrgCount} orgs · {p?.learners ?? 0} learners{p?.atRisk ? ` · ${p.atRisk} at risk` : ""}
+                        {p?.organizations ?? a.managedOrgCount} {tr("orgs ·")}{" "}{p?.learners ?? 0} {tr("learners")}{p?.atRisk ? tr(" · {{atRisk}} at risk", { atRisk: p.atRisk }) : ""}
                       </span>
                     </div>
                   ));
                 })()}
               </Panel>
-              <Panel title="By department">
+              <Panel title={tr("By department")}>
                 {(() => {
                   const by = new Map<string, number>();
                   for (const a of all.filter((x) => x.active)) by.set(a.department || "Not set", (by.get(a.department || "Not set") ?? 0) + 1);
@@ -766,23 +754,23 @@ function AdminsListPage() {
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, department or organization" />
-            {depts.length > 0 && <SelectFilter label="Department" value={dept} onChange={setDept} options={[["all", "All departments"], ...depts.map((d) => [d, d] as [string, string])]} />}
+            <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email, department or organization")} />
+            {depts.length > 0 && <SelectFilter label={tr("Department")} value={dept} onChange={setDept} options={[["all", tr("All departments")], ...depts.map((d) => [d, d] as [string, string])]} />}
             <FilterPills<AdminFilter>
               value={filter}
               onChange={setFilter}
               options={[
-                ["all", "All", all.length],
-                ["active", "Active", all.filter((a) => adminStatus(a) === "active").length],
-                ["pending", "Invite pending", all.filter((a) => adminStatus(a) === "pending").length],
-                ["quiet", "Quiet 14+ days", all.filter(isQuiet).length],
-                ["deactivated", "Deactivated", all.filter((a) => adminStatus(a) === "deactivated").length],
+                ["all", tr("All"), all.length],
+                ["active", tr("Active"), all.filter((a) => adminStatus(a) === "active").length],
+                ["pending", tr("Invite pending"), all.filter((a) => adminStatus(a) === "pending").length],
+                ["quiet", tr("Quiet 14+ days"), all.filter(isQuiet).length],
+                ["deactivated", tr("Deactivated"), all.filter((a) => adminStatus(a) === "deactivated").length],
               ]}
             />
           </div>
 
-          {all.length === 0 && <EmptyNote>No Admins yet — onboard your first one.</EmptyNote>}
-          {all.length > 0 && shown.length === 0 && <EmptyNote>No Admins match.</EmptyNote>}
+          {all.length === 0 && <EmptyNote>{tr("No Admins yet — onboard your first one.")}</EmptyNote>}
+          {all.length > 0 && shown.length === 0 && <EmptyNote>{tr("No Admins match.")}</EmptyNote>}
 
           <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
             {shown.map((a, i) => {
@@ -799,7 +787,7 @@ function AdminsListPage() {
                   <div className="flex items-start gap-3">
                     <button
                       onClick={() => setViewingActivity(a)}
-                      title="View their organizations"
+                      title={tr("View their organizations")}
                       style={{ background: c }}
                       className="h-12 w-12 rounded-2xl text-white flex items-center justify-center text-sm font-bold shrink-0 cursor-pointer"
                     >
@@ -807,17 +795,17 @@ function AdminsListPage() {
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-display font-bold text-ink truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                        <p className="font-display font-bold text-ink truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
                         <StatusPill tone={st === "active" ? "success" : st === "pending" ? "warning" : "error"}>
-                          {st === "active" ? "Active" : st === "pending" ? "Invite pending" : "Deactivated"}
+                          {st === "active" ? tr("Active") : st === "pending" ? tr("Invite pending") : tr("Deactivated")}
                         </StatusPill>
-                        {isSameDay(a.createdAt, new Date()) && <StatusPill tone="navy">New</StatusPill>}
+                        {isSameDay(a.createdAt, new Date()) && <StatusPill tone="navy">{tr("New")}</StatusPill>}
                       </div>
                       <p className="text-xs text-muted truncate">
-                        {[a.jobTitle, a.department ?? "No department", a.email, a.phone].filter(Boolean).join(" · ")}
+                        {[a.jobTitle, a.department ?? tr("No department"), a.email, a.phone].filter(Boolean).join(" · ")}
                       </p>
                       <p className="text-xs text-muted truncate">
-                        {[a.region, a.city, a.country].filter(Boolean).join(", ") || "Location not set"}
+                        {[a.region, a.city, a.country].filter(Boolean).join(", ") || tr("Location not set")}
                       </p>
                     </div>
                   </div>
@@ -825,13 +813,13 @@ function AdminsListPage() {
                   <div className="grid grid-cols-3 gap-2">
                     {(
                       [
-                        [p?.organizations ?? a.managedOrgCount, "Organizations"],
-                        [p?.learners ?? 0, "Learners"],
-                        [p?.atRisk ?? 0, "At risk"],
+                        [p?.organizations ?? a.managedOrgCount, tr("Organizations")],
+                        [p?.learners ?? 0, tr("Learners")],
+                        [p?.atRisk ?? 0, tr("At risk")],
                       ] as const
                     ).map(([v, l]) => (
                       <div key={l} className="rounded-input bg-surface border border-rule px-3 py-2">
-                        <p className="font-display font-bold text-xl" style={{ color: l === "At risk" && v ? "var(--color-error)" : c }}>
+                        <p className="font-display font-bold text-xl" style={{ color: l === tr("At risk") && v ? "var(--color-error)" : c }}>
                           {v}
                         </p>
                         <p className="text-[11px] text-muted">{l}</p>
@@ -841,7 +829,7 @@ function AdminsListPage() {
 
                   <div className="flex flex-wrap gap-1.5">
                     {a.managedOrgNames.length === 0 ? (
-                      <span className="text-xs text-muted italic">Owns no organizations yet</span>
+                      <span className="text-xs text-muted italic">{tr("Owns no organizations yet")}</span>
                     ) : (
                       a.managedOrgNames.map((n) => (
                         <span key={n} style={{ color: c, background: `color-mix(in srgb, ${c} 14%, var(--color-surface))` }} className="text-xs font-semibold px-2.5 py-1 rounded-pill">
@@ -853,7 +841,7 @@ function AdminsListPage() {
 
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1">
-                      Permissions · {granted.length} of {totalPerms}
+                      {tr("Permissions ·")}{" "}{granted.length} {tr("of")}{" "}{totalPerms}
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {(Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).map((k) => (
@@ -869,19 +857,18 @@ function AdminsListPage() {
 
                   <div className="flex items-center justify-between gap-2 flex-wrap pt-2 border-t border-rule">
                     <span className="text-xs text-muted">
-                      {st === "pending" ? "Hasn't signed in yet" : `Last signed in ${ago(a.lastLoginAt)}`} · Added {shortDate(a.createdAt)}
+                      {st === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added")}{" "}{shortDate(a.createdAt)}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <button onClick={() => setViewingActivity(a)} className="text-xs font-semibold text-navy hover:underline cursor-pointer px-1">
-                        Organizations
-                      </button>
+                        {tr("Organizations")}</button>
                       {st === "deactivated" ? (
                         <button
                           onClick={() => handleReactivate(a)}
                           disabled={reactivatingId === a.id}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold bg-success/10 text-success hover:bg-success/20 cursor-pointer disabled:opacity-50"
                         >
-                          <RotateCcw size={13} /> {reactivatingId === a.id ? "Activating…" : "Reactivate"}
+                          <RotateCcw size={13} /> {reactivatingId === a.id ? tr("Activating…") : tr("Reactivate")}
                         </button>
                       ) : (
                         <>
@@ -889,12 +876,11 @@ function AdminsListPage() {
                             onClick={() => setEditing(a)}
                             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill border border-rule text-xs font-semibold text-ink hover:bg-paper-warm cursor-pointer"
                           >
-                            <Pencil size={13} /> Edit & permissions
-                          </button>
+                            <Pencil size={13} /> {tr("Edit & permissions")}</button>
                           <button
                             onClick={() => setConfirmingDelete(a)}
                             disabled={deletingId === a.id}
-                            title="Deactivate"
+                            title={tr("Deactivate")}
                             className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error cursor-pointer disabled:opacity-50"
                           >
                             <Trash2 size={15} />

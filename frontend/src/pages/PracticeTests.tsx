@@ -49,6 +49,7 @@ import {
   getPassageAndQuestion,
 } from "@/lib/testItemDisplay";
 
+import { tr } from "@/i18n/tr";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -870,10 +871,10 @@ export function PracticeTests() {
           stats={
             exams
               ? [
-                  { label: "Sets", value: exams.length, icon: ClipboardCheck },
-                  { label: "Completed", value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
-                  { label: "Questions per set", value: exams[0]?.itemCount ?? "—", icon: ListChecks },
-                  { label: "Timing", value: t(`practiceTests.versantProduct.${selectedProduct}Desc`).match(/\d+\s*min/)?.[0] ?? "—", icon: Clock },
+                  { label: tr("Sets"), value: exams.length, icon: ClipboardCheck },
+                  { label: tr("Completed"), value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
+                  { label: tr("Questions per set"), value: exams[0]?.itemCount ?? "—", icon: ListChecks },
+                  { label: tr("Timing"), value: t(`practiceTests.versantProduct.${selectedProduct}Desc`).match(/\d+\s*min/)?.[0] ?? "—", icon: Clock },
                 ]
               : undefined
           }
@@ -920,15 +921,15 @@ export function PracticeTests() {
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
-        eyebrow="Mock exams"
+        eyebrow={tr("Mock exams")}
         title={t("nav.practiceTests")}
         subtitle={t("practiceTests.subtitle")}
         icon={ClipboardCheck}
         stats={[
-          { label: "Exam types", value: VERSANT_PRODUCTS.length, icon: Layers },
-          { label: "Full sets to take", value: VERSANT_PRODUCTS.length * 5, icon: ListChecks },
-          { label: "Length", value: "17–60 min", icon: Clock },
-          { label: "Scored by section", value: "Instant", icon: Award },
+          { label: tr("Exam types"), value: VERSANT_PRODUCTS.length, icon: Layers },
+          { label: tr("Full sets to take"), value: VERSANT_PRODUCTS.length * 5, icon: ListChecks },
+          { label: tr("Length"), value: "17–60 min", icon: Clock },
+          { label: tr("Scored by section"), value: "Instant", icon: Award },
         ]}
       />
 

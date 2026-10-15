@@ -2,6 +2,7 @@ import type { LearnerDetails } from "@/api/details";
 import { api } from "@/lib/api";
 import type { BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 export interface AdminStats {
   totalLearners: number;
   totalOrganizations: number;
@@ -24,13 +25,13 @@ export interface AdminPermissions {
 }
 
 export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
-  manageOrganizations: "Manage organizations",
-  inviteLearners: "Invite / bulk-upload learners",
-  viewLearnerInfo: "View learner information",
-  contentReview: "Content review",
-  scoreReview: "Score review",
-  viewReports: "View reports",
-  manageAdmins: "Manage Admins",
+  manageOrganizations: tr("Manage organizations"),
+  inviteLearners: tr("Invite / bulk-upload learners"),
+  viewLearnerInfo: tr("View learner information"),
+  contentReview: tr("Content review"),
+  scoreReview: tr("Score review"),
+  viewReports: tr("View reports"),
+  manageAdmins: tr("Manage Admins"),
 };
 
 export interface AdminAccount {

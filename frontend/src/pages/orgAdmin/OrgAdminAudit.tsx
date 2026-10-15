@@ -6,19 +6,20 @@ import { downloadCsv } from "@/api/analytics";
 import { AUDIT_VERBS as VERBS } from "@/lib/auditVerbs";
 import { auditExportPath, getAuditLog, type AuditEntry, type AuditFilters } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 const ACTION_GROUPS: [string, string][] = [
-  ["", "All activity"],
-  ["batch.", "Batches"],
-  ["manager.", "Managers"],
-  ["learner.", "Learners"],
-  ["license.", "Licenses"],
-  ["plan.", "Plan"],
-  ["organization.", "Organization profile and settings"],
-  ["org_admin.", "Org Admin changes"],
-  ["api_key.", "API keys"],
-  ["webhook.", "Webhooks"],
-  ["sso.", "Single sign-on"],
-  ["data.", "Data exports"],
+  ["", tr("All activity")],
+  ["batch.", tr("Batches")],
+  ["manager.", tr("Managers")],
+  ["learner.", tr("Learners")],
+  ["license.", tr("Licenses")],
+  ["plan.", tr("Plan")],
+  ["organization.", tr("Organization profile and settings")],
+  ["org_admin.", tr("Org Admin changes")],
+  ["api_key.", tr("API keys")],
+  ["webhook.", tr("Webhooks")],
+  ["sso.", tr("Single sign-on")],
+  ["data.", tr("Data exports")],
 ];
 
 
@@ -52,7 +53,7 @@ export function OrgAdminAudit() {
         setActors(r.actors);
         setHasMore(r.hasMore);
       })
-      .catch(() => setError("Could not load the audit log."))
+      .catch(() => setError(tr("Could not load the audit log.")))
       .finally(() => setLoading(false));
   }
 
@@ -67,17 +68,16 @@ export function OrgAdminAudit() {
     <div className="flex flex-col gap-5 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Audit log</h1>
-          <p className="text-sm text-muted mt-1">Every change made in your organization — who did it and when.</p>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Audit log")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("Every change made in your organization — who did it and when.")}</p>
         </div>
         {allowed && (
           <Button
             variant="secondary"
-            onClick={() => downloadCsv(auditExportPath(filters), "audit-log.csv").catch(() => setError("Export failed."))}
+            onClick={() => downloadCsv(auditExportPath(filters), "audit-log.csv").catch(() => setError(tr("Export failed.")))}
             className="flex items-center gap-2 !px-3.5 !py-2"
           >
-            <Download size={15} /> Export CSV
-          </Button>
+            <Download size={15} /> {tr("Export CSV")}</Button>
         )}
       </div>
 
@@ -87,7 +87,7 @@ export function OrgAdminAudit() {
         <>
           <div className="flex items-end gap-3 flex-wrap">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">Activity</label>
+              <label className="text-xs text-muted">{tr("Activity")}</label>
               <select
                 value={filters.action ?? ""}
                 onChange={(e) => setFilters((f) => ({ ...f, action: e.target.value || undefined }))}
@@ -101,13 +101,13 @@ export function OrgAdminAudit() {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">Person</label>
+              <label className="text-xs text-muted">{tr("Person")}</label>
               <select
                 value={filters.actorId ?? ""}
                 onChange={(e) => setFilters((f) => ({ ...f, actorId: e.target.value || undefined }))}
                 className={`${inputClass} cursor-pointer`}
               >
-                <option value="">Anyone</option>
+                <option value="">{tr("Anyone")}</option>
                 {actors.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name}
@@ -116,11 +116,11 @@ export function OrgAdminAudit() {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">From</label>
+              <label className="text-xs text-muted">{tr("From")}</label>
               <input type="date" value={filters.from ?? ""} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value || undefined }))} className={inputClass} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted">To</label>
+              <label className="text-xs text-muted">{tr("To")}</label>
               <input type="date" value={filters.to ?? ""} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value || undefined }))} className={inputClass} />
             </div>
           </div>
@@ -131,17 +131,16 @@ export function OrgAdminAudit() {
             <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-4 py-3 w-44">When</th>
-                  <th className="px-4 py-3 w-48">Who</th>
-                  <th className="px-4 py-3">What</th>
+                  <th className="px-4 py-3 w-44">{tr("When")}</th>
+                  <th className="px-4 py-3 w-48">{tr("Who")}</th>
+                  <th className="px-4 py-3">{tr("What")}</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.length === 0 && !loading && (
                   <tr>
                     <td colSpan={3} className="px-4 py-6 text-center text-muted">
-                      Nothing recorded for these filters yet.
-                    </td>
+                      {tr("Nothing recorded for these filters yet.")}</td>
                   </tr>
                 )}
                 {entries.map((e) => (
@@ -150,7 +149,7 @@ export function OrgAdminAudit() {
                       {new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-ink">{e.actorLabel ?? "System"}</p>
+                      <p className="text-ink">{e.actorLabel ?? tr("System")}</p>
                       {e.actorRole && <p className="text-xs text-muted">{e.actorRole.replace("_", " ")}</p>}
                     </td>
                     <td className="px-4 py-3 text-ink">{describe(e)}</td>
@@ -161,7 +160,7 @@ export function OrgAdminAudit() {
           </div>
           {hasMore && (
             <Button variant="secondary" onClick={() => load(true)} disabled={loading} className="self-center">
-              {loading ? "Loading…" : "Load more"}
+              {loading ? tr("Loading…") : tr("Load more")}
             </Button>
           )}
         </>

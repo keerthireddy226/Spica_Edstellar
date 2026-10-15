@@ -3,6 +3,7 @@ import type { AgeBand, Gender, JobRole } from "@/api/onboarding";
 import { AGE_BANDS, GENDERS, JOB_ROLES, sortedCountries } from "@/constants/demographics";
 import type { LearnerDetails } from "@/api/details";
 
+import { tr } from "@/i18n/tr";
 const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 const labelClass = "text-xs font-semibold uppercase tracking-wide text-muted";
 
@@ -21,13 +22,13 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
 
   return (
     <div className="grid sm:grid-cols-2 gap-3">
-      {text("employeeId", "Employee ID", "e.g. EMP-1042", 60)}
-      {text("department", "Department", "e.g. Customer Support", 120)}
-      {text("jobTitle", "Job title", "e.g. Support Associate", 120)}
+      {text("employeeId", tr("Employee ID"), tr("e.g. EMP-1042"), 60)}
+      {text("department", tr("Department"), tr("e.g. Customer Support"), 120)}
+      {text("jobTitle", tr("Job title"), tr("e.g. Support Associate"), 120)}
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Job role</label>
+        <label className={labelClass}>{tr("Job role")}</label>
         <select value={value.jobRole ?? ""} onChange={(e) => set("jobRole", (e.target.value || null) as JobRole | null)} className={`${inputClass} cursor-pointer`}>
-          <option value="">Not set</option>
+          <option value="">{tr("Not set")}</option>
           {JOB_ROLES.map((r) => (
             <option key={r} value={r}>
               {t(`demographics.jobRole.${r}`)}
@@ -35,11 +36,11 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
           ))}
         </select>
       </div>
-      {text("phone", "Work phone", "e.g. +91 98765 43210", 40)}
+      {text("phone", tr("Work phone"), tr("e.g. +91 98765 43210"), 40)}
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Country</label>
+        <label className={labelClass}>{tr("Country")}</label>
         <select value={value.country ?? ""} onChange={(e) => set("country", e.target.value || null)} className={`${inputClass} cursor-pointer`}>
-          <option value="">Not set</option>
+          <option value="">{tr("Not set")}</option>
           {sortedCountries(i18n.language).map((c) => (
             <option key={c.code} value={c.code}>
               {c.name}
@@ -47,11 +48,11 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
           ))}
         </select>
       </div>
-      {text("city", "City", "e.g. Hyderabad", 100)}
+      {text("city", tr("City"), tr("e.g. Hyderabad"), 100)}
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Gender</label>
+        <label className={labelClass}>{tr("Gender")}</label>
         <select value={value.gender ?? ""} onChange={(e) => set("gender", (e.target.value || null) as Gender | null)} className={`${inputClass} cursor-pointer`}>
-          <option value="">Not set</option>
+          <option value="">{tr("Not set")}</option>
           {GENDERS.map((g) => (
             <option key={g} value={g}>
               {t(`demographics.gender.${g}`)}
@@ -60,9 +61,9 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
         </select>
       </div>
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Age</label>
+        <label className={labelClass}>{tr("Age")}</label>
         <select value={value.ageBand ?? ""} onChange={(e) => set("ageBand", (e.target.value || null) as AgeBand | null)} className={`${inputClass} cursor-pointer`}>
-          <option value="">Not set</option>
+          <option value="">{tr("Not set")}</option>
           {AGE_BANDS.map((a) => (
             <option key={a} value={a}>
               {t(`demographics.ageBand.${a}`)}
@@ -71,8 +72,7 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
         </select>
       </div>
       <p className="text-xs text-muted sm:col-span-2">
-        All optional. Gender and age are only shown in reports for groups of five or more, and the learner can update them when they sign in.
-      </p>
+        {tr("All optional. Gender and age are only shown in reports for groups of five or more, and the learner can update them when they sign in.")}</p>
     </div>
   );
 }

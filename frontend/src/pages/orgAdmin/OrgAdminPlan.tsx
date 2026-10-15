@@ -6,15 +6,16 @@ import { refreshPlan, usePlan } from "@/components/plans/usePlan";
 import { formatUsdCents, sendEnterpriseInquiry, TIER_LABELS, type PlanTier } from "@/api/plans";
 import { formatShortDate } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 const TIERS: PlanTier[] = ["starter", "business", "enterprise"];
 const TIER_BLURB: Record<PlanTier, string> = {
-  starter: "Small teams and pilots",
-  business: "Growing companies and universities",
-  enterprise: "Large or regulated organizations",
+  starter: tr("Small teams and pilots"),
+  business: tr("Growing companies and universities"),
+  enterprise: tr("Large or regulated organizations"),
 };
 
 function limitText(max: number | null): string {
-  return max === null ? "Unlimited" : `Up to ${max}`;
+  return max === null ? tr("Unlimited") : tr("Up to {{max}}", { max: max });
 }
 
 function EnterpriseInquiry() {
@@ -34,13 +35,12 @@ function EnterpriseInquiry() {
   }
 
   if (state === "sent") {
-    return <p className="text-sm text-success">Sent. Your Edstellar contact will get back to you.</p>;
+    return <p className="text-sm text-success">{tr("Sent. Your Edstellar contact will get back to you.")}</p>;
   }
   if (!open) {
     return (
       <Button variant="secondary" onClick={() => setOpen(true)} className="w-full">
-        Talk to us
-      </Button>
+        {tr("Talk to us")}</Button>
     );
   }
   return (
@@ -49,12 +49,12 @@ function EnterpriseInquiry() {
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={4}
-        placeholder="How many learners, which features you need (SSO, API…), and your timeline."
+        placeholder={tr("How many learners, which features you need (SSO, API…), and your timeline.")}
         className="w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
       />
-      {state === "error" && <p className="text-xs text-error">Couldn't send. Please try again.</p>}
+      {state === "error" && <p className="text-xs text-error">{tr("Couldn't send. Please try again.")}</p>}
       <Button onClick={send} disabled={state === "sending" || !message.trim()} className="flex items-center justify-center gap-2">
-        <Send size={14} /> {state === "sending" ? "Sending…" : "Send"}
+        <Send size={14} /> {state === "sending" ? tr("Sending…") : tr("Send")}
       </Button>
     </div>
   );
@@ -65,7 +65,7 @@ export function OrgAdminPlan() {
   const [showBuy, setShowBuy] = useState(false);
 
   if (!plan) {
-    return <p className="text-sm text-muted">Loading your plan…</p>;
+    return <p className="text-sm text-muted">{tr("Loading your plan…")}</p>;
   }
 
   const pilotDaysLeft = plan.pilotEndsAt ? Math.max(0, Math.ceil((new Date(plan.pilotEndsAt).getTime() - Date.now()) / 86400000)) : null;
@@ -75,10 +75,9 @@ export function OrgAdminPlan() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Plan</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">{tr("Plan")}</h1>
         <p className="text-sm text-muted mt-1">
-          Every learner gets the same Spica on every plan. Plans set your price per license and the tools for managing at scale.
-        </p>
+          {tr("Every learner gets the same Spica on every plan. Plans set your price per license and the tools for managing at scale.")}</p>
       </div>
 
       {plan.pilotEndsAt && (
@@ -86,13 +85,12 @@ export function OrgAdminPlan() {
           <Clock size={20} className="text-warning mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="font-semibold text-ink">
-              Pilot — {pilotDaysLeft === 0 ? "ends today" : `${pilotDaysLeft} day${pilotDaysLeft === 1 ? "" : "s"} left`}
+              {tr("Pilot —")}{" "}{pilotDaysLeft === 0 ? tr("ends today") : tr("{{pilotDaysLeft}} day{{v}} left", { pilotDaysLeft: pilotDaysLeft, v: pilotDaysLeft === 1 ? "" : "s" })}
             </p>
             <p className="text-sm text-muted">
-              Your pilot licenses lapse on {formatShortDate(plan.pilotEndsAt)}. Buy licenses before then so learners keep their access.
-            </p>
+              {tr("Your pilot licenses lapse on")}{" "}{formatShortDate(plan.pilotEndsAt)}{tr(". Buy licenses before then so learners keep their access.")}</p>
           </div>
-          <Button onClick={() => setShowBuy(true)}>Buy licenses</Button>
+          <Button onClick={() => setShowBuy(true)}>{tr("Buy licenses")}</Button>
         </div>
       )}
 
@@ -103,20 +101,20 @@ export function OrgAdminPlan() {
               <Gem size={22} />
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">Current plan</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Current plan")}</p>
               <p className="font-display font-bold text-xl text-ink">{plan.tierLabel}</p>
               <p className="text-xs text-muted">{plan.support}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Your price</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Your price")}</p>
             <p className="font-display font-bold text-xl text-ink">
               {plan.customPriceCents !== null ? formatUsdCents(plan.customPriceCents) : `from ${formatUsdCents(Math.min(...plan.bands.map((b) => b.unitPriceCents)))}`}
-              <span className="text-sm font-normal text-muted"> / license</span>
+              <span className="text-sm font-normal text-muted"> {tr("/ license")}</span>
             </p>
-            {plan.customPriceCents !== null && <p className="text-xs text-muted">Negotiated price</p>}
+            {plan.customPriceCents !== null && <p className="text-xs text-muted">{tr("Negotiated price")}</p>}
             {plan.educationDiscountPercent > 0 && plan.customPriceCents === null && (
-              <p className="text-xs text-success">Includes {plan.educationDiscountPercent}% education discount</p>
+              <p className="text-xs text-success">{tr("Includes")}{" "}{plan.educationDiscountPercent}{tr("% education discount")}</p>
             )}
           </div>
         </div>
@@ -125,7 +123,7 @@ export function OrgAdminPlan() {
           <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm rounded-input bg-paper-warm px-4 py-3">
             {plan.contract?.end && (
               <span>
-                <span className="text-muted">Contract</span>{" "}
+                <span className="text-muted">{tr("Contract")}</span>{" "}
                 <span className="text-ink font-medium">
                   {plan.contract.start ? `${formatShortDate(plan.contract.start)} – ` : "until "}
                   {formatShortDate(plan.contract.end)}
@@ -134,7 +132,7 @@ export function OrgAdminPlan() {
             )}
             {plan.accountManager && (
               <span>
-                <span className="text-muted">Your account manager</span>{" "}
+                <span className="text-muted">{tr("Your account manager")}</span>{" "}
                 <a href={`mailto:${plan.accountManager.email}`} className="text-navy font-medium hover:underline">
                   {plan.accountManager.name}
                 </a>
@@ -151,7 +149,7 @@ export function OrgAdminPlan() {
                 <div className="flex justify-between text-sm">
                   <span className="text-ink font-medium capitalize">{l.key}</span>
                   <span className="text-muted">
-                    {l.used} {l.max === null ? "· unlimited" : `of ${l.max}`}
+                    {l.used} {l.max === null ? tr("· unlimited") : `of ${l.max}`}
                   </span>
                 </div>
                 {l.max !== null && (
@@ -166,18 +164,18 @@ export function OrgAdminPlan() {
 
         {plan.customPriceCents === null && (
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2">Price per license-month on your plan</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2">{tr("Price per license-month on your plan")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {plan.bands.map((b) => (
                 <div key={b.minQuantity} className="rounded-input bg-paper-warm px-3.5 py-2.5">
                   <p className="text-sm text-muted">
-                    {b.maxQuantity === null ? `${b.minQuantity}+ licenses` : `${b.minQuantity}–${b.maxQuantity} licenses`}
+                    {b.maxQuantity === null ? tr("{{minQuantity}}+ licenses", { minQuantity: b.minQuantity }) : tr("{{minQuantity}}–{{maxQuantity}} licenses", { minQuantity: b.minQuantity, maxQuantity: b.maxQuantity })}
                   </p>
                   <p className="font-semibold text-ink">{formatUsdCents(b.unitPriceCents)}</p>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted mt-2">Priced per purchase. Licenses stay valid for 12 months from purchase.</p>
+            <p className="text-xs text-muted mt-2">{tr("Priced per purchase. Licenses stay valid for 12 months from purchase.")}</p>
           </div>
         )}
 
@@ -185,9 +183,8 @@ export function OrgAdminPlan() {
           <div className="flex items-center justify-between gap-3 flex-wrap rounded-input bg-navy/5 px-4 py-3">
             <p className="text-sm text-ink">
               <Sparkles size={15} className="inline text-navy mr-1.5 -mt-0.5" />
-              Buy {plan.businessQualifyingQuantity} or more licenses at once and your organization moves to Business automatically.
-            </p>
-            <Button onClick={() => setShowBuy(true)}>Buy licenses</Button>
+              {tr("Buy")}{" "}{plan.businessQualifyingQuantity} {tr("or more licenses at once and your organization moves to Business automatically.")}</p>
+            <Button onClick={() => setShowBuy(true)}>{tr("Buy licenses")}</Button>
           </div>
         )}
       </div>
@@ -196,16 +193,16 @@ export function OrgAdminPlan() {
         <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-rule">
-              <th className="text-left px-5 py-4 font-semibold text-muted text-xs uppercase tracking-wide w-2/5">Compare plans</th>
+              <th className="text-left px-5 py-4 font-semibold text-muted text-xs uppercase tracking-wide w-2/5">{tr("Compare plans")}</th>
               {plan.catalog.map((c) => (
                 <th key={c.tier} className={`px-4 py-4 text-left align-top ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
                   <p className="font-display font-bold text-base text-ink">
                     {c.label}
-                    {c.tier === plan.tier && <span className="ml-2 text-[11px] font-semibold text-navy uppercase">Current</span>}
+                    {c.tier === plan.tier && <span className="ml-2 text-[11px] font-semibold text-navy uppercase">{tr("Current")}</span>}
                   </p>
                   <p className="text-xs text-muted font-normal">{TIER_BLURB[c.tier]}</p>
                   <p className="text-xs text-ink font-normal mt-1">
-                    {c.tier === "enterprise" ? "Custom pricing" : `from ${formatUsdCents(c.fromPriceCents)} / license`}
+                    {c.tier === "enterprise" ? tr("Custom pricing") : `from ${formatUsdCents(c.fromPriceCents)} / license`}
                   </p>
                 </th>
               ))}
@@ -213,7 +210,7 @@ export function OrgAdminPlan() {
           </thead>
           <tbody>
             <tr className="border-b border-rule">
-              <td className="px-5 py-3 text-ink">Managers</td>
+              <td className="px-5 py-3 text-ink">{tr("Managers")}</td>
               {plan.catalog.map((c) => (
                 <td key={c.tier} className={`px-4 py-3 ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
                   {limitText(c.limits.managers)}
@@ -221,7 +218,7 @@ export function OrgAdminPlan() {
               ))}
             </tr>
             <tr className="border-b border-rule">
-              <td className="px-5 py-3 text-ink">Batches</td>
+              <td className="px-5 py-3 text-ink">{tr("Batches")}</td>
               {plan.catalog.map((c) => (
                 <td key={c.tier} className={`px-4 py-3 ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
                   {limitText(c.limits.batches)}
@@ -233,7 +230,7 @@ export function OrgAdminPlan() {
                 <td className="px-5 py-3">
                   <p className="text-ink">
                     {f.label}
-                    {!f.available && <span className="ml-2 text-[11px] font-semibold text-muted uppercase">Coming soon</span>}
+                    {!f.available && <span className="ml-2 text-[11px] font-semibold text-muted uppercase">{tr("Coming soon")}</span>}
                   </p>
                   <p className="text-xs text-muted">{f.description}</p>
                 </td>
@@ -245,7 +242,7 @@ export function OrgAdminPlan() {
               </tr>
             ))}
             <tr className="border-t border-rule">
-              <td className="px-5 py-3 text-ink">Support</td>
+              <td className="px-5 py-3 text-ink">{tr("Support")}</td>
               {plan.catalog.map((c) => (
                 <td key={c.tier} className={`px-4 py-3 text-xs ${c.tier === plan.tier ? "bg-navy/5" : ""}`}>
                   {c.support}
@@ -257,15 +254,15 @@ export function OrgAdminPlan() {
               {TIERS.map((tier) => (
                 <td key={tier} className={`px-4 py-4 align-top ${tier === plan.tier ? "bg-navy/5" : ""}`}>
                   {tier === plan.tier ? (
-                    <span className="text-xs text-muted">Your plan</span>
+                    <span className="text-xs text-muted">{tr("Your plan")}</span>
                   ) : tier === "enterprise" ? (
                     <EnterpriseInquiry />
                   ) : tier === "business" && plan.tier === "starter" ? (
                     <Button onClick={() => setShowBuy(true)} className="w-full">
-                      Buy {plan.businessQualifyingQuantity}+
+                      {tr("Buy")}{" "}{plan.businessQualifyingQuantity}+
                     </Button>
                   ) : (
-                    <span className="text-xs text-muted">Included in {TIER_LABELS[plan.tier]}</span>
+                    <span className="text-xs text-muted">{tr("Included in")}{" "}{TIER_LABELS[plan.tier]}</span>
                   )}
                 </td>
               ))}

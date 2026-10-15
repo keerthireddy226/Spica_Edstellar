@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
 
+import { tr } from "@/i18n/tr";
 // A learner is in exactly one batch — this shifts them to another one the
 // caller is allowed to manage. Shared by the Org Admin and Manager consoles;
 // each passes its own scoped batch list and move call.
@@ -38,7 +39,7 @@ export function MoveLearnerModal({
       await onMove(batchId, reason.trim() || undefined);
       onMoved();
     } catch (err) {
-      setError(err instanceof ApiError && err.message === "already_in_batch" ? "They're already in that batch." : "Could not move this learner.");
+      setError(err instanceof ApiError && err.message === "already_in_batch" ? tr("They're already in that batch.") : tr("Could not move this learner."));
     } finally {
       setSubmitting(false);
     }
@@ -48,22 +49,21 @@ export function MoveLearnerModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Move learner</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Move learner")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-6 py-5">
           <p className="text-sm text-ink">
-            Move <span className="font-semibold">{learnerName}</span> out of{" "}
-            <span className="font-semibold">{currentBatchName ?? "no batch"}</span>. A learner can only be in one batch at a time.
-          </p>
+            {tr("Move")}{" "}<span className="font-semibold">{learnerName}</span> {tr("out of")}{" "}
+            <span className="font-semibold">{currentBatchName ?? tr("no batch")}</span>{tr(". A learner can only be in one batch at a time.")}</p>
           {options.length === 0 ? (
-            <p className="text-sm text-muted">There's no other batch to move them to yet.</p>
+            <p className="text-sm text-muted">{tr("There's no other batch to move them to yet.")}</p>
           ) : (
             <>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">New batch</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("New batch")}</label>
                 <select
                   value={batchId}
                   onChange={(e) => setBatchId(e.target.value)}
@@ -77,11 +77,11 @@ export function MoveLearnerModal({
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">Reason (optional)</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Reason (optional)")}</label>
                 <input
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Placed at a higher level"
+                  placeholder={tr("e.g. Placed at a higher level")}
                   className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
                 />
               </div>
@@ -90,11 +90,10 @@ export function MoveLearnerModal({
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3 pt-1">
             <Button type="submit" disabled={submitting || options.length === 0} className="flex-1">
-              {submitting ? "Moving…" : "Move"}
+              {submitting ? tr("Moving…") : tr("Move")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { LICENSE_ERROR_TEXT, formatShortDate, type LearnerAccess } from "@/api/licenses";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 
+import { tr } from "@/i18n/tr";
 const QUICK = [1, 3, 6, 12];
 
 function addMonths(from: Date, months: number): Date {
@@ -52,7 +53,7 @@ export function AssignLicenseModal({
       onDone();
     } catch (err) {
       const code = err instanceof ApiError ? err.message : "";
-      setError(LICENSE_ERROR_TEXT[code] ?? "Something went wrong. Please try again.");
+      setError(LICENSE_ERROR_TEXT[code] ?? tr("Something went wrong. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -63,7 +64,7 @@ export function AssignLicenseModal({
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">
-            {mode === "reclaim" ? "Reclaim licenses" : isExtend ? "Extend access" : "Assign licenses"}
+            {mode === "reclaim" ? tr("Reclaim licenses") : isExtend ? tr("Extend access") : tr("Assign licenses")}
           </h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
@@ -90,7 +91,7 @@ export function AssignLicenseModal({
                     mode === m ? "bg-navy/10 text-navy" : "text-muted hover:text-ink"
                   }`}
                 >
-                  {m === "assign" ? (isExtend ? "Extend" : "Assign") : "Reclaim queued"}
+                  {m === "assign" ? (isExtend ? tr("Extend") : tr("Assign")) : tr("Reclaim queued")}
                 </button>
               ))}
             </div>
@@ -98,7 +99,7 @@ export function AssignLicenseModal({
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {mode === "assign" ? "Months (1 license = 1 month)" : `Months to return (up to ${maxReclaim})`}
+              {mode === "assign" ? tr("Months (1 license = 1 month)") : tr("Months to return (up to {{maxReclaim}})", { maxReclaim: maxReclaim })}
             </label>
             <div className="flex items-center gap-2">
               <button
@@ -127,8 +128,7 @@ export function AssignLicenseModal({
                         months === q ? "bg-navy text-white" : "bg-paper-warm text-muted hover:text-ink"
                       }`}
                     >
-                      {q}m
-                    </button>
+                      {q}{tr("m")}</button>
                   ))}
                 </div>
               )}
@@ -138,14 +138,12 @@ export function AssignLicenseModal({
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
             {mode === "assign" ? (
               <>
-                Uses <span className="font-semibold">{months}</span> license{months === 1 ? "" : "s"} from the pool. Access{" "}
-                {isExtend ? "extends" : "starts today and runs"} until <span className="font-semibold">{formatShortDate(newEnd.toISOString())}</span>.
+                {tr("Uses")}{" "}<span className="font-semibold">{months}</span> {tr("license")}{months === 1 ? "" : "s"} {tr("from the pool. Access")}{" "}
+                {isExtend ? "extends" : tr("starts today and runs")} {tr("until")}{" "}<span className="font-semibold">{formatShortDate(newEnd.toISOString())}</span>.
               </>
             ) : (
               <>
-                Returns <span className="font-semibold">{Math.min(months, maxReclaim)}</span> unstarted month
-                {months === 1 ? "" : "s"} to the pool. The month already running isn't refunded.
-              </>
+                {tr("Returns")}{" "}<span className="font-semibold">{Math.min(months, maxReclaim)}</span> {tr("unstarted month")}{months === 1 ? "" : "s"} {tr("to the pool. The month already running isn't refunded.")}</>
             )}
             <p className="text-xs text-muted mt-1">{poolHint}</p>
           </div>
@@ -153,11 +151,10 @@ export function AssignLicenseModal({
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={submit} disabled={submitting} className="flex-1">
-              {submitting ? "Saving…" : mode === "assign" ? (isExtend ? `Extend by ${months}` : `Assign ${months}`) : `Reclaim ${Math.min(months, maxReclaim)}`}
+              {submitting ? tr("Saving…") : mode === "assign" ? (isExtend ? tr("Extend by {{months}}", { months: months }) : `Assign ${months}`) : `Reclaim ${Math.min(months, maxReclaim)}`}
             </Button>
             <Button variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import {
   type AppNotification,
 } from "@/api/notifications";
 
+import { tr } from "@/i18n/tr";
 const POLL_MS = 60_000;
 
 export function NotificationBell() {
@@ -62,7 +63,7 @@ export function NotificationBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Notifications"
+        aria-label={tr("Notifications")}
         className="relative p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
       >
         <Bell size={22} />
@@ -75,15 +76,14 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 max-w-[90vw] bg-surface border border-rule rounded-card shadow-lg z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-rule">
-            <p className="text-sm font-semibold text-ink">Notifications</p>
+            <p className="text-sm font-semibold text-ink">{tr("Notifications")}</p>
             {unread > 0 && (
               <button onClick={readAll} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-                Mark all read
-              </button>
+                {tr("Mark all read")}</button>
             )}
           </div>
           <div className="max-h-96 overflow-y-auto">
-            {items.length === 0 && <p className="px-4 py-6 text-sm text-muted text-center">You're all caught up.</p>}
+            {items.length === 0 && <p className="px-4 py-6 text-sm text-muted text-center">{tr("You're all caught up.")}</p>}
             {items.map((n) => (
               <button
                 key={n.id}

@@ -10,7 +10,8 @@ import {
   type LicensePurchase,
 } from "@/api/licenses";
 
-const SOURCE_LABEL = { purchase: "Purchase", credit: "Credit", comp: "Complimentary" } as const;
+import { tr } from "@/i18n/tr";
+const SOURCE_LABEL = { purchase: tr("Purchase"), credit: tr("Credit"), comp: tr("Complimentary") } as const;
 
 function CreditModal({
   orgName,
@@ -53,7 +54,7 @@ function CreditModal({
         validityMonths: customValidity ? Math.max(1, Math.min(36, Math.floor(Number(validity) || 12))) : undefined,
       });
     } catch {
-      setError("Could not add licenses.");
+      setError(tr("Could not add licenses."));
       setSubmitting(false);
     }
   }
@@ -64,7 +65,7 @@ function CreditModal({
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Add licenses · {orgName}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Add licenses ·")}{" "}{orgName}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -72,54 +73,52 @@ function CreditModal({
         <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Licenses</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Licenses")}</label>
               <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} className={inputClass} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Type</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Type")}</label>
               <select value={source} onChange={(e) => setSource(e.target.value as typeof source)} className={`${inputClass} cursor-pointer`}>
-                <option value="purchase">Purchase (billed)</option>
-                <option value="credit">Credit</option>
-                <option value="comp">Complimentary</option>
+                <option value="purchase">{tr("Purchase (billed)")}</option>
+                <option value="credit">{tr("Credit")}</option>
+                <option value="comp">{tr("Complimentary")}</option>
               </select>
             </div>
           </div>
           {source !== "comp" && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Price per license (USD)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Price per license (USD)")}</label>
               <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className={inputClass} />
             </div>
           )}
           {customValidity && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Valid for (months)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Valid for (months)")}</label>
               <input type="number" min={1} max={36} value={validity} onChange={(e) => setValidity(e.target.value)} className={inputClass} />
-              <p className="text-xs text-muted">Enterprise only — standard licenses are valid for 12 months.</p>
+              <p className="text-xs text-muted">{tr("Enterprise only — standard licenses are valid for 12 months.")}</p>
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Invoice / reference</label>
-            <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. INV-2026-014" className={inputClass} />
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Invoice / reference")}</label>
+            <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder={tr("e.g. INV-2026-014")} className={inputClass} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Note (optional)</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Note (optional)")}</label>
             <input value={note} onChange={(e) => setNote(e.target.value)} className={inputClass} />
           </div>
           <p className="text-sm text-ink bg-paper-warm rounded-input px-3.5 py-2.5">
-            {qty} license{qty === 1 ? "" : "s"} = {qty} learner-month{qty === 1 ? "" : "s"} ·{" "}
-            <span className="font-semibold">{source === "comp" ? "no charge" : formatMoney(unitCents * qty)}</span>
+            {qty} {tr("license")}{qty === 1 ? "" : "s"} = {qty} {tr("learner-month")}{qty === 1 ? "" : "s"} ·{" "}
+            <span className="font-semibold">{source === "comp" ? tr("no charge") : formatMoney(unitCents * qty)}</span>
             <span className="block text-xs text-muted mt-0.5">
-              Unassigned licenses expire {customValidity ? Math.max(1, Math.floor(Number(validity) || 12)) : 12} months from today.
-            </span>
+              {tr("Unassigned licenses expire")}{" "}{customValidity ? Math.max(1, Math.floor(Number(validity) || 12)) : 12} {tr("months from today.")}</span>
           </p>
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={submitting || qty < 1} className="flex-1">
-              {submitting ? "Adding…" : `Add ${qty} licenses`}
+              {submitting ? tr("Adding…") : tr("Add {{qty}} licenses", { qty: qty })}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>
@@ -144,7 +143,7 @@ export function OrgLicensesPanel({ tenantId, orgName, planTier }: { tenantId: st
         setPurchases(res.purchases);
         setPrice(res.pricePerLicenseCents);
       })
-      .catch(() => setError("Could not load licenses."));
+      .catch(() => setError(tr("Could not load licenses.")));
   }
 
   useEffect(load, [tenantId]);
@@ -152,27 +151,26 @@ export function OrgLicensesPanel({ tenantId, orgName, planTier }: { tenantId: st
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Licenses</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Licenses")}</p>
         <button
           onClick={() => setShowCredit(true)}
           className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline cursor-pointer"
         >
-          <Plus size={13} /> Add licenses
-        </button>
+          <Plus size={13} /> {tr("Add licenses")}</button>
       </div>
       <div className="border border-rule rounded-input px-4 py-3 flex flex-col gap-3">
         {error && <p className="text-sm text-error">{error}</p>}
-        {!summary && !error && <p className="text-sm text-muted">Loading…</p>}
+        {!summary && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
         {summary && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {(
               [
-                ["Purchased", summary.purchased],
-                ["Available", summary.available],
-                ["Assigned", summary.assigned],
-                ["Active learners", summary.activeLearners],
-                ["Expired / grace", summary.expiredLearners + summary.graceLearners],
-                ["No license", summary.unlicensedLearners],
+                [tr("Purchased"), summary.purchased],
+                [tr("Available"), summary.available],
+                [tr("Assigned"), summary.assigned],
+                [tr("Active learners"), summary.activeLearners],
+                [tr("Expired / grace"), summary.expiredLearners + summary.graceLearners],
+                [tr("No license"), summary.unlicensedLearners],
               ] as const
             ).map(([label, value]) => (
               <div key={label}>
@@ -191,8 +189,7 @@ export function OrgLicensesPanel({ tenantId, orgName, planTier }: { tenantId: st
                   {p.reference ? <span className="text-muted"> · {p.reference}</span> : null}
                 </span>
                 <span className="text-xs text-muted shrink-0">
-                  {p.source === "comp" ? "free" : formatMoney(p.totalCents, p.currency)} · {formatShortDate(p.purchasedAt)} · {p.remaining} left
-                </span>
+                  {p.source === "comp" ? "free" : formatMoney(p.totalCents, p.currency)} · {formatShortDate(p.purchasedAt)} · {p.remaining} {tr("left")}</span>
               </div>
             ))}
           </div>

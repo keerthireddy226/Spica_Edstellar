@@ -19,6 +19,7 @@ import {
   type EditOrgPayload,
 } from "@/api/admin";
 
+import { tr } from "@/i18n/tr";
 function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: (name: string) => void }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<"company" | "university">("company");
@@ -85,9 +86,9 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
       onCreated(payload.name);
     } catch (err) {
       if (err instanceof ApiError && err.message === "email_already_registered") {
-        setError("That org admin email is already registered.");
+        setError(tr("That org admin email is already registered."));
       } else {
-        setError("Something went wrong onboarding that organization.");
+        setError(tr("Something went wrong onboarding that organization."));
       }
     } finally {
       setSubmitting(false);
@@ -101,7 +102,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Onboard Organization</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Onboard Organization")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -110,31 +111,31 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
           {isSuper && (
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Owning Admin</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Owning Admin")}</label>
               <select {...f("ownerId")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
-                <option value="">Me (Super Admin) — assign later</option>
+                <option value="">{tr("Me (Super Admin) — assign later")}</option>
                 {admins.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.name} ({a.email})
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-muted">The Admin who will look after this organization in their console.</p>
+              <p className="text-xs text-muted">{tr("The Admin who will look after this organization in their console.")}</p>
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Organization name</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Organization name")}</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Acme Corp, Anna University"
+              placeholder={tr("e.g. Acme Corp, Anna University")}
               className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Type</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Type")}</label>
             <div className="grid grid-cols-2 gap-3">
               {(["company", "university"] as const).map((c) => (
                 <button
@@ -146,7 +147,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
                   }`}
                 >
                   {c === "company" ? <Briefcase size={16} /> : <GraduationCap size={16} />}
-                  {c === "company" ? "Organization" : "University"}
+                  {c === "company" ? tr("Organization") : tr("University")}
                 </button>
               ))}
             </div>
@@ -154,22 +155,22 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Industry (optional)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Industry (optional)")}</label>
               <input
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. IT services, Higher education"
+                placeholder={tr("e.g. IT services, Higher education")}
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Expected learners (optional)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Expected learners (optional)")}</label>
               <input
                 type="number"
                 min={1}
                 value={expectedLearnerCount}
                 onChange={(e) => setExpectedLearnerCount(e.target.value)}
-                placeholder="e.g. 50"
+                placeholder={tr("e.g. 50")}
                 className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
             </div>
@@ -177,9 +178,9 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Country</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Country")}</label>
               <select value={country} onChange={(e) => setCountry(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
-                <option value="">Select…</option>
+                <option value="">{tr("Select…")}</option>
                 {sortedCountries("en").map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.name}
@@ -188,32 +189,32 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Tax ID — GST / VAT (optional)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Tax ID — GST / VAT (optional)")}</label>
               <input value={taxId} onChange={(e) => setTaxId(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
-            <p className="text-sm font-semibold text-ink">Company details (optional)</p>
-            <p className="text-xs text-muted">Used on quotes and invoices; the Org Admin can complete them later.</p>
+            <p className="text-sm font-semibold text-ink">{tr("Company details (optional)")}</p>
+            <p className="text-xs text-muted">{tr("Used on quotes and invoices; the Org Admin can complete them later.")}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Registered legal name</label>
-              <input type="text" {...f("legalName")} placeholder="e.g. Acme Technologies Pvt Ltd" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Registered legal name")}</label>
+              <input type="text" {...f("legalName")} placeholder={tr("e.g. Acme Technologies Pvt Ltd")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Website</label>
-              <input type="text" {...f("website")} placeholder="https://" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Website")}</label>
+              <input type="text" {...f("website")} placeholder={tr("https://")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Main phone</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Main phone")}</label>
               <input type="tel" {...f("phone")} placeholder="+91 …" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Employees</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Employees")}</label>
               <select {...f("employeeCountBand")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
-                <option value="">Not set</option>
+                <option value="">{tr("Not set")}</option>
                 <option value="1_50">1–50</option>
                 <option value="51_200">51–200</option>
                 <option value="201_1000">201–1,000</option>
@@ -222,54 +223,54 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               </select>
             </div>
             <div className="flex flex-col gap-1.5 col-span-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Address</label>
-              <input type="text" {...f("addressLine")} placeholder="Street and building" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Address")}</label>
+              <input type="text" {...f("addressLine")} placeholder={tr("Street and building")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">City</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("City")}</label>
               <input type="text" {...f("city")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">State / province</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("State / province")}</label>
               <input type="text" {...f("state")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Postal code</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Postal code")}</label>
               <input type="text" {...f("postalCode")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
-            <p className="text-sm font-semibold text-ink">Plan, contract and goals</p>
-            <p className="text-xs text-muted">Licenses are added after onboarding from the organization's details.</p>
+            <p className="text-sm font-semibold text-ink">{tr("Plan, contract and goals")}</p>
+            <p className="text-xs text-muted">{tr("Licenses are added after onboarding from the organization's details.")}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Plan</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Plan")}</label>
               <select {...f("planTier")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
-                <option value="starter">Starter</option>
-                <option value="business">Business</option>
-                <option value="enterprise">Enterprise</option>
+                <option value="starter">{tr("Starter")}</option>
+                <option value="business">{tr("Business")}</option>
+                <option value="enterprise">{tr("Enterprise")}</option>
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Purchase order reference</label>
-              <input type="text" {...f("purchaseOrderRef")} placeholder="e.g. PO-2026-118" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Purchase order reference")}</label>
+              <input type="text" {...f("purchaseOrderRef")} placeholder={tr("e.g. PO-2026-118")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract start</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Contract start")}</label>
               <input type="date" {...f("contractStart")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract end</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Contract end")}</label>
               <input type="date" {...f("contractEnd")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Contract value</label>
-              <input type="number" {...f("contractValue")} placeholder="e.g. 12000" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Contract value")}</label>
+              <input type="number" {...f("contractValue")} placeholder={tr("e.g. 12000")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Currency</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Currency")}</label>
               <select {...f("contractCurrency")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none cursor-pointer">
                 {["USD", "INR", "EUR", "GBP", "AED", "SGD"].map((c) => (
                   <option key={c}>{c}</option>
@@ -277,38 +278,38 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               </select>
             </div>
             <div className="flex flex-col gap-1.5 col-span-2">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Training goal</label>
-              <textarea rows={2} {...f("trainingGoal")} placeholder="e.g. Get 200 support agents from B1 to B2 for the Versant Professional test by March" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Training goal")}</label>
+              <textarea rows={2} {...f("trainingGoal")} placeholder={tr("e.g. Get 200 support agents from B1 to B2 for the Versant Professional test by March")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
-            <p className="text-sm font-semibold text-ink">Billing contact (optional)</p>
-            <p className="text-xs text-muted">Who receives license invoices. Leave blank if it's the Org Admin.</p>
+            <p className="text-sm font-semibold text-ink">{tr("Billing contact (optional)")}</p>
+            <p className="text-xs text-muted">{tr("Who receives license invoices. Leave blank if it's the Org Admin.")}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Name")}</label>
               <input value={billingContactName} onChange={(e) => setBillingContactName(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Email</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Email")}</label>
               <input type="email" value={billingContactEmail} onChange={(e) => setBillingContactEmail(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Phone</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Phone")}</label>
               <input type="tel" {...f("billingContactPhone")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
-            <p className="text-sm font-semibold text-ink">Org Admin contact</p>
-            <p className="text-xs text-muted">The real contact person at this organization. They'll get an invite to set their own password.</p>
+            <p className="text-sm font-semibold text-ink">{tr("Org Admin contact")}</p>
+            <p className="text-xs text-muted">{tr("The real contact person at this organization. They'll get an invite to set their own password.")}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
               <input
                 required
                 value={firstName}
@@ -317,7 +318,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
               <input
                 required
                 value={lastName}
@@ -330,8 +331,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-                <Mail size={13} /> Email
-              </label>
+                <Mail size={13} /> {tr("Email")}</label>
               <input
                 required
                 type="email"
@@ -341,7 +341,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Phone (optional)</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Phone (optional)")}</label>
               <input
                 type="tel"
                 value={phone}
@@ -350,8 +350,8 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Job title (optional)</label>
-              <input type="text" {...f("orgAdminJobTitle")} placeholder="e.g. L&D Head" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Job title (optional)")}</label>
+              <input type="text" {...f("orgAdminJobTitle")} placeholder={tr("e.g. L&D Head")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
@@ -359,11 +359,10 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
 
           <div className="flex items-center gap-3 pt-2">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? "Creating…" : "Create & send invite"}
+              {submitting ? tr("Creating…") : tr("Create & send invite")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>
@@ -394,7 +393,7 @@ function EditOrgModal({
       await editOrganization(org.id, payload);
       onSaved();
     } catch {
-      setError("Something went wrong saving those changes.");
+      setError(tr("Something went wrong saving those changes."));
     } finally {
       setSubmitting(false);
     }
@@ -404,14 +403,14 @@ function EditOrgModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Edit organization</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Edit organization")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Organization name</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Organization name")}</label>
             <input
               required
               value={name}
@@ -420,7 +419,7 @@ function EditOrgModal({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Type</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Type")}</label>
             <div className="grid grid-cols-2 gap-3">
               {(["company", "university"] as const).map((c) => (
                 <button
@@ -432,7 +431,7 @@ function EditOrgModal({
                   }`}
                 >
                   {c === "company" ? <Briefcase size={16} /> : <GraduationCap size={16} />}
-                  {c === "company" ? "Organization" : "University"}
+                  {c === "company" ? tr("Organization") : tr("University")}
                 </button>
               ))}
             </div>
@@ -440,11 +439,10 @@ function EditOrgModal({
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3 pt-1">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? "Saving…" : "Save changes"}
+              {submitting ? tr("Saving…") : tr("Save changes")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>
@@ -467,22 +465,20 @@ function DeactivateOrgModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Deactivate organization</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Deactivate organization")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <div className="px-6 py-5 flex flex-col gap-5">
           <p className="text-sm text-ink">
-            Deactivate <span className="font-semibold">{org.name}</span>? Its Org Admin and Managers lose access immediately.
-          </p>
+            {tr("Deactivate")}{" "}<span className="font-semibold">{org.name}</span>{tr("? Its Org Admin and Managers lose access immediately.")}</p>
           <div className="flex items-center gap-3">
             <Button type="button" onClick={onConfirm} disabled={submitting} className="flex-1 !bg-error hover:!bg-error/90">
-              {submitting ? "Deactivating…" : "Deactivate"}
+              {submitting ? tr("Deactivating…") : tr("Deactivate")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </div>
       </div>
@@ -504,14 +500,14 @@ function OwnerModal({ org, current, onClose, onSaved }: { org: AdminConsoleOrg; 
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h2 className="font-display font-bold text-lg text-ink">Owning Admin · {org.name}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Owning Admin ·")}{" "}{org.name}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer">
             <X size={20} />
           </button>
         </div>
-        <p className="text-sm text-muted">The owning Admin sees and manages this organization in their console.</p>
+        <p className="text-sm text-muted">{tr("The owning Admin sees and manages this organization in their console.")}</p>
         <select value={adminId} onChange={(e) => setAdminId(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink cursor-pointer">
-          <option value="">Choose an Admin</option>
+          <option value="">{tr("Choose an Admin")}</option>
           {admins.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name} ({a.email})
@@ -529,16 +525,15 @@ function OwnerModal({ org, current, onClose, onSaved }: { org: AdminConsoleOrg; 
                 await setOrgOwner(org.id, adminId);
                 onSaved();
               } catch {
-                setError("Couldn't change the owner.");
+                setError(tr("Couldn't change the owner."));
                 setSaving(false);
               }
             }}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? tr("Saving…") : tr("Save")}
           </Button>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
+            {tr("Cancel")}</Button>
         </div>
       </div>
     </div>
@@ -569,7 +564,7 @@ export function AdminOrganizations() {
   function load() {
     getAdminConsoleOverview()
       .then(setOverview)
-      .catch(() => setError("Could not load organizations."));
+      .catch(() => setError(tr("Could not load organizations.")));
     getOrgMetrics()
       .then((r) => setMetrics(new Map(r.metrics.map((m) => [m.id, m]))))
       .catch(() => {});
@@ -583,7 +578,7 @@ export function AdminOrganizations() {
       setConfirmingDeactivate(null);
       load();
     } catch {
-      setError("Could not deactivate that organization.");
+      setError(tr("Could not deactivate that organization."));
     } finally {
       setBusyId(null);
     }
@@ -595,14 +590,14 @@ export function AdminOrganizations() {
       await reactivateOrganization(org.id);
       load();
     } catch {
-      setError("Could not reactivate that organization.");
+      setError(tr("Could not reactivate that organization."));
     } finally {
       setBusyId(null);
     }
   }
 
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!overview) return <p className="text-sm text-muted">Loading…</p>;
+  if (!overview) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
 
   const orgs = overview.organizations;
   const active = orgs.filter((o) => o.active);
@@ -631,13 +626,12 @@ export function AdminOrganizations() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title="Organizations"
-        subtitle={perms.isSuper ? "Every organization and university on Spica, and the Admin who owns each." : "The organizations and universities you look after."}
+        title={tr("Organizations")}
+        subtitle={perms.isSuper ? tr("Every organization and university on Spica, and the Admin who owns each.") : tr("The organizations and universities you look after.")}
         actions={
           canManage && (
             <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-              <UserPlus size={18} /> Onboard Organization
-            </Button>
+              <UserPlus size={18} /> {tr("Onboard Organization")}</Button>
           )
         }
       />
@@ -651,17 +645,17 @@ export function AdminOrganizations() {
           index={0}
           icon={Building2}
           value={active.length}
-          label="Active organizations"
-          sub={`${active.filter((o) => o.category !== "university").length} companies · ${active.filter((o) => o.category === "university").length} universities`}
+          label={tr("Active organizations")}
+          sub={tr("{{length}} companies · {{length2}} universities", { length: active.filter((o) => o.category !== "university").length, length2: active.filter((o) => o.category === "university").length })}
         />
-        <StatCard variant="tint" palette="terracotta" index={1} icon={Users} value={overview.totalLearners} label="Learners" sub={`${sum((x) => x.active7)} practised this week`} />
+        <StatCard variant="tint" palette="terracotta" index={1} icon={Users} value={overview.totalLearners} label={tr("Learners")} sub={tr("{{sum}} practised this week", { sum: sum((x) => x.active7) })} />
         <StatCard
           variant="tint"
           palette="terracotta"
           index={2}
           icon={KeyRound}
           value={`${sum((x) => x.licensesAssigned)} / ${sum((x) => x.licensesBought)}`}
-          label="Licenses assigned / bought"
+          label={tr("Licenses assigned / bought")}
         />
         <StatCard
           variant="tint"
@@ -669,37 +663,37 @@ export function AdminOrganizations() {
           index={3}
           icon={Mail}
           value={active.filter((o) => o.health?.band === "at_risk").length}
-          label="At risk"
-          sub={`${active.filter((o) => o.orgAdminStatus !== "active").length} Org Admin invites open · ${sum((x) => x.unpaidInvoices)} unpaid invoices`}
+          label={tr("At risk")}
+          sub={tr("{{length}} Org Admin invites open · {{sum}} unpaid invoices", { length: active.filter((o) => o.orgAdminStatus !== "active").length, sum: sum((x) => x.unpaidInvoices) })}
         />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, Org Admin, industry or owner" />
-        <SelectFilter label="Type" value={type} onChange={setType} options={[["all", "All types"], ["company", "Companies"], ["university", "Universities"]]} />
+        <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, Org Admin, industry or owner")} />
+        <SelectFilter label={tr("Type")} value={type} onChange={setType} options={[["all", tr("All types")], ["company", tr("Companies")], ["university", tr("Universities")]]} />
         <SelectFilter
-          label="Plan"
+          label={tr("Plan")}
           value={tier}
           onChange={setTier}
-          options={[["all", "All plans"], ...(Object.entries(TIER_LABELS) as [string, string][])]}
+          options={[["all", tr("All plans")], ...(Object.entries(TIER_LABELS) as [string, string][])]}
         />
-        {perms.isSuper && <SelectFilter label="Owner" value={owner} onChange={setOwner} options={[["all", "All Admins"], ...owners]} />}
+        {perms.isSuper && <SelectFilter label={tr("Owner")} value={owner} onChange={setOwner} options={[["all", tr("All Admins")], ...owners]} />}
       </div>
       <FilterPills<OrgFilter>
         value={filter}
         onChange={setFilter}
         options={[
-          ["active", "Active", active.length],
-          ["pilot", "On pilot", orgs.filter(matches.pilot).length],
-          ["at_risk", "At risk", orgs.filter(matches.at_risk).length],
-          ["invite", "Org Admin not active", orgs.filter(matches.invite).length],
-          ["deactivated", "Deactivated", orgs.filter(matches.deactivated).length],
-          ["all", "All", orgs.length],
+          ["active", tr("Active"), active.length],
+          ["pilot", tr("On pilot"), orgs.filter(matches.pilot).length],
+          ["at_risk", tr("At risk"), orgs.filter(matches.at_risk).length],
+          ["invite", tr("Org Admin not active"), orgs.filter(matches.invite).length],
+          ["deactivated", tr("Deactivated"), orgs.filter(matches.deactivated).length],
+          ["all", tr("All"), orgs.length],
         ]}
       />
 
-      {orgs.length === 0 && <EmptyNote>{canManage ? "No organizations yet — onboard your first one." : "No organizations yet."}</EmptyNote>}
-      {orgs.length > 0 && shown.length === 0 && <EmptyNote>No organizations match.</EmptyNote>}
+      {orgs.length === 0 && <EmptyNote>{canManage ? tr("No organizations yet — onboard your first one.") : tr("No organizations yet.")}</EmptyNote>}
+      {orgs.length > 0 && shown.length === 0 && <EmptyNote>{tr("No organizations match.")}</EmptyNote>}
 
       <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
         {shown.map((org, i) => {
@@ -720,26 +714,26 @@ export function AdminOrganizations() {
                   </button>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{TIER_LABELS[org.planTier]}</span>
-                    {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">Pilot to {shortDate(org.pilotEndsAt)}</span>}
+                    {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{tr("Pilot to")}{" "}{shortDate(org.pilotEndsAt)}</span>}
                     {org.health && (
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/15" title={org.health.flags.join("\n")}>
-                        Health {org.health.score} · {org.health.band === "at_risk" ? "At risk" : org.health.band === "watch" ? "Watch" : "Healthy"}
+                        {tr("Health")}{" "}{org.health.score} · {org.health.band === "at_risk" ? tr("At risk") : org.health.band === "watch" ? tr("Watch") : tr("Healthy")}
                       </span>
                     )}
-                    {!org.active && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/25 uppercase">Deactivated</span>}
+                    {!org.active && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/25 uppercase">{tr("Deactivated")}</span>}
                   </div>
                 </div>
               </div>
 
               <div className="text-xs text-white/85">
-                Org Admin:{" "}
+                {tr("Org Admin:")}{" "}
                 {org.orgAdmin ? (
                   <>
                     <span className="font-semibold text-white">{org.orgAdmin.name || org.orgAdmin.email}</span>
-                    {org.orgAdminStatus === "pending" ? " · invite not accepted" : ""}
+                    {org.orgAdminStatus === "pending" ? tr(" · invite not accepted") : ""}
                   </>
                 ) : (
-                  <span className="font-semibold">none yet</span>
+                  <span className="font-semibold">{tr("none yet")}</span>
                 )}
                 {org.industry ? ` · ${org.industry}` : ""}
               </div>
@@ -747,14 +741,14 @@ export function AdminOrganizations() {
               <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
                 <div>
                   <p className="font-display font-bold text-xl">{org.learnerCount}</p>
-                  <p className="text-[11px] text-white/75">Learners · {x?.active7 ?? 0} active</p>
+                  <p className="text-[11px] text-white/75">{tr("Learners ·")}{" "}{x?.active7 ?? 0} {tr("active")}</p>
                 </div>
                 <div>
                   <p className="font-display font-bold text-xl">
                     {x?.activeBatches ?? 0}
                     <span className="text-xs font-normal text-white/75"> / {x?.managers ?? org.managers.length}</span>
                   </p>
-                  <p className="text-[11px] text-white/75">Batches / Managers</p>
+                  <p className="text-[11px] text-white/75">{tr("Batches / Managers")}</p>
                 </div>
                 <div>
                   <p className="font-display font-bold text-xl">
@@ -768,29 +762,27 @@ export function AdminOrganizations() {
               </div>
 
               <p className="text-xs text-white/80">
-                {x?.contractEnd ? `Contract to ${shortDate(x.contractEnd)}` : "No contract dates"}
-                {x?.unpaidInvoices ? ` · ${x.unpaidInvoices} unpaid invoice${x.unpaidInvoices === 1 ? "" : "s"}` : ""}
-                {` · Last activity ${ago(x?.lastActivityAt)}`}
-                {perms.isSuper ? ` · Owner: ${x?.owner?.name ?? "none"}` : ""}
+                {x?.contractEnd ? tr("Contract to {{shortDate}}", { shortDate: shortDate(x.contractEnd) }) : tr("No contract dates")}
+                {x?.unpaidInvoices ? tr(" · {{unpaidInvoices}} unpaid invoice{{v}}", { unpaidInvoices: x.unpaidInvoices, v: x.unpaidInvoices === 1 ? "" : "s" }) : ""}
+                {tr(" · Last activity {{ago}}", { ago: ago(x?.lastActivityAt) })}
+                {perms.isSuper ? tr(" · Owner: {{v}}", { v: x?.owner?.name ?? "none" }) : ""}
               </p>
 
               <div className="flex items-center gap-2 flex-wrap">
-                <CardButton onClick={() => setViewingOrg(org)}>View details</CardButton>
-                {perms.isSuper && <CardButton onClick={() => setOwning(org)}>Change owner</CardButton>}
+                <CardButton onClick={() => setViewingOrg(org)}>{tr("View details")}</CardButton>
+                {perms.isSuper && <CardButton onClick={() => setOwning(org)}>{tr("Change owner")}</CardButton>}
                 {canManage && org.active && (
                   <>
                     <CardButton onClick={() => setEditing(org)}>
-                      <Pencil size={13} /> Edit
-                    </CardButton>
+                      <Pencil size={13} /> {tr("Edit")}</CardButton>
                     <span className="flex-1" />
                     <CardButton onClick={() => setConfirmingDeactivate(org)} disabled={busyId === org.id}>
-                      <Ban size={13} /> Deactivate
-                    </CardButton>
+                      <Ban size={13} /> {tr("Deactivate")}</CardButton>
                   </>
                 )}
                 {canManage && !org.active && (
                   <CardButton onClick={() => handleReactivate(org)} disabled={busyId === org.id}>
-                    <RotateCcw size={13} /> {busyId === org.id ? "Activating…" : "Reactivate"}
+                    <RotateCcw size={13} /> {busyId === org.id ? tr("Activating…") : tr("Reactivate")}
                   </CardButton>
                 )}
               </div>
@@ -804,7 +796,7 @@ export function AdminOrganizations() {
           onClose={() => setShowOnboard(false)}
           onCreated={(name) => {
             setShowOnboard(false);
-            setNotice(`${name} created — their Org Admin will receive an email to set up their account.`);
+            setNotice(tr("{{name}} created — their Org Admin will receive an email to set up their account.", { name: name }));
             load();
           }}
         />
@@ -836,7 +828,7 @@ export function AdminOrganizations() {
           current={m(owning.id)?.owner?.id ?? null}
           onClose={() => setOwning(null)}
           onSaved={() => {
-            setNotice(`${owning.name} now belongs to its new Admin.`);
+            setNotice(tr("{{name}} now belongs to its new Admin.", { name: owning.name }));
             setOwning(null);
             load();
           }}

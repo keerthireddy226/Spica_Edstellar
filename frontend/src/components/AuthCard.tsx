@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { GraduationCap } from "lucide-react";
 
+import { tr } from "@/i18n/tr";
 export function AuthCard({
   eyebrow,
   title,
@@ -22,7 +23,7 @@ export function AuthCard({
         </span>
         <h1 className="font-logo tracking-tight flex items-baseline gap-3">
           <span className="font-bold text-6xl text-logo-primary">{eyebrow}</span>
-          <span className="italic font-medium text-2xl text-logo-accent">by Edstellar</span>
+          <span className="italic font-medium text-2xl text-logo-accent">{tr("by Edstellar")}</span>
         </h1>
       </div>
 

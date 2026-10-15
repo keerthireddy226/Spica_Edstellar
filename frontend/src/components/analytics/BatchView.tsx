@@ -5,14 +5,15 @@ import { formatShortDate } from "@/api/licenses";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Card, Stat, StackedBar, WeeklyBars } from "@/components/analytics/Charts";
 
+import { tr } from "@/i18n/tr";
 const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
-const SKILL_LABEL: Record<string, string> = { listening: "Listening", speaking: "Speaking", reading: "Reading", writing: "Writing" };
+const SKILL_LABEL: Record<string, string> = { listening: tr("Listening"), speaking: tr("Speaking"), reading: tr("Reading"), writing: tr("Writing") };
 
 function Compare({ value, org, unit }: { value: number; org: number; unit: string }) {
   const diff = value - org;
   return (
     <span className={`text-[11px] ${diff >= 0 ? "text-success" : "text-error"}`}>
-      {diff === 0 ? "Same as" : `${diff > 0 ? "+" : ""}${diff}${unit} vs`} org average ({org}
+      {diff === 0 ? tr("Same as") : `${diff > 0 ? "+" : ""}${diff}${unit} vs`} {tr("org average (")}{org}
       {unit})
     </span>
   );
@@ -26,59 +27,58 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Stat label="Learners" value={s.learners} hint={data.batch.managers.length ? `Managed by ${data.batch.managers.join(", ")}` : "No manager"} />
+        <Stat label={tr("Learners")} value={s.learners} hint={data.batch.managers.length ? tr("Managed by {{join}}", { join: data.batch.managers.join(", ") }) : tr("No manager")} />
         <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5">
-          <p className="text-xs text-muted">On track</p>
+          <p className="text-xs text-muted">{tr("On track")}</p>
           <p className="text-2xl font-display font-bold text-ink mt-0.5">{s.onTrackPercent}%</p>
           <Compare value={s.onTrackPercent} org={s.orgOnTrackPercent} unit="%" />
         </div>
         <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5">
-          <p className="text-xs text-muted">Practice / learner / week</p>
-          <p className="text-2xl font-display font-bold text-ink mt-0.5">{s.avgMinutesPerLearnerPerWeek} min</p>
+          <p className="text-xs text-muted">{tr("Practice / learner / week")}</p>
+          <p className="text-2xl font-display font-bold text-ink mt-0.5">{s.avgMinutesPerLearnerPerWeek} {tr("min")}</p>
           <Compare value={s.avgMinutesPerLearnerPerWeek} org={s.orgAvgMinutesPerLearnerPerWeek} unit=" min" />
         </div>
         <Stat
-          label="Days left"
+          label={tr("Days left")}
           value={data.batch.daysLeft ?? "—"}
-          hint={data.batch.endsOn ? `Ends ${formatShortDate(data.batch.endsOn)}` : "Set a duration to track this"}
+          hint={data.batch.endsOn ? `Ends ${formatShortDate(data.batch.endsOn)}` : tr("Set a duration to track this")}
         />
         <Stat
-          label="Licensed learners"
+          label={tr("Licensed learners")}
           value={`${s.licensedLearners} / ${s.learners}`}
-          hint={s.endingWithin7Days ? `${s.endingWithin7Days} ending within 7 days` : "None ending this week"}
+          hint={s.endingWithin7Days ? tr("{{endingWithin7Days}} ending within 7 days", { endingWithin7Days: s.endingWithin7Days }) : tr("None ending this week")}
         />
         <Stat
-          label="Fixed licenses"
-          value={s.fixedLicenses === null ? "None" : `${s.fixedLicensesUsed} / ${s.fixedLicenses}`}
-          hint={s.fixedLicenses === null ? "Uses Manager's pool" : `${Math.max(0, s.fixedLicenses - s.fixedLicensesUsed)} left`}
+          label={tr("Fixed licenses")}
+          value={s.fixedLicenses === null ? tr("None") : `${s.fixedLicensesUsed} / ${s.fixedLicenses}`}
+          hint={s.fixedLicenses === null ? tr("Uses Manager's pool") : `${Math.max(0, s.fixedLicenses - s.fixedLicensesUsed)} left`}
         />
       </div>
 
-      <Card title="Where learners are" subtitle="Status today">
+      <Card title={tr("Where learners are")} subtitle={tr("Status today")}>
         <StackedBar
           parts={[
-            { label: "Goal achieved", value: c.achieved, className: "bg-navy" },
-            { label: "On track", value: c.on_track, className: "bg-success" },
-            { label: "Behind", value: c.slow, className: "bg-warning" },
-            { label: "Inactive", value: c.inactive, className: "bg-error" },
-            { label: "Not started", value: c.not_started, className: "bg-muted" },
+            { label: tr("Goal achieved"), value: c.achieved, className: "bg-navy" },
+            { label: tr("On track"), value: c.on_track, className: "bg-success" },
+            { label: tr("Behind"), value: c.slow, className: "bg-warning" },
+            { label: tr("Inactive"), value: c.inactive, className: "bg-error" },
+            { label: tr("Not started"), value: c.not_started, className: "bg-muted" },
           ]}
         />
         {(s.needsAttention > 0 || s.remindedLearners > 0) && (
           <p className="text-xs text-muted">
-            {s.remindedLearners} learner{s.remindedLearners === 1 ? " has" : "s have"} been reminded
-            {s.needsAttention ? ` · ${s.needsAttention} still stuck after 2+ reminders` : ""}.
+            {s.remindedLearners} {tr("learner")}{s.remindedLearners === 1 ? " has" : tr("s have")} {tr("been reminded")}{s.needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: s.needsAttention }) : ""}.
           </p>
         )}
       </Card>
 
       <div className="grid lg:grid-cols-2 gap-5">
         <Card
-          title="Level distribution"
+          title={tr("Level distribution")}
           subtitle={
             data.cefr.start || data.cefr.target
-              ? `Batch goal: ${data.cefr.start ?? "?"} → ${data.cefr.target ?? "?"}`
-              : "Set a starting and goal level on the batch to track progress"
+              ? tr("Batch goal: {{v}} → {{v2}}", { v: data.cefr.start ?? "?", v2: data.cefr.target ?? "?" })
+              : tr("Set a starting and goal level on the batch to track progress")
           }
         >
           <div className="flex flex-col gap-2">
@@ -90,9 +90,9 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
               return (
                 <div key={level} className="flex items-center gap-3 text-sm">
                   <span className="w-20 shrink-0 text-ink">
-                    {level}
-                    {isStart && <span className="ml-1 text-[10px] text-muted">start</span>}
-                    {isTarget && <span className="ml-1 text-[10px] font-semibold text-navy">goal</span>}
+                    {level === "Not placed" ? tr("Not placed") : level}
+                    {isStart && <span className="ml-1 text-[10px] text-muted">{tr("start")}</span>}
+                    {isTarget && <span className="ml-1 text-[10px] font-semibold text-navy">{tr("goal")}</span>}
                   </span>
                   <div className={`flex-1 h-2.5 rounded-full overflow-hidden ${isTarget ? "bg-navy/15" : "bg-rule"}`}>
                     <div className="h-full rounded-full bg-navy" style={{ width: `${(n / maxCefr) * 100}%` }} />
@@ -103,14 +103,14 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
             })}
           </div>
         </Card>
-        <Card title="Weekly active learners" subtitle="Last 8 weeks">
-          <WeeklyBars data={data.weeklyActive.map((w) => ({ week: w.week, value: w.activeLearners }))} valueLabel="active learners" />
+        <Card title={tr("Weekly active learners")} subtitle={tr("Last 8 weeks")}>
+          <WeeklyBars data={data.weeklyActive.map((w) => ({ week: w.week, value: w.activeLearners }))} valueLabel={tr("active learners")} />
         </Card>
       </div>
 
-      <Card title="Skills" subtitle="Average accuracy across the batch — the lowest is where to focus">
+      <Card title={tr("Skills")} subtitle={tr("Average accuracy across the batch — the lowest is where to focus")}>
         {data.skills.length === 0 ? (
-          <p className="text-sm text-muted">No practice graded yet.</p>
+          <p className="text-sm text-muted">{tr("No practice graded yet.")}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(() => {
@@ -119,10 +119,10 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
                 <div key={sk.skill} className={`rounded-input px-3 py-2.5 ${sk.skill === weakest ? "bg-warning/10 border border-warning/30" : "bg-paper-warm/60"}`}>
                   <p className="text-xs text-muted">
                     {SKILL_LABEL[sk.skill] ?? sk.skill}
-                    {sk.skill === weakest && " · weakest"}
+                    {sk.skill === weakest && tr(" · weakest")}
                   </p>
                   <p className="text-xl font-display font-bold text-ink">{sk.accuracy === null ? "—" : `${sk.accuracy}%`}</p>
-                  <p className="text-[11px] text-muted">{sk.avgMinutes} min avg</p>
+                  <p className="text-[11px] text-muted">{sk.avgMinutes} {tr("min avg")}</p>
                 </div>
               ));
             })()}
@@ -130,21 +130,21 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
         )}
       </Card>
 
-      <Card title="Learners" subtitle="Most at risk first — combines status, time left on their access, and distance from the goal">
+      <Card title={tr("Learners")} subtitle={tr("Most at risk first — combines status, time left on their access, and distance from the goal")}>
         {data.learners.length === 0 ? (
-          <p className="text-sm text-muted">No learners in this batch yet.</p>
+          <p className="text-sm text-muted">{tr("No learners in this batch yet.")}</p>
         ) : (
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-2 py-2">Learner</th>
-                  <th className="px-2 py-2">Status</th>
-                  <th className="px-2 py-2">Level</th>
-                  <th className="px-2 py-2">Sessions</th>
-                  <th className="px-2 py-2">Last active</th>
-                  <th className="px-2 py-2">License</th>
-                  <th className="px-2 py-2">Reminders</th>
+                  <th className="px-2 py-2">{tr("Learner")}</th>
+                  <th className="px-2 py-2">{tr("Status")}</th>
+                  <th className="px-2 py-2">{tr("Level")}</th>
+                  <th className="px-2 py-2">{tr("Sessions")}</th>
+                  <th className="px-2 py-2">{tr("Last active")}</th>
+                  <th className="px-2 py-2">{tr("License")}</th>
+                  <th className="px-2 py-2">{tr("Reminders")}</th>
                 </tr>
               </thead>
               <tbody>

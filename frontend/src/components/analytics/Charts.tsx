@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Bucket } from "@/api/analytics";
 
+import { tr } from "@/i18n/tr";
 export function Card({ title, subtitle, children, actions }: { title: string; subtitle?: string; children: ReactNode; actions?: ReactNode }) {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4 break-inside-avoid">
@@ -27,7 +28,7 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 }
 
 // Horizontal bars, largest first. Hidden (small) groups are listed without a number.
-export function BarList({ data, label, emptyText = "No data yet." }: { data: Bucket[]; label: (key: string) => string; emptyText?: string }) {
+export function BarList({ data, label, emptyText = tr("No data yet.") }: { data: Bucket[]; label: (key: string) => string; emptyText?: string }) {
   const known = data.filter((d) => d.key !== "unknown");
   const unknown = data.find((d) => d.key === "unknown");
   const max = Math.max(1, ...known.map((d) => d.count ?? 0));
@@ -52,7 +53,7 @@ export function BarList({ data, label, emptyText = "No data yet." }: { data: Buc
       {(hidden.length > 0 || unknown) && (
         <p className="text-[11px] text-muted pt-1">
           {hidden.length > 0 && `${hidden.map((h) => label(h.key)).join(", ")}: fewer than 5 (hidden for privacy). `}
-          {unknown && `${unknown.count} not answered.`}
+          {unknown && tr("{{v}} not answered.", { v: unknown.count })}
         </p>
       )}
     </div>
@@ -66,7 +67,7 @@ export function WeeklyBars({ data, valueLabel }: { data: { week: string; value: 
     <div className="flex flex-col gap-2">
       <div className="flex items-end gap-1.5 h-36">
         {data.map((d) => (
-          <div key={d.week} className="flex-1 flex flex-col items-center justify-end gap-1 h-full" title={`${d.value} ${valueLabel} · week of ${d.week}`}>
+          <div key={d.week} className="flex-1 flex flex-col items-center justify-end gap-1 h-full" title={tr("{{value}} {{valueLabel}} · week of {{week}}", { value: d.value, valueLabel: valueLabel, week: d.week })}>
             <span className="text-[10px] text-muted tabular-nums">{d.value || ""}</span>
             <div className="w-full rounded-t bg-navy/80" style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value ? 4 : 1 }} />
           </div>

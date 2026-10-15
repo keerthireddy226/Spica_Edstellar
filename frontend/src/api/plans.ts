@@ -1,5 +1,6 @@
 import { api, ApiError } from "@/lib/api";
 
+import { tr } from "@/i18n/tr";
 export type PlanTier = "starter" | "business" | "enterprise";
 export type PlanLimitKey = "managers" | "batches";
 export type PlanFeatureKey =
@@ -19,7 +20,7 @@ export type PlanFeatureKey =
   | "data_governance"
   | "account_manager";
 
-export const TIER_LABELS: Record<PlanTier, string> = { starter: "Starter", business: "Business", enterprise: "Enterprise" };
+export const TIER_LABELS: Record<PlanTier, string> = { starter: tr("Starter"), business: tr("Business"), enterprise: tr("Enterprise") };
 
 export interface PlanFeature {
   key: PlanFeatureKey;
@@ -90,22 +91,22 @@ export function endPilot(tenantId: string) {
 }
 
 const FEATURE_LABELS: Record<string, string> = {
-  manager_pools: "Manager license pools",
-  batch_allotments: "Fixed batch allotments",
-  license_requests: "License requests",
-  batch_analytics: "Batch analytics",
-  custom_pool_expiry: "Custom license validity",
-  security_policies: "Security policies",
-  ip_allowlist: "IP allowlist",
-  mfa_enforcement: "Enforced two-step sign-in",
-  audit_log: "The audit log",
-  scheduled_reports: "Scheduled reports",
-  sso: "Single sign-on",
-  api_access: "API and webhooks",
-  data_governance: "Data governance",
-  po_invoicing: "Paying by invoice",
+  manager_pools: tr("Manager license pools"),
+  batch_allotments: tr("Fixed batch allotments"),
+  license_requests: tr("License requests"),
+  batch_analytics: tr("Batch analytics"),
+  custom_pool_expiry: tr("Custom license validity"),
+  security_policies: tr("Security policies"),
+  ip_allowlist: tr("IP allowlist"),
+  mfa_enforcement: tr("Enforced two-step sign-in"),
+  audit_log: tr("The audit log"),
+  scheduled_reports: tr("Scheduled reports"),
+  sso: tr("Single sign-on"),
+  api_access: tr("API and webhooks"),
+  data_governance: tr("Data governance"),
+  po_invoicing: tr("Paying by invoice"),
 };
-const LIMIT_LABELS: Record<string, string> = { managers: "Managers", batches: "Batches" };
+const LIMIT_LABELS: Record<string, string> = { managers: tr("Managers"), batches: tr("Batches") };
 
 // Turns a plan gate from the API into a sentence; null if it wasn't one.
 export function planErrorMessage(err: unknown): string | null {
@@ -113,13 +114,13 @@ export function planErrorMessage(err: unknown): string | null {
   const body = err.body as { error?: string; feature?: string; limit?: string; max?: number; tier?: PlanTier } | null;
   if (body?.error === "plan_feature_locked") {
     const tier = ["custom_pool_expiry", "ip_allowlist", "mfa_enforcement", "sso", "api_access", "data_governance"].includes(body.feature ?? "")
-      ? "Enterprise plan"
-      : "Business plan and above";
-    return `${FEATURE_LABELS[body.feature ?? ""] ?? "This feature"} is available on the ${tier}.`;
+      ? tr("Enterprise plan")
+      : tr("Business plan and above");
+    return tr("{{v}} is available on the {{tier}}.", { v: FEATURE_LABELS[body.feature ?? ""] ?? "This feature", tier: tier });
   }
   if (body?.error === "plan_limit_reached") {
     const what = (LIMIT_LABELS[body.limit ?? ""] ?? "items").toLowerCase();
-    return `Your ${TIER_LABELS[body.tier ?? "starter"]} plan allows up to ${body.max} ${what}. Upgrade to Business for unlimited ${what}.`;
+    return tr("Your {{v}} plan allows up to {{max}} {{what}}. Upgrade to Business for unlimited {{what2}}.", { v: TIER_LABELS[body.tier ?? "starter"], max: body.max, what: what, what2: what });
   }
   return null;
 }

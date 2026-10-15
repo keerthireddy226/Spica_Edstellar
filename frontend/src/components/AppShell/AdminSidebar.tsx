@@ -5,6 +5,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import type { StaffPermissions } from "@/api/staff";
 
+import { tr } from "@/i18n/tr";
 // Four genuinely different nav sets, one per non-learner role — each sees
 // strictly less than the role above it: Super Admin manages every org and
 // every Admin; an Admin only sees organizations assigned to them; an Org
@@ -13,59 +14,59 @@ import type { StaffPermissions } from "@/api/staff";
 type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions };
 
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
-  { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: "Organizations" },
-  { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: "Admins" },
-  { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
-  { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: "Managers" },
-  { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: "Learners" },
-  { to: ROUTES.SUPER_INSIGHTS, icon: Lightbulb, label: "Insights" },
-  { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: "Billing" },
-  { to: ROUTES.SUPER_PLANS, icon: Gem, label: "Plans & pricing" },
-  { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: "Placement reviews" },
-  { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: "Audit log" },
-  { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: "System" },
-  { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
-  { to: ROUTES.ADMIN_PROFILE, icon: User, label: "Profile" },
+  { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
+  { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
+  { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: tr("Admins") },
+  { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
+  { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: tr("Managers") },
+  { to: ROUTES.ADMIN_LEARNERS, icon: Users, label: tr("Learners") },
+  { to: ROUTES.SUPER_INSIGHTS, icon: Lightbulb, label: tr("Insights") },
+  { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: tr("Billing") },
+  { to: ROUTES.SUPER_PLANS, icon: Gem, label: tr("Plans & pricing") },
+  { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: tr("Placement reviews") },
+  { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: tr("Audit log") },
+  { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: tr("System") },
+  { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
+  { to: ROUTES.ADMIN_PROFILE, icon: User, label: tr("Profile") },
 ];
 
 const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
-  { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: "Organizations" },
-  { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: "Admins", permission: "manageAdmins" },
-  { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: "Org Admins" },
-  { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: "Managers" },
-  { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: "Learners" },
-  { to: ROUTES.ADMIN_CONSOLE_INSIGHTS, icon: Lightbulb, label: "Insights", permission: "viewReports" },
-  { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: "Billing" },
-  { to: ROUTES.ADMIN_CONSOLE_PLANS, icon: Gem, label: "Plans & pricing" },
-  { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: "Placement reviews", permission: "scoreReview" },
-  { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: "Audit log" },
-  { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: "Analytics", permission: "viewReports" },
-  { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: "Profile" },
+  { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
+  { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
+  { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: tr("Admins"), permission: "manageAdmins" },
+  { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
+  { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: tr("Managers") },
+  { to: ROUTES.ADMIN_CONSOLE_USERS, icon: Users, label: tr("Learners") },
+  { to: ROUTES.ADMIN_CONSOLE_INSIGHTS, icon: Lightbulb, label: tr("Insights"), permission: "viewReports" },
+  { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: tr("Billing") },
+  { to: ROUTES.ADMIN_CONSOLE_PLANS, icon: Gem, label: tr("Plans & pricing") },
+  { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: tr("Placement reviews"), permission: "scoreReview" },
+  { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: tr("Audit log") },
+  { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: tr("Analytics"), permission: "viewReports" },
+  { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: tr("Profile") },
 ];
 
 const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
-  { to: ROUTES.ORG_ADMIN_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: "Batches" },
-  { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: "Managers" },
-  { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: "Learners" },
-  { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: "Licenses" },
-  { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: "Audit log" },
-  { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: "Plan" },
-  { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: "Settings" },
-  { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Plug, label: "Integrations" },
-  { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: "Analytics" },
-  { to: ROUTES.ORG_ADMIN_PROFILE, icon: User, label: "Profile" },
+  { to: ROUTES.ORG_ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
+  { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: tr("Batches") },
+  { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers") },
+  { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners") },
+  { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses") },
+  { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: tr("Audit log") },
+  { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: tr("Plan") },
+  { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: tr("Settings") },
+  { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Plug, label: tr("Integrations") },
+  { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
+  { to: ROUTES.ORG_ADMIN_PROFILE, icon: User, label: tr("Profile") },
 ];
 
 const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
-  { to: ROUTES.MANAGER_DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { to: ROUTES.MANAGER_BATCHES, icon: Layers, label: "Batches" },
-  { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: "Learners" },
-  { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: "Analytics" },
-  { to: ROUTES.MANAGER_ACTIVITY, icon: ScrollText, label: "Activity" },
-  { to: ROUTES.MANAGER_PROFILE, icon: User, label: "Profile" },
+  { to: ROUTES.MANAGER_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
+  { to: ROUTES.MANAGER_BATCHES, icon: Layers, label: tr("Batches") },
+  { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: tr("Learners") },
+  { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
+  { to: ROUTES.MANAGER_ACTIVITY, icon: ScrollText, label: tr("Activity") },
+  { to: ROUTES.MANAGER_PROFILE, icon: User, label: tr("Profile") },
 ];
 
 const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
@@ -110,8 +111,8 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
             <GraduationCap size={28} strokeWidth={1.8} />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-logo-primary font-logo font-bold text-xl">Spica</span>
-            <span className="text-logo-accent font-logo italic text-xs -mt-0.5">by Edstellar</span>
+            <span className="text-logo-primary font-logo font-bold text-xl">{tr("Spica")}</span>
+            <span className="text-logo-accent font-logo italic text-xs -mt-0.5">{tr("by Edstellar")}</span>
           </span>
         </div>
 

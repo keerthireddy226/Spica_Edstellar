@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { cancelPaymentOrder, confirmPaymentOrder } from "@/api/payments";
 import { ROUTES } from "@/constants/routes";
 
+import { tr } from "@/i18n/tr";
 // Every checkout ends here. The server — not this page — decides whether the
 // payment really happened (Stripe session lookup / Razorpay signature / test
 // mode), then adds the licenses and issues the invoice.
@@ -50,23 +51,20 @@ export function CheckoutReturn() {
   }, [orderId]);
 
   const backTo = user?.role === "org_admin" ? ROUTES.ORG_ADMIN_LICENSES : ROUTES.PROFILE;
-  const backLabel = user?.role === "org_admin" ? "Go to Licenses" : "Go to your profile";
+  const backLabel = user?.role === "org_admin" ? tr("Go to Licenses") : tr("Go to your profile");
 
   return (
     <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
       <div className="bg-surface border border-rule rounded-card shadow-sm p-8 max-w-md w-full flex flex-col items-center text-center gap-4">
         {state === "confirm-test" && (
           <>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-warning/15 text-navy-deep">Test mode — no real charge</span>
-            <h1 className="font-display font-bold text-xl text-ink">Simulate payment</h1>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-warning/15 text-navy-deep">{tr("Test mode — no real charge")}</span>
+            <h1 className="font-display font-bold text-xl text-ink">{tr("Simulate payment")}</h1>
             <p className="text-sm text-muted">
-              No payment provider keys are configured yet, so this checkout is simulated. Real payments go through Razorpay (India) or Stripe once keys
-              are added.
-            </p>
+              {tr("No payment provider keys are configured yet, so this checkout is simulated. Real payments go through Razorpay (India) or Stripe once keys are added.")}</p>
             <div className="flex gap-3 w-full">
               <Button onClick={confirm} className="flex-1">
-                Simulate successful payment
-              </Button>
+                {tr("Simulate successful payment")}</Button>
               <Button
                 variant="secondary"
                 onClick={() => {
@@ -74,32 +72,31 @@ export function CheckoutReturn() {
                   setState("cancelled");
                 }}
               >
-                Cancel
-              </Button>
+                {tr("Cancel")}</Button>
             </div>
           </>
         )}
         {state === "working" && (
           <>
             <Loader2 size={36} className="text-navy animate-spin" />
-            <p className="text-sm text-muted">Confirming your payment…</p>
+            <p className="text-sm text-muted">{tr("Confirming your payment…")}</p>
           </>
         )}
         {state === "paid" && result && (
           <>
             <CheckCircle2 size={44} className="text-success" />
-            <h1 className="font-display font-bold text-xl text-ink">Payment successful</h1>
+            <h1 className="font-display font-bold text-xl text-ink">{tr("Payment successful")}</h1>
             <p className="text-sm text-muted">
               {result.kind === "individual_plan"
-                ? `${result.quantity} month${result.quantity === 1 ? "" : "s"} of full access added to your account.`
-                : `${result.quantity} license${result.quantity === 1 ? "" : "s"} added to your pool — assign them from the Licenses page.`}
+                ? tr("{{quantity}} month{{v}} of full access added to your account.", { quantity: result.quantity, v: result.quantity === 1 ? "" : "s" })
+                : tr("{{quantity}} license{{v}} added to your pool — assign them from the Licenses page.", { quantity: result.quantity, v: result.quantity === 1 ? "" : "s" })}
             </p>
             <div className="flex gap-3 w-full">
               <Link to={backTo} className="flex-1">
                 <Button className="w-full">{backLabel}</Button>
               </Link>
               <Link to={`/invoice/${result.invoiceId}`} target="_blank">
-                <Button variant="secondary">View invoice</Button>
+                <Button variant="secondary">{tr("View invoice")}</Button>
               </Link>
             </div>
           </>
@@ -107,13 +104,13 @@ export function CheckoutReturn() {
         {(state === "failed" || state === "cancelled") && (
           <>
             <XCircle size={44} className={state === "failed" ? "text-error" : "text-muted"} />
-            <h1 className="font-display font-bold text-xl text-ink">{state === "failed" ? "Payment not confirmed" : "Checkout cancelled"}</h1>
+            <h1 className="font-display font-bold text-xl text-ink">{state === "failed" ? tr("Payment not confirmed") : tr("Checkout cancelled")}</h1>
             <p className="text-sm text-muted">
               {state === "failed"
-                ? "We couldn't verify this payment. If money left your account, it will be matched automatically or refunded — contact support with your order reference."
-                : "No payment was taken."}
+                ? tr("We couldn't verify this payment. If money left your account, it will be matched automatically or refunded — contact support with your order reference.")
+                : tr("No payment was taken.")}
             </p>
-            {state === "failed" && <p className="text-xs text-muted font-mono">Order {orderId.slice(0, 8)}</p>}
+            {state === "failed" && <p className="text-xs text-muted font-mono">{tr("Order")}{" "}{orderId.slice(0, 8)}</p>}
             <Link to={backTo}>
               <Button variant="secondary">{backLabel}</Button>
             </Link>

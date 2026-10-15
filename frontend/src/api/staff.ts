@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type { LearnerAccess } from "@/api/licenses";
 import type { PlanTier } from "@/api/plans";
 
+import { tr } from "@/i18n/tr";
 // Edstellar staff consoles (Super Admin and Admin).
 
 export interface StaffPermissions {
@@ -231,11 +232,11 @@ export function money(amount: number, currency: string) {
 export function ago(iso: string | null | undefined): string {
   if (!iso) return "never";
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 60) return mins <= 1 ? "just now" : `${mins} min ago`;
+  if (mins < 60) return mins <= 1 ? tr("just now") : tr("{{mins}} min ago", { mins: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (days < 30) return tr("{{days}} day{{v}} ago", { days: days, v: days === 1 ? "" : "s" });
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 

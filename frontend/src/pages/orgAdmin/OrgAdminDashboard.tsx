@@ -9,11 +9,12 @@ import { ROUTES } from "@/constants/routes";
 import { KeyRound } from "lucide-react";
 import type { ActivityKind } from "@/api/admin";
 
+import { tr } from "@/i18n/tr";
 const SESSION_TYPE_LABEL: Record<string, string> = {
-  practice: "Practice",
-  mocktest: "Mock Test",
-  placement: "Placement",
-  coach: "Coach Mode",
+  practice: tr("Practice"),
+  mocktest: tr("Mock Test"),
+  placement: tr("Placement"),
+  coach: tr("Coach Mode"),
 };
 
 const ACTIVITY_ICON: Record<ActivityKind, LucideIcon> = {
@@ -24,14 +25,14 @@ const ACTIVITY_ICON: Record<ActivityKind, LucideIcon> = {
 };
 
 function activitySentence(item: OrgAdminOverview["activityFeed"][number]): string {
-  const who = item.who.trim() || "Someone";
+  const who = item.who.trim() || tr("Someone");
   switch (item.kind) {
     case "signup":
-      return `${who} — ${item.detail === "manager" ? "Manager" : "Learner"} onboarded`;
+      return tr("{{who}} — {{v}} onboarded", { who: who, v: item.detail === "manager" ? "Manager" : "Learner" });
     case "session_completed":
-      return `${who} completed a ${SESSION_TYPE_LABEL[item.detail ?? ""] ?? item.detail} session`;
+      return tr("{{who}} completed a {{v}} session", { who: who, v: SESSION_TYPE_LABEL[item.detail ?? ""] ?? item.detail });
     case "placement":
-      return `${who}'s placement result: ${item.detail === "certified" ? "Certified" : item.detail === "fraud_confirmed" ? "Fraud flagged" : "Pending review"}`;
+      return `${who}'s placement result: ${item.detail === "certified" ? tr("Certified") : item.detail === "fraud_confirmed" ? tr("Fraud flagged") : tr("Pending review")}`;
     default:
       return who;
   }
@@ -40,19 +41,19 @@ function activitySentence(item: OrgAdminOverview["activityFeed"][number]): strin
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const mins = Math.round(ms / 60000);
-  if (mins < 60) return `${Math.max(mins, 0)}m ago`;
+  if (mins < 60) return tr("{{max}}m ago", { max: Math.max(mins, 0) });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return tr("{{hours}}h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  return `${days}d ago`;
+  return tr("{{days}}d ago", { days: days });
 }
 
 function RecentActivity({ data }: { data: OrgAdminOverview["activityFeed"] }) {
   return (
     <div className="bg-navy/5 border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
-      <h3 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">Recent activity</h3>
+      <h3 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">{tr("Recent activity")}</h3>
       {data.length === 0 ? (
-        <p className="text-sm text-muted">Nothing has happened yet.</p>
+        <p className="text-sm text-muted">{tr("Nothing has happened yet.")}</p>
       ) : (
         <div className="flex flex-col gap-3">
           {data.map((item, i) => {
@@ -99,8 +100,7 @@ function OrgNameEditor({ overview, onRenamed }: { overview: OrgAdminOverview; on
         }}
         className="flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors cursor-pointer"
       >
-        <Pencil size={13} /> Rename organization
-      </button>
+        <Pencil size={13} /> {tr("Rename organization")}</button>
     );
   }
 
@@ -143,38 +143,37 @@ export function OrgAdminDashboard() {
   useEffect(() => {
     getOrgOverview()
       .then(setOverview)
-      .catch(() => setError("Could not load your organization."));
+      .catch(() => setError(tr("Could not load your organization.")));
     getOrgLicenseSummary()
       .then(setLicenses)
       .catch(() => {});
   }, []);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!overview) return <p className="text-sm text-muted">Loading…</p>;
+  if (!overview) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{overview.organizationName ?? "Your organization"}</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">{overview.organizationName ?? tr("Your organization")}</h1>
         <div className="mt-1 flex items-center gap-3 flex-wrap">
           <OrgNameEditor overview={overview} onRenamed={(name) => setOverview({ ...overview, organizationName: name })} />
           {overview.onboardedBy && (
-            <span className="text-sm text-muted">· Onboarded by {overview.onboardedBy.name} ({overview.onboardedBy.email})</span>
+            <span className="text-sm text-muted">{tr("· Onboarded by")}{" "}{overview.onboardedBy.name} ({overview.onboardedBy.email})</span>
           )}
         </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Batches" value={overview.totalBatches} icon={Layers} index={0} />
-        <StatCard label="Managers" value={overview.totalManagers} icon={ShieldCheck} index={1} />
-        <StatCard label="Learners" value={overview.totalLearners} icon={Users} index={2} />
-        <StatCard label="Sessions completed today" value={overview.sessionsCompletedToday} icon={CalendarCheck} index={3} />
+        <StatCard label={tr("Batches")} value={overview.totalBatches} icon={Layers} index={0} />
+        <StatCard label={tr("Managers")} value={overview.totalManagers} icon={ShieldCheck} index={1} />
+        <StatCard label={tr("Learners")} value={overview.totalLearners} icon={Users} index={2} />
+        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={3} />
       </div>
 
       {overview.totalBatches === 0 && (
         <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-          No batches yet — create one from the Batches page, then invite learners into it.
-        </p>
+          {tr("No batches yet — create one from the Batches page, then invite learners into it.")}</p>
       )}
 
       {licenses && (
@@ -186,19 +185,19 @@ export function OrgAdminDashboard() {
             <KeyRound size={22} strokeWidth={1.8} />
           </span>
           <div className="flex-1 min-w-0">
-            <p className="font-display font-bold text-ink">Licenses</p>
+            <p className="font-display font-bold text-ink">{tr("Licenses")}</p>
             <p className="text-xs text-muted">
               {licenses.nextPoolExpiry
-                ? `${licenses.nextPoolExpiryQuantity} unassigned expire ${formatShortDate(licenses.nextPoolExpiry)}`
+                ? tr("{{nextPoolExpiryQuantity}} unassigned expire {{formatShortDate}}", { nextPoolExpiryQuantity: licenses.nextPoolExpiryQuantity, formatShortDate: formatShortDate(licenses.nextPoolExpiry) })
                 : "1 license = 1 learner-month"}
             </p>
           </div>
           {(
             [
-              ["Available", licenses.available, "text-ink"],
-              ["Active learners", licenses.activeLearners, "text-success"],
-              ["Ending ≤ 7 days", licenses.expiringSoonLearners, "text-navy-deep"],
-              ["No license", licenses.unlicensedLearners, "text-error"],
+              [tr("Available"), licenses.available, "text-ink"],
+              [tr("Active learners"), licenses.activeLearners, "text-success"],
+              [tr("Ending ≤ 7 days"), licenses.expiringSoonLearners, "text-navy-deep"],
+              [tr("No license"), licenses.unlicensedLearners, "text-error"],
             ] as const
           ).map(([label, value, cls]) => (
             <div key={label} className="text-center min-w-20">

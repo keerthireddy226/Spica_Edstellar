@@ -22,6 +22,7 @@ import {
 } from "@/api/manager";
 import { managerCertificates, managerIssueCertificate, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
 
+import { tr } from "@/i18n/tr";
 function fmt(d: string) {
   return new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
@@ -51,7 +52,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
         setData(d);
         setCloneName(`${d.batch.name} (next)`);
       })
-      .catch(() => setMsg({ ok: false, text: "Could not load this batch." }));
+      .catch(() => setMsg({ ok: false, text: tr("Could not load this batch.") }));
     managerCertificates(batchId)
       .then((r) => setCerts(new Map(r.certificates.filter((c) => !c.revokedAt && c.userId).map((c) => [c.userId!, c]))))
       .catch(() => {});
@@ -68,7 +69,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
       load();
       onChanged();
     } catch (err) {
-      setMsg({ ok: false, text: planErrorMessage(err) ?? "That didn't work. Please try again." });
+      setMsg({ ok: false, text: planErrorMessage(err) ?? tr("That didn't work. Please try again.") });
     } finally {
       setBusy(false);
     }
@@ -76,8 +77,8 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
 
   if (!data) {
     return (
-      <DetailModal title="Batch" onClose={onClose}>
-        <p className={`text-sm ${msg ? "text-error" : "text-muted"}`}>{msg?.text ?? "Loading…"}</p>
+      <DetailModal title={tr("Batch")} onClose={onClose}>
+        <p className={`text-sm ${msg ? "text-error" : "text-muted"}`}>{msg?.text ?? tr("Loading…")}</p>
       </DetailModal>
     );
   }
@@ -96,10 +97,10 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
         </>
       }
       stats={[
-        { label: "Learners", value: b.capacity ? `${b.licenses.learners} / ${b.capacity}` : b.licenses.learners },
-        { label: "Licensed now", value: b.licenses.licensed, hint: `${b.licenses.unlicensed} without a license` },
-        { label: "Fixed licenses left", value: b.fixedLicenses == null ? "—" : Math.max(0, b.fixedLicenses - b.fixedLicensesUsed), hint: b.fixedLicenses == null ? "Uses your pool" : `of ${b.fixedLicenses}` },
-        { label: "Ending soon", value: b.licenses.endingSoon, hint: "Access ends within 14 days" },
+        { label: tr("Learners"), value: b.capacity ? `${b.licenses.learners} / ${b.capacity}` : b.licenses.learners },
+        { label: tr("Licensed now"), value: b.licenses.licensed, hint: tr("{{unlicensed}} without a license", { unlicensed: b.licenses.unlicensed }) },
+        { label: tr("Fixed licenses left"), value: b.fixedLicenses == null ? "—" : Math.max(0, b.fixedLicenses - b.fixedLicensesUsed), hint: b.fixedLicenses == null ? tr("Uses your pool") : `of ${b.fixedLicenses}` },
+        { label: tr("Ending soon"), value: b.licenses.endingSoon, hint: tr("Access ends within 14 days") },
       ]}
       onClose={onClose}
       wide
@@ -107,8 +108,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
         <div className="flex gap-2 flex-wrap justify-end">
           {b.status !== "archived" && (
             <button className={pill} disabled={busy} onClick={() => setEditing(true)}>
-              <Pencil size={14} /> Edit
-            </button>
+              <Pencil size={14} /> {tr("Edit")}</button>
           )}
           {b.status === "active" && (
             <button
@@ -118,18 +118,14 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                 run(
                   () => managerCompleteBatch(b.id),
                   (r) =>
-                    `${b.name} is complete.${r.certificatesIssued ? ` ${r.certificatesIssued} certificate${r.certificatesIssued === 1 ? "" : "s"} issued.` : ""}${
-                      r.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to the organization.` : ""
-                    }`,
+                    tr("{{name}} is complete.{{v}}{{v2}}", { name: b.name, v: r.certificatesIssued ? ` ${r.certificatesIssued} certificate${r.certificatesIssued === 1 ? "" : "s"} issued.` : "", v2: r.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to the organization.` : "" }),
                 )
               }
             >
-              <CheckCircle2 size={14} /> Complete
-            </button>
+              <CheckCircle2 size={14} /> {tr("Complete")}</button>
           )}
           <button className={pill} disabled={busy} onClick={() => setCloning((c) => !c)}>
-            <Copy size={14} /> Start a new batch from this
-          </button>
+            <Copy size={14} /> {tr("Start a new batch from this")}</button>
         </div>
       }
     >
@@ -140,47 +136,46 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
             <input value={cloneName} onChange={(e) => setCloneName(e.target.value)} className="flex-1 rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             <Button
               disabled={busy || !cloneName.trim()}
-              onClick={() => run(() => managerCloneBatch(b.id, { name: cloneName.trim() }), () => `${cloneName.trim()} created with the same goals and settings.`).then(() => setCloning(false))}
+              onClick={() => run(() => managerCloneBatch(b.id, { name: cloneName.trim() }), () => tr("{{trim}} created with the same goals and settings.", { trim: cloneName.trim() })).then(() => setCloning(false))}
               className="!px-3.5 !py-2"
             >
-              Create
-            </Button>
+              {tr("Create")}</Button>
           </div>
         )}
 
         <BatchDetailsGrid
           batch={b}
           learnerCount={data.learners.filter((l) => l.active).length}
-          managedBy={b.managerNames.length > 1 ? b.managerNames.join(", ") : "Just you"}
+          managedBy={b.managerNames.length > 1 ? b.managerNames.join(", ") : tr("Just you")}
         />
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Licenses</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Licenses")}</p>
           <div className="border border-rule rounded-input px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
-              <p className="text-xs text-muted">Fixed licenses</p>
+              <p className="text-xs text-muted">{tr("Fixed licenses")}</p>
               <p className="text-ink">
-                {b.fixedLicenses === null ? "None — your pool" : `${b.fixedLicensesUsed} used of ${b.fixedLicenses} · ${Math.max(0, b.fixedLicenses - b.fixedLicensesUsed)} left`}
+                {b.fixedLicenses === null ? tr("None — your pool") : tr("{{fixedLicensesUsed}} used of {{fixedLicenses}} · {{max}} left", { fixedLicensesUsed: b.fixedLicensesUsed, fixedLicenses: b.fixedLicenses, max: Math.max(0, b.fixedLicenses - b.fixedLicensesUsed) })}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted">From your pool</p>
-              <p className="text-ink">{b.licenses.fromPool} license-month{b.licenses.fromPool === 1 ? "" : "s"}</p>
+              <p className="text-xs text-muted">{tr("From your pool")}</p>
+              <p className="text-ink">{b.licenses.fromPool} {tr("license-month")}{b.licenses.fromPool === 1 ? "" : "s"}</p>
             </div>
             <div>
-              <p className="text-xs text-muted">Learners licensed</p>
+              <p className="text-xs text-muted">{tr("Learners licensed")}</p>
               <p className="text-ink">
-                {b.licenses.licensed} of {b.licenses.learners}
-                {b.licenses.endingSoon ? ` · ${b.licenses.endingSoon} ending soon` : ""}
+                {b.licenses.licensed} {tr("of")}{" "}{b.licenses.learners}
+                {b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted">Without a license</p>
+              <p className="text-xs text-muted">{tr("Without a license")}</p>
               <p className={b.licenses.unlicensed ? "text-error" : "text-ink"}>{b.licenses.unlicensed}</p>
             </div>
             {b.status === "active" && poolLeft !== null && poolLeft > 0 && (
               <div className="col-span-2 sm:col-span-4 flex items-center gap-2 flex-wrap pt-3 border-t border-rule">
-                <span className="text-xs text-muted">Set aside licenses from your pool ({poolLeft} left) for this batch only:</span>
+                <span className="text-xs text-muted">{tr("Set aside licenses from your pool (")}{poolLeft} {tr("left) for this batch only:")}</span>
                 <input
                   type="number"
                   min={1}
@@ -195,21 +190,20 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                   onClick={() =>
                     run(
                       () => managerMovePoolToBatch(b.id, Math.floor(Number(moveQty))),
-                      () => `${Math.floor(Number(moveQty))} licenses moved from your pool to ${b.name}.`,
+                      () => tr("{{floor}} licenses moved from your pool to {{name}}.", { floor: Math.floor(Number(moveQty)), name: b.name }),
                     ).then(() => setMoveQty(""))
                   }
                 >
-                  Move to batch
-                </button>
+                  {tr("Move to batch")}</button>
               </div>
             )}
           </div>
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">Learners ({data.learners.length})</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-2">{tr("Learners (")}{data.learners.length})</p>
           {data.learners.length === 0 ? (
-            <p className="text-sm text-muted">No learners in this batch yet.</p>
+            <p className="text-sm text-muted">{tr("No learners in this batch yet.")}</p>
           ) : (
             <div className="flex flex-col gap-2">
               {data.learners.map((l) => {
@@ -224,9 +218,9 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                       <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                       <p className="text-xs text-muted">
                         {[l.employeeId, l.department, l.jobTitle].filter(Boolean).map((x) => `${x} · `).join("")}
-                        {l.sessionCount} session{l.sessionCount === 1 ? "" : "s"}
-                        {!l.hasLoggedIn ? " · invite pending" : ""}
-                        {!l.active ? " · deactivated" : ""}
+                        {l.sessionCount} {tr("session")}{l.sessionCount === 1 ? "" : "s"}
+                        {!l.hasLoggedIn ? tr(" · invite pending") : ""}
+                        {!l.active ? tr(" · deactivated") : ""}
                       </p>
                     </div>
                     {l.license && <LicenseStatusPill license={l.license} />}
@@ -234,16 +228,14 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                       {cert ? (
                         <span className="flex items-center gap-1">
                           <a href={`/certificate/${cert.code}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
-                            <Award size={14} /> Certificate
-                          </a>
-                          <button onClick={() => managerRevokeCertificate(cert.id).then(load)} title="Revoke" className="text-muted hover:text-error px-1 cursor-pointer">
+                            <Award size={14} /> {tr("Certificate")}</a>
+                          <button onClick={() => managerRevokeCertificate(cert.id).then(load)} title={tr("Revoke")} className="text-muted hover:text-error px-1 cursor-pointer">
                             ×
                           </button>
                         </span>
                       ) : (
                         <button onClick={() => managerIssueCertificate(l.id).then(load)} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-                          Issue certificate
-                        </button>
+                          {tr("Issue certificate")}</button>
                       )}
                     </span>
                   </div>
@@ -264,15 +256,15 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
       )}
       {editing && (
         <BatchFormModal
-          title="Edit batch"
-          submitLabel="Save changes"
+          title={tr("Edit batch")}
+          submitLabel={tr("Save changes")}
           initial={{ ...b, targetCutScore: b.targetCutScore != null ? Number(b.targetCutScore) : null }}
-          note="Fixed licenses are set by your Org Admin."
+          note={tr("Fixed licenses are set by your Org Admin.")}
           onClose={() => setEditing(false)}
           onSubmit={async (d) => {
             await managerUpdateBatch(b.id, d);
             setEditing(false);
-            setMsg({ ok: true, text: "Batch updated." });
+            setMsg({ ok: true, text: tr("Batch updated.") });
             load();
             onChanged();
           }}

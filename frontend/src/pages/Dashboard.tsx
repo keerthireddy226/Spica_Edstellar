@@ -42,6 +42,7 @@ import { ApiError } from "@/lib/api";
 import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
+import { tr } from "@/i18n/tr";
 const SKILL_ICONS: Record<SkillTag, typeof Headphones> = {
   listening: Headphones,
   speaking: Mic,
@@ -178,10 +179,10 @@ function QuickLinks() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const links = [
-    { to: ROUTES.MODULES, label: t("nav.modules"), hint: "Practise one skill at a time", icon: Layers, color: "#b5653f" },
-    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: "Full timed mock exams", icon: ClipboardCheck, color: "#c9965c" },
-    { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: "Chat in English with your coach", icon: MessageCircle, color: "#6e9660" },
-    { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: "Your skills, streaks and badges", icon: BarChart3, color: "#a8613f" },
+    { to: ROUTES.MODULES, label: t("nav.modules"), hint: tr("Practise one skill at a time"), icon: Layers, color: "#b5653f" },
+    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock exams"), icon: ClipboardCheck, color: "#c9965c" },
+    { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: tr("Chat in English with your coach"), icon: MessageCircle, color: "#6e9660" },
+    { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: tr("Your skills, streaks and badges"), icon: BarChart3, color: "#a8613f" },
   ];
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -351,8 +352,7 @@ function LearnerDashboard() {
           color="var(--color-accent)"
           action={
             <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
-              {doneToday}/{todaysTasks.length} done
-            </span>
+              {doneToday}/{todaysTasks.length} {tr("done")}</span>
           }
         >
           <TodaysTasksList tasks={todaysTasks} />
@@ -377,7 +377,7 @@ function LearnerDashboard() {
         title={t("dashboardHome.achievementsTitle")}
         icon={Trophy}
         color="#c9965c"
-        action={<span className="text-xs text-muted">{unlocked} of {badges.length} earned</span>}
+        action={<span className="text-xs text-muted">{unlocked} {tr("of")}{" "}{badges.length} {tr("earned")}</span>}
       >
         <AchievementBadges badges={badges} />
       </LearnerCard>

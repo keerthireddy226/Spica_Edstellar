@@ -6,6 +6,7 @@ import { planErrorMessage } from "@/api/plans";
 import type { CefrLevel } from "@/api/orgAdmin";
 import { EXAM_FOCUS_LABEL, type BatchDetails, type ExamFocus } from "@/api/details";
 
+import { tr } from "@/i18n/tr";
 const CEFR: CefrLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -73,7 +74,7 @@ export function BatchFormModal({
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (startCefr && targetCefr && CEFR.indexOf(targetCefr) <= CEFR.indexOf(startCefr)) {
-      setError("The goal level must be above the starting level.");
+      setError(tr("The goal level must be above the starting level."));
       return;
     }
     setSaving(true);
@@ -99,12 +100,12 @@ export function BatchFormModal({
       setError(
         planErrorMessage(err) ??
           ((err instanceof ApiError && err.message === "not_enough_licenses") || (err instanceof Error && err.message === "too_many")
-            ? "Not enough licenses left in your pool for that many."
+            ? tr("Not enough licenses left in your pool for that many.")
             : err instanceof ApiError && err.message === "insufficient_unreserved"
-            ? "Not enough unreserved licenses for that many fixed licenses."
+            ? tr("Not enough unreserved licenses for that many fixed licenses.")
             : err instanceof ApiError && err.message === "validation_error"
-              ? "Some values are out of range. Check the numbers and try again."
-              : "Couldn't save the batch."),
+              ? tr("Some values are out of range. Check the numbers and try again.")
+              : tr("Couldn't save the batch.")),
       );
       setSaving(false);
     }
@@ -120,29 +121,29 @@ export function BatchFormModal({
           </button>
         </div>
         <form onSubmit={submit} className="px-6 py-5 flex flex-col gap-6 overflow-y-auto">
-          <Section title="About the batch">
-            <Field label="Batch name" wide>
-              <input required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Support team — November intake" className={inputClass} />
+          <Section title={tr("About the batch")}>
+            <Field label={tr("Batch name")} wide>
+              <input required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("e.g. Support team — November intake")} className={inputClass} />
             </Field>
-            <Field label="Description" wide>
+            <Field label={tr("Description")} wide>
               <textarea
                 rows={2}
                 maxLength={1000}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Who this batch is for and what it should achieve"
+                placeholder={tr("Who this batch is for and what it should achieve")}
                 className={inputClass}
               />
             </Field>
-            <Field label="Department or team">
-              <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="e.g. Customer Support" className={inputClass} />
+            <Field label={tr("Department or team")}>
+              <input value={department} onChange={(e) => setDepartment(e.target.value)} placeholder={tr("e.g. Customer Support")} className={inputClass} />
             </Field>
-            <Field label="Location or site">
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Hyderabad office" className={inputClass} />
+            <Field label={tr("Location or site")}>
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={tr("e.g. Hyderabad office")} className={inputClass} />
             </Field>
-            <Field label="Exam or focus" wide>
+            <Field label={tr("Exam or focus")} wide>
               <select value={examFocus} onChange={(e) => setExamFocus(e.target.value as ExamFocus | "")} className={`${inputClass} cursor-pointer`}>
-                <option value="">Not set</option>
+                <option value="">{tr("Not set")}</option>
                 {(Object.keys(EXAM_FOCUS_LABEL) as ExamFocus[]).map((m) => (
                   <option key={m} value={m}>
                     {EXAM_FOCUS_LABEL[m]}
@@ -152,76 +153,74 @@ export function BatchFormModal({
             </Field>
           </Section>
 
-          <Section title="Schedule and goals">
-            <Field label="Start date">
+          <Section title={tr("Schedule and goals")}>
+            <Field label={tr("Start date")}>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
             </Field>
-            <Field label="Duration (months)">
-              <input type="number" min={1} max={36} value={durationMonths} onChange={(e) => setDurationMonths(e.target.value)} placeholder="e.g. 3" className={inputClass} />
+            <Field label={tr("Duration (months)")}>
+              <input type="number" min={1} max={36} value={durationMonths} onChange={(e) => setDurationMonths(e.target.value)} placeholder={tr("e.g. 3")} className={inputClass} />
             </Field>
-            <Field label="Starting level">
+            <Field label={tr("Starting level")}>
               <select value={startCefr} onChange={(e) => setStartCefr(e.target.value as CefrLevel | "")} className={`${inputClass} cursor-pointer`}>
-                <option value="">Not set</option>
+                <option value="">{tr("Not set")}</option>
                 {CEFR.map((l) => (
                   <option key={l}>{l}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Goal level">
+            <Field label={tr("Goal level")}>
               <select value={targetCefr} onChange={(e) => setTargetCefr(e.target.value as CefrLevel | "")} className={`${inputClass} cursor-pointer`}>
-                <option value="">Not set</option>
+                <option value="">{tr("Not set")}</option>
                 {CEFR.map((l) => (
                   <option key={l}>{l}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Target cut score %">
-              <input type="number" min={0} max={100} value={targetCutScore} onChange={(e) => setTargetCutScore(e.target.value)} placeholder="e.g. 60" className={inputClass} />
+            <Field label={tr("Target cut score %")}>
+              <input type="number" min={0} max={100} value={targetCutScore} onChange={(e) => setTargetCutScore(e.target.value)} placeholder={tr("e.g. 60")} className={inputClass} />
             </Field>
-            <Field label="Practice goal (minutes a week)">
+            <Field label={tr("Practice goal (minutes a week)")}>
               <input
                 type="number"
                 min={10}
                 max={2000}
                 value={weeklyMinutesGoal}
                 onChange={(e) => setWeeklyMinutesGoal(e.target.value)}
-                placeholder="e.g. 120"
+                placeholder={tr("e.g. 120")}
                 className={inputClass}
               />
             </Field>
           </Section>
 
-          <Section title="Seats and licenses">
-            <Field label="Capacity (most learners)" hint="Leave empty for no limit.">
-              <input type="number" min={1} max={10000} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="No limit" className={inputClass} />
+          <Section title={tr("Seats and licenses")}>
+            <Field label={tr("Capacity (most learners)")} hint={tr("Leave empty for no limit.")}>
+              <input type="number" min={1} max={10000} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder={tr("No limit")} className={inputClass} />
             </Field>
-            <Field label="License months per new learner" hint="Pre-filled when inviting learners into this batch.">
+            <Field label={tr("License months per new learner")} hint={tr("Pre-filled when inviting learners into this batch.")}>
               <input
                 type="number"
                 min={0}
                 max={24}
                 value={defaultLicenseMonths}
                 onChange={(e) => setDefaultLicenseMonths(e.target.value)}
-                placeholder="e.g. 3"
+                placeholder={tr("e.g. 3")}
                 className={inputClass}
               />
             </Field>
             {extra}
             <label className="flex items-center gap-2 text-sm text-ink cursor-pointer sm:col-span-2">
               <input type="checkbox" checked={autoReminders} onChange={(e) => setAutoReminders(e.target.checked)} className="h-4 w-4 accent-navy" />
-              Send learners automatic practice reminders
-            </label>
+              {tr("Send learners automatic practice reminders")}</label>
           </Section>
 
           {note && <p className="text-xs text-muted">{note}</p>}
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={saving} className="flex-1">
-              {saving ? "Saving…" : submitLabel}
+              {saving ? tr("Saving…") : submitLabel}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>

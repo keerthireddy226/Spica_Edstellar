@@ -8,6 +8,7 @@ import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ago, shortDate } from "@/api/staff";
 import { EmptyNote, FilterPills, PageHeader, SearchBox, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
+import { tr } from "@/i18n/tr";
 type F = "all" | "active" | "pending" | "quiet" | "deactivated";
 const status = (a: OrgAdminAccount): Exclude<F, "all" | "quiet"> => (!a.active ? "deactivated" : !a.hasLoggedIn ? "pending" : "active");
 const quiet = (a: OrgAdminAccount) => a.active && a.hasLoggedIn && (!a.lastLoginAt || Date.now() - new Date(a.lastLoginAt).getTime() > 30 * 86400000);
@@ -31,7 +32,7 @@ function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (m
         setOrgs(active);
         if (active[0]) setForm((f) => ({ ...f, tenantId: active[0].id }));
       })
-      .catch(() => setError("Could not load your organizations."));
+      .catch(() => setError(tr("Could not load your organizations.")));
   }, []);
 
   const org = orgs?.find((o) => o.id === form.tenantId);
@@ -50,9 +51,9 @@ function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (m
         phone: form.phone || undefined,
         jobTitle: form.jobTitle || undefined,
       });
-      onDone(`Invite sent to ${form.email}. They are now the Org Admin of ${org.name}.`);
+      onDone(tr("Invite sent to {{email}}. They are now the Org Admin of {{name}}.", { email: form.email, name: org.name }));
     } catch (err) {
-      setError(err instanceof ApiError && err.message === "email_already_registered" ? "That email already has a Spica account." : "Could not add the Org Admin. Try again.");
+      setError(err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has a Spica account.") : tr("Could not add the Org Admin. Try again."));
       setSaving(false);
     }
   }
@@ -61,61 +62,59 @@ function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (m
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">Add Org Admin</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Add Org Admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>
         <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
           {!orgs ? (
-            <p className="text-sm text-muted">{error ?? "Loading organizations…"}</p>
+            <p className="text-sm text-muted">{error ?? tr("Loading organizations…")}</p>
           ) : orgs.length === 0 ? (
-            <p className="text-sm text-muted">You have no active organizations yet. Onboard one on the Organizations page first.</p>
+            <p className="text-sm text-muted">{tr("You have no active organizations yet. Onboard one on the Organizations page first.")}</p>
           ) : (
             <>
               <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted">Organization</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Organization")}</span>
                 <select {...set("tenantId")} className={`${inputCls} cursor-pointer`}>
                   {orgs.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name}
-                      {o.hasOrgAdmin ? ` — current: ${o.orgAdmin?.name ?? "Org Admin"}` : " — no Org Admin"}
+                      {o.hasOrgAdmin ? tr(" — current: {{v}}", { v: o.orgAdmin?.name ?? "Org Admin" }) : tr(" — no Org Admin")}
                     </option>
                   ))}
                 </select>
               </label>
               {org?.hasOrgAdmin && (
                 <p className="text-xs text-navy-deep bg-warning/15 border border-warning/30 rounded-input px-3 py-2">
-                  {org.name} already has an Org Admin ({org.orgAdmin?.name}, {org.orgAdmin?.email}). Adding a new one replaces them, and they lose access.
-                </p>
+                  {org.name} {tr("already has an Org Admin (")}{org.orgAdmin?.name}, {org.orgAdmin?.email}{tr("). Adding a new one replaces them, and they lose access.")}</p>
               )}
               <div className="grid sm:grid-cols-2 gap-4">
                 {(
                   [
-                    ["firstName", "First name", true],
-                    ["lastName", "Last name", true],
-                    ["email", "Work email", true],
-                    ["phone", "Phone", false],
-                    ["jobTitle", "Job title", false],
+                    ["firstName", tr("First name"), true],
+                    ["lastName", tr("Last name"), true],
+                    ["email", tr("Work email"), true],
+                    ["phone", tr("Phone"), false],
+                    ["jobTitle", tr("Job title"), false],
                   ] as const
                 ).map(([k, label, required]) => (
                   <label key={k} className={`flex flex-col gap-1.5 ${k === "jobTitle" ? "sm:col-span-2" : ""}`}>
                     <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                       {label}
-                      {!required && <span className="normal-case font-normal"> (optional)</span>}
+                      {!required && <span className="normal-case font-normal"> {tr("(optional)")}</span>}
                     </span>
                     <input {...set(k)} required={required} type={k === "email" ? "email" : "text"} className={inputCls} />
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-muted">They get an email to set their password and sign in to the Org Admin console.</p>
+              <p className="text-xs text-muted">{tr("They get an email to set their password and sign in to the Org Admin console.")}</p>
               {error && <p className="text-sm text-error">{error}</p>}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="secondary" onClick={onClose}>
-                  Cancel
-                </Button>
+                  {tr("Cancel")}</Button>
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Sending…" : org?.hasOrgAdmin ? "Replace and send invite" : "Send invite"}
+                  {saving ? tr("Sending…") : org?.hasOrgAdmin ? tr("Replace and send invite") : tr("Send invite")}
                 </Button>
               </div>
             </>
@@ -140,12 +139,12 @@ export function OrgAdminsList() {
   const load = useCallback(() => {
     getOrgAdmins()
       .then((r) => setRows(r.orgAdmins))
-      .catch(() => setError("Could not load Org Admins."));
+      .catch(() => setError(tr("Could not load Org Admins.")));
   }, []);
   useEffect(load, [load]);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!rows) return <p className="text-sm text-muted">Loading…</p>;
+  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
   const q = query.trim().toLowerCase();
   const shown = rows.filter(
     (a) =>
@@ -156,39 +155,38 @@ export function OrgAdminsList() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title="Org Admins"
-        subtitle={`The main contact at each ${perms.isSuper ? "" : "of your "}organization${perms.isSuper ? " and university" : "s"}. They manage batches, Managers, learners and licenses.`}
+        title={tr("Org Admins")}
+        subtitle={tr("The main contact at each {{v}}organization{{v2}}. They manage batches, Managers, learners and licenses.", { v: perms.isSuper ? "" : "of your ", v2: perms.isSuper ? " and university" : "s" })}
         actions={
           perms.manageOrganizations && (
             <Button onClick={() => setAdding(true)} className="flex items-center gap-2 shrink-0">
-              <UserPlus size={18} /> Add Org Admin
-            </Button>
+              <UserPlus size={18} /> {tr("Add Org Admin")}</Button>
           )
         }
       />
       {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="split" palette="moss" index={0} icon={ShieldCheck} value={rows.filter((a) => status(a) === "active").length} label="Active Org Admins" />
-        <StatCard variant="split" palette="moss" index={1} icon={UserX} value={rows.filter((a) => status(a) === "pending").length} label="Invite not accepted" />
-        <StatCard variant="split" palette="moss" index={2} icon={Building2} value={rows.filter(quiet).length} label="Not signed in for 30+ days" />
-        <StatCard variant="split" palette="moss" index={3} icon={Users} value={rows.reduce((n, a) => n + a.learnerCount, 0)} label="Learners in their organizations" />
+        <StatCard variant="split" palette="moss" index={0} icon={ShieldCheck} value={rows.filter((a) => status(a) === "active").length} label={tr("Active Org Admins")} />
+        <StatCard variant="split" palette="moss" index={1} icon={UserX} value={rows.filter((a) => status(a) === "pending").length} label={tr("Invite not accepted")} />
+        <StatCard variant="split" palette="moss" index={2} icon={Building2} value={rows.filter(quiet).length} label={tr("Not signed in for 30+ days")} />
+        <StatCard variant="split" palette="moss" index={3} icon={Users} value={rows.reduce((n, a) => n + a.learnerCount, 0)} label={tr("Learners in their organizations")} />
       </div>
       <div className="flex items-center gap-3 flex-wrap">
-        <SearchBox value={query} onChange={setQuery} placeholder="Search by name, email, organization or owner" />
+        <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email, organization or owner")} />
         <FilterPills<F>
           value={filter}
           onChange={setFilter}
           options={[
-            ["all", "All", rows.length],
-            ["active", "Active", rows.filter((a) => status(a) === "active").length],
-            ["pending", "Invite pending", rows.filter((a) => status(a) === "pending").length],
-            ["quiet", "Quiet 30+ days", rows.filter(quiet).length],
-            ["deactivated", "Deactivated", rows.filter((a) => status(a) === "deactivated").length],
+            ["all", tr("All"), rows.length],
+            ["active", tr("Active"), rows.filter((a) => status(a) === "active").length],
+            ["pending", tr("Invite pending"), rows.filter((a) => status(a) === "pending").length],
+            ["quiet", tr("Quiet 30+ days"), rows.filter(quiet).length],
+            ["deactivated", tr("Deactivated"), rows.filter((a) => status(a) === "deactivated").length],
           ]}
         />
       </div>
       {shown.length === 0 ? (
-        <EmptyNote>No Org Admins match.</EmptyNote>
+        <EmptyNote>{tr("No Org Admins match.")}</EmptyNote>
       ) : (
         <div className="grid lg:grid-cols-2 2xl:grid-cols-3 gap-4">
           {shown.map((a, i) => {
@@ -204,16 +202,15 @@ export function OrgAdminsList() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-display font-bold truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                      <p className="font-display font-bold truncate">{[a.firstName, a.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 uppercase tracking-wide">
-                        {s === "active" ? "Active" : s === "pending" ? "Invite pending" : "Deactivated"}
+                        {s === "active" ? tr("Active") : s === "pending" ? tr("Invite pending") : tr("Deactivated")}
                       </span>
                     </div>
                     <p className="text-xs text-white/80 truncate">{a.tenantName}</p>
                   </div>
                   <button onClick={() => setViewing(a.id)} className="text-xs font-semibold hover:underline cursor-pointer shrink-0">
-                    View details
-                  </button>
+                    {tr("View details")}</button>
                 </div>
                 <div className="px-5 py-4 flex flex-col gap-3">
                   <p className="text-xs text-muted truncate">
@@ -222,16 +219,16 @@ export function OrgAdminsList() {
                     {a.phone ? ` · ${a.phone}` : ""}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    <StatusPill tone="navy">{a.tenantCategory === "university" ? "University" : "Company"}</StatusPill>
+                    <StatusPill tone="navy">{a.tenantCategory === "university" ? tr("University") : tr("Company")}</StatusPill>
                     {a.planTier && <StatusPill tone="success">{TIER_LABELS[a.planTier]}</StatusPill>}
-                    {a.orgActive === false && <StatusPill tone="error">Organization deactivated</StatusPill>}
+                    {a.orgActive === false && <StatusPill tone="error">{tr("Organization deactivated")}</StatusPill>}
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     {(
                       [
-                        [a.learnerCount, "Learners"],
-                        [a.managers.length, "Managers"],
-                        [a.activeBatches ?? 0, "Active batches"],
+                        [a.learnerCount, tr("Learners")],
+                        [a.managers.length, tr("Managers")],
+                        [a.activeBatches ?? 0, tr("Active batches")],
                       ] as const
                     ).map(([v, l]) => (
                       <div key={l} className="rounded-input bg-paper-warm px-3 py-2">
@@ -241,8 +238,8 @@ export function OrgAdminsList() {
                     ))}
                   </div>
                   <p className="text-xs text-muted">
-                    {s === "pending" ? "Hasn't signed in yet" : `Last signed in ${ago(a.lastLoginAt)}`} · Added {shortDate(a.createdAt)}
-                    {perms.isSuper && a.ownerName ? ` · Owner: ${a.ownerName}` : ""}
+                    {s === "pending" ? tr("Hasn't signed in yet") : tr("Last signed in {{ago}}", { ago: ago(a.lastLoginAt) })} {tr("· Added")}{" "}{shortDate(a.createdAt)}
+                    {perms.isSuper && a.ownerName ? tr(" · Owner: {{ownerName}}", { ownerName: a.ownerName }) : ""}
                   </p>
                 </div>
               </div>
@@ -250,7 +247,7 @@ export function OrgAdminsList() {
           })}
         </div>
       )}
-      <p className="text-xs text-muted">To resend an invite, open the organization on the Organizations page.</p>
+      <p className="text-xs text-muted">{tr("To resend an invite, open the organization on the Organizations page.")}</p>
       {viewing && <OrgAdminDetailModal orgAdminId={viewing} onClose={() => setViewing(null)} />}
       {adding && (
         <AddOrgAdminModal

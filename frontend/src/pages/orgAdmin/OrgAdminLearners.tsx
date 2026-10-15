@@ -23,6 +23,7 @@ import {
   type OrgBatch,
 } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
@@ -54,7 +55,7 @@ export function OrgAdminLearners() {
   function load() {
     getOrgLearners()
       .then((res) => setLearners(res.learners))
-      .catch(() => setError("Could not load learners."));
+      .catch(() => setError(tr("Could not load learners.")));
     getBatches().then((res) => setBatches(res.batches)).catch(() => {});
     getOrgLicenseSummary()
       .then((s) => setPoolAvailable(s.unreserved))
@@ -68,10 +69,10 @@ export function OrgAdminLearners() {
     try {
       const r = await deleteLearner(learner.id);
       setDeletingLearner(null);
-      if (r.reclaimedMonths) setNotice(`${r.reclaimedMonths} unused month${r.reclaimedMonths === 1 ? "" : "s"} went back to your license pool.`);
+      if (r.reclaimedMonths) setNotice(tr("{{reclaimedMonths}} unused month{{v}} went back to your license pool.", { reclaimedMonths: r.reclaimedMonths, v: r.reclaimedMonths === 1 ? "" : "s" }));
       load();
     } catch {
-      setError("Could not delete that learner.");
+      setError(tr("Could not delete that learner."));
     } finally {
       setBusyId(null);
     }
@@ -81,9 +82,9 @@ export function OrgAdminLearners() {
     setBusyId(learner.id);
     try {
       const r = await resendInvite("learners", learner.id);
-      setNotice(`A new invite link was sent to ${r.email}.`);
+      setNotice(tr("A new invite link was sent to {{email}}.", { email: r.email }));
     } catch {
-      setError("Could not resend the invite.");
+      setError(tr("Could not resend the invite."));
     } finally {
       setBusyId(null);
     }
@@ -94,11 +95,11 @@ export function OrgAdminLearners() {
     try {
       if (learner.active) {
         const r = await deactivateLearner(learner.id);
-        if (r.reclaimedMonths) setNotice(`${r.reclaimedMonths} unused month${r.reclaimedMonths === 1 ? "" : "s"} went back to your license pool.`);
+        if (r.reclaimedMonths) setNotice(tr("{{reclaimedMonths}} unused month{{v}} went back to your license pool.", { reclaimedMonths: r.reclaimedMonths, v: r.reclaimedMonths === 1 ? "" : "s" }));
       } else await reactivateLearner(learner.id);
       load();
     } catch {
-      setError("Could not update that learner's status.");
+      setError(tr("Could not update that learner's status."));
     } finally {
       setBusyId(null);
     }
@@ -108,12 +109,11 @@ export function OrgAdminLearners() {
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Learners</h1>
-          <p className="text-sm text-muted mt-1">Everyone in your organization, across every batch.</p>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Learners")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("Everyone in your organization, across every batch.")}</p>
         </div>
         <Button onClick={() => setShowInvite(true)} className="flex items-center gap-2 shrink-0">
-          <UserPlus size={18} /> Invite Learners
-        </Button>
+          <UserPlus size={18} /> {tr("Invite Learners")}</Button>
       </div>
 
       {notice && (
@@ -121,8 +121,8 @@ export function OrgAdminLearners() {
       )}
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {!learners && !error && <p className="text-sm text-muted">Loading…</p>}
-      {learners?.length === 0 && <p className="text-sm text-muted">No learners yet — invite them here, or a Manager can invite them into their batch.</p>}
+      {!learners && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {learners?.length === 0 && <p className="text-sm text-muted">{tr("No learners yet — invite them here, or a Manager can invite them into their batch.")}</p>}
 
       <FollowUpPanel />
 
@@ -130,7 +130,7 @@ export function OrgAdminLearners() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name, email, employee ID, department or batch"
+          placeholder={tr("Search by name, email, employee ID, department or batch")}
           className="w-full sm:max-w-md rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
         />
       )}
@@ -140,12 +140,12 @@ export function OrgAdminLearners() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">Learner</th>
-                <th className="px-4 py-3">Department</th>
-                <th className="px-4 py-3">Batch</th>
-                <th className="px-4 py-3">Sessions completed</th>
-                <th className="px-4 py-3">License</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">{tr("Learner")}</th>
+                <th className="px-4 py-3">{tr("Department")}</th>
+                <th className="px-4 py-3">{tr("Batch")}</th>
+                <th className="px-4 py-3">{tr("Sessions completed")}</th>
+                <th className="px-4 py-3">{tr("License")}</th>
+                <th className="px-4 py-3">{tr("Status")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -162,7 +162,7 @@ export function OrgAdminLearners() {
                         {initials(l.firstName, l.lastName, l.email)}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-ink font-medium truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || "Not named yet"}</p>
+                        <p className="text-ink font-medium truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
                         <p className="text-muted text-xs truncate">
                           {l.participantId ? `${l.participantId} · ` : ""}
                           {l.email}
@@ -174,12 +174,12 @@ export function OrgAdminLearners() {
                     <p>{l.department ?? "—"}</p>
                     {(l.employeeId || l.jobTitle) && <p className="text-xs">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
                   </td>
-                  <td className="px-4 py-3 text-muted">{l.batchName ?? <span className="text-xs italic">No batch yet</span>}</td>
+                  <td className="px-4 py-3 text-muted">{l.batchName ?? <span className="text-xs italic">{tr("No batch yet")}</span>}</td>
                   <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
                   <td className="px-4 py-3">{l.license && <LicenseStatusPill license={l.license} />}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {l.active ? "Active" : "Deactivated"}
+                      {l.active ? tr("Active") : tr("Deactivated")}
                     </span>
                     {l.active && l.hasLoggedIn === false && (
                       <button
@@ -190,8 +190,7 @@ export function OrgAdminLearners() {
                         disabled={busyId === l.id}
                         className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer disabled:opacity-50"
                       >
-                        Invite pending · resend
-                      </button>
+                        {tr("Invite pending · resend")}</button>
                     )}
                   </td>
                   <td className="px-4 py-3">
@@ -199,7 +198,7 @@ export function OrgAdminLearners() {
                       <button
                         onClick={() => setMovingLearner(l)}
                         disabled={batches.filter((b) => b.id !== l.batchId && b.status === "active").length === 0}
-                        title={l.batchId ? "Move to another batch" : "Put in a batch"}
+                        title={l.batchId ? tr("Move to another batch") : tr("Put in a batch")}
                         className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <ArrowRightLeft size={16} />
@@ -207,7 +206,7 @@ export function OrgAdminLearners() {
                       <button
                         onClick={() => handleToggleActive(l)}
                         disabled={busyId === l.id}
-                        title={l.active ? "Deactivate" : "Activate"}
+                        title={l.active ? tr("Deactivate") : tr("Activate")}
                         className={`p-1.5 rounded-input transition-colors cursor-pointer disabled:opacity-50 ${
                           l.active ? "text-muted hover:bg-error/10 hover:text-error" : "text-success hover:bg-success/10"
                         }`}
@@ -216,7 +215,7 @@ export function OrgAdminLearners() {
                       </button>
                       <button
                         onClick={() => setErasingLearner(l)}
-                        title="Erase personal data"
+                        title={tr("Erase personal data")}
                         className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer"
                       >
                         <Eraser size={16} />
@@ -224,7 +223,7 @@ export function OrgAdminLearners() {
                       <button
                         onClick={() => setDeletingLearner(l)}
                         disabled={busyId === l.id}
-                        title="Delete"
+                        title={tr("Delete")}
                         className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <Trash2 size={16} />
@@ -281,7 +280,7 @@ export function OrgAdminLearners() {
           onClose={() => setErasingLearner(null)}
           onErased={() => {
             setErasingLearner(null);
-            setNotice("Personal data erased.");
+            setNotice(tr("Personal data erased."));
             load();
           }}
         />
@@ -289,9 +288,9 @@ export function OrgAdminLearners() {
 
       {deletingLearner && (
         <ConfirmActionModal
-          title="Delete learner"
-          message={`Delete ${[deletingLearner.firstName, deletingLearner.lastName].filter(Boolean).join(" ") || deletingLearner.email}? All their progress and session history are removed, and any months that haven't started go back to your license pool. This cannot be undone.`}
-          confirmLabel="Delete"
+          title={tr("Delete learner")}
+          message={tr("Delete {{v}}? All their progress and session history are removed, and any months that haven't started go back to your license pool. This cannot be undone.", { v: [deletingLearner.firstName, deletingLearner.lastName].filter(Boolean).join(" ") || deletingLearner.email })}
+          confirmLabel={tr("Delete")}
           destructive
           submitting={busyId === deletingLearner.id}
           onClose={() => setDeletingLearner(null)}

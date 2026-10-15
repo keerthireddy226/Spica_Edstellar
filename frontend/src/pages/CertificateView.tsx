@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Printer, ShieldCheck, ShieldX } from "lucide-react";
 import { Button } from "@/components/Button";
 
+import { tr } from "@/i18n/tr";
 interface VerifiedCertificate {
   valid: boolean;
   revoked: boolean;
@@ -67,7 +68,7 @@ export function CertificateView() {
           cert.valid ? "" : "opacity-50"
         }`}
       >
-        <p className="text-xs tracking-[0.3em] uppercase text-[#5b6b7c]">Spica · Edstellar</p>
+        <p className="text-xs tracking-[0.3em] uppercase text-[#5b6b7c]">{tr("Spica · Edstellar")}</p>
         <h1 className="font-display text-3xl sm:text-4xl font-bold">{t("certificate.heading")}</h1>
         <p className="text-sm text-[#5b6b7c] mt-2">{t("certificate.awardedTo")}</p>
         <p className="font-display text-2xl sm:text-3xl font-bold border-b border-[#1f3a5f]/30 px-6 pb-1">{cert.learnerName}</p>

@@ -6,6 +6,7 @@ import { getLearnerProfile, type LearnerProfile } from "@/api/admin";
 import { EditLearnerDetailsModal } from "@/components/EditLearnerDetailsModal";
 import type { LearnerDetails } from "@/api/details";
 
+import { tr } from "@/i18n/tr";
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -38,12 +39,12 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 const SESSION_TYPE_LABEL: Record<string, string> = {
-  practice: "Practice",
-  mocktest: "Mock Test",
-  placement: "Placement",
-  coach: "Coach Mode",
-  diagnostic: "Diagnostic",
-  drill: "Drill",
+  practice: tr("Practice"),
+  mocktest: tr("Mock Test"),
+  placement: tr("Placement"),
+  coach: tr("Coach Mode"),
+  diagnostic: tr("Diagnostic"),
+  drill: tr("Drill"),
 };
 
 // Every learner row anywhere in the Super Admin console — Individual
@@ -75,26 +76,26 @@ export function LearnerProfileModal({
   useEffect(() => {
     fetcher(learnerId)
       .then(setProfile)
-      .catch(() => setError("Could not load this learner's details."));
+      .catch(() => setError(tr("Could not load this learner's details.")));
   }, [learnerId, fetcher, reload]);
 
   if (error) {
     return (
-      <DetailModal title="Learner details" onClose={onClose} onBack={onBack}>
+      <DetailModal title={tr("Learner details")} onClose={onClose} onBack={onBack}>
         <p className="text-sm text-error">{error}</p>
       </DetailModal>
     );
   }
   if (!profile) {
     return (
-      <DetailModal title="Learner details" onClose={onClose} onBack={onBack}>
-        <p className="text-sm text-muted">Loading…</p>
+      <DetailModal title={tr("Learner details")} onClose={onClose} onBack={onBack}>
+        <p className="text-sm text-muted">{tr("Loading…")}</p>
       </DetailModal>
     );
   }
 
   const { learner, onboarding, placement, roadmap, progress, skillStats, activity, employment } = profile;
-  const name = [learner.firstName, learner.lastName].filter(Boolean).join(" ") || "Not named yet";
+  const name = [learner.firstName, learner.lastName].filter(Boolean).join(" ") || tr("Not named yet");
 
   return (
     <DetailModal
@@ -103,20 +104,20 @@ export function LearnerProfileModal({
       initials={personInitials(learner.firstName, learner.lastName, learner.email)}
       badges={
         <>
-          <Badge tone={learner.active ? "good" : "bad"}>{learner.active ? "Active" : "Deactivated"}</Badge>
-          <Badge>{learner.tenantType === "cohort" ? (learner.tenantName ?? "Organization") : "Individual learner"}</Badge>
+          <Badge tone={learner.active ? "good" : "bad"}>{learner.active ? tr("Active") : tr("Deactivated")}</Badge>
+          <Badge>{learner.tenantType === "cohort" ? (learner.tenantName ?? tr("Organization")) : tr("Individual learner")}</Badge>
           {learner.batchName && <Badge>{learner.batchName}</Badge>}
           {employment?.department && <Badge>{employment.department}</Badge>}
         </>
       }
       stats={[
-        { label: "Current level", value: placement?.cefrLevel ?? "Not placed", hint: placement ? `${placement.overallPercent}% on placement` : undefined },
-        { label: "Sessions completed", value: activity.genuinelyCompletedSessions, hint: `${activity.totalSessions} started` },
-        { label: "Day streak", value: progress?.streakDays ?? 0, hint: progress ? `${progress.practiceMinutes} minutes practised` : undefined },
+        { label: tr("Current level"), value: placement?.cefrLevel ?? "Not placed", hint: placement ? tr("{{overallPercent}}% on placement", { overallPercent: placement.overallPercent }) : undefined },
+        { label: tr("Sessions completed"), value: activity.genuinelyCompletedSessions, hint: `${activity.totalSessions} started` },
+        { label: tr("Day streak"), value: progress?.streakDays ?? 0, hint: progress ? tr("{{practiceMinutes}} minutes practised", { practiceMinutes: progress.practiceMinutes }) : undefined },
         {
-          label: "Accuracy",
+          label: tr("Accuracy"),
           value: progress && progress.accuracyGraded > 0 ? `${Math.round((progress.accuracyCorrect / progress.accuracyGraded) * 100)}%` : "—",
-          hint: activity.lastSessionAt ? `Last session ${formatDate(activity.lastSessionAt)}` : "No sessions yet",
+          hint: activity.lastSessionAt ? tr("Last session {{formatDate}}", { formatDate: formatDate(activity.lastSessionAt) }) : tr("No sessions yet"),
         },
       ]}
       onClose={onClose}
@@ -124,119 +125,118 @@ export function LearnerProfileModal({
       wide
     >
       <div className="flex flex-col gap-4">
-        <Section title="Account">
+        <Section title={tr("Account")}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <Field label="Participant ID" value={learner.participantId ?? "—"} />
-            <Field label="Joined" value={formatDate(learner.createdAt)} />
-            <Field label="Plan / org type" value={learner.tenantCategory ?? learner.tenantType ?? "—"} />
-            <Field label="Status" value={learner.active ? "Active" : "Deactivated"} />
+            <Field label={tr("Participant ID")} value={learner.participantId ?? "—"} />
+            <Field label={tr("Joined")} value={formatDate(learner.createdAt)} />
+            <Field label={tr("Plan / org type")} value={learner.tenantCategory ?? learner.tenantType ?? "—"} />
+            <Field label={tr("Status")} value={learner.active ? tr("Active") : tr("Deactivated")} />
           </div>
         </Section>
 
         {employment ? (
           <Section
-            title="Employee details"
+            title={tr("Employee details")}
             action={
               saveDetails && (
                 <button onClick={() => setEditing(true)} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-                  Edit details
-                </button>
+                  {tr("Edit details")}</button>
               )
             }
           >
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="Employee ID" value={employment.employeeId ?? "—"} />
-              <Field label="Department" value={employment.department ?? "—"} />
-              <Field label="Job title" value={employment.jobTitle ?? "—"} />
-              <Field label="Job role" value={employment.jobRole ? t(`demographics.jobRole.${employment.jobRole}`) : "—"} />
-              <Field label="Work phone" value={employment.phone ?? "—"} />
-              <Field label="Country" value={countryName(employment.country, i18n.language)} />
-              <Field label="City" value={employment.city ?? "—"} />
-              <Field label="Gender" value={employment.gender ? t(`demographics.gender.${employment.gender}`) : "Not shared"} />
-              <Field label="Age" value={employment.ageBand ? t(`demographics.ageBand.${employment.ageBand}`) : "Not shared"} />
+              <Field label={tr("Employee ID")} value={employment.employeeId ?? "—"} />
+              <Field label={tr("Department")} value={employment.department ?? "—"} />
+              <Field label={tr("Job title")} value={employment.jobTitle ?? "—"} />
+              <Field label={tr("Job role")} value={employment.jobRole ? t(`demographics.jobRole.${employment.jobRole}`) : "—"} />
+              <Field label={tr("Work phone")} value={employment.phone ?? "—"} />
+              <Field label={tr("Country")} value={countryName(employment.country, i18n.language)} />
+              <Field label={tr("City")} value={employment.city ?? "—"} />
+              <Field label={tr("Gender")} value={employment.gender ? t(`demographics.gender.${employment.gender}`) : tr("Not shared")} />
+              <Field label={tr("Age")} value={employment.ageBand ? t(`demographics.ageBand.${employment.ageBand}`) : tr("Not shared")} />
             </div>
             {employment.demographicsSource && (
               <p className="text-xs text-muted mt-3">
                 {employment.demographicsSource === "organization"
-                  ? "Location, gender and age were entered by the organization; the learner can change them when they sign in."
-                  : "Location, gender and age were given by the learner."}
+                  ? tr("Location, gender and age were entered by the organization; the learner can change them when they sign in.")
+                  : tr("Location, gender and age were given by the learner.")}
               </p>
             )}
           </Section>
         ) : (
-          <Section title="About">
+          <Section title={tr("About")}>
             {!onboarding ? (
-              <p className="text-sm text-muted">Hasn't completed onboarding yet.</p>
+              <p className="text-sm text-muted">{tr("Hasn't completed onboarding yet.")}</p>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                <Field label="Country" value={countryName(onboarding.country, i18n.language)} />
-                <Field label="City" value={onboarding.city ?? "—"} />
-                <Field label="Job role" value={onboarding.jobRole ? t(`demographics.jobRole.${onboarding.jobRole}`) : "—"} />
-                <Field label="Gender" value={onboarding.gender ? t(`demographics.gender.${onboarding.gender}`) : "Not shared"} />
-                <Field label="Age" value={onboarding.ageBand ? t(`demographics.ageBand.${onboarding.ageBand}`) : "Not shared"} />
+                <Field label={tr("Country")} value={countryName(onboarding.country, i18n.language)} />
+                <Field label={tr("City")} value={onboarding.city ?? "—"} />
+                <Field label={tr("Job role")} value={onboarding.jobRole ? t(`demographics.jobRole.${onboarding.jobRole}`) : "—"} />
+                <Field label={tr("Gender")} value={onboarding.gender ? t(`demographics.gender.${onboarding.gender}`) : tr("Not shared")} />
+                <Field label={tr("Age")} value={onboarding.ageBand ? t(`demographics.ageBand.${onboarding.ageBand}`) : tr("Not shared")} />
               </div>
             )}
           </Section>
         )}
 
-        <Section title="Onboarding questionnaire">
+        <Section title={tr("Onboarding questionnaire")}>
           {!onboarding ? (
-            <p className="text-sm text-muted">Hasn't completed onboarding yet.</p>
+            <p className="text-sm text-muted">{tr("Hasn't completed onboarding yet.")}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="Exam" value={onboarding.examPreference ?? "—"} />
-              <Field label="Goal level" value={onboarding.goalLevel ?? "—"} />
-              <Field label="Score target" value={onboarding.scoreTarget ?? "—"} />
-              <Field label="Reason" value={onboarding.examReason ?? "—"} />
-              <Field label="Exam date" value={formatDate(onboarding.examDate)} />
-              <Field label="Prep days" value={onboarding.targetPrepDays ?? "—"} />
-              <Field label="Daily minutes goal" value={onboarding.dailyMinutesPreference ?? "—"} />
-              <Field label="Past attempts" value={onboarding.pastAttemptsStatus ?? "—"} />
+              <Field label={tr("Exam")} value={onboarding.examPreference ?? "—"} />
+              <Field label={tr("Goal level")} value={onboarding.goalLevel ?? "—"} />
+              <Field label={tr("Score target")} value={onboarding.scoreTarget ?? "—"} />
+              <Field label={tr("Reason")} value={onboarding.examReason ?? "—"} />
+              <Field label={tr("Exam date")} value={formatDate(onboarding.examDate)} />
+              <Field label={tr("Prep days")} value={onboarding.targetPrepDays ?? "—"} />
+              <Field label={tr("Daily minutes goal")} value={onboarding.dailyMinutesPreference ?? "—"} />
+              <Field label={tr("Past attempts")} value={onboarding.pastAttemptsStatus ?? "—"} />
               {onboarding.pastAttemptsStatus && onboarding.pastAttemptsStatus !== "first" && (
-                <Field label="Previous score" value={onboarding.prevScore ? `${onboarding.prevScore} (${onboarding.prevDate ?? "date unknown"})` : "—"} />
+                <Field label={tr("Previous score")} value={onboarding.prevScore ? `${onboarding.prevScore} (${onboarding.prevDate ?? tr("date unknown")})` : "—"} />
               )}
             </div>
           )}
         </Section>
 
-        <Section title="Placement result">
+        <Section title={tr("Placement result")}>
           {!placement ? (
-            <p className="text-sm text-muted">Hasn't taken a placement test yet.</p>
+            <p className="text-sm text-muted">{tr("Hasn't taken a placement test yet.")}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="CEFR level" value={placement.cefrLevel} />
-              <Field label="Overall score" value={`${placement.overallPercent}%`} />
-              <Field label="Status" value={placement.status} />
-              <Field label="Taken" value={formatDate(placement.takenAt)} />
+              <Field label={tr("CEFR level")} value={placement.cefrLevel} />
+              <Field label={tr("Overall score")} value={`${placement.overallPercent}%`} />
+              <Field label={tr("Status")} value={placement.status} />
+              <Field label={tr("Taken")} value={formatDate(placement.takenAt)} />
             </div>
           )}
         </Section>
 
-        <Section title="Roadmap">
+        <Section title={tr("Roadmap")}>
           {!roadmap ? (
-            <p className="text-sm text-muted">No roadmap generated yet.</p>
+            <p className="text-sm text-muted">{tr("No roadmap generated yet.")}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="Pace" value={roadmap.pace} />
-              <Field label="Minutes / day" value={roadmap.minutesPerDay} />
-              <Field label="Est. total hours" value={roadmap.totalHoursEstimate} />
-              <Field label="Generated" value={formatDate(roadmap.generatedAt)} />
+              <Field label={tr("Pace")} value={roadmap.pace} />
+              <Field label={tr("Minutes / day")} value={roadmap.minutesPerDay} />
+              <Field label={tr("Est. total hours")} value={roadmap.totalHoursEstimate} />
+              <Field label={tr("Generated")} value={formatDate(roadmap.generatedAt)} />
             </div>
           )}
         </Section>
 
-        <Section title="Progress">
+        <Section title={tr("Progress")}>
           {!progress ? (
-            <p className="text-sm text-muted">No practice activity yet.</p>
+            <p className="text-sm text-muted">{tr("No practice activity yet.")}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              <Field label="Sessions" value={progress.sessionsCount} />
-              <Field label="Questions completed" value={progress.questionsCompleted} />
-              <Field label="Practice minutes" value={progress.practiceMinutes} />
-              <Field label="Streak" value={`${progress.streakDays} days`} />
-              <Field label="XP" value={progress.totalXp} />
+              <Field label={tr("Sessions")} value={progress.sessionsCount} />
+              <Field label={tr("Questions completed")} value={progress.questionsCompleted} />
+              <Field label={tr("Practice minutes")} value={progress.practiceMinutes} />
+              <Field label={tr("Streak")} value={`${progress.streakDays} days`} />
+              <Field label={tr("XP")} value={progress.totalXp} />
               <Field
-                label="Accuracy"
+                label={tr("Accuracy")}
                 value={progress.accuracyGraded > 0 ? `${Math.round((progress.accuracyCorrect / progress.accuracyGraded) * 100)}%` : "—"}
               />
             </div>
@@ -255,12 +255,12 @@ export function LearnerProfileModal({
         </Section>
 
         {profile.batchHistory && profile.batchHistory.length > 0 && (
-          <Section title="Batch history">
+          <Section title={tr("Batch history")}>
             <div className="flex flex-col gap-2">
               {profile.batchHistory.map((m, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 text-sm">
                   <span className="text-ink">
-                    {m.fromBatch ?? "No batch"} → {m.toBatch ?? "No batch"}
+                    {m.fromBatch ?? tr("No batch")} → {m.toBatch ?? tr("No batch")}
                     {m.reason ? <span className="text-muted"> · {m.reason}</span> : null}
                   </span>
                   <span className="text-xs text-muted shrink-0">
@@ -273,11 +273,11 @@ export function LearnerProfileModal({
           </Section>
         )}
 
-        <Section title="Activity across the platform">
+        <Section title={tr("Activity across the platform")}>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-3">
-            <Field label="Total sessions started" value={activity.totalSessions} />
-            <Field label="Genuinely completed" value={activity.genuinelyCompletedSessions} />
-            <Field label="Last session" value={formatDate(activity.lastSessionAt)} />
+            <Field label={tr("Total sessions started")} value={activity.totalSessions} />
+            <Field label={tr("Genuinely completed")} value={activity.genuinelyCompletedSessions} />
+            <Field label={tr("Last session")} value={formatDate(activity.lastSessionAt)} />
           </div>
           {activity.sessionsByType.length > 0 && (
             <div className="flex flex-wrap gap-2 pt-2 border-t border-rule">

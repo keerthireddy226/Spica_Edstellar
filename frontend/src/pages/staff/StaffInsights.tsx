@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { shortDate } from "@/api/staff";
 import { EmptyNote, PageHeader, Panel, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
+import { tr } from "@/i18n/tr";
 interface Insights {
   funnel: { invited: number; signed_in: number; onboarded: number; placed: number; practising: number; certified: number };
   cefr: { level: string; n: number }[];
@@ -25,36 +26,36 @@ export function StaffInsights() {
   useEffect(() => {
     api<Insights>("/admin/insights")
       .then(setData)
-      .catch(() => setError("Could not load insights."));
+      .catch(() => setError(tr("Could not load insights.")));
   }, []);
   if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">Loading…</p>;
+  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
   const f = data.funnel;
   const steps: [string, number][] = [
-    ["Invited or signed up", f.invited],
-    ["Signed in", f.signed_in],
-    ["Finished onboarding", f.onboarded],
-    ["Took the placement test", f.placed],
-    ["Practised this week", f.practising],
-    ["Certified", f.certified],
+    [tr("Invited or signed up"), f.invited],
+    [tr("Signed in"), f.signed_in],
+    [tr("Finished onboarding"), f.onboarded],
+    [tr("Took the placement test"), f.placed],
+    [tr("Practised this week"), f.practising],
+    [tr("Certified"), f.certified],
   ];
   const maxCefr = Math.max(1, ...data.cefr.map((c) => c.n));
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title="Insights"
-        subtitle={perms.isSuper ? "How learners are doing across Spica." : "How learners are doing in your organizations and among individual learners."}
+        title={tr("Insights")}
+        subtitle={perms.isSuper ? tr("How learners are doing across Spica.") : tr("How learners are doing in your organizations and among individual learners.")}
       />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="glass" palette="terracotta" index={0} icon={Users} value={`${pct(f.signed_in, f.invited)}%`} label="Accepted their invite" sub={`${f.signed_in} of ${f.invited}`} />
-        <StatCard variant="glass" palette="terracotta" index={1} icon={Award} value={`${pct(f.placed, f.invited)}%`} label="Took the placement test" sub={`${f.placed} learners`} />
-        <StatCard variant="glass" palette="terracotta" index={2} icon={Moon} value={data.inactive.length} label="Licensed but inactive 14+ days" />
-        <StatCard variant="glass" palette="terracotta" index={3} icon={CalendarClock} value={data.exams.length} label="Exams in the next 60 days" />
+        <StatCard variant="glass" palette="terracotta" index={0} icon={Users} value={`${pct(f.signed_in, f.invited)}%`} label={tr("Accepted their invite")} sub={`${f.signed_in} of ${f.invited}`} />
+        <StatCard variant="glass" palette="terracotta" index={1} icon={Award} value={`${pct(f.placed, f.invited)}%`} label={tr("Took the placement test")} sub={`${f.placed} learners`} />
+        <StatCard variant="glass" palette="terracotta" index={2} icon={Moon} value={data.inactive.length} label={tr("Licensed but inactive 14+ days")} />
+        <StatCard variant="glass" palette="terracotta" index={3} icon={CalendarClock} value={data.exams.length} label={tr("Exams in the next 60 days")} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 items-start">
-        <Panel className="lg:col-span-2" title="Learner journey">
+        <Panel className="lg:col-span-2" title={tr("Learner journey")}>
           {steps.map(([label, n], i) => (
             <div key={label} className="flex items-center gap-3">
               <span className="w-48 text-sm text-ink">{label}</span>
@@ -66,11 +67,11 @@ export function StaffInsights() {
               <span className="w-12 text-right text-xs text-muted">{pct(n, f.invited)}%</span>
             </div>
           ))}
-          <p className="text-xs text-muted">The biggest drop between two steps is where to focus: reminders, onboarding help, or a nudge to take the placement test.</p>
+          <p className="text-xs text-muted">{tr("The biggest drop between two steps is where to focus: reminders, onboarding help, or a nudge to take the placement test.")}</p>
         </Panel>
-        <Panel title="Current levels">
+        <Panel title={tr("Current levels")}>
           {data.cefr.length === 0 ? (
-            <EmptyNote>No placement results yet.</EmptyNote>
+            <EmptyNote>{tr("No placement results yet.")}</EmptyNote>
           ) : (
             <div className="flex items-end gap-2 h-40">
               {LEVELS.map((lv, i) => {
@@ -88,22 +89,22 @@ export function StaffInsights() {
         </Panel>
       </div>
 
-      <Panel title="Organizations compared">
+      <Panel title={tr("Organizations compared")}>
         {data.organizations.length === 0 ? (
-          <EmptyNote>No organization learners yet.</EmptyNote>
+          <EmptyNote>{tr("No organization learners yet.")}</EmptyNote>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead>
                 <tr className="text-left text-xs text-muted border-b border-rule">
-                  <th className="py-2">Organization</th>
-                  <th className="py-2">Learners</th>
-                  <th className="py-2">Signed in</th>
-                  <th className="py-2">Practised this week</th>
-                  <th className="py-2">Placed</th>
-                  <th className="py-2">Certified</th>
-                  <th className="py-2">Avg minutes</th>
-                  <th className="py-2">Typical level</th>
+                  <th className="py-2">{tr("Organization")}</th>
+                  <th className="py-2">{tr("Learners")}</th>
+                  <th className="py-2">{tr("Signed in")}</th>
+                  <th className="py-2">{tr("Practised this week")}</th>
+                  <th className="py-2">{tr("Placed")}</th>
+                  <th className="py-2">{tr("Certified")}</th>
+                  <th className="py-2">{tr("Avg minutes")}</th>
+                  <th className="py-2">{tr("Typical level")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,25 +133,25 @@ export function StaffInsights() {
       </Panel>
 
       <div className="grid lg:grid-cols-2 gap-4 items-start">
-        <Panel title="Licensed but not practising">
+        <Panel title={tr("Licensed but not practising")}>
           {data.inactive.length === 0 ? (
-            <EmptyNote>Everyone with a license practised in the last two weeks.</EmptyNote>
+            <EmptyNote>{tr("Everyone with a license practised in the last two weeks.")}</EmptyNote>
           ) : (
             data.inactive.slice(0, 15).map((l) => (
               <div key={l.id} className="flex items-center justify-between gap-3 text-sm border-t border-rule pt-2 first:border-0 first:pt-0">
                 <div className="min-w-0">
                   <p className="text-ink truncate">{l.name}</p>
-                  <p className="text-xs text-muted truncate">{[l.orgName ?? "Individual", l.batchName].filter(Boolean).join(" · ")}</p>
+                  <p className="text-xs text-muted truncate">{[l.orgName ?? tr("Individual"), l.batchName].filter(Boolean).join(" · ")}</p>
                 </div>
-                <span className="text-xs text-muted shrink-0">{l.lastActive ? `Last ${shortDate(l.lastActive)}` : "Never practised"}</span>
+                <span className="text-xs text-muted shrink-0">{l.lastActive ? `Last ${shortDate(l.lastActive)}` : tr("Never practised")}</span>
               </div>
             ))
           )}
-          {data.inactive.length > 15 && <p className="text-xs text-muted">and {data.inactive.length - 15} more</p>}
+          {data.inactive.length > 15 && <p className="text-xs text-muted">{tr("and")}{" "}{data.inactive.length - 15} {tr("more")}</p>}
         </Panel>
-        <Panel title="Exams coming up">
+        <Panel title={tr("Exams coming up")}>
           {data.exams.length === 0 ? (
-            <EmptyNote>No learner has an exam date in the next 60 days.</EmptyNote>
+            <EmptyNote>{tr("No learner has an exam date in the next 60 days.")}</EmptyNote>
           ) : (
             data.exams.map((e) => {
               const days = Math.ceil((new Date(e.date).getTime() - Date.now()) / 86400000);
@@ -159,12 +160,11 @@ export function StaffInsights() {
                   <div className="min-w-0">
                     <p className="text-ink truncate">{e.name}</p>
                     <p className="text-xs text-muted truncate">
-                      {[e.orgName ?? "Individual", e.exam?.toUpperCase(), e.level ? `now ${e.level}` : null, e.goal ? `goal ${e.goal}` : null].filter(Boolean).join(" · ")}
+                      {[e.orgName ?? tr("Individual"), e.exam?.toUpperCase(), e.level ? `now ${e.level}` : null, e.goal ? `goal ${e.goal}` : null].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   <span className={`text-xs font-semibold shrink-0 ${days <= 14 ? "text-error" : "text-muted"}`}>
-                    {shortDate(e.date)} · {days} days
-                  </span>
+                    {shortDate(e.date)} · {days} {tr("days")}</span>
                 </div>
               );
             })

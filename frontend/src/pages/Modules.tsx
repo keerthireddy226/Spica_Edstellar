@@ -70,6 +70,7 @@ import {
   getPassageAndQuestion,
 } from "@/lib/testItemDisplay";
 
+import { tr } from "@/i18n/tr";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -231,10 +232,10 @@ function SkillPicker({
         stats={
           all.length
             ? [
-                { label: "Questions practised", value: total - left, icon: CheckCircle2 },
-                { label: "Still to try", value: left, icon: Sparkles },
-                { label: "Overall complete", value: `${total ? Math.round(((total - left) / total) * 100) : 0}%`, icon: Target },
-                { label: "Skills finished", value: `${all.filter((a) => a.remaining === 0).length}/${all.length}`, icon: Trophy },
+                { label: tr("Questions practised"), value: total - left, icon: CheckCircle2 },
+                { label: tr("Still to try"), value: left, icon: Sparkles },
+                { label: tr("Overall complete"), value: `${total ? Math.round(((total - left) / total) * 100) : 0}%`, icon: Target },
+                { label: tr("Skills finished"), value: `${all.filter((a) => a.remaining === 0).length}/${all.length}`, icon: Trophy },
               ]
             : undefined
         }
@@ -279,7 +280,7 @@ function SkillPicker({
                     <span>{exhausted ? t("modules.allDone") : t("modules.remainingItems", { count: remaining, total })}</span>
                     {!exhausted && (
                       <span className="flex items-center gap-0.5 font-semibold" style={{ color }}>
-                        Start <ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
+                        {tr("Start")}{" "}<ChevronRight size={15} className="transition-transform group-hover:translate-x-1" />
                       </span>
                     )}
                   </div>
@@ -304,7 +305,7 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
       <LearnerHero
         onBack={onBack}
         backLabel={t("modules.backToSkills")}
-        eyebrow={`${types.length} question types`}
+        eyebrow={tr("{{length}} question types", { length: types.length })}
         title={`${t(`skills.${skill}`)} Practice`}
         subtitle={t("modules.pickTypeSubtitle")}
         icon={Icon}
@@ -337,7 +338,7 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
                 <span className="text-xs text-muted leading-relaxed">{t(`modules.typeDesc.${typeId}`)}</span>
               </div>
               <span className="mt-auto flex items-center gap-1 text-xs font-semibold text-navy-deep">
-                Practise <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
+                {tr("Practise")}{" "}<ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
               </span>
             </button>
           );
@@ -372,10 +373,10 @@ function UnitPicker({
         stats={
           units.length
             ? [
-                { label: "Sets completed", value: units.reduce((n, u) => n + u.completedCount, 0), icon: CheckCircle2 },
-                { label: "Sets in total", value: units.reduce((n, u) => n + u.setCount, 0), icon: Layers },
-                { label: "Levels finished", value: units.filter((u) => u.setCount > 0 && u.completedCount === u.setCount).length, icon: Trophy },
-                { label: "Levels to go", value: units.filter((u) => !(u.setCount > 0 && u.completedCount === u.setCount)).length, icon: Target },
+                { label: tr("Sets completed"), value: units.reduce((n, u) => n + u.completedCount, 0), icon: CheckCircle2 },
+                { label: tr("Sets in total"), value: units.reduce((n, u) => n + u.setCount, 0), icon: Layers },
+                { label: tr("Levels finished"), value: units.filter((u) => u.setCount > 0 && u.completedCount === u.setCount).length, icon: Trophy },
+                { label: tr("Levels to go"), value: units.filter((u) => !(u.setCount > 0 && u.completedCount === u.setCount)).length, icon: Target },
               ]
             : undefined
         }
@@ -436,7 +437,7 @@ function SetPicker({
       <LearnerHero
         onBack={onBack}
         backLabel={t("modules.backToUnits")}
-        eyebrow={`${sets.filter((x) => x.completed).length} of ${sets.length} sets done`}
+        eyebrow={tr("{{length}} of {{length2}} sets done", { length: sets.filter((x) => x.completed).length, length2: sets.length })}
         title={unitName}
         icon={ListChecks}
         compact

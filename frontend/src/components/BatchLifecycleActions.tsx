@@ -5,9 +5,10 @@ import { archiveBatch, cloneBatch, completeBatch, reopenBatch, type BatchStatus 
 import { planErrorMessage } from "@/api/plans";
 import { refreshPlan } from "@/components/plans/usePlan";
 
+import { tr } from "@/i18n/tr";
 const pill = "flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer disabled:opacity-50";
 
-export const BATCH_STATUS_LABEL: Record<BatchStatus, string> = { active: "Active", completed: "Completed", archived: "Archived" };
+export const BATCH_STATUS_LABEL: Record<BatchStatus, string> = { active: tr("Active"), completed: tr("Completed"), archived: tr("Archived") };
 export const BATCH_STATUS_CLASS: Record<BatchStatus, string> = {
   active: "bg-success/15 text-success",
   completed: "bg-navy/10 text-navy",
@@ -41,7 +42,7 @@ export function BatchLifecycleActions({
       refreshPlan();
       onChanged(message(r));
     } catch (err) {
-      setError(planErrorMessage(err) ?? "That didn't work. Please try again.");
+      setError(planErrorMessage(err) ?? tr("That didn't work. Please try again."));
     } finally {
       setBusy(false);
     }
@@ -56,51 +57,46 @@ export function BatchLifecycleActions({
           onClick={() =>
             run(
               () => completeBatch(batchId),
-              (r) => `${batchName} marked complete.${r?.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to your pool.` : ""}`,
+              (r) => tr("{{batchName}} marked complete.{{v}}", { batchName: batchName, v: r?.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to your pool.` : "" }),
             )
           }
         >
-          <CheckCircle2 size={14} /> Complete
-        </button>
+          <CheckCircle2 size={14} /> {tr("Complete")}</button>
       )}
       {status !== "archived" && (
         <button className={pill} disabled={busy} onClick={() => run(() => archiveBatch(batchId), () => `${batchName} archived.`)}>
-          <Archive size={14} /> Archive
-        </button>
+          <Archive size={14} /> {tr("Archive")}</button>
       )}
       {status !== "active" && (
         <button className={pill} disabled={busy} onClick={() => run(() => reopenBatch(batchId), () => `${batchName} reopened.`)}>
-          <RotateCcw size={14} /> Reopen
-        </button>
+          <RotateCcw size={14} /> {tr("Reopen")}</button>
       )}
       <button className={pill} disabled={busy} onClick={() => setCloning(true)}>
-        <Copy size={14} /> Clone
-      </button>
+        <Copy size={14} /> {tr("Clone")}</button>
       {error && <span className="text-xs text-error self-center">{error}</span>}
 
       {cloning && (
         <div className="fixed inset-0 z-[70] bg-black/40 flex items-center justify-center p-4" onClick={() => setCloning(false)}>
           <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-              <h2 className="font-display font-bold text-lg text-ink">Clone batch</h2>
+              <h2 className="font-display font-bold text-lg text-ink">{tr("Clone batch")}</h2>
               <button onClick={() => setCloning(false)} className="text-muted hover:text-ink cursor-pointer">
                 <X size={20} />
               </button>
             </div>
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-sm text-muted">Copies the goals, duration and reminder setting. Learners and licenses are not copied.</p>
+              <p className="text-sm text-muted">{tr("Copies the goals, duration and reminder setting. Learners and licenses are not copied.")}</p>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">Name</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Name")}</label>
                 <input value={cloneName} onChange={(e) => setCloneName(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold uppercase tracking-wide text-muted">Start date (optional)</label>
+                <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Start date (optional)")}</label>
                 <input type="date" value={cloneStart} onChange={(e) => setCloneStart(e.target.value)} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
               </div>
               <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                 <input type="checkbox" checked={copyManagers} onChange={(e) => setCopyManagers(e.target.checked)} className="h-4 w-4 accent-navy" />
-                Same Managers
-              </label>
+                {tr("Same Managers")}</label>
               {error && <p className="text-sm text-error">{error}</p>}
               <div className="flex gap-3">
                 <Button
@@ -116,11 +112,10 @@ export function BatchLifecycleActions({
                   }
                   className="flex-1"
                 >
-                  {busy ? "Cloning…" : "Create copy"}
+                  {busy ? tr("Cloning…") : tr("Create copy")}
                 </Button>
                 <Button variant="secondary" onClick={() => setCloning(false)}>
-                  Cancel
-                </Button>
+                  {tr("Cancel")}</Button>
               </div>
             </div>
           </div>

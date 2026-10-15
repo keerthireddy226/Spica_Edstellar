@@ -7,6 +7,7 @@ import { Mascot } from "@/components/Mascot";
 import { Button } from "@/components/Button";
 import { startCoachSession, sendCoachMessage, endCoachSession, type CoachTurn } from "@/api/coach";
 
+import { tr } from "@/i18n/tr";
 // A real, working conversation with Gemini — one ongoing session resumed each visit.
 export function Tutor() {
   const { t } = useTranslation();
@@ -168,11 +169,11 @@ export function Tutor() {
 
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-3">
-          <StatCard index={0} variant="pastel" palette="terracotta" icon={MessageCircle} label="Your messages" value={mine.length} />
-          <StatCard index={0} variant="pastel" palette="moss" icon={Type} label="Words used" value={words} />
+          <StatCard index={0} variant="pastel" palette="terracotta" icon={MessageCircle} label={tr("Your messages")} value={mine.length} />
+          <StatCard index={0} variant="pastel" palette="moss" icon={Type} label={tr("Words used")} value={words} />
         </div>
 
-        <LearnerCard title="Talk about…" icon={Lightbulb} color="#c9965c">
+        <LearnerCard title={tr("Talk about…")} icon={Lightbulb} color="#c9965c">
           <div className="flex flex-col gap-2">
             {STARTERS.map((q) => (
               <button
@@ -186,7 +187,7 @@ export function Tutor() {
           </div>
         </LearnerCard>
 
-        <LearnerCard title="Tips" icon={Sparkles} color="var(--color-success)">
+        <LearnerCard title={tr("Tips")} icon={Sparkles} color="var(--color-success)">
           <ul className="flex flex-col gap-2.5 text-sm text-ink">
             {TIPS.map((tip) => (
               <li key={tip} className="flex gap-2">
@@ -201,16 +202,16 @@ export function Tutor() {
 }
 
 const STARTERS = [
-  "Can you help me practise a job interview?",
-  "Let's talk about my weekend.",
-  "How do I order food politely at a restaurant?",
-  "Ask me questions about my hometown.",
-  "Help me describe my daily routine.",
+  tr("Can you help me practise a job interview?"),
+  tr("Let's talk about my weekend."),
+  tr("How do I order food politely at a restaurant?"),
+  tr("Ask me questions about my hometown."),
+  tr("Help me describe my daily routine."),
 ];
 
 const TIPS = [
-  "Answer in full sentences, not single words.",
-  "Try a new word you learned today.",
-  "Ask the tutor to correct your grammar.",
-  "Keep going for at least five replies.",
+  tr("Answer in full sentences, not single words."),
+  tr("Try a new word you learned today."),
+  tr("Ask the tutor to correct your grammar."),
+  tr("Keep going for at least five replies."),
 ];

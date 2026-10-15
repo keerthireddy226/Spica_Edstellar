@@ -28,17 +28,18 @@ import {
   type OrgBatch,
 } from "@/api/orgAdmin";
 
+import { tr } from "@/i18n/tr";
 type ManagerStatus = "active" | "pending" | "deactivated";
 const statusOf = (m: OrgManager): ManagerStatus => (!m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active");
 
 function relative(iso: string | null | undefined): string {
   if (!iso) return "never";
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 60) return mins <= 1 ? "just now" : `${mins} min ago`;
+  if (mins < 60) return mins <= 1 ? tr("just now") : tr("{{mins}} min ago", { mins: mins });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} h ago`;
+  if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  return days < 30 ? `${days} day${days === 1 ? "" : "s"} ago` : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return days < 30 ? tr("{{days}} day{{v}} ago", { days: days, v: days === 1 ? "" : "s" }) : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 function StatCard({ label, value, icon: Icon, index }: { label: string; value: number | string; icon: LucideIcon; index: number }) {
@@ -128,7 +129,7 @@ function ManagerFormModal({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (poolNumber !== null && maxPool !== null && poolNumber > maxPool) {
-      setError(`Only ${maxPool} licenses can be set aside for this Manager right now.`);
+      setError(tr("Only {{maxPool}} licenses can be set aside for this Manager right now.", { maxPool: maxPool }));
       return;
     }
     setError(null);
@@ -141,17 +142,17 @@ function ManagerFormModal({
         onSaved(`${firstName.trim()} ${lastName.trim()} updated.`);
       } else {
         await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment, ...profile });
-        onSaved(`Invite sent to ${email.trim()} — they'll receive an email to set their password.`);
+        onSaved(tr("Invite sent to {{trim}} — they'll receive an email to set their password.", { trim: email.trim() }));
       }
     } catch (err) {
       if (planErrorMessage(err)) {
         setError(planErrorMessage(err));
       } else if (err instanceof ApiError && err.message === "email_already_registered") {
-        setError("That email is already registered.");
+        setError(tr("That email is already registered."));
       } else if (err instanceof ApiError && LICENSE_ERROR_TEXT[err.message]) {
         setError(LICENSE_ERROR_TEXT[err.message]);
       } else {
-        setError(editing ? "Something went wrong saving this manager." : "Something went wrong onboarding that manager.");
+        setError(editing ? tr("Something went wrong saving this manager.") : tr("Something went wrong onboarding that manager."));
       }
     } finally {
       setSubmitting(false);
@@ -164,7 +165,7 @@ function ManagerFormModal({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
-          <h2 className="font-display font-bold text-lg text-ink">{editing ? "Edit Manager" : "Onboard Manager"}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{editing ? tr("Edit Manager") : tr("Onboard Manager")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
@@ -172,19 +173,18 @@ function ManagerFormModal({
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">First name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
               <input required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Last name</label>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last name")}</label>
               <input required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
-              <Mail size={13} /> Email
-            </label>
+              <Mail size={13} /> {tr("Email")}</label>
             <input
               required
               type="email"
@@ -193,29 +193,29 @@ function ManagerFormModal({
               disabled={editing}
               className={`${inputClass} ${editing ? "opacity-60 cursor-not-allowed" : ""}`}
             />
-            {editing && <p className="text-xs text-muted">Email is their login, so it can't be changed here.</p>}
+            {editing && <p className="text-xs text-muted">{tr("Email is their login, so it can't be changed here.")}</p>}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Job title</label>
-              <input {...pf("jobTitle")} placeholder="e.g. Training Lead" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Job title")}</label>
+              <input {...pf("jobTitle")} placeholder={tr("e.g. Training Lead")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Department</label>
-              <input {...pf("department")} placeholder="e.g. Customer Support" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Department")}</label>
+              <input {...pf("department")} placeholder={tr("e.g. Customer Support")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">Phone</label>
-              <input {...pf("phone")} placeholder="e.g. +91 98765 43210" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Phone")}</label>
+              <input {...pf("phone")} placeholder={tr("e.g. +91 98765 43210")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted">City</label>
-              <input {...pf("city")} placeholder="e.g. Pune" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("City")}</label>
+              <input {...pf("city")} placeholder={tr("e.g. Pune")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">License pool for this Manager</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("License pool for this Manager")}</label>
             {!poolsAllowed ? (
               <PlanLockNote feature="manager_pools" compact />
             ) : (
@@ -230,29 +230,27 @@ function ManagerFormModal({
                 className="w-32 rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
               <span className="text-xs text-muted">
-                {editing && poolUsed ? `${poolUsed} already assigned from it · ` : ""}
-                {maxPool !== null ? `up to ${maxPool} available to set aside` : ""}
+                {editing && poolUsed ? tr("{{poolUsed}} already assigned from it · ", { poolUsed: poolUsed }) : ""}
+                {maxPool !== null ? tr("up to {{maxPool}} available to set aside", { maxPool: maxPool }) : ""}
               </span>
             </div>
             <p className="text-xs text-muted">
-              Set aside from your pool for this Manager to use in any of their batches, including batches they create themselves. They can't change it —
-              they send you a request.
-            </p>
+              {tr("Set aside from your pool for this Manager to use in any of their batches, including batches they create themselves. They can't change it — they send you a request.")}</p>
             </>
             )}
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted">Batches they manage</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Batches they manage")}</label>
             {batches.length === 0 ? (
-              <p className="text-sm text-muted">No batches yet — the Manager can create their own.</p>
+              <p className="text-sm text-muted">{tr("No batches yet — the Manager can create their own.")}</p>
             ) : (
               <div className="border border-rule rounded-input overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-paper-warm/60 border-b border-rule text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
-                      <th className="px-3 py-2">Batch</th>
-                      <th className="px-3 py-2 text-right">Fixed batch licenses</th>
+                      <th className="px-3 py-2">{tr("Batch")}</th>
+                      <th className="px-3 py-2 text-right">{tr("Fixed batch licenses")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -267,10 +265,10 @@ function ManagerFormModal({
                               <input type="checkbox" checked={checked} onChange={() => toggleBatch(b.id)} className="h-4 w-4 rounded accent-navy cursor-pointer" />
                               <span className="truncate">{b.name}</span>
                             </label>
-                            {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">also managed by {others.join(", ")}</p>}
+                            {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">{tr("also managed by")}{" "}{others.join(", ")}</p>}
                           </td>
                           <td className="px-3 py-2.5 text-right text-xs text-muted">
-                            {fixed?.budget != null ? `${fixed.used} / ${fixed.budget} used` : "None — uses Manager's pool"}
+                            {fixed?.budget != null ? `${fixed.used} / ${fixed.budget} used` : tr("None — uses Manager's pool")}
                           </td>
                         </tr>
                       );
@@ -279,19 +277,18 @@ function ManagerFormModal({
                 </table>
               </div>
             )}
-            <p className="text-xs text-muted">Fixed batch licenses are set when you create a batch (or in Licenses → Allotments) and are used first for that batch's learners.</p>
+            <p className="text-xs text-muted">{tr("Fixed batch licenses are set when you create a batch (or in Licenses → Allotments) and are used first for that batch's learners.")}</p>
           </div>
 
           {error && <p className="text-sm text-error">{error}</p>}
-          {!editing && <p className="text-xs text-muted">They'll get an email to set their own password.</p>}
+          {!editing && <p className="text-xs text-muted">{tr("They'll get an email to set their own password.")}</p>}
 
           <div className="flex items-center gap-3 pt-1">
             <Button type="submit" disabled={submitting} className="flex-1">
-              {submitting ? (editing ? "Saving…" : "Sending invite…") : editing ? "Save changes" : "Send invite"}
+              {submitting ? (editing ? tr("Saving…") : tr("Sending invite…")) : editing ? tr("Save changes") : tr("Send invite")}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
-            </Button>
+              {tr("Cancel")}</Button>
           </div>
         </form>
       </div>
@@ -334,7 +331,7 @@ export function OrgAdminManagers() {
   function load() {
     getManagers()
       .then((res) => setManagers(res.managers))
-      .catch(() => setError("Could not load managers."));
+      .catch(() => setError(tr("Could not load managers.")));
     getBatches().then((res) => setBatches(res.batches));
     getOrgLicenseOverview()
       .then((res) => {
@@ -357,11 +354,11 @@ export function OrgAdminManagers() {
     try {
       const r = await deleteManager(manager.id);
       setDeletingManager(null);
-      if (r.releasedLicenses) setJustInvited(`${r.releasedLicenses} unused license${r.releasedLicenses === 1 ? "" : "s"} from their pool went back to yours.`);
+      if (r.releasedLicenses) setJustInvited(tr("{{releasedLicenses}} unused license{{v}} from their pool went back to yours.", { releasedLicenses: r.releasedLicenses, v: r.releasedLicenses === 1 ? "" : "s" }));
       load();
       refreshPlan();
     } catch {
-      setError("Could not delete that manager.");
+      setError(tr("Could not delete that manager."));
     } finally {
       setBusyId(null);
     }
@@ -372,12 +369,12 @@ export function OrgAdminManagers() {
     try {
       if (manager.active) {
         const r = await deactivateManager(manager.id);
-        if (r.releasedLicenses) setJustInvited(`${r.releasedLicenses} unused license${r.releasedLicenses === 1 ? "" : "s"} from their pool went back to yours.`);
+        if (r.releasedLicenses) setJustInvited(tr("{{releasedLicenses}} unused license{{v}} from their pool went back to yours.", { releasedLicenses: r.releasedLicenses, v: r.releasedLicenses === 1 ? "" : "s" }));
       } else await reactivateManager(manager.id);
       load();
       refreshPlan();
     } catch (err) {
-      setError(planErrorMessage(err) ?? "Could not update that manager's status.");
+      setError(planErrorMessage(err) ?? tr("Could not update that manager's status."));
     } finally {
       setBusyId(null);
     }
@@ -387,13 +384,12 @@ export function OrgAdminManagers() {
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display font-bold text-2xl text-ink">Managers</h1>
-          <p className="text-sm text-muted mt-1">Each one scoped to only the batch(es) you assign them.</p>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Managers")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("Each one scoped to only the batch(es) you assign them.")}</p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2 shrink-0">
-            <UserPlus size={18} /> Onboard Manager
-          </Button>
+            <UserPlus size={18} /> {tr("Onboard Manager")}</Button>
           <PlanLimitHint limit="managers" />
         </div>
       </div>
@@ -405,33 +401,32 @@ export function OrgAdminManagers() {
       )}
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {!managers && !error && <p className="text-sm text-muted">Loading…</p>}
-      {managers?.length === 0 && <p className="text-sm text-muted">No managers yet.</p>}
+      {!managers && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {managers?.length === 0 && <p className="text-sm text-muted">{tr("No managers yet.")}</p>}
 
       {managers && managers.length > 0 && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard index={0} icon={ShieldCheck} value={counts.active} label={`Active manager${counts.active === 1 ? "" : "s"}`} />
-            <StatCard index={1} icon={Users} value={counts.learners} label="Learners in their batches" />
+            <StatCard index={0} icon={ShieldCheck} value={counts.active} label={tr("Active manager{{v}}", { v: counts.active === 1 ? "" : "s" })} />
+            <StatCard index={1} icon={Users} value={counts.learners} label={tr("Learners in their batches")} />
             <StatCard
               index={2}
               icon={KeyRound}
               value={counts.allotted ? `${counts.used} / ${counts.allotted}` : "—"}
-              label={counts.allotted ? `Pool licenses used · ${counts.allotted - counts.used} left` : "No manager pools yet"}
+              label={counts.allotted ? tr("Pool licenses used · {{v}} left", { v: counts.allotted - counts.used }) : tr("No manager pools yet")}
             />
-            <StatCard index={3} icon={Inbox} value={counts.requests} label={`Pending license request${counts.requests === 1 ? "" : "s"}`} />
+            <StatCard index={3} icon={Inbox} value={counts.requests} label={tr("Pending license request{{v}}", { v: counts.requests === 1 ? "" : "s" })} />
           </div>
 
           {(counts.pending > 0 || counts.requests > 0) && (
             <div className="flex flex-wrap gap-2 text-sm">
               {counts.pending > 0 && (
                 <span className="bg-warning/15 text-navy-deep border border-warning/30 rounded-pill px-3 py-1">
-                  {counts.pending} invite{counts.pending === 1 ? "" : "s"} not accepted yet
-                </span>
+                  {counts.pending} {tr("invite")}{counts.pending === 1 ? "" : "s"} {tr("not accepted yet")}</span>
               )}
               {counts.requests > 0 && (
                 <Link to={ROUTES.ORG_ADMIN_LICENSES} className="bg-navy/10 text-navy rounded-pill px-3 py-1 font-semibold hover:underline">
-                  Review {counts.requests} license request{counts.requests === 1 ? "" : "s"} →
+                  {tr("Review")}{" "}{counts.requests} {tr("license request")}{counts.requests === 1 ? "" : "s"} →
                 </Link>
               )}
             </div>
@@ -443,17 +438,17 @@ export function OrgAdminManagers() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name, email, job title or batch"
+                placeholder={tr("Search by name, email, job title or batch")}
                 className="w-full rounded-input border border-rule bg-paper pl-9 pr-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
               />
             </div>
             <div className="flex items-center gap-1 bg-surface border border-rule rounded-pill p-1 max-w-full overflow-x-auto">
               {(
                 [
-                  ["all", "All", managers.length],
-                  ["active", "Active", counts.active],
-                  ["pending", "Invite pending", counts.pending],
-                  ["deactivated", "Deactivated", counts.deactivated],
+                  ["all", tr("All"), managers.length],
+                  ["active", tr("Active"), counts.active],
+                  ["pending", tr("Invite pending"), counts.pending],
+                  ["deactivated", tr("Deactivated"), counts.deactivated],
                 ] as const
               ).map(([key, label, n]) => (
                 <button
@@ -469,12 +464,12 @@ export function OrgAdminManagers() {
             </div>
           </div>
 
-          {shown.length === 0 && <p className="text-sm text-muted">No managers match.</p>}
+          {shown.length === 0 && <p className="text-sm text-muted">{tr("No managers match.")}</p>}
 
           <div className="grid lg:grid-cols-2 gap-4">
             {shown.map((m, i) => {
               const status = statusOf(m);
-              const name = [m.firstName, m.lastName].filter(Boolean).join(" ") || "Not named yet";
+              const name = [m.firstName, m.lastName].filter(Boolean).join(" ") || tr("Not named yet");
               const left = m.licensesAllotted != null ? Math.max(0, m.licensesAllotted - m.licensesUsed) : null;
               return (
                 <div
@@ -492,7 +487,7 @@ export function OrgAdminManagers() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-display font-bold text-white truncate">{name}</p>
                         <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 text-white uppercase tracking-wide">
-                          {status === "active" ? "Active" : status === "pending" ? "Invite pending" : "Deactivated"}
+                          {status === "active" ? tr("Active") : status === "pending" ? tr("Invite pending") : tr("Deactivated")}
                         </span>
                       </div>
                       <p className="text-xs text-white/75 truncate">
@@ -505,13 +500,12 @@ export function OrgAdminManagers() {
                       onClick={() => setViewingManagerId(m.id)}
                       className="text-xs font-semibold text-white underline-offset-2 hover:underline cursor-pointer shrink-0"
                     >
-                      View details
-                    </button>
+                      {tr("View details")}</button>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
                     {m.batchNames.length === 0 ? (
-                      <span className="text-xs text-white/75 italic">No batches yet — they can create their own.</span>
+                      <span className="text-xs text-white/75 italic">{tr("No batches yet — they can create their own.")}</span>
                     ) : (
                       m.batchNames.map((b) => (
                         <span key={b} className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white">
@@ -524,23 +518,23 @@ export function OrgAdminManagers() {
                   <div className="grid grid-cols-3 gap-3 bg-black/10 rounded-input px-3.5 py-3">
                     <div>
                       <p className="font-display font-bold text-xl text-white">{m.learnerCount ?? 0}</p>
-                      <p className="text-[11px] text-white/75">Learners</p>
+                      <p className="text-[11px] text-white/75">{tr("Learners")}</p>
                     </div>
                     <div>
                       <p className="font-display font-bold text-xl text-white">{m.activeLearners7d ?? 0}</p>
-                      <p className="text-[11px] text-white/75">Practised this week</p>
+                      <p className="text-[11px] text-white/75">{tr("Practised this week")}</p>
                     </div>
                     <div>
                       {m.licensesAllotted == null ? (
                         <>
                           <p className="font-display font-bold text-xl text-white/60">—</p>
-                          <p className="text-[11px] text-white/75">No license pool</p>
+                          <p className="text-[11px] text-white/75">{tr("No license pool")}</p>
                         </>
                       ) : (
                         <>
                           <p className="font-display font-bold text-xl text-white">
                             {left}
-                            <span className="text-xs font-normal text-white/75"> / {m.licensesAllotted} left</span>
+                            <span className="text-xs font-normal text-white/75"> / {m.licensesAllotted} {tr("left")}</span>
                           </p>
                           <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
                             <div
@@ -555,14 +549,13 @@ export function OrgAdminManagers() {
 
                   <div className="flex items-center justify-between gap-3 flex-wrap text-xs text-white/80">
                     <span>
-                      {status === "pending" ? "Hasn't signed in yet" : `Last active ${relative(m.lastLoginAt)}`}
-                      {" · "}Added {new Date(m.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                      {status === "pending" ? tr("Hasn't signed in yet") : tr("Last active {{relative}}", { relative: relative(m.lastLoginAt) })}
+                      {" · "}{tr("Added")}{" "}{new Date(m.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                       {m.invitedByName ? ` by ${m.invitedByName}` : ""}
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (
                       <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
-                        {m.pendingRequests} license request{m.pendingRequests === 1 ? "" : "s"} waiting
-                      </Link>
+                        {m.pendingRequests} {tr("license request")}{m.pendingRequests === 1 ? "" : "s"} {tr("waiting")}</Link>
                     )}
                   </div>
 
@@ -570,30 +563,30 @@ export function OrgAdminManagers() {
                     {status === "pending" && (
                       <ActionButton
                         icon={Mail}
-                        label="Resend invite"
+                        label={tr("Resend invite")}
                         onClick={async () => {
                           try {
                             const r = await resendInvite("managers", m.id);
-                            setJustInvited(`A new invite link was sent to ${r.email}.`);
+                            setJustInvited(tr("A new invite link was sent to {{email}}.", { email: r.email }));
                           } catch {
-                            setError("Could not resend the invite.");
+                            setError(tr("Could not resend the invite."));
                           }
                         }}
                       />
                     )}
-                    <ActionButton icon={Pencil} label="Edit" onClick={() => setEditingManager(m)} />
-                    <ActionButton icon={Repeat} label="Hand over" title="Move their batches and pool to another Manager" onClick={() => setHandingOver(m)} />
+                    <ActionButton icon={Pencil} label={tr("Edit")} onClick={() => setEditingManager(m)} />
+                    <ActionButton icon={Repeat} label={tr("Hand over")} title={tr("Move their batches and pool to another Manager")} onClick={() => setHandingOver(m)} />
                     {m.active && (
                       <ActionButton
                         icon={Eye}
-                        label="View as"
-                        title="See their console, read-only (recorded in the audit log)"
+                        label={tr("View as")}
+                        title={tr("See their console, read-only (recorded in the audit log)")}
                         onClick={async () => {
                           try {
                             await viewAsManager(m.id);
                             window.location.assign("/manager/dashboard");
                           } catch {
-                            setError("Couldn't open their console.");
+                            setError(tr("Couldn't open their console."));
                           }
                         }}
                       />
@@ -601,12 +594,12 @@ export function OrgAdminManagers() {
                     <span className="flex-1" />
                     <ActionButton
                       icon={m.active ? Ban : RotateCcw}
-                      label={m.active ? "Deactivate" : "Reactivate"}
+                      label={m.active ? tr("Deactivate") : tr("Reactivate")}
                       tone={m.active ? "danger" : "success"}
                       disabled={busyId === m.id}
                       onClick={() => handleToggleActive(m)}
                     />
-                    <ActionButton icon={Trash2} label="Delete" tone="danger" disabled={busyId === m.id} onClick={() => setDeletingManager(m)} />
+                    <ActionButton icon={Trash2} label={tr("Delete")} tone="danger" disabled={busyId === m.id} onClick={() => setDeletingManager(m)} />
                   </div>
                 </div>
               );
@@ -647,9 +640,9 @@ export function OrgAdminManagers() {
 
       {deletingManager && (
         <ConfirmActionModal
-          title="Delete manager"
-          message={`Delete ${[deletingManager.firstName, deletingManager.lastName].filter(Boolean).join(" ") || deletingManager.email}? They lose access immediately and their batch assignments are removed. This cannot be undone.`}
-          confirmLabel="Delete"
+          title={tr("Delete manager")}
+          message={tr("Delete {{v}}? They lose access immediately and their batch assignments are removed. This cannot be undone.", { v: [deletingManager.firstName, deletingManager.lastName].filter(Boolean).join(" ") || deletingManager.email })}
+          confirmLabel={tr("Delete")}
           destructive
           submitting={busyId === deletingManager.id}
           onClose={() => setDeletingManager(null)}

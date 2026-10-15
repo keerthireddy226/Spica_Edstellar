@@ -8,6 +8,7 @@ import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
 import type { SkillTag } from "@/api/testSession";
 
+import { tr } from "@/i18n/tr";
 const MODULE_SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const MODULE_SKILL_ICONS: Record<SkillTag, LucideIcon> = {
   listening: Headphones,
@@ -88,8 +89,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             <GraduationCap size={28} strokeWidth={1.8} />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-logo-primary font-logo font-bold text-xl">Spica</span>
-            <span className="text-logo-accent font-logo italic text-xs -mt-0.5">by Edstellar</span>
+            <span className="text-logo-primary font-logo font-bold text-xl">{tr("Spica")}</span>
+            <span className="text-logo-accent font-logo italic text-xs -mt-0.5">{tr("by Edstellar")}</span>
           </span>
         </div>
 

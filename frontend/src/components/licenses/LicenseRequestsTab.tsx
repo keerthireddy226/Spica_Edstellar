@@ -10,9 +10,10 @@ import {
   type LicenseRequest,
 } from "@/api/licenses";
 
+import { tr } from "@/i18n/tr";
 const ERRORS: Record<string, string> = {
-  not_pending: "This request was already handled.",
-  nothing_to_unassign: "That learner has no unused months left to return.",
+  not_pending: tr("This request was already handled."),
+  nothing_to_unassign: tr("That learner has no unused months left to return."),
 };
 
 function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void }) {
@@ -29,7 +30,7 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
       await decideLicenseRequest(r.id, deciding === "approve", note.trim() || undefined);
       onDecided();
     } catch (err) {
-      setError(ERRORS[err instanceof ApiError ? err.message : ""] ?? "Couldn't save the decision.");
+      setError(ERRORS[err instanceof ApiError ? err.message : ""] ?? tr("Couldn't save the decision."));
       setBusy(false);
     }
   }
@@ -47,8 +48,8 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink">{describeLicenseRequest(r)}</p>
           <p className="text-xs text-muted">
-            {r.requestedBy ?? "A Manager"} · {formatShortDate(r.createdAt)}
-            {r.batchName && r.kind !== "unassign_learner" ? ` · ${r.batchName} allotment ${r.batchAllotment ?? 0}, ${r.batchUsed} assigned` : ""}
+            {r.requestedBy ?? tr("A Manager")} · {formatShortDate(r.createdAt)}
+            {r.batchName && r.kind !== "unassign_learner" ? tr(" · {{batchName}} allotment {{v}}, {{batchUsed}} assigned", { batchName: r.batchName, v: r.batchAllotment ?? 0, batchUsed: r.batchUsed }) : ""}
           </p>
         </div>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill capitalize ${REQUEST_STATUS_CLASS[r.status]}`}>{r.status}</span>
@@ -57,18 +58,16 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
       {r.status !== "pending" && (r.decisionNote || r.decidedBy) && (
         <p className="text-xs text-muted">
           {r.decidedBy ? `${r.decidedBy}: ` : ""}
-          {r.decisionNote ?? (r.status === "approved" ? "Applied." : "")}
+          {r.decisionNote ?? (r.status === "approved" ? tr("Applied.") : "")}
         </p>
       )}
       {r.status === "pending" && !deciding && (
         <div className="flex items-center gap-2">
           <Button onClick={() => setDeciding("approve")} className="!px-3 !py-1.5 !text-xs flex items-center gap-1.5">
-            <Check size={14} /> Approve
-          </Button>
+            <Check size={14} /> {tr("Approve")}</Button>
           <Button variant="secondary" onClick={() => setDeciding("reject")} className="!px-3 !py-1.5 !text-xs flex items-center gap-1.5">
-            <X size={14} /> Decline
-          </Button>
-          {after !== null && <span className="text-xs text-muted">Approving sets {r.batchName}'s allotment to {after}.</span>}
+            <X size={14} /> {tr("Decline")}</Button>
+          {after !== null && <span className="text-xs text-muted">{tr("Approving sets")}{" "}{r.batchName}{tr("'s allotment to")}{" "}{after}.</span>}
         </div>
       )}
       {deciding && (
@@ -76,17 +75,16 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={deciding === "approve" ? "Note to the Manager (optional)" : "Why are you declining? (optional)"}
+            placeholder={deciding === "approve" ? tr("Note to the Manager (optional)") : tr("Why are you declining? (optional)")}
             className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
           />
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-2">
             <Button onClick={submit} disabled={busy} className={`!px-3 !py-1.5 !text-xs ${deciding === "reject" ? "!bg-error hover:!bg-error/90" : ""}`}>
-              {busy ? "Saving…" : deciding === "approve" ? "Confirm approval" : "Confirm decline"}
+              {busy ? tr("Saving…") : deciding === "approve" ? tr("Confirm approval") : tr("Confirm decline")}
             </Button>
             <Button variant="secondary" onClick={() => setDeciding(null)} disabled={busy} className="!px-3 !py-1.5 !text-xs">
-              Back
-            </Button>
+              {tr("Back")}</Button>
           </div>
         </div>
       )}
@@ -96,7 +94,7 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
 
 export function LicenseRequestsTab({ requests, onChanged }: { requests: LicenseRequest[]; onChanged: () => void }) {
   if (requests.length === 0) {
-    return <p className="text-sm text-muted">No requests yet. Managers can ask for more or fewer licenses, or to return a learner's unused months.</p>;
+    return <p className="text-sm text-muted">{tr("No requests yet. Managers can ask for more or fewer licenses, or to return a learner's unused months.")}</p>;
   }
   return (
     <div className="flex flex-col gap-3">

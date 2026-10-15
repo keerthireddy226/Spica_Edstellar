@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { getPendingReviewPlacements, getReviewHistory, reviewPlacement, type PendingPlacement } from "@/api/adminReview";
 import { ROUTES } from "@/constants/routes";
 
+import { tr } from "@/i18n/tr";
 const ADMIN_ROLES = ["admin", "super_admin"];
 
 export function AdminReview() {
@@ -28,7 +29,7 @@ export function AdminReview() {
       .catch(() => {});
     getPendingReviewPlacements()
       .then((res) => setPlacements(res.placements))
-      .catch(() => setError("Could not load pending reviews."));
+      .catch(() => setError(tr("Could not load pending reviews.")));
   }
 
   async function handleVerdict(id: string, verdict: "certified" | "fraud_confirmed") {
@@ -40,7 +41,7 @@ export function AdminReview() {
         .then(setHist)
         .catch(() => {});
     } catch {
-      setError("Something went wrong recording that verdict.");
+      setError(tr("Something went wrong recording that verdict."));
     } finally {
       setActingOn(null);
     }
@@ -51,29 +52,28 @@ export function AdminReview() {
   return (
     <div className="flex flex-col gap-5 w-full">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Placement reviews</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">{tr("Placement reviews")}</h1>
         <p className="text-sm text-muted mt-1">
-          Placements flagged during a face check — not blocked for the learner, just awaiting a verdict here.
-        </p>
+          {tr("Placements flagged during a face check — not blocked for the learner, just awaiting a verdict here.")}</p>
       </div>
 
       {hist && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard variant="split" palette="rose" index={0} icon={Clock} value={hist.stats.pending} label="Waiting for a verdict" />
-          <StatCard variant="split" palette="rose" index={1} icon={CheckCircle2} value={hist.stats.decidedThisMonth} label="Decided this month" sub={`${hist.stats.cleared} cleared in total`} />
-          <StatCard variant="split" palette="rose" index={2} icon={ShieldX} value={hist.stats.fraud} label="Confirmed not the learner" sub={hist.stats.cleared + hist.stats.fraud ? `${Math.round((hist.stats.fraud / (hist.stats.cleared + hist.stats.fraud)) * 100)}% of decisions` : undefined} />
-          <StatCard variant="split" palette="rose" index={3} icon={Timer} value={`${hist.stats.avgHoursToDecide} h`} label="Average time to decide" sub={`${hist.stats.placements} placement tests taken`} />
+          <StatCard variant="split" palette="rose" index={0} icon={Clock} value={hist.stats.pending} label={tr("Waiting for a verdict")} />
+          <StatCard variant="split" palette="rose" index={1} icon={CheckCircle2} value={hist.stats.decidedThisMonth} label={tr("Decided this month")} sub={tr("{{cleared}} cleared in total", { cleared: hist.stats.cleared })} />
+          <StatCard variant="split" palette="rose" index={2} icon={ShieldX} value={hist.stats.fraud} label={tr("Confirmed not the learner")} sub={hist.stats.cleared + hist.stats.fraud ? tr("{{round}}% of decisions", { round: Math.round((hist.stats.fraud / (hist.stats.cleared + hist.stats.fraud)) * 100) }) : undefined} />
+          <StatCard variant="split" palette="rose" index={3} icon={Timer} value={`${hist.stats.avgHoursToDecide} h`} label={tr("Average time to decide")} sub={tr("{{placements}} placement tests taken", { placements: hist.stats.placements })} />
         </div>
       )}
 
       <div className="grid lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-2 flex flex-col gap-4">
-          <h2 className="font-display font-bold text-lg text-ink">Waiting for review</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("Waiting for review")}</h2>
       {error && <p className="text-sm text-error">{error}</p>}
 
-      {placements === null && !error && <p className="text-sm text-muted">Loading…</p>}
+      {placements === null && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
 
-      {placements?.length === 0 && <p className="text-sm text-muted">Nothing pending review right now.</p>}
+      {placements?.length === 0 && <p className="text-sm text-muted">{tr("Nothing pending review right now.")}</p>}
 
       {placements?.map((p) => (
         <div key={p.id} className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-4">
@@ -82,14 +82,14 @@ export function AdminReview() {
               <p className="font-semibold text-ink">{p.name?.trim() || p.email}</p>
               <p className="text-xs text-muted">
                 {p.email}
-                {p.org_name ? ` · ${p.org_name}` : " · Individual learner"}
+                {p.org_name ? ` · ${p.org_name}` : tr(" · Individual learner")}
               </p>
               <p className="text-xs text-muted mt-0.5">
                 {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
               </p>
             </div>
             <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">
-              <ShieldAlert size={14} /> {p.flagged_checks.length} flagged check{p.flagged_checks.length === 1 ? "" : "s"}
+              <ShieldAlert size={14} /> {p.flagged_checks.length} {tr("flagged check")}{p.flagged_checks.length === 1 ? "" : "s"}
             </span>
           </div>
 
@@ -97,12 +97,11 @@ export function AdminReview() {
             {p.flagged_checks.map((c, i) => (
               <div key={i} className="flex items-center gap-3 text-xs bg-paper-warm rounded-input px-3 py-2">
                 <span className="font-mono uppercase text-error font-semibold">{c.decision}</span>
-                {c.similarityScore !== null && <span className="text-muted">similarity {Number(c.similarityScore).toFixed(2)}</span>}
+                {c.similarityScore !== null && <span className="text-muted">{tr("similarity")}{" "}{Number(c.similarityScore).toFixed(2)}</span>}
                 <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString()}</span>
                 {c.sampleUri && (
                   <a href={c.sampleUri} target="_blank" rel="noreferrer" className="text-navy-deep hover:underline ml-auto">
-                    view photo
-                  </a>
+                    {tr("view photo")}</a>
                 )}
               </div>
             ))}
@@ -110,53 +109,51 @@ export function AdminReview() {
 
           <div className="flex gap-3">
             <Button variant="secondary" onClick={() => handleVerdict(p.id, "certified")} disabled={actingOn === p.id} className="flex-1">
-              <Check size={15} className="inline mr-1.5" /> Confirm, it's them
-            </Button>
+              <Check size={15} className="inline mr-1.5" /> {tr("Confirm, it's them")}</Button>
             <Button variant="secondary" onClick={() => handleVerdict(p.id, "fraud_confirmed")} disabled={actingOn === p.id} className="flex-1 text-error">
-              <X size={15} className="inline mr-1.5" /> Not them
-            </Button>
+              <X size={15} className="inline mr-1.5" /> {tr("Not them")}</Button>
           </div>
         </div>
       ))}
         </div>
         <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 text-sm">
-          <h2 className="font-display font-bold text-lg text-ink">How flagging works</h2>
-          <p className="text-muted">During the placement test Spica checks, a few times, that the person on camera matches the face the learner enrolled.</p>
-          <p className="text-muted">When a check doesn't match, the test isn't stopped. The result is held here as "pending review" until someone decides.</p>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("How flagging works")}</h2>
+          <p className="text-muted">{tr("During the placement test Spica checks, a few times, that the person on camera matches the face the learner enrolled.")}</p>
+          <p className="text-muted">{tr("When a check doesn't match, the test isn't stopped. The result is held here as \"pending review\" until someone decides.")}</p>
           <ul className="list-disc pl-5 text-muted flex flex-col gap-1">
-            <li><span className="text-ink font-medium">Confirm, it's them</span> — the result is certified and counts.</li>
-            <li><span className="text-ink font-medium">Not them</span> — the result is marked as fraud and won't count or appear on certificates.</li>
+            <li><span className="text-ink font-medium">{tr("Confirm, it's them")}</span> {tr("— the result is certified and counts.")}</li>
+            <li><span className="text-ink font-medium">{tr("Not them")}</span> {tr("— the result is marked as fraud and won't count or appear on certificates.")}</li>
           </ul>
-          <p className="text-xs text-muted">Open each flagged photo before deciding. Every verdict is recorded with your name.</p>
+          <p className="text-xs text-muted">{tr("Open each flagged photo before deciding. Every verdict is recorded with your name.")}</p>
         </div>
       </div>
 
       {hist && (
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="font-display font-bold text-lg text-ink">Past decisions</h2>
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Past decisions")}</h2>
             <FilterPills
               value={verdict}
               onChange={setVerdict}
               options={[
-                ["all", "All", hist.history.length],
-                ["certified", "Cleared", hist.history.filter((h) => h.status === "certified").length],
-                ["fraud_confirmed", "Not the learner", hist.history.filter((h) => h.status === "fraud_confirmed").length],
+                ["all", tr("All"), hist.history.length],
+                ["certified", tr("Cleared"), hist.history.filter((h) => h.status === "certified").length],
+                ["fraud_confirmed", tr("Not the learner"), hist.history.filter((h) => h.status === "fraud_confirmed").length],
               ]}
             />
           </div>
           {hist.history.length === 0 ? (
-            <EmptyNote>No decisions yet.</EmptyNote>
+            <EmptyNote>{tr("No decisions yet.")}</EmptyNote>
           ) : (
             <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
               <table className="w-full text-sm min-w-[720px]">
                 <thead>
                   <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                    <th className="px-4 py-3">Learner</th>
-                    <th className="px-4 py-3">Result</th>
-                    <th className="px-4 py-3">Verdict</th>
-                    <th className="px-4 py-3">Decided by</th>
-                    <th className="px-4 py-3">When</th>
+                    <th className="px-4 py-3">{tr("Learner")}</th>
+                    <th className="px-4 py-3">{tr("Result")}</th>
+                    <th className="px-4 py-3">{tr("Verdict")}</th>
+                    <th className="px-4 py-3">{tr("Decided by")}</th>
+                    <th className="px-4 py-3">{tr("When")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,13 +163,13 @@ export function AdminReview() {
                       <tr key={h.id} className="border-b border-rule last:border-0">
                         <td className="px-4 py-3">
                           <p className="text-ink font-medium">{h.name?.trim() || h.email}</p>
-                          <p className="text-xs text-muted">{h.org_name ?? "Individual learner"}</p>
+                          <p className="text-xs text-muted">{h.org_name ?? tr("Individual learner")}</p>
                         </td>
                         <td className="px-4 py-3 text-muted">
                           {h.cefr_level} · {h.overall_percent}%
                         </td>
                         <td className="px-4 py-3">
-                          <StatusPill tone={h.status === "certified" ? "success" : "error"}>{h.status === "certified" ? "Cleared" : "Not the learner"}</StatusPill>
+                          <StatusPill tone={h.status === "certified" ? "success" : "error"}>{h.status === "certified" ? tr("Cleared") : tr("Not the learner")}</StatusPill>
                           {h.review_note && <p className="text-xs text-muted mt-1">{h.review_note}</p>}
                         </td>
                         <td className="px-4 py-3 text-muted">{h.reviewer?.trim() || "—"}</td>
