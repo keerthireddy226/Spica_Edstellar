@@ -140,6 +140,15 @@ export async function buildExport(exportId: string): Promise<void> {
       licenseAssignments: await q(`SELECT id, purchase_id, user_id, batch_id, source, starts_at, ends_at, reclaimed_at FROM license_assignments WHERE tenant_id = $1`),
       licenseEvents: await q(`SELECT kind, quantity, user_id, batch_name, note, created_at FROM license_events WHERE tenant_id = $1 ORDER BY created_at`),
       invoices: await q(`SELECT invoice_number, issued_at, description, quantity, currency, total, tax_amount FROM invoices WHERE tenant_id = $1`),
+      // Recruitment: job openings, each candidate's assessment and result (never the link token), and credits.
+      recruitmentJobs: await q(`SELECT id, title, department, location, test_kind, min_cefr, invite_valid_days, status, created_at, closed_at FROM recruitment_jobs WHERE tenant_id = $1 ORDER BY created_at`),
+      recruitmentAssessments: await q(
+        `SELECT a.id, a.job_id, a.email, a.first_name, a.last_name, a.status, s.test_code AS attempt_id, e.test_id, a.result, a.decision, a.decision_note,
+           a.decided_at, a.invited_at, a.expires_at, a.started_at, a.completed_at
+         FROM recruitment_assessments a LEFT JOIN sessions s ON s.id = a.session_id LEFT JOIN exams e ON e.id = a.exam_id
+         WHERE a.tenant_id = $1 ORDER BY a.invited_at`,
+      ),
+      recruitmentCredits: await q(`SELECT delta, reason, note, assessment_id, created_at FROM recruitment_credit_events WHERE tenant_id = $1 ORDER BY created_at`),
       creditNotes: await q(`SELECT credit_note_number, issued_at, currency, amount, reason FROM credit_notes WHERE tenant_id = $1`),
       certificates: await q(`SELECT code, user_id, learner_name, batch_name, cefr_level, issued_at, revoked_at FROM certificates WHERE tenant_id = $1`),
       auditLog: await q(`SELECT created_at, actor_label, actor_role, action, target_type, target_label, details FROM audit_log
