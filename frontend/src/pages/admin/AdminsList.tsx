@@ -13,7 +13,7 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
-import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 import { ago, getPortfolio, shortDate } from "@/api/staff";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
@@ -608,7 +608,22 @@ type AdminFilter = "all" | "active" | "pending" | "quiet" | "deactivated";
 const adminStatus = (a: AdminAccount) => (!a.active ? "deactivated" : !a.hasLoggedIn ? "pending" : "active");
 const isQuiet = (a: AdminAccount) => a.active && a.hasLoggedIn && (!a.lastLoginAt || Date.now() - new Date(a.lastLoginAt).getTime() > 14 * 86400000);
 
+// Reached only by typing the address when the Admin can't manage Admins
+// (the menu hides it), so say so plainly instead of failing to load.
 export function AdminsList() {
+  const perms = useStaffPermissions();
+  if (!perms.isSuper && !perms.manageAdmins) {
+    return (
+      <div className="flex flex-col gap-6 w-full">
+        <PageHeader title="Admins" subtitle="Edstellar staff accounts." />
+        <EmptyNote>You don't have permission to manage Admins. Ask a Super Admin if you need it.</EmptyNote>
+      </div>
+    );
+  }
+  return <AdminsListPage />;
+}
+
+function AdminsListPage() {
   const [admins, setAdmins] = useState<AdminAccount[] | null>(null);
   const [portfolio, setPortfolio] = useState<Map<string, { learners: number; atRisk: number; organizations: number }>>(new Map());
   const [error, setError] = useState<string | null>(null);
