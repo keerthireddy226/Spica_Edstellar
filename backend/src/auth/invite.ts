@@ -18,7 +18,7 @@ const BCRYPT_ROUNDS = 12;
 // verified immediately (the inviter vouches for the address), a reset-style
 // token, and the same "set your password" email everyone else gets.
 export async function createAndInviteUser(row: {
-  role: "org_admin" | "manager" | "learner";
+  role: "org_admin" | "manager" | "learner" | "recruiter";
   tenantId: string;
   batchId?: string | null;
   email: string;

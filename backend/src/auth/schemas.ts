@@ -18,7 +18,7 @@ export const updateNameSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  allowedRoles: z.array(z.enum(["learner", "org_admin", "admin", "super_admin", "manager"])).min(1),
+  allowedRoles: z.array(z.enum(["learner", "org_admin", "admin", "super_admin", "manager", "recruiter"])).min(1),
 });
 
 export const forgotPasswordSchema = z.object({

@@ -6,6 +6,8 @@ export interface Branding {
   organization: { name: string; logoUrl: string | null; brandColor: string | null } | null;
   faceCheckRequired: boolean;
   allowedTestProducts: string[] | null;
+  // What the organization bought: employee skills, recruitment, or both.
+  products: ("skills" | "recruitment")[];
 }
 
 let cached: Promise<Branding> | null = null;

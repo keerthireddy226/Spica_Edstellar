@@ -4,7 +4,7 @@ import { pool } from "../db.js";
 // Console roles inside an organization: the people an organization's
 // security policies (MFA, IP allowlist) are about. Learners practise from
 // anywhere, so those two don't apply to them.
-export const ORG_CONSOLE_ROLES = ["org_admin", "manager"];
+export const ORG_CONSOLE_ROLES = ["org_admin", "manager", "recruiter"];
 
 const COMMON = new Set([
   "password", "password1", "password123", "12345678", "123456789", "1234567890", "qwerty123", "qwertyuiop",

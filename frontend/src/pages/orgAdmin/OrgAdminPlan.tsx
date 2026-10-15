@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useBranding } from "@/components/AppShell/useBranding";
+import { RecruitmentPlanCard } from "@/components/recruitment/RecruitmentPlanCard";
 import { Check, Clock, Gem, Minus, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
 import { BuyLicensesModal } from "@/components/licenses/BuyLicensesModal";
@@ -64,6 +66,20 @@ function EnterpriseInquiry() {
 export function OrgAdminPlan() {
   const plan = usePlan();
   const [showBuy, setShowBuy] = useState(false);
+  const products = useBranding()?.products;
+
+  // Recruitment only: credits are the whole plan.
+  if (products && !products.includes("skills")) {
+    return (
+      <div className="flex flex-col gap-6 w-full">
+        <div>
+          <h1 className="font-display font-bold text-2xl text-ink">{tr("Plan")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("Your organization uses Spica for recruitment, paid per candidate assessment.")}</p>
+        </div>
+        <RecruitmentPlanCard />
+      </div>
+    );
+  }
 
   if (!plan) {
     return <p className="text-sm text-muted">{tr("Loading your plan…")}</p>;
@@ -80,6 +96,8 @@ export function OrgAdminPlan() {
         <p className="text-sm text-muted mt-1">
           {tr("Every learner gets the same Spica on every plan. Plans set your price per license and the tools for managing at scale.")}</p>
       </div>
+
+      {products?.includes("recruitment") && <RecruitmentPlanCard />}
 
       {plan.pilotEndsAt && (
         <div className="flex items-start gap-3 rounded-card border border-warning/40 bg-warning/10 px-5 py-4">

@@ -25,6 +25,7 @@ const ROLE_LABEL: Record<string, string> = {
   super_admin: tr("Super Admin"),
   org_admin: tr("Org Admin"),
   manager: tr("Manager"),
+  recruiter: tr("Recruiter"),
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -249,7 +250,7 @@ export function LoginHistorySection() {
 function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
   // Org Admin / Manager aren't gated by the permissions system at all — their
   // scope comes from tenant/batch assignment instead, so this card doesn't apply.
-  if (user?.role === "org_admin" || user?.role === "manager") return null;
+  if (user?.role === "org_admin" || user?.role === "manager" || user?.role === "recruiter") return null;
 
   if (user?.role === "super_admin") {
     return (

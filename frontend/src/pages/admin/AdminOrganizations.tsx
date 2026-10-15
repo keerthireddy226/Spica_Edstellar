@@ -35,6 +35,9 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [x, setX] = useState<Record<string, string>>({ planTier: "business", contractCurrency: "USD" });
+  // What the organization buys: employee skills, recruitment, or both.
+  const [products, setProducts] = useState<("skills" | "recruitment")[]>(["skills"]);
+  const [initialCredits, setInitialCredits] = useState("");
   const isSuper = useStaffPermissions().isSuper;
   const [admins, setAdmins] = useState<{ id: string; name: string; email: string }[]>([]);
   useEffect(() => {
@@ -70,6 +73,8 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
         billingContactPhone: x.billingContactPhone?.trim() || undefined,
         purchaseOrderRef: x.purchaseOrderRef?.trim() || undefined,
         planTier: (x.planTier || undefined) as OnboardOrgPayload["planTier"],
+        products,
+        initialCredits: products.includes("recruitment") && initialCredits.trim() ? Number(initialCredits.trim()) : undefined,
         contractStart: x.contractStart || undefined,
         contractEnd: x.contractEnd || undefined,
         contractValue: x.contractValue ? Number(x.contractValue) : undefined,
@@ -240,6 +245,46 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <input type="text" {...f("postalCode")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
+
+          <div className="border-t border-rule pt-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-ink">{tr("Products")}</p>
+            <p className="text-xs text-muted">{tr("What the organization buys. Only these parts of Spica are switched on for them; this can change later.")}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {(
+              [
+                [["skills"], tr("Employee skills"), tr("Assess and train their employees' English: licenses, batches, Managers.")],
+                [["recruitment"], tr("Recruitment"), tr("Proctored English tests for job candidates, paid per assessment.")],
+                [["skills", "recruitment"], tr("Both"), tr("Employees and candidates, each with their own proctoring settings.")],
+              ] as [("skills" | "recruitment")[], string, string][]
+            ).map(([value, label, hint]) => {
+              const selected = value.length === products.length && value.every((v) => products.includes(v));
+              return (
+                <button
+                  type="button"
+                  key={label}
+                  onClick={() => setProducts(value)}
+                  className={`text-left rounded-card border p-3 flex flex-col gap-1 cursor-pointer ${selected ? "border-navy bg-navy/10" : "border-rule bg-paper hover:border-navy/40"}`}
+                >
+                  <span className="text-sm font-semibold text-ink">{label}</span>
+                  <span className="text-xs text-muted">{hint}</span>
+                </button>
+              );
+            })}
+          </div>
+          {products.includes("recruitment") && (
+            <div className="flex flex-col gap-1.5 max-w-xs">
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Starting assessment credits")}</label>
+              <input
+                type="number"
+                min={0}
+                value={initialCredits}
+                onChange={(e) => setInitialCredits(e.target.value)}
+                placeholder={tr("e.g. 50")}
+                className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+              />
+            </div>
+          )}
 
           <div className="border-t border-rule pt-4 flex flex-col gap-1">
             <p className="text-sm font-semibold text-ink">{tr("Plan, contract and goals")}</p>
@@ -560,6 +605,7 @@ export function AdminOrganizations() {
   const [filter, setFilter] = useState<OrgFilter>("active");
   const [type, setType] = useState("all");
   const [tier, setTier] = useState("all");
+  const [product, setProduct] = useState("all");
   const [owner, setOwner] = useState("all");
 
   function load() {
@@ -620,6 +666,7 @@ export function AdminOrganizations() {
       matches[filter](o) &&
       (type === "all" || (type === "university" ? o.category === "university" : o.category !== "university")) &&
       (tier === "all" || o.planTier === tier) &&
+      (product === "all" || (product === "both" ? o.products?.length === 2 : o.products?.length === 1 && o.products[0] === product)) &&
       (owner === "all" || m(o.id)?.owner?.id === owner) &&
       (!q || [o.name, o.orgAdmin?.name, o.orgAdmin?.email, o.industry, m(o.id)?.owner?.name].some((v) => v?.toLowerCase().includes(q))),
   );
@@ -678,6 +725,17 @@ export function AdminOrganizations() {
           onChange={setTier}
           options={[["all", tr("All plans")], ...(Object.entries(TIER_LABELS) as [string, string][])]}
         />
+        <SelectFilter
+          label={tr("Product")}
+          value={product}
+          onChange={setProduct}
+          options={[
+            ["all", tr("All products")],
+            ["skills", tr("Employee skills only")],
+            ["recruitment", tr("Recruitment only")],
+            ["both", tr("Both")],
+          ]}
+        />
         {perms.isSuper && <SelectFilter label={tr("Owner")} value={owner} onChange={setOwner} options={[["all", tr("All Admins")], ...owners]} />}
       </div>
       <FilterPills<OrgFilter>
@@ -715,6 +773,11 @@ export function AdminOrganizations() {
                   </button>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{TIER_LABELS[org.planTier]}</span>
+                    {org.products?.includes("recruitment") && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">
+                        {org.products.includes("skills") ? tr("Skills + Recruitment") : tr("Recruitment")} · {tr("{{n}} credits", { n: org.assessmentCredits })}
+                      </span>
+                    )}
                     {isPilot(org) && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25">{tr("Pilot to {{shortDate}}", { shortDate: shortDate(org.pilotEndsAt) })}</span>}
                     {org.health && (
                       <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-black/15" title={org.health.flags.map((f) => trServer(f)).join("\n")}>

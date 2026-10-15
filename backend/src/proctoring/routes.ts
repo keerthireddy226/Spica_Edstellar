@@ -15,7 +15,7 @@ import { cropFace, detectFaces } from "../face/detect.js";
 import { scoreLiveness } from "../face/liveness.js";
 import { headPose } from "./headPose.js";
 import { readMrz } from "./idDocument.js";
-import { embedFace, cosineSimilarity, bufferToEmbedding, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "../face/embed.js";
+import { embedFace, cosineSimilarity, bufferToEmbedding, embeddingToBuffer, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "../face/embed.js";
 import { detectObjects } from "./objects.js";
 import { mediaPath, removeMedia, saveMedia } from "./storage.js";
 import { analyzeSession } from "./analyze.js";
@@ -33,8 +33,10 @@ import {
   saveTenantPolicy,
   tenantPolicy,
   usesBiometrics,
+  type PolicyAudience,
   type ProctoringPolicy,
 } from "./policy.js";
+import { RecruitmentError, tenantProducts } from "../recruitment/service.js";
 
 export const proctoringRouter = Router();
 
@@ -83,10 +85,18 @@ function requireOrgAdmin(req: AuthedRequest, res: Response): string | null {
   return req.user.tenantId;
 }
 
+function audienceOf(req: AuthedRequest): PolicyAudience {
+  return req.query.audience === "candidates" ? "candidates" : "employees";
+}
+
 async function savePolicy(req: AuthedRequest, tenantId: string, policy: ProctoringPolicy) {
-  if (needsSecureProctoringPlan(policy)) await assertFeature(tenantId, "secure_proctoring");
-  const before = await tenantPolicy(tenantId);
-  await saveTenantPolicy(tenantId, policy);
+  const audience = audienceOf(req);
+  const products = await tenantProducts(tenantId);
+  if (audience === "candidates" && !products.includes("recruitment")) throw new RecruitmentError("product_not_enabled", 403, { product: "recruitment" });
+  // Recruitment includes secure proctoring; the employee product needs the plan.
+  if (needsSecureProctoringPlan(policy) && !products.includes("recruitment")) await assertFeature(tenantId, "secure_proctoring");
+  const before = await tenantPolicy(tenantId, audience);
+  await saveTenantPolicy(tenantId, policy, audience);
   const changed = (Object.keys(policy) as (keyof ProctoringPolicy)[]).filter((k) => JSON.stringify(policy[k]) !== JSON.stringify(before[k]));
   await recordAudit({
     tenantId,
@@ -95,7 +105,7 @@ async function savePolicy(req: AuthedRequest, tenantId: string, policy: Proctori
     action: "proctoring.policy_updated",
     targetType: "organization",
     targetId: tenantId,
-    details: { changed, mode: policy.mode, region: policy.region },
+    details: { audience, changed, mode: policy.mode, region: policy.region },
     ip: req.ip,
   });
 }
@@ -110,7 +120,7 @@ proctoringRouter.get("/policy", requireAuth, async (req: AuthedRequest, res, nex
   const tenantId = requireOrgAdmin(req, res);
   if (!tenantId) return;
   try {
-    res.json({ policy: await tenantPolicy(tenantId) });
+    res.json({ policy: await tenantPolicy(tenantId, audienceOf(req)) });
   } catch (err) {
     next(err);
   }
@@ -132,7 +142,7 @@ proctoringRouter.get("/tenants/:tenantId/policy", requireAuth, async (req: Authe
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     if (!(await staffOwnsTenant(req, req.params.tenantId as string))) return res.status(404).json({ error: "not_found" });
-    res.json({ policy: await tenantPolicy(req.params.tenantId as string) });
+    res.json({ policy: await tenantPolicy(req.params.tenantId as string, audienceOf(req)) });
   } catch (err) {
     next(err);
   }
@@ -333,6 +343,9 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
     let faceDecision: string | null = null;
     let similarity: number | null = null;
     if (faces.length === 1 && si.policy.faceMatch && !si.biometric_opt_out) {
+      // A candidate has no face enrollment: the first clear snapshot becomes
+      // the reference, so a different person later in the test stands out.
+      if (req.user!.role === "candidate") await enrollCandidateFace(req.user!.id, image, faces[0], si.consent_record_id, false);
       const enrolled = (await pool.query(`SELECT embedding, status FROM face_enrollments WHERE user_id = $1`, [req.user!.id])).rows[0];
       if (enrolled?.status === "enrolled" && enrolled.embedding?.byteLength === FACE_EMBEDDING_BYTES) {
         const probe = await embedFace(image, faces[0]).catch(() => null);
@@ -481,6 +494,22 @@ proctoringRouter.post("/sessions/:sessionId/status/ack", requireAuth, async (req
   }
 });
 
+// Stores a candidate's face reference. `replace` = the ID selfie, which
+// wins over a reference taken from a snapshot.
+async function enrollCandidateFace(userId: string, image: Buffer, face: Awaited<ReturnType<typeof detectFaces>>[number], consentId: string | null, replace: boolean) {
+  if (!replace) {
+    const has = await pool.query(`SELECT 1 FROM face_enrollments WHERE user_id = $1 AND status = 'enrolled'`, [userId]);
+    if (has.rowCount) return;
+  }
+  const embedding = await embedFace(image, face).catch(() => null);
+  if (!embedding) return;
+  await pool.query(
+    `INSERT INTO face_enrollments (user_id, embedding, status, consent_record_id) VALUES ($1, $2, 'enrolled', $3)
+     ON CONFLICT (user_id) DO UPDATE SET embedding = EXCLUDED.embedding, status = 'enrolled', updated_at = now()`,
+    [userId, embeddingToBuffer(embedding), consentId],
+  );
+}
+
 // ---------- Learner: identity document ----------
 
 proctoringRouter.get("/identity", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -550,6 +579,10 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
       if (!s.rowCount) body.sessionId = undefined;
     }
     const [docId, selfieId] = [await store("id_document", doc), await store("id_selfie", selfie)];
+    // A candidate's ID selfie is their face reference for the test.
+    if (req.user!.role === "candidate" && selfieFaces.length === 1 && (liveness ?? 1) >= 0.5) {
+      await enrollCandidateFace(req.user!.id, selfie, selfieFaces[0], null, true);
+    }
     const consent = await pool.query(
       `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring_biometric', $3) RETURNING id`,
       [req.user!.id, consentVersion(policy), req.ip],
@@ -572,11 +605,13 @@ interface Scope {
   params: unknown[];
 }
 
-// Org Admins review their own organization; Edstellar staff with Score
-// review see their organizations and individual learners. The scope's
-// single parameter is always $1, and it filters a "u" users / "t" tenants join.
+// Org Admins review their own organization and recruiters its candidates;
+// Edstellar staff with Score review see their organizations and individual
+// learners. The scope's single parameter is always $1, and it filters a "u"
+// users / "t" tenants join.
 async function reviewerScope(req: AuthedRequest, res: Response): Promise<Scope | null> {
   if (req.user?.role === "org_admin" && req.user.tenantId) return { sql: `u.tenant_id = $1`, params: [req.user.tenantId] };
+  if (req.user?.role === "recruiter" && req.user.tenantId) return { sql: `(u.tenant_id = $1 AND u.role = 'candidate')`, params: [req.user.tenantId] };
   if (!(await requirePermission(req, res, "scoreReview"))) return null;
   if (isSuperAdmin(req)) return { sql: `$1::text IS NOT NULL`, params: ["all"] };
   return { sql: `(t.type <> 'cohort' OR t.managed_by = $1 OR t.account_manager_id = $1)`, params: [req.user!.id] };
@@ -585,6 +620,10 @@ async function reviewerScope(req: AuthedRequest, res: Response): Promise<Scope |
 async function canReviewUser(req: AuthedRequest, userId: string): Promise<boolean> {
   if (req.user?.role === "org_admin") {
     const r = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2`, [userId, req.user.tenantId]);
+    return (r.rowCount ?? 0) > 0;
+  }
+  if (req.user?.role === "recruiter") {
+    const r = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'candidate'`, [userId, req.user.tenantId]);
     return (r.rowCount ?? 0) > 0;
   }
   if (!req.user || !["admin", "super_admin"].includes(req.user.role)) return false;

@@ -20,6 +20,8 @@ import { managerRouter } from "./manager/routes.js";
 import { coachRouter } from "./coach/routes.js";
 import { faceRouter } from "./face/routes.js";
 import { proctoringRouter } from "./proctoring/routes.js";
+import { recruitmentRouter } from "./recruitment/routes.js";
+import { RecruitmentError, requireSkillsProduct } from "./recruitment/service.js";
 import { requireAuth } from "./auth/middleware.js";
 import { licensesRouter } from "./licenses/routes.js";
 import { paymentsRouter, stripeWebhookHandler } from "./payments/routes.js";
@@ -95,16 +97,17 @@ app.use("/api/practice-tests", requireAccess("mocktest"), practiceTestsRouter);
 app.use("/api/coach", requireAccess("coach"), coachRouter);
 app.use("/api/face", faceRouter);
 app.use("/api/proctoring", proctoringRouter);
+app.use("/api/recruitment", recruitmentRouter);
 app.use("/api/admin", auditTrail(STAFF_AUDIT), adminRouter);
 app.use("/api/admin", commercialRouter);
 app.use("/api/admin", staffConsoleRouter);
 app.use("/api/me", meRouter);
-app.use("/api/org-admin", auditTrail(ORG_ADMIN_AUDIT), orgAdminRouter, developerRouter, governanceRouter, ssoAdminRouter);
+app.use("/api/org-admin", requireSkillsProduct(["/batches", "/managers", "/learners"]), auditTrail(ORG_ADMIN_AUDIT), orgAdminRouter, developerRouter, governanceRouter, ssoAdminRouter);
 app.use("/api/sso", ssoRouter);
 app.use("/api/scim/v2", express.json({ type: ["application/json", "application/scim+json"] }), scimRouter);
 app.use("/api/v1", apiV1Router);
-app.use("/api/manager", auditTrail(MANAGER_AUDIT), managerRouter);
-app.use("/api/licenses", licensesRouter);
+app.use("/api/manager", requireSkillsProduct(null), auditTrail(MANAGER_AUDIT), managerRouter);
+app.use("/api/licenses", requireSkillsProduct(["/org"]), licensesRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/reminders", remindersRouter);
@@ -127,6 +130,9 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   }
   if (err instanceof DetailsError) {
     return res.status(409).json({ error: err.code });
+  }
+  if (err instanceof RecruitmentError) {
+    return res.status(err.status).json({ error: err.code, ...err.detail });
   }
   console.error(err);
   res.status(500).json({ error: "internal_server_error" });

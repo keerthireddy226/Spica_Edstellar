@@ -958,7 +958,9 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
         `SELECT t.id, t.name, t.category, t.deactivated_at, t.industry, t.expected_learner_count, t.country,
            t.billing_contact_name, t.billing_contact_email, t.tax_id, t.legal_name, t.website, t.phone, t.address_line,
            t.city, t.state, t.postal_code, t.employee_count_band, t.training_goal, t.billing_contact_phone, t.purchase_order_ref,
-           t.plan_tier, t.pilot_ends_at, t.custom_price_cents,
+           t.plan_tier, t.pilot_ends_at, t.custom_price_cents, t.products,
+           (SELECT coalesce(sum(ce.delta), 0)::int FROM recruitment_credit_events ce WHERE ce.tenant_id = t.id) AS assessment_credits,
+           (SELECT count(*)::int FROM recruitment_assessments ra WHERE ra.tenant_id = t.id AND ra.status <> 'cancelled') AS candidates_invited,
            count(DISTINCT l.id)::int AS learner_count,
            count(DISTINCT oa.id)::int AS has_org_admin,
            count(DISTINCT oa.id) FILTER (WHERE EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = oa.id))::int AS org_admin_logged_in,
@@ -1011,6 +1013,9 @@ adminRouter.get("/console/overview", requireAuth, async (req: AuthedRequest, res
         orgAdmin: r.org_admin,
         managers: r.managers,
         planTier: r.plan_tier,
+        products: r.products,
+        assessmentCredits: r.assessment_credits,
+        candidatesInvited: r.candidates_invited,
         pilotEndsAt: r.pilot_ends_at,
         health: health.get(r.id) ?? null,
         customPriceCents: r.custom_price_cents,
@@ -1102,6 +1107,10 @@ const onboardOrgSchema = z.object({
   billingContactName: z.string().min(1).optional(),
   billingContactEmail: z.string().email().optional(),
   taxId: z.string().min(1).optional(),
+  // Employee skills, recruitment, or both.
+  products: z.array(z.enum(["skills", "recruitment"])).min(1).default(["skills"]),
+  // Assessment credits to start with, when recruitment is included.
+  initialCredits: z.coerce.number().int().min(0).max(100000).optional(),
   orgAdmin: z.object({
     email: z.string().email(),
     firstName: z.string().min(1),
@@ -1132,8 +1141,8 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
     }
     const tenant = await pool.query(
       `INSERT INTO tenants (name, type, category, managed_by, industry, expected_learner_count, country,
-         billing_contact_name, billing_contact_email, tax_id)
-       VALUES ($1, 'cohort', $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+         billing_contact_name, billing_contact_email, tax_id, products)
+       VALUES ($1, 'cohort', $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
       [
         body.name,
         body.category,
@@ -1144,9 +1153,17 @@ adminRouter.post("/organizations", requireAuth, async (req: AuthedRequest, res, 
         body.billingContactName ?? null,
         body.billingContactEmail ?? null,
         body.taxId ?? null,
+        [...new Set(body.products)],
       ],
     );
     const tenantId = tenant.rows[0].id;
+    if (body.products.includes("recruitment") && body.initialCredits) {
+      await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, note, actor_id) VALUES ($1, $2, 'grant', 'Starting credits', $3)`, [
+        tenantId,
+        body.initialCredits,
+        req.user!.id,
+      ]);
+    }
     await pool.query(
       `UPDATE tenants SET legal_name = $2, website = $3, phone = $4, address_line = $5, city = $6, state = $7, postal_code = $8,
          employee_count_band = $9, training_goal = $10, billing_contact_phone = $11, purchase_order_ref = $12,

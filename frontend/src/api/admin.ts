@@ -295,6 +295,9 @@ export interface AdminConsoleOrg {
   orgAdmin: { id: string; email: string; name: string; phone: string | null; jobTitle: string | null } | null;
   managers: { id: string; name: string; email: string; learnerCount: number }[];
   planTier: "starter" | "business" | "enterprise";
+  products: ("skills" | "recruitment")[];
+  assessmentCredits: number;
+  candidatesInvited: number;
   health?: OrgHealth | null;
   pilotEndsAt: string | null;
   customPriceCents: number | null;
@@ -343,6 +346,9 @@ export function getConsoleUserBreakdown(): Promise<ConsoleUserBreakdown> {
 
 export interface OnboardOrgPayload {
   name: string;
+  // Employee skills, recruitment, or both.
+  products?: ("skills" | "recruitment")[];
+  initialCredits?: number;
   category: "company" | "university";
   industry?: string;
   expectedLearnerCount?: number;

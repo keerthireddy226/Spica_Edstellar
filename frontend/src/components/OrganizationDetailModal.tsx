@@ -11,6 +11,7 @@ import { OrgAdminRecovery } from "@/components/OrgAdminRecovery";
 import { OrgAuditPanel } from "@/components/OrgAuditPanel";
 import { OrgCommercialPanel } from "@/components/OrgCommercialPanel";
 import { ProctoringSettings } from "@/components/proctoring/ProctoringSettings";
+import { OrgProductsPanel } from "@/components/recruitment/OrgProductsPanel";
 import { getTenantProctoringPolicy, saveTenantProctoringPolicy, type ProctoringPolicy } from "@/api/proctoring";
 
 import { tr } from "@/i18n/tr";
@@ -43,6 +44,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
           <Badge tone={org.active ? "good" : "bad"}>{org.active ? tr("Active") : tr("Deactivated")}</Badge>
           <Badge>{categoryLabel(org.category)}</Badge>
           <Badge>{tr("{{tierLabel}} plan", { tierLabel: tierLabel })}</Badge>
+          {org.products?.includes("recruitment") && <Badge>{org.products.includes("skills") ? tr("Skills + Recruitment") : tr("Recruitment only")}</Badge>}
           {org.pilotEndsAt && new Date(org.pilotEndsAt).getTime() > Date.now() && <Badge tone="warn">{tr("Pilot")}</Badge>}
         </>
       }
@@ -55,6 +57,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
       tabs={[
         { key: "overview", label: tr("Overview") },
         { key: "people", label: tr("People"), count: org.managers.length + (org.orgAdmin ? 1 : 0) },
+        { key: "products", label: tr("Products & recruitment") },
         { key: "plan", label: tr("Plan & licenses") },
         { key: "billing", label: tr("Contract & billing") },
         { key: "proctoring", label: tr("Proctoring") },
@@ -161,7 +164,14 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
 
       {tab === "billing" && <OrgCommercialPanel tenantId={org.id} hasOrgAdmin={!!org.orgAdmin} />}
 
-      {tab === "proctoring" && <ProctoringSettings load={loadProctoring} save={saveProctoring} />}
+      {tab === "products" && <OrgProductsPanel tenantId={org.id} onChanged={onChanged} />}
+
+      {tab === "proctoring" && (
+        <div className="flex flex-col gap-3">
+          {org.products?.includes("recruitment") && <p className="text-sm text-muted">{tr("These settings apply to employees. Candidates' proctoring is under Products & recruitment.")}</p>}
+          <ProctoringSettings load={loadProctoring} save={saveProctoring} />
+        </div>
+      )}
 
       {tab === "activity" && <OrgAuditPanel tenantId={org.id} />}
 

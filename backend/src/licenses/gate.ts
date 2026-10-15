@@ -2,6 +2,7 @@ import type { NextFunction, Response } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { accessCache } from "./accessCache.js";
 import { freeTierUsage, learnerAccess, learnerKind } from "./service.js";
+import { candidateMayStart } from "../recruitment/service.js";
 
 export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 
@@ -16,6 +17,11 @@ export function requireAccess(feature: GatedFeature) {
     if (req.method === "GET" || req.method === "HEAD") return next();
     requireAuth(req, res, async () => {
       try {
+        // A candidate may only take the one test they were invited to.
+        if (req.user!.role === "candidate") {
+          if (await candidateMayStart(req.user!.id, feature)) return next();
+          return res.status(403).json({ error: "candidate_not_allowed", feature });
+        }
         const cached = await accessCache.getOrLoad(req.user!.id, async () => {
           const k = await learnerKind(req.user!.id);
           return { kind: k, access: k === "other" ? null : await learnerAccess(req.user!.id) };

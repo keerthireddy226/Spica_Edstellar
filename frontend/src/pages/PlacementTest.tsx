@@ -15,6 +15,8 @@ import {
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { useProctoring } from "@/hooks/useProctoring";
+import { useAuth } from "@/hooks/useAuth";
+import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { FaceCheck } from "@/components/FaceCheck";
@@ -34,6 +36,7 @@ import { tr } from "@/i18n/tr";
 const TOTAL_QUESTIONS = 20;
 
 export function PlacementTest() {
+  const isCandidate = useAuth().user?.role === "candidate";
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
@@ -253,6 +256,9 @@ export function PlacementTest() {
       </div>
     );
   }
+
+  // A candidate's result goes to the recruiter, not to a score screen.
+  if (summary && isCandidate) return <CandidateFinished />;
 
   if (summary) {
     if (!summary.cefrLevel || !summary.skillPercents) {

@@ -14,6 +14,8 @@ export const WEBHOOK_EVENTS = [
   "license.reclaimed",
   "batch.completed",
   "certificate.issued",
+  "assessment.completed",
+  "assessment.decided",
 ] as const;
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number] | "ping";
 

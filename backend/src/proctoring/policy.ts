@@ -174,20 +174,35 @@ export function normalizePolicy(stored: unknown): ProctoringPolicy {
   return policySchema.safeParse(merged).success ? (merged as ProctoringPolicy) : presetPolicy(mode, region);
 }
 
-export async function tenantPolicy(tenantId: string): Promise<ProctoringPolicy> {
-  const r = await pool.query(`SELECT proctoring FROM tenants WHERE id = $1`, [tenantId]);
-  return normalizePolicy(r.rows[0]?.proctoring);
+// Employees and recruitment candidates have separate policies: an
+// organization usually checks its own staff lightly and candidates strictly.
+export type PolicyAudience = "employees" | "candidates";
+const POLICY_COLUMN: Record<PolicyAudience, string> = { employees: "proctoring", candidates: "recruitment_proctoring" };
+
+// Candidates of an organization that never saved their policy get the
+// strict preset.
+export function normalizeCandidatePolicy(stored: unknown): ProctoringPolicy {
+  return stored === null || stored === undefined ? presetPolicy("strict", "global") : normalizePolicy(stored);
 }
 
-export async function saveTenantPolicy(tenantId: string, policy: ProctoringPolicy): Promise<void> {
-  await pool.query(`UPDATE tenants SET proctoring = $2 WHERE id = $1`, [tenantId, JSON.stringify(policy)]);
+export async function tenantPolicy(tenantId: string, audience: PolicyAudience = "employees"): Promise<ProctoringPolicy> {
+  const r = await pool.query(`SELECT ${POLICY_COLUMN[audience]} AS p FROM tenants WHERE id = $1`, [tenantId]);
+  return audience === "candidates" ? normalizeCandidatePolicy(r.rows[0]?.p) : normalizePolicy(r.rows[0]?.p);
+}
+
+export async function saveTenantPolicy(tenantId: string, policy: ProctoringPolicy, audience: PolicyAudience = "employees"): Promise<void> {
+  await pool.query(`UPDATE tenants SET ${POLICY_COLUMN[audience]} = $2 WHERE id = $1`, [tenantId, JSON.stringify(policy)]);
 }
 
 // The policy that applies to one learner: their organization's, or the
 // individual default.
 export async function learnerPolicy(userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
-  const r = await pool.query(`SELECT t.id, t.type, t.proctoring FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId]);
+  const r = await pool.query(
+    `SELECT u.role, t.id, t.type, t.proctoring, t.recruitment_proctoring FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+    [userId],
+  );
   const t = r.rows[0];
+  if (t?.role === "candidate") return { policy: normalizeCandidatePolicy(t.recruitment_proctoring), tenantId: t.id };
   if (!t || t.type !== "cohort") return { policy: INDIVIDUAL_POLICY, tenantId: t?.id ?? null };
   return { policy: normalizePolicy(t.proctoring), tenantId: t.id };
 }

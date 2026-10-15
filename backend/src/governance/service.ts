@@ -27,8 +27,8 @@ async function removeUpload(uri: string | null) {
 // while keeping anonymous learning statistics and license accounting intact.
 export async function eraseLearner(args: { userId: string; actorId: string | null; actorRole: string; reason: string }): Promise<boolean> {
   const u = (await pool.query(`SELECT id, tenant_id, role, erased_at FROM users WHERE id = $1`, [args.userId])).rows[0];
-  if (!u || u.role !== "learner" || u.erased_at) return false;
-  if (u.tenant_id) await releaseQueuedMonths({ tenantId: u.tenant_id, userId: u.id, actorId: args.actorId ?? u.id, reason: "Learner erased" });
+  if (!u || !["learner", "candidate"].includes(u.role) || u.erased_at) return false;
+  if (u.tenant_id && u.role === "learner") await releaseQueuedMonths({ tenantId: u.tenant_id, userId: u.id, actorId: args.actorId ?? u.id, reason: "Learner erased" });
 
   const files: string[] = [];
   const client = await pool.connect();
@@ -71,6 +71,11 @@ export async function eraseLearner(args: { userId: string; actorId: string | nul
     );
     await client.query(`UPDATE certificates SET learner_name = 'Erased learner', participant_id = NULL, revoked_at = coalesce(revoked_at, now()) WHERE user_id = $1`, [u.id]);
     await client.query(`UPDATE license_events SET user_email = NULL WHERE user_id = $1`, [u.id]);
+    // A candidate's results stay as anonymous numbers for the job's statistics.
+    await client.query(
+      `UPDATE recruitment_assessments SET email = 'erased', first_name = NULL, last_name = NULL, decision_note = NULL WHERE candidate_id = $1`,
+      [u.id],
+    );
     await client.query(
       `UPDATE users SET email = $2, first_name = NULL, last_name = NULL, phone = NULL, job_title = NULL, participant_id = NULL,
          password_hash = $3, mfa_secret = NULL, mfa_enabled_at = NULL, mfa_recovery_hashes = NULL,

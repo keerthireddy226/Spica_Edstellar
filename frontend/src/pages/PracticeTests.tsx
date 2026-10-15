@@ -41,6 +41,8 @@ import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { useProctoring } from "@/hooks/useProctoring";
+import { useAuth } from "@/hooks/useAuth";
+import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import {
@@ -91,6 +93,7 @@ const PRODUCT_SOLID: Record<(typeof VERSANT_PRODUCTS)[number], string> = {
 
 export function PracticeTests() {
   const { t } = useTranslation();
+  const isCandidate = useAuth().user?.role === "candidate";
   const allowedProducts = useBranding()?.allowedTestProducts ?? null;
   const navigate = useNavigate();
   const location = useLocation();
@@ -527,6 +530,9 @@ export function PracticeTests() {
       />
     );
   }
+
+  // A candidate's result goes to the recruiter, not to a score screen.
+  if (summary && isCandidate) return <CandidateFinished />;
 
   // Takes priority over the running-session view below — completing a test
   // never clears sessionId/items (Back-to-exams needs them to still be

@@ -10,7 +10,7 @@ import {
   LANDING_ROUTE_BY_ROLE,
   LEARNER_LOGIN_ALLOWED_ROLES,
   MANAGER_LOGIN_ALLOWED_ROLES,
-  MANAGER_ONLY_ROLES,
+  MANAGER_ONLY_ROLES, RECRUITER_ONLY_ROLES,
   ORG_ADMIN_LOGIN_ALLOWED_ROLES,
   ORG_ADMIN_ONLY_ROLES,
   ROUTES,
@@ -34,6 +34,9 @@ import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
 import { IntegrityReviews } from "@/pages/IntegrityReviews";
+import { AssessInvite, CandidateAssessmentPage } from "@/pages/recruitment/CandidatePages";
+import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
+import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -46,7 +49,6 @@ import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
 import { AdminOrganizations } from "@/pages/admin/AdminOrganizations";
-import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
 import { OrgAdminBatches } from "@/pages/orgAdmin/OrgAdminBatches";
 import { OrgAdminManagers } from "@/pages/orgAdmin/OrgAdminManagers";
 import { LicenseGate } from "@/components/licenses/LicenseGate";
@@ -127,6 +129,32 @@ function App() {
           }
         />
         <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmail />} />
+        {/* Recruitment: the candidate's emailed link and assessment, and the printable report. */}
+        <Route path={ROUTES.ASSESS} element={<AssessInvite />} />
+        <Route
+          path={ROUTES.CANDIDATE}
+          element={
+            <ProtectedRoute>
+              <CandidateAssessmentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.RECRUITMENT}
+          element={
+            <ProtectedRoute>
+              <RecruitmentRedirect />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recruitment/report/:id"
+          element={
+            <ProtectedRoute>
+              <CandidateReportPrint />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path={ROUTES.ONBOARDING}
           element={
@@ -234,7 +262,8 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path={ROUTES.ORG_ADMIN_DASHBOARD} element={<OrgAdminDashboard />} />
+          <Route path={ROUTES.ORG_ADMIN_DASHBOARD} element={<OrgAdminHome />} />
+          <Route path={ROUTES.ORG_ADMIN_RECRUITMENT} element={<RecruitmentConsole />} />
           <Route path={ROUTES.ORG_ADMIN_BATCHES} element={<OrgAdminBatches />} />
           <Route path={ROUTES.ORG_ADMIN_MANAGERS} element={<OrgAdminManagers />} />
           <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
@@ -246,6 +275,18 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_DEVELOPERS} element={<OrgAdminDevelopers />} />
           <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ORG_ADMIN_ANALYTICS} element={<AnalyticsPage />} />
+        </Route>
+        {/* Recruiter's console: job openings, candidates and their integrity reviews. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={RECRUITER_ONLY_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.RECRUITER_JOBS} element={<RecruitmentConsole />} />
+          <Route path={ROUTES.RECRUITER_INTEGRITY} element={<IntegrityReviews />} />
+          <Route path={ROUTES.RECRUITER_PROFILE} element={<AdminProfile />} />
         </Route>
         {/* Manager's own console — only the batch(es) assigned to them. */}
         <Route

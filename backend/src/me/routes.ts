@@ -10,7 +10,7 @@ import { getLearnerStats } from "../gamification/stats.js";
 // learning setup.
 export const meRouter = Router();
 
-const STAFF_ROLES = ["super_admin", "admin", "org_admin", "manager"];
+const STAFF_ROLES = ["super_admin", "admin", "org_admin", "manager", "recruiter"];
 const text = (max: number) => z.string().trim().max(max).optional().or(z.literal("").transform(() => undefined));
 
 meRouter.get("/work", requireAuth, async (req: AuthedRequest, res, next) => {

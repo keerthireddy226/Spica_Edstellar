@@ -24,7 +24,10 @@ import {
   type IntegrityStats,
   type LiveSessionRow,
   type MrzReading,
+  type ProctoringPolicy,
 } from "@/api/proctoring";
+import { useSearchParams } from "react-router-dom";
+import { useBranding } from "@/components/AppShell/useBranding";
 import { tr } from "@/i18n/tr";
 
 // What each risk reason means, for the reviewer. The count shows next to it.
@@ -690,12 +693,19 @@ type Tab = "queue" | "live" | "ids" | "settings";
 export function IntegrityReviews() {
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "org_admin";
-  const [tab, setTab] = useState<Tab>("queue");
+  const products = useBranding()?.products;
+  const [searchParams] = useSearchParams();
+  const loadEmployees = useCallback(() => getOrgProctoringPolicy("employees"), []);
+  const saveEmployees = useCallback((p: ProctoringPolicy) => saveOrgProctoringPolicy(p, "employees"), []);
+  const loadCandidates = useCallback(() => getOrgProctoringPolicy("candidates"), []);
+  const saveCandidates = useCallback((p: ProctoringPolicy) => saveOrgProctoringPolicy(p, "candidates"), []);
+  const [tab, setTab] = useState<Tab>(searchParams.get("tab") === "settings" && isOrgAdmin ? "settings" : "queue");
   const [status, setStatus] = useState("flagged");
   const [rows, setRows] = useState<IntegritySessionRow[] | null>(null);
   const [stats, setStats] = useState<IntegrityStats | null>(null);
   const [live, setLive] = useState<LiveSessionRow[] | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
+  // ?session= opens that session's review straight away (from a candidate report).
+  const [open, setOpen] = useState<string | null>(searchParams.get("session"));
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -805,9 +815,18 @@ export function IntegrityReviews() {
       {tab === "ids" && <IdentityQueue onChanged={load} />}
 
       {tab === "settings" && isOrgAdmin && (
-        <Panel title={tr("Proctoring")}>
-          <ProctoringSettings load={getOrgProctoringPolicy} save={saveOrgProctoringPolicy} />
-        </Panel>
+        <div className="flex flex-col gap-5">
+          {(!products || products.includes("skills")) && (
+            <Panel title={tr("Proctoring for employees")}>
+              <ProctoringSettings load={loadEmployees} save={saveEmployees} />
+            </Panel>
+          )}
+          {products?.includes("recruitment") && (
+            <Panel title={tr("Proctoring for candidates")}>
+              <ProctoringSettings load={loadCandidates} save={saveCandidates} />
+            </Panel>
+          )}
+        </div>
       )}
 
       {open && <ReviewDetail sessionId={open} onClose={() => setOpen(null)} onDecided={load} />}

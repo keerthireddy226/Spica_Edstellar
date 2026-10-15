@@ -3,7 +3,7 @@ import i18n from "i18next";
 import { changeAppLanguage, isSupportedLanguage } from "@/i18n";
 import { api } from "@/lib/api";
 
-export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager";
+export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager" | "recruiter" | "candidate";
 
 type AuthUser = {
   id: string;

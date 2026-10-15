@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
+import { useBranding } from "@/components/AppShell/useBranding";
 import type { StaffPermissions } from "@/api/staff";
 
 import { tr } from "@/i18n/tr";
@@ -11,7 +12,8 @@ import { tr } from "@/i18n/tr";
 // every Admin; an Admin only sees organizations assigned to them; an Org
 // Admin only their one organization (every batch, every Manager); a Manager
 // only the batch(es) assigned to them, never the whole organization.
-type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions };
+// `product`: shown only when the organization bought that product.
+type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions; product?: "skills" | "recruitment" };
 
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
@@ -48,19 +50,26 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: tr("Profile") },
 ];
 
-const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
-  { to: ROUTES.ORG_ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
-  { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: tr("Batches") },
-  { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers") },
-  { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners") },
-  { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses") },
+const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
+  { to: ROUTES.ORG_ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: tr("Batches"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_RECRUITMENT, icon: UserSearch, label: tr("Recruitment"), product: "recruitment" },
   { to: ROUTES.ORG_ADMIN_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: tr("Plan") },
   { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: tr("Settings") },
   { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Plug, label: tr("Integrations") },
-  { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
+  { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_PROFILE, icon: User, label: tr("Profile") },
+];
+
+const RECRUITER_NAV_ITEMS: NavItem[] = [
+  { to: ROUTES.RECRUITER_JOBS, icon: UserSearch, label: tr("Recruitment") },
+  { to: ROUTES.RECRUITER_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
+  { to: ROUTES.RECRUITER_PROFILE, icon: User, label: tr("Profile") },
 ];
 
 const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
@@ -77,6 +86,7 @@ const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
   admin: ADMIN_CONSOLE_NAV_ITEMS,
   org_admin: ORG_ADMIN_NAV_ITEMS,
   manager: MANAGER_NAV_ITEMS,
+  recruiter: RECRUITER_NAV_ITEMS,
 };
 
 function navClasses(isActive: boolean) {
@@ -94,9 +104,11 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
   const location = useLocation();
   const { user } = useAuth();
   const perms = (user?.permissions ?? {}) as Partial<StaffPermissions>;
-  // An Admin only sees pages their permissions allow.
+  const products = useBranding()?.products;
+  // An Admin only sees pages their permissions allow; an organization only
+  // the products it bought.
   const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS).filter(
-    (n) => !n.permission || user?.role !== "admin" || perms[n.permission],
+    (n) => (!n.permission || user?.role !== "admin" || perms[n.permission]) && (!n.product || !products || products.includes(n.product)),
   );
 
   return (

@@ -157,10 +157,13 @@ export async function applyLearnerDefaults(tenantId: string, userId: string): Pr
 // practice-test products may they take? Individuals: yes, and all.
 export async function learnerOrgPolicy(userId: string): Promise<{ faceCheckRequired: boolean; allowedTestProducts: string[] | null }> {
   const r = await pool.query(
-    `SELECT t.type, t.face_check_required, t.allowed_test_products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+    `SELECT u.role, t.type, t.face_check_required, t.allowed_test_products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
     [userId],
   );
   const t = r.rows[0];
+  // Candidates are identified by the proctoring steps instead (ID selfie,
+  // snapshots), never by a learner's face enrollment.
+  if (t?.role === "candidate") return { faceCheckRequired: false, allowedTestProducts: null };
   if (!t || t.type !== "cohort") return { faceCheckRequired: true, allowedTestProducts: null };
   return { faceCheckRequired: t.face_check_required, allowedTestProducts: t.allowed_test_products };
 }

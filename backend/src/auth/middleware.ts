@@ -20,7 +20,7 @@ export interface SessionCheck {
   error?: "not_authenticated" | "session_expired" | "ip_not_allowed";
 }
 
-const ORG_CONSOLE = ["org_admin", "manager"];
+const ORG_CONSOLE = ["org_admin", "manager", "recruiter"];
 
 // One place that decides whether a session cookie is still good: not
 // revoked or expired, not idle longer than the organization allows, and

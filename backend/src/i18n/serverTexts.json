@@ -218,5 +218,18 @@
  "🔥 Day {{v}} — keep your streak going",
  "Test session flagged for review",
  "{{v}}'s test session needs an integrity review.",
- "A learner"
+ "A learner",
+ "A candidate finished their assessment",
+ "Assessment credits are running low",
+ "Invitation cancelled before it was started",
+ "Invitation expired without being started",
+ "Reminder: your English assessment for {{jobTitle}}",
+ "Your English assessment for {{jobTitle}}",
+ "Your English assessment for {{jobTitle}} at {{orgName}} is still waiting. The link works until {{until}}:\n\n{{link}}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone.",
+ "{{balance}} assessment credits left. Ask your Edstellar contact for more.",
+ "{{name}} asked for assessment credits",
+ "{{name}} finished the assessment for {{title}}.",
+ "{{orgName}} has invited you to an English assessment for {{jobTitle}}.\n\nStart it here (the link works until {{until}}):\n\n{{link}}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone, in a quiet room. If you weren't expecting this, you can ignore this message.",
+ "{{quantity}} credits at {{toFixed}} USD each.{{v}}",
+ "Starting credits"
 ]

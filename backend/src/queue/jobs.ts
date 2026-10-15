@@ -1,6 +1,6 @@
 import { registerHandler } from "./queue.js";
 import { deliverWebhook } from "../webhooks/service.js";
-import { buildExport, runRetention } from "../governance/service.js";
+import { buildExport, eraseLearner, runRetention } from "../governance/service.js";
 import { every } from "./schedule.js";
 import { sendQueuedNotificationEmail } from "../notifications/service.js";
 import { runAllJobs } from "../notifications/jobs.js";
@@ -10,6 +10,7 @@ import { runScheduledReports } from "../reports/service.js";
 import { runContractRenewalAlerts } from "../admin/renewals.js";
 import { runVoiceCheck } from "../proctoring/voiceCheck.js";
 import { analyzeSession } from "../proctoring/analyze.js";
+import { runRecruitmentLifecycle } from "../recruitment/service.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -34,6 +35,10 @@ export function registerJobs() {
   });
   every(60, "reports.scheduled", async () => {
     await runScheduledReports();
+  });
+  every(60, "recruitment.lifecycle", async () => {
+    const r = await runRecruitmentLifecycle((userId) => eraseLearner({ userId, actorId: null, actorRole: "system", reason: "Candidate retention period ended" }));
+    if (r.expired || r.reminded || r.erased) console.log("recruitment:", r);
   });
   every(60, "contracts.renewals", async () => {
     await runContractRenewalAlerts();

@@ -76,6 +76,16 @@ export const ROUTES = {
   ORG_ADMIN_DEVELOPERS: "/orgadmin/developers",
   ORG_ADMIN_PROFILE: "/orgadmin/profile",
   ORG_ADMIN_INTEGRITY: "/orgadmin/integrity",
+  ORG_ADMIN_RECRUITMENT: "/orgadmin/recruitment",
+  // Recruiter's console: job openings, candidates, their integrity reviews.
+  RECRUITER_JOBS: "/recruiter/jobs",
+  RECRUITER_INTEGRITY: "/recruiter/integrity",
+  RECRUITER_PROFILE: "/recruiter/profile",
+  // Notification links point here; it opens the reader's recruitment page.
+  RECRUITMENT: "/recruitment",
+  // A candidate: the emailed link, then the assessment itself.
+  ASSESS: "/assess/:token",
+  CANDIDATE: "/candidate",
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.
   MANAGER_DASHBOARD: "/manager/dashboard",
@@ -92,10 +102,12 @@ export const SUPER_ADMIN_ONLY_ROLES: Role[] = ["super_admin"];
 export const ADMIN_CONSOLE_ONLY_ROLES: Role[] = ["admin"];
 export const ORG_ADMIN_ONLY_ROLES: Role[] = ["org_admin"];
 export const MANAGER_ONLY_ROLES: Role[] = ["manager"];
+export const RECRUITER_ONLY_ROLES: Role[] = ["recruiter"];
 
 // Which role(s) each login portal accepts.
 export const LEARNER_LOGIN_ALLOWED_ROLES: Role[] = ["learner"];
-export const ORG_ADMIN_LOGIN_ALLOWED_ROLES: Role[] = ["org_admin"];
+// Recruiters sign in on the organization page too.
+export const ORG_ADMIN_LOGIN_ALLOWED_ROLES: Role[] = ["org_admin", "recruiter"];
 export const MANAGER_LOGIN_ALLOWED_ROLES: Role[] = ["manager"];
 export const ADMIN_LOGIN_ALLOWED_ROLES: Role[] = ["admin", "super_admin"];
 
@@ -106,6 +118,9 @@ export const LOGIN_ROUTE_BY_ROLE: Record<Role, string> = {
   manager: ROUTES.MANAGER_LOGIN,
   admin: ROUTES.ADMIN_LOGIN,
   super_admin: ROUTES.ADMIN_LOGIN,
+  recruiter: ROUTES.ORG_ADMIN_LOGIN,
+  // A candidate signs in only through their emailed link.
+  candidate: ROUTES.CANDIDATE,
 };
 
 // Every role now lands on its own real console — none of these share a URL
@@ -116,6 +131,8 @@ export const LANDING_ROUTE_BY_ROLE: Record<Role, string> = {
   manager: ROUTES.MANAGER_DASHBOARD,
   admin: ROUTES.ADMIN_CONSOLE_DASHBOARD,
   super_admin: ROUTES.ADMIN_DASHBOARD,
+  recruiter: ROUTES.RECRUITER_JOBS,
+  candidate: ROUTES.CANDIDATE,
 };
 
 // Lets the header's user-menu send "Profile" to the right console's own page.
@@ -125,4 +142,6 @@ export const PROFILE_ROUTE_BY_ROLE: Record<Role, string> = {
   manager: ROUTES.MANAGER_PROFILE,
   admin: ROUTES.ADMIN_CONSOLE_PROFILE,
   super_admin: ROUTES.ADMIN_PROFILE,
+  recruiter: ROUTES.RECRUITER_PROFILE,
+  candidate: ROUTES.CANDIDATE,
 };

@@ -217,5 +217,18 @@
  "🔥 Day {{v}} — keep your streak going": "🔥 Día {{v}}: sigue con tu racha",
  "Test session flagged for review": "Sesión de examen marcada para revisión",
  "{{v}}'s test session needs an integrity review.": "La sesión de examen de {{v}} necesita una revisión de integridad.",
- "A learner": "Un estudiante"
+ "A learner": "Un estudiante",
+ "A candidate finished their assessment": "Un candidato terminó su evaluación",
+ "Assessment credits are running low": "Quedan pocos créditos de evaluación",
+ "Invitation cancelled before it was started": "Invitación cancelada antes de empezar",
+ "Invitation expired without being started": "La invitación caducó sin haberse empezado",
+ "Reminder: your English assessment for {{jobTitle}}": "Recordatorio: tu evaluación de inglés para {{jobTitle}}",
+ "Your English assessment for {{jobTitle}}": "Tu evaluación de inglés para {{jobTitle}}",
+ "Your English assessment for {{jobTitle}} at {{orgName}} is still waiting. The link works until {{until}}:\n\n{{link}}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone.": "Tu evaluación de inglés para {{jobTitle}} en {{orgName}} sigue pendiente. El enlace funciona hasta el {{until}}:\n\n{{link}}\n\nDura entre 30 y 60 minutos. Usa un ordenador con cámara y micrófono.",
+ "{{balance}} assessment credits left. Ask your Edstellar contact for more.": "Quedan {{balance}} créditos de evaluación. Pide más a tu contacto de Edstellar.",
+ "{{name}} asked for assessment credits": "{{name}} pidió créditos de evaluación",
+ "{{name}} finished the assessment for {{title}}.": "{{name}} terminó la evaluación para {{title}}.",
+ "{{orgName}} has invited you to an English assessment for {{jobTitle}}.\n\nStart it here (the link works until {{until}}):\n\n{{link}}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone, in a quiet room. If you weren't expecting this, you can ignore this message.": "{{orgName}} te ha invitado a una evaluación de inglés para {{jobTitle}}.\n\nEmpiézala aquí (el enlace funciona hasta el {{until}}):\n\n{{link}}\n\nDura entre 30 y 60 minutos. Usa un ordenador con cámara y micrófono, en una sala tranquila. Si no esperabas este mensaje, puedes ignorarlo.",
+ "{{quantity}} credits at {{toFixed}} USD each.{{v}}": "{{quantity}} créditos a {{toFixed}} USD cada uno.{{v}}",
+ "Starting credits": "Créditos iniciales"
 }

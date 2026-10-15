@@ -13,6 +13,7 @@ import { checkAndAwardBadges } from "../gamification/stats.js";
 import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
+import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
 
 export const practiceTestsRouter = Router();
 
@@ -179,7 +180,12 @@ const startSessionSchema = z.object({ examId: z.string().uuid() });
 practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = startSessionSchema.parse(req.body);
-    const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
+    // A candidate takes exactly the exam set their invitation assigned.
+    if (req.user!.role === "candidate") {
+      const a = await activeAssessment(req.user!.id);
+      if (!a || a.exam_id !== body.examId) return res.status(403).json({ error: "candidate_not_allowed" });
+    }
+    const { allowedTestProducts } = req.user!.role === "candidate" ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts) {
       const code = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [body.examId])).rows[0]?.code ?? "";
       const product = PRODUCT_IDS.find((id) => code.startsWith(`${PRODUCT_CODE_PREFIX[id]}-`));
@@ -353,6 +359,14 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   } catch (err) {
     console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
   }
+
+  // A candidate's result goes to the recruiter.
+  try {
+    await recordCandidateResult(req.user!.id, req.params.sessionId as string);
+  } catch (err) {
+    console.error("practiceTests /complete: candidate result failed (non-fatal):", err);
+  }
+  if (req.user!.role === "candidate") return;
 
   // Badge-checking is best-effort and must never affect the response above
   // (already sent) or retroactively fail a completion that already succeeded.

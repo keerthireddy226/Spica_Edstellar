@@ -20,8 +20,9 @@ async function localize(to: string, subject: string, text: string): Promise<{ su
   return { subject: translateServerText(lang, subject), text: translateServerText(lang, text) };
 }
 
-async function sendMail(to: string, subject: string, text: string) {
-  const l = await localize(to, subject, text);
+async function sendMail(to: string, subject: string, text: string, lang?: string) {
+  // A known language wins (a candidate has no account to look it up from).
+  const l = lang ? { subject: translateServerText(lang, subject), text: translateServerText(lang, text) } : await localize(to, subject, text);
   await transporter.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to,
@@ -67,6 +68,27 @@ export async function sendPlacementReminderEmail(email: string, token: string) {
     email,
     "Your placement test is waiting — Spica",
     `Whenever you're ready, come back and take your placement test:\n\n${link}\n\nThis reminder is valid for 1 week — after that, log in and you can send yourself a new one.`,
+  );
+}
+
+// A recruitment assessment: the link signs the candidate straight in, no password.
+export async function sendCandidateInviteEmail(args: { to: string; orgName: string; jobTitle: string; token: string; expiresAt: Date; lang?: string; reminder?: boolean }) {
+  const link = `${FRONTEND_URL}/assess/${args.token}`;
+  const until = args.expiresAt.toISOString().slice(0, 10);
+  if (args.reminder) {
+    await sendMail(
+      args.to,
+      `Reminder: your English assessment for ${args.jobTitle}`,
+      `Your English assessment for ${args.jobTitle} at ${args.orgName} is still waiting. The link works until ${until}:\n\n${link}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone.`,
+      args.lang,
+    );
+    return;
+  }
+  await sendMail(
+    args.to,
+    `Your English assessment for ${args.jobTitle}`,
+    `${args.orgName} has invited you to an English assessment for ${args.jobTitle}.\n\nStart it here (the link works until ${until}):\n\n${link}\n\nIt takes about 30 to 60 minutes. Use a computer with a camera and microphone, in a quiet room. If you weren't expecting this, you can ignore this message.`,
+    args.lang,
   );
 }
 

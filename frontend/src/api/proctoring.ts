@@ -119,20 +119,23 @@ export function submitIdentity(body: { documentType: DocumentType; documentBase6
 
 // ---- Policy ----
 
-export function getOrgProctoringPolicy(): Promise<{ policy: ProctoringPolicy }> {
-  return api(`/proctoring/policy`);
+// Employees and recruitment candidates have separate policies.
+export type PolicyAudience = "employees" | "candidates";
+
+export function getOrgProctoringPolicy(audience: PolicyAudience = "employees"): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/policy?audience=${audience}`);
 }
 
-export function saveOrgProctoringPolicy(policy: ProctoringPolicy): Promise<{ policy: ProctoringPolicy }> {
-  return api(`/proctoring/policy`, { method: "PUT", body: JSON.stringify(policy) });
+export function saveOrgProctoringPolicy(policy: ProctoringPolicy, audience: PolicyAudience = "employees"): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/policy?audience=${audience}`, { method: "PUT", body: JSON.stringify(policy) });
 }
 
-export function getTenantProctoringPolicy(tenantId: string): Promise<{ policy: ProctoringPolicy }> {
-  return api(`/proctoring/tenants/${tenantId}/policy`);
+export function getTenantProctoringPolicy(tenantId: string, audience: PolicyAudience = "employees"): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/tenants/${tenantId}/policy?audience=${audience}`);
 }
 
-export function saveTenantProctoringPolicy(tenantId: string, policy: ProctoringPolicy): Promise<{ policy: ProctoringPolicy }> {
-  return api(`/proctoring/tenants/${tenantId}/policy`, { method: "PUT", body: JSON.stringify(policy) });
+export function saveTenantProctoringPolicy(tenantId: string, policy: ProctoringPolicy, audience: PolicyAudience = "employees"): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/tenants/${tenantId}/policy?audience=${audience}`, { method: "PUT", body: JSON.stringify(policy) });
 }
 
 export function getProctoringPreset(mode: ProctoringMode, region: ProctoringRegion): Promise<{ policy: ProctoringPolicy }> {

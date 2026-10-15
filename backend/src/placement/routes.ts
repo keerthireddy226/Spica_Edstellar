@@ -4,6 +4,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { orgScope, requirePermission, staffCanSeeUser } from "../admin/staff.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
+import { recordCandidateResult } from "../recruitment/service.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendPlacementReminderEmail } from "../auth/mailer.js";
 import { submitAttemptSchema } from "./schemas.js";
@@ -555,6 +556,10 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
 
     // Nothing graded yet — return the raw tally without a placement/roadmap.
     if (graded.length === 0) {
+      await finishProctoredSession(req.params.sessionId as string).catch((err) => console.error("placement /complete: proctoring analysis failed:", err));
+      if (req.user!.role === "candidate") {
+        await recordCandidateResult(req.user!.id, req.params.sessionId as string).catch((err) => console.error("placement /complete: candidate result failed:", err));
+      }
       return res.json({ gradedCount: 0, correctCount: 0, pendingCount, failedCount });
     }
 
@@ -583,8 +588,14 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       [req.user!.id, req.params.sessionId, overallPercent, cefrLevel, JSON.stringify(skillPercents), JSON.stringify(skillLevels), status],
     );
 
-    const { goalLevel } = await saveRoadmap(req.user!.id, cefrLevel, roadmapSkillPercents);
-    await checkAndAwardBadges(req.user!.id);
+    // Candidates get no learning plan; their result goes to the recruiter.
+    const candidate = req.user!.role === "candidate";
+    const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, cefrLevel, roadmapSkillPercents);
+    if (candidate) {
+      await recordCandidateResult(req.user!.id, req.params.sessionId as string).catch((err) => console.error("placement /complete: candidate result failed:", err));
+    } else {
+      await checkAndAwardBadges(req.user!.id);
+    }
 
     res.json({
       gradedCount: graded.length,

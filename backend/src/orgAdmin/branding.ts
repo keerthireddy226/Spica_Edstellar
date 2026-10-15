@@ -11,18 +11,20 @@ export const brandingRouter = Router();
 brandingRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const r = await pool.query(
-      `SELECT t.id, t.name, t.type, t.logo_path, t.brand_color FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+      `SELECT t.id, t.name, t.type, t.logo_path, t.brand_color, t.products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
       [req.user!.id],
     );
     const t = r.rows[0];
     const policy = await learnerOrgPolicy(req.user!.id);
-    if (!t || t.type !== "cohort") return res.json({ organization: null, ...policy });
+    if (!t || t.type !== "cohort") return res.json({ organization: null, products: ["skills"], ...policy });
     res.json({
       organization: {
         name: t.name,
         logoUrl: t.logo_path ? `/api/branding/logo/${t.id}?v=${encodeURIComponent(t.logo_path)}` : null,
         brandColor: t.brand_color,
       },
+      // Which products the organization bought: the consoles show only those.
+      products: t.products,
       ...policy,
     });
   } catch (err) {
