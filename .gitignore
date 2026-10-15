@@ -6,6 +6,7 @@ build/
 *.log
 .DS_Store
 backend/uploads/
+backend/private/
 # Face models are tracked via Git LFS instead (backend/models/*.onnx) — needed
 # at runtime by the deployed backend, so they can't just be gitignored like
 # the old voice model was.

@@ -14,6 +14,9 @@ import {
 } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
+import { useProctoring } from "@/hooks/useProctoring";
+import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
+import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { FaceCheck } from "@/components/FaceCheck";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
@@ -79,6 +82,7 @@ export function PlacementTest() {
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(readyToLoadSession && !summary && !requireReverify, "placement", sessionId, () => setRequireReverify(true));
+  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
 
   useEffect(() => {
     if (alreadyInProgress === null || !readyToLoadSession) return;
@@ -342,9 +346,28 @@ export function PlacementTest() {
 
   if (!current) return null;
 
+  // Proctoring steps (consent, ID, room scan, voice sample) come before the test.
+  if (sessionId && !proctor.ready) {
+    if (proctor.loading || !proctor.setup) return null;
+    return (
+      <div className="app-surface min-h-screen px-4 py-10">
+        <ProctoringGate proctor={proctor} sessionId={sessionId} />
+      </div>
+    );
+  }
+  // The proctor ended the test: finish it so the result (held for review) shows.
+  const finishTerminated = () => {
+    if (!sessionId) return;
+    completeSession(sessionId)
+      .then(setSummary)
+      .catch(() => setError(t("placementTest.submitError")));
+  };
+  const overlay = <ProctoringOverlay proctor={proctor} onFinish={finishTerminated} />;
+
   if (showTypeIntro) {
     return (
       <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
+        {overlay}
         <div className="w-full max-w-lg bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
           <div className="h-14 w-14 rounded-full bg-navy flex items-center justify-center">
             <Volume2 size={24} className="text-lime" />
@@ -373,6 +396,7 @@ export function PlacementTest() {
 
   return (
     <div className="fixed inset-0 bg-paper flex flex-col">
+      {overlay}
       <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: `var(--color-${current.skills[0]})` }} />
 
       <div className="relative flex items-center justify-between gap-3 px-5 py-3 shrink-0">

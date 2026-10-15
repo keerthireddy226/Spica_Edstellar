@@ -1,0 +1,306 @@
+import { api } from "@/lib/api";
+
+export type ProctoringMode = "off" | "standard" | "strict";
+export type ProctoringRegion = "global" | "eu" | "us" | "india";
+
+export interface ProctoringPolicy {
+  mode: ProctoringMode;
+  region: ProctoringRegion;
+  lockdown: boolean;
+  requireFullscreen: boolean;
+  multiMonitorCheck: boolean;
+  randomizedForms: boolean;
+  webcamMonitoring: boolean;
+  faceMatch: boolean;
+  voiceMatch: boolean;
+  roomScan: boolean;
+  idVerification: boolean;
+  liveMonitoring: boolean;
+  secureBrowser: boolean;
+  sebConfigKeys: string[];
+  retentionDays: number;
+}
+
+export type LearnerPolicy = Omit<ProctoringPolicy, "sebConfigKeys">;
+
+export interface IdentityStatus {
+  id: string;
+  status: "pending" | "verified" | "rejected";
+  created_at: string;
+  review_note: string | null;
+}
+
+export interface ProctoringSetup {
+  proctored: boolean;
+  policy: LearnerPolicy;
+  consentNeeded: boolean;
+  consentVersion: string;
+  biometric: boolean;
+  biometricOptOut: boolean;
+  identity: IdentityStatus | null;
+  roomScanDone: boolean;
+  voiceBaselineDone: boolean;
+  voiceBaselineMinSeconds: number;
+  secureBrowser: boolean | null;
+  faceEnrolled: boolean;
+  terminated: boolean;
+}
+
+// Safe Exam Browser exposes a per-page hash of its config key; the server
+// compares it with the organization's keys.
+interface SebWindow {
+  SafeExamBrowser?: { security?: { configKey?: string; updateKeys?: (cb: () => void) => void } };
+}
+
+async function sebHeaders(): Promise<Record<string, string>> {
+  const seb = (window as unknown as SebWindow).SafeExamBrowser?.security;
+  if (!seb) return {};
+  if (seb.updateKeys) await new Promise<void>((resolve) => seb.updateKeys!(resolve));
+  if (!seb.configKey) return {};
+  return { "X-SEB-Config-Key-Hash": seb.configKey, "X-SEB-Page-Url": window.location.href.split("#")[0] };
+}
+
+export async function getProctoringSetup(sessionId: string): Promise<ProctoringSetup> {
+  const extra = await sebHeaders();
+  return api(`/proctoring/sessions/${sessionId}/setup`, { headers: { "Content-Type": "application/json", ...extra } });
+}
+
+export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {
+  return api(`/proctoring/sessions/${sessionId}/consent`, { method: "POST", body: JSON.stringify({ accept: true, biometric }) });
+}
+
+export interface ProctoringEvent {
+  type: string;
+  at?: string;
+  detail?: Record<string, string | number | boolean | null>;
+}
+
+export function sendProctoringEvents(sessionId: string, events: ProctoringEvent[]): Promise<{ accepted: number }> {
+  return api(`/proctoring/sessions/${sessionId}/events`, { method: "POST", body: JSON.stringify({ events }), keepalive: true });
+}
+
+export type SnapshotWarning = "no_face" | "multiple_people" | "phone" | null;
+
+export function sendSnapshot(sessionId: string, imageBase64: string): Promise<{ faces: number; warning: SnapshotWarning }> {
+  return api(`/proctoring/sessions/${sessionId}/snapshot`, { method: "POST", body: JSON.stringify({ imageBase64 }) });
+}
+
+export function uploadRoomScan(sessionId: string, dataBase64: string, mimeType: string): Promise<{ ok: boolean }> {
+  return api(`/proctoring/sessions/${sessionId}/room-scan`, { method: "POST", body: JSON.stringify({ dataBase64, mimeType }) });
+}
+
+export function uploadVoiceBaseline(sessionId: string, dataBase64: string, mimeType: string): Promise<{ ok: boolean; speechSeconds: number; minSeconds?: number }> {
+  return api(`/proctoring/sessions/${sessionId}/voice-baseline`, { method: "POST", body: JSON.stringify({ dataBase64, mimeType }) });
+}
+
+export function getProctoringStatus(sessionId: string): Promise<{ terminated: boolean; terminateReason: string | null; message: string | null }> {
+  return api(`/proctoring/sessions/${sessionId}/status`);
+}
+
+export function ackProctorMessage(sessionId: string): Promise<{ ok: boolean }> {
+  return api(`/proctoring/sessions/${sessionId}/status/ack`, { method: "POST" });
+}
+
+export type DocumentType = "passport" | "national_id" | "driving_licence" | "other";
+
+export function submitIdentity(body: { documentType: DocumentType; documentBase64: string; selfieBase64: string; sessionId?: string }): Promise<{ identity: IdentityStatus }> {
+  return api(`/proctoring/identity`, { method: "POST", body: JSON.stringify(body) });
+}
+
+// ---- Policy ----
+
+export function getOrgProctoringPolicy(): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/policy`);
+}
+
+export function saveOrgProctoringPolicy(policy: ProctoringPolicy): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/policy`, { method: "PUT", body: JSON.stringify(policy) });
+}
+
+export function getTenantProctoringPolicy(tenantId: string): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/tenants/${tenantId}/policy`);
+}
+
+export function saveTenantProctoringPolicy(tenantId: string, policy: ProctoringPolicy): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/tenants/${tenantId}/policy`, { method: "PUT", body: JSON.stringify(policy) });
+}
+
+export function getProctoringPreset(mode: ProctoringMode, region: ProctoringRegion): Promise<{ policy: ProctoringPolicy }> {
+  return api(`/proctoring/presets?mode=${mode}&region=${region}`);
+}
+
+// ---- Reviewers ----
+
+export interface IntegrityReason {
+  code: string;
+  count: number;
+  points: number;
+}
+
+export type IntegrityStatus = "in_progress" | "clear" | "flagged" | "cleared" | "violation";
+
+export interface IntegritySessionRow {
+  session_id: string;
+  session_type: "placement" | "mocktest";
+  status: IntegrityStatus;
+  risk_score: number;
+  risk_level: "low" | "medium" | "high";
+  reasons: IntegrityReason[];
+  biometric_opt_out: boolean;
+  terminated_at: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  started_at: string;
+  completed_at: string | null;
+  user_id: string;
+  email: string;
+  name: string;
+  org_name: string | null;
+  exam_name: string | null;
+  reviewer: string | null;
+}
+
+export interface IntegrityStats {
+  flagged: number;
+  violations: number;
+  cleared: number;
+  clear: number;
+  live: number;
+  pendingIds: number;
+}
+
+export function getIntegrityReviews(status: string): Promise<{ sessions: IntegritySessionRow[]; stats: IntegrityStats }> {
+  return api(`/proctoring/reviews?status=${encodeURIComponent(status)}`);
+}
+
+export interface ProctoringMediaRow {
+  id: string;
+  kind: "snapshot" | "room_scan" | "voice_baseline" | "id_document" | "id_selfie";
+  face_count: number | null;
+  face_decision: string | null;
+  face_similarity: string | null;
+  objects: { label: string; score: number }[] | null;
+  created_at: string;
+}
+
+export interface IntegrityDetail {
+  integrity: IntegritySessionRow & {
+    policy: LearnerPolicy;
+    live_message: string | null;
+    terminate_reason: string | null;
+    secure_browser: boolean | null;
+    analyzed_at: string | null;
+  };
+  session: {
+    started_at: string;
+    completed_at: string | null;
+    session_type: string;
+    email: string;
+    name: string;
+    org_name: string | null;
+    exam_name: string | null;
+    answers: number;
+  };
+  events: { type: string; severity: "info" | "warn" | "high"; detail: Record<string, unknown> | null; at: string }[];
+  media: ProctoringMediaRow[];
+  faceChecks: { decision: string; similarity_score: string | null; liveness_score: string | null; face_count: number | null; created_at: string }[];
+  voice: {
+    decision: "match" | "uncertain" | "mismatch" | "insufficient_audio" | "error";
+    similarity_score: string | null;
+    detail: {
+      totalSpeechSeconds?: number;
+      answers?: number;
+      baselineSeconds?: number;
+      chunks?: { seconds: number; vsBaseline: number | null }[];
+      pairs?: { a: number; b: number; score: number }[];
+      reason?: string;
+    } | null;
+    created_at: string;
+  } | null;
+  identity: {
+    id: string;
+    status: "pending" | "verified" | "rejected";
+    document_type: DocumentType;
+    document_media_id: string | null;
+    selfie_media_id: string | null;
+    face_similarity: string | null;
+    auto_decision: string | null;
+    review_note: string | null;
+    reviewed_at: string | null;
+    created_at: string;
+  } | null;
+  placement: { id: string; status: string; cefr_level: string; overall_percent: number } | null;
+}
+
+export function getIntegrityDetail(sessionId: string): Promise<IntegrityDetail> {
+  return api(`/proctoring/reviews/${sessionId}`);
+}
+
+export function decideIntegrity(sessionId: string, verdict: "cleared" | "violation", note?: string): Promise<{ status: string }> {
+  return api(`/proctoring/reviews/${sessionId}/decision`, { method: "POST", body: JSON.stringify({ verdict, note }) });
+}
+
+export interface LiveSessionRow {
+  session_id: string;
+  session_type: "placement" | "mocktest";
+  last_seen_at: string;
+  live_message: string | null;
+  live_message_at: string | null;
+  live_message_seen_at: string | null;
+  started_at: string;
+  user_id: string;
+  email: string;
+  name: string;
+  org_name: string | null;
+  exam_name: string | null;
+  answers: number;
+  alerts: number;
+  last_alert: string | null;
+  snapshot: { id: string; face_count: number | null; objects: { label: string }[] | null; created_at: string } | null;
+}
+
+export function getLiveSessions(): Promise<{ sessions: LiveSessionRow[] }> {
+  return api(`/proctoring/live`);
+}
+
+export function sendLiveMessage(sessionId: string, message: string): Promise<{ ok: boolean }> {
+  return api(`/proctoring/live/${sessionId}/message`, { method: "POST", body: JSON.stringify({ message }) });
+}
+
+export function terminateLiveSession(sessionId: string, reason: string): Promise<{ ok: boolean }> {
+  return api(`/proctoring/live/${sessionId}/terminate`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
+export interface IdentityReviewRow {
+  id: string;
+  status: "pending" | "verified" | "rejected";
+  document_type: DocumentType;
+  document_media_id: string | null;
+  selfie_media_id: string | null;
+  face_similarity: string | null;
+  auto_decision: string | null;
+  review_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  user_id: string;
+  email: string;
+  name: string;
+  org_name: string | null;
+  reviewer: string | null;
+}
+
+export function getIdentityReviews(status: "pending" | "verified" | "rejected"): Promise<{ verifications: IdentityReviewRow[] }> {
+  return api(`/proctoring/identity-reviews?status=${status}`);
+}
+
+export function decideIdentity(id: string, verdict: "verified" | "rejected", note?: string): Promise<{ status: string }> {
+  return api(`/proctoring/identity-reviews/${id}/decision`, { method: "POST", body: JSON.stringify({ verdict, note }) });
+}
+
+// Media is served with the session cookie; an object URL lets <img>,
+// <video> and <audio> show it.
+export async function fetchMediaUrl(id: string): Promise<string | null> {
+  const r = await fetch(`/api/proctoring/media/${id}`, { credentials: "include" });
+  if (!r.ok) return null;
+  return URL.createObjectURL(await r.blob());
+}

@@ -6,6 +6,7 @@ import { pool } from "../db.js";
 import { releaseQueuedMonths } from "../licenses/service.js";
 import { recordAudit } from "../audit/service.js";
 import { notify } from "../notifications/service.js";
+import { removeMedia } from "../proctoring/storage.js";
 
 export const EXPORT_DIR = path.resolve("uploads", "exports");
 const EXPORT_TTL_DAYS = 7;
@@ -42,6 +43,7 @@ export async function eraseLearner(args: { userId: string; actorId: string | nul
     await collect(`SELECT sample_uri FROM face_check_results WHERE user_id = $1 AND sample_uri IS NOT NULL`);
     await collect(`SELECT sample_uri, sample_uri_2 FROM voice_enrollments WHERE user_id = $1`);
     await collect(`SELECT sample_uri FROM voice_check_results WHERE user_id = $1 AND sample_uri IS NOT NULL`);
+    const proctoringFiles = (await client.query(`SELECT uri FROM proctoring_media WHERE user_id = $1 AND uri IS NOT NULL`, [u.id])).rows.map((r) => r.uri as string);
 
     await client.query(
       `UPDATE attempts SET response_uri = NULL, response_text = CASE WHEN response_text IS NULL THEN NULL ELSE '' END
@@ -50,11 +52,15 @@ export async function eraseLearner(args: { userId: string; actorId: string | nul
     );
     await client.query(`UPDATE coach_turns SET audio_uri = NULL, transcript = NULL WHERE session_id IN (SELECT id FROM sessions WHERE user_id = $1)`, [u.id]);
     for (const t of ["face_enrollments", "voice_enrollments", "webauthn_credentials", "webauthn_challenges", "reminder_preferences", "report_subscriptions",
-      "notifications", "password_reset_tokens", "email_verification_tokens", "placement_reminder_tokens", "mfa_challenges", "face_fallback_otp_codes", "face_check_fallback_requests"]) {
+      "notifications", "password_reset_tokens", "email_verification_tokens", "placement_reminder_tokens", "mfa_challenges", "face_fallback_otp_codes", "face_check_fallback_requests",
+      "identity_verifications", "proctoring_media"]) {
       await client.query(`DELETE FROM ${t} WHERE user_id = $1`, [u.id]);
     }
     await client.query(`UPDATE face_check_results SET sample_uri = NULL WHERE user_id = $1`, [u.id]);
-    await client.query(`UPDATE voice_check_results SET sample_uri = NULL WHERE user_id = $1`, [u.id]);
+    await client.query(`UPDATE voice_check_results SET sample_uri = NULL, detail = NULL WHERE user_id = $1`, [u.id]);
+    await client.query(`UPDATE proctoring_events SET detail = NULL WHERE user_id = $1`, [u.id]);
+    await client.query(`UPDATE session_integrity SET live_message = NULL, review_note = NULL, terminate_reason = NULL WHERE user_id = $1`, [u.id]);
+    files.push(...proctoringFiles.map((f) => `proctoring:${f}`));
     await client.query(`UPDATE login_events SET ip_address = NULL, user_agent = NULL WHERE user_id = $1`, [u.id]);
     await client.query(`UPDATE consent_records SET ip_address = NULL WHERE user_id = $1`, [u.id]);
     await client.query(`UPDATE auth_sessions SET revoked_at = coalesce(revoked_at, now()) WHERE user_id = $1`, [u.id]);
@@ -79,7 +85,10 @@ export async function eraseLearner(args: { userId: string; actorId: string | nul
   } finally {
     client.release();
   }
-  for (const f of files) await removeUpload(f);
+  for (const f of files) {
+    if (f.startsWith("proctoring:")) await removeMedia(f.slice("proctoring:".length));
+    else await removeUpload(f);
+  }
   await recordAudit({
     tenantId: u.tenant_id,
     actorId: args.actorId,
@@ -158,7 +167,29 @@ export async function buildExport(exportId: string): Promise<void> {
 
 // ---- Retention (periodic) ----
 
-export async function runRetention(): Promise<{ recordings: number; erased: number; expiredExports: number }> {
+// Proctoring snapshots, scans, voice samples and ID images go after the
+// organization's proctoring retention period. Evidence for a session still
+// waiting on a reviewer, or an ID still pending, is kept up to a year.
+async function runProctoringRetention(): Promise<number> {
+  const old = await pool.query(
+    `SELECT m.id, m.uri FROM proctoring_media m
+     JOIN users u ON u.id = m.user_id JOIN tenants t ON t.id = u.tenant_id
+     LEFT JOIN session_integrity si ON si.session_id = m.session_id
+     WHERE m.uri IS NOT NULL
+       AND m.created_at < now() - make_interval(days => coalesce((t.proctoring->>'retentionDays')::int, 90))
+       AND (m.created_at < now() - interval '365 days' OR NOT (
+         coalesce(si.status, '') = 'flagged'
+         OR EXISTS (SELECT 1 FROM identity_verifications iv WHERE iv.status = 'pending' AND m.id IN (iv.document_media_id, iv.selfie_media_id))
+       ))
+     LIMIT 5000`,
+  );
+  for (const m of old.rows) await removeMedia(m.uri);
+  await pool.query(`UPDATE proctoring_media SET uri = NULL WHERE id = ANY($1::uuid[])`, [old.rows.map((m) => m.id)]);
+  await pool.query(`DELETE FROM proctoring_events WHERE created_at < now() - interval '365 days'`);
+  return old.rows.length;
+}
+
+export async function runRetention(): Promise<{ recordings: number; erased: number; expiredExports: number; proctoringMedia: number }> {
   let recordings = 0;
   let erased = 0;
   const tenants = await pool.query(
@@ -197,7 +228,8 @@ export async function runRetention(): Promise<{ recordings: number; erased: numb
   }
   const expired = await pool.query(`UPDATE data_exports SET status = 'expired' WHERE status = 'ready' AND expires_at < now() RETURNING file_path`);
   for (const e of expired.rows) if (e.file_path?.startsWith(EXPORT_DIR)) await unlink(e.file_path).catch(() => {});
-  return { recordings, erased, expiredExports: expired.rowCount ?? 0 };
+  const proctoringMedia = await runProctoringRetention();
+  return { recordings, erased, expiredExports: expired.rowCount ?? 0, proctoringMedia };
 }
 
 export async function acceptDpa(tenantId: string, userId: string) {

@@ -214,5 +214,8 @@
  "{{v}}A 15-minute session today keeps you on track.": "{{v}}Una sesión de 15 minutos hoy te mantiene al día.",
  "{{v}}{{practised}} of {{learners}} learners practised.{{goal}}{{v2}}{{v3}}": "{{v}}{{practised}} de {{learners}} estudiantes practicaron.{{goal}}{{v2}}{{v3}}",
  "{{who}} created the batch {{name}}": "{{who}} creó el grupo {{name}}",
- "🔥 Day {{v}} — keep your streak going": "🔥 Día {{v}}: sigue con tu racha"
+ "🔥 Day {{v}} — keep your streak going": "🔥 Día {{v}}: sigue con tu racha",
+ "Test session flagged for review": "Sesión de examen marcada para revisión",
+ "{{v}}'s test session needs an integrity review.": "La sesión de examen de {{v}} necesita una revisión de integridad.",
+ "A learner": "Un estudiante"
 }

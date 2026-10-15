@@ -1,0 +1,163 @@
+// What an organization switches on for its tests. Presets follow two choices:
+// how strict (off / standard for employee skill checks / strict for
+// recruitment) and which privacy rules apply (region). An organization can
+// change any single option after picking a preset.
+import { z } from "zod";
+import { pool } from "../db.js";
+
+export const PROCTORING_MODES = ["off", "standard", "strict"] as const;
+export const PROCTORING_REGIONS = ["global", "eu", "us", "india"] as const;
+export type ProctoringMode = (typeof PROCTORING_MODES)[number];
+export type ProctoringRegion = (typeof PROCTORING_REGIONS)[number];
+
+// Session types the policy applies to: the placement test and full mock exams.
+export const PROCTORED_SESSION_TYPES = ["placement", "mocktest"];
+
+export const policySchema = z.object({
+  mode: z.enum(PROCTORING_MODES),
+  region: z.enum(PROCTORING_REGIONS),
+  // Blocks copy, paste and the context menu; logs tab switches and focus loss.
+  lockdown: z.boolean(),
+  requireFullscreen: z.boolean(),
+  // Chrome and Edge report a second screen; other browsers can't tell.
+  multiMonitorCheck: z.boolean(),
+  // Each candidate gets questions drawn from every set of the product.
+  randomizedForms: z.boolean(),
+  // Camera snapshots during the test: face present, one face, no phone.
+  webcamMonitoring: z.boolean(),
+  // Biometric: the snapshot face compared with the enrolled face.
+  faceMatch: z.boolean(),
+  // Biometric: spoken answers compared with each other and a voice sample.
+  voiceMatch: z.boolean(),
+  roomScan: z.boolean(),
+  idVerification: z.boolean(),
+  liveMonitoring: z.boolean(),
+  secureBrowser: z.boolean(),
+  // Safe Exam Browser config keys accepted for this organization.
+  sebConfigKeys: z.array(z.string().trim().regex(/^[0-9a-fA-F]{64}$/)).max(10),
+  // Days to keep snapshots, scans, voice samples and ID images.
+  retentionDays: z.number().int().min(1).max(365),
+});
+export type ProctoringPolicy = z.infer<typeof policySchema>;
+
+// Biometric features are off by default in the EU: GDPR treats them as
+// special-category data and an employee's consent is rarely "freely given".
+// They can still be switched on; learners then always get a manual route.
+const BIOMETRIC_DEFAULT: Record<ProctoringRegion, boolean> = { global: true, eu: false, us: true, india: true };
+const RETENTION_DEFAULT: Record<ProctoringRegion, number> = { global: 90, eu: 30, us: 30, india: 90 };
+
+export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): ProctoringPolicy {
+  const base = {
+    mode,
+    region,
+    sebConfigKeys: [],
+    retentionDays: RETENTION_DEFAULT[region],
+    secureBrowser: false,
+  };
+  if (mode === "off") {
+    return {
+      ...base,
+      lockdown: false,
+      requireFullscreen: false,
+      multiMonitorCheck: false,
+      randomizedForms: false,
+      webcamMonitoring: false,
+      faceMatch: false,
+      voiceMatch: false,
+      roomScan: false,
+      idVerification: false,
+      liveMonitoring: false,
+    };
+  }
+  if (mode === "standard") {
+    return {
+      ...base,
+      lockdown: true,
+      requireFullscreen: false,
+      multiMonitorCheck: true,
+      randomizedForms: true,
+      webcamMonitoring: true,
+      faceMatch: false,
+      voiceMatch: false,
+      roomScan: false,
+      idVerification: false,
+      liveMonitoring: false,
+    };
+  }
+  const bio = BIOMETRIC_DEFAULT[region];
+  return {
+    ...base,
+    lockdown: true,
+    requireFullscreen: true,
+    multiMonitorCheck: true,
+    randomizedForms: true,
+    webcamMonitoring: true,
+    faceMatch: bio,
+    voiceMatch: bio,
+    roomScan: true,
+    idVerification: true,
+    liveMonitoring: true,
+  };
+}
+
+export function usesBiometrics(p: ProctoringPolicy): boolean {
+  return p.faceMatch || p.voiceMatch || p.idVerification;
+}
+
+export function usesCamera(p: ProctoringPolicy): boolean {
+  return p.webcamMonitoring || p.faceMatch || p.roomScan || p.idVerification || p.liveMonitoring;
+}
+
+// Anything that records the learner needs their consent first.
+export function needsConsent(p: ProctoringPolicy): boolean {
+  return usesCamera(p) || p.voiceMatch;
+}
+
+// Features above the standard preset are a paid-plan feature.
+export function needsSecureProctoringPlan(p: ProctoringPolicy): boolean {
+  return p.mode === "strict" || p.idVerification || p.liveMonitoring || p.secureBrowser || p.roomScan || p.voiceMatch;
+}
+
+// Individuals: copy and paste blocked and randomized forms, no camera beyond
+// the face check they already do before a test.
+const INDIVIDUAL_POLICY: ProctoringPolicy = { ...presetPolicy("standard", "global"), webcamMonitoring: false, multiMonitorCheck: false };
+
+// An organization that never saved a policy keeps tests free of cameras:
+// the lockdown and randomized forms of the standard preset only.
+const UNSAVED_POLICY: ProctoringPolicy = { ...presetPolicy("standard", "global"), webcamMonitoring: false };
+
+export function normalizePolicy(stored: unknown): ProctoringPolicy {
+  if (stored === null || stored === undefined) return UNSAVED_POLICY;
+  const parsed = policySchema.safeParse(stored);
+  if (parsed.success) return parsed.data;
+  // Older or partial rows: fill gaps from the matching preset.
+  const s = (stored ?? {}) as Partial<ProctoringPolicy>;
+  const mode = PROCTORING_MODES.includes(s.mode as ProctoringMode) ? (s.mode as ProctoringMode) : "standard";
+  const region = PROCTORING_REGIONS.includes(s.region as ProctoringRegion) ? (s.region as ProctoringRegion) : "global";
+  const merged = { ...presetPolicy(mode, region), ...s, mode, region };
+  return policySchema.safeParse(merged).success ? (merged as ProctoringPolicy) : presetPolicy(mode, region);
+}
+
+export async function tenantPolicy(tenantId: string): Promise<ProctoringPolicy> {
+  const r = await pool.query(`SELECT proctoring FROM tenants WHERE id = $1`, [tenantId]);
+  return normalizePolicy(r.rows[0]?.proctoring);
+}
+
+export async function saveTenantPolicy(tenantId: string, policy: ProctoringPolicy): Promise<void> {
+  await pool.query(`UPDATE tenants SET proctoring = $2 WHERE id = $1`, [tenantId, JSON.stringify(policy)]);
+}
+
+// The policy that applies to one learner: their organization's, or the
+// individual default.
+export async function learnerPolicy(userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
+  const r = await pool.query(`SELECT t.id, t.type, t.proctoring FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId]);
+  const t = r.rows[0];
+  if (!t || t.type !== "cohort") return { policy: INDIVIDUAL_POLICY, tenantId: t?.id ?? null };
+  return { policy: normalizePolicy(t.proctoring), tenantId: t.id };
+}
+
+// Consent wording version. Changing the wording means a new version, so
+// learners are asked again.
+export function consentVersion(p: ProctoringPolicy): string {
+  return `proctoring-v1-${p.region}`;
+}

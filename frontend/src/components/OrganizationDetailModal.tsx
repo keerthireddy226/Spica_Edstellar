@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Badge, DetailModal, InfoGrid, ModalEmpty, ModalRow, ModalSection, Pill } from "@/components/DetailModal";
 import { Building2, GraduationCap, HeartPulse, Receipt, ShieldCheck, Target, Users } from "lucide-react";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
@@ -10,6 +10,8 @@ import { OrgPlanAdminPanel } from "@/components/plans/OrgPlanAdminPanel";
 import { OrgAdminRecovery } from "@/components/OrgAdminRecovery";
 import { OrgAuditPanel } from "@/components/OrgAuditPanel";
 import { OrgCommercialPanel } from "@/components/OrgCommercialPanel";
+import { ProctoringSettings } from "@/components/proctoring/ProctoringSettings";
+import { getTenantProctoringPolicy, saveTenantProctoringPolicy, type ProctoringPolicy } from "@/api/proctoring";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
@@ -28,6 +30,8 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
   const [tab, setTab] = useState("overview");
   const managedLearners = org.managers.reduce((n, m) => n + m.learnerCount, 0);
   const tierLabel = planTier.charAt(0).toUpperCase() + planTier.slice(1);
+  const loadProctoring = useCallback(() => getTenantProctoringPolicy(org.id), [org.id]);
+  const saveProctoring = useCallback((p: ProctoringPolicy) => saveTenantProctoringPolicy(org.id, p), [org.id]);
 
   return (
     <DetailModal
@@ -53,6 +57,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
         { key: "people", label: tr("People"), count: org.managers.length + (org.orgAdmin ? 1 : 0) },
         { key: "plan", label: tr("Plan & licenses") },
         { key: "billing", label: tr("Contract & billing") },
+        { key: "proctoring", label: tr("Proctoring") },
         { key: "activity", label: tr("Activity") },
       ]}
       tab={tab}
@@ -155,6 +160,8 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
       )}
 
       {tab === "billing" && <OrgCommercialPanel tenantId={org.id} hasOrgAdmin={!!org.orgAdmin} />}
+
+      {tab === "proctoring" && <ProctoringSettings load={loadProctoring} save={saveProctoring} />}
 
       {tab === "activity" && <OrgAuditPanel tenantId={org.id} />}
 

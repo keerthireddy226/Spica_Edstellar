@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { orgScope, requirePermission, staffCanSeeUser } from "../admin/staff.js";
+import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendPlacementReminderEmail } from "../auth/mailer.js";
 import { submitAttemptSchema } from "./schemas.js";
@@ -339,6 +340,8 @@ placementRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Au
     const session = sessionResult.rows[0];
     if (!session) return res.status(404).json({ error: "session_not_found" });
     if (session.completed_at) return res.status(409).json({ error: "session_already_completed" });
+    const blocked = await proctoringBlock(session.id, req.user!.id);
+    if (blocked) return res.status(409).json({ error: blocked });
     if (!Array.isArray(session.composition?.history)) {
       return res.status(410).json({ error: "session_predates_adaptive_engine" });
     }
@@ -566,7 +569,13 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       `SELECT 1 FROM face_check_results WHERE session_id = $1 AND flagged_for_review LIMIT 1`,
       [req.params.sessionId],
     );
-    const status = flagged.rows[0] ? "pending_review" : "certified";
+    // The proctoring signals count the same way; a failure there never
+    // blocks the result.
+    const integrity = await finishProctoredSession(req.params.sessionId as string).catch((err) => {
+      console.error("placement /complete: proctoring analysis failed (non-fatal):", err);
+      return null;
+    });
+    const status = flagged.rows[0] || integrity?.status === "flagged" ? "pending_review" : "certified";
 
     await pool.query(
       `INSERT INTO placements (user_id, session_id, overall_percent, cefr_level, skill_percents, skill_levels, status)
@@ -606,16 +615,18 @@ placementRouter.get("/admin/pending-review", requireAuth, async (req: AuthedRequ
     const result = await pool.query(
       `SELECT p.id, p.user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name, p.taken_at, p.overall_percent, p.cefr_level,
               CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
-              json_agg(json_build_object(
+              coalesce(json_agg(json_build_object(
                 'decision', fcr.decision, 'similarityScore', fcr.similarity_score,
                 'sampleUri', fcr.sample_uri, 'createdAt', fcr.created_at
-              ) ORDER BY fcr.created_at) AS flagged_checks
+              ) ORDER BY fcr.created_at) FILTER (WHERE fcr.id IS NOT NULL), '[]') AS flagged_checks,
+              si.risk_score, si.risk_level, si.reasons AS integrity_reasons, si.session_id AS integrity_session_id
        FROM placements p
        JOIN users u ON u.id = p.user_id
        JOIN tenants t ON t.id = u.tenant_id
-       JOIN face_check_results fcr ON fcr.session_id = p.session_id AND fcr.flagged_for_review
+       LEFT JOIN face_check_results fcr ON fcr.session_id = p.session_id AND fcr.flagged_for_review
+       LEFT JOIN session_integrity si ON si.session_id = p.session_id
        WHERE p.status = 'pending_review' ${scope.sql ? `AND (t.type <> 'cohort' OR (true ${scope.sql}))` : ""}
-       GROUP BY p.id, u.id, t.id
+       GROUP BY p.id, u.id, t.id, si.session_id
        ORDER BY p.taken_at ASC`,
       scope.params,
     );
@@ -682,6 +693,11 @@ placementRouter.post("/admin/:id/review", requireAuth, async (req: AuthedRequest
       [body.verdict, req.user!.id, body.note ?? null, req.params.id],
     );
     if (!result.rows[0]) return res.status(400).json({ error: "not_pending_review" });
+    await pool.query(
+      `UPDATE session_integrity SET status = $2, reviewed_by = $3, reviewed_at = now(), review_note = $4, updated_at = now()
+       WHERE session_id = (SELECT session_id FROM placements WHERE id = $1)`,
+      [req.params.id, body.verdict === "fraud_confirmed" ? "violation" : "cleared", req.user!.id, body.note ?? null],
+    );
     res.json({ status: body.verdict });
   } catch (err) {
     next(err);

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import type { StaffPermissions } from "@/api/staff";
@@ -24,6 +24,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: tr("Billing") },
   { to: ROUTES.SUPER_PLANS, icon: Gem, label: tr("Plans & pricing") },
   { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: tr("Placement reviews") },
+  { to: ROUTES.SUPER_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: tr("System") },
   { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
@@ -41,6 +42,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: tr("Billing") },
   { to: ROUTES.ADMIN_CONSOLE_PLANS, icon: Gem, label: tr("Plans & pricing") },
   { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: tr("Placement reviews"), permission: "scoreReview" },
+  { to: ROUTES.ADMIN_CONSOLE_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: tr("Analytics"), permission: "viewReports" },
   { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: tr("Profile") },
@@ -52,6 +54,7 @@ const ORG_ADMIN_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers") },
   { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners") },
   { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses") },
+  { to: ROUTES.ORG_ADMIN_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: tr("Plan") },
   { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: tr("Settings") },

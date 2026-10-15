@@ -8,11 +8,18 @@ import { refreshActivityRollup } from "../analytics/rollup.js";
 import { autoCompleteBatches } from "../batches/lifecycle.js";
 import { runScheduledReports } from "../reports/service.js";
 import { runContractRenewalAlerts } from "../admin/renewals.js";
+import { runVoiceCheck } from "../proctoring/voiceCheck.js";
+import { analyzeSession } from "../proctoring/analyze.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
   registerHandler("data.export", (p) => buildExport(p.exportId));
   registerHandler("webhook.deliver", (p, job) => deliverWebhook(p.deliveryId, job.attempts));
+  // Voice consistency after a proctored test, then the session is re-scored.
+  registerHandler("proctoring.voice", async (p) => {
+    await runVoiceCheck(p.sessionId);
+    await analyzeSession(p.sessionId);
+  });
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
   every(15, "notifications.run", async () => {
@@ -33,6 +40,6 @@ export function registerJobs() {
   });
   every(24 * 60, "data.retention", async () => {
     const r = await runRetention();
-    if (r.recordings || r.erased || r.expiredExports) console.log("retention:", r);
+    if (r.recordings || r.erased || r.expiredExports || r.proctoringMedia) console.log("retention:", r);
   });
 }

@@ -50,6 +50,7 @@ export type PlanFeature =
   | "sso"
   | "api_access"
   | "mfa_enforcement"
+  | "secure_proctoring"
   | "data_governance"
   | "account_manager";
 
@@ -110,6 +111,12 @@ export const FEATURES: Record<PlanFeature, FeatureInfo> = {
   sso: { label: "Single sign-on and SCIM", description: "Sign in with your company identity provider (OpenID Connect) and provision learners automatically.", minTier: "enterprise", available: true },
   api_access: { label: "API and webhooks", description: "Connect Spica to your LMS or HR system.", minTier: "enterprise", available: true },
   mfa_enforcement: { label: "Enforced two-factor sign-in", description: "Require MFA for every admin and manager.", minTier: "enterprise", available: true },
+  secure_proctoring: {
+    label: "Secure proctoring",
+    description: "Recruitment-grade test security: ID checks, room scans, live monitoring, voice checks and secure browsers.",
+    minTier: "business",
+    available: true,
+  },
   data_governance: { label: "Data governance", description: "Retention rules and a full data export.", minTier: "enterprise", available: true },
   account_manager: { label: "Dedicated account manager", description: "A named contact and an SLA.", minTier: "enterprise", available: true },
 };

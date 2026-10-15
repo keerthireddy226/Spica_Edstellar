@@ -10,6 +10,9 @@ import { passThresholdForLevel } from "../placement/cefr.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
+import { learnerPolicy } from "../proctoring/policy.js";
+import { randomizedFormItemIds } from "../proctoring/forms.js";
+import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
 
 export const practiceTestsRouter = Router();
 
@@ -50,18 +53,43 @@ async function selectExamItems(examId: string) {
   return result.rows;
 }
 
-function derivePartBoundaries(rows: Awaited<ReturnType<typeof selectExamItems>>): PartBoundary[] {
-  const boundaries: PartBoundary[] = [];
+// A randomized form draws a section's questions from several sets, so
+// sections are grouped by position (sort_order), and each one takes the part
+// id of the chosen exam's own section.
+function derivePartBoundaries(rows: Awaited<ReturnType<typeof selectExamItems>>, partIdByOrder?: Map<number, string>): PartBoundary[] {
+  const boundaries: (PartBoundary & { sortOrder: number })[] = [];
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const prev = boundaries[boundaries.length - 1];
-    if (prev && prev.partId === row.exam_part_id) {
+    if (prev && prev.sortOrder === row.sort_order) {
       prev.count++;
     } else {
-      boundaries.push({ partId: row.exam_part_id, label: row.part_label, startIndex: i, count: 1 });
+      boundaries.push({ partId: partIdByOrder?.get(row.sort_order) ?? row.exam_part_id, label: row.part_label, startIndex: i, count: 1, sortOrder: row.sort_order });
     }
   }
-  return boundaries;
+  return boundaries.map(({ sortOrder: _s, ...b }) => b);
+}
+
+// One randomized form for this exam, in section order.
+async function selectRandomizedItems(examId: string) {
+  const ids = await randomizedFormItemIds(examId);
+  if (ids.length === 0) return { rows: [], partIdByOrder: new Map<number, string>() };
+  const result = await pool.query(
+    `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
+       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds,
+       ep.id AS exam_part_id, ep.part_label, ep.sort_order
+     FROM items i
+     JOIN item_types it ON it.id = i.item_type_id
+     JOIN exam_parts ep ON ep.id = i.exam_part_id
+     WHERE i.id = ANY($1::uuid[])`,
+    [ids],
+  );
+  const byId = new Map(result.rows.map((r) => [r.id, r]));
+  const parts = await pool.query(`SELECT id, sort_order FROM exam_parts WHERE exam_id = $1`, [examId]);
+  return {
+    rows: ids.map((id) => byId.get(id)).filter(Boolean) as typeof result.rows,
+    partIdByOrder: new Map<number, string>(parts.rows.map((p) => [p.sort_order, p.id])),
+  };
 }
 
 // Used by both the resume-below and /session/current equivalents — loads an
@@ -170,18 +198,21 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       return res.json({ sessionId: existing.rows[0].id, examId: body.examId, partBoundaries, items });
     }
 
-    const rows = await selectExamItems(body.examId);
+    // Proctored organizations give each candidate their own mix of questions.
+    const { policy } = await learnerPolicy(req.user!.id);
+    const randomized = policy.randomizedForms ? await selectRandomizedItems(body.examId) : null;
+    const rows = randomized?.rows.length ? randomized.rows : await selectExamItems(body.examId);
     if (rows.length === 0) {
       return res.status(404).json({ error: "no_exam_items_available" });
     }
-    const partBoundaries = derivePartBoundaries(rows);
+    const partBoundaries = derivePartBoundaries(rows, randomized?.rows.length ? randomized.partIdByOrder : undefined);
 
     const sessionResult = await pool.query(
       `INSERT INTO sessions (user_id, session_type, mode, composition)
        VALUES ($1, 'mocktest', 'coach', $2) RETURNING id`,
       [
         req.user!.id,
-        JSON.stringify({ examId: body.examId, itemIds: rows.map((r) => r.id), partBoundaries }),
+        JSON.stringify({ examId: body.examId, itemIds: rows.map((r) => r.id), partBoundaries, randomized: !!randomized?.rows.length }),
       ],
     );
 
@@ -229,6 +260,8 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
     const session = sessionResult.rows[0];
     if (!session) return res.status(404).json({ error: "session_not_found" });
     if (session.completed_at) return res.status(409).json({ error: "session_already_completed" });
+    const blocked = await proctoringBlock(session.id, req.user!.id);
+    if (blocked) return res.status(409).json({ error: blocked });
 
     const graded = await gradeAndSaveAttempt(session.id, body);
     if (!graded) return res.status(404).json({ error: "item_not_found" });
@@ -312,6 +345,13 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   } catch (err) {
     console.error("practiceTests /complete: score summary failed, session still marked complete:", err);
     res.json({ gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
+  }
+
+  // Proctoring analysis is best-effort too: the learner already has their result.
+  try {
+    await finishProctoredSession(req.params.sessionId as string);
+  } catch (err) {
+    console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
   }
 
   // Badge-checking is best-effort and must never affect the response above

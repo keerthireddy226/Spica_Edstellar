@@ -17,6 +17,7 @@ export type PlanFeatureKey =
   | "sso"
   | "api_access"
   | "mfa_enforcement"
+  | "secure_proctoring"
   | "data_governance"
   | "account_manager";
 
@@ -104,6 +105,7 @@ const FEATURE_LABELS: Record<string, string> = {
   sso: tr("Single sign-on"),
   api_access: tr("API and webhooks"),
   data_governance: tr("Data governance"),
+  secure_proctoring: tr("Secure proctoring"),
   po_invoicing: tr("Paying by invoice"),
 };
 const LIMIT_LABELS: Record<string, string> = { managers: tr("Managers"), batches: tr("Batches") };

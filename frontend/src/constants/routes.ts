@@ -44,6 +44,7 @@ export const ROUTES = {
   SUPER_SYSTEM: "/superadmin/system",
   SUPER_INSIGHTS: "/superadmin/insights",
   SUPER_PLANS: "/superadmin/plans",
+  SUPER_INTEGRITY: "/superadmin/integrity",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -60,6 +61,7 @@ export const ROUTES = {
   ADMIN_CONSOLE_ADMINS: "/admin/admins",
   ADMIN_CONSOLE_INSIGHTS: "/admin/insights",
   ADMIN_CONSOLE_PLANS: "/admin/plans",
+  ADMIN_CONSOLE_INTEGRITY: "/admin/integrity",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
@@ -73,6 +75,7 @@ export const ROUTES = {
   ORG_ADMIN_SETTINGS: "/orgadmin/settings",
   ORG_ADMIN_DEVELOPERS: "/orgadmin/developers",
   ORG_ADMIN_PROFILE: "/orgadmin/profile",
+  ORG_ADMIN_INTEGRITY: "/orgadmin/integrity",
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.
   MANAGER_DASHBOARD: "/manager/dashboard",

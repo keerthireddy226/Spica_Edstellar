@@ -40,6 +40,9 @@ import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
+import { useProctoring } from "@/hooks/useProctoring";
+import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
+import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -182,6 +185,9 @@ export function PracticeTests() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<ExamCompleteResult | null>(null);
+  // The organization's proctoring for this session: pre-test steps, then
+  // monitoring until the score report shows.
+  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice_test", sessionId, () => setRequireReverify(true));
@@ -585,10 +591,18 @@ export function PracticeTests() {
     );
   }
 
+  // Proctoring steps (consent, ID, room scan, voice sample) come before the test.
+  if (sessionId && !proctor.ready) {
+    if (proctor.loading || !proctor.setup) return null;
+    return <ProctoringGate proctor={proctor} sessionId={sessionId} />;
+  }
+  const overlay = <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />;
+
   // --- Exam overview (Pearson-style Part/Task/Questions table), fresh starts only ---
   if (sessionId && current && showExamOverview) {
     return (
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+        {overlay}
         <span className="h-14 w-14 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
           <ClipboardCheck size={26} strokeWidth={2} />
         </span>
@@ -616,6 +630,7 @@ export function PracticeTests() {
   if (sessionId && current && showSectionIntro && currentPart) {
     return (
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+        {overlay}
         <div className="flex items-center gap-2">
           <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
             {String.fromCharCode(65 + currentPartIndex)}
@@ -644,6 +659,7 @@ export function PracticeTests() {
     const progressPct = Math.round((index / items.length) * 100);
     return (
       <div className="max-w-4xl mx-auto flex flex-col gap-3">
+        {overlay}
         <div className="flex items-center justify-between px-1">
           {currentPart ? (
             <div className="flex items-center gap-2">

@@ -215,5 +215,8 @@
  "{{v}}A 15-minute session today keeps you on track.",
  "{{v}}{{practised}} of {{learners}} learners practised.{{goal}}{{v2}}{{v3}}",
  "{{who}} created the batch {{name}}",
- "🔥 Day {{v}} — keep your streak going"
+ "🔥 Day {{v}} — keep your streak going",
+ "Test session flagged for review",
+ "{{v}}'s test session needs an integrity review.",
+ "A learner"
 ]

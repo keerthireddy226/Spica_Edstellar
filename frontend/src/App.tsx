@@ -33,6 +33,7 @@ import { PracticeTests } from "@/pages/PracticeTests";
 import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
+import { IntegrityReviews } from "@/pages/IntegrityReviews";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -200,6 +201,7 @@ function App() {
           <Route path={ROUTES.ADMIN_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.ADMIN_ANALYTICS} element={<AnalyticsPage />} />
           <Route path={ROUTES.ADMIN_REVIEW} element={<AdminReview />} />
+          <Route path={ROUTES.SUPER_INTEGRITY} element={<IntegrityReviews />} />
         </Route>
         {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
         <Route
@@ -214,6 +216,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_BILLING} element={<StaffBilling />} />
           <Route path={ROUTES.ADMIN_CONSOLE_AUDIT} element={<StaffAudit />} />
           <Route path={ROUTES.ADMIN_CONSOLE_REVIEWS} element={<AdminReview />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />
@@ -238,6 +241,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
           <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
           <Route path={ROUTES.ORG_ADMIN_AUDIT} element={<OrgAdminAudit />} />
+          <Route path={ROUTES.ORG_ADMIN_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.ORG_ADMIN_SETTINGS} element={<OrgAdminSettings />} />
           <Route path={ROUTES.ORG_ADMIN_DEVELOPERS} element={<OrgAdminDevelopers />} />
           <Route path={ROUTES.ORG_ADMIN_PROFILE} element={<AdminProfile />} />
