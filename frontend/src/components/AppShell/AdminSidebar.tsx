@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch } from "lucide-react";
@@ -5,6 +6,7 @@ import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
 import type { StaffPermissions } from "@/api/staff";
+import { getPendingReviewCount } from "@/api/proctoring";
 
 import { tr } from "@/i18n/tr";
 // Four genuinely different nav sets, one per non-learner role — each sees
@@ -89,6 +91,25 @@ const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
   recruiter: RECRUITER_NAV_ITEMS,
 };
 
+const INTEGRITY_PATHS = new Set<string>([ROUTES.SUPER_INTEGRITY, ROUTES.ADMIN_CONSOLE_INTEGRITY, ROUTES.ORG_ADMIN_INTEGRITY, ROUTES.RECRUITER_INTEGRITY]);
+
+// Tests waiting for review, for the count next to "Test integrity". Refreshed
+// every minute and on every page change.
+function usePendingReviewCount(enabled: boolean, pathname: string): number {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const load = () =>
+      getPendingReviewCount()
+        .then((r) => setCount(r.flagged))
+        .catch(() => {});
+    load();
+    const t = setInterval(load, 60_000);
+    return () => clearInterval(t);
+  }, [enabled, pathname]);
+  return count;
+}
+
 function navClasses(isActive: boolean) {
   return [
     "flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium transition-colors",
@@ -110,6 +131,8 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
   const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS).filter(
     (n) => (!n.permission || user?.role !== "admin" || perms[n.permission]) && (!n.product || !products || products.includes(n.product)),
   );
+  const integrityPath = navItems.find((n) => INTEGRITY_PATHS.has(n.to))?.to ?? null;
+  const pendingReviews = usePendingReviewCount(Boolean(integrityPath), location.pathname);
 
   return (
     <>
@@ -135,7 +158,12 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
           {navItems.map(({ to, icon: Icon, label }) => (
             <Link key={to} to={to} onClick={onClose} className={navClasses(location.pathname === to)}>
               <Icon size={22} strokeWidth={1.8} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {to === integrityPath && pendingReviews > 0 && (
+                <span className="min-w-6 h-6 px-1.5 rounded-pill bg-error text-white text-xs font-bold flex items-center justify-center" aria-label={tr("{{n}} waiting for review", { n: pendingReviews })}>
+                  {pendingReviews > 99 ? "99+" : pendingReviews}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

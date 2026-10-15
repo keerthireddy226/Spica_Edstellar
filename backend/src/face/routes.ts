@@ -15,6 +15,7 @@ import { detectFaces, cropFace } from "./detect.js";
 import { assessQuality } from "./quality.js";
 import { scoreLiveness } from "./liveness.js";
 import { embedFace, cosineSimilarity, embeddingToBuffer, bufferToEmbedding, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "./embed.js";
+import { faceCheckSignal } from "../proctoring/alerts.js";
 
 export const faceRouter = Router();
 
@@ -24,7 +25,8 @@ const CHECK_UPLOADS_DIR = path.join(process.cwd(), "uploads", "face-check");
 // Skipped outside production so local QA never gets locked out.
 const faceCheckLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 30,
+  // The in-test check runs about once a minute, on top of the start checks.
+  limit: 60,
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => process.env.NODE_ENV !== "production",
@@ -192,6 +194,7 @@ faceRouter.post("/verify", requireAuth, faceCheckLimiter, async (req: AuthedRequ
          VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
         [req.user!.id, body.sessionId ?? null, body.purpose, decision, faces.length, sampleUri],
       );
+      if (body.sessionId) await faceCheckSignal(req.user!.id, body.sessionId, decision).catch((err) => console.error("face check signal failed:", err));
       const envRetries = await countRecentFailures(req.user!.id, body.purpose, ["no_face", "multiple_faces", "error"]);
       return res.status(201).json({
         faceCheckId: result.rows[0].id,
@@ -230,6 +233,7 @@ faceRouter.post("/verify", requireAuth, faceCheckLimiter, async (req: AuthedRequ
          VALUES ($1, $2, $3, 'spoof', $4, true, 1, $5, true) RETURNING id`,
         [req.user!.id, body.sessionId ?? null, body.purpose, liveness.live, sampleUri],
       );
+      if (body.sessionId) await faceCheckSignal(req.user!.id, body.sessionId, "spoof").catch((err) => console.error("face check signal failed:", err));
       return res.status(201).json({
         faceCheckId: result.rows[0].id,
         allowed: false,
@@ -264,6 +268,8 @@ faceRouter.post("/verify", requireAuth, faceCheckLimiter, async (req: AuthedRequ
        VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $8) RETURNING id`,
       [req.user!.id, body.sessionId ?? null, body.purpose, decision, similarity, liveness.live, sampleUri, decision !== "match"],
     );
+
+    if (body.sessionId) await faceCheckSignal(req.user!.id, body.sessionId, decision).catch((err) => console.error("face check signal failed:", err));
 
     // uncertain/mismatch both count toward RETRY_LIMIT and look the same to the learner.
     const retriesUsed = await countRecentFailures(req.user!.id, body.purpose, ["mismatch", "uncertain"]);

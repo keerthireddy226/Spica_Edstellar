@@ -30,7 +30,8 @@ export type ProctorWarning =
   | "camera_frozen"
   | "background_speech"
   | "screen_share_stopped"
-  | "screen_not_entire";
+  | "screen_not_entire"
+  | "face_mismatch";
 
 const FLUSH_MS = 5000;
 const STATUS_MS = 15000;
@@ -61,6 +62,9 @@ export interface ProctoringState {
   // Screen recording: the shared screen, and asking for it (needs a click).
   screenStream: MediaStream | null;
   startScreenShare: () => Promise<"ok" | "not_entire" | "denied">;
+  // Shows a warning raised outside this hook (the face check during the
+  // test), recording it as an event too when eventType is given.
+  report: (warning: ProctorWarning, eventType?: string) => void;
 }
 
 function usesCamera(s: ProctoringSetup | null): boolean {
@@ -449,5 +453,6 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     enterFullscreen,
     screenStream,
     startScreenShare,
+    report: (warning: ProctorWarning, eventType?: string) => (eventType ? log(eventType, undefined, warning) : setWarning(warning)),
   };
 }

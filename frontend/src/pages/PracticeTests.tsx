@@ -41,6 +41,7 @@ import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
+import { showFaceCheckOutcome } from "@/hooks/faceCheckWarning";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
@@ -209,7 +210,13 @@ export function PracticeTests() {
   const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
-  usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice_test", sessionId, () => setRequireReverify(true));
+  usePeriodicFaceCheck(
+    Boolean(sessionId) && !summary && !requireReverify,
+    "practice_test",
+    sessionId,
+    () => setRequireReverify(true),
+    (outcome) => showFaceCheckOutcome(proctor, outcome),
+  );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
 

@@ -19,6 +19,7 @@ import { embedFace, cosineSimilarity, bufferToEmbedding, embeddingToBuffer, MATC
 import { detectObjects } from "./objects.js";
 import { mediaPath, removeMedia, saveMedia } from "./storage.js";
 import { analyzeSession } from "./analyze.js";
+import { liveAlert } from "./alerts.js";
 import { BASELINE_MIN_SECONDS, speechSeconds } from "./voiceCheck.js";
 import {
   PROCTORED_SESSION_TYPES,
@@ -70,6 +71,12 @@ const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   screen_not_entire: "warn",
   typing_profile: "info",
   system_check: "info",
+  // From the face check during the test (written by the server).
+  face_missing: "high",
+  extra_face: "high",
+  face_different: "high",
+  face_unconfirmed: "warn",
+  face_spoof: "high",
 };
 
 function decode(base64: string): Buffer {
@@ -323,6 +330,9 @@ proctoringRouter.post("/sessions/:sessionId/events", requireAuth, async (req: Au
       );
     }
     await pool.query(`UPDATE session_integrity SET last_seen_at = now() WHERE session_id = $1`, [own.si.session_id]);
+    for (const kind of ["camera_off", "camera_covered", "camera_frozen"] as const) {
+      if (accepted.some((e) => e.type === kind)) liveAlert(own.si.session_id, kind);
+    }
     res.status(201).json({ accepted: accepted.length });
   } catch (err) {
     next(err);
@@ -375,6 +385,14 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
     if (faces.length === 0) warning = "no_face";
     else if (faces.length > 1 || persons > 1) warning = "multiple_people";
     else if (watched.some((o) => o.label === "cell_phone")) warning = "phone";
+    else if (faceDecision === "mismatch" || faceDecision === "uncertain") warning = "face_mismatch";
+
+    // And the reviewers, for what matters, once per kind per test.
+    if (warning === "multiple_people") liveAlert(si.session_id, "multiple_people");
+    if (warning === "phone") liveAlert(si.session_id, "phone");
+    if (faceDecision === "mismatch") liveAlert(si.session_id, "face_mismatch");
+    if (faceDecision === "uncertain") liveAlert(si.session_id, "face_unconfirmed");
+    if (warning === "no_face") liveAlert(si.session_id, "away");
     res.status(201).json({ faces: faces.length, warning });
   } catch (err) {
     next(err);
@@ -633,6 +651,50 @@ async function canReviewUser(req: AuthedRequest, userId: string): Promise<boolea
 }
 
 const REVIEW_STATUSES = ["flagged", "clear", "cleared", "violation", "in_progress", "all"] as const;
+
+// Tests waiting for a review, for the count next to "Test integrity" in the menu.
+proctoringRouter.get("/reviews/pending-count", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const scope = await reviewerScope(req, res);
+    if (!scope) return;
+    const r = await pool.query(
+      `SELECT count(*)::int AS n FROM session_integrity si JOIN users u ON u.id = si.user_id JOIN tenants t ON t.id = u.tenant_id
+       WHERE ${scope.sql} AND si.status = 'flagged'`,
+      scope.params,
+    );
+    res.json({ flagged: r.rows[0].n });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const REVIEWER_ROLES = ["org_admin", "recruiter", "admin", "super_admin"];
+
+// How this reviewer wants integrity alerts emailed. The bell always shows them.
+proctoringRouter.get("/alert-preferences", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    if (!REVIEWER_ROLES.includes(req.user!.role)) return res.status(403).json({ error: "forbidden" });
+    const r = (await pool.query(`SELECT integrity_alerts FROM user_notification_prefs WHERE user_id = $1`, [req.user!.id])).rows[0];
+    res.json({ email: r?.integrity_alerts ?? "instant" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+proctoringRouter.put("/alert-preferences", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    if (!REVIEWER_ROLES.includes(req.user!.role)) return res.status(403).json({ error: "forbidden" });
+    const body = z.object({ email: z.enum(["instant", "daily"]) }).parse(req.body);
+    await pool.query(
+      `INSERT INTO user_notification_prefs (user_id, integrity_alerts) VALUES ($1, $2)
+       ON CONFLICT (user_id) DO UPDATE SET integrity_alerts = $2, updated_at = now()`,
+      [req.user!.id, body.email],
+    );
+    res.json(body);
+  } catch (err) {
+    next(err);
+  }
+});
 
 proctoringRouter.get("/reviews", requireAuth, async (req: AuthedRequest, res, next) => {
   const scope = await reviewerScope(req, res);

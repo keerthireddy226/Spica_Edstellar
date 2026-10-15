@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, Eye, IdCard, MessageSquare, Radio, ShieldAlert, ShieldCheck, ShieldX, Square } from "lucide-react";
+import { AlertTriangle, BellRing, Eye, IdCard, MessageSquare, Radio, ShieldAlert, ShieldCheck, ShieldX, Square } from "lucide-react";
 import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
 import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
@@ -9,6 +9,9 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   decideIdentity,
   decideIntegrity,
+  getAlertPreferences,
+  saveAlertPreferences,
+  type AlertEmailPreference,
   fetchMediaUrl,
   getIdentityReviews,
   getIntegrityDetail,
@@ -53,6 +56,10 @@ const REASON_TEXT: Record<string, () => string> = {
   phone_in_view: () => tr("Snapshots with a phone"),
   no_snapshots: () => tr("No camera snapshots arrived"),
   face_check_flagged: () => tr("Face checks flagged"),
+  face_check_uncertain: () => tr("Face checks where the face couldn't be confirmed"),
+  face_unconfirmed: () => tr("Snapshots where the face couldn't be confirmed"),
+  face_missing: () => tr("Face checks with no face"),
+  extra_face: () => tr("Face checks with more than one face"),
   voice_mismatch: () => tr("A different voice answered part of the test"),
   voice_uncertain: () => tr("Voice match uncertain"),
   room_scan_missing: () => tr("No room scan"),
@@ -109,6 +116,11 @@ const EVENT_TEXT: Record<string, () => string> = {
   screen_share_stopped: () => tr("Screen sharing stopped"),
   screen_not_entire: () => tr("Shared a window, not the screen"),
   system_check: () => tr("Device check passed"),
+  face_missing: () => tr("No face at a face check"),
+  extra_face: () => tr("More than one face at a face check"),
+  face_different: () => tr("A different face at a face check"),
+  face_unconfirmed: () => tr("Face couldn't be confirmed at a face check"),
+  face_spoof: () => tr("Photo or screen held up at a face check"),
 };
 
 const DIRECTION_TEXT: Record<string, () => string> = {
@@ -698,6 +710,35 @@ type Tab = "queue" | "live" | "ids" | "settings";
 
 // Test integrity for reviewers: flagged sessions, live tests, ID checks and
 // (for an Org Admin) the organization's proctoring settings.
+// How this reviewer gets alert emails. The bell shows every alert either way.
+function AlertEmailSetting() {
+  const [value, setValue] = useState<AlertEmailPreference | null>(null);
+  useEffect(() => {
+    getAlertPreferences()
+      .then((r) => setValue(r.email))
+      .catch(() => {});
+  }, []);
+  if (!value) return null;
+  return (
+    <label className="flex flex-wrap items-center gap-2 text-sm text-muted">
+      <BellRing size={16} className="text-ink" />
+      {tr("Email me about live alerts and flagged tests:")}
+      <select
+        value={value}
+        onChange={(e) => {
+          const next = e.target.value as AlertEmailPreference;
+          setValue(next);
+          saveAlertPreferences(next).catch(() => {});
+        }}
+        className="text-sm text-ink bg-surface border border-rule rounded-input px-2.5 py-1.5"
+      >
+        <option value="instant">{tr("As they happen")}</option>
+        <option value="daily">{tr("One summary a day")}</option>
+      </select>
+    </label>
+  );
+}
+
 export function IntegrityReviews() {
   const { user } = useAuth();
   const isOrgAdmin = user?.role === "org_admin";
@@ -715,6 +756,11 @@ export function IntegrityReviews() {
   const [live, setLive] = useState<LiveSessionRow[] | null>(null);
   // ?session= opens that session's review straight away (from a candidate report).
   const [open, setOpen] = useState<string | null>(searchParams.get("session"));
+  const sessionParam = searchParams.get("session");
+  useEffect(() => {
+    // A notification link opened while this page is already showing.
+    if (sessionParam) setOpen(sessionParam);
+  }, [sessionParam]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -749,6 +795,7 @@ export function IntegrityReviews() {
   return (
     <div className="flex flex-col gap-5 w-full">
       <PageHeader title={tr("Test integrity")} subtitle={tr("Proctored tests that need a person to look at them. Nothing here fails a learner automatically.")} />
+      <AlertEmailSetting />
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label={tr("Needs review")} value={stats.flagged} icon={ShieldAlert} index={0} />

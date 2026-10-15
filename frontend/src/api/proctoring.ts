@@ -83,7 +83,7 @@ export function sendProctoringEvents(sessionId: string, events: ProctoringEvent[
   return api(`/proctoring/sessions/${sessionId}/events`, { method: "POST", body: JSON.stringify({ events }), keepalive: true });
 }
 
-export type SnapshotWarning = "no_face" | "multiple_people" | "phone" | null;
+export type SnapshotWarning = "no_face" | "multiple_people" | "phone" | "face_mismatch" | null;
 
 export function sendSnapshot(sessionId: string, imageBase64: string): Promise<{ faces: number; warning: SnapshotWarning }> {
   return api(`/proctoring/sessions/${sessionId}/snapshot`, { method: "POST", body: JSON.stringify({ imageBase64 }) });
@@ -301,6 +301,20 @@ export interface LiveSessionRow {
   last_alert: string | null;
   snapshot: { id: string; face_count: number | null; objects: { label: string }[] | null; created_at: string } | null;
   video: { id: string; created_at: string } | null;
+}
+
+export function getPendingReviewCount(): Promise<{ flagged: number }> {
+  return api("/proctoring/reviews/pending-count");
+}
+
+export type AlertEmailPreference = "instant" | "daily";
+
+export function getAlertPreferences(): Promise<{ email: AlertEmailPreference }> {
+  return api("/proctoring/alert-preferences");
+}
+
+export function saveAlertPreferences(email: AlertEmailPreference): Promise<{ email: AlertEmailPreference }> {
+  return api("/proctoring/alert-preferences", { method: "PUT", body: JSON.stringify({ email }) });
 }
 
 export function getLiveSessions(): Promise<{ sessions: LiveSessionRow[] }> {

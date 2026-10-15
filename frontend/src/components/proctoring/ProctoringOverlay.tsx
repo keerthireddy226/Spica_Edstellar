@@ -21,6 +21,7 @@ const WARNING_TEXT: Record<ProctorWarning, () => string> = {
   background_speech: () => tr("We heard talking. Stay silent unless a question asks you to speak."),
   screen_share_stopped: () => tr("Screen sharing stopped. Share your entire screen again to continue being monitored."),
   screen_not_entire: () => tr("Share your entire screen, not a window or tab."),
+  face_mismatch: () => tr("We couldn't confirm it's you. Sit facing the camera in good light."),
 };
 
 function SelfView({ stream }: { stream: MediaStream }) {

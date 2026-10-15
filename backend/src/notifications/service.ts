@@ -36,6 +36,8 @@ export type NotificationKind =
   | "manager_digest"
   | "manager_pool"
   | "integrity_flag"
+  | "integrity_alert"
+  | "integrity_digest"
   | "assessment_completed"
   | "credits_low"
   | "credit_request";

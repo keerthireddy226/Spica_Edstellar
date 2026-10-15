@@ -14,6 +14,7 @@ import {
 } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
+import { showFaceCheckOutcome } from "@/hooks/faceCheckWarning";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
@@ -91,8 +92,14 @@ export function PlacementTest() {
   const readyToLoadSession = alreadyInProgress === true || faceChecked;
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
-  usePeriodicFaceCheck(readyToLoadSession && !summary && !requireReverify, "placement", sessionId, () => setRequireReverify(true));
   const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
+  usePeriodicFaceCheck(
+    readyToLoadSession && !summary && !requireReverify,
+    "placement",
+    sessionId,
+    () => setRequireReverify(true),
+    (outcome) => showFaceCheckOutcome(proctor, outcome),
+  );
 
   useEffect(() => {
     if (alreadyInProgress === null || !readyToLoadSession) return;

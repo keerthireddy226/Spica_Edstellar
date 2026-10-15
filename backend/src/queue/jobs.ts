@@ -11,6 +11,7 @@ import { runContractRenewalAlerts } from "../admin/renewals.js";
 import { runVoiceCheck } from "../proctoring/voiceCheck.js";
 import { analyzeSession } from "../proctoring/analyze.js";
 import { runRecruitmentLifecycle } from "../recruitment/service.js";
+import { sendIntegrityDigests } from "../proctoring/alerts.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -39,6 +40,10 @@ export function registerJobs() {
   every(60, "recruitment.lifecycle", async () => {
     const r = await runRecruitmentLifecycle((userId) => eraseLearner({ userId, actorId: null, actorRole: "system", reason: "Candidate retention period ended" }));
     if (r.expired || r.reminded || r.erased) console.log("recruitment:", r);
+  });
+  every(60, "integrity.digest", async () => {
+    const n = await sendIntegrityDigests();
+    if (n) console.log("integrity summaries sent:", n);
   });
   every(60, "contracts.renewals", async () => {
     await runContractRenewalAlerts();

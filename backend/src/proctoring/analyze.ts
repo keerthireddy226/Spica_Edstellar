@@ -2,7 +2,7 @@
 // reasons a reviewer can read. The score only decides what a person looks
 // at first: "flagged" means "needs a human", never "cheated".
 import { pool } from "../db.js";
-import { notify, orgAdminIds } from "../notifications/service.js";
+import { notifyFlagged } from "./alerts.js";
 import { enqueue } from "../queue/queue.js";
 import { learnerPolicy, needsConsent, normalizePolicy } from "./policy.js";
 import { runTypingCheck } from "./typing.js";
@@ -41,6 +41,22 @@ const EVENT_WEIGHTS: Record<string, { each: number; cap: number }> = {
 const AWAY_YAW = 0.35;
 const AWAY_PITCH = 0.3;
 
+const CAMERA_ISSUES = new Set([
+  "away_from_camera",
+  "multiple_faces",
+  "extra_person",
+  "face_mismatch",
+  "face_unconfirmed",
+  "face_check_flagged",
+  "face_check_uncertain",
+  "face_missing",
+  "extra_face",
+  "camera_off",
+  "camera_covered",
+  "camera_frozen",
+  "no_snapshots",
+]);
+
 const HIGH_AT = 30;
 const MEDIUM_AT = 12;
 
@@ -65,17 +81,18 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
          count(*) FILTER (WHERE face_count = 0)::int AS no_face,
          count(*) FILTER (WHERE face_count > 1)::int AS multiple_faces,
          count(*) FILTER (WHERE face_decision = 'mismatch')::int AS face_mismatch,
+         count(*) FILTER (WHERE face_decision = 'uncertain')::int AS face_uncertain,
          count(*) FILTER (WHERE objects @> '[{"label":"cell_phone"}]')::int AS phone,
          count(*) FILTER (WHERE (SELECT count(*) FROM jsonb_array_elements(coalesce(objects, '[]')) o WHERE o->>'label' = 'person') > 1)::int AS extra_person
        FROM proctoring_media WHERE session_id = $1 AND kind = 'snapshot'`,
       [sessionId],
     )
   ).rows[0];
-  // A few frames without a face is normal (looking down to think); a lot isn't.
-  if (snaps.total > 0 && snaps.no_face / snaps.total > 0.2) add("away_from_camera", snaps.no_face, 8);
+  add("away_from_camera", snaps.no_face, Math.min(16, snaps.no_face * 4));
   add("multiple_faces", snaps.multiple_faces, Math.min(20, snaps.multiple_faces * 10));
   add("extra_person", snaps.extra_person, Math.min(16, snaps.extra_person * 8));
   add("face_mismatch", snaps.face_mismatch, Math.min(30, snaps.face_mismatch * 15));
+  add("face_unconfirmed", snaps.face_uncertain, Math.min(15, snaps.face_uncertain * 5));
   add("phone_in_view", snaps.phone, Math.min(20, snaps.phone * 10));
   if (policy.webcamMonitoring && snaps.total === 0) add("no_snapshots", 1, 10);
 
@@ -108,8 +125,22 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
   if (typing?.decision === "inconsistent") add("typing_inconsistent", 1, 8);
   if (typing?.decision === "uncertain") add("typing_uncertain", 1, 2);
 
-  const face = (await pool.query(`SELECT count(*)::int AS n FROM face_check_results WHERE session_id = $1 AND flagged_for_review`, [sessionId])).rows[0];
-  add("face_check_flagged", face.n, Math.min(30, face.n * 15));
+  // The face check during the test, about once a minute at random moments.
+  const checks = (
+    await pool.query(
+      `SELECT count(*)::int AS total,
+         count(*) FILTER (WHERE decision IN ('mismatch', 'spoof'))::int AS failed,
+         count(*) FILTER (WHERE decision = 'uncertain')::int AS uncertain,
+         count(*) FILTER (WHERE decision = 'no_face')::int AS no_face,
+         count(*) FILTER (WHERE decision = 'multiple_faces')::int AS multiple
+       FROM face_check_results WHERE session_id = $1`,
+      [sessionId],
+    )
+  ).rows[0];
+  add("face_check_flagged", checks.failed, Math.min(30, checks.failed * 15));
+  add("face_check_uncertain", checks.uncertain, Math.min(15, checks.uncertain * 5));
+  add("face_missing", checks.no_face, Math.min(16, checks.no_face * 4));
+  add("extra_face", checks.multiple, Math.min(20, checks.multiple * 10));
 
   const voice = (
     await pool.query(`SELECT decision FROM voice_check_results WHERE session_id = $1 AND method = 'session_consistency' ORDER BY created_at DESC LIMIT 1`, [sessionId])
@@ -146,6 +177,10 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
   }
   if (si.terminated_at) add("terminated", 1, 40);
 
+  // No face, another face, an unconfirmed face or an empty, dark or frozen
+  // camera: even once is enough for a person to look at the test.
+  if (reasons.some((r) => CAMERA_ISSUES.has(r.code))) needsHuman = true;
+
   const riskScore = reasons.reduce((n, r) => n + r.points, 0);
   const riskLevel = riskScore >= HIGH_AT ? "high" : riskScore >= MEDIUM_AT ? "medium" : "low";
   const flagged = riskLevel !== "low" || needsHuman;
@@ -162,18 +197,9 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
     await pool.query(`UPDATE placements SET status = 'pending_review' WHERE session_id = $1 AND status = 'certified' AND reviewed_at IS NULL`, [sessionId]);
   }
 
-  if (status === "flagged" && si.status !== "flagged" && si.tenant_id && riskLevel === "high") {
-    const who = (await pool.query(`SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS name FROM users WHERE id = $1`, [si.user_id])).rows[0];
-    for (const adminId of await orgAdminIds(si.tenant_id)) {
-      await notify({
-        userId: adminId,
-        kind: "integrity_flag",
-        title: "Test session flagged for review",
-        body: `${who?.name ?? "A learner"}'s test session needs an integrity review.`,
-        link: "/orgadmin/integrity",
-        dedupeKey: `integrity:${sessionId}:${adminId}`,
-      }).catch((err) => console.error("integrity notification failed:", err));
-    }
+  // Every newly flagged test reaches its reviewers, whatever the risk level.
+  if (status === "flagged" && si.status !== "flagged") {
+    await notifyFlagged(sessionId, riskLevel, reasons).catch((err) => console.error("integrity notification failed:", err));
   }
   return { riskScore, riskLevel, status };
 }
