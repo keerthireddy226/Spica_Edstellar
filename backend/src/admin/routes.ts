@@ -6,7 +6,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
-import { createAndInviteUser, resendSetPasswordLink } from "../auth/invite.js";
+import { resendSetPasswordLink } from "../auth/invite.js";
 import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "../orgAdmin/handover.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { queueStats, retryJob } from "../queue/queue.js";
@@ -36,16 +36,6 @@ function requirePlatformAdmin(req: AuthedRequest, res: import("express").Respons
 // never other Admin accounts (see the spec's Role & Permission Matrix).
 function requireSuperAdmin(req: AuthedRequest, res: import("express").Response): boolean {
   if (!req.user || req.user.role !== "super_admin") {
-    res.status(403).json({ error: "forbidden" });
-    return false;
-  }
-  return true;
-}
-
-// The inverse of requireSuperAdmin — onboarding an organization is an Admin's
-// job, never Super Admin's (same Role & Permission Matrix rule, other direction).
-function requireAdminOnly(req: AuthedRequest, res: import("express").Response): boolean {
-  if (!req.user || req.user.role !== "admin") {
     res.status(403).json({ error: "forbidden" });
     return false;
   }

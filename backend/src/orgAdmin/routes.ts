@@ -14,7 +14,7 @@ import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js
 import { buildLearnerProfile } from "../learners/profile.js";
 import { ipAllowed, parseAllowlist } from "../auth/policy.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
-import { applyLearnerDefaults, getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
+import { getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
 import { BATCH_END_SQL, BatchStateError, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { startViewAs } from "../auth/viewAs.js";

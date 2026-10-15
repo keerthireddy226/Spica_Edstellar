@@ -155,8 +155,8 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
         <OrgBrandBadge />
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
-        <LanguageSwitcher />
+      <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+        <LanguageSwitcher compact />
         <button
           onClick={toggleTheme}
           aria-label={t("shell.toggleTheme")}

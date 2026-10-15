@@ -1,7 +1,7 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { pool } from "../db.js";
-import { requireAuth, requireAdmin, type AuthedRequest } from "../auth/middleware.js";
+import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { orgScope, requirePermission, staffCanSeeUser } from "../admin/staff.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendPlacementReminderEmail } from "../auth/mailer.js";

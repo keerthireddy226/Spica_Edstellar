@@ -16,10 +16,6 @@ function dayKey(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
-function fullName(r: { first_name: string | null; last_name: string | null; email: string }): string {
-  return [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email;
-}
-
 // ---- 1. License alerts: learners, Org Admins, pool ----
 
 export async function runLicenseAlerts(): Promise<number> {
