@@ -59,7 +59,11 @@ export function DetailModal({
   return (
     <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center p-3 sm:p-6" onClick={onClose}>
       <div
-        className={`bg-surface border border-rule rounded-card shadow-2xl w-full flex flex-col overflow-hidden ${wide ? "max-w-7xl min-h-[70vh]" : "max-w-4xl"} max-h-[94vh]`}
+        // With tabs the height is fixed, so switching tabs never resizes the
+        // window; the body scrolls instead.
+        className={`bg-surface border border-rule rounded-card shadow-2xl w-full flex flex-col overflow-hidden ${wide ? "max-w-7xl" : "max-w-4xl"} ${
+          tabs && tabs.length > 0 ? "h-[90vh]" : `max-h-[94vh] ${wide ? "min-h-[70vh]" : ""}`
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="shrink-0 relative overflow-hidden" style={{ background: "linear-gradient(120deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 70%, black) 70%, color-mix(in srgb, #c9965c 60%, var(--color-navy)))" }}>

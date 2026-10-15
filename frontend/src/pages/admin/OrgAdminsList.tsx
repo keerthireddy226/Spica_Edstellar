@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
-import { Building2, ShieldCheck, Users, UserX } from "lucide-react";
-import { getOrgAdmins, type OrgAdminAccount } from "@/api/admin";
+import { useCallback, useEffect, useState } from "react";
+import { Building2, ShieldCheck, UserPlus, Users, UserX, X } from "lucide-react";
+import { getAdminConsoleOverview, getOrgAdmins, replaceOrgAdmin, type AdminConsoleOrg, type OrgAdminAccount } from "@/api/admin";
+import { ApiError } from "@/lib/api";
+import { Button } from "@/components/Button";
 import { TIER_LABELS } from "@/api/plans";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ago, shortDate } from "@/api/staff";
@@ -10,6 +12,120 @@ type F = "all" | "active" | "pending" | "quiet" | "deactivated";
 const status = (a: OrgAdminAccount): Exclude<F, "all" | "quiet"> => (!a.active ? "deactivated" : !a.hasLoggedIn ? "pending" : "active");
 const quiet = (a: OrgAdminAccount) => a.active && a.hasLoggedIn && (!a.lastLoginAt || Date.now() - new Date(a.lastLoginAt).getTime() > 30 * 86400000);
 
+const inputCls = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+
+// Invite an Org Admin for one of the viewer's organizations. An
+// organization has one Org Admin, so this replaces the current one.
+function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (message: string) => void }) {
+  const [orgs, setOrgs] = useState<AdminConsoleOrg[] | null>(null);
+  const [form, setForm] = useState({ tenantId: "", firstName: "", lastName: "", email: "", phone: "", jobTitle: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAdminConsoleOverview()
+      .then((r) => {
+        const active = r.organizations.filter((o) => o.active);
+        // Organizations without an Org Admin first: they need one most.
+        active.sort((a, b) => Number(a.hasOrgAdmin) - Number(b.hasOrgAdmin) || a.name.localeCompare(b.name));
+        setOrgs(active);
+        if (active[0]) setForm((f) => ({ ...f, tenantId: active[0].id }));
+      })
+      .catch(() => setError("Could not load your organizations."));
+  }, []);
+
+  const org = orgs?.find((o) => o.id === form.tenantId);
+  const set = (k: keyof typeof form) => ({ value: form[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value }) });
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!org) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await replaceOrgAdmin(org.id, {
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone || undefined,
+        jobTitle: form.jobTitle || undefined,
+      });
+      onDone(`Invite sent to ${form.email}. They are now the Org Admin of ${org.name}.`);
+    } catch (err) {
+      setError(err instanceof ApiError && err.message === "email_already_registered" ? "That email already has a Spica account." : "Could not add the Org Admin. Try again.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+          <h2 className="font-display font-bold text-lg text-ink">Add Org Admin</h2>
+          <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={submit} className="flex flex-col gap-4 px-6 py-5">
+          {!orgs ? (
+            <p className="text-sm text-muted">{error ?? "Loading organizations…"}</p>
+          ) : orgs.length === 0 ? (
+            <p className="text-sm text-muted">You have no active organizations yet. Onboard one on the Organizations page first.</p>
+          ) : (
+            <>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">Organization</span>
+                <select {...set("tenantId")} className={`${inputCls} cursor-pointer`}>
+                  {orgs.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                      {o.hasOrgAdmin ? ` — current: ${o.orgAdmin?.name ?? "Org Admin"}` : " — no Org Admin"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {org?.hasOrgAdmin && (
+                <p className="text-xs text-navy-deep bg-warning/15 border border-warning/30 rounded-input px-3 py-2">
+                  {org.name} already has an Org Admin ({org.orgAdmin?.name}, {org.orgAdmin?.email}). Adding a new one replaces them, and they lose access.
+                </p>
+              )}
+              <div className="grid sm:grid-cols-2 gap-4">
+                {(
+                  [
+                    ["firstName", "First name", true],
+                    ["lastName", "Last name", true],
+                    ["email", "Work email", true],
+                    ["phone", "Phone", false],
+                    ["jobTitle", "Job title", false],
+                  ] as const
+                ).map(([k, label, required]) => (
+                  <label key={k} className={`flex flex-col gap-1.5 ${k === "jobTitle" ? "sm:col-span-2" : ""}`}>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      {label}
+                      {!required && <span className="normal-case font-normal"> (optional)</span>}
+                    </span>
+                    <input {...set(k)} required={required} type={k === "email" ? "email" : "text"} className={inputCls} />
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted">They get an email to set their password and sign in to the Org Admin console.</p>
+              {error && <p className="text-sm text-error">{error}</p>}
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="secondary" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Sending…" : org?.hasOrgAdmin ? "Replace and send invite" : "Send invite"}
+                </Button>
+              </div>
+            </>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // The one Org Admin of each organization the viewer can see.
 export function OrgAdminsList() {
   const perms = useStaffPermissions();
@@ -18,12 +134,15 @@ export function OrgAdminsList() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<F>("all");
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     getOrgAdmins()
       .then((r) => setRows(r.orgAdmins))
       .catch(() => setError("Could not load Org Admins."));
   }, []);
+  useEffect(load, [load]);
 
   if (error) return <p className="text-sm text-error">{error}</p>;
   if (!rows) return <p className="text-sm text-muted">Loading…</p>;
@@ -39,7 +158,15 @@ export function OrgAdminsList() {
       <PageHeader
         title="Org Admins"
         subtitle={`The main contact at each ${perms.isSuper ? "" : "of your "}organization${perms.isSuper ? " and university" : "s"}. They manage batches, Managers, learners and licenses.`}
+        actions={
+          perms.manageOrganizations && (
+            <Button onClick={() => setAdding(true)} className="flex items-center gap-2 shrink-0">
+              <UserPlus size={18} /> Add Org Admin
+            </Button>
+          )
+        }
       />
+      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="split" palette="moss" index={0} icon={ShieldCheck} value={rows.filter((a) => status(a) === "active").length} label="Active Org Admins" />
         <StatCard variant="split" palette="moss" index={1} icon={UserX} value={rows.filter((a) => status(a) === "pending").length} label="Invite not accepted" />
@@ -123,8 +250,18 @@ export function OrgAdminsList() {
           })}
         </div>
       )}
-      <p className="text-xs text-muted">To resend an invite or replace an Org Admin, open their organization on the Organizations page.</p>
+      <p className="text-xs text-muted">To resend an invite, open the organization on the Organizations page.</p>
       {viewing && <OrgAdminDetailModal orgAdminId={viewing} onClose={() => setViewing(null)} />}
+      {adding && (
+        <AddOrgAdminModal
+          onClose={() => setAdding(false)}
+          onDone={(m) => {
+            setAdding(false);
+            setNotice(m);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }

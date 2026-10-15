@@ -110,15 +110,21 @@ export function useAuthState() {
       method: "POST",
       body: JSON.stringify({ email, password, allowedRoles }),
     });
-    if (!isMfaChallenge(result)) setState({ user: result, loading: false, error: null });
+    if (!isMfaChallenge(result)) {
+      setState({ user: result, loading: false, error: null });
+      // The login response is a short user; /auth/me adds permissions and
+      // the rest, which staff menus and buttons depend on.
+      refresh();
+    }
     return result;
-  }, []);
+  }, [refresh]);
 
   const verifyMfa = useCallback(async (challenge: string, code: string): Promise<AuthUser> => {
     const user = await api<AuthUser>("/auth/mfa/verify", { method: "POST", body: JSON.stringify({ challenge, code }) });
     setState({ user, loading: false, error: null });
+    refresh();
     return user;
-  }, []);
+  }, [refresh]);
 
   // Deliberately doesn't set auth state — signup ends with "check your email,"
   // not an automatic login (the backend doesn't create a session either).
