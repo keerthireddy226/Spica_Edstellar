@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Mail, Lock, ShieldCheck } from "lucide-react";
 import { isMfaChallenge, useAuth, type Role } from "@/hooks/useAuth";
@@ -16,9 +16,14 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
   const [challenge, setChallenge] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [params] = useSearchParams();
-  // Set after an invite or password reset, so the new account's email is
-  // shown instead of whatever the browser remembers for this site.
-  const [email, setEmail] = useState(() => params.get("email") ?? "");
+  // Right after someone sets their password from an invite or reset link,
+  // the form starts empty. The browser would otherwise fill in another
+  // account it remembers for this site (e.g. the person who sent the
+  // invite). Browsers don't autofill read-only fields, so the fields stay
+  // read-only until the person clicks into them.
+  const fresh = !!(useLocation().state as { fresh?: boolean } | null)?.fresh;
+  const [locked, setLocked] = useState(fresh);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +44,23 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
     }, 400);
     return () => clearTimeout(h);
   }, [email]);
+
+  useEffect(() => {
+    if (!fresh) return;
+    // Some browsers fill in just before the read-only flag applies; undo it.
+    const timers = [200, 800].map((ms) =>
+      setTimeout(() => {
+        setLocked((still) => {
+          if (still) {
+            setEmail("");
+            setPassword("");
+          }
+          return still;
+        });
+      }, ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [fresh]);
 
   if (user) return <Navigate to={user.mfaSetupRequired ? ROUTES.MFA_SETUP : LANDING_ROUTE_BY_ROLE[user.role]} replace />;
 
@@ -137,7 +159,9 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={t("auth.login.emailPlaceholder")}
-          autoComplete="email"
+          autoComplete={fresh ? "off" : "email"}
+          readOnly={locked}
+          onFocus={() => setLocked(false)}
           required
         />
         <FormField
@@ -148,7 +172,9 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder={t("auth.login.passwordPlaceholder")}
-          autoComplete="current-password"
+          autoComplete={fresh ? "off" : "current-password"}
+          readOnly={locked}
+          onFocus={() => setLocked(false)}
           required
         />
         {(error || ssoError) && (
