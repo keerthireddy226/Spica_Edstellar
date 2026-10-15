@@ -43,6 +43,7 @@ import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
+import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import {
@@ -163,6 +164,7 @@ export function PracticeTests() {
   }
 
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [testCode, setTestCode] = useState<string | null>(null);
   const [partBoundaries, setPartBoundaries] = useState<PartBoundary[]>([]);
   const [items, setItems] = useState<TestItem[]>([]);
   const [index, setIndex] = useState(0);
@@ -214,8 +216,9 @@ export function PracticeTests() {
 
   // Shared by a fresh start and a refresh-resume — both hand it the same
   // { sessionId, partBoundaries, items } shape.
-  function applySessionData(res: { sessionId: string; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }) {
+  function applySessionData(res: { sessionId: string; testCode: string | null; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }) {
     setSessionId(res.sessionId);
+    setTestCode(res.testCode);
     setActiveExamId(res.examId);
     setPartBoundaries(res.partBoundaries);
     setItems(res.items);
@@ -493,6 +496,7 @@ export function PracticeTests() {
 
   function resetToExamList() {
     setSessionId(null);
+    setTestCode(null);
     setItems([]);
     setPartBoundaries([]);
     setSummary(null);
@@ -545,6 +549,7 @@ export function PracticeTests() {
           <CheckCircle2 size={32} />
         </div>
         <h1 className="font-display font-bold text-2xl text-ink">{t("practiceTests.scoreReport.title")}</h1>
+        {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} />}
         {selectedProduct && (
           <p className="text-sm text-muted -mt-3">
             {t("practiceTests.scoreReport.testType")}:{" "}
@@ -635,6 +640,7 @@ export function PracticeTests() {
           <ClipboardCheck size={26} strokeWidth={2} />
         </span>
         <h1 className="font-display font-bold text-xl text-ink">{t("practiceTests.overview.title")}</h1>
+        {testCode && <TestIdTag code={testCode} />}
         <p className="text-sm text-muted -mt-2">{t("practiceTests.overview.subtitle")}</p>
         <div className="w-full flex flex-col gap-2 text-left">
           {partBoundaries.map((part, i) => (
@@ -700,6 +706,7 @@ export function PracticeTests() {
             <span />
           )}
           <span className="text-xs font-mono text-muted">
+            {testCode && <span className="mr-3">{tr("Test ID")} {testCode}</span>}
             {t("placementTest.progress", { current: index + 1, total: items.length })}
           </span>
         </div>

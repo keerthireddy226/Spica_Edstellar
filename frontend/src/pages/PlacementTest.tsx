@@ -17,6 +17,7 @@ import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
+import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { FaceCheck } from "@/components/FaceCheck";
@@ -42,6 +43,7 @@ export function PlacementTest() {
   const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
 
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [testCode, setTestCode] = useState<string | null>(null);
   // Real time spent on the current question — reset whenever a question
   // first appears (session load/resume, or the next adaptive item), read at
   // submit/skip time. Counts only while actually on a question.
@@ -92,6 +94,7 @@ export function PlacementTest() {
     startSession()
       .then((res) => {
         setSessionId(res.sessionId);
+        setTestCode(res.testCode ?? null);
         setItems(res.items);
         questionShownAtRef.current = Date.now();
         // A resumed session's history already includes every previously
@@ -268,6 +271,7 @@ export function PlacementTest() {
         <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
           <div className="w-full max-w-lg bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-4 items-center text-center">
             <h1 className="font-display font-bold text-2xl text-ink">{t("placementTest.resultsTitle")}</h1>
+            {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} />}
             <p className="text-sm text-muted">
               {t("placementTest.resultsSummary", {
                 correct: summary.correctCount,
@@ -294,6 +298,7 @@ export function PlacementTest() {
             <h1 className="font-display font-bold text-2xl text-ink">
               {t("placementTest.yourLevel", { level: summary.cefrLevel })}
             </h1>
+            {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} className="mt-2" />}
             <p className="text-xs text-muted mt-2">{t("placementTest.levelDisclaimer")}</p>
             {summary.cefrCappedByGap && (
               <p className="text-xs text-muted mt-1 italic">{t("placementTest.gapCappedNote")}</p>
@@ -426,6 +431,7 @@ export function PlacementTest() {
 
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-muted">
+            {testCode && <span className="hidden sm:inline mr-3">{tr("Test ID")} {testCode}</span>}
             {t("placementTest.progress", { current: questionNumber, total: TOTAL_QUESTIONS })}
           </span>
           <button

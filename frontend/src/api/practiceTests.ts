@@ -22,6 +22,8 @@ export interface PartBoundary {
 }
 
 export interface ExamCompleteResult {
+  // This attempt's Test ID, e.g. "FS-7K3M-9QX2".
+  testCode?: string | null;
   gradedCount: number;
   correctCount: number;
   pendingCount: number;
@@ -45,13 +47,13 @@ export function getExamsForProduct(product: string): Promise<{ exams: ExamSummar
 
 export function startExamSession(
   examId: string,
-): Promise<{ sessionId: string; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }> {
+): Promise<{ sessionId: string; testCode: string | null; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }> {
   return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ examId }) });
 }
 
 export function getExamSession(
   sessionId: string,
-): Promise<{ sessionId: string; examId: string; completed: boolean; partBoundaries: PartBoundary[]; items: TestItem[] }> {
+): Promise<{ sessionId: string; testCode: string | null; examId: string; completed: boolean; partBoundaries: PartBoundary[]; items: TestItem[] }> {
   return api(`/practice-tests/session/${sessionId}`);
 }
 

@@ -181,7 +181,9 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
       <div className="flex flex-col gap-5">
         <Panel title={tr("Result")}>
           {a.result ? <ResultDetails result={a.result} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
-          <p className="text-xs text-muted">{a.exam_name ? `${TEST_KIND_LABEL[a.test_kind]()} · ${a.exam_name}` : TEST_KIND_LABEL[a.test_kind]()}</p>
+          <p className="text-xs text-muted">
+            {[TEST_KIND_LABEL[a.test_kind](), a.exam_name, a.test_code ? tr("Test ID {{c}}", { c: a.test_code }) : null].filter(Boolean).join(" · ")}
+          </p>
         </Panel>
         <Panel
           title={tr("Integrity")}
@@ -523,6 +525,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                     <p className="text-sm font-semibold text-ink truncate">{personName(c)}</p>
                     <p className="text-xs text-muted truncate">
                       {c.email} · {c.completed_at ? tr("finished {{d}}", { d: shortDate(c.completed_at) }) : tr("invited {{d}}", { d: shortDate(c.invited_at) })}
+                      {c.test_code ? ` · ${c.test_code}` : ""}
                     </p>
                   </button>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">

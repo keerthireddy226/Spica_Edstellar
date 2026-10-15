@@ -86,6 +86,7 @@ export function AdminReview() {
               </p>
               <p className="text-xs text-muted mt-0.5">
                 {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
+                {p.test_code && <> &middot; {p.test_code}</>}
               </p>
             </div>
             <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">

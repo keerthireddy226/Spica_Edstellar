@@ -128,6 +128,7 @@ export interface CandidateRow {
   started_at: string | null;
   completed_at: string | null;
   session_id: string | null;
+  test_code: string | null;
   integrity_status: "in_progress" | "clear" | "flagged" | "cleared" | "violation" | null;
   risk_level: "low" | "medium" | "high" | null;
   risk_score: number | null;

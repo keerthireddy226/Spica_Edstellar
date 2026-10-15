@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Eye, IdCard, MessageSquare, Radio, ShieldAlert, ShieldCheck, ShieldX, Square } from "lucide-react";
 import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
-import { EmptyNote, FilterPills, PageHeader, Panel, StatCard, StatusPill } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { ProctoringSettings } from "@/components/proctoring/ProctoringSettings";
 import { shortDate } from "@/api/staff";
 import { useAuth } from "@/hooks/useAuth";
@@ -313,7 +313,13 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
   return (
     <DetailModal
       title={d.session.name.trim() || d.session.email}
-      subtitle={[d.session.exam_name ?? (d.session.session_type === "placement" ? tr("Placement test") : tr("Mock exam")), d.session.org_name].filter(Boolean).join(" · ")}
+      subtitle={[
+        d.session.exam_name ?? (d.session.session_type === "placement" ? tr("Placement test") : tr("Mock exam")),
+        d.session.test_code ? tr("Test ID {{c}}", { c: d.session.test_code }) : null,
+        d.session.org_name,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
       onClose={onClose}
       icon={ShieldAlert}
       badges={
@@ -592,6 +598,7 @@ function LiveCard({ s, onChanged }: { s: LiveSessionRow; onChanged: () => void }
         <p className="text-sm font-semibold text-ink truncate">{s.name.trim() || s.email}</p>
         <p className="text-xs text-muted truncate">
           {s.exam_name ?? (s.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {tr("{{n}} answers", { n: s.answers })}
+          {s.test_code ? ` · ${s.test_code}` : ""}
         </p>
         <p className={`text-xs mt-0.5 ${s.alerts ? "text-error" : "text-success"}`}>
           {s.alerts ? tr("{{n}} alerts, latest: {{t}}", { n: s.alerts, t: (EVENT_TEXT[s.last_alert ?? ""] ?? (() => s.last_alert ?? ""))() }) : tr("No alerts")}
@@ -701,6 +708,7 @@ export function IntegrityReviews() {
   const saveCandidates = useCallback((p: ProctoringPolicy) => saveOrgProctoringPolicy(p, "candidates"), []);
   const [tab, setTab] = useState<Tab>(searchParams.get("tab") === "settings" && isOrgAdmin ? "settings" : "queue");
   const [status, setStatus] = useState("flagged");
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
   const [rows, setRows] = useState<IntegritySessionRow[] | null>(null);
   const [stats, setStats] = useState<IntegrityStats | null>(null);
   const [live, setLive] = useState<LiveSessionRow[] | null>(null);
@@ -709,13 +717,13 @@ export function IntegrityReviews() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    getIntegrityReviews(status)
+    getIntegrityReviews(status, query.trim())
       .then((r) => {
         setRows(r.sessions);
         setStats(r.stats);
       })
       .catch(() => setError(tr("Could not load the review queue.")));
-  }, [status]);
+  }, [status, query]);
   useEffect(load, [load]);
 
   const loadLive = useCallback(() => {
@@ -753,6 +761,7 @@ export function IntegrityReviews() {
 
       {tab === "queue" && (
         <div className="flex flex-col gap-4">
+          <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email or Test ID")} />
           <FilterPills
             value={status}
             onChange={setStatus}
@@ -774,6 +783,7 @@ export function IntegrityReviews() {
                     <p className="text-sm font-semibold text-ink truncate">{r.name.trim() || r.email}</p>
                     <p className="text-xs text-muted truncate">
                       {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {shortDate(r.started_at)}
+                      {r.test_code ? ` · ${r.test_code}` : ""}
                       {r.org_name ? ` · ${r.org_name}` : ""}
                     </p>
                     {r.reasons.length > 0 && (

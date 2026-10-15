@@ -16,6 +16,7 @@ export interface PendingPlacement {
   taken_at: string;
   overall_percent: string;
   cefr_level: string;
+  test_code?: string | null;
   flagged_checks: FlaggedCheck[];
 }
 

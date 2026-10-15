@@ -18,6 +18,7 @@ import {
 } from "./cefr.js";
 import { buildRoadmap, type AccessDuration, type SkillTag } from "./roadmapBuilder.js";
 import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, type ScoredAttemptRow } from "./levels.js";
+import { newTestCode } from "../lib/testCode.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
@@ -234,8 +235,10 @@ async function buildHistoryResponse(userId: string, sessionId: string, compositi
       responseText: attemptByItem.get(row!.id) ?? null,
     }));
 
+  const testCode = (await pool.query(`SELECT test_code FROM sessions WHERE id = $1`, [sessionId])).rows[0]?.test_code ?? null;
   return {
     sessionId,
+    testCode,
     completed,
     items: await withAudioUrls(userId, items),
   };
@@ -268,14 +271,16 @@ placementRouter.post("/session", requireAuth, async (req: AuthedRequest, res, ne
       perType: { [TYPE_ORDER[first.typeIndex]]: { budget: ITEMS_PER_TYPE[TYPE_ORDER[first.typeIndex]], shown: [first.item.id] } },
       pendingItemId: first.item.id,
     };
+    const testCode = newTestCode("AP");
     const sessionResult = await pool.query(
-      `INSERT INTO sessions (user_id, session_type, mode, composition)
-       VALUES ($1, 'placement', 'exam', $2) RETURNING id`,
-      [req.user!.id, JSON.stringify(composition)],
+      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code)
+       VALUES ($1, 'placement', 'exam', $2, $3) RETURNING id`,
+      [req.user!.id, JSON.stringify(composition), testCode],
     );
 
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
+      testCode,
       items: await withAudioUrls(req.user!.id, [toItemPayload(first.item)]),
     });
   } catch (err) {
@@ -457,7 +462,7 @@ async function saveRoadmap(userId: string, cefrLevel: CefrLevel, roadmapSkillPer
 placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const sessionResult = await pool.query(
-      `UPDATE sessions SET completed_at = now() WHERE id = $1 AND user_id = $2 AND completed_at IS NULL RETURNING id`,
+      `UPDATE sessions SET completed_at = now() WHERE id = $1 AND user_id = $2 AND completed_at IS NULL RETURNING id, test_code`,
       [req.params.sessionId, req.user!.id],
     );
     if (!sessionResult.rows[0]) return res.status(404).json({ error: "session_not_found_or_already_completed" });
@@ -485,7 +490,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       if (req.user!.role === "candidate") {
         await recordCandidateResult(req.user!.id, req.params.sessionId as string).catch((err) => console.error("placement /complete: candidate result failed:", err));
       }
-      return res.json({ gradedCount: 0, correctCount: 0, pendingCount, failedCount });
+      return res.json({ testCode: sessionResult.rows[0].test_code, gradedCount: 0, correctCount: 0, pendingCount, failedCount });
     }
 
     const overallPercent = Math.round((correctCount / graded.length) * 100);
@@ -523,6 +528,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
     }
 
     res.json({
+      testCode: sessionResult.rows[0].test_code,
       gradedCount: graded.length,
       correctCount,
       pendingCount,
@@ -550,6 +556,7 @@ placementRouter.get("/admin/pending-review", requireAuth, async (req: AuthedRequ
     const scope = orgScope(req, "t", 1);
     const result = await pool.query(
       `SELECT p.id, p.user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name, p.taken_at, p.overall_percent, p.cefr_level,
+              (SELECT ts.test_code FROM sessions ts WHERE ts.id = p.session_id) AS test_code,
               CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
               coalesce(json_agg(json_build_object(
                 'decision', fcr.decision, 'similarityScore', fcr.similarity_score,

@@ -165,6 +165,7 @@ export interface IntegritySessionRow {
   review_note: string | null;
   started_at: string;
   completed_at: string | null;
+  test_code: string | null;
   user_id: string;
   email: string;
   name: string;
@@ -182,8 +183,8 @@ export interface IntegrityStats {
   pendingIds: number;
 }
 
-export function getIntegrityReviews(status: string): Promise<{ sessions: IntegritySessionRow[]; stats: IntegrityStats }> {
-  return api(`/proctoring/reviews?status=${encodeURIComponent(status)}`);
+export function getIntegrityReviews(status: string, q = ""): Promise<{ sessions: IntegritySessionRow[]; stats: IntegrityStats }> {
+  return api(`/proctoring/reviews?status=${encodeURIComponent(status)}&q=${encodeURIComponent(q)}`);
 }
 
 export interface ProctoringMediaRow {
@@ -233,6 +234,7 @@ export interface IntegrityDetail {
     started_at: string;
     completed_at: string | null;
     session_type: string;
+    test_code: string | null;
     email: string;
     name: string;
     org_name: string | null;
@@ -284,6 +286,7 @@ export interface LiveSessionRow {
   session_id: string;
   session_type: "placement" | "mocktest";
   last_seen_at: string;
+  test_code: string | null;
   live_message: string | null;
   live_message_at: string | null;
   live_message_seen_at: string | null;

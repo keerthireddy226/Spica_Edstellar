@@ -638,9 +638,11 @@ proctoringRouter.get("/reviews", requireAuth, async (req: AuthedRequest, res, ne
   if (!scope) return;
   try {
     const status = REVIEW_STATUSES.find((s) => s === req.query.status) ?? "flagged";
+    // Name, email or Test ID.
+    const q = String(req.query.q ?? "").trim().slice(0, 80);
     const rows = await pool.query(
       `SELECT si.session_id, si.session_type, si.status, si.risk_score, si.risk_level, si.reasons, si.biometric_opt_out,
-         si.terminated_at, si.reviewed_at, si.review_note, s.started_at, s.completed_at,
+         si.terminated_at, si.reviewed_at, si.review_note, s.started_at, s.completed_at, s.test_code,
          u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
          e.name AS exam_name, concat_ws(' ', r.first_name, r.last_name) AS reviewer
@@ -651,9 +653,11 @@ proctoringRouter.get("/reviews", requireAuth, async (req: AuthedRequest, res, ne
        LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
        LEFT JOIN users r ON r.id = si.reviewed_by
        WHERE ${scope.sql} AND ($2 = 'all' OR si.status = $2) AND (si.status <> 'in_progress' OR $2 = 'in_progress')
+         AND ($3 = '' OR s.test_code ILIKE '%' || $3 || '%' OR u.email ILIKE '%' || $3 || '%'
+              OR concat_ws(' ', u.first_name, u.last_name) ILIKE '%' || $3 || '%')
        ORDER BY si.risk_score DESC, s.started_at DESC
        LIMIT 200`,
-      [...scope.params, status],
+      [...scope.params, status, q],
     );
     const stats = (
       await pool.query(
@@ -686,7 +690,7 @@ proctoringRouter.get("/reviews/:sessionId", requireAuth, async (req: AuthedReque
     if (!si || !(await canReviewUser(req, si.user_id))) return res.status(404).json({ error: "not_found" });
     const [session, events, media, faceChecks, voice, identity, placement] = await Promise.all([
       pool.query(
-        `SELECT s.started_at, s.completed_at, s.session_type, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
+        `SELECT s.started_at, s.completed_at, s.session_type, s.test_code, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
            CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, e.name AS exam_name,
            (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id) AS answers
          FROM sessions s JOIN users u ON u.id = s.user_id JOIN tenants t ON t.id = u.tenant_id
@@ -768,7 +772,7 @@ proctoringRouter.get("/live", requireAuth, async (req: AuthedRequest, res, next)
   try {
     const rows = await pool.query(
       `SELECT si.session_id, si.session_type, si.last_seen_at, si.live_message, si.live_message_at, si.live_message_seen_at,
-         s.started_at, u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
+         s.started_at, s.test_code, u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, e.name AS exam_name,
          (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id) AS answers,
          (SELECT count(*)::int FROM proctoring_events pe WHERE pe.session_id = s.id AND pe.severity <> 'info') AS alerts,

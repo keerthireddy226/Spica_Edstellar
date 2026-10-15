@@ -65,6 +65,7 @@ export function CandidateReportPrint() {
           {[
             [tr("Job opening"), [a.job_title, a.department, a.location].filter(Boolean).join(" · ")],
             [tr("Test"), [TEST_KIND_LABEL[a.test_kind](), a.exam_name].filter(Boolean).join(" · ")],
+            [tr("Test ID"), a.test_code ?? "—"],
             [tr("Completed"), a.completed_at ? new Date(a.completed_at).toLocaleString() : "—"],
             [tr("Minimum level for the job"), a.min_cefr ?? tr("None")],
           ].map(([k, v]) => (

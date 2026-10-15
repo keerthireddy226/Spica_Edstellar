@@ -284,10 +284,11 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
     if (!job) return res.status(404).json({ error: "job_not_found" });
     const candidates = await pool.query(
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
-         a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id,
+         a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
          concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name
        FROM recruitment_assessments a
+       LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
        LEFT JOIN users inv ON inv.id = a.invited_by
        WHERE a.job_id = $1 AND a.status <> 'cancelled'
@@ -366,11 +367,12 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
       await pool.query(
         `SELECT a.*, j.title AS job_title, j.test_kind, j.min_cefr, j.department, j.location,
            si.status AS integrity_status, si.risk_level, si.risk_score, si.reasons AS integrity_reasons, si.reviewed_at AS integrity_reviewed_at,
-           e.name AS exam_name, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
+           e.name AS exam_name, ts.test_code, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
            concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
            (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status
          FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
          LEFT JOIN session_integrity si ON si.session_id = a.session_id
+         LEFT JOIN sessions ts ON ts.id = a.session_id
          LEFT JOIN exams e ON e.id = a.exam_id
          LEFT JOIN users inv ON inv.id = a.invited_by
          LEFT JOIN users dec ON dec.id = a.decided_by
@@ -433,15 +435,16 @@ recruitmentRouter.get("/jobs/:id/export.csv", requireAuth, async (req: AuthedReq
     if (!job) return res.status(404).json({ error: "job_not_found" });
     const rows = (
       await pool.query(
-        `SELECT a.first_name, a.last_name, a.email, a.status, a.result, a.decision, a.completed_at, si.status AS integrity
+        `SELECT a.first_name, a.last_name, a.email, a.status, a.result, a.decision, a.completed_at, si.status AS integrity, ts.test_code
          FROM recruitment_assessments a LEFT JOIN session_integrity si ON si.session_id = a.session_id
+         LEFT JOIN sessions ts ON ts.id = a.session_id
          WHERE a.job_id = $1 AND a.status <> 'cancelled' ORDER BY a.invited_at`,
         [req.params.id],
       )
     ).rows;
-    const header = ["First name", "Last name", "Email", "Status", "Level", "Score %", "Integrity", "Decision", "Completed"];
+    const header = ["First name", "Last name", "Email", "Test ID", "Status", "Level", "Score %", "Integrity", "Decision", "Completed"];
     const lines = rows.map((r) =>
-      [r.first_name, r.last_name, r.email, r.status, r.result?.cefrLevel ?? "", r.result?.overallPercent ?? "", r.integrity ?? "", r.decision ?? "", r.completed_at?.toISOString?.() ?? ""]
+      [r.first_name, r.last_name, r.email, r.test_code ?? "", r.status, r.result?.cefrLevel ?? "", r.result?.overallPercent ?? "", r.integrity ?? "", r.decision ?? "", r.completed_at?.toISOString?.() ?? ""]
         .map(csvCell)
         .join(","),
     );

@@ -37,6 +37,8 @@ export type CefrLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type SkillTag = "listening" | "speaking" | "reading" | "writing";
 
 export interface SessionSummary {
+  // This attempt's Test ID, e.g. "AP-7K3M-9QX2".
+  testCode?: string | null;
   gradedCount: number;
   correctCount: number;
   // Genuinely unanswered, or awaiting a grading path with nothing to check
@@ -65,7 +67,7 @@ export interface SessionSummary {
   goalLevel?: CefrLevel;
 }
 
-export function startSession(): Promise<{ sessionId: string; items: TestItem[] }> {
+export function startSession(): Promise<{ sessionId: string; testCode?: string | null; items: TestItem[] }> {
   return api("/placement/session", { method: "POST", body: JSON.stringify({}) });
 }
 

@@ -15,6 +15,7 @@ import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
 import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
 import { levelSummary } from "../placement/levels.js";
+import { examPrefix, newTestCode } from "../lib/testCode.js";
 
 export const practiceTestsRouter = Router();
 
@@ -194,7 +195,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
 
     const existing = await pool.query(
-      `SELECT id, composition FROM sessions
+      `SELECT id, composition, test_code FROM sessions
        WHERE user_id = $1 AND session_type = 'mocktest' AND completed_at IS NULL
          AND composition->>'examId' = $2
        ORDER BY started_at DESC LIMIT 1`,
@@ -202,7 +203,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     );
     if (existing.rows[0]) {
       const { partBoundaries, items } = await loadExamSession(req.user!.id, existing.rows[0]);
-      return res.json({ sessionId: existing.rows[0].id, examId: body.examId, partBoundaries, items });
+      return res.json({ sessionId: existing.rows[0].id, testCode: existing.rows[0].test_code, examId: body.examId, partBoundaries, items });
     }
 
     // Proctored organizations give each candidate their own mix of questions.
@@ -214,17 +215,21 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
     const partBoundaries = derivePartBoundaries(rows, randomized?.rows.length ? randomized.partIdByOrder : undefined);
 
+    const examCode = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [body.examId])).rows[0]?.code ?? "";
+    const testCode = newTestCode(examPrefix(examCode));
     const sessionResult = await pool.query(
-      `INSERT INTO sessions (user_id, session_type, mode, composition)
-       VALUES ($1, 'mocktest', 'coach', $2) RETURNING id`,
+      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code)
+       VALUES ($1, 'mocktest', 'coach', $2, $3) RETURNING id`,
       [
         req.user!.id,
         JSON.stringify({ examId: body.examId, itemIds: rows.map((r) => r.id), partBoundaries, randomized: !!randomized?.rows.length }),
+        testCode,
       ],
     );
 
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
+      testCode,
       examId: body.examId,
       partBoundaries,
       items: await withAudioUrls(req.user!.id, rows.map(toItemPayload)),
@@ -237,7 +242,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
 practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const sessionResult = await pool.query(
-      `SELECT id, composition, completed_at FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
+      `SELECT id, composition, completed_at, test_code FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
       [req.params.sessionId, req.user!.id],
     );
     const session = sessionResult.rows[0];
@@ -246,6 +251,7 @@ practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRe
     const { partBoundaries, items } = await loadExamSession(req.user!.id, session);
     res.json({
       sessionId: session.id,
+      testCode: session.test_code,
       examId: session.composition?.examId ?? null,
       completed: !!session.completed_at,
       partBoundaries,
@@ -293,7 +299,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   let sessionExists;
   try {
     sessionExists = await pool.query(
-      `SELECT id FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
+      `SELECT id, test_code FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
       [req.params.sessionId, req.user!.id],
     );
     if (sessionExists.rows[0]) {
@@ -343,6 +349,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     // The same CEFR level logic as the placement test, from each question's level.
     const level = levelSummary(rows);
     res.json({
+      testCode: sessionExists.rows[0].test_code,
       gradedCount: graded.length,
       correctCount,
       pendingCount,
@@ -356,7 +363,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     });
   } catch (err) {
     console.error("practiceTests /complete: score summary failed, session still marked complete:", err);
-    res.json({ gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
+    res.json({ testCode: sessionExists.rows[0].test_code, gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
   }
 
   // Proctoring analysis is best-effort too: the learner already has their result.
