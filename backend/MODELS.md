@@ -10,6 +10,7 @@ third party. The files live in `backend/models/` and are stored with Git LFS.
 | `minifasnet_v2.onnx` | Photo and screen spoof detection | MiniFASNet v2 | Apache-2.0 |
 | `object-detection.onnx` | Phones, books and extra people in proctoring snapshots | SSD-MobileNet v1 (COCO), ONNX Model Zoo | Apache-2.0 |
 | `speaker-embedding.onnx` | Voice consistency after a proctored test | NVIDIA NeMo TitaNet-Large, via sherpa-onnx | CC-BY-4.0 |
+| `eng.traineddata.gz` | Reading the machine-readable zone of ID documents | Tesseract English (4.0.0 best_int, from `@tesseract.js-data/eng`) | Apache-2.0 |
 
 TitaNet-Large is © NVIDIA, licensed under CC-BY-4.0
 (https://huggingface.co/nvidia/speakerverification_en_titanet_large). The
@@ -19,6 +20,9 @@ ONNX export comes from the sherpa-onnx speaker-recognition model releases
 SSD-MobileNet v1 comes from the ONNX Model Zoo,
 `validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_12.onnx`
 (sha256 `b8fba5e404077d4048d27fcd1667e85e27e192eb9bf51e696c46a3acd7d21058`).
+
+Head direction on proctoring snapshots uses YuNet's five landmarks, no extra
+model (`src/proctoring/headPose.ts`).
 
 ## Voice check calibration
 

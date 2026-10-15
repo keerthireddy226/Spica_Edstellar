@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { beginAudioBusy } from "@/lib/audioBusy";
 
 interface RecordingResult {
   blob: Blob | null;
@@ -26,6 +27,7 @@ export function useVoiceRecorder() {
   const streamRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const endBusyRef = useRef<(() => void) | null>(null);
   const rafIdRef = useRef<number | null>(null);
 
   const start = useCallback(async () => {
@@ -102,6 +104,7 @@ export function useVoiceRecorder() {
       recognition.start();
     }
 
+    endBusyRef.current = beginAudioBusy();
     setRecording(true);
   }, []);
 
@@ -124,6 +127,8 @@ export function useVoiceRecorder() {
         audioContextRef.current?.close().catch(() => {});
         audioContextRef.current = null;
         setVolumeLevel(0);
+        endBusyRef.current?.();
+        endBusyRef.current = null;
         setRecording(false);
         resolve({
           blob,

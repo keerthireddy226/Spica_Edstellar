@@ -5,6 +5,7 @@ import { pool } from "../db.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { enqueue } from "../queue/queue.js";
 import { learnerPolicy, needsConsent, normalizePolicy } from "./policy.js";
+import { runTypingCheck } from "./typing.js";
 
 export interface IntegrityReason {
   code: string;
@@ -28,7 +29,17 @@ const EVENT_WEIGHTS: Record<string, { each: number; cap: number }> = {
   camera_off: { each: 8, cap: 16 },
   mic_off: { each: 4, cap: 8 },
   devtools: { each: 5, cap: 10 },
+  camera_covered: { each: 8, cap: 16 },
+  camera_frozen: { each: 8, cap: 16 },
+  background_speech: { each: 4, cap: 16 },
+  screen_share_stopped: { each: 8, cap: 16 },
+  screen_not_entire: { each: 10, cap: 10 },
 };
+
+// A snapshot counts as looking away when the head turns this far from the
+// learner's own usual position in the same test (see headPose.ts).
+const AWAY_YAW = 0.35;
+const AWAY_PITCH = 0.3;
 
 const HIGH_AT = 30;
 const MEDIUM_AT = 12;
@@ -68,6 +79,35 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
   add("phone_in_view", snaps.phone, Math.min(20, snaps.phone * 10));
   if (policy.webcamMonitoring && snaps.total === 0) add("no_snapshots", 1, 10);
 
+  // Looking away: compared with this learner's median head position, since a
+  // camera beside the screen shifts everyone's baseline.
+  const poses = (
+    await pool.query(`SELECT head_yaw::float AS yaw, head_pitch::float AS pitch FROM proctoring_media WHERE session_id = $1 AND kind = 'snapshot' AND head_yaw IS NOT NULL`, [
+      sessionId,
+    ])
+  ).rows as { yaw: number; pitch: number }[];
+  if (poses.length >= 4) {
+    const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+    const my = median(poses.map((p) => p.yaw));
+    const mp = median(poses.map((p) => p.pitch));
+    const away = poses.filter((p) => Math.abs(p.yaw - my) > AWAY_YAW || Math.abs(p.pitch - mp) > AWAY_PITCH).length;
+    // Glancing away now and then is normal; a fifth of the test is not.
+    if (away / poses.length > 0.2) add("looking_away", away, Math.min(15, 3 + away * 2));
+  }
+
+  for (const [flag, kind, code] of [
+    ["videoRecording", "video_segment", "video_missing"],
+    ["screenRecording", "screen_segment", "screen_missing"],
+  ] as const) {
+    if (!policy[flag]) continue;
+    const n = (await pool.query(`SELECT count(*)::int AS n FROM proctoring_media WHERE session_id = $1 AND kind = $2`, [sessionId, kind])).rows[0].n;
+    if (n === 0) add(code, 1, 10);
+  }
+
+  const typing = si.checks?.typing;
+  if (typing?.decision === "inconsistent") add("typing_inconsistent", 1, 8);
+  if (typing?.decision === "uncertain") add("typing_uncertain", 1, 2);
+
   const face = (await pool.query(`SELECT count(*)::int AS n FROM face_check_results WHERE session_id = $1 AND flagged_for_review`, [sessionId])).rows[0];
   add("face_check_flagged", face.n, Math.min(30, face.n * 15));
 
@@ -85,7 +125,14 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
 
   let needsHuman = false;
   if (policy.idVerification) {
-    const id = (await pool.query(`SELECT status FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.user_id])).rows[0];
+    const id = (await pool.query(`SELECT status, mrz, liveness_score, auto_decision FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.user_id])).rows[0];
+    // What was read from the document, while a reviewer hasn't decided yet.
+    if (id && id.status === "pending") {
+      if (id.mrz?.expired === true) add("id_expired", 1, 15);
+      if (id.mrz?.nameMatches === false && id.mrz?.checksumsValid) add("id_name_mismatch", 1, 10);
+      if (id.auto_decision === "faces_differ") add("id_face_differs", 1, 10);
+      if (id.liveness_score !== null && Number(id.liveness_score) < 0.5) add("id_selfie_not_live", 1, 15);
+    }
     if (!id) add("id_missing", 1, 15);
     else if (id.status === "rejected") add("id_rejected", 1, 30);
     else if (id.status === "pending") {
@@ -136,6 +183,7 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
 export async function finishProctoredSession(sessionId: string) {
   const si = (await pool.query(`SELECT policy, biometric_opt_out FROM session_integrity WHERE session_id = $1`, [sessionId])).rows[0];
   if (!si) return null;
+  await runTypingCheck(sessionId).catch((err) => console.error("typing check failed:", err));
   const result = await analyzeSession(sessionId);
   if (si.policy?.voiceMatch && !si.biometric_opt_out) await enqueue("proctoring.voice", { sessionId }, { dedupeKey: `proctoring.voice:${sessionId}` });
   return result;

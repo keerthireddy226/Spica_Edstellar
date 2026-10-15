@@ -5,9 +5,12 @@ import {
   getProctoringStatus,
   sendProctoringEvents,
   sendSnapshot,
+  uploadSegment,
   type ProctoringEvent,
+  type SegmentKind,
   type ProctoringSetup,
 } from "@/api/proctoring";
+import { blobToBase64, profileTyping, recordSegments, watchCamera, watchSpeech } from "@/lib/proctorSensors";
 
 // What the learner is told right away when something is picked up. Each
 // code maps to a sentence in ProctoringOverlay.
@@ -22,12 +25,20 @@ export type ProctorWarning =
   | "phone"
   | "camera_off"
   | "second_tab"
-  | "offline";
+  | "offline"
+  | "camera_covered"
+  | "camera_frozen"
+  | "background_speech"
+  | "screen_share_stopped"
+  | "screen_not_entire";
 
 const FLUSH_MS = 5000;
 const STATUS_MS = 15000;
 const SNAPSHOT_MS = 30000;
 const LIVE_SNAPSHOT_MS = 20000;
+// Strict mode checks the camera about four times a minute.
+const STRICT_SNAPSHOT_MS = 15000;
+const SEGMENT_MS = 30000;
 // One input event adding this many characters at once is pasted or injected
 // text, not typing.
 const BURST_CHARS = 25;
@@ -47,10 +58,18 @@ export interface ProctoringState {
   terminateReason: string | null;
   cameraStream: MediaStream | null;
   enterFullscreen: () => void;
+  // Screen recording: the shared screen, and asking for it (needs a click).
+  screenStream: MediaStream | null;
+  startScreenShare: () => Promise<"ok" | "not_entire" | "denied">;
 }
 
 function usesCamera(s: ProctoringSetup | null): boolean {
   if (!s) return false;
+  const p = s.policy;
+  return p.webcamMonitoring || p.liveMonitoring || p.videoRecording || (p.faceMatch && !s.biometricOptOut);
+}
+
+function snapshotsWanted(s: ProctoringSetup): boolean {
   const p = s.policy;
   return p.webcamMonitoring || p.liveMonitoring || (p.faceMatch && !s.biometricOptOut);
 }
@@ -68,6 +87,7 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
   const [terminated, setTerminated] = useState(false);
   const [terminateReason, setTerminateReason] = useState<string | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const queueRef = useRef<ProctoringEvent[]>([]);
   const lastLoggedRef = useRef<Record<string, number>>({});
 
@@ -109,6 +129,17 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     queueRef.current.push({ type, at: new Date(now).toISOString(), detail });
     if (warn) setWarning(warn);
   }, []);
+
+  // Recorded segments and clips: one retry after a failed upload.
+  const sendSegment = useCallback(
+    async (kind: SegmentKind, blob: Blob, mimeType: string, seq?: number, durationMs?: number) => {
+      if (!sessionId) return;
+      const dataBase64 = await blobToBase64(blob);
+      const body = { kind, dataBase64, mimeType, seq, durationMs };
+      await uploadSegment(sessionId, body).catch(() => new Promise((r) => setTimeout(r, 10_000)).then(() => uploadSegment(sessionId, body).catch(() => {})));
+    },
+    [sessionId],
+  );
 
   // Upload queued events every few seconds and when the page is hidden.
   useEffect(() => {
@@ -213,17 +244,20 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     };
   }, [running, policy, sessionId, log]);
 
-  // Camera on for the whole test; a frame goes to the server at an uneven
-  // interval so it can't be timed.
+  // Camera on for the whole test: frames go to the server at an uneven
+  // interval so they can't be timed, the picture is watched for a covered
+  // or frozen lens, and the video is recorded in segments if asked.
   useEffect(() => {
-    if (!running || !sessionId || !usesCamera(setup)) return;
+    if (!running || !sessionId || !setup || !usesCamera(setup)) return;
+    const p = setup.policy;
     let stopped = false;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    const stops: (() => void)[] = [];
     const video = document.createElement("video");
     video.muted = true;
     video.playsInline = true;
-    const base = setup!.policy.liveMonitoring ? LIVE_SNAPSHOT_MS : SNAPSHOT_MS;
+    const base = p.mode === "strict" ? STRICT_SNAPSHOT_MS : p.liveMonitoring ? LIVE_SNAPSHOT_MS : SNAPSHOT_MS;
     const capture = async () => {
       if (stopped || !video.videoWidth) return;
       const canvas = document.createElement("canvas");
@@ -242,8 +276,10 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
         if (!stopped) schedule();
       }, delay);
     };
+    // The video recording carries sound too when the microphone is monitored.
+    const withAudio = p.videoRecording && p.audioMonitoring;
     navigator.mediaDevices
-      .getUserMedia({ video: { width: 1280, height: 720, facingMode: "user" } })
+      .getUserMedia({ video: { width: 1280, height: 720, facingMode: "user" }, audio: withAudio ? { echoCancellation: true, noiseSuppression: true } : false })
       .then(async (s) => {
         if (stopped) {
           s.getTracks().forEach((t) => t.stop());
@@ -254,16 +290,110 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
         s.getVideoTracks()[0]?.addEventListener("ended", () => log("camera_off", undefined, "camera_off"));
         video.srcObject = s;
         await video.play().catch(() => {});
-        schedule(true);
+        if (snapshotsWanted(setup)) schedule(true);
+        stops.push(
+          watchCamera(
+            s,
+            () => log("camera_covered", undefined, "camera_covered"),
+            () => log("camera_frozen", undefined, "camera_frozen"),
+          ),
+        );
+        if (p.videoRecording) {
+          stops.push(
+            recordSegments(s, { kind: "video", segmentMs: SEGMENT_MS, videoBitsPerSecond: 300_000, audioBitsPerSecond: 32_000 }, (blob, mime, seq, ms) =>
+              sendSegment("video_segment", blob, mime, seq, ms),
+            ),
+          );
+        }
       })
       .catch(() => log("camera_off", { reason: "denied" }, "camera_off"));
     return () => {
       stopped = true;
       if (timer) clearTimeout(timer);
+      stops.forEach((f) => f());
       stream?.getTracks().forEach((t) => t.stop());
       setCameraStream(null);
     };
-  }, [running, sessionId, setup, log]);
+  }, [running, sessionId, setup, log, sendSegment]);
+
+  // Microphone between answers: talking or whispering is flagged and a
+  // short clip kept for the reviewer.
+  useEffect(() => {
+    if (!running || !sessionId || !setup?.policy.audioMonitoring) return;
+    let stream: MediaStream | null = null;
+    let stopWatch: (() => void) | null = null;
+    let stopped = false;
+    navigator.mediaDevices
+      .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } })
+      .then((s) => {
+        if (stopped) return s.getTracks().forEach((t) => t.stop());
+        stream = s;
+        s.getAudioTracks()[0]?.addEventListener("ended", () => log("mic_off"));
+        stopWatch = watchSpeech(s, (clip, mime) => {
+          log("background_speech", undefined, "background_speech");
+          if (clip) sendSegment("audio_clip", clip, mime);
+        });
+      })
+      .catch(() => log("mic_off", { reason: "denied" }));
+    return () => {
+      stopped = true;
+      stopWatch?.();
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [running, sessionId, setup?.policy.audioMonitoring, log, sendSegment]);
+
+  // The shared screen, recorded in segments. Stopping the share is recorded
+  // and the learner is asked to share again.
+  useEffect(() => {
+    if (!running || !screenStream || !setup?.policy.screenRecording) return;
+    const track = screenStream.getVideoTracks()[0];
+    const onEnded = () => {
+      log("screen_share_stopped", undefined, "screen_share_stopped");
+      setScreenStream(null);
+    };
+    track?.addEventListener("ended", onEnded);
+    const stop = recordSegments(screenStream, { kind: "video", segmentMs: SEGMENT_MS, videoBitsPerSecond: 250_000 }, (blob, mime, seq, ms) =>
+      sendSegment("screen_segment", blob, mime, seq, ms),
+    );
+    return () => {
+      track?.removeEventListener("ended", onEnded);
+      stop();
+    };
+  }, [running, screenStream, setup?.policy.screenRecording, log, sendSegment]);
+
+  // Typing rhythm, as timing statistics only.
+  useEffect(() => {
+    if (!running || !setup?.policy.typingPattern || setup.biometricOptOut) return;
+    return profileTyping((profile) => {
+      queueRef.current.push({ type: "typing_profile", at: new Date().toISOString(), detail: profile });
+    });
+  }, [running, setup?.policy.typingPattern, setup?.biometricOptOut]);
+
+  // Stop sharing the screen once the test is over.
+  useEffect(() => {
+    if (active || !screenStream) return;
+    screenStream.getTracks().forEach((t) => t.stop());
+    setScreenStream(null);
+  }, [active, screenStream]);
+
+  const startScreenShare = useCallback(async (): Promise<"ok" | "not_entire" | "denied"> => {
+    try {
+      const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 5, displaySurface: "monitor" } as MediaTrackConstraints, audio: false });
+      const surface = s.getVideoTracks()[0]?.getSettings().displaySurface;
+      // Only the whole screen shows everything the learner sees; a window or
+      // tab would hide other apps.
+      if (surface && surface !== "monitor") {
+        s.getTracks().forEach((t) => t.stop());
+        log("screen_not_entire", { surface }, "screen_not_entire");
+        return "not_entire";
+      }
+      setScreenStream(s);
+      setWarning((w) => (w === "screen_share_stopped" || w === "screen_not_entire" ? null : w));
+      return "ok";
+    } catch {
+      return "denied";
+    }
+  }, [log]);
 
   // The proctor's messages and a session ended by the proctor.
   useEffect(() => {
@@ -317,5 +447,7 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     terminateReason,
     cameraStream,
     enterFullscreen,
+    screenStream,
+    startScreenShare,
   };
 }

@@ -11,7 +11,10 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { isSuperAdmin, requirePermission, staffCanSeeUser, staffOwnsTenant, staffPermissions } from "../admin/staff.js";
 import { assertFeature } from "../plans/service.js";
 import { recordAudit } from "../audit/service.js";
-import { detectFaces } from "../face/detect.js";
+import { cropFace, detectFaces } from "../face/detect.js";
+import { scoreLiveness } from "../face/liveness.js";
+import { headPose } from "./headPose.js";
+import { readMrz } from "./idDocument.js";
 import { embedFace, cosineSimilarity, bufferToEmbedding, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "../face/embed.js";
 import { detectObjects } from "./objects.js";
 import { mediaPath, removeMedia, saveMedia } from "./storage.js";
@@ -58,6 +61,12 @@ const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   offline: "info",
   devtools: "warn",
   message_seen: "info",
+  camera_covered: "high",
+  camera_frozen: "warn",
+  background_speech: "warn",
+  screen_share_stopped: "high",
+  screen_not_entire: "warn",
+  typing_profile: "info",
 };
 
 function decode(base64: string): Buffer {
@@ -333,15 +342,16 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
         }
       }
     }
+    const pose = faces.length === 1 ? headPose(faces[0]) : null;
     const objects = (await detectObjects(image).catch(() => null)) ?? [];
     const watched = objects.filter((o) => o.label === "cell_phone" || o.label === "book" || o.label === "person");
 
     const small = await sharp(image).rotate().resize(640, 640, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
     const uri = await saveMedia("snapshot", "jpg", small);
     await pool.query(
-      `INSERT INTO proctoring_media (session_id, user_id, kind, uri, face_count, face_decision, face_similarity, objects)
-       VALUES ($1, $2, 'snapshot', $3, $4, $5, $6, $7)`,
-      [si.session_id, req.user!.id, uri, faces.length, faceDecision, similarity, JSON.stringify(watched)],
+      `INSERT INTO proctoring_media (session_id, user_id, kind, uri, face_count, face_decision, face_similarity, objects, head_yaw, head_pitch, head_direction)
+       VALUES ($1, $2, 'snapshot', $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [si.session_id, req.user!.id, uri, faces.length, faceDecision, similarity, JSON.stringify(watched), pose?.yaw ?? null, pose?.pitch ?? null, pose?.direction ?? null],
     );
     await pool.query(`UPDATE session_integrity SET last_seen_at = now() WHERE session_id = $1`, [si.session_id]);
 
@@ -377,6 +387,42 @@ proctoringRouter.post("/sessions/:sessionId/room-scan", requireAuth, async (req:
     if (!ext) return res.status(400).json({ error: "unsupported_format" });
     const uri = await saveMedia("room_scan", ext, decode(body.dataBase64));
     await pool.query(`INSERT INTO proctoring_media (session_id, user_id, kind, uri) VALUES ($1, $2, 'room_scan', $3)`, [own.si.session_id, req.user!.id, uri]);
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const segmentSchema = z.object({
+  kind: z.enum(["video_segment", "screen_segment", "audio_clip"]),
+  dataBase64: z.string().min(100).max(6_500_000),
+  mimeType: z.string().max(80),
+  seq: z.number().int().min(0).max(100_000).optional(),
+  durationMs: z.number().int().min(0).max(600_000).optional(),
+});
+const SEGMENT_FLAG = { video_segment: "videoRecording", screen_segment: "screenRecording", audio_clip: "audioMonitoring" } as const;
+const SEGMENT_MEDIA = { video_segment: "video", screen_segment: "video", audio_clip: "audio" } as const;
+
+// A piece of the webcam or screen recording, or a short clip of talking
+// picked up between answers. Uploads may arrive just after the test ends.
+proctoringRouter.post("/sessions/:sessionId/segment", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const own = await ownSession(req, res);
+    if (!own) return;
+    if (consentMissing(own.si)) return res.status(409).json({ error: "consent_required" });
+    const body = segmentSchema.parse(req.body);
+    if (!own.si.policy[SEGMENT_FLAG[body.kind]]) return res.status(400).json({ error: "not_enabled" });
+    const ext = extFor(body.mimeType, SEGMENT_MEDIA[body.kind]);
+    if (!ext) return res.status(400).json({ error: "unsupported_format" });
+    const count = (await pool.query(`SELECT count(*)::int AS n FROM proctoring_media WHERE session_id = $1 AND kind = $2`, [own.si.session_id, body.kind])).rows[0].n;
+    // About four hours of 30-second segments; clips are capped lower.
+    if (count >= (body.kind === "audio_clip" ? 120 : 500)) return res.status(429).json({ error: "too_many_segments" });
+    const uri = await saveMedia(body.kind, ext, decode(body.dataBase64));
+    await pool.query(
+      `INSERT INTO proctoring_media (session_id, user_id, kind, uri, segment_seq, duration_ms) VALUES ($1, $2, $3, $4, $5, $6)`,
+      [own.si.session_id, req.user!.id, body.kind, uri, body.seq ?? count, body.durationMs ?? null],
+    );
+    await pool.query(`UPDATE session_integrity SET last_seen_at = now() WHERE session_id = $1`, [own.si.session_id]);
     res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
@@ -474,6 +520,19 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
         auto = similarity >= UNCERTAIN_FLOOR ? "likely_same_person" : "faces_differ";
       }
     }
+    // Liveness on the selfie: a photo of a photo or a screen scores low.
+    let liveness: number | null = null;
+    if (selfieFaces.length === 1) {
+      liveness = await scoreLiveness(await cropFace(selfie, selfieFaces[0]))
+        .then((l) => Math.round(l.live * 1000) / 1000)
+        .catch(() => null);
+    }
+    // The machine-readable zone, compared with the name on the account.
+    const me = (await pool.query(`SELECT concat_ws(' ', first_name, last_name) AS name FROM users WHERE id = $1`, [req.user!.id])).rows[0];
+    const mrz = await readMrz(doc, me?.name ?? "").catch((err) => {
+      console.error("MRZ reading failed:", err);
+      return null;
+    });
     const store = async (kind: "id_document" | "id_selfie", data: Buffer) => {
       const jpg = await sharp(data).rotate().resize(1600, 1600, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
       const uri = await saveMedia(kind, "jpg", jpg);
@@ -496,9 +555,9 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
       [req.user!.id, consentVersion(policy), req.ip],
     );
     const r = await pool.query(
-      `INSERT INTO identity_verifications (user_id, tenant_id, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, consent_record_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, status, created_at`,
-      [req.user!.id, tenantId, body.documentType, docId, selfieId, similarity, auto, consent.rows[0].id],
+      `INSERT INTO identity_verifications (user_id, tenant_id, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, consent_record_id, mrz, liveness_score)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, status, created_at`,
+      [req.user!.id, tenantId, body.documentType, docId, selfieId, similarity, auto, consent.rows[0].id, mrz ? JSON.stringify(mrz) : null, liveness],
     );
     res.status(201).json({ identity: r.rows[0] });
   } catch (err) {
@@ -598,13 +657,14 @@ proctoringRouter.get("/reviews/:sessionId", requireAuth, async (req: AuthedReque
       ),
       pool.query(`SELECT type, severity, detail, coalesce(client_at, created_at) AS at FROM proctoring_events WHERE session_id = $1 ORDER BY at LIMIT 1000`, [si.session_id]),
       pool.query(
-        `SELECT id, kind, face_count, face_decision, face_similarity, objects, created_at FROM proctoring_media WHERE session_id = $1 AND uri IS NOT NULL ORDER BY created_at`,
+        `SELECT id, kind, face_count, face_decision, face_similarity, objects, head_direction, head_yaw, head_pitch, segment_seq, duration_ms, created_at
+         FROM proctoring_media WHERE session_id = $1 AND uri IS NOT NULL ORDER BY kind, coalesce(segment_seq, 0), created_at`,
         [si.session_id],
       ),
       pool.query(`SELECT decision, similarity_score, liveness_score, face_count, created_at FROM face_check_results WHERE session_id = $1 ORDER BY created_at`, [si.session_id]),
       pool.query(`SELECT decision, similarity_score, detail, created_at FROM voice_check_results WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.session_id]),
       pool.query(
-        `SELECT id, status, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, review_note, reviewed_at, created_at
+        `SELECT id, status, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, mrz, liveness_score, review_note, reviewed_at, created_at
          FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
         [si.user_id],
       ),
@@ -675,7 +735,9 @@ proctoringRouter.get("/live", requireAuth, async (req: AuthedRequest, res, next)
          (SELECT count(*)::int FROM proctoring_events pe WHERE pe.session_id = s.id AND pe.severity <> 'info') AS alerts,
          (SELECT pe.type FROM proctoring_events pe WHERE pe.session_id = s.id AND pe.severity <> 'info' ORDER BY pe.created_at DESC LIMIT 1) AS last_alert,
          (SELECT row_to_json(m) FROM (SELECT pm.id, pm.face_count, pm.objects, pm.created_at FROM proctoring_media pm
-            WHERE pm.session_id = s.id AND pm.kind = 'snapshot' AND pm.uri IS NOT NULL ORDER BY pm.created_at DESC LIMIT 1) m) AS snapshot
+            WHERE pm.session_id = s.id AND pm.kind = 'snapshot' AND pm.uri IS NOT NULL ORDER BY pm.created_at DESC LIMIT 1) m) AS snapshot,
+         (SELECT row_to_json(v) FROM (SELECT pm.id, pm.created_at FROM proctoring_media pm
+            WHERE pm.session_id = s.id AND pm.kind = 'video_segment' AND pm.uri IS NOT NULL ORDER BY pm.created_at DESC LIMIT 1) v) AS video
        FROM session_integrity si
        JOIN sessions s ON s.id = si.session_id
        JOIN users u ON u.id = si.user_id
@@ -752,7 +814,7 @@ proctoringRouter.get("/identity-reviews", requireAuth, async (req: AuthedRequest
   try {
     const status = ["pending", "verified", "rejected"].includes(String(req.query.status)) ? String(req.query.status) : "pending";
     const rows = await pool.query(
-      `SELECT iv.id, iv.status, iv.document_type, iv.document_media_id, iv.selfie_media_id, iv.face_similarity, iv.auto_decision,
+      `SELECT iv.id, iv.status, iv.document_type, iv.document_media_id, iv.selfie_media_id, iv.face_similarity, iv.auto_decision, iv.mrz, iv.liveness_score,
          iv.review_note, iv.reviewed_at, iv.created_at, u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, concat_ws(' ', r.first_name, r.last_name) AS reviewer
        FROM identity_verifications iv
@@ -805,6 +867,7 @@ proctoringRouter.post("/identity-reviews/:id/decision", requireAuth, async (req:
 // ---------- Media ----------
 
 const MEDIA_TYPES: Record<string, string> = { jpg: "image/jpeg", webm: "video/webm", mp4: "video/mp4", ogg: "audio/ogg" };
+const AUDIO_KINDS = new Set(["voice_baseline", "audio_clip"]);
 
 proctoringRouter.get("/media/:id", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -816,8 +879,8 @@ proctoringRouter.get("/media/:id", requireAuth, async (req: AuthedRequest, res, 
     const data = await readFile(file).catch(() => null);
     if (!data) return res.status(404).end();
     const ext = m.uri.split(".").pop() ?? "";
-    // A voice sample recorded as webm is audio, not video.
-    const type = m.kind === "voice_baseline" && ext === "webm" ? "audio/webm" : (MEDIA_TYPES[ext] ?? "application/octet-stream");
+    // Voice samples and clips recorded as webm or mp4 are audio, not video.
+    const type = AUDIO_KINDS.has(m.kind) && ext !== "ogg" ? `audio/${ext}` : (MEDIA_TYPES[ext] ?? "application/octet-stream");
     res.setHeader("Content-Type", type);
     res.setHeader("Cache-Control", "private, no-store");
     res.send(data);

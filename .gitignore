@@ -12,3 +12,4 @@ backend/private/
 # the old voice model was.
 backend/models/*
 !backend/models/*.onnx
+!backend/models/*.traineddata.gz

@@ -32,6 +32,14 @@ export const policySchema = z.object({
   roomScan: z.boolean(),
   idVerification: z.boolean(),
   liveMonitoring: z.boolean(),
+  // Microphone open between answers: talking or whispering is recorded as
+  // short clips for the reviewer.
+  audioMonitoring: z.boolean(),
+  // Webcam video and the learner's screen, recorded in segments.
+  videoRecording: z.boolean(),
+  screenRecording: z.boolean(),
+  // Biometric: typing rhythm compared within the test and with earlier tests.
+  typingPattern: z.boolean(),
   secureBrowser: z.boolean(),
   // Safe Exam Browser config keys accepted for this organization.
   sebConfigKeys: z.array(z.string().trim().regex(/^[0-9a-fA-F]{64}$/)).max(10),
@@ -67,6 +75,10 @@ export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): Pr
       roomScan: false,
       idVerification: false,
       liveMonitoring: false,
+      audioMonitoring: false,
+      videoRecording: false,
+      screenRecording: false,
+      typingPattern: false,
     };
   }
   if (mode === "standard") {
@@ -82,6 +94,10 @@ export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): Pr
       roomScan: false,
       idVerification: false,
       liveMonitoring: false,
+      audioMonitoring: false,
+      videoRecording: false,
+      screenRecording: false,
+      typingPattern: false,
     };
   }
   const bio = BIOMETRIC_DEFAULT[region];
@@ -97,26 +113,45 @@ export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): Pr
     roomScan: true,
     idVerification: true,
     liveMonitoring: true,
+    audioMonitoring: true,
+    videoRecording: true,
+    screenRecording: true,
+    typingPattern: bio,
   };
 }
 
 export function usesBiometrics(p: ProctoringPolicy): boolean {
-  return p.faceMatch || p.voiceMatch || p.idVerification;
+  return p.faceMatch || p.voiceMatch || p.idVerification || p.typingPattern;
 }
 
 export function usesCamera(p: ProctoringPolicy): boolean {
-  return p.webcamMonitoring || p.faceMatch || p.roomScan || p.idVerification || p.liveMonitoring;
+  return p.webcamMonitoring || p.faceMatch || p.roomScan || p.idVerification || p.liveMonitoring || p.videoRecording;
 }
 
 // Anything that records the learner needs their consent first.
 export function needsConsent(p: ProctoringPolicy): boolean {
-  return usesCamera(p) || p.voiceMatch;
+  return usesCamera(p) || p.voiceMatch || p.audioMonitoring || p.screenRecording || p.typingPattern;
 }
 
 // Features above the standard preset are a paid-plan feature.
 export function needsSecureProctoringPlan(p: ProctoringPolicy): boolean {
-  return p.mode === "strict" || p.idVerification || p.liveMonitoring || p.secureBrowser || p.roomScan || p.voiceMatch;
+  return (
+    p.mode === "strict" ||
+    p.idVerification ||
+    p.liveMonitoring ||
+    p.secureBrowser ||
+    p.roomScan ||
+    p.voiceMatch ||
+    p.audioMonitoring ||
+    p.videoRecording ||
+    p.screenRecording ||
+    p.typingPattern
+  );
 }
+
+// Options added after a policy was saved start off, so an organization
+// never collects more than it agreed to without saving again.
+const LATER_OPTIONS = ["audioMonitoring", "videoRecording", "screenRecording", "typingPattern"] as const;
 
 // Individuals: copy and paste blocked and randomized forms, no camera beyond
 // the face check they already do before a test.
@@ -134,7 +169,8 @@ export function normalizePolicy(stored: unknown): ProctoringPolicy {
   const s = (stored ?? {}) as Partial<ProctoringPolicy>;
   const mode = PROCTORING_MODES.includes(s.mode as ProctoringMode) ? (s.mode as ProctoringMode) : "standard";
   const region = PROCTORING_REGIONS.includes(s.region as ProctoringRegion) ? (s.region as ProctoringRegion) : "global";
-  const merged = { ...presetPolicy(mode, region), ...s, mode, region };
+  const merged: Record<string, unknown> = { ...presetPolicy(mode, region), ...s, mode, region };
+  for (const k of LATER_OPTIONS) if (typeof s[k] !== "boolean") merged[k] = false;
   return policySchema.safeParse(merged).success ? (merged as ProctoringPolicy) : presetPolicy(mode, region);
 }
 

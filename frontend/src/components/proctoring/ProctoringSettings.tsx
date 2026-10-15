@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { AlertTriangle, Briefcase, Fingerprint, Globe2, Monitor, ShieldOff, UserCheck } from "lucide-react";
+import { AlertTriangle, Briefcase, Fingerprint, Globe2, Monitor, ShieldOff, UserCheck, Video } from "lucide-react";
 import { Button } from "@/components/Button";
 import { getProctoringPreset, type ProctoringMode, type ProctoringPolicy, type ProctoringRegion } from "@/api/proctoring";
 import { planErrorMessage } from "@/api/plans";
@@ -44,13 +44,32 @@ const GROUPS: { title: () => string; icon: typeof Monitor; flags: { key: Flag; l
     ],
   },
   {
-    title: () => tr("Voice"),
+    title: () => tr("Recording"),
+    icon: Video,
+    flags: [
+      { key: "videoRecording", label: () => tr("Record the camera"), hint: () => tr("The whole test on video, in 30-second parts your reviewers can play back.") },
+      { key: "screenRecording", label: () => tr("Record the screen"), hint: () => tr("The learner shares their entire screen, recorded for review. Computers only.") },
+      {
+        key: "audioMonitoring",
+        label: () => tr("Listen for talking"),
+        hint: () => tr("The microphone stays on between answers; talking or whispering is flagged with a short clip."),
+      },
+    ],
+  },
+  {
+    title: () => tr("Voice and typing"),
     icon: Fingerprint,
     flags: [
       {
         key: "voiceMatch",
         label: () => tr("Voice matching"),
         hint: () => tr("Spoken answers compared with each other and a voice sample, after the test. Flags a different speaker for review."),
+        biometric: true,
+      },
+      {
+        key: "typingPattern",
+        label: () => tr("Typing rhythm"),
+        hint: () => tr("Typing timing compared across answers and with earlier tests. Only timing is kept, never the text. A weak signal."),
         biometric: true,
       },
     ],
@@ -95,7 +114,7 @@ export function ProctoringSettings({ load, save }: { load: () => Promise<{ polic
     }
   };
   const set = (key: Flag, value: boolean) => setDraft({ ...draft, [key]: value });
-  const biometricOn = draft.faceMatch || draft.voiceMatch || draft.idVerification;
+  const biometricOn = draft.faceMatch || draft.voiceMatch || draft.idVerification || draft.typingPattern;
   const keys = sebText
     .split(/\s+/)
     .map((k) => k.trim())
@@ -156,7 +175,7 @@ export function ProctoringSettings({ load, save }: { load: () => Promise<{ polic
       </label>
 
       {draft.mode !== "off" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {GROUPS.map((g) => (
             <div key={g.title()} className="bg-surface border border-rule rounded-card p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-ink mb-1">

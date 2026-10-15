@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Camera, CheckCircle2, IdCard, Lock, Mic, MonitorX, RotateCcw, ScanLine, ShieldCheck, Square, Video } from "lucide-react";
+import { Camera, CheckCircle2, IdCard, Lock, Mic, MonitorUp, MonitorX, RotateCcw, ScanLine, ShieldCheck, Square, Video } from "lucide-react";
 import { Button } from "@/components/Button";
 import {
   giveProctoringConsent,
@@ -10,11 +10,12 @@ import {
   type ProctoringSetup,
 } from "@/api/proctoring";
 import type { ProctoringState } from "@/hooks/useProctoring";
+import { blobToBase64 } from "@/lib/proctorSensors";
 import { tr } from "@/i18n/tr";
 
-type Step = "secure_browser" | "consent" | "identity" | "room" | "voice" | "start";
+type Step = "secure_browser" | "consent" | "identity" | "room" | "voice" | "screen" | "start";
 
-function stepsFor(s: ProctoringSetup): Step[] {
+function stepsFor(s: ProctoringSetup, sharing: boolean): Step[] {
   const p = s.policy;
   const steps: Step[] = [];
   if (p.secureBrowser && s.secureBrowser !== true) steps.push("secure_browser");
@@ -22,17 +23,10 @@ function stepsFor(s: ProctoringSetup): Step[] {
   if (p.idVerification && (!s.identity || s.identity.status === "rejected")) steps.push("identity");
   if (p.roomScan && !s.roomScanDone) steps.push("room");
   if (p.voiceMatch && !s.biometricOptOut && !s.voiceBaselineDone) steps.push("voice");
+  // Screen sharing can't carry over a page reload, so it's asked every time.
+  if (p.screenRecording && !sharing) steps.push("screen");
   steps.push("start");
   return steps;
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
 }
 
 function Card({ icon, title, subtitle, children }: { icon: ReactNode; title: string; subtitle?: string; children: ReactNode }) {
@@ -98,6 +92,10 @@ const MONITORED: { key: keyof ProctoringSetup["policy"]; label: () => string }[]
   { key: "roomScan", label: () => tr("A short video of your room before you start") },
   { key: "idVerification", label: () => tr("A photo of your ID document and a selfie") },
   { key: "liveMonitoring", label: () => tr("A proctor may watch live and message you") },
+  { key: "videoRecording", label: () => tr("Your camera is recorded during the test") },
+  { key: "screenRecording", label: () => tr("Your entire screen is recorded during the test") },
+  { key: "audioMonitoring", label: () => tr("The microphone listens between answers; talking is recorded as short clips") },
+  { key: "typingPattern", label: () => tr("Your typing rhythm (timing only, never the text) is compared across answers") },
 ];
 
 function ConsentStep({ setup, sessionId, onDone }: { setup: ProctoringSetup; sessionId: string; onDone: () => void }) {
@@ -337,13 +335,35 @@ function VoiceStep({ sessionId, minSeconds, onDone }: { sessionId: string; minSe
   );
 }
 
+function ScreenStep({ proctor }: { proctor: ProctoringState }) {
+  const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  async function share() {
+    setBusy(true);
+    const r = await proctor.startScreenShare();
+    setBusy(false);
+    if (r === "not_entire") setMessage(tr("Choose \"Entire screen\" in the sharing window, not a window or tab."));
+    else if (r === "denied") setMessage(tr("Screen sharing was cancelled. Share your screen to continue."));
+  }
+  return (
+    <Card icon={<MonitorUp size={26} />} title={tr("Share your screen")} subtitle={tr("Your entire screen is recorded during the test. Choose \"Entire screen\" when your browser asks.")}>
+      {message && <p className="text-sm text-error text-center">{message}</p>}
+      <Button onClick={share} disabled={busy}>
+        <MonitorUp size={16} className="inline mr-1.5" />
+        {tr("Share entire screen")}
+      </Button>
+      <p className="text-xs text-muted text-center">{tr("Screen sharing works in Chrome, Edge and Firefox on a computer, not on phones.")}</p>
+    </Card>
+  );
+}
+
 // Everything the organization's policy asks for before a proctored test,
 // one step at a time. Steps already done (a resumed session) are skipped.
 export function ProctoringGate({ proctor, sessionId }: { proctor: ProctoringState; sessionId: string }) {
   const { setup } = proctor;
   const [checking, setChecking] = useState(false);
   if (!setup) return null;
-  const step = stepsFor(setup)[0];
+  const step = stepsFor(setup, !!proctor.screenStream)[0];
   const next = async () => {
     setChecking(true);
     await proctor.refreshSetup();
@@ -371,6 +391,7 @@ export function ProctoringGate({ proctor, sessionId }: { proctor: ProctoringStat
   if (step === "identity") return <IdentityStep sessionId={sessionId} rejected={setup.identity?.status === "rejected"} onDone={next} />;
   if (step === "room") return <RoomScanStep sessionId={sessionId} onDone={next} />;
   if (step === "voice") return <VoiceStep sessionId={sessionId} minSeconds={setup.voiceBaselineMinSeconds} onDone={next} />;
+  if (step === "screen") return <ScreenStep proctor={proctor} />;
 
   const p = setup.policy;
   return (

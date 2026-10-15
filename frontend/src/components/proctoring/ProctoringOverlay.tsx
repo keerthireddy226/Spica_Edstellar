@@ -16,6 +16,11 @@ const WARNING_TEXT: Record<ProctorWarning, () => string> = {
   camera_off: () => tr("Your camera turned off. Turn it back on to continue being monitored."),
   second_tab: () => tr("This test is open in another tab or window. Close the other one."),
   offline: () => tr("You're offline. Your answers are saved once you reconnect."),
+  camera_covered: () => tr("Your camera looks covered or dark. Make sure your face is visible and lit."),
+  camera_frozen: () => tr("Your camera picture stopped changing. Check that your real camera is selected."),
+  background_speech: () => tr("We heard talking. Stay silent unless a question asks you to speak."),
+  screen_share_stopped: () => tr("Screen sharing stopped. Share your entire screen again to continue being monitored."),
+  screen_not_entire: () => tr("Share your entire screen, not a window or tab."),
 };
 
 function SelfView({ stream }: { stream: MediaStream }) {
@@ -61,6 +66,10 @@ export function ProctoringOverlay({ proctor, onFinish }: { proctor: ProctoringSt
             <button onClick={proctor.enterFullscreen} className="text-sm font-semibold underline cursor-pointer shrink-0">
               {tr("Full screen")}
             </button>
+          ) : warning === "screen_share_stopped" || warning === "screen_not_entire" ? (
+            <button onClick={() => proctor.startScreenShare()} className="text-sm font-semibold underline cursor-pointer shrink-0">
+              {tr("Share screen")}
+            </button>
           ) : (
             <button onClick={proctor.dismissWarning} aria-label={tr("Dismiss")} className="shrink-0 cursor-pointer">
               <X size={16} />
@@ -88,7 +97,9 @@ export function ProctoringOverlay({ proctor, onFinish }: { proctor: ProctoringSt
           <span className="flex items-center gap-1 text-xs font-semibold text-success">
             <ShieldCheck size={14} /> {tr("Proctored")}
           </span>
-          <span className="text-[11px] text-muted">{proctor.cameraStream ? tr("Camera on") : tr("Activity monitored")}</span>
+          <span className="text-[11px] text-muted">
+            {proctor.screenStream ? tr("Camera and screen recorded") : proctor.cameraStream ? tr("Camera on") : tr("Activity monitored")}
+          </span>
         </div>
       </div>
     </>

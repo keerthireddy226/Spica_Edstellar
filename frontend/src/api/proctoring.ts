@@ -16,6 +16,10 @@ export interface ProctoringPolicy {
   roomScan: boolean;
   idVerification: boolean;
   liveMonitoring: boolean;
+  audioMonitoring: boolean;
+  videoRecording: boolean;
+  screenRecording: boolean;
+  typingPattern: boolean;
   secureBrowser: boolean;
   sebConfigKeys: string[];
   retentionDays: number;
@@ -91,6 +95,12 @@ export function uploadRoomScan(sessionId: string, dataBase64: string, mimeType: 
 
 export function uploadVoiceBaseline(sessionId: string, dataBase64: string, mimeType: string): Promise<{ ok: boolean; speechSeconds: number; minSeconds?: number }> {
   return api(`/proctoring/sessions/${sessionId}/voice-baseline`, { method: "POST", body: JSON.stringify({ dataBase64, mimeType }) });
+}
+
+export type SegmentKind = "video_segment" | "screen_segment" | "audio_clip";
+
+export function uploadSegment(sessionId: string, body: { kind: SegmentKind; dataBase64: string; mimeType: string; seq?: number; durationMs?: number }): Promise<{ ok: boolean }> {
+  return api(`/proctoring/sessions/${sessionId}/segment`, { method: "POST", body: JSON.stringify(body), keepalive: body.dataBase64.length < 60_000 });
 }
 
 export function getProctoringStatus(sessionId: string): Promise<{ terminated: boolean; terminateReason: string | null; message: string | null }> {
@@ -175,7 +185,10 @@ export function getIntegrityReviews(status: string): Promise<{ sessions: Integri
 
 export interface ProctoringMediaRow {
   id: string;
-  kind: "snapshot" | "room_scan" | "voice_baseline" | "id_document" | "id_selfie";
+  kind: "snapshot" | "room_scan" | "voice_baseline" | "id_document" | "id_selfie" | "video_segment" | "screen_segment" | "audio_clip";
+  head_direction: "center" | "left" | "right" | "up" | "down" | null;
+  segment_seq: number | null;
+  duration_ms: number | null;
   face_count: number | null;
   face_decision: string | null;
   face_similarity: string | null;
@@ -183,9 +196,31 @@ export interface ProctoringMediaRow {
   created_at: string;
 }
 
+export interface MrzReading {
+  format: string;
+  checksumsValid: boolean;
+  documentNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  nationality: string | null;
+  birthDate: string | null;
+  expirationDate: string | null;
+  expired: boolean | null;
+  nameMatches: boolean | null;
+}
+
+export interface TypingCheck {
+  decision: "consistent" | "uncertain" | "inconsistent" | "insufficient_typing";
+  keys: number;
+  withinSession: number | null;
+  vsHistory: number | null;
+  historySessions: number;
+}
+
 export interface IntegrityDetail {
   integrity: IntegritySessionRow & {
     policy: LearnerPolicy;
+    checks: { typing?: TypingCheck };
     live_message: string | null;
     terminate_reason: string | null;
     secure_browser: boolean | null;
@@ -225,6 +260,8 @@ export interface IntegrityDetail {
     selfie_media_id: string | null;
     face_similarity: string | null;
     auto_decision: string | null;
+    mrz: MrzReading | null;
+    liveness_score: string | null;
     review_note: string | null;
     reviewed_at: string | null;
     created_at: string;
@@ -257,6 +294,7 @@ export interface LiveSessionRow {
   alerts: number;
   last_alert: string | null;
   snapshot: { id: string; face_count: number | null; objects: { label: string }[] | null; created_at: string } | null;
+  video: { id: string; created_at: string } | null;
 }
 
 export function getLiveSessions(): Promise<{ sessions: LiveSessionRow[] }> {
@@ -279,6 +317,8 @@ export interface IdentityReviewRow {
   selfie_media_id: string | null;
   face_similarity: string | null;
   auto_decision: string | null;
+  mrz: MrzReading | null;
+  liveness_score: string | null;
   review_note: string | null;
   reviewed_at: string | null;
   created_at: string;

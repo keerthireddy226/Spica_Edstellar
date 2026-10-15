@@ -23,6 +23,7 @@ import {
   type IntegritySessionRow,
   type IntegrityStats,
   type LiveSessionRow,
+  type MrzReading,
 } from "@/api/proctoring";
 import { tr } from "@/i18n/tr";
 
@@ -58,6 +59,20 @@ const REASON_TEXT: Record<string, () => string> = {
   id_pending: () => tr("ID check waiting for review"),
   manual_identity_check: () => tr("Chose a manual identity check"),
   terminated: () => tr("Ended by the proctor"),
+  camera_covered: () => tr("Camera covered or dark"),
+  camera_frozen: () => tr("Camera picture froze"),
+  background_speech: () => tr("Talking heard between answers"),
+  screen_share_stopped: () => tr("Stopped sharing the screen"),
+  screen_not_entire: () => tr("Shared a window instead of the entire screen"),
+  looking_away: () => tr("Snapshots looking away from the screen"),
+  video_missing: () => tr("No camera recording"),
+  screen_missing: () => tr("No screen recording"),
+  typing_inconsistent: () => tr("Typing rhythm changed"),
+  typing_uncertain: () => tr("Typing rhythm uncertain"),
+  id_expired: () => tr("ID document has expired"),
+  id_name_mismatch: () => tr("Name on the ID differs from the account"),
+  id_face_differs: () => tr("Face on the ID looks different from the selfie"),
+  id_selfie_not_live: () => tr("Selfie may be a photo or screen"),
 };
 
 function reasonText(code: string, count: number): string {
@@ -85,7 +100,69 @@ const EVENT_TEXT: Record<string, () => string> = {
   message_seen: () => tr("Read the proctor's message"),
   proctor_message: () => tr("Proctor sent a message"),
   terminated: () => tr("Ended by the proctor"),
+  camera_covered: () => tr("Camera covered"),
+  camera_frozen: () => tr("Camera froze"),
+  background_speech: () => tr("Talking heard"),
+  screen_share_stopped: () => tr("Screen sharing stopped"),
+  screen_not_entire: () => tr("Shared a window, not the screen"),
 };
+
+const DIRECTION_TEXT: Record<string, () => string> = {
+  left: () => tr("Looking left"),
+  right: () => tr("Looking right"),
+  up: () => tr("Looking up"),
+  down: () => tr("Looking down"),
+};
+
+const TYPING_TEXT: Record<string, () => string> = {
+  consistent: () => tr("Same typing rhythm throughout"),
+  uncertain: () => tr("Typing rhythm uncertain"),
+  inconsistent: () => tr("Typing rhythm changed: check the written answers"),
+  insufficient_typing: () => tr("Not enough typing to compare"),
+};
+
+// Plays recorded segments one after another, like one continuous video.
+function SegmentPlayer({ ids, kind }: { ids: string[]; kind: "video" | "audio" }) {
+  const [index, setIndex] = useState(0);
+  const [url, setUrl] = useState<string | null>(null);
+  const id = ids[index];
+  useEffect(() => {
+    let made: string | null = null;
+    setUrl(null);
+    fetchMediaUrl(id).then((u) => {
+      made = u;
+      setUrl(u);
+    });
+    return () => {
+      if (made) URL.revokeObjectURL(made);
+    };
+  }, [id]);
+  const onEnded = () => setIndex((i) => (i + 1 < ids.length ? i + 1 : i));
+  return (
+    <div className="flex flex-col gap-2">
+      {!url ? (
+        <div className="w-full max-w-2xl aspect-video bg-paper-warm animate-pulse rounded-lg" />
+      ) : kind === "video" ? (
+        <video key={id} src={url} controls autoPlay={index > 0} onEnded={onEnded} className="w-full max-w-2xl rounded-lg bg-ink" />
+      ) : (
+        <audio key={id} src={url} controls autoPlay={index > 0} onEnded={onEnded} className="w-full" />
+      )}
+      {ids.length > 1 && (
+        <div className="flex flex-wrap gap-1">
+          {ids.map((x, i) => (
+            <button
+              key={x}
+              onClick={() => setIndex(i)}
+              className={`text-[11px] font-mono rounded-pill px-2 py-0.5 cursor-pointer ${i === index ? "bg-navy text-white" : "bg-rule text-muted hover:text-ink"}`}
+            >
+              {tr("Part {{n}}", { n: i + 1 })}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const VOICE_TEXT: Record<string, () => string> = {
   match: () => tr("Same voice throughout"),
@@ -138,6 +215,36 @@ function MediaView({ id, kind, className = "" }: { id: string; kind: "image" | "
   return <img src={url} alt="" className={`rounded-lg object-cover ${className}`} />;
 }
 
+// What was read from the document's machine-readable zone.
+function MrzDetails({ mrz, liveness }: { mrz: MrzReading | null; liveness: string | null }) {
+  const live = liveness === null ? null : Number(liveness);
+  return (
+    <div className="flex flex-col gap-1.5 text-sm">
+      {live !== null && (
+        <p className={live < 0.5 ? "text-error" : "text-success"}>{live < 0.5 ? tr("The selfie may be a photo or a screen.") : tr("The selfie looks like a live person.")}</p>
+      )}
+      {!mrz ? (
+        <p className="text-xs text-muted">{tr("No machine-readable zone found. Check the document by eye.")}</p>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-1.5">
+            <StatusPill tone={mrz.checksumsValid ? "success" : "warning"}>{mrz.checksumsValid ? tr("Check digits valid") : tr("Check digits don't add up")}</StatusPill>
+            {mrz.expired !== null && <StatusPill tone={mrz.expired ? "error" : "success"}>{mrz.expired ? tr("Expired") : tr("Not expired")}</StatusPill>}
+            {mrz.nameMatches !== null && <StatusPill tone={mrz.nameMatches ? "success" : "warning"}>{mrz.nameMatches ? tr("Name matches the account") : tr("Name differs from the account")}</StatusPill>}
+          </div>
+          <p className="text-xs text-muted">
+            {[mrz.lastName, mrz.firstName].filter(Boolean).join(", ")}
+            {mrz.documentNumber ? ` · ${tr("No. {{n}}", { n: mrz.documentNumber })}` : ""}
+            {mrz.nationality ? ` · ${mrz.nationality}` : ""}
+            {mrz.expirationDate ? ` · ${tr("expires {{d}}", { d: `20${mrz.expirationDate.slice(0, 2)}-${mrz.expirationDate.slice(2, 4)}-${mrz.expirationDate.slice(4, 6)}` })}` : ""}
+          </p>
+          {!mrz.checksumsValid && <p className="text-xs text-muted">{tr("A blurry photo can cause misread digits; compare the strip on the image.")}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; onClose: () => void; onDecided: () => void }) {
   const [d, setD] = useState<IntegrityDetail | null>(null);
   const [tab, setTab] = useState("summary");
@@ -187,11 +294,17 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
   const flaggedSnaps = snapshots.filter((m) => m.face_count !== 1 || m.face_decision === "mismatch" || (m.objects ?? []).some((o) => o.label === "cell_phone"));
   const room = d.media.find((m) => m.kind === "room_scan");
   const baseline = d.media.find((m) => m.kind === "voice_baseline");
+  const videoIds = d.media.filter((m) => m.kind === "video_segment").map((m) => m.id);
+  const screenIds = d.media.filter((m) => m.kind === "screen_segment").map((m) => m.id);
+  const clips = d.media.filter((m) => m.kind === "audio_clip");
+  const events = d.events.filter((e) => e.type !== "typing_profile");
+  const typing = si.checks?.typing;
   const tabs = [
     { key: "summary", label: tr("Summary") },
     { key: "snapshots", label: tr("Snapshots"), count: snapshots.length },
-    { key: "timeline", label: tr("Timeline"), count: d.events.length },
-    { key: "identity", label: tr("Identity and voice") },
+    { key: "recordings", label: tr("Recordings"), count: videoIds.length + screenIds.length + clips.length },
+    { key: "timeline", label: tr("Timeline"), count: events.length },
+    { key: "identity", label: tr("Identity, voice and typing") },
   ];
 
   return (
@@ -283,12 +396,13 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
               {snapshots.map((m) => {
                 const phone = (m.objects ?? []).some((o) => o.label === "cell_phone");
                 const issue = m.face_count === 0 ? tr("No face") : (m.face_count ?? 0) > 1 ? tr("{{n}} faces", { n: m.face_count }) : m.face_decision === "mismatch" ? tr("Face mismatch") : phone ? tr("Phone") : null;
+                const direction = m.head_direction && m.head_direction !== "center" ? DIRECTION_TEXT[m.head_direction]?.() : null;
                 return (
                   <figure key={m.id} className={`rounded-card border ${issue ? "border-error/60" : "border-rule"} bg-surface p-1.5`}>
                     <MediaView id={m.id} kind="image" className="w-full aspect-[4/3]" />
                     <figcaption className="flex items-center justify-between text-[11px] mt-1 px-0.5">
                       <span className="text-muted">{new Date(m.created_at).toLocaleTimeString()}</span>
-                      {issue && <span className="text-error font-semibold">{issue}</span>}
+                      {issue ? <span className="text-error font-semibold">{issue}</span> : direction && <span className="text-navy-deep font-semibold">{direction}</span>}
                     </figcaption>
                   </figure>
                 );
@@ -298,12 +412,37 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
         </div>
       )}
 
+      {tab === "recordings" && (
+        <div className="flex flex-col gap-5">
+          <Panel title={tr("Camera recording")}>
+            {videoIds.length ? <SegmentPlayer ids={videoIds} kind="video" /> : <EmptyNote>{si.policy.videoRecording ? tr("No camera recording arrived.") : tr("Camera recording is off for this organization.")}</EmptyNote>}
+          </Panel>
+          <Panel title={tr("Screen recording")}>
+            {screenIds.length ? <SegmentPlayer ids={screenIds} kind="video" /> : <EmptyNote>{si.policy.screenRecording ? tr("No screen recording arrived.") : tr("Screen recording is off for this organization.")}</EmptyNote>}
+          </Panel>
+          <Panel title={tr("Talking heard between answers")}>
+            {clips.length === 0 ? (
+              <EmptyNote>{si.policy.audioMonitoring ? tr("No talking was picked up.") : tr("Listening for talking is off for this organization.")}</EmptyNote>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {clips.map((c) => (
+                  <div key={c.id} className="flex flex-col gap-1">
+                    <span className="text-xs font-mono text-muted">{new Date(c.created_at).toLocaleTimeString()}</span>
+                    <MediaView id={c.id} kind="audio" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+        </div>
+      )}
+
       {tab === "timeline" && (
         <div className="flex flex-col gap-1">
-          {d.events.length === 0 ? (
+          {events.length === 0 ? (
             <EmptyNote>{tr("No events recorded.")}</EmptyNote>
           ) : (
-            d.events.map((e, i) => (
+            events.map((e, i) => (
               <div key={i} className="flex items-center gap-3 text-sm py-1.5 border-b border-rule last:border-0">
                 <span className="text-xs font-mono text-muted w-20 shrink-0">{new Date(e.at).toLocaleTimeString()}</span>
                 <span className={`h-2 w-2 rounded-full shrink-0 ${e.severity === "high" ? "bg-error" : e.severity === "warn" ? "bg-warning" : "bg-rule"}`} />
@@ -331,6 +470,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
                   {DOC_TEXT[d.identity.document_type]()} · {d.identity.auto_decision ? (AUTO_TEXT[d.identity.auto_decision] ?? (() => d.identity!.auto_decision!))() : ""}
                   {d.identity.face_similarity && <span className="text-muted"> ({tr("similarity {{v}}", { v: Number(d.identity.face_similarity).toFixed(2) })})</span>}
                 </p>
+                <MrzDetails mrz={d.identity.mrz} liveness={d.identity.liveness_score} />
                 {d.identity.status === "pending" ? (
                   <div className="flex gap-2">
                     <Button onClick={() => decideId("verified")} disabled={busy}>
@@ -380,10 +520,38 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
               </div>
             )}
           </Panel>
+          <Panel title={tr("Typing rhythm")}>
+            {!typing ? (
+              <EmptyNote>{si.policy.typingPattern ? (si.biometric_opt_out ? tr("The learner chose a manual identity check.") : tr("The typing check hasn't run yet.")) : tr("Typing rhythm is off for this organization.")}</EmptyNote>
+            ) : (
+              <div className="flex flex-col gap-1 text-sm">
+                <p className="font-semibold text-ink">{(TYPING_TEXT[typing.decision] ?? (() => typing.decision))()}</p>
+                <p className="text-xs text-muted">
+                  {tr("{{n}} keystrokes.", { n: typing.keys })}
+                  {typing.withinSession !== null && ` ${tr("First half against second half: {{d}} apart.", { d: Math.round(typing.withinSession * 100) + "%" })}`}
+                  {typing.vsHistory !== null && ` ${tr("Against {{n}} earlier tests: {{d}} apart.", { n: typing.historySessions, d: Math.round(typing.vsHistory * 100) + "%" })}`}
+                </p>
+                <p className="text-xs text-muted">{tr("Under 20% apart is the same rhythm; over 35% is flagged. Typing changes with tiredness and keyboards, so treat this as a weak signal.")}</p>
+              </div>
+            )}
+          </Panel>
         </div>
       )}
     </DetailModal>
   );
+}
+
+// The newest 30 seconds of camera recording, on request.
+function LatestVideo({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} className="text-xs font-semibold text-navy-deep underline self-start cursor-pointer">
+        {tr("Play the last 30 seconds")}
+      </button>
+    );
+  }
+  return <MediaView key={id} id={id} kind="video" className="w-full aspect-video" />;
 }
 
 function LiveCard({ s, onChanged }: { s: LiveSessionRow; onChanged: () => void }) {
@@ -416,6 +584,7 @@ function LiveCard({ s, onChanged }: { s: LiveSessionRow; onChanged: () => void }
           </span>
         )}
       </div>
+      {s.video && <LatestVideo id={s.video.id} />}
       <div className="min-w-0">
         <p className="text-sm font-semibold text-ink truncate">{s.name.trim() || s.email}</p>
         <p className="text-xs text-muted truncate">
@@ -491,6 +660,7 @@ function IdentityQueue({ onChanged }: { onChanged: () => void }) {
                 {r.document_media_id && <MediaView id={r.document_media_id} kind="image" className="w-full aspect-[4/3] object-contain bg-paper-warm" />}
                 {r.selfie_media_id && <MediaView id={r.selfie_media_id} kind="image" className="w-full aspect-[4/3]" />}
               </div>
+              <MrzDetails mrz={r.mrz} liveness={r.liveness_score} />
               {r.status === "pending" ? (
                 <div className="flex gap-2">
                   <Button onClick={() => decide(r.id, "verified")} className="flex-1">
