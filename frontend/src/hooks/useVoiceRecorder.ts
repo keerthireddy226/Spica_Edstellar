@@ -86,7 +86,9 @@ export function useVoiceRecorder() {
       const recognition = new SpeechRecognitionCtor();
       recognition.continuous = true;
       recognition.interimResults = false;
-      recognition.lang = "en-US";
+      // The learner's own English (en-IN, en-GB...) when the browser says so.
+      // Only for the live text; grading uses the server's transcript.
+      recognition.lang = navigator.language?.toLowerCase().startsWith("en") ? navigator.language : "en-US";
       recognition.onresult = (event: any) => {
         let text = "";
         for (let i = 0; i < event.results.length; i++) {

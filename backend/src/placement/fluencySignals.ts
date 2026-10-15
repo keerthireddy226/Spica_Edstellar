@@ -30,8 +30,14 @@ export interface StoredMannerScores {
   wordCount?: number;
   wordsPerMinute?: number | null;
   fillerCount?: number;
-  gemini?: { pronunciation: number; fluency: number; comment: string } | null;
+  gemini?: { pronunciation: number; fluency: number; comment: string; model?: string; rubric?: string } | null;
 }
+
+// Delivery fails an otherwise correct spoken answer only when it's genuinely
+// hard to follow. Holding it to the level's pass mark (0.95 at C2) failed
+// clear speakers for not sounding native; the level comes from content
+// (structure and vocabulary), not accent.
+export const DELIVERY_FLOOR = 0.4;
 
 // Rough, unvalidated "reasonable pace" band (same caveat as cefr.ts) —
 // generous, just catches unintelligibly fast/slow, not normal variation.
@@ -43,7 +49,8 @@ const MAX_ACCEPTABLE_WPM = 220;
 // gate on below this length.
 const MIN_WORD_COUNT_FOR_PACE_CHECK = 4;
 
-// Single definition of "correct" everywhere. Typed: content only. Mic: content + pace + pronunciation must all clear the bar; a missing signal never counts against the learner.
+// Single definition of "correct" everywhere. Typed: content only. Mic: content must clear the level's bar, pace must be in range, and
+// intelligibility and fluency must clear DELIVERY_FLOOR; a missing signal never counts against the learner.
 export function isTrulyCorrect(
   contentScore: number | null,
   cefrLevel: string | null,
@@ -62,7 +69,7 @@ export function isTrulyCorrect(
   if (paceIsMeaningful && typeof wpm === "number" && (wpm < MIN_ACCEPTABLE_WPM || wpm > MAX_ACCEPTABLE_WPM)) return false;
 
   const gemini = mannerScores?.gemini;
-  if (gemini && (gemini.pronunciation < bar || gemini.fluency < bar)) return false;
+  if (gemini && (gemini.pronunciation < DELIVERY_FLOOR || gemini.fluency < DELIVERY_FLOOR)) return false;
 
   return true;
 }

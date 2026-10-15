@@ -30,7 +30,7 @@ function acceptableAnswers(answerSet: Record<string, unknown>): string[] {
 function levelStandard(cefrLevel: string | null): string {
   const level = cefrLevel ?? "B1";
   if (level === "C2" || level === "C1") {
-    return `This item is tagged ${level} — hold it to that standard: content must be precise and complete, and writing/wording should read as close to native-level, with no grammar slips. Don't give a high score for merely adequate work at this level.`;
+    return `This item is tagged ${level} — hold it to that standard: content must be precise and complete, with natural, well-chosen wording and no grammar slips. Don't give a high score for merely adequate work at this level.`;
   }
   if (level === "B1" || level === "B2") {
     return `This item is tagged ${level} — clear, correct content is expected, but occasional minor errors are fine and not disqualifying.`;
@@ -41,6 +41,21 @@ function levelStandard(cefrLevel: string | null): string {
 // Learners write British, Indian or American English; none of them is wrong.
 const SPELLING_RULE =
   "Spelling: British, American, Indian and other standard English spellings are all correct (organisation/organization, colour/color, travelled/traveled, learnt/learned). Never count a standard spelling variant as a mistake, and don't require one variety to be used consistently.";
+
+// Spoken answers reach the grader as an automatic transcript.
+const SPOKEN_TYPES = new Set([
+  "repeats",
+  "short_answer",
+  "sentence_builds",
+  "conversations",
+  "passage_comprehension",
+  "reading",
+  "story_retelling",
+  "speaking_situations",
+  "open_questions",
+]);
+const SPOKEN_RULE =
+  "This is an automatic transcript of speech. Ignore spelling, punctuation and capital letters, and don't penalize the speaker's accent or a word the transcript obviously misheard. Judge the content, the grammar and the vocabulary.";
 
 // One task description per AI-graded type — "answered well" means something different per type.
 function buildTask(
@@ -107,7 +122,8 @@ export async function gradeWithAI(
   const ai = getClient();
   if (!ai) return null;
 
-  const prompt = `${task}\n\n${levelStandard(cefrLevel)}\n\n${SPELLING_RULE}\n\nLearner's response: "${responseText}"\n\nGive a score from 0 (fails the task) to 1 (fully meets it) and a one-sentence reason.`;
+  const spoken = SPOKEN_TYPES.has(itemTypeId) ? `\n\n${SPOKEN_RULE}` : "";
+  const prompt = `${task}\n\n${levelStandard(cefrLevel)}\n\n${SPELLING_RULE}${spoken}\n\nLearner's response: "${responseText}"\n\nGive a score from 0 (fails the task) to 1 (fully meets it) and a one-sentence reason.`;
 
   let parsed: { score?: unknown; reason?: unknown };
   try {
@@ -122,7 +138,8 @@ export async function gradeWithAI(
       ai.models.generateContent({
         model: GEMINI_GRADING_MODEL,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: { responseMimeType: "application/json", responseJsonSchema: GRADE_SCHEMA },
+        // The same answer should get the same score.
+        config: { responseMimeType: "application/json", responseJsonSchema: GRADE_SCHEMA, temperature: 0 },
       }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("gradeWithAI: timed out")), 10_000)),
     ]);

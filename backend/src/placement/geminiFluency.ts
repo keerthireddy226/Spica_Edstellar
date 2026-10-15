@@ -12,7 +12,13 @@ function getClient(): GoogleGenAI | null {
   return client;
 }
 
+// Bump when the rubric below changes, so scores made under different rubrics
+// can be told apart later.
+export const SPEAKING_RUBRIC_VERSION = "intelligibility-v1";
+
 export interface GeminiFluencyResult {
+  // How easy the speech is to understand (stored under its old name); an
+  // accent on its own never lowers it.
   pronunciation: number;
   fluency: number;
   comment: string;
@@ -21,6 +27,8 @@ export interface GeminiFluencyResult {
   // the frontend) came back empty, instead of leaving the attempt "pending"
   // forever with no way to ever grade it.
   transcript: string;
+  model: string;
+  rubric: string;
 }
 
 const RESPONSE_SCHEMA = {
@@ -28,11 +36,12 @@ const RESPONSE_SCHEMA = {
   properties: {
     pronunciation: {
       type: "number",
-      description: "0 to 1: how clearly and accurately the individual sounds/words were pronounced.",
+      description:
+        "0 to 1: intelligibility. How easily a listener used to international English understands each word. An accent (Indian, African, British, American or any other) is never an error; only sounds, stress or rhythm that make words hard to understand lower it.",
     },
     fluency: {
       type: "number",
-      description: "0 to 1: how smooth and natural the delivery was — pace, hesitation, filler words.",
+      description: "0 to 1: how smoothly the speaker keeps going: steady pace, few long pauses, restarts or filler words. Accent plays no part.",
     },
     comment: { type: "string", description: "One short, specific sentence of feedback for the learner." },
     transcript: {
@@ -54,7 +63,9 @@ export async function scoreAudioFluency(
   const level = cefrLevel ?? "B1";
   // Deliberately doesn't tell the model the expected text — that made it anchor on "they probably said this"
   // and hallucinate on silence (4/6 trials); verifying real speech is present first fixed it (0/6).
-  const prompt = `Listen carefully to the attached audio. First, determine: does this recording contain any actual audible human speech at all? If the recording is silent, contains only noise/static, or has no discernible spoken words, you must respond with pronunciation 0, fluency 0, and clearly state no speech was detected — do not guess or assume speech occurred. Only if you can actually hear real spoken words, judge the pronunciation and fluency of what you genuinely hear (a ${level}-level English learner's recording) — how it sounds, not the words' content. Score both pronunciation and fluency on a scale from 0 (worst) to 1 (excellent, native-like) — never use any other scale.`;
+  const prompt = `Listen carefully to the attached audio. First, determine: does this recording contain any actual audible human speech at all? If the recording is silent, contains only noise/static, or has no discernible spoken words, you must respond with pronunciation 0, fluency 0, and clearly state no speech was detected — do not guess or assume speech occurred. Only if you can actually hear real spoken words, judge what you genuinely hear (a ${level}-level English learner's recording) — how it sounds, not the words' content.
+
+Score intelligibility (the "pronunciation" field) and fluency from 0 to 1. Judge them as a listener used to international English would, not against any one native accent. An Indian, African, British, American or any other accent is never an error and must not lower either score. Lower intelligibility only when sounds, word stress or rhythm make words hard to understand. 1 = every word is easy to understand; 0 = the speech can't be understood. Never use any other scale. Transcribe exactly what was said, in standard English spelling, without correcting the speaker's grammar.`;
 
   try {
     // Same reasoning as aiGrading.ts's timeout: an unguarded audio-grading
@@ -74,6 +85,8 @@ export async function scoreAudioFluency(
         config: {
           responseMimeType: "application/json",
           responseJsonSchema: RESPONSE_SCHEMA,
+          // The same recording should get the same score.
+          temperature: 0,
         },
       }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("scoreAudioFluency: timed out")), 12_000)),
@@ -89,6 +102,8 @@ export async function scoreAudioFluency(
       fluency: Math.max(0, Math.min(1, fluency)),
       comment: String(parsed.comment ?? ""),
       transcript: String(parsed.transcript ?? ""),
+      model: GEMINI_MODEL,
+      rubric: SPEAKING_RUBRIC_VERSION,
     };
   } catch (err) {
     console.error("scoreAudioFluency: request failed:", err);

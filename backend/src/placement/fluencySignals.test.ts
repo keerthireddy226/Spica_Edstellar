@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeFluencySignals, isTrulyCorrect } from "./fluencySignals.js";
+import { computeFluencySignals, isTrulyCorrect, DELIVERY_FLOOR } from "./fluencySignals.js";
 import { passThresholdForLevel } from "./cefr.js";
 
 describe("computeFluencySignals", () => {
@@ -66,16 +66,20 @@ describe("isTrulyCorrect", () => {
     expect(isTrulyCorrect(0.9, "B1", "mic", null, passThresholdForLevel)).toBe(true);
   });
 
-  it("for mic input with content passing, gemini pronunciation/fluency below the bar fails it", () => {
-    const bar = passThresholdForLevel("B1"); // 0.65
+  it("for mic input with content passing, only hard-to-follow delivery fails it", () => {
     expect(
-      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: bar - 0.01, fluency: 0.9, comment: "" } }, passThresholdForLevel),
+      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: DELIVERY_FLOOR - 0.01, fluency: 0.9, comment: "" } }, passThresholdForLevel),
     ).toBe(false);
     expect(
-      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: 0.9, fluency: bar - 0.01, comment: "" } }, passThresholdForLevel),
+      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: 0.9, fluency: DELIVERY_FLOOR - 0.01, comment: "" } }, passThresholdForLevel),
     ).toBe(false);
     expect(
-      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: bar, fluency: bar, comment: "" } }, passThresholdForLevel),
+      isTrulyCorrect(0.9, "B1", "mic", { gemini: { pronunciation: DELIVERY_FLOOR, fluency: DELIVERY_FLOOR, comment: "" } }, passThresholdForLevel),
     ).toBe(true);
+  });
+
+  it("a clear speaker with an accent passes even at C2", () => {
+    // Clear but not native-sounding: used to fail at C2, whose pass mark is 0.95.
+    expect(isTrulyCorrect(0.97, "C2", "mic", { gemini: { pronunciation: 0.75, fluency: 0.8, comment: "" } }, passThresholdForLevel)).toBe(true);
   });
 });

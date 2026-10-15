@@ -78,12 +78,10 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
       ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level)
       : null;
 
-  // The browser's own speech-to-text (sent as body.responseText) is tried
-  // first; if it came back empty — mic permission hiccup, unsupported
-  // browser, learner's accent, network blip — fall back to Gemini's own
-  // transcript of the same recording instead of leaving the attempt
-  // "pending" forever with nothing that will ever grade it.
-  const effectiveResponseText = body.responseText || geminiScores?.transcript || undefined;
+  // A spoken answer is graded on Gemini's transcript of the recording: the
+  // browser's speech-to-text is tuned to one accent and mishears others, so
+  // it's only the fallback (no API key, a failed call, or nothing heard).
+  const effectiveResponseText = (item.input_method === "mic" ? geminiScores?.transcript || body.responseText : body.responseText) || undefined;
 
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
   const grade = await gradeAttempt(
