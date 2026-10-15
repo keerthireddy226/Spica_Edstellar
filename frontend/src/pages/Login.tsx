@@ -15,13 +15,15 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
   // Set after a correct password when the account uses two-step sign-in.
   const [challenge, setChallenge] = useState<string | null>(null);
   const [code, setCode] = useState("");
-  const [email, setEmail] = useState("");
+  const [params] = useSearchParams();
+  // Set after an invite or password reset, so the new account's email is
+  // shown instead of whatever the browser remembers for this site.
+  const [email, setEmail] = useState(() => params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   // Whether this email's organization signs in through its own identity provider.
   const [sso, setSso] = useState<{ sso: boolean; enforce: boolean } | null>(null);
-  const [params] = useSearchParams();
   const ssoError = params.get("sso_error");
 
   useEffect(() => {

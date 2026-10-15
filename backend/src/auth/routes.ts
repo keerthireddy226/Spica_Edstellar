@@ -475,6 +475,26 @@ authRouter.post("/forgot-password", forgotPasswordLimiter, async (req, res, next
   }
 });
 
+// Whose account a set-password link is for, so the page can show it and the
+// browser saves the new password under the right email (not whoever it
+// last saw signed in on this site).
+authRouter.get("/reset-password/info", forgotPasswordLimiter, async (req, res, next) => {
+  try {
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    if (!token) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const r = await pool.query(
+      `SELECT u.email, u.role, u.first_name FROM password_reset_tokens t JOIN users u ON u.id = t.user_id
+       WHERE t.token_hash = $1 AND t.used_at IS NULL AND t.expires_at > now()`,
+      [hashToken(token)],
+    );
+    if (r.rowCount === 0) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const u = r.rows[0];
+    res.json({ email: u.email, role: u.role, firstName: u.first_name });
+  } catch (err) {
+    next(err);
+  }
+});
+
 authRouter.post("/reset-password", async (req, res, next) => {
   try {
     const body = resetPasswordSchema.parse(req.body);
