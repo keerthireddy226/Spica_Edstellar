@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Award, BookOpen, CalendarDays, Clock, Flame, Headphones, History, Mic, PenLine, Sparkles, Target, Trophy } from "lucide-react";
+import { Award, BookOpen, CalendarDays, ClipboardCheck, Clock, Flame, Headphones, History, Layers, ListChecks, Lock, Mic, PenLine, Sparkles, Star, Target, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -18,6 +18,18 @@ const SKILL: Record<string, { icon: LucideIcon; color: string; label: string }> 
   reading: { icon: BookOpen, color: "var(--color-reading)", label: "Reading" },
   writing: { icon: PenLine, color: "var(--color-writing)", label: "Writing" },
 };
+// Achievement icons are stored by name in the database.
+const BADGE_ICON: Record<string, LucideIcon> = {
+  flag: ClipboardCheck,
+  target: Target,
+  flame: Flame,
+  layers: Layers,
+  award: Award,
+  "list-checks": ListChecks,
+  trophy: Trophy,
+  star: Star,
+};
+const BADGE_COLORS = ["#b5653f", "#c9965c", "#6e9660", "#a8613f", "#8a8f4f", "#b97a62"];
 const TYPE: Record<string, string> = { practice: "Practice", mocktest: "Mock test", placement: "Placement test", coach: "Tutor", diagnostic: "Diagnostic", drill: "Drill" };
 
 function Card({ title, icon: Icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {
@@ -164,7 +176,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                     </p>
                   </div>
                   <span className="text-xs text-muted shrink-0">
-                    {r.answered} answered{r.minutes ? ` · ${r.minutes} min` : ""}
+                    {r.answered > 0 ? `${r.answered} answered` : "No answers"}{r.minutes ? ` · ${r.minutes} min` : ""}
                   </span>
                 </div>
               ))}
@@ -195,17 +207,44 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
             {d.achievements.length === 0 ? (
               <p className="text-sm text-muted">Badges appear as you practise.</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {d.achievements.map((a) => (
-                  <div
-                    key={a.id}
-                    title={a.description}
-                    className={`rounded-input px-3 py-2.5 border text-center ${a.unlockedAt ? "border-warning/40 bg-warning/10" : "border-rule opacity-50"}`}
-                  >
-                    <p className="text-xl">{a.icon ?? "🏅"}</p>
-                    <p className="text-xs font-semibold text-ink truncate">{a.title}</p>
-                  </div>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {d.achievements.map((a, i) => {
+                  const Icon = BADGE_ICON[a.icon ?? ""] ?? Award;
+                  const color = BADGE_COLORS[i % BADGE_COLORS.length];
+                  const earned = !!a.unlockedAt;
+                  return (
+                    <div
+                      key={a.id}
+                      title={a.description}
+                      className={`relative flex flex-col items-center text-center gap-2 rounded-card px-3 pt-4 pb-3 border ${
+                        earned ? "shadow-sm" : "bg-paper/50 border-dashed border-rule-strong"
+                      }`}
+                      style={earned ? { background: `color-mix(in srgb, ${color} 9%, var(--color-surface))`, borderColor: `color-mix(in srgb, ${color} 30%, transparent)` } : undefined}
+                    >
+                      <span
+                        className={`relative h-14 w-14 rounded-full flex items-center justify-center ${earned ? "text-white shadow-md" : "text-muted bg-surface border-2 border-rule"}`}
+                        style={
+                          earned
+                            ? { background: `linear-gradient(145deg, color-mix(in srgb, ${color} 80%, white), ${color} 45%, color-mix(in srgb, ${color} 60%, black))`, boxShadow: `0 0 0 4px color-mix(in srgb, ${color} 18%, transparent)` }
+                            : undefined
+                        }
+                      >
+                        <Icon size={24} strokeWidth={1.8} />
+                        {!earned && (
+                          <span className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-surface border border-rule flex items-center justify-center">
+                            <Lock size={12} className="text-muted" />
+                          </span>
+                        )}
+                      </span>
+                      <p className={`text-sm font-semibold leading-tight ${earned ? "text-ink" : "text-muted"}`}>{a.title}</p>
+                      <p className="text-[11px] text-muted leading-snug line-clamp-2">
+                        {earned
+                          ? `Earned ${new Date(a.unlockedAt!).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
+                          : a.description}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </Card>

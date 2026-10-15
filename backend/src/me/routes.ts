@@ -251,7 +251,8 @@ meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => 
       ),
       pool.query(
         `SELECT s.id, s.session_type, s.mode, s.started_at, s.completed_at,
-           (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS answered
+           (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS answered,
+           (SELECT coalesce(sum(a.active_ms), 0) FROM attempts a WHERE a.session_id = s.id) AS active_ms
          FROM sessions s WHERE s.user_id = $1 AND s.completed_at IS NOT NULL ORDER BY s.completed_at DESC LIMIT 12`,
         [id],
       ),
@@ -286,7 +287,9 @@ meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => 
         type: r.session_type,
         mode: r.mode,
         completedAt: r.completed_at,
-        minutes: r.started_at ? Math.max(1, Math.round((new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()) / 60000)) : null,
+        // Time actually spent answering, same as the totals — wall-clock time
+        // counts a session left open overnight.
+        minutes: Number(r.active_ms) > 0 ? Math.max(1, Math.round(Number(r.active_ms) / 60000)) : null,
         answered: r.answered,
       })),
       achievements: achievements.rows.map((a) => ({ id: a.id, title: a.title, description: a.description, icon: a.icon, unlockedAt: a.unlocked_at })),
