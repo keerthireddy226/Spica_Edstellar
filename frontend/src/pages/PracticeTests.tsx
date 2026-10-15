@@ -551,10 +551,32 @@ export function PracticeTests() {
             {exams?.find((e) => e.id === activeExamId)?.name || t(`practiceTests.versantProduct.${selectedProduct}`)}
           </p>
         )}
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-4xl font-display font-bold text-ink">{summary.overallPercent}%</span>
-          <span className="text-xs text-muted uppercase tracking-wide">{t("practiceTests.scoreReport.overall")}</span>
+        <div className="flex items-stretch justify-center gap-3 w-full">
+          {summary.cefrLevel && (
+            <div className="flex-1 max-w-40 flex flex-col items-center gap-1 bg-navy/10 rounded-card py-3">
+              <span className="text-4xl font-display font-bold text-navy-deep">{summary.cefrLevel}</span>
+              <span className="text-xs text-muted uppercase tracking-wide">{tr("CEFR level")}</span>
+            </div>
+          )}
+          <div className="flex-1 max-w-40 flex flex-col items-center gap-1 bg-paper-warm rounded-card py-3">
+            <span className="text-4xl font-display font-bold text-ink">{summary.overallPercent}%</span>
+            <span className="text-xs text-muted uppercase tracking-wide">{t("practiceTests.scoreReport.overall")}</span>
+          </div>
         </div>
+        {summary.skillLevels && Object.keys(summary.skillLevels).length > 0 && (
+          <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(["listening", "speaking", "reading", "writing"] as const)
+              .filter((skill) => summary.skillLevels?.[skill])
+              .map((skill) => (
+                <div key={skill} className="bg-paper-warm rounded-input px-3 py-2 flex flex-col items-center">
+                  <span className="text-[11px] text-muted">{t(`skills.${skill}`)}</span>
+                  <span className="font-display font-bold text-lg text-ink">{summary.skillLevels![skill]}</span>
+                  {summary.skillPercents?.[skill] !== undefined && <span className="text-[11px] text-muted">{summary.skillPercents[skill]}%</span>}
+                </div>
+              ))}
+          </div>
+        )}
+        {summary.cefrLevel && <p className="text-xs text-muted -mt-2">{t("placementTest.levelDisclaimer")}</p>}
 
         <div className="w-full flex flex-col gap-2.5 text-left">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted">{t("practiceTests.scoreReport.sectionResults")}</span>

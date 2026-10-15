@@ -89,37 +89,39 @@ function ResultDetails({ result }: { result: AssessmentResult }) {
   if (result.pending || (result.kind === "exam" && !result.partResults?.some((p) => p.gradedCount > 0) && !result.pendingCount)) {
     return <p className="text-sm text-muted">{tr("No answers could be scored. The candidate may have skipped the questions.")}</p>;
   }
-  if (result.kind === "placement" && result.skillLevels) {
-    return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {Object.entries(result.skillLevels).map(([skill, level]) => (
-          <div key={skill} className="bg-paper-warm rounded-input p-3">
-            <p className="text-xs text-muted capitalize">{tr(skill.charAt(0).toUpperCase() + skill.slice(1))}</p>
-            <p className="font-display font-bold text-lg text-ink">{level}</p>
-            {result.skillPercents?.[skill] !== undefined && <p className="text-[11px] text-muted">{result.skillPercents[skill]}%</p>}
-          </div>
-        ))}
-      </div>
-    );
-  }
   return (
-    <div className="flex flex-col gap-2">
-      {(result.partResults ?? []).map((p) => {
-        const pct = p.gradedCount ? Math.round((p.correctCount / p.gradedCount) * 100) : 0;
-        return (
-          <div key={p.label} className="flex flex-col gap-1">
-            <div className="flex justify-between text-sm">
-              <span className="text-ink">{p.label}</span>
-              <span className="text-xs font-mono text-muted">
-                {p.correctCount}/{p.gradedCount}
-              </span>
+    <div className="flex flex-col gap-4">
+      {result.skillLevels && Object.keys(result.skillLevels).length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Object.entries(result.skillLevels).map(([skill, level]) => (
+            <div key={skill} className="bg-paper-warm rounded-input p-3">
+              <p className="text-xs text-muted capitalize">{tr(skill.charAt(0).toUpperCase() + skill.slice(1))}</p>
+              <p className="font-display font-bold text-lg text-ink">{level}</p>
+              {result.skillPercents?.[skill] !== undefined && <p className="text-[11px] text-muted">{result.skillPercents[skill]}%</p>}
             </div>
-            <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
-              <div className="h-full bg-navy" style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      )}
+      {(result.partResults ?? []).length > 0 && (
+        <div className="flex flex-col gap-2">
+          {(result.partResults ?? []).map((p) => {
+            const pct = p.gradedCount ? Math.round((p.correctCount / p.gradedCount) * 100) : 0;
+            return (
+              <div key={p.label} className="flex flex-col gap-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-ink">{p.label}</span>
+                  <span className="text-xs font-mono text-muted">
+                    {p.correctCount}/{p.gradedCount}
+                  </span>
+                </div>
+                <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
+                  <div className="h-full bg-navy" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {(result.pendingCount ?? 0) > 0 && <p className="text-xs text-muted">{tr("{{n}} answers still being scored.", { n: result.pendingCount })}</p>}
     </div>
   );

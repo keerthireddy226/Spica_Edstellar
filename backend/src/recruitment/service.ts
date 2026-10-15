@@ -11,6 +11,7 @@ import { notify, orgAdminIds } from "../notifications/service.js";
 import { emitEvent } from "../webhooks/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
+import { levelSummary } from "../placement/levels.js";
 
 export const PRODUCTS = ["skills", "recruitment"] as const;
 export type Product = (typeof PRODUCTS)[number];
@@ -288,7 +289,7 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
   } else {
     const rows = (
       await pool.query(
-        `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, i.cefr_level, ep.part_label
+        `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label
          FROM attempts at JOIN scores sc ON sc.attempt_id = at.id JOIN items i ON i.id = at.item_id
          JOIN item_types it ON it.id = i.item_type_id LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id
          WHERE at.session_id = $1`,
@@ -298,9 +299,11 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
     const graded = rows.filter((r) => r.status === "scored");
     const ok = (r: (typeof rows)[number]) => isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
     const labels = [...new Set(rows.map((r) => r.part_label).filter(Boolean))];
+    const level = levelSummary(rows);
     result = {
       kind: "exam",
       overallPercent: graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null,
+      ...(level ?? {}),
       gradedCount: graded.length,
       pendingCount: rows.filter((r) => r.status === "pending").length,
       partResults: labels.map((label) => {

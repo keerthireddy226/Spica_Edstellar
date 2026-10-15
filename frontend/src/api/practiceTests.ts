@@ -29,6 +29,10 @@ export interface ExamCompleteResult {
   failedCount: number;
   overallPercent: number;
   partResults: { label: string; gradedCount: number; correctCount: number }[];
+  // CEFR level from the levels of the questions answered; null until something is scored.
+  cefrLevel?: string | null;
+  skillLevels?: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>> | null;
+  skillPercents?: Partial<Record<"listening" | "speaking" | "reading" | "writing", number>> | null;
 }
 
 export function getProducts(): Promise<{ products: ExamProduct[] }> {

@@ -14,6 +14,7 @@ import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
 import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
+import { levelSummary } from "../placement/levels.js";
 
 export const practiceTestsRouter = Router();
 
@@ -309,7 +310,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   // pending" response instead of failing the whole request.
   try {
     const summaryResult = await pool.query(
-      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, i.cefr_level, ep.part_label,
+      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label,
          a.response_text, a.response_uri
        FROM attempts a
        JOIN scores sc ON sc.attempt_id = a.id
@@ -339,6 +340,8 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       return { label, gradedCount: partRows.length, correctCount: partRows.filter(rowCorrect).length };
     });
 
+    // The same CEFR level logic as the placement test, from each question's level.
+    const level = levelSummary(rows);
     res.json({
       gradedCount: graded.length,
       correctCount,
@@ -347,6 +350,9 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       failedCount,
       overallPercent: graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : 0,
       partResults,
+      cefrLevel: level?.cefrLevel ?? null,
+      skillLevels: level?.skillLevels ?? null,
+      skillPercents: level?.skillPercents ?? null,
     });
   } catch (err) {
     console.error("practiceTests /complete: score summary failed, session still marked complete:", err);
