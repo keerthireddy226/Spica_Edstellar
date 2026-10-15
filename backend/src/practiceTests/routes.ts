@@ -16,6 +16,7 @@ import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.j
 import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
 import { levelSummary } from "../placement/levels.js";
 import { examPrefix, newTestCode } from "../lib/testCode.js";
+import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 
 export const practiceTestsRouter = Router();
 
@@ -227,6 +228,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       ],
     );
 
+    await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
       testCode,
@@ -297,13 +299,16 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   // fixes) just gets its real score recomputed and returned again, instead
   // of a 404 that leaves the learner with no way to see their result.
   let sessionExists;
+  // Only the first /complete finishes the test (and is audited).
+  let justFinished = false;
   try {
     sessionExists = await pool.query(
       `SELECT id, test_code FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
       [req.params.sessionId, req.user!.id],
     );
     if (sessionExists.rows[0]) {
-      await pool.query(`UPDATE sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`, [req.params.sessionId]);
+      const u = await pool.query(`UPDATE sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`, [req.params.sessionId]);
+      justFinished = (u.rowCount ?? 0) > 0;
     }
   } catch (err) {
     return next(err);
@@ -348,6 +353,10 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
 
     // The same CEFR level logic as the placement test, from each question's level.
     const level = levelSummary(rows);
+    if (justFinished) {
+      const overall = graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : null;
+      await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
+    }
     res.json({
       testCode: sessionExists.rows[0].test_code,
       gradedCount: graded.length,

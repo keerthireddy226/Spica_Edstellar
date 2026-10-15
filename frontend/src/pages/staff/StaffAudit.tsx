@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
-import { AUDIT_VERBS } from "@/lib/auditVerbs";
+import { AUDIT_VERBS, auditDetailParts } from "@/lib/auditVerbs";
 import { getAdminConsoleOverview } from "@/api/admin";
 import { getStaffAudit, type StaffAuditEntry, type StaffAuditFilters } from "@/api/staff";
 import { EmptyNote, PageHeader, SelectFilter, useStaffPermissions } from "@/components/staff/StaffKit";
@@ -14,6 +14,10 @@ const GROUPS: [string, string][] = [
   ["manager.", tr("Managers")],
   ["batch.", tr("Batches")],
   ["learner.", tr("Learners")],
+  ["test.", tr("Tests started and finished")],
+  ["recruitment.", tr("Recruitment")],
+  ["integrity.", tr("Test integrity")],
+  ["plan.", tr("Plan")],
   ["license.", tr("Licenses")],
   ["certificate.", tr("Certificates")],
   ["sso.", tr("Single sign-on")],
@@ -27,13 +31,18 @@ const ROLES: [string, string][] = [
   ["admin", tr("Admin")],
   ["org_admin", tr("Org Admin")],
   ["manager", tr("Manager")],
+  ["recruiter", tr("Recruiter")],
+  ["learner", tr("Learner")],
+  ["candidate", tr("Candidate")],
   ["system", tr("System / API")],
 ];
 
 function describe(e: StaffAuditEntry) {
   const verb = AUDIT_VERBS[e.action] ?? e.action.replace(/[._]/g, " ");
-  const d = e.details ?? {};
-  const extra = typeof d.quantity === "number" ? ` (${d.quantity})` : "";
+  const d = (e.details ?? {}) as Record<string, unknown>;
+  const parts = auditDetailParts(d);
+  if (typeof d.quantity === "number") parts.unshift(String(d.quantity));
+  const extra = parts.length ? ` (${parts.join(" · ")})` : "";
   return `${verb} ${e.targetLabel ?? ""}${extra}`.trim();
 }
 

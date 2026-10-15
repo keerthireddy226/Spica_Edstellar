@@ -3,13 +3,17 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/Button";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { downloadCsv } from "@/api/analytics";
-import { AUDIT_VERBS as VERBS } from "@/lib/auditVerbs";
+import { AUDIT_VERBS as VERBS, auditDetailParts } from "@/lib/auditVerbs";
 import { auditExportPath, getAuditLog, type AuditEntry, type AuditFilters } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
 const ACTION_GROUPS: [string, string][] = [
   ["", tr("All activity")],
+  ["test.", tr("Tests started and finished")],
+  ["recruitment.", tr("Recruitment")],
+  ["integrity.", tr("Test integrity")],
+  ["proctoring.", tr("Proctoring settings")],
   ["batch.", tr("Batches")],
   ["manager.", tr("Managers")],
   ["learner.", tr("Learners")],
@@ -26,8 +30,8 @@ const ACTION_GROUPS: [string, string][] = [
 
 function describe(e: AuditEntry): string {
   const verb = VERBS[e.action] ?? e.action.replace(/[._]/g, " ");
-  const extra: string[] = [];
-  const d = e.details as Record<string, unknown>;
+  const d = (e.details ?? {}) as Record<string, unknown>;
+  const extra: string[] = auditDetailParts(d);
   if (typeof d.quantity === "number") extra.push(`${d.quantity}`);
   if (d.fromTier && d.toTier) extra.push(`${d.fromTier} → ${d.toTier}`);
   if (typeof d.note === "string" && d.note) extra.push(trServer(d.note));

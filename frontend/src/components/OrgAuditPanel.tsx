@@ -4,6 +4,7 @@ import { getOrgAudit, type OrgAuditEntry } from "@/api/admin";
 import { downloadCsv } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
+import { AUDIT_VERBS, auditDetailParts } from "@/lib/auditVerbs";
 // The organization's audit trail, read-only, for Edstellar staff.
 export function OrgAuditPanel({ tenantId }: { tenantId: string }) {
   const [open, setOpen] = useState(false);
@@ -40,8 +41,11 @@ export function OrgAuditPanel({ tenantId }: { tenantId: string }) {
           {entries.map((e) => (
             <div key={`${e.source}-${e.id}`} className="flex items-start justify-between gap-3 text-sm">
               <span className="text-ink">
-                <span className="font-medium">{e.actorLabel ?? tr("System")}</span> · {e.action.replace(/[._]/g, " ")}
+                <span className="font-medium">{e.actorLabel ?? tr("System")}</span> · {AUDIT_VERBS[e.action] ?? e.action.replace(/[._]/g, " ")}
                 {e.targetLabel && <span className="text-muted"> — {e.targetLabel}</span>}
+                {e.details && auditDetailParts(e.details as Record<string, unknown>).length > 0 && (
+                  <span className="text-muted"> ({auditDetailParts(e.details as Record<string, unknown>).join(" · ")})</span>
+                )}
               </span>
               <span className="text-xs text-muted shrink-0">{new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span>
             </div>

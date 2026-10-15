@@ -61,4 +61,52 @@ export const AUDIT_VERBS: Record<string, string> = {
   "certificate.issued": tr("issued a certificate to"),
   "certificate.revoked": tr("revoked a certificate of"),
   "manager.handover": tr("handed over the batches of"),
+  "test.started": tr("started the test"),
+  "test.completed": tr("finished the test"),
+  "recruitment.job_created": tr("created job opening"),
+  "recruitment.candidates_invited": tr("invited candidates to"),
+  "recruitment.decision": tr("recorded a decision for"),
+  "recruitment.recruiter_added": tr("added recruiter"),
+  "recruitment.recruiter_removed": tr("removed recruiter"),
+  "recruitment.credits_requested": tr("asked for assessment credits"),
+  "recruitment.retention_changed": tr("changed how long candidate data is kept"),
+  "proctoring.policy_updated": tr("changed the proctoring settings"),
+  "integrity.reviewed": tr("recorded an integrity decision for"),
+  "integrity.session_terminated": tr("ended the test of"),
+  "identity.reviewed": tr("reviewed the ID of"),
+  "plan.products_changed": tr("changed the products"),
+  "plan.credits_granted": tr("changed assessment credits"),
 };
+
+// Detail values that read better as words.
+export const AUDIT_DETAIL_WORDS: Record<string, string> = {
+  shortlisted: tr("shortlisted"),
+  rejected: tr("rejected"),
+  hired: tr("hired"),
+  cleared: tr("cleared"),
+  violation: tr("violation"),
+  verified: tr("verified"),
+  employees: tr("employees"),
+  candidates: tr("candidates"),
+};
+
+// Extra facts for a test, a decision or a count, e.g.
+// "(Test ID SL-002 · Attempt ID SL-7K3M-9QX2 · B2 · 74% · 29 min)".
+export function auditDetailParts(d: Record<string, unknown>): string[] {
+  const parts: string[] = [];
+  const word = (v: unknown) => AUDIT_DETAIL_WORDS[String(v)] ?? String(v);
+  if (typeof d.testId === "string") parts.push(tr("Test ID {{c}}", { c: d.testId }));
+  if (typeof d.attemptId === "string") parts.push(tr("Attempt ID {{c}}", { c: d.attemptId }));
+  if (typeof d.level === "string") parts.push(d.level);
+  if (typeof d.score === "number") parts.push(`${d.score}%`);
+  if (typeof d.minutes === "number") parts.push(tr("{{m}} min", { m: d.minutes }));
+  if (typeof d.skipped === "number" && d.skipped > 0) parts.push(tr("{{n}} skipped", { n: d.skipped }));
+  if (typeof d.decision === "string") parts.push(word(d.decision));
+  if ("decision" in d && d.decision === null) parts.push(tr("decision cleared"));
+  if (typeof d.verdict === "string") parts.push(word(d.verdict));
+  if (typeof d.audience === "string") parts.push(word(d.audience));
+  if (typeof d.count === "number") parts.push(tr("{{n}} people", { n: d.count }));
+  if (typeof d.amount === "number") parts.push(`${d.amount > 0 ? "+" : ""}${d.amount}`);
+  if (typeof d.reason === "string" && d.reason && !["grant", "purchase", "adjustment"].includes(d.reason)) parts.push(d.reason);
+  return parts;
+}

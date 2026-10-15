@@ -19,6 +19,7 @@ import {
 import { buildRoadmap, type AccessDuration, type SkillTag } from "./roadmapBuilder.js";
 import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, type ScoredAttemptRow } from "./levels.js";
 import { newTestCode } from "../lib/testCode.js";
+import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
@@ -278,6 +279,7 @@ placementRouter.post("/session", requireAuth, async (req: AuthedRequest, res, ne
       [req.user!.id, JSON.stringify(composition), testCode],
     );
 
+    await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
       testCode,
@@ -490,6 +492,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       if (req.user!.role === "candidate") {
         await recordCandidateResult(req.user!.id, req.params.sessionId as string).catch((err) => console.error("placement /complete: candidate result failed:", err));
       }
+      await auditTestCompleted(req.params.sessionId as string, { answered: rows.length }, req.ip).catch(() => {});
       return res.json({ testCode: sessionResult.rows[0].test_code, gradedCount: 0, correctCount: 0, pendingCount, failedCount });
     }
 
@@ -527,6 +530,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       await checkAndAwardBadges(req.user!.id);
     }
 
+    await auditTestCompleted(req.params.sessionId as string, { cefrLevel, overallPercent, answered: rows.length }, req.ip).catch(() => {});
     res.json({
       testCode: sessionResult.rows[0].test_code,
       gradedCount: graded.length,
