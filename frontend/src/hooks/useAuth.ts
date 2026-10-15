@@ -148,10 +148,15 @@ export function useAuthState() {
   // login page — neither of these actions creates a session, so this is the
   // only way the frontend learns which portal the account belongs to.
   const resetPassword = useCallback(async (token: string, password: string) => {
-    return api<{ role: Role }>("/auth/reset-password", {
+    const result = await api<{ role: Role }>("/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, password }),
     });
+    // The backend signs this browser out (an invite link is often opened
+    // where someone else is signed in). Forget that person here too, or the
+    // login page sends the new user straight into the old account's console.
+    setState({ user: null, loading: false, error: null });
+    return result;
   }, []);
 
   const verifyEmail = useCallback(async (token: string) => {

@@ -72,13 +72,16 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void }) {
   const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <span className={`h-10 w-10 rounded-2xl flex items-center justify-center shrink-0 ${status.enabled ? "bg-success/15 text-success" : "bg-navy/10 text-navy"}`}>
-          <ShieldCheck size={20} />
-        </span>
-        <div className="flex-1">
-          <h2 className="font-display font-bold text-lg text-ink">Two-step sign-in</h2>
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        <h2 className="flex items-center gap-2.5 font-display font-bold text-ink">
+          <span className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 text-white shadow-sm ${status.enabled ? "bg-success" : "bg-navy"}`}>
+            <ShieldCheck size={18} />
+          </span>
+          Two-step sign-in
+          {status.enabled && <span className="text-xs font-semibold px-2.5 py-0.5 rounded-pill bg-success/15 text-success">On</span>}
+        </h2>
+        <div>
           <p className="text-sm text-muted">
             {status.enabled
               ? `On since ${new Date(status.enabledAt!).toLocaleDateString()}. ${status.recoveryCodesLeft} recovery code${status.recoveryCodesLeft === 1 ? "" : "s"} left.`

@@ -20,9 +20,12 @@ export function ManagerPreferencesCard() {
   }
 
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
-      <h2 className="font-display font-bold text-lg text-ink flex items-center gap-2">
-        <BellRing size={18} className="text-navy" /> Email alerts {saved && <span className="text-xs font-normal text-success">Saved</span>}
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-4">
+      <h2 className="font-display font-bold text-ink flex items-center gap-2.5">
+        <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: "#6e9660" }}>
+          <BellRing size={18} />
+        </span>
+        Email alerts {saved && <span className="text-xs font-normal text-success">Saved</span>}
       </h2>
       <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
         <input type="checkbox" checked={prefs.dailyDigest} onChange={(e) => toggle("dailyDigest", e.target.checked)} className="mt-0.5 h-4 w-4 accent-navy" />

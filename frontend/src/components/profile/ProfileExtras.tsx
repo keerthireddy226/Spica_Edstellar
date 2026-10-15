@@ -7,6 +7,7 @@ import { countryName, sortedCountries } from "@/constants/demographics";
 import { getMyActivity, getMySummary, getMyWork, saveMyWork, type WorkDetails } from "@/api/me";
 import { ago } from "@/api/staff";
 import { StatCard } from "@/components/staff/StaffKit";
+import { LearnerCard } from "@/components/learner/LearnerHero";
 import { BarChart3, Building2, Layers, Users } from "lucide-react";
 
 const ICONS = [Building2, Users, Layers, BarChart3];
@@ -64,19 +65,20 @@ export function WorkDetailsCard({ showRegion }: { showRegion: boolean }) {
   ];
 
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted flex items-center gap-2">
-          <Briefcase size={14} /> Work details
-        </h2>
-        {!editing && (
+    <LearnerCard
+      title="Work details"
+      icon={Briefcase}
+      color="#c9965c"
+      action={
+        !editing && (
           <button onClick={() => setEditing(true)} className="flex items-center gap-1.5 text-xs font-semibold text-navy hover:underline cursor-pointer">
             <Pencil size={13} /> Edit
           </button>
-        )}
-      </div>
+        )
+      }
+    >
       {!editing ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
           {rows.map(([l, v]) => (
             <div key={l}>
               <p className="text-xs text-muted">{l}</p>
@@ -125,7 +127,7 @@ export function WorkDetailsCard({ showRegion }: { showRegion: boolean }) {
         </div>
       )}
       {saved && !editing && <p className="text-xs text-success">Saved.</p>}
-    </div>
+    </LearnerCard>
   );
 }
 
@@ -139,18 +141,16 @@ export function MyRecentActions() {
   }, []);
   if (!rows) return null;
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
-      <h2 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted flex items-center gap-2">
-        <History size={14} /> Your recent actions
-      </h2>
+    <LearnerCard title="Your recent actions" icon={History} color="#b97a62" action={<span className="text-xs text-muted">Last {Math.min(rows.length, 25)}</span>}>
       {rows.length === 0 ? (
         <p className="text-sm text-muted">Nothing yet — changes you make show up here.</p>
       ) : (
-        <div className="flex flex-col divide-y divide-rule">
-          {rows.slice(0, 10).map((r, i) => (
-            <div key={i} className="py-2 flex items-start justify-between gap-3 text-sm">
-              <p className="text-ink">
-                You {AUDIT_VERBS[r.action] ?? r.action.replace(/[._]/g, " ")} {r.targetLabel ?? ""}
+        <div className="flex flex-col">
+          {rows.slice(0, 25).map((r, i) => (
+            <div key={i} className="flex items-start gap-3 py-2.5 border-b border-rule last:border-b-0">
+              <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ background: ["#b5653f", "#c9965c", "#6e9660", "#a8613f"][i % 4] }} />
+              <p className="flex-1 text-sm text-ink">
+                You {AUDIT_VERBS[r.action] ?? r.action.replace(/[._]/g, " ")} <span className="font-semibold">{r.targetLabel ?? ""}</span>
                 {r.orgName ? <span className="text-muted"> · {r.orgName}</span> : null}
               </p>
               <span className="text-xs text-muted shrink-0">{ago(r.createdAt)}</span>
@@ -158,6 +158,6 @@ export function MyRecentActions() {
           ))}
         </div>
       )}
-    </div>
+    </LearnerCard>
   );
 }

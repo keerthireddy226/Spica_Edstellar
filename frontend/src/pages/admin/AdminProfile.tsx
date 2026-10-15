@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Mail, ShieldCheck, LogOut, CalendarDays, Clock, KeyRound, Monitor, Briefcase, Lock, LockOpen, Pencil, UserCircle2, BadgeCheck, UserCog } from "lucide-react";
+import { Mail, ShieldCheck, LogOut, CalendarDays, Clock, KeyRound, Monitor, Briefcase, Lock, LockOpen, Pencil, UserCircle2, BadgeCheck, UserCog, Building2 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { HERO_GRADIENT, LearnerCard } from "@/components/learner/LearnerHero";
 import {
   useAuth,
   getLoginHistory,
@@ -34,12 +36,11 @@ function formatDateTime(iso: string | null | undefined): string {
   return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
-function SectionCard({ title, tint, children }: { title: string; tint: string; children: React.ReactNode }) {
+function SectionCard({ title, icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {
   return (
-    <div className={`${tint} border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4`}>
-      <h2 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">{title}</h2>
+    <LearnerCard title={title} icon={icon} color={color}>
       {children}
-    </div>
+    </LearnerCard>
   );
 }
 
@@ -71,8 +72,8 @@ function AccountDetails({ user, onboardedBy, firstName, lastName, setFirstName, 
   }
 
   return (
-    <SectionCard title="Account details" tint="bg-navy/5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <SectionCard title="Account details" icon={UserCircle2} color="var(--color-navy)">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
         <div className="flex items-start gap-2 text-sm">
           <UserCircle2 size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
@@ -195,13 +196,13 @@ export function SecuritySection({ email }: { email: string | undefined }) {
   }
 
   return (
-    <SectionCard title="Security" tint="bg-warning/5">
+    <SectionCard title="Password" icon={KeyRound} color="#c9965c">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-2 text-sm">
           <KeyRound size={16} className="text-muted mt-0.5 shrink-0" />
           <div>
-            <p className="text-ink font-medium">Password</p>
-            <p className="text-xs text-muted">Reset your password via an emailed link — no current password needed here.</p>
+            <p className="text-ink">Change your password with a link sent to your email.</p>
+            <p className="text-xs text-muted">You don't need your current password.</p>
           </div>
         </div>
         <Button variant="secondary" onClick={handleResetPassword} disabled={sending || sent}>
@@ -223,7 +224,7 @@ export function LoginHistorySection() {
   }, []);
 
   return (
-    <SectionCard title="Recent login activity" tint="bg-error/5">
+    <SectionCard title="Recent sign-ins" icon={Monitor} color="#b97a62">
       {!logins && <p className="text-sm text-muted">Loading…</p>}
       {logins?.length === 0 && <p className="text-sm text-muted">No login history yet.</p>}
       {logins && logins.length > 0 && (
@@ -253,7 +254,7 @@ function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"]
 
   if (user?.role === "super_admin") {
     return (
-      <SectionCard title="Your permissions" tint="bg-accent/5">
+      <SectionCard title="Your permissions" icon={ShieldCheck} color="var(--color-success)">
         <div className="flex items-center gap-2 text-sm">
           <ShieldCheck size={16} className="text-success shrink-0" />
           <span className="text-ink">Full platform access — Super Admin isn't gated by individual permissions.</span>
@@ -266,7 +267,7 @@ function PermissionsSection({ user }: { user: ReturnType<typeof useAuth>["user"]
   const granted = (Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[]).filter((k) => permissions[k]);
 
   return (
-    <SectionCard title="Your permissions" tint="bg-accent/5">
+    <SectionCard title="Your permissions" icon={ShieldCheck} color="var(--color-success)">
       {granted.length === 0 ? (
         <p className="text-sm text-muted">No permissions granted yet — ask a Super Admin to grant you some.</p>
       ) : (
@@ -306,7 +307,7 @@ export function ActiveSessionsSection() {
   }
 
   return (
-    <SectionCard title="Active sessions" tint="bg-navy/5">
+    <SectionCard title="Active sessions" icon={Lock} color="#8a8f4f">
       {!sessions && <p className="text-sm text-muted">Loading…</p>}
       {sessions?.length === 0 && <p className="text-sm text-muted">No active sessions.</p>}
       {sessions && sessions.length > 0 && (
@@ -342,6 +343,10 @@ export function ActiveSessionsSection() {
   );
 }
 
+type ProfileTab = "account" | "organization" | "security" | "activity";
+
+// One profile page for every staff and organization role: a header with who
+// they are, then tabs so each part has room without one long scroll.
 export function AdminProfile() {
   const { user, updateName, logout } = useAuth();
   const [firstName, setFirstName] = useState("");
@@ -351,6 +356,7 @@ export function AdminProfile() {
   // Whoever added this account: an Org Admin for Managers, an Admin for Org Admins.
   const onboardedBy = user?.onboardedBy ?? null;
   const [organizationName, setOrganizationName] = useState<string | null>(null);
+  const [tab, setTab] = useState<ProfileTab>("account");
 
   useEffect(() => {
     setFirstName(user?.firstName ?? "");
@@ -379,76 +385,114 @@ export function AdminProfile() {
 
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || user?.email.slice(0, 2).toUpperCase() || "?";
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Not named yet";
+  const role = user?.role;
+  const tabs: [ProfileTab, string][] = [
+    ["account", "Account"],
+    ...(role === "org_admin" ? ([["organization", "Organization"]] as [ProfileTab, string][]) : []),
+    ["security", "Security"],
+    ["activity", "Activity"],
+  ];
+
+  const account = (
+    <AccountDetails
+      user={user}
+      onboardedBy={onboardedBy}
+      firstName={firstName}
+      lastName={lastName}
+      setFirstName={setFirstName}
+      setLastName={setLastName}
+      saving={saving}
+      saved={saved}
+      onSave={handleSave}
+    />
+  );
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">Profile</h1>
-        <p className="text-sm text-muted mt-1">Your account, work details, what you look after, security and sign-in activity.</p>
-      </div>
-
-      <div
-        style={{ background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 100%, black 35%))" }}
-        className="rounded-card shadow-sm p-6 flex items-center gap-5 flex-wrap"
-      >
-        <span className="h-16 w-16 rounded-full bg-white/20 text-white flex items-center justify-center text-xl font-bold shrink-0">
-          {initials}
-        </span>
-        <div className="flex-1 min-w-0">
-          <p className="font-display font-bold text-xl text-white truncate">{fullName}</p>
-          <p className="text-sm text-white/80 truncate">
-            {user?.email}
-            {organizationName ? ` · ${organizationName}` : ""}
-          </p>
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white mt-2">
-            <ShieldCheck size={13} /> {user ? (ROLE_LABEL[user.role] ?? user.role) : "—"}
+    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto">
+      <div className="relative overflow-hidden rounded-card shadow-sm text-white" style={{ background: HERO_GRADIENT }}>
+        <span className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10" />
+        <span className="pointer-events-none absolute right-56 -bottom-28 h-56 w-56 rounded-full bg-white/5" />
+        <div className="relative flex items-center gap-5 flex-wrap px-6 sm:px-8 pt-7 pb-6">
+          <span className="h-20 w-20 rounded-2xl ring-2 ring-white/40 flex items-center justify-center text-2xl font-display font-bold shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+            {initials}
           </span>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display font-bold text-2xl sm:text-3xl truncate">{fullName}</h1>
+            <p className="text-sm text-white/85 truncate flex items-center gap-1.5 mt-0.5">
+              <Mail size={14} /> {user?.email}
+              {organizationName ? <span className="flex items-center gap-1.5"> · <Building2 size={14} /> {organizationName}</span> : null}
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-pill bg-white text-navy-deep">
+                <ShieldCheck size={13} /> {role ? (ROLE_LABEL[role] ?? role) : "—"}
+              </span>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
+                Member since {formatDate(user?.createdAt)}
+              </span>
+              {onboardedBy && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill border border-white/30" style={{ background: "rgba(255,255,255,0.15)" }}>
+                  Onboarded by {onboardedBy.name}
+                </span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2 rounded-pill bg-white text-navy-deep text-sm font-semibold hover:bg-white/90 transition-colors cursor-pointer shrink-0"
+          >
+            <LogOut size={16} /> Log out
+          </button>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 px-4 py-2 rounded-pill border border-white/40 text-white text-sm font-semibold hover:bg-white/15 transition-colors cursor-pointer shrink-0"
-        >
-          <LogOut size={16} /> Log out
-        </button>
-      </div>
-
-      <RoleSummary />
-
-      <div className="grid lg:grid-cols-2 gap-4 items-start">
-        <AccountDetails
-          user={user}
-          onboardedBy={onboardedBy}
-          firstName={firstName}
-          lastName={lastName}
-          setFirstName={setFirstName}
-          setLastName={setLastName}
-          saving={saving}
-          saved={saved}
-          onSave={handleSave}
-        />
-        <div className="flex flex-col gap-4">
-          <SecuritySection email={user?.email} />
-          <PermissionsSection user={user} />
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-4 items-start">
-        <WorkDetailsCard showRegion={user?.role === "admin" || user?.role === "super_admin"} />
-        <MyRecentActions />
-      </div>
-
-      <MfaCard />
-      {user?.role === "manager" && <ManagerPreferencesCard />}
-      {user?.role === "org_admin" && <OrganizationProfileCard />}
-      {user?.role === "org_admin" && <HandoverCard />}
-
-      <div className="flex flex-col gap-3">
-        <h2 className="font-display font-bold text-lg text-ink">Sign-in activity</h2>
-        <div className="grid lg:grid-cols-2 gap-4 items-start">
-          <ActiveSessionsSection />
-          <LoginHistorySection />
+        <div className="relative flex items-center gap-1 px-4 sm:px-6 bg-surface border-b border-rule overflow-x-auto">
+          {tabs.map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${
+                tab === key ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
+
+      {tab === "account" && (
+        <>
+          <RoleSummary />
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            <div className="flex flex-col gap-6">{account}</div>
+            <div className="flex flex-col gap-6">
+              <WorkDetailsCard showRegion={role === "admin" || role === "super_admin"} />
+              <PermissionsSection user={user} />
+              {role === "manager" && <ManagerPreferencesCard />}
+            </div>
+          </div>
+        </>
+      )}
+
+      {tab === "organization" && role === "org_admin" && (
+        <>
+          <OrganizationProfileCard />
+          <HandoverCard />
+        </>
+      )}
+
+      {tab === "security" && (
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
+          <div className="flex flex-col gap-6">
+            <SecuritySection email={user?.email} />
+            <MfaCard />
+          </div>
+          <div className="flex flex-col gap-6">
+            <ActiveSessionsSection />
+            <LoginHistorySection />
+          </div>
+        </div>
+      )}
+
+      {tab === "activity" && <MyRecentActions />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
-import { Building2, Pencil } from "lucide-react";
+import { Building2, GraduationCap, MapPin, Pencil, Receipt, UserRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EMPLOYEE_COUNT_BANDS, countryName, employeeCountLabel, sortedCountries } from "@/constants/demographics";
 import {
@@ -69,10 +70,24 @@ function toDraft(org: OrganizationProfile, contact: OrgAdminContact): Draft {
 const inputClass =
   "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+const GROUP_ICON: Record<string, { icon: LucideIcon; color: string }> = {
+  Company: { icon: Building2, color: "#b5653f" },
+  Address: { icon: MapPin, color: "#c9965c" },
+  Training: { icon: GraduationCap, color: "#6e9660" },
+  Billing: { icon: Receipt, color: "#a8613f" },
+  "You (primary contact)": { icon: UserRound, color: "#8a8f4f" },
+};
+
+function Group({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
+  const g = GROUP_ICON[title] ?? { icon: Building2, color: "var(--color-navy)" };
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{title}</p>
+    <div className={`rounded-card border border-rule bg-paper/40 p-4 flex flex-col gap-3 ${wide ? "lg:col-span-2" : ""}`}>
+      <p className="flex items-center gap-2 text-sm font-display font-bold text-ink">
+        <span className="h-7 w-7 rounded-lg flex items-center justify-center text-white" style={{ background: g.color }}>
+          <g.icon size={14} />
+        </span>
+        {title}
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">{children}</div>
     </div>
   );
@@ -186,15 +201,15 @@ export function OrganizationProfileCard() {
   const addressText = [org.addressLine, org.city, org.state, org.postalCode].filter(Boolean).join(", ");
 
   return (
-    <div className="bg-accent/5 border border-rule rounded-card shadow-sm p-5 flex flex-col gap-5">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="h-9 w-9 rounded-full bg-navy/10 text-navy flex items-center justify-center shrink-0">
-            <Building2 size={17} strokeWidth={1.8} />
+          <span className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0 text-white shadow-sm" style={{ background: "var(--color-navy)" }}>
+            <Building2 size={18} />
           </span>
           <div>
-            <h2 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">Organization details</h2>
-            <p className="text-sm text-ink font-medium">
+            <h2 className="font-display font-bold text-ink">Organization details</h2>
+            <p className="text-xs text-muted">
               {org.name} · {org.category === "university" ? "University" : "Organization"}
             </p>
           </div>
@@ -210,17 +225,22 @@ export function OrganizationProfileCard() {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted">Profile completeness</span>
-            <span className="font-semibold text-ink">{completeness}%</span>
+            <span className="font-semibold text-ink">
+              {filled} of {COMPLETENESS_FIELDS.length} details · {completeness}%
+            </span>
           </div>
-          <div className="h-1.5 rounded-full bg-rule overflow-hidden">
-            <div className="h-full bg-navy rounded-full transition-all" style={{ width: `${completeness}%` }} />
+          <div className="h-2 rounded-full bg-rule overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${Math.max(completeness, 2)}%`, background: completeness === 100 ? "var(--color-success)" : "linear-gradient(90deg, var(--color-navy), #c9965c)" }}
+            />
           </div>
-          {completeness < 100 && <p className="text-xs text-muted">Complete your profile so invoices and reports show the right details.</p>}
+          {completeness < 100 && <p className="text-xs text-muted">Add the missing details so invoices and reports are correct. Click Edit details.</p>}
         </div>
       )}
 
       {draft ? (
-        <div className="flex flex-col gap-5">
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
           <Group title="Company">
             <Input label="Display name" value={draft.name} onChange={(v) => patch({ name: v })} />
             <Input label="Registered legal name" value={draft.legalName ?? ""} onChange={(v) => patch({ legalName: v })} />
@@ -299,13 +319,13 @@ export function OrganizationProfileCard() {
             />
           </Group>
 
-          <Group title="You (primary contact)">
+          <Group title="You (primary contact)" wide>
             <Input label="Your designation" value={draft.jobTitle} onChange={(v) => patch({ jobTitle: v })} placeholder="e.g. L&D Manager" />
             <Input label="Your phone" type="tel" value={draft.contactPhone} onChange={(v) => patch({ contactPhone: v })} />
           </Group>
 
-          {error && <p className="text-sm text-error">{error}</p>}
-          <div className="flex items-center gap-3">
+          {error && <p className="text-sm text-error lg:col-span-2">{error}</p>}
+          <div className="flex items-center gap-3 lg:col-span-2">
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Saving…" : "Save details"}
             </Button>
@@ -322,7 +342,7 @@ export function OrganizationProfileCard() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="grid lg:grid-cols-2 gap-4 items-start">
           <Group title="Company">
             <View label="Registered legal name" value={org.legalName} />
             <View label="Industry" value={org.industry} />
@@ -343,7 +363,7 @@ export function OrganizationProfileCard() {
             <View label="PO / reference" value={org.purchaseOrderRef} />
             <View label="Billing contact" value={[org.billingContactName, org.billingContactEmail, org.billingContactPhone].filter(Boolean).join(" · ")} wide />
           </Group>
-          <Group title="You (primary contact)">
+          <Group title="You (primary contact)" wide>
             <View label="Designation" value={contact.jobTitle} />
             <View label="Phone" value={contact.phone} />
           </Group>
