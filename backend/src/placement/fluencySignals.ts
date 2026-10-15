@@ -27,6 +27,8 @@ export function computeFluencySignals(responseText: string, durationMs: number |
 // Shape stored in scores.manner_scores (see routes.ts/geminiFluency.ts) —
 // both pieces are optional independently.
 export interface StoredMannerScores {
+  // Recording length, kept while a spoken answer waits for background grading.
+  durationMs?: number | null;
   wordCount?: number;
   wordsPerMinute?: number | null;
   fillerCount?: number;

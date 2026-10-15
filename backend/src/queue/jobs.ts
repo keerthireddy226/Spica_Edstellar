@@ -12,6 +12,7 @@ import { runVoiceCheck } from "../proctoring/voiceCheck.js";
 import { analyzeSession } from "../proctoring/analyze.js";
 import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
+import { gradeSpeakingAttempt } from "../attemptGrading.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -22,6 +23,9 @@ export function registerJobs() {
     await runVoiceCheck(p.sessionId);
     await analyzeSession(p.sessionId);
   });
+  // A recorded answer saved without waiting for Gemini; the last try grades
+  // on the browser's transcript rather than leave it ungraded.
+  registerHandler("grading.speaking", (p, job) => gradeSpeakingAttempt(p.attemptId, { final: job.attempts >= 4 }));
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
   every(15, "notifications.run", async () => {

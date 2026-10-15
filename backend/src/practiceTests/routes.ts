@@ -4,7 +4,7 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { submitAttemptSchema } from "../placement/schemas.js";
-import { gradeAndSaveAttempt } from "../attemptGrading.js";
+import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
@@ -278,7 +278,10 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
     const blocked = await proctoringBlock(session.id, req.user!.id);
     if (blocked) return res.status(409).json({ error: blocked });
 
-    const graded = await gradeAndSaveAttempt(session.id, body);
+    // A mock exam never picks the next question from this answer, so a
+    // recorded answer is graded in the background instead of making the
+    // learner wait for it.
+    const graded = await gradeAndSaveAttempt(session.id, body, { deferSpeaking: true });
     if (!graded) return res.status(404).json({ error: "item_not_found" });
 
     const { attemptId, grade, wasCorrect } = graded;
@@ -314,6 +317,9 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     return next(err);
   }
   if (!sessionExists.rows[0]) return res.status(404).json({ error: "session_not_found" });
+
+  // Recorded answers graded in the background must count in the result.
+  await finishPendingSpeaking(req.params.sessionId as string).catch((err) => console.error("practiceTests /complete: speaking grading failed:", err));
 
   // The session is now genuinely done — a crash computing the score
   // breakdown below must never leave the learner stuck mid-test with an

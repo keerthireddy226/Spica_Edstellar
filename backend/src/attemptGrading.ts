@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pool } from "./db.js";
 import { gradeAttempt, type GradeResult } from "./placement/grading.js";
 import { computeFluencySignals, isTrulyCorrect, type StoredMannerScores } from "./placement/fluencySignals.js";
 import { scoreAudioFluency } from "./placement/geminiFluency.js";
+import { enqueue } from "./queue/queue.js";
 import { passThresholdForLevel } from "./placement/cefr.js";
 
 export const UPLOADS_DIR = path.join(process.cwd(), "uploads", "attempts");
@@ -43,7 +44,11 @@ export interface GradedAttempt {
 }
 
 // Shared by placement/practice attempt submission: loads item, grades, records score.
-export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody): Promise<GradedAttempt | null> {
+// deferSpeaking: a recorded answer is saved at once and graded in the
+// background (gradeSpeakingAttempt), so a slow Gemini call never makes the
+// learner wait or falls back to the browser's transcript. Only for tests that
+// don't pick the next question from this answer (not the adaptive placement).
+export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, opts: { deferSpeaking?: boolean } = {}): Promise<GradedAttempt | null> {
   const itemResult = await pool.query(
     `SELECT i.item_type_id, i.answer_set, i.content, i.cefr_level, it.min_words, it.input_method
      FROM items i JOIN item_types it ON it.id = i.item_type_id
@@ -70,11 +75,13 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
     responseUri = `/uploads/attempts/${fileName}`;
   }
 
+  const deferred = !!opts.deferSpeaking && item.input_method === "mic" && !!body.audioBase64;
+
   // Real pronunciation/fluency scoring from the recording itself — needs a recording + GEMINI_API_KEY, fails closed.
   // Run before grading (not after, as it used to be) because its transcript
   // is also the fallback content-grading text below.
   const geminiScores =
-    item.input_method === "mic" && body.audioBase64
+    item.input_method === "mic" && body.audioBase64 && !deferred
       ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level)
       : null;
 
@@ -84,14 +91,9 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
   const effectiveResponseText = (item.input_method === "mic" ? geminiScores?.transcript || body.responseText : body.responseText) || undefined;
 
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
-  const grade = await gradeAttempt(
-    item.item_type_id,
-    item.answer_set,
-    item.content,
-    item.cefr_level,
-    item.min_words,
-    effectiveResponseText,
-  );
+  const grade: GradeResult = deferred
+    ? { status: "pending", correct: null, score: null, method: null }
+    : await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, effectiveResponseText);
   const responseText = effectiveResponseText ?? null;
 
   // Resubmitting the same item in a session replaces the old attempt instead
@@ -134,7 +136,12 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
   // Free fluency signals (rate, fillers) from transcript/duration alone — describes delivery, not correctness.
   const freeSignals = item.input_method === "mic" && responseText ? computeFluencySignals(responseText, body.durationMs) : null;
 
-  const mannerScores = freeSignals || geminiScores ? { ...freeSignals, gemini: geminiScores ?? undefined } : null;
+  // A deferred answer keeps its recording length for the background grader's pace check.
+  const mannerScores = deferred
+    ? { durationMs: body.durationMs ?? null }
+    : freeSignals || geminiScores
+      ? { ...freeSignals, gemini: geminiScores ?? undefined }
+      : null;
 
   // Same UPSERT reasoning as attempts above (backed by a unique index on
   // attempt_id) — two concurrent gradings of the same attempt can't each
@@ -147,8 +154,74 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody):
     [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
   );
 
+  if (deferred && responseUri) {
+    // Keyed by the recording, so re-recording an answer queues a fresh grading.
+    await enqueue("grading.speaking", { attemptId }, { dedupeKey: `grading.speaking:${path.basename(responseUri)}`, maxAttempts: 4 });
+  }
+
   // For mic answers, "correct" also requires pronunciation/fluency/pace, not just content.
   const wasCorrect = isTrulyCorrect(grade.score, item.cefr_level, item.input_method, mannerScores, passThresholdForLevel);
 
   return { attemptId, item, grade, mannerScores, wasCorrect };
+}
+
+const BACKGROUND_TIMEOUT_MS = 60_000;
+
+// Grades a recorded answer that was saved without waiting for Gemini. Retried
+// by the queue when Gemini doesn't answer; the last try (final) grades on the
+// browser's transcript rather than leave the answer ungraded. Does nothing if
+// the answer was already graded.
+export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boolean; timeoutMs?: number }): Promise<void> {
+  const r = (
+    await pool.query(
+      `SELECT a.response_uri, a.response_text, sc.status, sc.manner_scores,
+         i.item_type_id, i.answer_set, i.content, i.cefr_level, it.min_words, it.input_method
+       FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+       WHERE a.id = $1`,
+      [attemptId],
+    )
+  ).rows[0];
+  if (!r || r.status !== "pending" || !r.response_uri) return;
+
+  const file = path.join(UPLOADS_DIR, path.basename(r.response_uri));
+  const audio = await readFile(file).catch(() => null);
+  const mime = file.endsWith(".m4a") ? "audio/mp4" : "audio/webm";
+  const geminiScores = audio ? await scoreAudioFluency(audio.toString("base64"), mime, r.cefr_level, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS) : null;
+  if (!geminiScores && !opts.final) throw new Error("speaking grading: Gemini didn't answer, will retry");
+
+  const responseText: string | null = geminiScores?.transcript || r.response_text || null;
+  const grade = await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined);
+  const durationMs = r.manner_scores?.durationMs ?? null;
+  const freeSignals = responseText ? computeFluencySignals(responseText, durationMs) : null;
+  const mannerScores = freeSignals || geminiScores ? { ...freeSignals, gemini: geminiScores ?? undefined } : null;
+  const modelVersion = grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : grade.method === "exact-match" ? "exact-match-v1" : "n/a";
+
+  await pool.query(`UPDATE attempts SET response_text = $2 WHERE id = $1`, [attemptId, responseText]);
+  // Only a still-pending score is written: a grading that finished first wins.
+  await pool.query(
+    `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, updated_at = now() WHERE attempt_id = $1 AND status = 'pending'`,
+    [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
+  );
+}
+
+async function pendingSpeaking(sessionId: string): Promise<string[]> {
+  const r = await pool.query(
+    `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+     WHERE a.session_id = $1 AND sc.status = 'pending' AND a.response_uri IS NOT NULL AND it.input_method = 'mic'`,
+    [sessionId],
+  );
+  return r.rows.map((x) => x.id);
+}
+
+// At the end of a test: let the background finish the last recorded answers
+// (usually seconds), then grade any still waiting here, so the result and the
+// recruiter's report are complete. Never waits more than about 45 s.
+export async function finishPendingSpeaking(sessionId: string): Promise<void> {
+  const until = Date.now() + 20_000;
+  let pending = await pendingSpeaking(sessionId);
+  while (pending.length > 0 && Date.now() < until) {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    pending = await pendingSpeaking(sessionId);
+  }
+  await Promise.all(pending.map((id) => gradeSpeakingAttempt(id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking grading failed:", err))));
 }

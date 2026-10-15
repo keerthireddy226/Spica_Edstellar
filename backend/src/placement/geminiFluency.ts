@@ -52,10 +52,16 @@ const RESPONSE_SCHEMA = {
   required: ["pronunciation", "fluency", "comment", "transcript"],
 };
 
+// Measured 6-24 s per recording (Oct 2026), so 12 s cut off about a third of
+// answers. A learner waiting for the next question gets 25 s; background
+// grading after the answer is saved can wait longer.
+export const SPEAKING_TIMEOUT_MS = 25_000;
+
 export async function scoreAudioFluency(
   audioBase64: string,
   audioMimeType: string,
   cefrLevel: string | null,
+  timeoutMs = SPEAKING_TIMEOUT_MS,
 ): Promise<GeminiFluencyResult | null> {
   const ai = getClient();
   if (!ai) return null;
@@ -89,7 +95,7 @@ Score intelligibility (the "pronunciation" field) and fluency from 0 to 1. Judge
           temperature: 0,
         },
       }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("scoreAudioFluency: timed out")), 12_000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("scoreAudioFluency: timed out")), timeoutMs)),
     ]);
 
     const parsed = JSON.parse(response.text ?? "");
