@@ -206,7 +206,7 @@ function RulesStep() {
       </div>
       <p className="text-xs text-muted leading-relaxed">
         {tr(
-          "Leaving the tab, screenshot keys, pasting and camera problems are recorded and may be reviewed after the test. You'll see a warning on screen when something is recorded. If your connection drops or the page closes, open the test again: your saved answers stay.",
+          "Leaving the tab, pasting, screenshot keys and camera problems are recorded and may be reviewed after the test. You'll see a warning on screen when something is recorded. Taking screenshots or photos of the questions breaks the test rules even when it isn't detected. If your connection drops or the page closes, open the test again: your saved answers stay.",
         )}
       </p>
     </div>

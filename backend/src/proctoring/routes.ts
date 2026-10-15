@@ -339,6 +339,31 @@ proctoringRouter.post("/sessions/:sessionId/events", requireAuth, async (req: Au
   }
 });
 
+// What the learner sees on their result screen: what was recorded during
+// the test and whether a reviewer will look at it. A candidate sees it only
+// when the job opening shows results to candidates.
+proctoringRouter.get("/sessions/:sessionId/learner-summary", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const own = await ownSession(req, res);
+    if (!own) return;
+    if (req.user!.role === "candidate") {
+      const job = (
+        await pool.query(
+          `SELECT j.show_result_to_candidate FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
+           WHERE a.candidate_id = $1 ORDER BY a.invited_at DESC LIMIT 1`,
+          [req.user!.id],
+        )
+      ).rows[0];
+      if (!job?.show_result_to_candidate) return res.json({ show: false });
+    }
+    const si = (await pool.query(`SELECT status, reasons FROM session_integrity WHERE session_id = $1`, [own.si.session_id])).rows[0];
+    const reasons = ((si?.reasons ?? []) as { code: string; count: number; points: number }[]).map(({ code, count }) => ({ code, count }));
+    res.json({ show: true, status: si?.status ?? "in_progress", reasons });
+  } catch (err) {
+    next(err);
+  }
+});
+
 const snapshotSchema = z.object({ imageBase64: z.string().min(100).max(3_000_000) });
 
 proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -651,6 +676,29 @@ async function canReviewUser(req: AuthedRequest, userId: string): Promise<boolea
 }
 
 const REVIEW_STATUSES = ["flagged", "clear", "cleared", "violation", "in_progress", "all"] as const;
+
+// Every proctored test one learner took, for the integrity section of their profile.
+proctoringRouter.get("/learners/:userId/integrity", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const userId = String(req.params.userId);
+    if (!/^[0-9a-f-]{36}$/i.test(userId) || !(await canReviewUser(req, userId))) return res.status(403).json({ error: "forbidden" });
+    const rows = await pool.query(
+      `SELECT si.session_id, si.session_type, si.status, si.risk_score, si.risk_level, si.reasons, si.reviewed_at, si.review_note,
+         s.started_at, s.completed_at, s.test_code, e.name AS exam_name, concat_ws(' ', r.first_name, r.last_name) AS reviewer
+       FROM session_integrity si
+       JOIN sessions s ON s.id = si.session_id
+       LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
+       LEFT JOIN users r ON r.id = si.reviewed_by
+       WHERE si.user_id = $1
+       ORDER BY s.started_at DESC
+       LIMIT 100`,
+      [userId],
+    );
+    res.json({ sessions: rows.rows });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Tests waiting for a review, for the count next to "Test integrity" in the menu.
 proctoringRouter.get("/reviews/pending-count", requireAuth, async (req: AuthedRequest, res, next) => {

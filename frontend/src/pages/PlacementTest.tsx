@@ -22,6 +22,7 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { reportHeldCheck } from "@/lib/systemCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
@@ -282,7 +283,7 @@ export function PlacementTest() {
   }
 
   // A candidate's result goes to the recruiter, not to a score screen.
-  if (summary && isCandidate) return <CandidateFinished />;
+  if (summary && isCandidate) return <CandidateFinished sessionId={sessionId} />;
 
   if (summary) {
     if (!summary.cefrLevel || !summary.skillPercents) {
@@ -303,6 +304,7 @@ export function PlacementTest() {
             {summary.failedCount > 0 && (
               <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
             )}
+            <IntegrityResultNote sessionId={sessionId} />
             <Button onClick={() => navigate(ROUTES.DASHBOARD)}>{t("placementTest.done")}</Button>
           </div>
         </div>
@@ -359,6 +361,7 @@ export function PlacementTest() {
           {summary.failedCount > 0 && (
             <p className="text-xs text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
           )}
+          <IntegrityResultNote sessionId={sessionId} />
 
           <Button onClick={() => navigate(ROUTES.ROADMAP)} className="w-full">
             {t("placementTest.goToRoadmap")}

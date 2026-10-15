@@ -303,6 +303,18 @@ export interface LiveSessionRow {
   video: { id: string; created_at: string } | null;
 }
 
+export type LearnerIntegrityRow = Omit<IntegritySessionRow, "user_id" | "email" | "name" | "org_name" | "biometric_opt_out" | "terminated_at">;
+
+export function getLearnerIntegrity(userId: string): Promise<{ sessions: LearnerIntegrityRow[] }> {
+  return api(`/proctoring/learners/${userId}/integrity`);
+}
+
+export function getLearnerIntegritySummary(
+  sessionId: string,
+): Promise<{ show: false } | { show: true; status: IntegrityStatus; reasons: { code: string; count: number }[] }> {
+  return api(`/proctoring/sessions/${sessionId}/learner-summary`);
+}
+
 export function getPendingReviewCount(): Promise<{ flagged: number }> {
   return api("/proctoring/reviews/pending-count");
 }

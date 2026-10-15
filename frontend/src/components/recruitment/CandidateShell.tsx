@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getCandidateAssessment, type CandidateAssessment } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
+import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 
 export function CandidateShell({ org, children }: { org?: string | null; children: ReactNode }) {
   return (
@@ -30,7 +31,7 @@ export function CandidatePanel({ icon, title, subtitle, children }: { icon: Reac
 }
 
 // Shown when the candidate finishes, from either test page.
-export function CandidateFinished() {
+export function CandidateFinished({ sessionId = null }: { sessionId?: string | null }) {
   const [a, setA] = useState<CandidateAssessment | null>(null);
   useEffect(() => {
     getCandidateAssessment()
@@ -51,6 +52,7 @@ export function CandidateFinished() {
             {r.overallPercent !== null && r.overallPercent !== undefined && <p className="text-sm text-muted">{tr("Score: {{p}}%", { p: r.overallPercent })}</p>}
           </div>
         )}
+        <IntegrityResultNote sessionId={sessionId} />
         <p className="text-xs text-muted text-center">{tr("You can close this window.")}</p>
       </CandidatePanel>
     </CandidateShell>

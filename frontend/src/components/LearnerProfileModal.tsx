@@ -9,6 +9,7 @@ import type { LearnerDetails } from "@/api/details";
 import { tr } from "@/i18n/tr";
 import { dateTime } from "@/api/staff";
 import { trServer } from "@/i18n/serverText";
+import { LearnerIntegritySection } from "@/components/proctoring/LearnerIntegritySection";
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -226,6 +227,8 @@ export function LearnerProfileModal({
             </div>
           )}
         </Section>
+
+        <LearnerIntegritySection learnerId={learner.id} Section={Section} />
 
         <Section title={tr("Progress")}>
           {!progress ? (

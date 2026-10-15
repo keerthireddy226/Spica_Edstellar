@@ -49,6 +49,7 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
 import {
@@ -568,7 +569,7 @@ export function PracticeTests() {
   }
 
   // A candidate's result goes to the recruiter, not to a score screen.
-  if (summary && isCandidate) return <CandidateFinished />;
+  if (summary && isCandidate) return <CandidateFinished sessionId={sessionId} />;
 
   // Takes priority over the running-session view below — completing a test
   // never clears sessionId/items (Back-to-exams needs them to still be
@@ -647,6 +648,7 @@ export function PracticeTests() {
         {summary.failedCount > 0 && (
           <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
         )}
+        <IntegrityResultNote sessionId={sessionId} />
         <div className="flex items-center gap-3 w-full">
           <Button variant="secondary" onClick={resetToExamList} className="flex-1">
             {t("practiceTests.backToExams")}

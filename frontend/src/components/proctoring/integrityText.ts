@@ -1,0 +1,58 @@
+import { tr } from "@/i18n/tr";
+
+// What each risk reason means, for the reviewer. The count shows next to it.
+export const REASON_TEXT: Record<string, () => string> = {
+  tab_hidden: () => tr("Left the test tab"),
+  window_blur: () => tr("Test window lost focus"),
+  fullscreen_exit: () => tr("Left full screen"),
+  paste_blocked: () => tr("Tried to paste"),
+  copy_blocked: () => tr("Tried to copy"),
+  cut_blocked: () => tr("Tried to cut text"),
+  context_menu: () => tr("Opened the right-click menu"),
+  print_screen: () => tr("Pressed a screenshot key"),
+  multi_monitor: () => tr("A second screen was connected"),
+  second_tab: () => tr("The test was open in two tabs"),
+  typing_burst: () => tr("Text appeared without typing"),
+  camera_off: () => tr("Camera turned off"),
+  mic_off: () => tr("Microphone turned off"),
+  devtools: () => tr("Tried to open developer tools"),
+  away_from_camera: () => tr("Snapshots with no face"),
+  multiple_faces: () => tr("Snapshots with more than one face"),
+  extra_person: () => tr("Snapshots with another person"),
+  face_mismatch: () => tr("Snapshots where the face didn't match"),
+  phone_in_view: () => tr("Snapshots with a phone"),
+  no_snapshots: () => tr("No camera snapshots arrived"),
+  face_check_flagged: () => tr("Face checks flagged"),
+  face_check_uncertain: () => tr("Face checks where the face couldn't be confirmed"),
+  face_unconfirmed: () => tr("Snapshots where the face couldn't be confirmed"),
+  face_missing: () => tr("Face checks with no face"),
+  extra_face: () => tr("Face checks with more than one face"),
+  voice_mismatch: () => tr("A different voice answered part of the test"),
+  voice_uncertain: () => tr("Voice match uncertain"),
+  room_scan_missing: () => tr("No room scan"),
+  secure_browser_missing: () => tr("Not taken in Safe Exam Browser"),
+  id_missing: () => tr("No ID check submitted"),
+  id_rejected: () => tr("ID check rejected"),
+  id_pending: () => tr("ID check waiting for review"),
+  manual_identity_check: () => tr("Chose a manual identity check"),
+  terminated: () => tr("Ended by the proctor"),
+  camera_covered: () => tr("Camera covered or dark"),
+  camera_frozen: () => tr("Camera picture froze"),
+  background_speech: () => tr("Talking heard between answers"),
+  screen_share_stopped: () => tr("Stopped sharing the screen"),
+  screen_not_entire: () => tr("Shared a window instead of the entire screen"),
+  looking_away: () => tr("Snapshots looking away from the screen"),
+  video_missing: () => tr("No camera recording"),
+  screen_missing: () => tr("No screen recording"),
+  typing_inconsistent: () => tr("Typing rhythm changed"),
+  typing_uncertain: () => tr("Typing rhythm uncertain"),
+  id_expired: () => tr("ID document has expired"),
+  id_name_mismatch: () => tr("Name on the ID differs from the account"),
+  id_face_differs: () => tr("Face on the ID looks different from the selfie"),
+  id_selfie_not_live: () => tr("Selfie may be a photo or screen"),
+};
+
+export function reasonText(code: string, count: number): string {
+  const label = (REASON_TEXT[code] ?? (() => code))();
+  return count > 1 ? `${label} (×${count})` : label;
+}

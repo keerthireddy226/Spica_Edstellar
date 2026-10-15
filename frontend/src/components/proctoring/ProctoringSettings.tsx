@@ -25,7 +25,7 @@ const GROUPS: { title: () => string; icon: typeof Monitor; flags: { key: Flag; l
     title: () => tr("Browser and device"),
     icon: Monitor,
     flags: [
-      { key: "lockdown", label: () => tr("Lock down the test page"), hint: () => tr("Turns off copy, paste and right-click; records leaving the tab and screenshot keys.") },
+      { key: "lockdown", label: () => tr("Lock down the test page"), hint: () => tr("Turns off copy, paste and right-click; records leaving the tab and screenshot keys. A web page can't block screenshots: on Mac and Linux the browser doesn't even see the key. Use Safe Exam Browser where that matters.") },
       { key: "requireFullscreen", label: () => tr("Require full screen"), hint: () => tr("Leaving full screen is recorded and the learner is asked to return.") },
       { key: "multiMonitorCheck", label: () => tr("Detect a second screen"), hint: () => tr("Works in Chrome and Edge; other browsers can't report it.") },
       { key: "secureBrowser", label: () => tr("Require Safe Exam Browser"), hint: () => tr("Blocks other apps and screenshots at the system level. Learners install it first.") },
