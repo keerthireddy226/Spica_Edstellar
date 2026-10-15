@@ -19,7 +19,7 @@ import { embedFace, cosineSimilarity, bufferToEmbedding, embeddingToBuffer, MATC
 import { detectObjects } from "./objects.js";
 import { mediaPath, removeMedia, saveMedia } from "./storage.js";
 import { analyzeSession } from "./analyze.js";
-import { liveAlert } from "./alerts.js";
+import { defaultAlertEmail, liveAlert } from "./alerts.js";
 import { BASELINE_MIN_SECONDS, speechSeconds } from "./voiceCheck.js";
 import {
   PROCTORED_SESSION_TYPES,
@@ -675,7 +675,7 @@ proctoringRouter.get("/alert-preferences", requireAuth, async (req: AuthedReques
   try {
     if (!REVIEWER_ROLES.includes(req.user!.role)) return res.status(403).json({ error: "forbidden" });
     const r = (await pool.query(`SELECT integrity_alerts FROM user_notification_prefs WHERE user_id = $1`, [req.user!.id])).rows[0];
-    res.json({ email: r?.integrity_alerts ?? "instant" });
+    res.json({ email: r?.integrity_alerts ?? defaultAlertEmail(req.user!.role) });
   } catch (err) {
     next(err);
   }

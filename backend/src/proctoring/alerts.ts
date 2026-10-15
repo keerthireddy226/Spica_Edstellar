@@ -88,9 +88,9 @@ interface Recipient {
 }
 
 // Who reviews this learner's tests. An organization's learner: its Org
-// Admins, the Edstellar Admins who manage it with Score review, and for a
-// candidate the recruiter who sent the invitation. An individual learner:
-// the Super Admins and every Admin with Score review.
+// Admins, the Edstellar Admins who manage it with Score review, the Super
+// Admins, and for a candidate the recruiter who sent the invitation. An
+// individual learner: the Super Admins and every Admin with Score review.
 export async function integrityRecipients(userId: string): Promise<Recipient[]> {
   const u = (
     await pool.query(
@@ -107,6 +107,8 @@ export async function integrityRecipients(userId: string): Promise<Recipient[]> 
       [[u.managed_by, u.account_manager_id].filter(Boolean)],
     );
     for (const r of managers.rows) ids.add(r.id);
+    const supers = await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`);
+    for (const r of supers.rows) ids.add(r.id);
     if (u.role === "candidate") {
       const inviter = (
         await pool.query(
@@ -128,10 +130,15 @@ export async function integrityRecipients(userId: string): Promise<Recipient[]> 
   return rows.rows.filter((r) => REVIEW_PATH[r.role]);
 }
 
-// Email each alert as it happens unless the reviewer chose a daily summary.
-async function emailsInstantly(userId: string): Promise<boolean> {
-  const r = (await pool.query(`SELECT integrity_alerts FROM user_notification_prefs WHERE user_id = $1`, [userId])).rows[0];
-  return (r?.integrity_alerts ?? "instant") === "instant";
+// A Super Admin hears about every organization, so their emails default to
+// one daily summary; everyone else gets each alert as it happens.
+export function defaultAlertEmail(role: string): "instant" | "daily" {
+  return role === "super_admin" ? "daily" : "instant";
+}
+
+async function emailsInstantly(r: Recipient): Promise<boolean> {
+  const pref = (await pool.query(`SELECT integrity_alerts FROM user_notification_prefs WHERE user_id = $1`, [r.id])).rows[0];
+  return (pref?.integrity_alerts ?? defaultAlertEmail(r.role)) === "instant";
 }
 
 async function sessionLabel(sessionId: string): Promise<{ userId: string; who: string; completed: boolean } | null> {
@@ -160,7 +167,7 @@ export async function sendLiveAlert(sessionId: string, kind: LiveAlertKind): Pro
       body,
       link: `${REVIEW_PATH[r.role]}?session=${sessionId}`,
       dedupeKey: `integrity-live:${sessionId}:${kind}:${r.id}`,
-      email: await emailsInstantly(r.id),
+      email: await emailsInstantly(r),
       emailSubject: title,
     }).catch((err) => console.error("integrity alert failed:", err));
   }
@@ -190,7 +197,7 @@ export async function notifyFlagged(sessionId: string, riskLevel: string, reason
       body,
       link: `${REVIEW_PATH[r.role]}?session=${sessionId}`,
       dedupeKey: `integrity:${sessionId}:${r.id}`,
-      email: await emailsInstantly(r.id),
+      email: await emailsInstantly(r),
       emailSubject: title,
     }).catch((err) => console.error("integrity notification failed:", err));
   }
@@ -200,10 +207,10 @@ export async function notifyFlagged(sessionId: string, riskLevel: string, reason
 // alerts and flagged tests since their last summary.
 export async function sendIntegrityDigests(): Promise<number> {
   const due = await pool.query(
-    `SELECT p.user_id, u.role,
-       (SELECT max(created_at) FROM notifications d WHERE d.user_id = p.user_id AND d.kind = 'integrity_digest') AS last_digest
-     FROM user_notification_prefs p JOIN users u ON u.id = p.user_id
-     WHERE p.integrity_alerts = 'daily' AND u.deleted_at IS NULL`,
+    `SELECT u.id AS user_id, u.role,
+       (SELECT max(created_at) FROM notifications d WHERE d.user_id = u.id AND d.kind = 'integrity_digest') AS last_digest
+     FROM users u LEFT JOIN user_notification_prefs p ON p.user_id = u.id
+     WHERE u.deleted_at IS NULL AND (p.integrity_alerts = 'daily' OR (p.integrity_alerts IS NULL AND u.role = 'super_admin'))`,
   );
   let sent = 0;
   for (const row of due.rows) {
