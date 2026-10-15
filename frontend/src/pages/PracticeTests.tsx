@@ -19,6 +19,7 @@ import {
   ListChecks,
   Layers,
   Award,
+  PlayCircle,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -46,6 +47,9 @@ import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
+import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { TestDemo } from "@/components/pretest/TestDemo";
+import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -65,6 +69,11 @@ interface CachedAnswer {
   audioMimeType?: string;
   audioBlobUrl?: string;
   durationMs?: number;
+}
+
+// "About 35 minutes" -> "35", for the demo's time card.
+function productMinutes(description: string): string | null {
+  return description.match(/(\d+)\s*min/)?.[1] ?? null;
 }
 
 // The real Versant exam products. Durations/skills sourced directly from
@@ -116,6 +125,10 @@ export function PracticeTests() {
   }, [pendingExamId, faceEnrolled, navigate, location.pathname, location.search]);
   // Set by a mid-session spoof detection — re-shows the gate, session stays intact.
   const [requireReverify, setRequireReverify] = useState(false);
+  // The exam whose device check and demo are done; the face check comes next.
+  const [preTestDoneFor, setPreTestDoneFor] = useState<string | null>(null);
+  // "Watch the test demo" from the exam list, outside any test.
+  const [showDemo, setShowDemo] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [exams, setExams] = useState<ExamSummary[] | null>(null);
@@ -230,6 +243,7 @@ export function PracticeTests() {
       Object.fromEntries(res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : []))),
     );
     setSummary(null);
+    reportHeldCheck(res.sessionId);
 
     const isFreshStart = res.items.every((item) => !item.attempted);
     setShowExamOverview(isFreshStart);
@@ -518,8 +532,18 @@ export function PracticeTests() {
     return <FaceCheck mode="verify" purpose="practice_test" onComplete={() => setRequireReverify(false)} />;
   }
 
-  // A Start/Retake was clicked — gate the actual session start behind a
-  // face check (same pattern as Modules/Placement), then clear it either way.
+  // A Start/Retake was clicked: the device check and demo come first, then
+  // the face check (same pattern as Modules/Placement) gates the session start.
+  if (pendingExamId && preTestDoneFor !== pendingExamId && selectedProduct) {
+    return (
+      <PreTestFlow
+        kind={selectedProduct}
+        minutes={productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`))}
+        onBack={() => setPendingExamId(null)}
+        onReady={() => setPreTestDoneFor(pendingExamId)}
+      />
+    );
+  }
   if (pendingExamId) {
     if (faceEnrolled === null || faceEnrolled === false) return null; // enrollment redirect effect above handles the false case
     return (
@@ -915,6 +939,18 @@ export function PracticeTests() {
     return <p className="text-sm text-muted">{t("modules.starting")}</p>;
   }
 
+  if (showDemo && selectedProduct) {
+    return (
+      <TestDemo
+        kind={selectedProduct}
+        needs={deviceNeedsFor(selectedProduct)}
+        minutes={productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`))}
+        doneLabel={tr("Close the demo")}
+        onDone={() => setShowDemo(false)}
+      />
+    );
+  }
+
   // --- Exam (set) picker for the selected product ---
   if (selectedProduct) {
     const Icon = PRODUCT_ICON[selectedProduct as (typeof VERSANT_PRODUCTS)[number]];
@@ -938,6 +974,13 @@ export function PracticeTests() {
               : undefined
           }
         />
+
+        <button
+          onClick={() => setShowDemo(true)}
+          className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
+        >
+          <PlayCircle size={16} /> {tr("Watch the test demo")}
+        </button>
 
         {loadingExams ? (
           <p className="text-sm text-muted">{t("modules.starting")}</p>
@@ -968,7 +1011,14 @@ export function PracticeTests() {
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>
                   )}
                 </div>
-                <Button onClick={() => setPendingExamId(exam.id)} className="w-full">
+                <Button
+                  onClick={() => {
+                    // Every Start or Retake gets its own check.
+                    setPreTestDoneFor(null);
+                    setPendingExamId(exam.id);
+                  }}
+                  className="w-full"
+                >
                   {exam.completed ? t("practiceTests.retake") : t("practiceTests.startExam")}
                 </Button>
               </div>

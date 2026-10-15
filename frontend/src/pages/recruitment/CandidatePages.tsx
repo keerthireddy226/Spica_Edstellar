@@ -12,6 +12,7 @@ import { startExamSession } from "@/api/practiceTests";
 import { getCandidateAssessment, getInvite, startInvite, type CandidateAssessment, type InviteInfo } from "@/api/recruitment";
 import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
+import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 
 // The emailed link: what the assessment is, then signing the candidate in.
 export function AssessInvite() {
@@ -131,6 +132,8 @@ export function CandidateAssessmentPage() {
   const [started, setStarted] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
+  // "I'm ready" opens the device check and demo; the test starts after them.
+  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     getCandidateAssessment()
@@ -178,6 +181,14 @@ export function CandidateAssessmentPage() {
       </CandidateShell>
     );
   }
+  if (preparing && !started) {
+    return (
+      <div className="app-surface min-h-screen px-4 sm:px-6 py-10">
+        {/* One attempt only: always a fresh check, never a remembered one. */}
+        <PreTestFlow kind={a.testKind} minutes={TEST_MINUTES[a.testKind]} allowRemembered={false} onBack={() => setPreparing(false)} onReady={() => !busy && begin()} />
+      </div>
+    );
+  }
   if (started && a.testKind === "placement") return <PlacementTest />;
   if (started && searchParams.get("session")) {
     return (
@@ -208,7 +219,7 @@ export function CandidateAssessmentPage() {
             </li>
           ))}
         </ul>
-        <Button onClick={begin} disabled={busy}>
+        <Button onClick={() => setPreparing(true)} disabled={busy}>
           {busy ? tr("Starting...") : tr("I'm ready")}
         </Button>
       </CandidatePanel>

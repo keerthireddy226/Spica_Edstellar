@@ -108,6 +108,7 @@ const EVENT_TEXT: Record<string, () => string> = {
   background_speech: () => tr("Talking heard"),
   screen_share_stopped: () => tr("Screen sharing stopped"),
   screen_not_entire: () => tr("Shared a window, not the screen"),
+  system_check: () => tr("Device check passed"),
 };
 
 const DIRECTION_TEXT: Record<string, () => string> = {

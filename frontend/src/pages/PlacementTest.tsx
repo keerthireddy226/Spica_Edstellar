@@ -20,6 +20,8 @@ import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
+import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { reportHeldCheck } from "@/lib/systemCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
@@ -69,6 +71,9 @@ export function PlacementTest() {
   // Resuming an in-progress session skips the gate — nobody new could take
   // over mid-test just by reloading the page.
   const [faceChecked, setFaceChecked] = useState(false);
+  // Device check and demo, before the face check on a fresh start. A
+  // candidate already did them on the assessment page.
+  const [preTestDone, setPreTestDone] = useState(isCandidate);
   // Set by a mid-test spoof detection — re-shows the same gate, not a new screen.
   const [requireReverify, setRequireReverify] = useState(false);
 
@@ -95,6 +100,7 @@ export function PlacementTest() {
       .then((res) => {
         setSessionId(res.sessionId);
         setTestCode(res.testCode ?? null);
+        reportHeldCheck(res.sessionId);
         setItems(res.items);
         questionShownAtRef.current = Date.now();
         // A resumed session's history already includes every previously
@@ -235,6 +241,14 @@ export function PlacementTest() {
     return (
       <div className="app-surface min-h-screen flex items-center justify-center px-4">
         <p className="text-sm text-muted">{t("placementTest.loading")}</p>
+      </div>
+    );
+  }
+
+  if (!readyToLoadSession && !preTestDone) {
+    return (
+      <div className="app-surface min-h-screen px-4 py-10">
+        <PreTestFlow kind="placement" minutes="30–45" onBack={() => navigate(-1)} onReady={() => setPreTestDone(true)} />
       </div>
     );
   }

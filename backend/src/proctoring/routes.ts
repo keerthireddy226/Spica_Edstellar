@@ -69,6 +69,7 @@ const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   screen_share_stopped: "high",
   screen_not_entire: "warn",
   typing_profile: "info",
+  system_check: "info",
 };
 
 function decode(base64: string): Buffer {
