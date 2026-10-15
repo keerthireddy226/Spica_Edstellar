@@ -86,6 +86,48 @@ describe("gradeAttempt", () => {
     });
   });
 
+  // Real answer keys from the item bank, which are spelt the American way.
+  describe("British, Indian and American spellings", () => {
+    it.each([
+      ["My neighbor walks to school.", "My neighbour walks to school"],
+      ["My colleague likes the color blue.", "my colleague likes the colour blue"],
+      ["She apologized for the late delivery.", "She apologised for the late delivery."],
+      ["She was criticized for the vagueness of the proposal.", "She was criticised for the vagueness of the proposal"],
+      ["The tribunal ruled in the plaintiff's favor, though damages were reduced.", "The tribunal ruled in the plaintiff's favour, though damages were reduced."],
+      ["My neighbor negotiated a better price for the flat.", "My neighbour negotiated a better price for the flat"],
+    ])("dictation key %j accepts %j", async (key, answer) => {
+      const result = await gradeAttempt("dictation", { exact: key }, {}, "B1", null, answer);
+      expect(result.correct).toBe(true);
+    });
+
+    it("accepts the American spelling against a British key", async () => {
+      const result = await gradeAttempt("dictation", { exact: "The organisation travelled to the centre." }, {}, "B1", null, "the organization traveled to the center");
+      expect(result.correct).toBe(true);
+    });
+
+    it("still marks a different word wrong", async () => {
+      const result = await gradeAttempt("dictation", { exact: "I have four meetings." }, {}, "B1", null, "I have for meetings");
+      expect(result.correct).toBe(false);
+    });
+
+    it("accepts a spelling variant in sentence completion", async () => {
+      const result = await gradeAttempt("sentence_completion", { acceptable_answers: ["organize"] }, {}, "B1", null, "organise");
+      expect(result.correct).toBe(true);
+    });
+
+    it("doesn't count a spelling variant as a typing mistake", async () => {
+      const result = await gradeAttempt(
+        "typing",
+        {},
+        { text: "The organization analyzed the program and canceled the meeting." },
+        "B1",
+        null,
+        "The organisation analysed the programme and cancelled the meeting.",
+      );
+      expect(result.score).toBe(1);
+    });
+  });
+
   it("falls back to pending for an item type with no grading rule at all", async () => {
     const result = await gradeAttempt("some_unhandled_type", {}, {}, "A1", null, "anything");
     expect(result).toEqual({ status: "pending", correct: null, score: null, method: null });

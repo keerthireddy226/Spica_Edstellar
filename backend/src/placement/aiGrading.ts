@@ -1,5 +1,6 @@
 // Rubric-based grading (Gemini), always from text — its own audio-quality judgment was tested and found to hallucinate. Fails closed: returns null, treated as "no verdict yet."
 import { GoogleGenAI } from "@google/genai";
+import { canonicalSpelling } from "./spelling.js";
 
 export const GEMINI_GRADING_MODEL = "gemini-3.5-flash-lite";
 
@@ -36,6 +37,10 @@ function levelStandard(cefrLevel: string | null): string {
   }
   return `This item is tagged ${level} — basic clarity is enough; simple errors are expected and should not be penalized heavily.`;
 }
+
+// Learners write British, Indian or American English; none of them is wrong.
+const SPELLING_RULE =
+  "Spelling: British, American, Indian and other standard English spellings are all correct (organisation/organization, colour/color, travelled/traveled, learnt/learned). Never count a standard spelling variant as a mistake, and don't require one variety to be used consistently.";
 
 // One task description per AI-graded type — "answered well" means something different per type.
 function buildTask(
@@ -102,7 +107,7 @@ export async function gradeWithAI(
   const ai = getClient();
   if (!ai) return null;
 
-  const prompt = `${task}\n\n${levelStandard(cefrLevel)}\n\nLearner's response: "${responseText}"\n\nGive a score from 0 (fails the task) to 1 (fully meets it) and a one-sentence reason.`;
+  const prompt = `${task}\n\n${levelStandard(cefrLevel)}\n\n${SPELLING_RULE}\n\nLearner's response: "${responseText}"\n\nGive a score from 0 (fails the task) to 1 (fully meets it) and a one-sentence reason.`;
 
   let parsed: { score?: unknown; reason?: unknown };
   try {
@@ -134,7 +139,8 @@ export async function gradeWithAI(
 
 // "Typing" has a definite target text — word-level diff is cheaper/more reliable than AI judging it.
 export function scoreTypingAccuracy(target: string, response: string): number {
-  const norm = (s: string) => s.trim().toLowerCase().replace(/[.,!?;:]/g, "").replace(/\s+/g, " ");
+  // A habitual British or American spelling isn't a typing mistake.
+  const norm = (s: string) => canonicalSpelling(s.trim().toLowerCase().replace(/[.,!?;:]/g, "").replace(/\s+/g, " "));
   const a = norm(target).split(" ").filter(Boolean);
   const b = norm(response).split(" ").filter(Boolean);
   if (a.length === 0) return 0;

@@ -1,5 +1,6 @@
 import { gradeWithAI, scoreTypingAccuracy, AI_GRADED_TYPES } from "./aiGrading.js";
 import { passThresholdForLevel } from "./cefr.js";
+import { canonicalSpelling } from "./spelling.js";
 
 // Exact-text grading for items with a definite answer, AI rubric grading otherwise. `correct` = score >= pass bar.
 export type GradeResult = {
@@ -9,12 +10,15 @@ export type GradeResult = {
   method: "exact-match" | "text-diff" | "ai-text" | null;
 };
 
+// British, Indian and American spellings of a word count as the same answer.
 function normalize(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/[.,!?;:]+$/g, "")
-    .replace(/\s+/g, " ");
+  return canonicalSpelling(
+    s
+      .trim()
+      .toLowerCase()
+      .replace(/[.,!?;:]+$/g, "")
+      .replace(/\s+/g, " "),
+  );
 }
 
 const PENDING: GradeResult = { status: "pending", correct: null, score: null, method: null };
