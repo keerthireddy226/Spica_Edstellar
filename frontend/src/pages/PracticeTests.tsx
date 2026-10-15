@@ -123,6 +123,7 @@ export function PracticeTests() {
   // the score report so a learner can tell which test they just took.
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loadingExams, setLoadingExams] = useState(false);
+  const activeTestId = exams?.find((e) => e.id === activeExamId)?.testId ?? null;
 
   function openProduct(productId: string) {
     setSelectedProduct(productId);
@@ -549,7 +550,10 @@ export function PracticeTests() {
           <CheckCircle2 size={32} />
         </div>
         <h1 className="font-display font-bold text-2xl text-ink">{t("practiceTests.scoreReport.title")}</h1>
-        {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} />}
+        <div className="flex flex-wrap justify-center gap-2 -mt-2">
+          {activeTestId && <TestIdTag code={activeTestId} />}
+          {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} label={tr("Attempt ID")} />}
+        </div>
         {selectedProduct && (
           <p className="text-sm text-muted -mt-3">
             {t("practiceTests.scoreReport.testType")}:{" "}
@@ -640,7 +644,10 @@ export function PracticeTests() {
           <ClipboardCheck size={26} strokeWidth={2} />
         </span>
         <h1 className="font-display font-bold text-xl text-ink">{t("practiceTests.overview.title")}</h1>
-        {testCode && <TestIdTag code={testCode} />}
+        <div className="flex flex-wrap justify-center gap-2">
+          {activeTestId && <TestIdTag code={activeTestId} />}
+          {testCode && <TestIdTag code={testCode} label={tr("Attempt ID")} />}
+        </div>
         <p className="text-sm text-muted -mt-2">{t("practiceTests.overview.subtitle")}</p>
         <div className="w-full flex flex-col gap-2 text-left">
           {partBoundaries.map((part, i) => (
@@ -706,7 +713,8 @@ export function PracticeTests() {
             <span />
           )}
           <span className="text-xs font-mono text-muted">
-            {testCode && <span className="mr-3">{tr("Test ID")} {testCode}</span>}
+            {activeTestId && <span className="mr-3">{tr("Test ID")} {activeTestId}</span>}
+            {testCode && <span className="hidden sm:inline mr-3">{tr("Attempt ID")} {testCode}</span>}
             {t("placementTest.progress", { current: index + 1, total: items.length })}
           </span>
         </div>
@@ -952,6 +960,9 @@ export function PracticeTests() {
                   <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <span className="font-display font-bold text-base text-ink">{exam.name || `Set ${i + 1}`}</span>
                     <span className="text-sm text-muted">{t("practiceTests.questionsCount", { count: exam.itemCount })}</span>
+                    <span className="self-start text-[11px] font-mono font-semibold text-ink bg-paper-warm border border-rule rounded-pill px-2 py-0.5">
+                      {tr("Test ID")} {exam.testId}
+                    </span>
                   </div>
                   {exam.completed && (
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>

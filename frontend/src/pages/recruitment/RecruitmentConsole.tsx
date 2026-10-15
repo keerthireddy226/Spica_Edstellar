@@ -182,7 +182,14 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
         <Panel title={tr("Result")}>
           {a.result ? <ResultDetails result={a.result} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
           <p className="text-xs text-muted">
-            {[TEST_KIND_LABEL[a.test_kind](), a.exam_name, a.test_code ? tr("Test ID {{c}}", { c: a.test_code }) : null].filter(Boolean).join(" · ")}
+            {[
+              TEST_KIND_LABEL[a.test_kind](),
+              a.exam_name,
+              a.exam_test_id ? tr("Test ID {{c}}", { c: a.exam_test_id }) : null,
+              a.test_code ? tr("Attempt ID {{c}}", { c: a.test_code }) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </Panel>
         <Panel

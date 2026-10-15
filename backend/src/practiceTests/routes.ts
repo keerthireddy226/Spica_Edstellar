@@ -151,7 +151,7 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
     }
 
     const result = await pool.query(
-      `SELECT e.id, e.code, e.name,
+      `SELECT e.id, e.code, e.name, e.test_id,
          (SELECT count(*)::int FROM exam_parts ep JOIN items i ON i.exam_part_id = ep.id WHERE ep.exam_id = e.id) AS item_count,
          EXISTS (
            SELECT 1 FROM sessions s
@@ -169,7 +169,7 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
       [`${prefix}-%`, req.user!.id],
     );
     res.json({
-      exams: result.rows.map((r) => ({ id: r.id, code: r.code, name: r.name, itemCount: r.item_count, completed: r.completed })),
+      exams: result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed })),
     });
   } catch (err) {
     next(err);

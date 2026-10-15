@@ -159,6 +159,7 @@ export interface AssessmentReport extends Omit<CandidateRow, "invited_by_name"> 
   department: string | null;
   location: string | null;
   exam_name: string | null;
+  exam_test_id: string | null;
   integrity_reasons: { code: string; count: number; points: number }[] | null;
   integrity_reviewed_at: string | null;
   identity_status: "pending" | "verified" | "rejected" | null;

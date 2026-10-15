@@ -645,7 +645,7 @@ proctoringRouter.get("/reviews", requireAuth, async (req: AuthedRequest, res, ne
          si.terminated_at, si.reviewed_at, si.review_note, s.started_at, s.completed_at, s.test_code,
          u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
-         e.name AS exam_name, concat_ws(' ', r.first_name, r.last_name) AS reviewer
+         e.name AS exam_name, e.test_id AS exam_test_id, concat_ws(' ', r.first_name, r.last_name) AS reviewer
        FROM session_integrity si
        JOIN sessions s ON s.id = si.session_id
        JOIN users u ON u.id = si.user_id
@@ -691,7 +691,7 @@ proctoringRouter.get("/reviews/:sessionId", requireAuth, async (req: AuthedReque
     const [session, events, media, faceChecks, voice, identity, placement] = await Promise.all([
       pool.query(
         `SELECT s.started_at, s.completed_at, s.session_type, s.test_code, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
-           CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, e.name AS exam_name,
+           CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, e.name AS exam_name, e.test_id AS exam_test_id,
            (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id) AS answers
          FROM sessions s JOIN users u ON u.id = s.user_id JOIN tenants t ON t.id = u.tenant_id
          LEFT JOIN exams e ON e.id::text = s.composition->>'examId'

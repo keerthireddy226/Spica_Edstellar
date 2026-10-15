@@ -9,6 +9,8 @@ export interface ExamProduct {
 export interface ExamSummary {
   id: string;
   code: string;
+  // Fixed ID of this test set, e.g. "SL-001".
+  testId: string;
   name: string;
   itemCount: number;
   completed: boolean;

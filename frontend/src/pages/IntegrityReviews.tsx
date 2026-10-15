@@ -315,7 +315,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
       title={d.session.name.trim() || d.session.email}
       subtitle={[
         d.session.exam_name ?? (d.session.session_type === "placement" ? tr("Placement test") : tr("Mock exam")),
-        d.session.test_code ? tr("Test ID {{c}}", { c: d.session.test_code }) : null,
+        d.session.test_code ? tr("Attempt ID {{c}}", { c: d.session.test_code }) : null,
         d.session.org_name,
       ]
         .filter(Boolean)
@@ -761,7 +761,7 @@ export function IntegrityReviews() {
 
       {tab === "queue" && (
         <div className="flex flex-col gap-4">
-          <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email or Test ID")} />
+          <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email or Attempt ID")} />
           <FilterPills
             value={status}
             onChange={setStatus}
