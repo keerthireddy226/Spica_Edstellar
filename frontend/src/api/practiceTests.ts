@@ -10,6 +10,8 @@ export interface CatalogueTestType {
   cefrMin: string;
   cefrMax: string;
   durationMinutes: number;
+  // Delivery formats and their times, e.g. paper 120 min, computer 60-90 min.
+  formats: { kind: "paper" | "computer" | "online" | "face_to_face"; min: number; max: number }[];
   status: "live" | "coming_soon" | "retired";
   setCount: number;
   allowed: boolean;

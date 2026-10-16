@@ -7,22 +7,7 @@
   "parts": [
     {
       "sort_order": 1,
-      "label": "Task 1: Short message",
-      "item_type_id": "lc_write_task1",
-      "items": [
-        {
-          "cefr_level": "B1",
-          "topic": "everyday life",
-          "content": {
-            "prompt": "Last weekend you stayed with your friend Camila Rocha at her flat in Porto Alegre. After you got home, you realised you had left your jacket there. Write a message to Camila (60-100 words). In your message:\n- thank her for having you to stay and say what you enjoyed most\n- describe the jacket and say where you think you left it\n- ask her to keep it or send it to you, and offer to pay for the cost"
-          },
-          "answer_set": {}
-        }
-      ]
-    },
-    {
-      "sort_order": 2,
-      "label": "Task 2: Report, article or review",
+      "label": "Writing: Report, article or review",
       "item_type_id": "lc_write_task2",
       "items": [
         {

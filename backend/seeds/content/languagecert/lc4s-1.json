@@ -1573,22 +1573,7 @@
     },
     {
       "sort_order": 10,
-      "label": "Task 1: Short message",
-      "item_type_id": "lc_write_task1",
-      "items": [
-        {
-          "cefr_level": "B1",
-          "topic": "work",
-          "content": {
-            "prompt": "Last weekend you borrowed a camera from your colleague, Daniel, for a short trip. Unfortunately, the camera was slightly damaged while you were away. Write an email to Daniel (60-100 words).\nIn your email:\n- thank him for lending you the camera\n- explain what happened to it\n- suggest what you will do about the damage"
-          },
-          "answer_set": {}
-        }
-      ]
-    },
-    {
-      "sort_order": 11,
-      "label": "Task 2: Report, article or review",
+      "label": "Writing: Report, article or review",
       "item_type_id": "lc_write_task2",
       "items": [
         {
@@ -1602,7 +1587,7 @@
       ]
     },
     {
-      "sort_order": 12,
+      "sort_order": 11,
       "label": "Part 1: Personal questions",
       "item_type_id": "lc_speak_personal",
       "items": [
@@ -1633,7 +1618,7 @@
       ]
     },
     {
-      "sort_order": 13,
+      "sort_order": 12,
       "label": "Part 2: Discussion",
       "item_type_id": "lc_speak_discussion",
       "items": [
@@ -1655,7 +1640,7 @@
       ]
     },
     {
-      "sort_order": 14,
+      "sort_order": 13,
       "label": "Part 3: Presenting a topic",
       "item_type_id": "lc_speak_presentation",
       "items": [
@@ -1675,7 +1660,7 @@
       ]
     },
     {
-      "sort_order": 15,
+      "sort_order": 14,
       "label": "Part 3: Follow-up questions",
       "item_type_id": "lc_speak_followup",
       "items": [

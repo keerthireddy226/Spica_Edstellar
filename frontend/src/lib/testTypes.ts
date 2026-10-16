@@ -48,9 +48,42 @@ export function testTypeName(tt: Pick<CatalogueTestType, "id" | "name">, t: TFun
   return NAMES[tt.id]?.() ?? tt.name;
 }
 
+const FORMAT_LABEL: Record<CatalogueTestType["formats"][number]["kind"], () => string> = {
+  paper: () => tr("Paper"),
+  computer: () => tr("Computer"),
+  online: () => tr("Online"),
+  face_to_face: () => tr("Face to face"),
+};
+
+function minutesText(m: number): string {
+  if (m < 60) return tr("{{m}} min", { m });
+  const h = Math.floor(m / 60);
+  return m % 60 === 0 ? tr("{{h}} h", { h }) : tr("{{h}} h {{m}} min", { h, m: m % 60 });
+}
+
+// "2 h", "1 h-1 h 30 min", "10-14 min".
+function rangeText(min: number, max: number): string {
+  if (min === max) return minutesText(min);
+  return max < 60 ? tr("{{from}}-{{to}} min", { from: min, to: max }) : `${minutesText(min)}-${minutesText(max)}`;
+}
+
+// The test's length: per delivery format where the catalogue lists them.
+export function testTypeTime(tt: CatalogueTestType): string {
+  if (!tt.formats?.length) return minutesText(tt.durationMinutes);
+  const distinct = new Set(tt.formats.map((f) => `${f.min}-${f.max}`));
+  // Same time in every format: just the time.
+  if (distinct.size === 1) return rangeText(tt.formats[0].min, tt.formats[0].max);
+  return tt.formats.map((f) => `${FORMAT_LABEL[f.kind]()} ${rangeText(f.min, f.max)}`).join(" · ");
+}
+
+// Short form for the card's badge: the first format's time.
+export function testTypeBadgeTime(tt: CatalogueTestType): string {
+  return tt.formats?.length ? rangeText(tt.formats[0].min, tt.formats[0].max) : minutesText(tt.durationMinutes);
+}
+
 export function testTypeDescription(tt: CatalogueTestType, t: TFunction): string {
   if (VERSANT_IDS.has(tt.id)) return t(`practiceTests.versantProduct.${tt.id}Desc`);
-  return tr("{{skills}} · {{m}} min", { skills: tt.skills.map((s) => t(`skills.${s}`)).join(", "), m: tt.durationMinutes });
+  return `${tt.skills.map((s) => t(`skills.${s}`)).join(", ")} · ${testTypeTime(tt)}`;
 }
 
 export function testTypeIcon(id: string): LucideIcon {

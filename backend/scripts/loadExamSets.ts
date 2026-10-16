@@ -24,6 +24,11 @@ interface SetFile {
 
 const DIFFICULTY: Record<string, number> = { A1: 0.15, A2: 0.3, B1: 0.5, B2: 0.65, C1: 0.8, C2: 0.92 };
 const PIPELINE = "lc-starter-v1";
+// A test whose time per question differs from the question type's default:
+// LanguageCert's A1-B1 Reading has 40 minutes (its A1-C2 Reading 70).
+const TIMER_OVERRIDES: Record<string, Record<string, number>> = {
+  lcListeningReadingLower: { lc_read_short: 45, lc_read_cloze: 260, lc_read_gap: 30, lc_read_long: 540 },
+};
 
 const apply = process.argv.includes("--apply");
 const files = process.argv.slice(2).filter((a) => !a.startsWith("--"));
@@ -56,9 +61,20 @@ for (const file of files) {
       ]);
       for (const [i, item] of part.items.entries()) {
         await client.query(
-          `INSERT INTO items (item_type_id, content, answer_set, cefr_level, difficulty, topic, status, pool, pipeline_version, exam_part_id, exam_order)
-           VALUES ($1, $2, $3, $4, $5, $6, 'approved', 'exam', $7, $8, $9)`,
-          [part.item_type_id, JSON.stringify(item.content), JSON.stringify(item.answer_set), item.cefr_level, DIFFICULTY[item.cefr_level] ?? 0.5, item.topic, PIPELINE, p.rows[0].id, i + 1],
+          `INSERT INTO items (item_type_id, content, answer_set, cefr_level, difficulty, topic, status, pool, pipeline_version, exam_part_id, exam_order, timer_seconds)
+           VALUES ($1, $2, $3, $4, $5, $6, 'approved', 'exam', $7, $8, $9, $10)`,
+          [
+            part.item_type_id,
+            JSON.stringify(item.content),
+            JSON.stringify(item.answer_set),
+            item.cefr_level,
+            DIFFICULTY[item.cefr_level] ?? 0.5,
+            item.topic,
+            PIPELINE,
+            p.rows[0].id,
+            i + 1,
+            TIMER_OVERRIDES[set.exam.test_type_id]?.[part.item_type_id] ?? null,
+          ],
         );
       }
     }

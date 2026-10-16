@@ -22,7 +22,7 @@ import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
-import { familyHeading, familyNote, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
+import { familyHeading, familyNote, testTypeBadgeTime, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import {
   getProducts,
   getExamsForProduct,
@@ -967,7 +967,6 @@ export function PracticeTests() {
   // --- Exam (set) picker for the selected product ---
   if (selectedProduct) {
     const Icon = testTypeIcon(selectedProduct);
-    const productMins = selectedType?.durationMinutes ?? null;
     const colour = testTypeColour(selectedProduct);
     return (
       <div className="w-full flex flex-col gap-6">
@@ -984,7 +983,7 @@ export function PracticeTests() {
                   { label: tr("Sets"), value: exams.length, icon: ClipboardCheck },
                   { label: tr("Completed"), value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
                   { label: tr("Questions per set"), value: exams[0]?.itemCount ?? "—", icon: ListChecks },
-                  { label: tr("Timing"), value: productMins ? tr("{{m}} min", { m: productMins }) : "—", icon: Clock },
+                  { label: tr("Timing"), value: selectedType ? testTypeBadgeTime(selectedType) : "—", icon: Clock },
                 ]
               : undefined
           }
@@ -1112,7 +1111,7 @@ export function PracticeTests() {
                   </div>
                   <div className="relative flex items-center gap-2 mt-auto">
                     <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
-                      <Clock size={11} /> {tr("{{m}} min", { m: tt.durationMinutes })}
+                      <Clock size={11} /> {testTypeBadgeTime(tt)}
                     </span>
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
                       {tt.cefrMin}-{tt.cefrMax}

@@ -10,6 +10,8 @@ export interface CatalogueTestType {
   cefrMin: string;
   cefrMax: string;
   durationMinutes: number;
+  // Delivery formats and their times (paper, computer, online, face_to_face).
+  formats: { kind: string; min: number; max: number }[];
   status: "live" | "coming_soon" | "retired";
   setCount: number;
 }
@@ -26,7 +28,7 @@ export interface CatalogueFamily {
 export async function listCatalogue(): Promise<CatalogueFamily[]> {
   const families = await pool.query(`SELECT id, name, publisher FROM exam_families WHERE active ORDER BY sort_order`);
   const types = await pool.query(
-    `SELECT tt.id, tt.family_id, tt.name, tt.skills, tt.cefr_min, tt.cefr_max, tt.duration_minutes, tt.status,
+    `SELECT tt.id, tt.family_id, tt.name, tt.skills, tt.cefr_min, tt.cefr_max, tt.duration_minutes, tt.formats, tt.status,
        (SELECT count(*)::int FROM exams e WHERE e.test_type_id = tt.id AND e.is_active) AS set_count
      FROM test_types tt WHERE tt.status <> 'retired' ORDER BY tt.sort_order`,
   );
@@ -44,6 +46,7 @@ export async function listCatalogue(): Promise<CatalogueFamily[]> {
         cefrMin: t.cefr_min,
         cefrMax: t.cefr_max,
         durationMinutes: t.duration_minutes,
+        formats: t.formats ?? [],
         status: t.status,
         setCount: t.set_count,
       })),

@@ -7,22 +7,7 @@
   "parts": [
     {
       "sort_order": 1,
-      "label": "Task 1: Short message",
-      "item_type_id": "lc_write_task1",
-      "items": [
-        {
-          "cefr_level": "B1",
-          "topic": "workplace",
-          "content": {
-            "prompt": "You work in a small design office. Your colleague, Tomasz Nowak, has asked to borrow your laptop charger tomorrow because his has stopped working. You will not be in the office tomorrow morning, but you can help in another way. Write an email to Tomasz (60-100 words). In your email:\n- say why you will not be in the office tomorrow morning\n- explain where he can find the charger and what to do with it after he uses it\n- suggest a place nearby where he can buy a new charger"
-          },
-          "answer_set": {}
-        }
-      ]
-    },
-    {
-      "sort_order": 2,
-      "label": "Task 2: Report, article or review",
+      "label": "Writing: Report, article or review",
       "item_type_id": "lc_write_task2",
       "items": [
         {

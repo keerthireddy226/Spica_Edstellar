@@ -90,11 +90,24 @@ an approved `form`. The hard-coded product lists are then read from `test_types`
 | Versant | Writing | W (+L, R) | A1-C2 | fixed |
 | Versant | Professional English | S, L, R, W | A1-C2 | fixed |
 | Versant | English Placement | S, L, R, W | A1-C2 | fixed |
-| LanguageCert | All 4 skills | S, L, R, W | A1-C2 | fixed |
-| LanguageCert | Listening & Reading | L, R | A1-C2 | fixed |
-| LanguageCert | Speaking | S | A1-C2 | fixed |
-| LanguageCert | Writing | W | A1-C2 | fixed |
-| LanguageCert | Listening & Reading (lower levels) | L, R | A1-B1 | fixed |
+| LanguageCert | 4 Skills (the three modules below) | S, L, R, W | A1-C2 | fixed |
+| LanguageCert | Listening & Reading | L, R | A1-C2 | fixed (paper); the computer version is adaptive |
+| LanguageCert | Listening & Reading | L, R | A1-B1 | fixed (paper only) |
+| LanguageCert | Writing: one report, article or review, 200-250 words | W | A1-C2 | fixed |
+| LanguageCert | Speaking: 3 parts | S | A1-C2 | fixed |
+
+Times, from languagecert.org (checked 2026-10-16), stored in `test_types.formats`:
+
+| Test | Paper | Computer / online |
+|---|---|---|
+| Listening & Reading A1-C2 | 2 h (Listening 50 min, Reading 1 h 10) | 1 h-1 h 30 (adaptive, about 58 questions) |
+| Listening & Reading A1-B1 | about 1 h 10 (Listening 30, Reading 40) | paper only |
+| Writing A1-C2 | 30 min, 1 task | 30 min, 1 task |
+| Speaking A1-C2 | 10-14 min | 10-14 min (online, live examiner) |
+| 4 Skills | about 2 h 40-2 h 44 | about 1 h 40-2 h 15 (online: one session) |
+
+The older Writing format (60 minutes, a 60-100 word message plus a 200-250 word
+text) was retired by LanguageCert; Spica follows the current one.
 
 LanguageCert needs question types Spica doesn't have yet. The list below is generic,
 so it can serve other families later. Exact section counts and timings must come from
