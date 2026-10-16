@@ -1,0 +1,39 @@
+{
+  "exam": {
+    "code": "lcwr-2",
+    "test_type_id": "lcWriting",
+    "name": "LanguageCert-style Writing (A1-C2) - Set 2"
+  },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Task 1: Short message",
+      "item_type_id": "lc_write_task1",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "everyday life",
+          "content": {
+            "prompt": "Last weekend you stayed with your friend Camila Rocha at her flat in Porto Alegre. After you got home, you realised you had left your jacket there. Write a message to Camila (60-100 words). In your message:\n- thank her for having you to stay and say what you enjoyed most\n- describe the jacket and say where you think you left it\n- ask her to keep it or send it to you, and offer to pay for the cost"
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Task 2: Report, article or review",
+      "item_type_id": "lc_write_task2",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "technology and learning",
+          "content": {
+            "prompt": "A website for people who want to learn new skills in their free time is asking readers to write reviews of an online course or app they have used. The best reviews will be published on the website. Write your review (200-250 words). In your review you should:\n- say what the course or app teaches and why you chose it\n- describe what was good and what was less helpful about it\n- say what kind of learner would benefit most from it and whether you would recommend it"
+          },
+          "answer_set": {}
+        }
+      ]
+    }
+  ]
+}

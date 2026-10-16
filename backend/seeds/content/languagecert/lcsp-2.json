@@ -1,0 +1,66 @@
+{
+  "exam": { "code": "lcsp-2", "test_type_id": "lcSpeaking", "name": "LanguageCert-style Speaking (A1-C2) - Set 2" },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Part 1: Personal questions",
+      "item_type_id": "lc_speak_personal",
+      "items": [
+        { "cefr_level": "A2", "topic": "free time", "content": { "prompt": "What do you like to do at the weekend?" }, "answer_set": {} },
+        { "cefr_level": "B1", "topic": "plans", "content": { "prompt": "What are you planning to do in the next few months? Tell me about one plan you are looking forward to." }, "answer_set": {} },
+        { "cefr_level": "B2", "topic": "technology", "content": { "prompt": "How has your use of your phone changed over the last few years, and do you think the change has been positive?" }, "answer_set": {} }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Part 2: Discussion",
+      "item_type_id": "lc_speak_discussion",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "community and environment",
+          "content": {
+            "prompt": "Your neighbourhood group has a small amount of money to make the local park more popular. Discuss these ideas and decide which two would be the best use of the money.",
+            "ideas": [
+              "more benches and shaded areas",
+              "a small outdoor gym",
+              "monthly weekend food markets",
+              "better lighting along the paths",
+              "a community vegetable garden"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 3,
+      "label": "Part 3: Presenting a topic",
+      "item_type_id": "lc_speak_presentation",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "travel and culture",
+          "content": {
+            "prompt": "A journey that was important to you",
+            "points": [
+              "Where did you go, and who were you with?",
+              "What happened during the journey?",
+              "Why was it important or memorable for you?"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 4,
+      "label": "Part 3: Follow-up questions",
+      "item_type_id": "lc_speak_followup",
+      "items": [
+        { "cefr_level": "B2", "topic": "travel and culture", "content": { "prompt": "Do you prefer to plan every detail of a trip in advance, or to decide things as you go? Why?" }, "answer_set": {} },
+        { "cefr_level": "C1", "topic": "travel and culture", "content": { "prompt": "Some people argue that travelling abroad is the best way to understand other cultures, while others believe it often gives only a surface impression. What is your view?" }, "answer_set": {} }
+      ]
+    }
+  ]
+}

@@ -2,10 +2,16 @@
 
 export type VoiceGender = "male" | "female";
 
-// Google's en-US Neural2 voice set. item_audio.voice_id stores the gender label, not this name.
-const VOICE_NAME: Record<VoiceGender, string> = {
-  male: "en-US-Neural2-D",
-  female: "en-US-Neural2-F",
+export type Accent = "en-US" | "en-GB" | "en-IN" | "en-AU";
+export const ACCENTS: Accent[] = ["en-US", "en-GB", "en-IN", "en-AU"];
+
+// Google's Neural2 voices per accent. item_audio.voice_id stores the gender
+// label and item_audio.accent the accent, not these names.
+const VOICE_NAME: Record<Accent, Record<VoiceGender, string>> = {
+  "en-US": { male: "en-US-Neural2-D", female: "en-US-Neural2-F" },
+  "en-GB": { male: "en-GB-Neural2-B", female: "en-GB-Neural2-A" },
+  "en-IN": { male: "en-IN-Neural2-B", female: "en-IN-Neural2-A" },
+  "en-AU": { male: "en-AU-Neural2-B", female: "en-AU-Neural2-A" },
 };
 
 export interface SynthesizedSpeech {
@@ -14,7 +20,7 @@ export interface SynthesizedSpeech {
   durationMs: number | null;
 }
 
-export async function synthesizeSpeech(text: string, voice: VoiceGender): Promise<SynthesizedSpeech | null> {
+export async function synthesizeSpeech(text: string, voice: VoiceGender, accent: Accent = "en-US"): Promise<SynthesizedSpeech | null> {
   const apiKey = process.env.GOOGLE_TTS_API_KEY;
   if (!apiKey) return null;
   try {
@@ -23,7 +29,7 @@ export async function synthesizeSpeech(text: string, voice: VoiceGender): Promis
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         input: { text },
-        voice: { languageCode: "en-US", name: VOICE_NAME[voice] },
+        voice: { languageCode: accent, name: VOICE_NAME[accent][voice] },
         audioConfig: { audioEncoding: "MP3" },
       }),
     });

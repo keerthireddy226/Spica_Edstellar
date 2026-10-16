@@ -1,0 +1,1031 @@
+{
+  "exam": {
+    "code": "lclrb-1",
+    "test_type_id": "lcListeningReadingLower",
+    "name": "LanguageCert-style Listening & Reading (A1-B1) - Set 1"
+  },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Listening Part 1: Short utterances",
+      "item_type_id": "lc_listen_mcq",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "shopping",
+          "content": {
+            "audio": "I'd like two apples and a bottle of water, please.",
+            "question": "What does the speaker want?",
+            "options": [
+              "two apples and some water",
+              "two bananas and some milk",
+              "one apple and some juice"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "travel",
+          "content": {
+            "audio": "The bus to the city centre leaves at a quarter past nine.",
+            "question": "When does the bus leave?",
+            "options": [
+              "at 9:15",
+              "at 9:45",
+              "at 8:15"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "weather",
+          "content": {
+            "audio": "It was sunny this morning, but now it's raining, so take your umbrella when you go out.",
+            "question": "What is the weather like now?",
+            "options": [
+              "sunny",
+              "rainy",
+              "snowy"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "work",
+          "content": {
+            "audio": "Sorry, Mr Okafor is in a meeting until two o'clock. Can I take a message?",
+            "question": "Where is Mr Okafor?",
+            "options": [
+              "in a meeting",
+              "at lunch",
+              "on holiday"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "directions",
+          "content": {
+            "audio": "The library is next to the post office, opposite the park.",
+            "question": "Where is the library?",
+            "options": [
+              "next to the post office",
+              "behind the park",
+              "opposite the bank"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "study",
+          "content": {
+            "audio": "I was going to study engineering, but in the end I chose computer science, because there are more jobs.",
+            "question": "What did the speaker decide to study?",
+            "options": [
+              "engineering",
+              "business",
+              "computer science"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "services",
+          "content": {
+            "audio": "Your new phone should arrive on Thursday, but if it isn't there by Friday, please call us again.",
+            "question": "When should the phone arrive?",
+            "options": [
+              "on Friday",
+              "on Thursday",
+              "on Monday"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "travel",
+          "content": {
+            "audio": "Our flight to Nairobi was delayed by three hours, so we missed the first day of the conference.",
+            "question": "What happened because of the delay?",
+            "options": [
+              "They changed to a different flight.",
+              "They missed part of the conference.",
+              "They stayed an extra night in a hotel."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Listening Part 2: Best reply",
+      "item_type_id": "lc_listen_reply",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "introductions",
+          "content": {
+            "audio": "Hello! What's your name?",
+            "options": [
+              "I'm Priya.",
+              "I'm fine, thanks.",
+              "It's Monday."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "food and drink",
+          "content": {
+            "audio": "Would you like a cup of tea?",
+            "options": [
+              "Yes, please.",
+              "It's on the table.",
+              "I'm from Brazil."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "daily life",
+          "content": {
+            "audio": "Can you help me carry these boxes to the car?",
+            "options": [
+              "Yes, they are.",
+              "Sure, no problem.",
+              "By car, I think."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "free time",
+          "content": {
+            "audio": "How was your weekend?",
+            "options": [
+              "Great, thanks. I went to the beach.",
+              "Maybe next weekend.",
+              "On Saturday and Sunday."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "audio": "I'm afraid the meeting room is booked all afternoon.",
+            "options": [
+              "Then let's use my office instead.",
+              "Great, see you there at three, then.",
+              "Don't worry, I'm not afraid of meetings."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "workplace",
+          "content": {
+            "audio": "Do you mind if I open the window?",
+            "options": [
+              "Not at all. It's quite hot in here.",
+              "Yes, I'd like to open it.",
+              "It was closed yesterday."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 3,
+      "label": "Listening Part 3: Short conversations",
+      "item_type_id": "lc_listen_conversation",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "eating out",
+          "content": {
+            "audio": "A: Shall we eat at the new Japanese restaurant tonight?\nB: Hmm, I went there last week with Daniel. The food was good, but it was very expensive.\nA: Oh. What about the Indian restaurant near the station?\nB: That's a good idea. It's cheap, and the curry is really nice. But it's always busy on Fridays.\nA: Then let's phone them now and book a table for seven o'clock.\nB: Perfect, I'll call them. And after dinner we can walk home. It isn't far.\nA: Great. I'll meet you at the station at a quarter to seven.",
+            "questions": [
+              {
+                "stem": "What did the second speaker think of the Japanese restaurant?",
+                "options": [
+                  "The food was not very good.",
+                  "It was too busy on a Friday.",
+                  "The food was good, but it cost too much."
+                ]
+              },
+              {
+                "stem": "What do they decide to do?",
+                "options": [
+                  "book a table at the Indian restaurant",
+                  "go back to the Japanese restaurant",
+                  "cook dinner at home tonight"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "school",
+          "content": {
+            "audio": "A: Hi, Mrs Santos. Here's my homework. I'm sorry it's late.\nB: Thank you, Kofi. Why is it late? You usually give it to me on time.\nA: My computer stopped working on Monday, and I couldn't print it. My brother fixed it last night.\nB: OK, I understand. Next time, you can send it to me by email, or you can write it by hand.\nA: Yes, I will. Thank you, Mrs Santos.\nB: And remember, we have a test on Thursday. Please study chapters four and five.\nA: Chapters four and five. OK, I'll start tonight.",
+            "questions": [
+              {
+                "stem": "Who are the two speakers?",
+                "options": [
+                  "two classmates",
+                  "a mother and her son",
+                  "a teacher and a student"
+                ]
+              },
+              {
+                "stem": "Why was Kofi's homework late?",
+                "options": [
+                  "His computer was not working.",
+                  "He was ill on Monday.",
+                  "He forgot about it."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "audio": "A: Have you heard? The company wants everyone to work in the office four days a week from next month.\nB: Yes, I saw the email. Honestly, I'm not very happy about it. It takes me over an hour to get here by train.\nA: I know what you mean, but I actually think it's a good thing. I feel lonely working at home, and it's much easier to ask questions when people are around.\nB: That's true. And I suppose I could use the time on the train to read or answer emails.\nA: Exactly. And we can have lunch together again, like we used to.\nB: All right. Maybe it won't be so bad after all.",
+            "questions": [
+              {
+                "stem": "How does the first speaker feel about the change?",
+                "options": [
+                  "They are worried about the long journey.",
+                  "They are pleased about it.",
+                  "They are not interested in it."
+                ]
+              },
+              {
+                "stem": "How does the second speaker feel at the end of the conversation?",
+                "options": [
+                  "a little more positive than before",
+                  "still completely against the idea",
+                  "ready to look for a new job"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "travel",
+          "content": {
+            "audio": "A: So, are we going to Lisbon by train or by plane for the holiday?\nB: Well, the plane is faster, of course, but the train tickets are cheaper if we book now.\nA: For me it isn't only about money. I really want to see the countryside on the way. And trains are better for the environment.\nB: Fair enough. But the train takes nearly twenty hours, with two changes.\nA: We could stop for a night in Madrid. Hiroshi went last year and he said it's a wonderful city.\nB: Oh, I like that idea. Then the journey becomes part of the holiday. OK, let's do it.",
+            "questions": [
+              {
+                "stem": "Why does the first speaker want to go by train?",
+                "options": [
+                  "because it is the fastest way to travel",
+                  "because Hiroshi is travelling with them",
+                  "to see the countryside and help the environment"
+                ]
+              },
+              {
+                "stem": "What do they decide to do?",
+                "options": [
+                  "fly to Lisbon to save time",
+                  "go to Madrid instead of Lisbon",
+                  "take the train and spend a night in Madrid"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 4,
+      "label": "Listening Part 4: Longer listening",
+      "item_type_id": "lc_listen_long",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "study",
+          "content": {
+            "audio": "Good morning, everyone, and welcome to the Greenhill Summer English Course. My name is Grace Mwangi, and I'm the course manager. I'd like to tell you a few important things about the next two weeks.\nFirst, classes. Lessons start every day at nine o'clock and finish at half past twelve. There is a short break at half past ten, and you can get free tea and coffee in the student cafe on the ground floor. Please be on time. If you are more than fifteen minutes late, you must wait until the break before you go into the classroom.\nIn the afternoons, we have activities. On Mondays and Wednesdays there is a sports afternoon in the park behind the school. On Tuesdays we visit a museum or a gallery in the city. On Thursdays you can join our cooking club. Last year the students made dishes from twelve different countries, and it was everyone's favourite activity. Fridays are free, so you can rest or go shopping.\nAt the weekend, there is a trip to the seaside on Saturday. The bus leaves from the front of the school at eight o'clock in the morning. The trip costs fifteen pounds, and you need to pay at reception before Thursday. On Sunday there are no activities.\nNow, a few rules. Please don't use your phone in class, unless your teacher asks you to. And please speak English as much as you can, also with your friends at lunch. It's the best way to learn quickly.\nFinally, if you have any problems, with your room, your classes or anything else, come and see me in my office. It's on the first floor, room twelve, and I'm there from eight until five every day. Right, now let's find your classrooms. Students in group A, please follow Lucas. Group B, please come with me.",
+            "questions": [
+              {
+                "stem": "Who is Grace Mwangi?",
+                "options": [
+                  "a teacher for group A",
+                  "a new student",
+                  "the course manager"
+                ]
+              },
+              {
+                "stem": "What happens if a student is twenty minutes late for class?",
+                "options": [
+                  "They must go to Grace's office.",
+                  "They must wait until the break to go in.",
+                  "They must pay a small fee."
+                ]
+              },
+              {
+                "stem": "Which activity did students enjoy most last year?",
+                "options": [
+                  "the cooking club",
+                  "the museum visits",
+                  "the sports afternoons"
+                ]
+              },
+              {
+                "stem": "What must students do before Thursday if they want to go on the trip?",
+                "options": [
+                  "buy a bus ticket online",
+                  "tell their teacher",
+                  "pay at reception"
+                ]
+              },
+              {
+                "stem": "Why does Grace want students to speak English at lunch?",
+                "options": [
+                  "It is a rule of the student cafe.",
+                  "It helps them to learn faster.",
+                  "The teachers will check them."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              1,
+              0,
+              2,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "community",
+          "content": {
+            "audio": "A: Today on Community Voices I'm talking to Ana Ferreira, who started a repair cafe in our town two years ago. Ana, what exactly is a repair cafe?\nB: Well, it's a free event where people bring things that are broken, like lamps, bikes, clothes or small kitchen machines, and volunteers help them fix them. We meet on the first Saturday of every month in the library hall.\nA: Why did you decide to start it?\nB: It started with my toaster, actually. It stopped working, and the shop told me it was cheaper to buy a new one than to repair it. That made me angry, because the problem was just one small part. I thought, there must be lots of people who feel the same.\nA: And were you right?\nB: Completely. At the first event we expected about twenty people, and nearly eighty came. We didn't have enough volunteers, so some people had to come back the next month.\nA: Who are the volunteers?\nB: All kinds of people. Retired engineers, students, and a tailor called Mr Adeyemi, who is brilliant with clothes. Some of our best volunteers are teenagers who are good with phones and computers.\nA: Some people say that repairing things is old-fashioned. What do you think?\nB: I don't agree at all. Fixing things saves money, and it means less rubbish. But for me, the most important thing is that people learn. We don't just repair the item for you. You sit next to the volunteer and do it together, so next time you can do it yourself.\nA: Do you ever fail?\nB: Of course. About one in four things can't be repaired. But even then, people usually leave happy, because they understand what the problem was.\nA: What are your plans for the future?\nB: We'd like to open a second repair cafe in the next town. We're looking for a room there, and we always need more volunteers, especially people who can fix bikes. That's our biggest need at the moment.\nA: Ana Ferreira, thank you very much.",
+            "questions": [
+              {
+                "stem": "Why did Ana start the repair cafe?",
+                "options": [
+                  "A shop said a new toaster was cheaper than a repair.",
+                  "She lost her job in a repair shop.",
+                  "The library asked her to organise it."
+                ]
+              },
+              {
+                "stem": "What happened at the first event?",
+                "options": [
+                  "Only about twenty people came.",
+                  "Many more people came than they expected.",
+                  "The volunteers could not fix anything."
+                ]
+              },
+              {
+                "stem": "What does Ana think is the most important thing about the repair cafe?",
+                "options": [
+                  "People learn how to repair things themselves.",
+                  "People save money.",
+                  "There is less rubbish in the town."
+                ]
+              },
+              {
+                "stem": "What does Ana say about the things that cannot be repaired?",
+                "options": [
+                  "Their owners are usually still happy.",
+                  "The volunteers send them to a shop.",
+                  "They are about half of all the items."
+                ]
+              },
+              {
+                "stem": "What kind of volunteer does the repair cafe need most now?",
+                "options": [
+                  "people who can fix phones",
+                  "people who can repair clothes",
+                  "people who can repair bikes"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              1,
+              0,
+              0,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 5,
+      "label": "Reading Part 1: Short texts",
+      "item_type_id": "lc_read_short",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "signs",
+          "content": {
+            "text": "NO PARKING in front of this gate. Thank you.",
+            "question": "What does this sign say?",
+            "options": [
+              "You can park here for free.",
+              "Do not leave your car here.",
+              "This gate is closed today."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "shopping",
+          "content": {
+            "text": "OPENING HOURS: Monday to Saturday, 9 am to 6 pm. Closed on Sunday.",
+            "question": "When can you NOT visit the shop?",
+            "options": [
+              "on Monday morning",
+              "on Saturday afternoon",
+              "on Sunday"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "family",
+          "content": {
+            "text": "Hi Mum, I'm at Mei's house. We're doing our homework together. I'll be home at 7. Love, Tom",
+            "question": "What is Tom doing?",
+            "options": [
+              "cooking dinner at home",
+              "studying with a friend",
+              "playing football with Mei"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "food",
+          "content": {
+            "text": "Keep in the fridge after opening. Use within 3 days.",
+            "question": "What does this label say?",
+            "options": [
+              "After you open it, finish it in three days.",
+              "Do not put it in the fridge.",
+              "You can keep it for three weeks after opening."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "work",
+          "content": {
+            "text": "Hi Ravi, the team meeting is moving from Tuesday to Wednesday, at the same time (10 am). Please bring your sales report. Thanks, Helen",
+            "question": "What is Helen telling Ravi?",
+            "options": [
+              "The meeting now starts at a different time.",
+              "He does not need to bring anything.",
+              "The meeting is now on a different day."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "sport",
+          "content": {
+            "text": "SWIMMING POOL: Children under 8 must be with an adult at all times.",
+            "question": "What does this notice say?",
+            "options": [
+              "Adults cannot use this pool.",
+              "Young children cannot swim without an adult.",
+              "Children under 8 cannot use this pool."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "services",
+          "content": {
+            "text": "Because of building work, the main entrance is closed until 15 May. Please use the side door on Park Road. We are sorry for any problems this causes.",
+            "question": "What should visitors do?",
+            "options": [
+              "Come back after 15 May.",
+              "Phone the office before they visit.",
+              "Go into the building through a different door."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "workplace",
+          "content": {
+            "text": "Joao, the printer on the 2nd floor isn't working again. I've reported it to IT, but they can't come until tomorrow. Use the one in the kitchen area for now. Aiko",
+            "question": "Why has Aiko written this message?",
+            "options": [
+              "to tell Joao which printer he can use today",
+              "to ask Joao to repair the printer",
+              "to ask Joao to contact IT"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 6,
+      "label": "Reading Part 2: Gapped texts",
+      "item_type_id": "lc_read_cloze",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "friends and free time",
+          "content": {
+            "passage": "Hi Lena,\nThank you (1) ____ your email. I'm sorry I didn't write back sooner. I was very busy last week (2) ____ we had exams at college. Now they're finished, and I feel much better!\nThis Saturday I'm going (3) ____ the new market in the old town with my sister. There are lots of stalls with food from different countries, and there is live music in the afternoon. Would you like to come with (4) ____? We can meet at the bus stop at eleven o'clock and have lunch at the market. After that, we could go to the cinema (5) ____ the weather is bad.\nWrite back soon,\nAmara",
+            "questions": [
+              {
+                "options": [
+                  "to",
+                  "of",
+                  "for"
+                ]
+              },
+              {
+                "options": [
+                  "but",
+                  "so",
+                  "because"
+                ]
+              },
+              {
+                "options": [
+                  "at",
+                  "to",
+                  "in"
+                ]
+              },
+              {
+                "options": [
+                  "we",
+                  "us",
+                  "our"
+                ]
+              },
+              {
+                "options": [
+                  "so",
+                  "if",
+                  "or"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              2,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "town events",
+          "content": {
+            "passage": "Car-Free Sunday\nNext Sunday, the streets in the centre of Westbridge will be (1) ____ to cars from 10 am to 4 pm. This is the third year of our Car-Free Sunday, and every year more people (2) ____ part. You can walk, cycle or skate in the streets, and there will be music, games and food stalls. If you don't have a bike, you can (3) ____ one for free at the town hall. You only need to show your ID card. Children under twelve must (4) ____ a helmet. Buses will run as usual, but they will stop at the edge of the centre. For more information, please (5) ____ our website or call the town office.",
+            "questions": [
+              {
+                "options": [
+                  "opened",
+                  "stopped",
+                  "closed"
+                ]
+              },
+              {
+                "options": [
+                  "make",
+                  "take",
+                  "have"
+                ]
+              },
+              {
+                "options": [
+                  "lend",
+                  "borrow",
+                  "pay"
+                ]
+              },
+              {
+                "options": [
+                  "put",
+                  "dress",
+                  "wear"
+                ]
+              },
+              {
+                "options": [
+                  "visit",
+                  "go",
+                  "look"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              1,
+              1,
+              2,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "careers",
+          "content": {
+            "passage": "When Chidi Nwosu moved from Lagos to Manchester, he (1) ____ to find a job as an accountant. However, after six months he was still looking. 'I was starting to (2) ____ hope,' he says. Then a friend suggested an online programming course. Chidi had never written any code before, but he decided to give it a try. He studied every evening, (3) ____ he was also working part-time in a cafe during the day. The course was difficult, and at first he wanted to give (4) ____. But he kept going, and after a year he got his first job as a junior web developer. 'My advice is simple,' he says. 'Don't be afraid of something new. You might be (5) ____ at it than you think.'",
+            "questions": [
+              {
+                "options": [
+                  "thought",
+                  "planned",
+                  "considered"
+                ]
+              },
+              {
+                "options": [
+                  "miss",
+                  "drop",
+                  "lose"
+                ]
+              },
+              {
+                "options": [
+                  "despite",
+                  "however",
+                  "although"
+                ]
+              },
+              {
+                "options": [
+                  "in",
+                  "up",
+                  "off"
+                ]
+              },
+              {
+                "options": [
+                  "good",
+                  "best",
+                  "better"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 7,
+      "label": "Reading Part 3: Gapped sentences",
+      "item_type_id": "lc_read_gap",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "family",
+          "content": {
+            "sentence": "My sister ____ in a hospital in Manila.",
+            "options": [
+              "work",
+              "working",
+              "works"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "home",
+          "content": {
+            "sentence": "Your keys are ____ the table, next to your phone.",
+            "options": [
+              "at",
+              "on",
+              "of"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "weather",
+          "content": {
+            "sentence": "We didn't go to the beach ____ it was raining.",
+            "options": [
+              "so",
+              "because",
+              "but"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "home",
+          "content": {
+            "sentence": "Could you ____ the lights when you leave the room, please?",
+            "options": [
+              "turn up",
+              "turn over",
+              "turn off"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "study",
+          "content": {
+            "sentence": "I've been learning German ____ three years.",
+            "options": [
+              "since",
+              "during",
+              "for"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "travel",
+          "content": {
+            "sentence": "The train was very crowded, so we had to stand for the ____ journey.",
+            "options": [
+              "all",
+              "whole",
+              "every"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "free time",
+          "content": {
+            "sentence": "If I ____ more free time, I would learn to play the guitar.",
+            "options": [
+              "had",
+              "have",
+              "will have"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 8,
+      "label": "Reading Part 4: Longer texts",
+      "item_type_id": "lc_read_long",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "living abroad",
+          "content": {
+            "passage": "My first month in Melbourne\nby Sofia Lindqvist\n\nFour weeks ago I moved from Stockholm to Melbourne in Australia. I am a primary school teacher, and I got a job at a small school near the city centre. I want to write about my first month here, because many of my friends at home have asked me about it.\n\nThe first week was not easy. The flight was very long, more than twenty-four hours, and I was tired for days. I stayed in a hotel because my flat was not ready yet. Everything felt different: the food, the weather and even the way people speak English. I studied English at school for many years, but at first I didn't understand some of the words that people here use every day.\n\nIn the second week, I moved into my flat. It is small, but it has a balcony, and I can see a park from my window. My neighbour, an older woman called Mrs Tran, came to say hello on my first evening. She brought me some soup and told me about the best shops in the area. Since then, we often have tea together on Sundays.\n\nStarting work was exciting but also a bit scary. My class has twenty-six children, aged seven and eight. They were very interested in Sweden, and they asked me lots of questions. Is it dark all the time? Do you have kangaroos? (No, we don't!) The other teachers have been very kind and helpful. One of them, Mr Mensah, showed me how everything works at the school.\n\nThe thing I like most about Melbourne is that there is always something to do. There are markets, free concerts and lovely beaches not far from the city. The thing I like least is the weather. People say that Melbourne can have four seasons in one day, and it's true. In the morning it is sunny and warm, and in the afternoon it is cold and windy. I always carry a jacket now!\n\nDo I miss home? Yes, sometimes. I miss my family, and I miss Swedish bread. But I talk to my parents every weekend on video, and I am making new friends here. If you are thinking about moving to another country, my advice is simple: be patient. The first weeks are hard, but it gets better.",
+            "questions": [
+              {
+                "stem": "Why did Sofia write this post?",
+                "options": [
+                  "to answer her friends' questions about her new life",
+                  "to find a new flat in Melbourne",
+                  "to ask other teachers for advice"
+                ]
+              },
+              {
+                "stem": "Why did Sofia stay in a hotel at first?",
+                "options": [
+                  "She did not like her flat.",
+                  "Her flat was not ready.",
+                  "She wanted to be near her school."
+                ]
+              },
+              {
+                "stem": "What does Sofia say about Mrs Tran?",
+                "options": [
+                  "She works at Sofia's school.",
+                  "They often have tea together on Sundays.",
+                  "She lives in a flat with a view of the beach."
+                ]
+              },
+              {
+                "stem": "What does Sofia like least about Melbourne?",
+                "options": [
+                  "The weather changes a lot in one day.",
+                  "There is not much to do in the city.",
+                  "The beaches are far from the city."
+                ]
+              },
+              {
+                "stem": "What is Sofia's advice for people who move to another country?",
+                "options": [
+                  "Be patient, because things get easier.",
+                  "Learn the language well before you go.",
+                  "Call your family every day."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              1,
+              1,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "community",
+          "content": {
+            "passage": "The library where you can borrow a tent\n\nIn most libraries, you can borrow books, films and perhaps a laptop. But at the public library in Ridgeford, a small town of about 40,000 people, you can also borrow a tent, a sewing machine, a guitar or even a telescope. The 'Library of Things' opened there eighteen months ago, and it has become one of the most popular services in the town.\n\nThe idea came from Meera Pillai, who has worked at the library for eleven years. 'I noticed that people often bought expensive things that they only used once or twice,' she explains. 'My neighbour bought a drill to put up one shelf, and then it stayed in a cupboard for five years. I thought, why can't we share these things, like we share books?'\n\nAt first, not everyone liked the idea. Some members of the town council worried that items would be broken or never returned. 'They were right to ask questions,' says Meera. 'So we started small, with just forty items, and we made clear rules.' Members can borrow up to two things at a time, for one week. There is no charge, but if you return something late, you pay a small fee, and if you break something, you must pay for the repair.\n\nThe results have surprised even Meera. Today the library has more than three hundred items, and most of them were given by local people. Only a few things have been lost, and there have been very few problems with damage. The most popular items are the carpet cleaner, the camping equipment and, surprisingly, the ice-cream machine, which is booked almost every weekend in summer.\n\nUsers are enthusiastic. Tomasz Kowalski, a father of two, borrowed a tent before buying one. 'We wanted to find out if our children actually enjoyed camping,' he says. 'They loved it, so we bought our own. But if they had hated it, we would have saved a lot of money.' Student Grace Adebayo says the service has helped her to try new hobbies. 'I've borrowed a sewing machine and a keyboard. I could never afford to buy them both.'\n\nNot everyone is a fan, though. A local shop owner, who did not want to give his name, said the library was taking business away from shops in the town. Meera disagrees. 'Many people try something here and then go and buy their own, like Tomasz did. I think we help the shops more than we hurt them.'\n\nOther towns are now interested. Meera has already given advice to libraries in three nearby towns, and she hopes that one day every library will have a collection of things as well as books. 'Libraries have always been about sharing,' she says. 'This is just a new way of doing it.'",
+            "questions": [
+              {
+                "stem": "How did Meera get the idea for the Library of Things?",
+                "options": [
+                  "She read about a similar library in a book.",
+                  "The town council asked her to start it.",
+                  "She saw that her neighbour hardly used his new drill."
+                ]
+              },
+              {
+                "stem": "Why were some council members unsure about the idea at first?",
+                "options": [
+                  "They thought it would cost the town too much money.",
+                  "They thought items might be damaged or not returned.",
+                  "They thought nobody in the town would use it."
+                ]
+              },
+              {
+                "stem": "What does the writer suggest about the ice-cream machine?",
+                "options": [
+                  "It is often broken when people return it.",
+                  "It was one of the first forty items.",
+                  "It is more popular than you might expect."
+                ]
+              },
+              {
+                "stem": "Why did Tomasz borrow a tent?",
+                "options": [
+                  "because he could not afford to buy one",
+                  "because his own tent was broken",
+                  "to find out if his children liked camping"
+                ]
+              },
+              {
+                "stem": "What does Meera think about the shop owner's complaint?",
+                "options": [
+                  "She believes the library actually helps local shops.",
+                  "She agrees and plans to change the rules.",
+                  "She thinks the shops should give items to the library."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              1,
+              2,
+              2,
+              0
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

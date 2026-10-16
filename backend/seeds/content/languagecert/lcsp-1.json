@@ -1,0 +1,66 @@
+{
+  "exam": { "code": "lcsp-1", "test_type_id": "lcSpeaking", "name": "LanguageCert-style Speaking (A1-C2) - Set 1" },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Part 1: Personal questions",
+      "item_type_id": "lc_speak_personal",
+      "items": [
+        { "cefr_level": "A2", "topic": "daily routine", "content": { "prompt": "What do you usually do in the morning before you start work or study?" }, "answer_set": {} },
+        { "cefr_level": "B1", "topic": "recent activities", "content": { "prompt": "Tell me about a place you visited recently. What did you do there, and would you go back?" }, "answer_set": {} },
+        { "cefr_level": "B2", "topic": "work and study", "content": { "prompt": "Some people prefer to work or study at home, while others prefer an office or a library. Which do you prefer, and why?" }, "answer_set": {} }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Part 2: Discussion",
+      "item_type_id": "lc_speak_discussion",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "workplace events",
+          "content": {
+            "prompt": "Your company wants to help new employees get to know their colleagues during their first month. Discuss these ideas and decide which two would work best.",
+            "ideas": [
+              "a weekly team lunch",
+              "a buddy who helps each new person",
+              "a short welcome video from each department",
+              "an online chat group for new staff",
+              "a half-day volunteering activity together"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 3,
+      "label": "Part 3: Presenting a topic",
+      "item_type_id": "lc_speak_presentation",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "skills and learning",
+          "content": {
+            "prompt": "A practical skill you would like to learn",
+            "points": [
+              "What is the skill, and why are you interested in it?",
+              "How would you go about learning it?",
+              "How might it be useful in your life or work?"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 4,
+      "label": "Part 3: Follow-up questions",
+      "item_type_id": "lc_speak_followup",
+      "items": [
+        { "cefr_level": "B2", "topic": "skills and learning", "content": { "prompt": "Do you think it is easier to learn a practical skill from a video or from a person who shows you? Why?" }, "answer_set": {} },
+        { "cefr_level": "C1", "topic": "skills and learning", "content": { "prompt": "Some people say schools should spend more time teaching practical life skills and less time on academic subjects. To what extent do you agree?" }, "answer_set": {} }
+      ]
+    }
+  ]
+}

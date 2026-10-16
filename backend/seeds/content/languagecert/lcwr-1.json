@@ -1,0 +1,39 @@
+{
+  "exam": {
+    "code": "lcwr-1",
+    "test_type_id": "lcWriting",
+    "name": "LanguageCert-style Writing (A1-C2) - Set 1"
+  },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Task 1: Short message",
+      "item_type_id": "lc_write_task1",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "workplace",
+          "content": {
+            "prompt": "You work in a small design office. Your colleague, Tomasz Nowak, has asked to borrow your laptop charger tomorrow because his has stopped working. You will not be in the office tomorrow morning, but you can help in another way. Write an email to Tomasz (60-100 words). In your email:\n- say why you will not be in the office tomorrow morning\n- explain where he can find the charger and what to do with it after he uses it\n- suggest a place nearby where he can buy a new charger"
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Task 2: Report, article or review",
+      "item_type_id": "lc_write_task2",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "workplace wellbeing",
+          "content": {
+            "prompt": "Your manager, Ms Adaeze Okafor, wants to improve the staff break room at your company's office in Nairobi. She has asked you to write a short report for the management team about how the room is used now and what could be changed. Write your report (200-250 words). In your report you should:\n- describe how staff currently use the break room and any problems with it\n- suggest two changes that would make the room more useful or comfortable\n- explain which change should be made first and why"
+          },
+          "answer_set": {}
+        }
+      ]
+    }
+  ]
+}

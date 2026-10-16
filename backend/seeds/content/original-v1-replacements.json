@@ -1,0 +1,961 @@
+[
+ {
+  "replaces": "f6cb375e-0526-4a09-a59f-4fc5ed21e9fc",
+  "item_type_id": "conversations",
+  "cefr_level": "A2",
+  "topic": "finding the right bus",
+  "content": {
+   "dialogue": "A: Hi Jomo, which bus goes to the city museum? B: Take bus number fifteen from the square. A: Thank you!",
+   "question": "Which bus goes to the museum?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "bus number fifteen",
+    "number fifteen",
+    "fifteen",
+    "bus fifteen",
+    "the number fifteen bus",
+    "15",
+    "number 15",
+    "bus 15",
+    "bus number 15"
+   ]
+  }
+ },
+ {
+  "replaces": "c45ce5ef-4407-4e49-a051-424df01ddf84",
+  "item_type_id": "conversations",
+  "cefr_level": "A2",
+  "topic": "a birthday present",
+  "content": {
+   "dialogue": "A: Happy birthday, Sakura! Do you like the gift? B: Oh, a blue scarf! It's beautiful. A: I'm glad you like it.",
+   "question": "What colour is Sakura's new scarf?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "blue",
+    "it's blue",
+    "it is blue"
+   ]
+  }
+ },
+ {
+  "replaces": "c688fbf6-9caf-47db-a633-82cd3f8afccf",
+  "item_type_id": "conversations",
+  "cefr_level": "B1",
+  "topic": "meeting visitors from abroad",
+  "content": {
+   "dialogue": "A: Olumide, our visitors from Brazil land at noon. B: Do you want me to meet them? A: Yes, please take them straight to their hotel.",
+   "question": "Where should Olumide take the visitors?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "to their hotel",
+    "their hotel",
+    "straight to their hotel",
+    "to the hotel",
+    "the hotel"
+   ]
+  }
+ },
+ {
+  "replaces": "e3d9ada9-82ca-4620-885e-fc4125544acc",
+  "item_type_id": "conversations",
+  "cefr_level": "B1",
+  "topic": "getting to a conference centre",
+  "content": {
+   "dialogue": "A: Should I book a taxi to the conference centre? B: I'd walk, actually. It's only ten minutes, and the traffic is terrible at this time of day. A: Good idea, I'll do that.",
+   "question": "How will speaker A get to the conference centre?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "walk",
+    "on foot",
+    "he will walk",
+    "she will walk",
+    "by walking"
+   ]
+  }
+ },
+ {
+  "replaces": "7561b2e4-d0a7-4f9d-aea3-339bd419ebea",
+  "item_type_id": "dictation",
+  "cefr_level": "A2",
+  "topic": "family routines",
+  "content": {
+   "text": "My grandfather walks his dog every evening."
+  },
+  "answer_set": {
+   "exact": "My grandfather walks his dog every evening."
+  }
+ },
+ {
+  "replaces": "071fdc7b-bd27-410f-8997-ef4d7141dc63",
+  "item_type_id": "dictation",
+  "cefr_level": "A2",
+  "topic": "studying at university",
+  "content": {
+   "text": "Juan studies maths at the university."
+  },
+  "answer_set": {
+   "exact": "Juan studies maths at the university."
+  }
+ },
+ {
+  "replaces": "92782d56-461d-4157-baf0-40e582e6cc7b",
+  "item_type_id": "dictation",
+  "cefr_level": "B1",
+  "topic": "polite requests",
+  "content": {
+   "text": "Would you mind turning the music down a little?"
+  },
+  "answer_set": {
+   "exact": "Would you mind turning the music down a little?"
+  }
+ },
+ {
+  "replaces": "41ac1a5b-edad-477c-a5fb-60a1c7322500",
+  "item_type_id": "dictation",
+  "cefr_level": "B2",
+  "topic": "work and travel",
+  "content": {
+   "text": "My flatmate's job involves quite a lot of overseas travel."
+  },
+  "answer_set": {
+   "exact": "My flatmate's job involves quite a lot of overseas travel."
+  }
+ },
+ {
+  "replaces": "d5932eca-498e-4dac-9246-67726f71e677",
+  "item_type_id": "dictation",
+  "cefr_level": "B2",
+  "topic": "rail travel",
+  "content": {
+   "text": "Several passengers complained that the station announcements were unclear."
+  },
+  "answer_set": {
+   "exact": "Several passengers complained that the station announcements were unclear."
+  }
+ },
+ {
+  "replaces": "96149f9f-1623-42f8-b075-9a95e5e968de",
+  "item_type_id": "dictation",
+  "cefr_level": "C1",
+  "topic": "city parks and wildlife",
+  "content": {
+   "text": "Researchers are reconsidering how urban parks influence local wildlife."
+  },
+  "answer_set": {
+   "exact": "Researchers are reconsidering how urban parks influence local wildlife."
+  }
+ },
+ {
+  "replaces": "9987fd78-394a-453f-9edf-5107e9eea43b",
+  "item_type_id": "email_writing",
+  "cefr_level": "B1",
+  "topic": "declining a birthday invitation",
+  "content": {
+   "prompt": "Your colleague Ngozi has invited you to her birthday dinner next Friday, but you will be away on a training course. Write an email to Ngozi thanking her, explaining why you can't come, and suggesting another time to meet."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "c7f9c980-9a0c-4154-8b6a-598b76d7b3ae",
+  "item_type_id": "email_writing",
+  "cefr_level": "B1",
+  "topic": "class moving to a new room",
+  "content": {
+   "prompt": "Your evening language class is moving to a different building next week. Write an email to your classmates telling them where the new room is, what time the class starts, and what they should bring."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "75c4f38f-17b1-4c6a-a314-bb3a462f48f0",
+  "item_type_id": "email_writing",
+  "cefr_level": "B2",
+  "topic": "keeping the shared kitchen tidy",
+  "content": {
+   "prompt": "The shared kitchen on your floor is often left untidy. As office coordinator, write an email to staff asking them to wash their cups, label their food in the fridge, and clear the tables after lunch."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "7ab79d54-1c7e-41f4-b6cd-5dad6a5ccd50",
+  "item_type_id": "email_writing",
+  "cefr_level": "B2",
+  "topic": "wrong opening hours on a website",
+  "content": {
+   "prompt": "Several visitors to your museum have complained that the opening hours shown on the website are wrong. Write an email to the web team explaining the problem and asking them to fix it before the weekend."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "3ec8c432-2da7-4a3d-b52c-bd1f83b0b1da",
+  "item_type_id": "email_writing",
+  "cefr_level": "B2",
+  "topic": "recruiting student volunteers",
+  "content": {
+   "prompt": "You coordinate volunteers for a city tree-planting project and need more helpers aged 18 to 25. Write an email to the leaders of local student societies describing the project and asking them to: share a poster with their members, bring a group to one of the planting days, and suggest a student who could act as a contact person."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "8b110b73-323e-42d0-84f8-b5c45bf20278",
+  "item_type_id": "open_questions",
+  "cefr_level": "B2",
+  "topic": "city or small-town life",
+  "content": {
+   "prompt": "Is it better to grow up in a big city or in a small town? Give reasons and examples to support your view."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "6fd02fea-f4c2-4668-abe7-5691cfd71bc8",
+  "item_type_id": "open_questions",
+  "cefr_level": "C1",
+  "topic": "practical skills at school",
+  "content": {
+   "prompt": "Should schools spend more time teaching practical life skills, such as cooking and planning a household budget, even if it means less time for traditional subjects? Justify your position with examples."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "17484af0-da9e-4fe2-97e5-e6f491e02202",
+  "item_type_id": "passage_comprehension",
+  "cefr_level": "B1",
+  "topic": "a late start to the workday",
+  "content": {
+   "story": "Aiko missed the early bus to the museum where she works. She sent a message to her manager to say she would be late. While she was waiting at the bus stop, her neighbour drove past and offered her a lift. In the end, Aiko arrived at work ten minutes early.",
+   "question": "What did Aiko do first after she missed the bus?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "sent a message to her manager",
+    "she sent a message to her manager",
+    "messaged her manager",
+    "sent her manager a message",
+    "she messaged her manager"
+   ]
+  }
+ },
+ {
+  "replaces": "822a8304-9c8e-410c-9848-52029fcb5dcc",
+  "item_type_id": "passage_comprehension",
+  "cefr_level": "B1",
+  "topic": "a late start to the workday",
+  "content": {
+   "story": "Aiko missed the early bus to the museum where she works. She sent a message to her manager to say she would be late. While she was waiting at the bus stop, her neighbour drove past and offered her a lift. In the end, Aiko arrived at work ten minutes early.",
+   "question": "Who offered Aiko a lift?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "her neighbour",
+    "her neighbor",
+    "the neighbour",
+    "the neighbor",
+    "a neighbour",
+    "a neighbor"
+   ]
+  }
+ },
+ {
+  "replaces": "66aca8d9-33ad-4a18-9450-16e1b85810fb",
+  "item_type_id": "passage_comprehension",
+  "cefr_level": "B1",
+  "topic": "a late start to the workday",
+  "content": {
+   "story": "Aiko missed the early bus to the museum where she works. She sent a message to her manager to say she would be late. While she was waiting at the bus stop, her neighbour drove past and offered her a lift. In the end, Aiko arrived at work ten minutes early.",
+   "question": "What problem did Aiko have that morning?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "she missed the bus",
+    "missed the bus",
+    "she missed the early bus",
+    "missed the early bus"
+   ]
+  }
+ },
+ {
+  "replaces": "7446ebf3-a912-4acf-bae5-58ef8a703673",
+  "item_type_id": "passage_reconstruction",
+  "cefr_level": "A2",
+  "topic": "a new flat",
+  "content": {
+   "passage": "Fatima moved to a new flat last month. It is small but very bright. On Sundays she invites her friends for lunch on the balcony."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "0a49d62c-f1fb-4324-9ccc-0fa82fd9e784",
+  "item_type_id": "passage_reconstruction",
+  "cefr_level": "B1",
+  "topic": "library closure notice",
+  "content": {
+   "passage": "The city library will be closed on Thursday for repairs. Books can still be returned through the box outside the main door. Normal opening hours start again on Friday morning."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "c30dfcea-7b27-4b76-875a-a258be1766f5",
+  "item_type_id": "passage_reconstruction",
+  "cefr_level": "B1",
+  "topic": "baking bread for grandparents",
+  "content": {
+   "passage": "Lucas loves cooking, but he is not very careful. Last weekend he decided to bake bread for his grandparents. He forgot to set a timer and started reading a book. When he smelled smoke, he ran to the kitchen. The bread was black on top. He laughed, cut off the burnt part and took it to his grandparents anyway. They said it was delicious."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "87466ae6-32f7-4835-a1b9-81be01ac013d",
+  "item_type_id": "passage_reconstruction",
+  "cefr_level": "B1",
+  "topic": "growing tomatoes",
+  "content": {
+   "passage": "Grace planted tomatoes in April. By August, she had more than she could eat, so she gave some to her neighbours."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "32d6618a-4740-4361-9422-c1d606469a14",
+  "item_type_id": "passage_reconstruction",
+  "cefr_level": "B2",
+  "topic": "a presentation without a laptop",
+  "content": {
+   "passage": "Olga had to give a presentation to new clients, but her laptop stopped working an hour before the meeting. A colleague lent her a tablet, and she rebuilt the key slides from memory. The clients later said it was the clearest presentation they had seen."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "dd677678-43f8-4773-8e98-6a3f51762e47",
+  "item_type_id": "reading",
+  "cefr_level": "B1",
+  "topic": "swimming pool holiday hours",
+  "content": {
+   "text": "The swimming pool will close at 6 p.m. on weekdays during the school holidays. Members can still use the gym until 9 p.m."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "16927108-c2f4-4483-9b57-5e4d75935e44",
+  "item_type_id": "reading",
+  "cefr_level": "B1",
+  "topic": "cooking at home",
+  "content": {
+   "text": "Learning to cook at home can save money. It can also be a relaxing way to end a busy day."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "b58e30e5-8d76-4492-8408-a1747ea14a68",
+  "item_type_id": "reading",
+  "cefr_level": "B2",
+  "topic": "communication in remote teams",
+  "content": {
+   "text": "Remote working has changed how many teams communicate. Clear written updates have become just as important as regular meetings."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "7e054e28-3c04-438d-8e2b-86d67ddf88a1",
+  "item_type_id": "reading",
+  "cefr_level": "C1",
+  "topic": "narrow streets and road safety",
+  "content": {
+   "text": "A growing number of town planners argue that narrower roads could make neighbourhoods safer. Early studies suggest drivers instinctively slow down when streets feel enclosed, although critics question whether the effect lasts."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "6df649f2-890c-48cb-bc69-658bbfb1f1f4",
+  "item_type_id": "reading_comprehension",
+  "cefr_level": "B1",
+  "topic": "sports centre timetable",
+  "content": {
+   "options": [
+    "Yoga",
+    "Swimming",
+    "Tennis",
+    "Dance"
+   ],
+   "passage": "Riverside Sports Centre runs four classes every Wednesday. Yoga begins at 8:00am, Swimming at 12:30pm, Tennis at 5:00pm and Dance at 7:30pm. Chidi finishes work at 6:00pm and needs about an hour to travel to the centre.",
+   "question": "Which class can Chidi go to on Wednesday?"
+  },
+  "answer_set": {
+   "correctIndex": 3
+  }
+ },
+ {
+  "replaces": "63d443d2-4b8c-4a98-af2b-b03b1c0aa8e9",
+  "item_type_id": "repeats",
+  "cefr_level": "A2",
+  "topic": "buying a train ticket",
+  "content": {
+   "text": "How much does a return ticket to Kyoto cost?"
+  },
+  "answer_set": {
+   "exact": "How much does a return ticket to Kyoto cost?"
+  }
+ },
+ {
+  "replaces": "ceee8541-c596-4952-8f48-e02eaeeb42fc",
+  "item_type_id": "repeats",
+  "cefr_level": "A2",
+  "topic": "classroom rules",
+  "content": {
+   "text": "Switch off your phone in class, please."
+  },
+  "answer_set": {
+   "exact": "Switch off your phone in class, please."
+  }
+ },
+ {
+  "replaces": "987af875-0521-4642-b03b-8ab135659999",
+  "item_type_id": "repeats",
+  "cefr_level": "B1",
+  "topic": "family and studies",
+  "content": {
+   "text": "My cousin Siobhan is studying geography in Dublin."
+  },
+  "answer_set": {
+   "exact": "My cousin Siobhan is studying geography in Dublin."
+  }
+ },
+ {
+  "replaces": "a300487e-db79-4bc8-8c74-8f309b3fc13f",
+  "item_type_id": "repeats",
+  "cefr_level": "B1",
+  "topic": "library reminder",
+  "content": {
+   "text": "Please return your library books by the end of the week."
+  },
+  "answer_set": {
+   "exact": "Please return your library books by the end of the week."
+  }
+ },
+ {
+  "replaces": "36679557-0f6e-4445-bb8a-d8e8730603a2",
+  "item_type_id": "repeats",
+  "cefr_level": "B2",
+  "topic": "school play rehearsals",
+  "content": {
+   "text": "Rehearsals for the school play begin straight after half-term."
+  },
+  "answer_set": {
+   "exact": "Rehearsals for the school play begin straight after half-term."
+  }
+ },
+ {
+  "replaces": "0dcb8bb5-bbbc-45f8-8b35-5667bc5068d5",
+  "item_type_id": "repeats",
+  "cefr_level": "B2",
+  "topic": "booking event tickets",
+  "content": {
+   "text": "You'd better book early, as tickets usually sell out quickly."
+  },
+  "answer_set": {
+   "exact": "You'd better book early, as tickets usually sell out quickly."
+  }
+ },
+ {
+  "replaces": "be2572c4-fec5-407e-8f26-cc75f0f5aa77",
+  "item_type_id": "repeats",
+  "cefr_level": "B2",
+  "topic": "visitor sign-in rules",
+  "content": {
+   "text": "All visitors are required to sign in at reception before entering the building."
+  },
+  "answer_set": {
+   "exact": "All visitors are required to sign in at reception before entering the building."
+  }
+ },
+ {
+  "replaces": "e90d9e77-8636-418d-b419-92528769531b",
+  "item_type_id": "repeats",
+  "cefr_level": "C1",
+  "topic": "a successful local festival",
+  "content": {
+   "text": "Not only did the festival attract record crowds, but it also raised funds for three local schools."
+  },
+  "answer_set": {
+   "exact": "Not only did the festival attract record crowds, but it also raised funds for three local schools."
+  }
+ },
+ {
+  "replaces": "f73ec46a-5fbd-4a4c-abfb-eabb8826e830",
+  "item_type_id": "response_selection",
+  "cefr_level": "A2",
+  "topic": "asking for directions",
+  "content": {
+   "text": "Where is the nearest bus stop?",
+   "options": [
+    "It's just across the street.",
+    "I usually get up early.",
+    "My bag is very heavy."
+   ]
+  },
+  "answer_set": {
+   "correctIndex": 0
+  }
+ },
+ {
+  "replaces": "7ac2dbce-b945-42a5-8725-2c89e345b444",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "A2",
+  "topic": "eating out",
+  "content": {
+   "groups": [
+    "the friendly waiter",
+    "two glasses of mango juice",
+    "brought us"
+   ]
+  },
+  "answer_set": {
+   "correct": "The friendly waiter brought us two glasses of mango juice."
+  }
+ },
+ {
+  "replaces": "f90f0a62-7228-4780-9ba5-1ef9881376f2",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "A2",
+  "topic": "offering food",
+  "content": {
+   "groups": [
+    "some chocolate cake",
+    "would you like",
+    "with your coffee"
+   ]
+  },
+  "answer_set": {
+   "correct": "Would you like some chocolate cake with your coffee?"
+  }
+ },
+ {
+  "replaces": "4e9835e5-dade-47f9-b51b-c01d3ca7a6f9",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "A2",
+  "topic": "an art lesson",
+  "content": {
+   "groups": [
+    "of their favourite animals",
+    "drew colourful pictures",
+    "Mrs Novak's students"
+   ]
+  },
+  "answer_set": {
+   "correct": "Mrs Novak's students drew colourful pictures of their favourite animals."
+  }
+ },
+ {
+  "replaces": "3b81126b-1212-45f6-9bd4-ec3808d6c8c0",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "B1",
+  "topic": "office equipment",
+  "content": {
+   "groups": [
+    "a coffee machine for the office",
+    "is thinking of buying",
+    "Björn"
+   ]
+  },
+  "answer_set": {
+   "correct": "Björn is thinking of buying a coffee machine for the office."
+  }
+ },
+ {
+  "replaces": "79578764-d300-43ca-a600-1c0a9f71500a",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "B1",
+  "topic": "apologising for lateness",
+  "content": {
+   "groups": [
+    "for keeping everyone",
+    "Nkechi apologised",
+    "waiting so long"
+   ]
+  },
+  "answer_set": {
+   "correct": "Nkechi apologised for keeping everyone waiting so long."
+  }
+ },
+ {
+  "replaces": "bbe14dea-20c6-49ae-98b7-01d53945239c",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "B2",
+  "topic": "a difficult quiz",
+  "content": {
+   "groups": [
+    "turned out to be",
+    "the quiz",
+    "much harder than expected"
+   ]
+  },
+  "answer_set": {
+   "correct": "The quiz turned out to be much harder than expected."
+  }
+ },
+ {
+  "replaces": "ccfc9733-fb3a-4f82-b15a-f410bd2f5e42",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "B2",
+  "topic": "a park clean-up",
+  "content": {
+   "groups": [
+    "the volunteers",
+    "the entire park",
+    "cleaned up"
+   ]
+  },
+  "answer_set": {
+   "correct": "The volunteers cleaned up the entire park."
+  }
+ },
+ {
+  "replaces": "6a18394e-5d7c-4220-b449-7007dedaa1ed",
+  "item_type_id": "sentence_builds",
+  "cefr_level": "B2",
+  "topic": "a postponed festival",
+  "content": {
+   "groups": [
+    "the festival organisers",
+    "postpone the opening",
+    "had no choice but to"
+   ]
+  },
+  "answer_set": {
+   "correct": "The festival organisers had no choice but to postpone the opening."
+  }
+ },
+ {
+  "replaces": "db3fb427-af44-4bf1-9cdd-eab54384881b",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "A2",
+  "topic": "forgotten keys",
+  "content": {
+   "sentence": "Halvard ___ his keys at the gym, so he had to go back and get them."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "left",
+    "forgot"
+   ]
+  }
+ },
+ {
+  "replaces": "395be56b-2db1-4904-aef7-fff707c6bade",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "A2",
+  "topic": "languages",
+  "content": {
+   "sentence": "Fumiko speaks Japanese and English ___, so she often helps with translation."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "well",
+    "fluently",
+    "perfectly"
+   ]
+  }
+ },
+ {
+  "replaces": "cd0b6b24-3302-4aa0-b2bf-e1f2227f464b",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "A2",
+  "topic": "paying at a restaurant",
+  "content": {
+   "sentence": "Mwangi asked the waiter for the ___ after their meal."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "bill",
+    "check"
+   ]
+  }
+ },
+ {
+  "replaces": "268d6892-c68e-4cbf-b0f4-5c4407e91f9d",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B1",
+  "topic": "planning a hike",
+  "content": {
+   "sentence": "She checked the weather ___ before leaving for the hike."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "forecast"
+   ]
+  }
+ },
+ {
+  "replaces": "3f0454e3-40d1-47e0-9e66-4264c070ad4c",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B1",
+  "topic": "language practice",
+  "content": {
+   "sentence": "If you keep practising, your pronunciation will ___ quickly."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "improve",
+    "get better"
+   ]
+  }
+ },
+ {
+  "replaces": "1477e39f-da8b-4e9a-9b85-9405169e7ec1",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B1",
+  "topic": "gallery rules",
+  "content": {
+   "sentence": "Visitors are not ___ to take photographs inside the gallery."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "allowed",
+    "permitted"
+   ]
+  }
+ },
+ {
+  "replaces": "e9b3131f-a55e-4b85-b69e-7118c7c1cdc4",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B1",
+  "topic": "booking tickets early",
+  "content": {
+   "sentence": "Tickets were cheaper because we booked them several months in ___."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "advance"
+   ]
+  }
+ },
+ {
+  "replaces": "93819396-41e4-4514-8b88-66921048f962",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B1",
+  "topic": "lost keys",
+  "content": {
+   "sentence": "Can you help me ___ my keys? I think I dropped them in the car park."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "find",
+    "look for"
+   ]
+  }
+ },
+ {
+  "replaces": "634f9c98-6aef-4c40-a097-cdec361a66df",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B2",
+  "topic": "rescheduled meeting",
+  "content": {
+   "sentence": "The meeting has been ___ until next Tuesday because the director is travelling."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "postponed",
+    "put off",
+    "delayed",
+    "moved"
+   ]
+  }
+ },
+ {
+  "replaces": "6591b0c6-1a80-4d2b-b97c-7455b17a1f75",
+  "item_type_id": "sentence_completion",
+  "cefr_level": "B2",
+  "topic": "a new bridge",
+  "content": {
+   "sentence": "The new bridge will significantly ___ the time it takes to cross the river."
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "reduce",
+    "cut",
+    "shorten"
+   ]
+  }
+ },
+ {
+  "replaces": "f2cb8c61-1e80-4921-bce4-699f58f5d212",
+  "item_type_id": "short_answer",
+  "cefr_level": "A1",
+  "topic": "rooms in a home",
+  "content": {
+   "question": "We cook food in the kitchen. Do we sleep in the kitchen or the bedroom?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "the bedroom",
+    "bedroom",
+    "in the bedroom"
+   ]
+  }
+ },
+ {
+  "replaces": "2917f58a-57a1-44d8-8463-6971c83bcf16",
+  "item_type_id": "short_answer",
+  "cefr_level": "A1",
+  "topic": "bicycles",
+  "content": {
+   "question": "Bruno has a bicycle. Does a bicycle have two wheels or four wheels?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "two wheels",
+    "two",
+    "2",
+    "2 wheels"
+   ]
+  }
+ },
+ {
+  "replaces": "8f8308fe-9b83-41d8-b581-d01180afa1b0",
+  "item_type_id": "short_answer",
+  "cefr_level": "A2",
+  "topic": "days and weeks",
+  "content": {
+   "question": "There are seven days in a week. How many days are in two weeks?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "fourteen",
+    "14",
+    "fourteen days",
+    "14 days"
+   ]
+  }
+ },
+ {
+  "replaces": "40b06dd5-5457-4954-a190-0642a2719ef6",
+  "item_type_id": "short_answer",
+  "cefr_level": "B1",
+  "topic": "idioms: prices",
+  "content": {
+   "question": "Leilani's new phone cost an arm and a leg. Was it cheap or expensive?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "expensive",
+    "it was expensive",
+    "very expensive"
+   ]
+  }
+ },
+ {
+  "replaces": "607128f6-f923-41d7-90ca-7a03ee9b55dc",
+  "item_type_id": "short_answer",
+  "cefr_level": "B2",
+  "topic": "idioms: unlikely ideas",
+  "content": {
+   "question": "Viktor's colleagues think his new idea is far-fetched. Do they find it realistic or unlikely?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "unlikely",
+    "they find it unlikely",
+    "they think it is unlikely"
+   ]
+  }
+ },
+ {
+  "replaces": "2433b315-9957-45f6-965e-55da30aaf13c",
+  "item_type_id": "short_answer",
+  "cefr_level": "B2",
+  "topic": "phrasal verbs: delaying",
+  "content": {
+   "question": "Farid's flatmate keeps putting off the cleaning. Does he do it right away or delay it?"
+  },
+  "answer_set": {
+   "acceptable_answers": [
+    "delay it",
+    "he delays it",
+    "delays it",
+    "he puts it off",
+    "puts it off"
+   ]
+  }
+ },
+ {
+  "replaces": "c44989e7-a81b-4b4c-a696-278f0c4dd418",
+  "item_type_id": "speaking_situations",
+  "cefr_level": "B1",
+  "topic": "a problem with a restaurant booking",
+  "content": {
+   "situation": "You are organising a team lunch for Friday, and your manager, Ms Okafor, has asked for vegetarian options. The restaurant you booked has just told you their menu is changing. Explain the situation to Ms Okafor and suggest what to do."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "5e81459a-5abe-4519-80cc-06844caa436f",
+  "item_type_id": "story_retelling",
+  "cefr_level": "B1",
+  "topic": "learning the guitar",
+  "content": {
+   "story": "Halima wanted to learn to play the guitar. She bought a second-hand one at a weekend market, but the strings were old and kept breaking. A music teacher who lived in her building showed her how to change them. After a month of practice, Halima played a short song at her cousin's birthday party."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "59687b31-5de2-4ba0-97da-6ad886cf3a06",
+  "item_type_id": "story_retelling",
+  "cefr_level": "B2",
+  "topic": "a small bakery adapts",
+  "content": {
+   "story": "Wanjiru runs a small bakery in her town. When a large supermarket opened nearby, her sales dropped sharply. Instead of giving up, she started offering baking classes on weekday evenings. The classes became so popular that she now has a waiting list, and her bread sales have recovered as well."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "4a78da8c-4f07-4dd4-8e82-dd32927ea5eb",
+  "item_type_id": "summary_and_opinion",
+  "cefr_level": "B2",
+  "topic": "car-free city centres",
+  "content": {
+   "passage": "Many cities are creating car-free zones in their centres. Supporters say these areas are cleaner, quieter and better for local shops. However, some residents complain that they are harder to reach, especially for older people. Planners need to balance these concerns carefully."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "3bef4f3c-61a7-4565-986f-210781f327f6",
+  "item_type_id": "summary_and_opinion",
+  "cefr_level": "C1",
+  "topic": "the four-day working week",
+  "content": {
+   "passage": "Four-day working weeks are being trialled by organisations in several countries. Early reports suggest that staff are less tired and just as productive. Yet sceptics argue that the benefits may fade once the novelty wears off, and that not every type of job can be compressed into fewer days."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "ce102014-0dbd-407f-89eb-b00ab3766092",
+  "item_type_id": "typing",
+  "cefr_level": "B2",
+  "topic": "modern public libraries",
+  "content": {
+   "text": "Public libraries have changed a great deal over the past twenty years. Many now offer coding clubs, language exchanges and quiet study spaces. Yet some people still think of them simply as places to borrow books."
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "a1cd42ca-8c27-4e1f-8853-27f8af6f01ff",
+  "item_type_id": "typing",
+  "cefr_level": "B2",
+  "topic": "train ticket prices",
+  "content": {
+   "text": "Travellers often wonder why train tickets bought on the day cost so much more than those booked in advance. Is it reasonable to expect passengers to plan every journey weeks ahead?"
+  },
+  "answer_set": null
+ },
+ {
+  "replaces": "f2adb153-879b-4d46-818b-f22c4938d6b4",
+  "item_type_id": "typing",
+  "cefr_level": "C1",
+  "topic": "natural flood defences",
+  "content": {
+   "text": "Coastal towns are increasingly investing in natural defences, such as restored wetlands and dunes, to reduce flooding. These measures were initially regarded as experimental, but they are now considered a cost-effective complement to sea walls."
+  },
+  "answer_set": null
+ }
+]

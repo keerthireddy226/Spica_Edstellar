@@ -14,12 +14,16 @@ import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pool } from "../src/db.js";
-import { synthesizeSpeech, type VoiceGender } from "../src/voice/googleTts.js";
+import { ACCENTS, synthesizeSpeech, type Accent, type VoiceGender } from "../src/voice/googleTts.js";
 import { getSpokenSegments, AUDIO_FIRST_TYPES } from "../src/voice/spokenText.js";
 
 const VOICES: VoiceGender[] = ["male", "female"];
 const UPLOADS_DIR = path.join(process.cwd(), "uploads", "item-audio");
-const ACCENT = "en-US";
+// --accent=en-GB uses one accent; --accent=mix rotates US, British, Indian and
+// Australian voices across items (LanguageCert-style listening uses a mix).
+const accentArg = process.argv.find((a) => a.startsWith("--accent="))?.slice("--accent=".length) ?? "en-US";
+if (accentArg !== "mix" && !ACCENTS.includes(accentArg as Accent)) throw new Error(`--accent must be mix or one of ${ACCENTS.join(", ")}`);
+const accentFor = (i: number): Accent => (accentArg === "mix" ? ACCENTS[i % ACCENTS.length] : (accentArg as Accent));
 
 const force = process.argv.includes("--force");
 const typeArg = process.argv.find((a) => a.startsWith("--type="));
@@ -51,7 +55,8 @@ async function main() {
   let skipped = 0;
   let failed = 0;
 
-  for (const item of itemsResult.rows) {
+  for (const [itemIndex, item] of itemsResult.rows.entries()) {
+    const accent = accentFor(itemIndex);
     const text = getSpokenSegments(item.item_type_id, item.content as Record<string, unknown>).join(". ");
     if (!text) {
       console.warn(`Item ${item.id} (${item.item_type_id}): no spoken text found, skipping.`);
@@ -68,7 +73,7 @@ async function main() {
         }
       }
 
-      const speech = await synthesizeSpeech(text, voice);
+      const speech = await synthesizeSpeech(text, voice, accent);
       if (!speech) {
         console.error(`Item ${item.id} (${voice}): synthesis failed, skipping.`);
         failed++;
@@ -84,7 +89,7 @@ async function main() {
         `INSERT INTO item_audio (item_id, voice_id, accent, uri, duration_ms)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (item_id, voice_id) DO UPDATE SET uri = EXCLUDED.uri, duration_ms = EXCLUDED.duration_ms, accent = EXCLUDED.accent`,
-        [item.id, voice, ACCENT, uri, speech.durationMs],
+        [item.id, voice, accent, uri, speech.durationMs],
       );
 
       generated++;

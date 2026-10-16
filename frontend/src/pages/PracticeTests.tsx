@@ -884,7 +884,7 @@ export function PracticeTests() {
                   </div>
                 ) : (
                   <p
-                    className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
+                    className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
                     style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
                   >
                     {visibleText}

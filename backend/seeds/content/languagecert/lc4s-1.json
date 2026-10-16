@@ -1,0 +1,1701 @@
+{
+  "exam": {
+    "code": "lc4s-1",
+    "test_type_id": "lcFourSkills",
+    "name": "LanguageCert-style 4 Skills (A1-C2) - Set 1"
+  },
+  "parts": [
+    {
+      "sort_order": 1,
+      "label": "Listening Part 1: Short utterances",
+      "item_type_id": "lc_listen_mcq",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "shopping",
+          "content": {
+            "audio": "The shop opens at nine o'clock in the morning and closes at six.",
+            "question": "When does the shop open?",
+            "options": [
+              "at 6:00",
+              "at 10:00",
+              "at 9:00"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "family",
+          "content": {
+            "audio": "My sister Amina is twelve, and my brother Tunde is nine.",
+            "question": "How old is Tunde?",
+            "options": [
+              "nineteen",
+              "nine",
+              "twelve"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "travel",
+          "content": {
+            "audio": "Sorry, the train to Leeds isn't leaving from platform four today. Please go to platform seven.",
+            "question": "Which platform does the Leeds train leave from today?",
+            "options": [
+              "platform seven",
+              "platform eleven",
+              "platform four"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "shopping",
+          "content": {
+            "audio": "I wanted the blue jacket, but they only had it in black, so I bought a grey one instead.",
+            "question": "What colour jacket did the speaker buy?",
+            "options": [
+              "black",
+              "blue",
+              "grey"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "audio": "I was going to send the report on Thursday, but my manager has asked me to finish it a day early.",
+            "question": "When will the speaker send the report?",
+            "options": [
+              "on Wednesday",
+              "on Friday",
+              "on Thursday"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "technology",
+          "content": {
+            "audio": "Honestly, the new booking system isn't any faster than the old one, but at least customers can now change their appointments without phoning us.",
+            "question": "What does the speaker say is better about the new system?",
+            "options": [
+              "It is quicker than the old system.",
+              "Customers can change bookings themselves.",
+              "Fewer customers need appointments."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "environment",
+          "content": {
+            "audio": "Had the council asked residents what they thought before putting in the new bike lanes, it could have avoided most of the complaints it's now having to deal with.",
+            "question": "What is the speaker's view?",
+            "options": [
+              "The bike lanes should be removed.",
+              "Residents complained before the lanes were built.",
+              "The council should have consulted residents first."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "culture",
+          "content": {
+            "audio": "Far from brushing the critics aside, the director has quietly absorbed their objections into the revised production, which is arguably the sharpest it's ever been.",
+            "question": "What does the speaker suggest about the director?",
+            "options": [
+              "The director publicly argued with the critics.",
+              "The director used the criticism to improve the show.",
+              "The director ignored what the critics said."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 2,
+      "label": "Listening Part 2: Best reply",
+      "item_type_id": "lc_listen_reply",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "food and drink",
+          "content": {
+            "audio": "Can I have a glass of water, please?",
+            "options": [
+              "Yes, of course. Here you are.",
+              "It's on Tuesday.",
+              "No, I'm not hungry."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "travel",
+          "content": {
+            "audio": "How was your weekend in Nairobi?",
+            "options": [
+              "It was great, thanks. We visited the national park.",
+              "It takes about two hours.",
+              "I'm going there next weekend."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "audio": "Would you mind covering my shift on Saturday? I've got a family wedding.",
+            "options": [
+              "No, I don't work on Sundays.",
+              "Not at all. I'm not doing anything that day.",
+              "Yes, it was a lovely wedding."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "work",
+          "content": {
+            "audio": "I've been meaning to ask - did the supplier ever get back to you about the delayed order?",
+            "options": [
+              "Yes, I've been meaning to order some.",
+              "They delayed me on the way back.",
+              "Not yet. I'll chase them again this afternoon."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "technology",
+          "content": {
+            "audio": "I can't help thinking we've underestimated how long the data migration's going to take.",
+            "options": [
+              "You may be right. Perhaps we should build in some extra time.",
+              "Yes, we finished it much earlier than expected.",
+              "I can't help you with that, I'm afraid."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 3,
+      "label": "Listening Part 2: Complete the dialogue",
+      "item_type_id": "lc_listen_dialogue",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "leisure",
+          "content": {
+            "audio": "A: Hello, can I help you?\nB: Yes, I'd like two tickets for the museum, please.\nA: That's ten pounds, please.",
+            "options": [
+              "Nice to meet you.",
+              "Yes, I'm fine.",
+              "Here you are."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "home",
+          "content": {
+            "audio": "A: Where's my phone?\nB: Is it on the kitchen table?",
+            "options": [
+              "I'm in the kitchen.",
+              "No, it isn't. I looked there.",
+              "Yes, it's a new phone."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "study",
+          "content": {
+            "audio": "A: Are you coming to the cinema with us tonight?\nB: I'd love to, but I have to study for my exam.\nA: Oh, when is it?",
+            "options": [
+              "It was very difficult.",
+              "It's on Monday morning.",
+              "At the cinema."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "food and drink",
+          "content": {
+            "audio": "A: Good evening. Do you have a reservation?\nB: Yes, a table for three. The name's Okafor.\nA: Ah yes, here it is. Would you like to sit inside or outside?",
+            "options": [
+              "Inside, please. It's a bit cold tonight.",
+              "Yes, we would.",
+              "Three people, please."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "audio": "A: Did you manage to fix the printer?\nB: No, I've tried everything. I think it needs a new part.\nA: Shall I call the technician?",
+            "options": [
+              "Don't worry, I've already fixed it.",
+              "No, I've never printed it.",
+              "That would be great, thanks."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "travel",
+          "content": {
+            "audio": "A: Excuse me, is this the right bus for the airport?\nB: No, you need the number 42. This one goes to the city centre.\nA: Oh no. Where can I catch it?",
+            "options": [
+              "The city centre is lovely.",
+              "It leaves every twenty minutes.",
+              "From the stop across the road."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "work",
+          "content": {
+            "audio": "A: I heard you're thinking of leaving the design team.\nB: Well, nothing's decided yet. I've just been offered a role in Singapore.\nA: That's a big step. What's holding you back?",
+            "options": [
+              "Nothing. I've already accepted it.",
+              "Mostly the thought of being so far from my family.",
+              "I'm holding a meeting at three."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "work",
+          "content": {
+            "audio": "A: The client wants the whole presentation redone by Friday.\nB: Friday? That's a tall order, given everything else on our plate.\nA: I know, but they've made it clear the deadline isn't going to move.",
+            "options": [
+              "Then we'll have to put some other tasks on hold.",
+              "I'm afraid the plates have already been ordered.",
+              "Great, so we can take things easy this week."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "work",
+          "content": {
+            "audio": "A: So, what did you make of the proposal to merge the two departments?\nB: On paper it makes sense, but I'm not convinced the staff have been brought along.\nA: You mean people feel it's being imposed on them?",
+            "options": [
+              "No, they've all been brought to the new office.",
+              "Exactly. There's been very little genuine consultation.",
+              "Yes, the paperwork has all been completed."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "work",
+          "content": {
+            "audio": "A: I gather the funding bid fell through in the end.\nB: It did, though I wouldn't write the project off just yet.\nA: Really? I'd assumed that was the final nail in the coffin.",
+            "options": [
+              "You're right, it's definitely the end of the road.",
+              "Yes, we've finally finished building it.",
+              "Not necessarily. There are one or two other avenues we haven't explored."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 4,
+      "label": "Listening Part 3: Short conversations",
+      "item_type_id": "lc_listen_conversation",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "free time",
+          "content": {
+            "audio": "A: Hi Lucas, are you free on Saturday?\nB: In the morning I play football, but I'm free after lunch. Why?\nA: There's a food market in the park. Do you want to come?\nB: I'd love to. Is it expensive?\nA: Not really. Most things cost about five reais. And there's music too.\nB: Great. Can my cousin Bia come with us? She's staying with my family this week.\nA: Of course! Let's meet at the park gate at two o'clock.\nB: Perfect. I'll bring some water for everyone.",
+            "questions": [
+              {
+                "stem": "Why is Lucas busy on Saturday morning?",
+                "options": [
+                  "He plays football.",
+                  "He meets his cousin.",
+                  "He goes to the market."
+                ]
+              },
+              {
+                "stem": "What do they decide to do?",
+                "options": [
+                  "meet at the park gate at two o'clock",
+                  "go to the market without Bia",
+                  "meet in the morning after football"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "study",
+          "content": {
+            "audio": "A: Priya, have you decided which evening course to take next term?\nB: I'm stuck between photography and Spanish. Photography sounds fun, but it's on Tuesday evenings, and I always work late on Tuesdays.\nA: What about Spanish?\nB: That's on Saturday mornings, which suits me better. And I'm going to Madrid in the summer, so it'd be useful.\nA: Sounds like you've already made up your mind.\nB: I suppose I have. Although I'm a bit worried my Spanish will be terrible.\nA: Everyone starts somewhere. Jonas took the same class last year and he really enjoyed it.\nB: Did he? Then I'll sign up tonight.",
+            "questions": [
+              {
+                "stem": "Why doesn't Priya choose photography?",
+                "options": [
+                  "She thinks it would be boring.",
+                  "The day doesn't fit with her job.",
+                  "Jonas didn't enjoy it."
+                ]
+              },
+              {
+                "stem": "How does Priya feel about learning Spanish?",
+                "options": [
+                  "not really interested",
+                  "completely confident",
+                  "a little nervous"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "services",
+          "content": {
+            "audio": "A: Hello, is that the letting agency? It's Chidi Eze from flat 3B on Mill Road.\nB: Hi, Mr Eze. How can I help?\nA: The heating stopped working on Sunday. I reported it online, but nobody's replied.\nB: I'm sorry about that. Our engineer is fully booked tomorrow, but he could come on Thursday.\nA: Thursday? That's three more days without heating. It's freezing at night.\nB: I understand. Let me see... I could send an engineer from another company tomorrow afternoon, but you'd need to be at home.\nA: I'll work from home, then. That's much better than waiting.\nB: Great. I'll book it now and send you a text to confirm.",
+            "questions": [
+              {
+                "stem": "Why is Chidi calling the agency?",
+                "options": [
+                  "His heating has stopped and nobody has answered his report.",
+                  "He wants to move to another flat.",
+                  "The engineer didn't arrive on Sunday."
+                ]
+              },
+              {
+                "stem": "What does Chidi decide to do?",
+                "options": [
+                  "find an engineer himself",
+                  "wait until Thursday",
+                  "stay at home tomorrow afternoon"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2
+            ]
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "workplace",
+          "content": {
+            "audio": "A: Kenji, have you had a chance to look at Wanjiru's plan for the new staff newsletter?\nB: I have. I think the idea's good, but a weekly email seems like a lot. People already complain they get too many.\nA: That's fair. She did say it'd be short, though, just five headlines.\nB: Even so, I'd rather see it monthly and done properly. If it's weekly, it'll end up full of filler.\nA: I'm not sure. Monthly might mean the news is out of date by the time it goes out.\nB: True. Maybe we suggest a fortnightly one as a compromise?\nA: That could work. Let's put it to her this afternoon, and make it clear we like the idea overall.",
+            "questions": [
+              {
+                "stem": "What is Kenji's main concern about the newsletter?",
+                "options": [
+                  "Its news will be out of date.",
+                  "It will be sent too often.",
+                  "It will be too long."
+                ]
+              },
+              {
+                "stem": "What do the speakers agree to do?",
+                "options": [
+                  "recommend sending it monthly",
+                  "ask Wanjiru to drop the idea",
+                  "suggest sending it every two weeks"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "community",
+          "content": {
+            "audio": "A: Did you go to the residents' meeting about the community garden?\nB: I did. Marisol from the council presented the plans. Frankly, I came away rather underwhelmed.\nA: Really? I'd heard it was going to transform that empty lot.\nB: Oh, the design's lovely. My reservation is that there's no real plan for who'll look after it once the funding runs out after two years.\nA: Surely volunteers would step in?\nB: Perhaps, but you can't build a long-term project on goodwill alone. I've seen it happen before. The enthusiasm fades and things fall apart.\nA: So would you rather it didn't go ahead?\nB: No, no. I'd just like them to sort out the maintenance side before they break ground.",
+            "questions": [
+              {
+                "stem": "What is the second speaker's attitude to the garden plans?",
+                "options": [
+                  "supportive, but doubtful about the long term",
+                  "critical of the design itself",
+                  "keen for the project to be cancelled"
+                ]
+              },
+              {
+                "stem": "Why is the second speaker worried?",
+                "options": [
+                  "Volunteers have refused to help.",
+                  "The garden may not be looked after once the money stops.",
+                  "The council hasn't chosen a site yet."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "culture",
+          "content": {
+            "audio": "A: So, did the new translation of the novel live up to the hype?\nB: In some ways. It's undeniably more readable than the old one, but I can't shake the feeling that something's been lost in the smoothing out.\nA: Lost how? Surely readability's the whole point.\nB: Up to a point. The original is deliberately awkward in places. The author was playing with the rhythms of two languages at once. Iron that out and you end up with a perfectly pleasant book that isn't quite hers.\nA: That seems a bit purist. Most readers just want a good story.\nB: Which they'll certainly get. I'm not saying it's a failure, merely that it's a different book from the one she wrote.",
+            "questions": [
+              {
+                "stem": "What is the second speaker's view of the new translation?",
+                "options": [
+                  "It reads well but loses something essential about the original.",
+                  "It is a failure that readers should avoid.",
+                  "It is harder to read than the older version."
+                ]
+              },
+              {
+                "stem": "What does the first speaker think of the second speaker's argument?",
+                "options": [
+                  "It is entirely convincing.",
+                  "It ignores how difficult the original is.",
+                  "It is rather too purist."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 5,
+      "label": "Listening Part 4: Longer listening",
+      "item_type_id": "lc_listen_long",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "environment",
+          "content": {
+            "audio": "Good morning, everyone, and thank you for coming. My name's Grace Mwangi, and I'm the volunteer coordinator for today's river clean-up. Before we start, I'd like to explain how the day will work. We've divided the riverbank into four sections, and each group will look after one section. You'll find your group number on the back of your name badge. Groups one and two will start near the old bridge, and groups three and four will start by the sports field. Everyone gets a pair of gloves, a litter picker and two bags: a green bag for things that can be recycled, like bottles and cans, and a black bag for everything else. Please don't try to pick up anything heavy or sharp, like broken glass or large pieces of metal. If you see something like that, just tell your group leader, and our team will collect it later with the right equipment. We'll work until half past twelve, and then we'll all meet back here for lunch. The sandwiches have been given to us by a local bakery, so there's no need to buy anything. There's also tea and coffee, but please use your own cup if you brought one. We're trying not to use any paper cups today. Last year, about sixty people came, and we collected more than two hundred bags of rubbish. This year we have nearly ninety volunteers, so I'm hoping we can beat that number easily. Finally, if you'd like to take photos, that's fine, but please ask people before you include them in a picture. Right, let's get started. Group leaders, please raise your hands so your teams can find you.",
+            "questions": [
+              {
+                "stem": "How will volunteers know which group they are in?",
+                "options": [
+                  "Their group leader will call their name.",
+                  "It is written on their name badge.",
+                  "They can choose a group themselves."
+                ]
+              },
+              {
+                "stem": "What should volunteers do if they find broken glass?",
+                "options": [
+                  "tell their group leader",
+                  "take it to the old bridge",
+                  "put it in the black bag"
+                ]
+              },
+              {
+                "stem": "Why does Grace ask volunteers to use their own cups?",
+                "options": [
+                  "because there aren't enough cups",
+                  "because the drinks are not free",
+                  "to avoid using paper cups"
+                ]
+              },
+              {
+                "stem": "What does Grace say about this year's clean-up?",
+                "options": [
+                  "She expects them to collect fewer bags.",
+                  "More people are taking part than last year.",
+                  "It will finish later than last year."
+                ]
+              },
+              {
+                "stem": "What does Grace ask people to do when they take photos?",
+                "options": [
+                  "only take pictures of the river",
+                  "ask people before photographing them",
+                  "share the photos with the group leaders"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              1,
+              0,
+              2,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "work",
+          "content": {
+            "audio": "A: Today on Morning Talk I'm joined by Ana Ribeiro, who opened a shared workspace in the small town of Vale Verde last year. Ana, what made you decide to do it?\nB: Well, I'd moved back to my home town after years in the city, and I was working remotely for a design firm. I quickly realised I wasn't the only one. There were teachers giving online classes, a couple of software developers, a translator, all working at kitchen tables and feeling pretty isolated.\nA: So the idea was really about company rather than just desks?\nB: Exactly. The internet connection was part of it, of course. Broadband in a lot of homes here is quite unreliable. But mainly, people missed having colleagues to talk to.\nA: And how has it gone so far?\nB: Better than I expected, to be honest. We started with eight members and we've got thirty now. The thing that surprised me most is the number of older people who've joined. I'd assumed it would mainly be young people, but we've got a retired engineer who runs workshops for teenagers, for example.\nA: Some people in the town have said the space is too expensive for local people. How do you respond to that?\nB: I understand the concern. The full monthly membership isn't cheap, I'll admit. But we introduced a day pass last spring, which costs about the same as lunch in a cafe, and that's made a real difference.\nA: What's next for the space?\nB: We'd like to open a small room for parents with young children, so they can work while the kids are looked after next door. We're talking to the local council about funding at the moment, but nothing's confirmed.\nA: Well, it certainly sounds as if it's filled a gap in the town. Ana, thank you for coming in.\nB: My pleasure.",
+            "questions": [
+              {
+                "stem": "What was Ana's main reason for opening the workspace?",
+                "options": [
+                  "People working from home felt isolated.",
+                  "Homes in the town had no internet at all.",
+                  "Her design firm asked her to open an office."
+                ]
+              },
+              {
+                "stem": "What has surprised Ana about the members?",
+                "options": [
+                  "Few of them work in technology.",
+                  "Most of them are teenagers.",
+                  "Many of them are older people."
+                ]
+              },
+              {
+                "stem": "How does Ana respond to the criticism about cost?",
+                "options": [
+                  "She says the membership is actually cheap.",
+                  "She partly accepts it and mentions a cheaper option.",
+                  "She says the council should pay for members."
+                ]
+              },
+              {
+                "stem": "What is the purpose of the planned new room?",
+                "options": [
+                  "to hold workshops run by the council",
+                  "to give teenagers a place to study",
+                  "to let parents work while their children are cared for"
+                ]
+              },
+              {
+                "stem": "What does the presenter suggest at the end of the interview?",
+                "options": [
+                  "The space meets a real need in the town.",
+                  "The space is too expensive for most people.",
+                  "The project depends on council funding."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2,
+              1,
+              2,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "technology",
+          "content": {
+            "audio": "Most of us have had the experience of a device breaking just after the warranty runs out, and being told that it would cost almost as much to repair as to replace. It's tempting to see this as a simple story of manufacturers designing things to fail. I want to suggest this afternoon that the reality is rather more complicated, and in some ways more interesting. Let's start with what we actually know. Studies in several countries have found that the average lifespan of household appliances, washing machines for example, has fallen over the past two decades. That much is well documented. What's far less clear is why. Deliberate sabotage is one explanation, but there are others. Products have become lighter and cheaper, and consumers, on the whole, have rewarded that. Many components are now glued rather than screwed together, partly to make devices thinner, which happens to make them much harder to open. Now, my own view, and I should stress that it is a view, is that the biggest obstacle to repair isn't technical at all. It's that the skills, and the small businesses that once did repairs, have largely disappeared. When a town loses its last repair shop, it doesn't come back simply because people want it to. That's why I find the growth of community repair cafes so encouraging. These are volunteer-run events where people bring broken items and learn to fix them alongside someone experienced. Critics argue, fairly enough, that they're far too small to make a real dent in the amount of electronic waste we produce. But I think that rather misses the point. Their real value lies in rebuilding confidence and know-how, which is precisely what's been lost. None of this lets manufacturers off the hook. Making spare parts and manuals available would help enormously. But if we treat repair purely as a question of product design, we'll end up with repairable products and nobody who knows how to repair them.",
+            "questions": [
+              {
+                "stem": "What idea does the speaker want to challenge at the start?",
+                "options": [
+                  "that the problem is simply products being designed to fail",
+                  "that repairs are usually too expensive",
+                  "that warranties are too short"
+                ]
+              },
+              {
+                "stem": "Which of these does the speaker present as an established fact?",
+                "options": [
+                  "Manufacturers deliberately make products fail.",
+                  "Lost repair skills are the main obstacle to repair.",
+                  "Household appliances last less long than they used to."
+                ]
+              },
+              {
+                "stem": "Why does the speaker mention glued components?",
+                "options": [
+                  "to prove that manufacturers are being dishonest",
+                  "to show that design choices can make repair harder without that being the aim",
+                  "to blame consumers for wanting thinner devices"
+                ]
+              },
+              {
+                "stem": "How does the speaker respond to critics of repair cafes?",
+                "options": [
+                  "The speaker rejects their figures on electronic waste.",
+                  "The speaker accepts their point but thinks they overlook the cafes' main value.",
+                  "The speaker agrees the cafes should be replaced by repair shops."
+                ]
+              },
+              {
+                "stem": "What is the speaker's main conclusion?",
+                "options": [
+                  "Better product design alone will not solve the problem.",
+                  "Manufacturers are not responsible for the problem.",
+                  "Repair cafes will soon replace repair shops."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2,
+              1,
+              1,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 6,
+      "label": "Reading Part 1: Short texts",
+      "item_type_id": "lc_read_short",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "food and drink",
+          "content": {
+            "text": "CAFE CLOSED ON MONDAYS. OPEN TUESDAY TO SUNDAY, 8 AM - 5 PM.",
+            "question": "What does this sign say?",
+            "options": [
+              "The cafe opens at 5 pm.",
+              "The cafe is open every day.",
+              "You cannot visit the cafe on Monday."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "work",
+          "content": {
+            "text": "Hi Mei, my bus is late. Please start the meeting without me. I'll be there in 20 minutes. Ravi",
+            "question": "Why did Ravi send this message?",
+            "options": [
+              "He can't find the bus stop.",
+              "He wants to cancel the meeting.",
+              "He is going to arrive late."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "food and drink",
+          "content": {
+            "text": "Keep in the fridge after opening. Use within 3 days.",
+            "question": "What does this label tell you?",
+            "options": [
+              "Eat it within three days of opening it.",
+              "Keep it out of the fridge once it is open.",
+              "Open it three days after you buy it."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "leisure",
+          "content": {
+            "text": "Gym members: from 1 March, the pool will close at 8 pm instead of 10 pm on weekdays because of staff shortages. Weekend opening times will stay the same.",
+            "question": "What is changing?",
+            "options": [
+              "Members will have to pay for the pool from March.",
+              "The pool will close earlier on weekdays.",
+              "The pool will be closed at weekends."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "shopping",
+          "content": {
+            "text": "Dear Mr Adeyemi, your order has been sent, but it will arrive in two parcels. The desk lamp will be delivered separately next week. You do not need to do anything.",
+            "question": "What does the email tell Mr Adeyemi?",
+            "options": [
+              "His whole order has been delayed.",
+              "Part of his order will arrive later.",
+              "He needs to order the lamp again."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "workplace",
+          "content": {
+            "text": "Staff are reminded that meeting rooms which are booked but not in use within 15 minutes of the start time will be released automatically. Please cancel any bookings you no longer need.",
+            "question": "What is the main purpose of this notice?",
+            "options": [
+              "to tell staff that meetings must be shorter",
+              "to warn staff that the booking system makes mistakes",
+              "to stop rooms being reserved when nobody is using them"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "culture",
+          "content": {
+            "text": "Owing to unforeseen circumstances, tonight's talk has been postponed rather than cancelled. Tickets remain valid for the rescheduled date, which will be announced in due course. Refunds are available on request.",
+            "question": "What should ticket holders understand from this notice?",
+            "options": [
+              "They can keep their tickets for the new date.",
+              "The new date has already been confirmed.",
+              "The talk will not take place at all."
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 7,
+      "label": "Reading Part 2: Gapped texts",
+      "item_type_id": "lc_read_cloze",
+      "items": [
+        {
+          "cefr_level": "A2",
+          "topic": "home",
+          "content": {
+            "passage": "Hi Sofia,\nI'm writing to (1) ____ you about my new flat! I moved here last Saturday. It's small, but it's very bright and it's close (2) ____ the station. My neighbour, Mrs Tanaka, is really kind. She (3) ____ me a cake on my first day. The only problem is the noise from the street at night, so I want to buy some thick curtains. Are you free next weekend? You can come and stay. There's a market near here (4) ____ sells fresh fruit and flowers, and we could go there on Sunday morning. Then we can have lunch at the cafe on the corner. Let me (5) ____ if you can come!\nLove,\nEmma",
+            "questions": [
+              {
+                "options": [
+                  "say",
+                  "speak",
+                  "tell"
+                ]
+              },
+              {
+                "options": [
+                  "to",
+                  "from",
+                  "at"
+                ]
+              },
+              {
+                "options": [
+                  "took",
+                  "brought",
+                  "carried"
+                ]
+              },
+              {
+                "options": [
+                  "who",
+                  "that",
+                  "where"
+                ]
+              },
+              {
+                "options": [
+                  "tell",
+                  "say",
+                  "know"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              0,
+              1,
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "community",
+          "content": {
+            "passage": "When Halden Public Library began lending out tools alongside books last year, few staff expected the scheme to (1) ____ on. Yet within six months, drills, ladders and sewing machines were being borrowed more often than many bestsellers. Librarian Femi Adebayo believes the idea has struck a (2) ____ with residents who need equipment only occasionally. 'Why spend money on a tool you'll use twice a year?' he says. The library has also started running weekend workshops, at (3) ____ volunteers show borrowers how to use the equipment safely. Not everyone was enthusiastic at first: some local shop owners were concerned that the scheme would (4) ____ into their sales. (5) ____, several of them have since donated tools themselves, saying the library brings more people into the town centre.",
+            "questions": [
+              {
+                "options": [
+                  "catch",
+                  "pick",
+                  "take"
+                ]
+              },
+              {
+                "options": [
+                  "note",
+                  "chord",
+                  "tone"
+                ]
+              },
+              {
+                "options": [
+                  "that",
+                  "where",
+                  "which"
+                ]
+              },
+              {
+                "options": [
+                  "eat",
+                  "run",
+                  "fall"
+                ]
+              },
+              {
+                "options": [
+                  "However",
+                  "Therefore",
+                  "Moreover"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              1,
+              2,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "travel",
+          "content": {
+            "passage": "The appeal of slow travel lies less in the destination than in the journey itself. Rather than rushing from one famous sight to the next, slow travellers choose to (1) ____ down in a single region for several weeks, getting to know its rhythms. Advocates argue that this approach not only reduces the environmental (2) ____ of frequent flights but also allows for more meaningful contact with local people. Critics, however, point out that such trips are (3) ____ of reach for most workers, whose annual leave is measured in days rather than weeks. There is some (4) ____ in this objection, yet it perhaps misses the broader point: slowing down is as much an attitude as a timetable. Even a weekend away can be approached in this spirit, (5) ____ one resists the urge to fill every hour.",
+            "questions": [
+              {
+                "options": [
+                  "calm",
+                  "sit",
+                  "settle"
+                ]
+              },
+              {
+                "options": [
+                  "charge",
+                  "toll",
+                  "fee"
+                ]
+              },
+              {
+                "options": [
+                  "out",
+                  "beyond",
+                  "off"
+                ]
+              },
+              {
+                "options": [
+                  "fact",
+                  "reality",
+                  "truth"
+                ]
+              },
+              {
+                "options": [
+                  "unless",
+                  "provided",
+                  "despite"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              1,
+              0,
+              2,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 8,
+      "label": "Reading Part 3: Gapped sentences",
+      "item_type_id": "lc_read_gap",
+      "items": [
+        {
+          "cefr_level": "A1",
+          "topic": "family",
+          "content": {
+            "sentence": "My brother ____ a doctor in Lagos.",
+            "options": [
+              "am",
+              "are",
+              "is"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "free time",
+          "content": {
+            "sentence": "We go to the park ____ Sunday mornings.",
+            "options": [
+              "on",
+              "in",
+              "at"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A1",
+          "topic": "home",
+          "content": {
+            "sentence": "Can you ____ the window, please? It's cold in here.",
+            "options": [
+              "open",
+              "close",
+              "wear"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "home",
+          "content": {
+            "sentence": "I've lived in Manila ____ 2019.",
+            "options": [
+              "since",
+              "from",
+              "for"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "family",
+          "content": {
+            "sentence": "Hiroshi is ____ than his sister, but she can run faster.",
+            "options": [
+              "tallest",
+              "taller",
+              "more tall"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "daily life",
+          "content": {
+            "sentence": "Could you ____ me a favour and water my plants while I'm away?",
+            "options": [
+              "make",
+              "give",
+              "do"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "A2",
+          "topic": "leisure",
+          "content": {
+            "sentence": "I didn't go to the concert ____ I was feeling ill.",
+            "options": [
+              "but",
+              "so",
+              "because"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "leisure",
+          "content": {
+            "sentence": "If it ____ tomorrow, we'll have the picnic indoors.",
+            "options": [
+              "will rain",
+              "rains",
+              "rained"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "services",
+          "content": {
+            "sentence": "Please fill ____ this form and give it to the receptionist.",
+            "options": [
+              "in",
+              "on",
+              "up"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "sentence": "The meeting has been ____ until next Tuesday because the manager is away.",
+            "options": [
+              "put off",
+              "put out",
+              "put up"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "sentence": "She's very good ____ solving problems under pressure.",
+            "options": [
+              "for",
+              "at",
+              "in"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "travel",
+          "content": {
+            "sentence": "Had I known about the traffic, I ____ earlier.",
+            "options": [
+              "had left",
+              "would leave",
+              "would have left"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "workplace",
+          "content": {
+            "sentence": "The new manager is very approachable, so don't be afraid to ____ any concerns with her.",
+            "options": [
+              "raise",
+              "arise",
+              "rise"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "business",
+          "content": {
+            "sentence": "After months of negotiation, the two companies finally reached an ____.",
+            "options": [
+              "approval",
+              "agreement",
+              "acceptance"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "workplace",
+          "content": {
+            "sentence": "I'm going to have to ____ on this one - I've got far too much on my plate this week.",
+            "options": [
+              "miss",
+              "skip",
+              "pass"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "business",
+          "content": {
+            "sentence": "The report was criticised for ____ over the key risks rather than addressing them directly.",
+            "options": [
+              "polishing",
+              "shining",
+              "glossing"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "work",
+          "content": {
+            "sentence": "____ the project's tight budget, the team managed to deliver an impressive result.",
+            "options": [
+              "Notwithstanding",
+              "Nevertheless",
+              "Whereas"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "workplace",
+          "content": {
+            "sentence": "Her proposal was met with a great deal of ____ at first, but most colleagues came round to it eventually.",
+            "options": [
+              "sceptic",
+              "scepticism",
+              "sceptically"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "business",
+          "content": {
+            "sentence": "It was only when the final figures came in ____ we realised how successful the campaign had been.",
+            "options": [
+              "when",
+              "that",
+              "which"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "business",
+          "content": {
+            "sentence": "The chief executive's statement was so ____ that both supporters and critics of the plan claimed it backed their position.",
+            "options": [
+              "emphatic",
+              "explicit",
+              "equivocal"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 2
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "workplace",
+          "content": {
+            "sentence": "Having been ____ for promotion twice, Kwame decided it was time to look elsewhere.",
+            "options": [
+              "passed over",
+              "passed on",
+              "passed by"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "culture",
+          "content": {
+            "sentence": "The documentary doesn't so much explain the issue ____ invite viewers to draw their own conclusions.",
+            "options": [
+              "than",
+              "as",
+              "but"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 1
+          }
+        },
+        {
+          "cefr_level": "C2",
+          "topic": "study",
+          "content": {
+            "sentence": "His argument, though superficially convincing, does not ____ up to close scrutiny.",
+            "options": [
+              "stand",
+              "put",
+              "keep"
+            ]
+          },
+          "answer_set": {
+            "correctIndex": 0
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 9,
+      "label": "Reading Part 4: Longer texts",
+      "item_type_id": "lc_read_long",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "community",
+          "content": {
+            "passage": "When Kavya Rao moved into a fifth-floor flat in Bengaluru three years ago, the roof of her building was an empty, dusty space that nobody used. Today it is home to more than forty pots of tomatoes, chillies, spinach and herbs, and it has become the most popular place in the building.\n\n'It started by accident, really,' Kavya explains. 'I had a few plants on my balcony, but they didn't get enough sun. One day I asked the building manager if I could put three or four pots on the roof. He said yes, as long as I kept the area tidy.'\n\nAt first, Kavya's neighbours were not very interested. Some of them thought the plants would attract insects, and one family worried that water would leak through the roof into their flat. Kavya listened to their concerns and bought special trays to go under every pot. 'I understood why they were worried,' she says. 'It's their building too.'\n\nThings changed during the first summer, when Kavya had more tomatoes than she could eat. She left a basket of them by the lift with a note saying 'Please help yourself.' The basket was empty by the evening. A week later, an older neighbour, Mr Fernandes, knocked on her door and asked if he could grow some beans.\n\nNow twelve households share the garden. They have a simple timetable for watering, and each family looks after its own pots. Once a month, everyone meets on the roof for a shared meal using vegetables they have grown.\n\nKavya says the biggest change is not the food but the friendships. 'Before, I only knew people's faces from the lift. Now I know their names, their children, even their favourite recipes.'\n\nShe admits that it isn't always easy. Last year, very heavy rain destroyed almost all the plants, and the group had to start again from the beginning. But nobody gave up. 'If anything,' she says, 'it brought us closer together.'\n\nKavya's advice to anyone who wants to start a similar project is simple: 'Begin small, ask permission, and listen to your neighbours.'",
+            "questions": [
+              {
+                "stem": "Why did Kavya first put plants on the roof?",
+                "options": [
+                  "Her neighbours asked her to.",
+                  "The building manager wanted a garden.",
+                  "Her balcony did not get enough sunlight."
+                ]
+              },
+              {
+                "stem": "How did Kavya deal with her neighbours' worries?",
+                "options": [
+                  "She moved her plants back to her balcony.",
+                  "She did something practical to stop water problems.",
+                  "She told them the insects were harmless."
+                ]
+              },
+              {
+                "stem": "What happened after Kavya left tomatoes by the lift?",
+                "options": [
+                  "She sold the rest of her tomatoes.",
+                  "The building manager complained.",
+                  "A neighbour asked to join the garden."
+                ]
+              },
+              {
+                "stem": "According to Kavya, what is the most important result of the garden?",
+                "options": [
+                  "People in the building have got to know each other.",
+                  "The roof is cleaner than it was before.",
+                  "Families spend less money on vegetables."
+                ]
+              },
+              {
+                "stem": "How did the group react when the rain destroyed the plants?",
+                "options": [
+                  "Several families left the group.",
+                  "They started again and became closer.",
+                  "They decided to grow plants indoors instead."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              2,
+              1,
+              2,
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "workplace",
+          "content": {
+            "passage": "A few years ago, I would have described myself as proudly reachable. My phone was always on, and I took a certain satisfaction in replying to colleagues' messages within minutes, whatever the time. It took a long weekend in the mountains, with no signal whatsoever, to make me realise how exhausted I had become.\n\nI am hardly alone. Surveys in several countries suggest that a large proportion of office workers regularly check emails in the evening, and many say they feel unable to switch off. Some governments and employers have responded with so-called 'right to disconnect' policies, which discourage or even prevent staff from being contacted outside working hours.\n\nOn the face of it, this seems an obvious improvement. Yet when I spoke to people about it, the picture was more mixed than I had expected. Tomasz, a project manager who works with teams in three time zones, told me that strict rules would make his job almost impossible. 'My afternoon is someone else's night,' he pointed out. 'If nobody can send a message after six, nothing gets done.' Others valued the flexibility of finishing work late in exchange for collecting their children from school in the afternoon.\n\nWhat struck me in these conversations was that the problem was rarely the messages themselves. It was the expectation of an immediate reply. Adaeze, a designer, put it neatly: 'I don't mind receiving an email at ten at night. I mind feeling that I have to answer it before I go to bed.'\n\nThis suggests that the most effective changes may be cultural rather than legal. Managers, in particular, set the tone. When a team leader sends messages late at night, staff inevitably feel pressure to respond, however often they are told it is not necessary. Simple habits, such as scheduling emails to arrive in the morning or stating clearly when a reply is genuinely urgent, can do more than any official policy.\n\nNone of this means that formal rules are pointless. For workers in organisations where long hours are simply expected, a clear policy may provide valuable protection. But rules on their own will not change the habits of people who have come to feel that being constantly available is part of being good at their job. I should know: I was one of them.",
+            "questions": [
+              {
+                "stem": "What made the writer change their attitude to being available?",
+                "options": [
+                  "a period with no phone connection",
+                  "a new policy at work",
+                  "a conversation with a manager"
+                ]
+              },
+              {
+                "stem": "Why does the writer mention Tomasz?",
+                "options": [
+                  "to support a complete ban on evening messages",
+                  "to give an example of someone who works too many hours",
+                  "to show that strict rules can cause problems for some workers"
+                ]
+              },
+              {
+                "stem": "According to the writer, what really causes stress for many workers?",
+                "options": [
+                  "the number of messages they receive",
+                  "working with people in other time zones",
+                  "feeling that they must reply immediately"
+                ]
+              },
+              {
+                "stem": "What does the writer suggest about managers?",
+                "options": [
+                  "What they do matters more than what they tell staff.",
+                  "They are usually unaware of the problem.",
+                  "They should be banned from sending emails after work."
+                ]
+              },
+              {
+                "stem": "What can we infer about the writer from the final paragraph?",
+                "options": [
+                  "They now believe that formal rules are pointless.",
+                  "They used to see constant availability as a sign of doing their job well.",
+                  "They still reply to messages late at night."
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2,
+              2,
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "cefr_level": "C1",
+          "topic": "science",
+          "content": {
+            "passage": "Every spring, thousands of volunteers across the country spend an hour in their gardens, parks and balconies counting the birds they see. The results, gathered through a simple online form, are used by researchers to track changes in bird populations over time. It is a striking example of what has come to be known as citizen science: research in which members of the public, rather than professional scientists alone, collect and sometimes analyse data.\n\nThe appeal is easy to grasp. No research team, however well funded, could station observers in tens of thousands of locations at once. Volunteers can. Projects of this kind have mapped the spread of invasive plants, recorded the timing of flowering seasons and even helped astronomers classify galaxies from telescope images. In each case, the sheer scale of public involvement has made possible studies that would otherwise have been unthinkable.\n\nYet professional scientists have not always welcomed such projects with open arms, and their reservations deserve to be taken seriously. The most obvious concern is accuracy. An enthusiastic beginner may confuse similar species, or report a sighting that is more hopeful than real. There is also the question of bias: volunteers tend to live in certain areas and to notice certain things, so the resulting data may say as much about the observers as about the world they observe.\n\nDefenders of citizen science have responded to these criticisms not by dismissing them but by designing around them. Many projects now ask several volunteers to classify the same image, accepting a result only when there is broad agreement. Others use statistical methods to correct for the uneven distribution of observers. Studies comparing volunteer and expert data have often found the differences to be smaller than sceptics predicted, though it would be wrong to claim they are negligible in every case.\n\nWhat is perhaps less often discussed is what volunteers themselves gain. Interviews with participants suggest that taking part changes how they see their surroundings. A woman in Osaka who had joined a project recording urban insects told researchers that she 'had never really looked' at the plants on her street before. Such shifts in attention are difficult to measure, and they are not the reason most projects are funded. But they may turn out to be among the most lasting benefits.\n\nThere is a risk, of course, in romanticising all this. Citizen science is not a substitute for properly funded research, and there are fields in which specialist training simply cannot be replaced by enthusiasm. Nor should volunteers become a source of free labour for institutions unwilling to pay for expertise. The most successful projects tend to be those in which the relationship runs both ways: scientists gain data, and the public gains not only knowledge but a sense that research is something done with them, rather than to them or for them.",
+            "questions": [
+              {
+                "stem": "What point does the writer make in the second paragraph?",
+                "options": [
+                  "Volunteers make research possible on a scale professionals could not manage alone.",
+                  "Volunteer data is more reliable than data collected by experts.",
+                  "Citizen science is mainly useful in astronomy."
+                ]
+              },
+              {
+                "stem": "What is the writer's view of professional scientists' doubts?",
+                "options": [
+                  "They come from a misunderstanding of the projects.",
+                  "They have now been completely disproved.",
+                  "They are reasonable and should not be ignored."
+                ]
+              },
+              {
+                "stem": "What does the writer mean by saying the data 'may say as much about the observers as about the world they observe'?",
+                "options": [
+                  "Volunteers often report their feelings instead of facts.",
+                  "Results may reflect where volunteers live and what they tend to notice.",
+                  "Researchers are more interested in volunteers than in birds."
+                ]
+              },
+              {
+                "stem": "What is the writer's attitude to the studies comparing volunteer and expert data?",
+                "options": [
+                  "cautiously positive",
+                  "completely convinced",
+                  "openly doubtful"
+                ]
+              },
+              {
+                "stem": "Why does the writer mention the woman in Osaka?",
+                "options": [
+                  "to show that volunteers often make mistakes",
+                  "to illustrate a benefit that is hard to measure",
+                  "to explain why projects receive funding"
+                ]
+              }
+            ]
+          },
+          "answer_set": {
+            "correct": [
+              0,
+              2,
+              1,
+              0,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sort_order": 10,
+      "label": "Task 1: Short message",
+      "item_type_id": "lc_write_task1",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "work",
+          "content": {
+            "prompt": "Last weekend you borrowed a camera from your colleague, Daniel, for a short trip. Unfortunately, the camera was slightly damaged while you were away. Write an email to Daniel (60-100 words).\nIn your email:\n- thank him for lending you the camera\n- explain what happened to it\n- suggest what you will do about the damage"
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 11,
+      "label": "Task 2: Report, article or review",
+      "item_type_id": "lc_write_task2",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "study",
+          "content": {
+            "prompt": "Your town's website is publishing reviews of local places where people can study or work outside the home, such as libraries, cafes and community centres. The reviews will help residents choose a good place to go. Write a review of one place you know for the website (200-250 words).\nIn your review:\n- describe the place and its facilities\n- explain who it is most suitable for and why\n- say whether you would recommend it and suggest one improvement"
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 12,
+      "label": "Part 1: Personal questions",
+      "item_type_id": "lc_speak_personal",
+      "items": [
+        {
+          "cefr_level": "B1",
+          "topic": "home",
+          "content": {
+            "prompt": "Tell me about the place where you live. What do you like most about it?"
+          },
+          "answer_set": {}
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "free time",
+          "content": {
+            "prompt": "What did you do last weekend? Did you enjoy it?"
+          },
+          "answer_set": {}
+        },
+        {
+          "cefr_level": "B1",
+          "topic": "study",
+          "content": {
+            "prompt": "What is something you would like to learn or improve in the next year, and why?"
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 13,
+      "label": "Part 2: Discussion",
+      "item_type_id": "lc_speak_discussion",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "study",
+          "content": {
+            "prompt": "Your college wants to encourage more students to use its library and study spaces. Discuss these ideas with your partner and decide which two would work best.",
+            "ideas": [
+              "Open the library until midnight during exam periods",
+              "Add a cafe area where students can talk",
+              "Offer free study-skills workshops",
+              "Create bookable rooms for group projects",
+              "Give small prizes to students who visit most often"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 14,
+      "label": "Part 3: Presenting a topic",
+      "item_type_id": "lc_speak_presentation",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "travel",
+          "content": {
+            "prompt": "A journey you remember well",
+            "points": [
+              "Where did you go, and who were you with?",
+              "What happened during the journey?",
+              "Why do you still remember it?"
+            ]
+          },
+          "answer_set": {}
+        }
+      ]
+    },
+    {
+      "sort_order": 15,
+      "label": "Part 3: Follow-up questions",
+      "item_type_id": "lc_speak_followup",
+      "items": [
+        {
+          "cefr_level": "B2",
+          "topic": "travel",
+          "content": {
+            "prompt": "Do you think people travel too much nowadays? Why or why not?"
+          },
+          "answer_set": {}
+        },
+        {
+          "cefr_level": "B2",
+          "topic": "travel",
+          "content": {
+            "prompt": "How has the way people plan their journeys changed in recent years?"
+          },
+          "answer_set": {}
+        }
+      ]
+    }
+  ]
+}

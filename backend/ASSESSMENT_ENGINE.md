@@ -1,7 +1,7 @@
 # Assessment engine: design (Phase 0)
 
-Status: draft for review, 2026-10-16. No code yet. Section 11 lists the decisions
-needed before Phase 1.
+Status: Phase 1 built (2026-10-16); decisions D1-D9 taken as recommended. See
+section 14 for what Phase 1 delivered.
 
 ## 1. Goal and scope
 
@@ -277,3 +277,30 @@ screens, and an update to this file.
   applies.
 - **Cost**: generation is a one-off per bank; reports scale with tests taken. Both
   are measured per row from day one.
+
+## 14. Phase 1: built
+
+- **Catalogue** (`migrations/1794300000000_exam-catalogue.sql`, `src/catalogue/`):
+  `exam_families`, `test_types`, `blueprint_sections`, `exams.test_type_id`. The
+  practice-test list, organization settings, recruitment and the consent screen
+  read test types from it.
+- **LanguageCert question types** (`migrations/1794400000000_languagecert-item-types.sql`):
+  15 types from the LTE handbooks (Listening & Reading v9.0, Speaking v4.0,
+  October 2025); grouped questions (`mcq_group`), preparation time
+  (`item_types.prep_seconds`), word ranges on writing tasks. Layouts follow the
+  paper-based tests; the adaptive A1-C2 Listening & Reading comes with the
+  adaptive engine.
+- **Starter bank** (`seeds/content/languagecert/*.json`, loaded with
+  `scripts/loadExamSets.ts`): LR-001 (110 marks), LB-001 (72), L4-001 (4 skills),
+  LW-001/002, LS-001/002. All original; each Listening & Reading key was
+  confirmed by an independent blind answer pass (292 of 292 agreed). Listening
+  audio in mixed US, British, Indian and Australian voices
+  (`scripts/generateItemAudio.ts --accent=mix`).
+- **D1 done**: the 71 copied questions are retired and replaced by original ones
+  in the same places (`seeds/content/original-v1-replacements.json`,
+  `scripts/replaceSourcedItems.ts`).
+
+Still open from Phase 1: two-voice dialogues (each listening script is read by
+one voice, with "Speaker A/B" spoken); more sets per test type (Phase 4
+generation); LanguageCert estimated scores on the result page (needs the
+score scale in `exam_families.score_scale`).
