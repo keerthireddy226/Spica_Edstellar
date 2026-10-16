@@ -632,3 +632,14 @@ Still open: recruitment and admissions invitations still use the test type's
 sets, not built forms; Versant module questions can fill Versant tests, but
 LanguageCert sections need LanguageCert question types (mostly from the
 starter sets and AI); new screens are in English only.
+
+## 22. Limits per access month; only the organization's tests
+
+- Practice-test and mock limits now count over the learner's current license
+  month (`quotaWindow` in `programs/quotas.ts`): a 1-month access from 16
+  October allows Business's 2 mocks between 16 October and 16 November, not 2
+  in October and 2 more in November. Learners without a running license
+  (Free individuals, grace period) still count by calendar month. Program
+  schedules cap mocks the same way.
+- When an organization allows only some tests (Settings), its learners see
+  only those on Practice Tests; the others are hidden instead of greyed out.

@@ -78,3 +78,14 @@ describe("nextMonthStart", () => {
     expect(nextMonthStart(new Date("2026-12-31T23:59:00Z")).toISOString().slice(0, 10)).toBe("2027-01-01");
   });
 });
+
+describe("buildSchedule with license months", () => {
+  it("caps mocks per license month, not per calendar month", () => {
+    // Access 20 Oct - 19 Nov: one license month, so at most 2 mocks in all.
+    const s = buildSchedule({ from: "2026-10-20", targetDate: "2026-11-19", gap: 2, practicePerMonth: null, mocksPerMonth: 2, monthStart: "2026-10-20" });
+    expect(s.filter((i) => i.kind === "mock").length).toBeLessThanOrEqual(2);
+    // Counted by calendar month, the same plan could hold 2 in October and 2 in November.
+    const byCalendar = buildSchedule({ from: "2026-10-20", targetDate: "2026-11-19", gap: 2, practicePerMonth: null, mocksPerMonth: 2 });
+    expect(byCalendar.filter((i) => i.kind === "mock").length).toBeGreaterThanOrEqual(2);
+  });
+});

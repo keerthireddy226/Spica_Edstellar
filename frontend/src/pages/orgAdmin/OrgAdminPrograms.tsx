@@ -261,7 +261,7 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
           <div className="text-xs text-muted">{m.email}</div>
         </td>
         <td className="py-2 pr-3">
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${st.cls}`} title={m.statusReason}>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill whitespace-nowrap ${st.cls}`} title={m.statusReason}>
             {st.label()}
           </span>
         </td>

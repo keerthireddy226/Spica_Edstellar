@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { pool } from "../db.js";
 import { CEFR_LEVELS } from "../placement/cefr.js";
-import { learnerQuota } from "./quotas.js";
+import { learnerQuota, quotaWindow } from "./quotas.js";
 import { buildSchedule, programGap } from "./schedule.js";
 import type { DeliveryMode } from "../practiceTests/modes.js";
 
@@ -112,6 +112,7 @@ export async function planMember(p: ProgramRow, userId: string): Promise<number>
   await pool.query(`DELETE FROM schedule_items WHERE program_id = $1 AND user_id = $2 AND status = 'due' AND due_on >= $3`, [p.id, userId, today()]);
   if (p.status !== "active") return 0;
   const quota = await learnerQuota(userId);
+  const window = await quotaWindow(userId);
   const from = p.starts_on > today() ? p.starts_on : today();
   const items = buildSchedule({
     from,
@@ -119,6 +120,8 @@ export async function planMember(p: ProgramRow, userId: string): Promise<number>
     gap: programGap(p, await latestLevel(userId, p.test_type_id)),
     practicePerMonth: quota?.practicePerMonth ?? null,
     mocksPerMonth: quota?.mocksPerMonth ?? null,
+    // Limits count per license month, from the start of the learner's license.
+    monthStart: window.licensed ? window.from.toISOString().slice(0, 10) : undefined,
   });
   if (items.length === 0) return 0;
   await pool.query(

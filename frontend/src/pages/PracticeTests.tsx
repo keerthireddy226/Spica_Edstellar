@@ -1337,7 +1337,13 @@ export function PracticeTests() {
   }
 
   // --- Product picker: one group per exam family ---
-  const live = testTypes.filter((tt) => tt.status === "live");
+  // An organization that chose its tests shows only those: tests it didn't
+  // turn on (and ones coming soon) are hidden, not greyed out.
+  const restricted = !!allowedProducts || testTypes.some((tt) => !tt.allowed);
+  const visibleType = (tt: (typeof testTypes)[number]) =>
+    !restricted || (tt.status === "live" && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id)));
+  const families = (catalogue ?? []).map((f) => ({ ...f, testTypes: f.testTypes.filter(visibleType) })).filter((f) => f.testTypes.length > 0);
+  const live = testTypes.filter((tt) => tt.status === "live" && visibleType(tt));
   const lengths = live.map((tt) => tt.durationMinutes);
   return (
     <div className="w-full flex flex-col gap-6">
@@ -1430,7 +1436,7 @@ export function PracticeTests() {
         </div>
       )}
 
-      {(catalogue ?? []).map((family) => (
+      {families.map((family) => (
         <section key={family.id} className="flex flex-col gap-3">
           <div>
             <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family)}</h2>
@@ -1440,7 +1446,7 @@ export function PracticeTests() {
             {family.testTypes.map((tt) => {
               const Icon = testTypeIcon(tt.id);
               const comingSoon = tt.status !== "live";
-              // Products the learner's organization switched off stay visible but closed.
+              // Coming soon (only shown when the organization didn't restrict its tests).
               const enabled = !comingSoon && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id));
               return (
                 <button

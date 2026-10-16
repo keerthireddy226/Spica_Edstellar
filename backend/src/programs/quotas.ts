@@ -1,5 +1,6 @@
 // Monthly limits on practice tests and mock exams (ASSESSMENT_ENGINE.md
-// section 8), read from plan_quotas. A month is the calendar month in UTC.
+// section 8), read from plan_quotas. A month is the learner's current license
+// month, or the calendar month (UTC) without one (see quotaWindow).
 import { pool } from "../db.js";
 import { learnerAccess } from "../licenses/service.js";
 import type { DeliveryMode } from "../practiceTests/modes.js";
@@ -67,13 +68,28 @@ export function nextMonthStart(now = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 }
 
-// Practice tests and mock exams started this month.
-export async function monthUsage(userId: string): Promise<{ practice: number; mock: number }> {
+// The month the limits count over: the learner's current license month
+// (a 1-month access from 20 October runs to 20 November), or the calendar
+// month (UTC) for someone without a license running now.
+export async function quotaWindow(userId: string): Promise<{ from: Date; to: Date; licensed: boolean }> {
+  const r = await pool.query(
+    `SELECT starts_at, ends_at FROM license_assignments
+     WHERE user_id = $1 AND reclaimed_at IS NULL AND starts_at <= now() AND ends_at > now()
+     ORDER BY starts_at LIMIT 1`,
+    [userId],
+  );
+  if (r.rows[0]) return { from: new Date(r.rows[0].starts_at), to: new Date(r.rows[0].ends_at), licensed: true };
+  const now = new Date();
+  return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), to: nextMonthStart(now), licensed: false };
+}
+
+// Practice tests and mock exams started in the current window.
+export async function monthUsage(userId: string, from: Date): Promise<{ practice: number; mock: number }> {
   const r = await pool.query(
     `SELECT count(*) FILTER (WHERE delivery_mode = 'practice')::int AS practice, count(*) FILTER (WHERE delivery_mode = 'mock')::int AS mock
      FROM sessions
-     WHERE user_id = $1 AND session_type = 'mocktest' AND started_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`,
-    [userId],
+     WHERE user_id = $1 AND session_type = 'mocktest' AND started_at >= $2`,
+    [userId, from],
   );
   return { practice: r.rows[0].practice, mock: r.rows[0].mock };
 }
@@ -81,8 +97,9 @@ export async function monthUsage(userId: string): Promise<{ practice: number; mo
 export async function quotaUsage(userId: string): Promise<QuotaUsage | null> {
   const q = await learnerQuota(userId);
   if (!q) return null;
-  const used = await monthUsage(userId);
-  return { ...q, practiceUsed: used.practice, mocksUsed: used.mock, resetsOn: nextMonthStart().toISOString().slice(0, 10) };
+  const window = await quotaWindow(userId);
+  const used = await monthUsage(userId, window.from);
+  return { ...q, practiceUsed: used.practice, mocksUsed: used.mock, resetsOn: window.to.toISOString().slice(0, 10) };
 }
 
 // Throws QuotaError when starting one more test of this kind would go over.

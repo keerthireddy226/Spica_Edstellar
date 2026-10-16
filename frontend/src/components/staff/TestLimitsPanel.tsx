@@ -65,7 +65,7 @@ export function TestLimitsPanel() {
   return (
     <Panel title={tr("Monthly test limits")}>
       <p className="text-xs text-muted">
-        {tr("Practice tests and mock exams each learner can start per calendar month. Empty means unlimited. Candidates take their one assessment and have no limits.")}
+        {tr("Practice tests and mock exams each learner can start per month of access (a license month, e.g. 16 Oct to 16 Nov; the calendar month for learners without a license). Empty means unlimited. Candidates take their one assessment and have no limits.")}
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

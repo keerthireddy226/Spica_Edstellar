@@ -11,6 +11,8 @@ export interface ScheduleInput {
   gap: number | null;
   practicePerMonth: number | null;
   mocksPerMonth: number | null;
+  // Limits count per license month from this day (YYYY-MM-DD); calendar months without it.
+  monthStart?: string;
 }
 
 export interface PlannedItem {
@@ -28,8 +30,13 @@ function toIso(t: number): string {
   return new Date(t).toISOString().slice(0, 10);
 }
 
-function month(s: string): string {
-  return s.slice(0, 7);
+// The month a day falls in: the calendar month, or the number of whole
+// months since `start` (license months: 20 Oct - 19 Nov is month 0).
+function monthKey(s: string, start?: string): string {
+  if (!start) return s.slice(0, 7);
+  const [y1, m1, d1] = start.split("-").map(Number);
+  const [y2, m2, d2] = s.split("-").map(Number);
+  return String((y2 - y1) * 12 + (m2 - m1) - (d2 < d1 ? 1 : 0));
 }
 
 // Days between practice tests and between mock exams: a bigger gap means
@@ -51,10 +58,10 @@ export function levelGap(target: string, current: string | null | undefined): nu
 
 // Keeps at most `limit` items per calendar month, spread across the month's
 // dates. Items with priority (the final mock, a first mock) are kept first.
-function capPerMonth(items: (PlannedItem & { priority?: boolean })[], limit: number | null): PlannedItem[] {
+function capPerMonth(items: (PlannedItem & { priority?: boolean })[], limit: number | null, start?: string): PlannedItem[] {
   if (limit === null) return items.map(({ dueOn, kind }) => ({ dueOn, kind }));
   const byMonth = new Map<string, (PlannedItem & { priority?: boolean })[]>();
-  for (const it of items) byMonth.set(month(it.dueOn), [...(byMonth.get(month(it.dueOn)) ?? []), it]);
+  for (const it of items) byMonth.set(monthKey(it.dueOn, start), [...(byMonth.get(monthKey(it.dueOn, start)) ?? []), it]);
   const kept: PlannedItem[] = [];
   for (const list of byMonth.values()) {
     const priority = list.filter((x) => x.priority).slice(0, limit);
@@ -87,7 +94,7 @@ export function buildSchedule(input: ScheduleInput): PlannedItem[] {
   const lastMock = mocks.length ? toDate(mocks[mocks.length - 1].dueOn) : -Infinity;
   if (final > start && final > lastMock) mocks.push({ dueOn: toIso(final), kind: "mock", priority: true });
 
-  const keptMocks = capPerMonth(mocks, input.mocksPerMonth);
+  const keptMocks = capPerMonth(mocks, input.mocksPerMonth, input.monthStart);
   const mockDates = new Set(keptMocks.map((m) => m.dueOn));
 
   // Practice: every practiceDays, never on a mock day.
@@ -96,7 +103,7 @@ export function buildSchedule(input: ScheduleInput): PlannedItem[] {
     const d = toIso(t);
     if (!mockDates.has(d)) practice.push({ dueOn: d, kind: "practice" });
   }
-  const keptPractice = capPerMonth(practice, input.practicePerMonth);
+  const keptPractice = capPerMonth(practice, input.practicePerMonth, input.monthStart);
 
   return [...keptMocks, ...keptPractice].sort((a, b) => a.dueOn.localeCompare(b.dueOn) || a.kind.localeCompare(b.kind));
 }
