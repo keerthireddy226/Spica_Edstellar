@@ -358,3 +358,48 @@ avoiding recent repeats; monthly practice and mock quotas come with Phase 3;
 "readiness against the target" needs Phase 3's programs; an untouched open
 practice session holding questions retired since it started is replaced by a
 fresh one, but one already started keeps them.
+
+## 16. Phase 3: built
+
+- **Monthly limits** (`migrations/1794700000000_programs-and-quotas.sql`,
+  `src/programs/quotas.ts`): `plan_quotas` holds practice tests and mock exams
+  per calendar month (UTC) for each segment and tier, as in section 8:
+  individuals Free 2 / 1 and Plus unlimited / 2; companies Starter 4 / 1,
+  Business unlimited / 2, Enterprise unlimited / 4; universities Campus
+  unlimited / 2. A learner's row: an organization's learners by its plan tier
+  (universities are all Campus until Phase 7), individuals Plus while a paid
+  plan runs. Enforced when a practice test or mock starts (403
+  `quota_reached` with the reset date); resuming an open one never counts
+  again. Candidates have no limits (their assessment is the test). Free
+  individuals can now open practice tests and take their monthly mock (the
+  page used to be Plus only). Super Admins edit the limits on Plans & pricing;
+  Admins see them.
+- **Programs** (`src/programs/`): an Org Admin sets a goal for one batch:
+  test type, target level (and optional per-skill targets), field, start and
+  target dates. One active program per batch; everyone in the batch follows
+  it, including people who join later.
+- **Schedules** (`schedule.ts`): per member, from the gap between their
+  latest level (latest mock of that test type, else the placement test) and
+  the target: gap 2+ = a practice test every 3 days and a mock every 2 weeks;
+  gap 1 = every 4 days / 3 weeks; at target = weekly / every 4 weeks. Unknown
+  level = a first mock within 3 days. A final mock 3 days before the target
+  date. Capped by the learner's monthly limits (the final mock is kept first).
+  A finished test with at least one answer ticks off the earliest missed or
+  next-week item of its kind; after a mock the rest of the plan is redone. An
+  hourly job marks past items missed, completes programs past their date and
+  plans newcomers.
+- **Screens**: Org Admin > Programs (list, create, members with latest level,
+  done/missed and next test; change target level or date and replan; mark
+  completed, reopen, archive). Learners see "Your program" and this month's
+  counts on Practice Tests; start buttons turn off at the limit (an unfinished
+  set can still be resumed). The individual Plans page shows each tier's
+  limits.
+- `sessions.result` now keeps each practice test's level, skill levels,
+  percentage and score band; `sessions.program_id` links a test to the
+  program it counted towards.
+
+Still open from Phase 3: "1 sample per candidate" for recruitment and the
+university Admissions tier (Phase 7); the report level (summary / full) is
+stored but used from Phase 5; the program field (banking, BPO, IT) picks
+questions once Phase 4 generates domain questions; on track / at risk and
+alerts come with Phase 6 monitoring; Managers don't see programs yet.

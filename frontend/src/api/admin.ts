@@ -621,3 +621,24 @@ export const commercialApi = {
   viewAs: (tenantId: string) => api<{ ok: true }>(`/admin/organizations/${tenantId}/view-as`, { method: "POST" }),
   health: () => api<{ organizations: (OrgHealth & { id: string; name: string })[] }>("/admin/health"),
 };
+
+// Monthly practice-test and mock-exam limits per segment and tier (Super Admin).
+export interface PlanQuota {
+  segment: "individual" | "company" | "university";
+  tier: string;
+  practicePerMonth: number | null;
+  mocksPerMonth: number | null;
+  reportLevel: "summary" | "full";
+  updatedAt: string;
+}
+
+export function getPlanQuotas(): Promise<{ quotas: PlanQuota[] }> {
+  return api("/admin/plan-quotas");
+}
+
+export function savePlanQuota(q: Pick<PlanQuota, "segment" | "tier" | "practicePerMonth" | "mocksPerMonth" | "reportLevel">) {
+  return api(`/admin/plan-quotas/${q.segment}/${q.tier}`, {
+    method: "PUT",
+    body: JSON.stringify({ practicePerMonth: q.practicePerMonth, mocksPerMonth: q.mocksPerMonth, reportLevel: q.reportLevel }),
+  });
+}

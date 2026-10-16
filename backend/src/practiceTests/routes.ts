@@ -33,6 +33,8 @@ import {
   type DeliveryMode,
   type MockComposition,
 } from "./modes.js";
+import { QuotaError, assertQuota, listQuotas, quotaUsage } from "../programs/quotas.js";
+import { activeProgramOf, learnerProgram, recordProgramSession } from "../programs/service.js";
 
 export const practiceTestsRouter = Router();
 
@@ -170,6 +172,27 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
   }
 });
 
+// This month's practice tests and mock exams against the learner's limits.
+practiceTestsRouter.get("/quota", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const quota = await quotaUsage(req.user!.id);
+    // Individuals also see both of their tiers' limits (for the Plans page).
+    const tiers = quota?.segment === "individual" ? (await listQuotas()).filter((q) => q.segment === "individual") : null;
+    res.json({ quota, tiers });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The learner's program: target, latest level and the next scheduled tests.
+practiceTestsRouter.get("/program", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ program: req.user!.role === "learner" ? await learnerProgram(req.user!.id) : null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // This product's 5 exam sets, each with its item count and this learner's completion.
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -192,14 +215,20 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
              AND NOT EXISTS (
                SELECT 1 FROM attempts a WHERE a.session_id = s.id AND a.response_text IS NULL AND a.response_uri IS NULL
              )
-         ) AS completed
+         ) AS completed,
+         -- An open practice session to resume (doesn't count against the monthly limit again).
+         EXISTS (
+           SELECT 1 FROM sessions s
+           WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
+             AND s.composition->>'examId' = e.id::text
+         ) AS in_progress
        FROM exams e
        WHERE e.is_active AND e.test_type_id = $1
        ORDER BY e.code`,
       [testType.id, req.user!.id],
     );
     res.json({
-      exams: result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed })),
+      exams: result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed, inProgress: r.in_progress })),
     });
   } catch (err) {
     next(err);
@@ -274,6 +303,20 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       });
     }
 
+    // Monthly limits apply to each new practice test or mock (candidates
+    // take their one assessment).
+    if (!candidate) {
+      try {
+        await assertQuota(req.user!.id, mode);
+      } catch (err) {
+        if (err instanceof QuotaError) return res.status(403).json({ error: "quota_reached", ...err.detail });
+        throw err;
+      }
+    }
+    // A test of the learner's program's test type counts towards it.
+    const program = candidate ? null : await activeProgramOf(req.user!.id);
+    const programId = program?.test_type_id === testTypeId ? program.id : null;
+
     let examId = body.examId;
     let form: Awaited<ReturnType<typeof selectFormItems>> | null = null;
     if (mode === "mock" && !candidate) {
@@ -299,9 +342,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const examCode = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [examId])).rows[0]?.code ?? "";
     const testCode = newTestCode(examPrefix(examCode));
     const sessionResult = await pool.query(
-      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code, delivery_mode)
-       VALUES ($1, 'mocktest', 'coach', $2, $3, $4) RETURNING id`,
-      [req.user!.id, JSON.stringify({ examId, testTypeId, itemIds, partBoundaries, randomized: !!form?.rows.length, ...mock }), testCode, mode],
+      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code, delivery_mode, program_id)
+       VALUES ($1, 'mocktest', 'coach', $2, $3, $4, $5) RETURNING id`,
+      [req.user!.id, JSON.stringify({ examId, testTypeId, itemIds, partBoundaries, randomized: !!form?.rows.length, ...mock }), testCode, mode, programId],
     );
 
     await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
@@ -519,6 +562,11 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       : null;
     if (justFinished) {
       const overall = graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : null;
+      // Kept for programs (the learner's latest level) and reports.
+      await pool.query(`UPDATE sessions SET result = $2 WHERE id = $1`, [
+        req.params.sessionId,
+        JSON.stringify({ cefrLevel: level?.cefrLevel ?? null, skillLevels: level?.skillLevels ?? null, overallPercent: overall, scoreBand: bandForLevel(scale, level?.cefrLevel) }),
+      ]);
       await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
     }
     res.json({
@@ -547,6 +595,15 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     await finishProctoredSession(req.params.sessionId as string);
   } catch (err) {
     console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
+  }
+
+  // A finished test ticks off the learner's program schedule.
+  if (justFinished) {
+    try {
+      await recordProgramSession(req.user!.id, req.params.sessionId as string, deliveryMode);
+    } catch (err) {
+      console.error("practiceTests /complete: program schedule update failed (non-fatal):", err);
+    }
   }
 
   // A candidate's result goes to the recruiter.

@@ -33,6 +33,8 @@ export interface ExamSummary {
   name: string;
   itemCount: number;
   completed: boolean;
+  // An unfinished practice session of this set to resume.
+  inProgress: boolean;
 }
 
 export interface PartBoundary {
@@ -160,4 +162,64 @@ export function getPracticeFeedback(sessionId: string, itemId: string): Promise<
 
 export function completeExamSession(sessionId: string): Promise<ExamCompleteResult> {
   return api(`/practice-tests/session/${sessionId}/complete`, { method: "POST" });
+}
+
+// ---- Monthly limits and programs ----
+
+export interface QuotaUsage {
+  segment: "individual" | "company" | "university";
+  tier: string;
+  // null = unlimited.
+  practicePerMonth: number | null;
+  mocksPerMonth: number | null;
+  reportLevel: "summary" | "full";
+  practiceUsed: number;
+  mocksUsed: number;
+  // When the counts start again (YYYY-MM-DD).
+  resetsOn: string;
+}
+
+export interface QuotaTier {
+  segment: string;
+  tier: string;
+  practicePerMonth: number | null;
+  mocksPerMonth: number | null;
+  reportLevel: "summary" | "full";
+}
+
+// quota is null for people without limits (staff, candidates).
+export function getQuota(): Promise<{ quota: QuotaUsage | null; tiers: QuotaTier[] | null }> {
+  return api("/practice-tests/quota");
+}
+
+export interface Program {
+  id: string;
+  name: string;
+  domain: string;
+  testTypeId: string;
+  targetLevel: string;
+  targetSkills: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
+  batchId: string;
+  startsOn: string;
+  targetDate: string;
+  status: "active" | "completed" | "archived";
+}
+
+export interface ScheduleItem {
+  id: string;
+  dueOn: string;
+  kind: DeliveryMode;
+  status: "due" | "done" | "missed";
+}
+
+export interface MyProgram {
+  program: Program;
+  latestLevel: string | null;
+  done: number;
+  missed: number;
+  upcoming: ScheduleItem[];
+}
+
+export function getMyProgram(): Promise<{ program: MyProgram | null }> {
+  return api("/practice-tests/program");
 }

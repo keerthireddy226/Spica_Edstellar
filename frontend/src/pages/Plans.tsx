@@ -14,8 +14,19 @@ import {
   type InvoiceSummary,
   type Quote,
 } from "@/api/payments";
+import { getQuota, type QuotaTier } from "@/api/practiceTests";
+import { tr } from "@/i18n/tr";
 
 const PLAN_MONTHS = [1, 3, 6] as const;
+
+// "Practice tests: 2 a month" lines for a tier, from the server's limits.
+function testLimitLines(q: QuotaTier | undefined): { practice: string; mocks: string } | null {
+  if (!q) return null;
+  return {
+    practice: q.practicePerMonth === null ? tr("Unlimited practice tests") : tr("Practice tests per month: {{n}}", { n: q.practicePerMonth }),
+    mocks: q.mocksPerMonth === null ? tr("Unlimited mock exams") : tr("Mock exams per month: {{n}}", { n: q.mocksPerMonth }),
+  };
+}
 
 function Feature({ ok, children }: { ok: boolean; children: string }) {
   return (
@@ -36,8 +47,12 @@ export function Plans() {
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tiers, setTiers] = useState<QuotaTier[]>([]);
 
   useEffect(() => {
+    getQuota()
+      .then((r) => setTiers(r.tiers ?? []))
+      .catch(() => {});
     Promise.all(PLAN_MONTHS.map((m) => getQuote(m).then((q) => [m, q] as const)))
       .then((pairs) => setQuotes(Object.fromEntries(pairs)))
       .catch(() => setError(t("plans.unavailable")));
@@ -51,6 +66,8 @@ export function Plans() {
   }
 
   const active = license && (license.status === "active" || license.status === "grace");
+  const freeTests = testLimitLines(tiers.find((x) => x.tier === "free"));
+  const plusTests = testLimitLines(tiers.find((x) => x.tier === "plus"));
   const q = quotes[months];
   const monthly = quotes[1];
 
@@ -85,7 +102,14 @@ export function Plans() {
             <Feature ok>{t("plans.features.placementOnce")}</Feature>
             <Feature ok>{t("plans.features.practiceLimited", { count: license?.freeTier?.practiceLimit ?? 3 })}</Feature>
             <Feature ok>{t("plans.features.progress")}</Feature>
-            <Feature ok={false}>{t("plans.features.mockTests")}</Feature>
+            {freeTests ? (
+              <>
+                <Feature ok>{freeTests.practice}</Feature>
+                <Feature ok>{freeTests.mocks}</Feature>
+              </>
+            ) : (
+              <Feature ok={false}>{t("plans.features.mockTests")}</Feature>
+            )}
             <Feature ok={false}>{t("plans.features.tutor")}</Feature>
           </ul>
           {!active && license?.freeTier && (
@@ -105,7 +129,14 @@ export function Plans() {
           <ul className="flex flex-col gap-2">
             <Feature ok>{t("plans.features.placementUnlimited")}</Feature>
             <Feature ok>{t("plans.features.practiceUnlimited")}</Feature>
-            <Feature ok>{t("plans.features.mockTests")}</Feature>
+            {plusTests ? (
+              <>
+                <Feature ok>{plusTests.practice}</Feature>
+                <Feature ok>{plusTests.mocks}</Feature>
+              </>
+            ) : (
+              <Feature ok>{t("plans.features.mockTests")}</Feature>
+            )}
             <Feature ok>{t("plans.features.tutor")}</Feature>
             <Feature ok>{t("plans.features.progress")}</Feature>
           </ul>

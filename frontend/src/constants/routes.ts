@@ -66,6 +66,7 @@ export const ROUTES = {
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
   ORG_ADMIN_BATCHES: "/orgadmin/batches",
+  ORG_ADMIN_PROGRAMS: "/orgadmin/programs",
   ORG_ADMIN_MANAGERS: "/orgadmin/managers",
   ORG_ADMIN_LEARNERS: "/orgadmin/learners",
   ORG_ADMIN_LICENSES: "/orgadmin/licenses",

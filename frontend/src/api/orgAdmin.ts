@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
 import type { BatchDetails, BatchLicenseStats, ExamFocus, LearnerDetails } from "@/api/details";
+import type { Program } from "@/api/practiceTests";
 
 // Batch fields beyond the basics, as the API returns them.
 export interface BatchExtras {
@@ -406,4 +407,57 @@ export function handOverManager(id: string, body: { toManagerId: string; movePoo
 
 export function viewAsManager(id: string) {
   return api<{ ok: true }>(`/org-admin/managers/${id}/view-as`, { method: "POST" });
+}
+
+// ---- Programs: a batch's exam goal and its members' test schedules ----
+
+export type ProgramDomain = "general" | "banking" | "bpo" | "it" | "insurance" | "healthcare";
+
+export interface ProgramInput {
+  name: string;
+  batchId: string;
+  testTypeId: string;
+  domain: ProgramDomain;
+  targetLevel: string;
+  targetSkills: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
+  startsOn: string;
+  targetDate: string;
+}
+
+export interface ProgramSummary extends Program {
+  batchName: string;
+  members: number;
+  items: { done: number; missed: number; due: number };
+}
+
+export interface ProgramMember {
+  userId: string;
+  name: string;
+  email: string;
+  latestLevel: string | null;
+  // CEFR steps still to go; null until the level is known.
+  gap: number | null;
+  done: number;
+  missed: number;
+  due: number;
+  next: { dueOn: string; kind: "practice" | "mock" } | null;
+}
+
+export function listPrograms(): Promise<{ programs: ProgramSummary[] }> {
+  return api("/org-admin/programs");
+}
+
+export function createProgram(input: ProgramInput): Promise<Program> {
+  return api("/org-admin/programs", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function getProgramDetail(id: string): Promise<{ program: Program; members: ProgramMember[] }> {
+  return api(`/org-admin/programs/${id}`);
+}
+
+export function updateProgram(
+  id: string,
+  input: Partial<Pick<ProgramInput, "name" | "domain" | "targetLevel" | "targetSkills" | "targetDate">> & { status?: Program["status"] },
+): Promise<Program> {
+  return api(`/org-admin/programs/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }

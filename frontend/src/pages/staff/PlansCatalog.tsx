@@ -3,6 +3,7 @@ import { Check, Gift, Minus, Percent, Tag } from "lucide-react";
 import { api } from "@/lib/api";
 import { money } from "@/api/staff";
 import { PageHeader, Panel, StatCard, paletteColor } from "@/components/staff/StaffKit";
+import { TestLimitsPanel } from "@/components/staff/TestLimitsPanel";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
@@ -66,6 +67,8 @@ export function PlansCatalog() {
           </div>
         ))}
       </div>
+
+      <TestLimitsPanel />
 
       <Panel title={tr("Volume pricing")}>
         <div className="grid sm:grid-cols-3 gap-3">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -55,6 +55,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
 const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ORG_ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_BATCHES, icon: Layers, label: tr("Batches"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_PROGRAMS, icon: Target, label: tr("Programs"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses"), product: "skills" },

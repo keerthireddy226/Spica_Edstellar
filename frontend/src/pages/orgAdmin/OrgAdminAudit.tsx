@@ -15,6 +15,7 @@ const ACTION_GROUPS: [string, string][] = [
   ["integrity.", tr("Test integrity")],
   ["proctoring.", tr("Proctoring settings")],
   ["batch.", tr("Batches")],
+  ["program.", tr("Programs")],
   ["manager.", tr("Managers")],
   ["learner.", tr("Learners")],
   ["license.", tr("Licenses")],

@@ -3,6 +3,8 @@ import { tr } from "@/i18n/tr";// How each audit action reads in a sentence: "<w
 export const AUDIT_VERBS: Record<string, string> = {
   "batch.created": tr("created batch"),
   "batch.updated": tr("edited batch"),
+  "program.created": tr("created program"),
+  "program.updated": tr("edited program"),
   "batch.deleted": tr("deleted batch"),
   "batch.completed": tr("marked batch complete"),
   "batch.archived": tr("archived batch"),
@@ -76,6 +78,7 @@ export const AUDIT_VERBS: Record<string, string> = {
   "identity.reviewed": tr("reviewed the ID of"),
   "plan.products_changed": tr("changed the products"),
   "plan.credits_granted": tr("changed assessment credits"),
+  "plan.quota_changed": tr("changed monthly test limits"),
 };
 
 // Detail values that read better as words.

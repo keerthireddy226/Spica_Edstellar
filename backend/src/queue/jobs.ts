@@ -13,6 +13,7 @@ import { analyzeSession } from "../proctoring/analyze.js";
 import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
+import { runProgramsDaily } from "../programs/service.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -53,6 +54,12 @@ export function registerJobs() {
   every(60, "integrity.digest", async () => {
     const n = await sendIntegrityDigests();
     if (n) console.log("integrity summaries sent:", n);
+  });
+  // Missed items, finished programs and plans for new batch members (dates
+  // are whole days, so running hourly changes nothing twice).
+  every(60, "programs.daily", async () => {
+    const r = await runProgramsDaily();
+    if (r.missed || r.completed || r.planned) console.log("programs:", r);
   });
   every(60, "contracts.renewals", async () => {
     await runContractRenewalAlerts();

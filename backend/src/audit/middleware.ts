@@ -7,7 +7,7 @@ interface Rule {
   method: "POST" | "PATCH" | "PUT" | "DELETE";
   path: string; // relative to where the router is mounted, e.g. "/batches/:id"
   action: string;
-  targetType: "batch" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user" | "certificate" | "admin";
+  targetType: "batch" | "program" | "manager" | "learner" | "organization" | "org_admin" | "settings" | "api_key" | "webhook" | "user" | "certificate" | "admin";
   // Staff routes act on an organization named in the path, or created by
   // the request; the entry belongs to that organization's log.
   tenant?: "target" | "response";
@@ -44,6 +44,7 @@ async function labelFor(id: string): Promise<string | null> {
   const r = await pool.query(
     `SELECT coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS l FROM users WHERE id = $1
      UNION ALL SELECT name FROM batches WHERE id = $1
+     UNION ALL SELECT name FROM programs WHERE id = $1
      UNION ALL SELECT name FROM tenants WHERE id = $1
      LIMIT 1`,
     [id],
@@ -101,6 +102,8 @@ export function auditTrail(rules: Rule[]) {
 }
 
 export const ORG_ADMIN_AUDIT: Rule[] = [
+  { method: "POST", path: "/programs", action: "program.created", targetType: "program" },
+  { method: "PATCH", path: "/programs/:id", action: "program.updated", targetType: "program" },
   { method: "POST", path: "/batches", action: "batch.created", targetType: "batch" },
   { method: "PATCH", path: "/batches/:id", action: "batch.updated", targetType: "batch" },
   { method: "DELETE", path: "/batches/:id", action: "batch.deleted", targetType: "batch" },

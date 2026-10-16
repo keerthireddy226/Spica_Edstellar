@@ -30,7 +30,10 @@ function isLive(l: MyLicense): boolean {
 
 function individualBlocked(l: MyLicense, feature: GatedFeature): boolean {
   if (!l.individual || isLive(l) || !l.freeTier) return false;
-  if (feature === "mocktest" || feature === "coach") return true;
+  // Practice tests and mock exams: free learners get a few each month,
+  // shown and enforced on the page itself.
+  if (feature === "mocktest") return false;
+  if (feature === "coach") return true;
   if (feature === "placement") return l.freeTier.placementTaken;
   return !l.freeTier.hasOpenPractice && l.freeTier.practiceUsed >= l.freeTier.practiceLimit;
 }

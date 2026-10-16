@@ -59,6 +59,7 @@ import { InvoiceView } from "@/pages/InvoiceView";
 import { OrgAdminLicenses } from "@/pages/orgAdmin/OrgAdminLicenses";
 import { OrgAdminPlan } from "@/pages/orgAdmin/OrgAdminPlan";
 import { OrgAdminAudit } from "@/pages/orgAdmin/OrgAdminAudit";
+import { OrgAdminPrograms } from "@/pages/orgAdmin/OrgAdminPrograms";
 import { OrgAdminSettings } from "@/pages/orgAdmin/OrgAdminSettings";
 import { OrgAdminDevelopers } from "@/pages/orgAdmin/OrgAdminDevelopers";
 import { ManagerActivity } from "@/pages/manager/ManagerActivity";
@@ -265,6 +266,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_DASHBOARD} element={<OrgAdminHome />} />
           <Route path={ROUTES.ORG_ADMIN_RECRUITMENT} element={<RecruitmentConsole />} />
           <Route path={ROUTES.ORG_ADMIN_BATCHES} element={<OrgAdminBatches />} />
+          <Route path={ROUTES.ORG_ADMIN_PROGRAMS} element={<OrgAdminPrograms />} />
           <Route path={ROUTES.ORG_ADMIN_MANAGERS} element={<OrgAdminManagers />} />
           <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />

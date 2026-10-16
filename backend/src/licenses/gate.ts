@@ -11,7 +11,8 @@ export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 //  - Organization learners: need an active license (or the 3-day grace).
 //  - Individual learners with an active plan: everything.
 //  - Individual learners on the free tier: one placement test, a few practice
-//    sessions a week, no mock tests or AI tutor.
+//    sessions a week, no AI tutor. Practice tests and mock exams have monthly
+//    limits for everyone, enforced where they start (programs/quotas.ts).
 export function requireAccess(feature: GatedFeature) {
   return (req: AuthedRequest, res: Response, next: NextFunction) => {
     if (req.method === "GET" || req.method === "HEAD") return next();
@@ -36,7 +37,8 @@ export function requireAccess(feature: GatedFeature) {
         }
 
         const startsSomethingNew = req.path === "/session";
-        if (feature === "mocktest" || feature === "coach") {
+        if (feature === "mocktest") return next();
+        if (feature === "coach") {
           return res.status(403).json({ error: "plan_required", feature });
         }
         if (!startsSomethingNew) return next();

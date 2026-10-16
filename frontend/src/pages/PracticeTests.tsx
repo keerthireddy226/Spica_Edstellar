@@ -19,6 +19,7 @@ import {
   PlayCircle,
   Timer,
   BookOpenCheck,
+  Target,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -35,9 +36,14 @@ import {
   submitExamAttempt,
   getPracticeFeedback,
   completeExamSession,
+  getQuota,
+  getMyProgram,
+  type QuotaUsage,
+  type MyProgram,
   type ExamSessionData,
   type PracticeFeedback,
   type CatalogueFamily,
+  type CatalogueTestType,
   type ExamSummary,
   type PartBoundary,
   type ExamCompleteResult,
@@ -61,6 +67,7 @@ import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
 import type { DeliveryMode, PreTestKind } from "@/api/proctoring";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
+import { formatShortDate } from "@/api/licenses";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -130,6 +137,9 @@ export function PracticeTests() {
   const [catalogue, setCatalogue] = useState<CatalogueFamily[] | null>(null);
   // The learner's mock exam in progress, if any (one at a time).
   const [openMock, setOpenMock] = useState<{ sessionId: string; testTypeId: string | null } | null>(null);
+  // This month's tests against the learner's limits, and their program.
+  const [quota, setQuota] = useState<QuotaUsage | null>(null);
+  const [myProgram, setMyProgram] = useState<MyProgram | null>(null);
   function loadProducts() {
     getProducts()
       .then((r) => {
@@ -137,7 +147,15 @@ export function PracticeTests() {
         setOpenMock(r.openMock);
       })
       .catch(() => setCatalogue([]));
+    getQuota()
+      .then((r) => setQuota(r.quota))
+      .catch(() => {});
+    getMyProgram()
+      .then((r) => setMyProgram(r.program))
+      .catch(() => {});
   }
+  const practiceLeft = quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null;
+  const mocksLeft = quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null;
   useEffect(loadProducts, []);
   const testTypes = catalogue?.flatMap((f) => f.testTypes) ?? [];
   const selectedType = testTypes.find((tt) => tt.id === selectedProduct) ?? null;
@@ -314,7 +332,13 @@ export function PracticeTests() {
       applySessionData(res);
     } catch (err) {
       const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
-      setError(code === "mock_in_progress" ? tr("You have another mock exam in progress. Finish it first.") : t("practiceTests.loadError"));
+      setError(
+        code === "mock_in_progress"
+          ? tr("You have another mock exam in progress. Finish it first.")
+          : code === "quota_reached"
+            ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
+            : t("practiceTests.loadError"),
+      );
       loadProducts();
     } finally {
       setStarting(false);
@@ -1214,6 +1238,10 @@ export function PracticeTests() {
           </div>
           {openMock && openMock.testTypeId && openMock.testTypeId !== selectedProduct ? (
             <span className="text-sm text-white/80 sm:max-w-56">{tr("You have another mock exam in progress. Finish it first.")}</span>
+          ) : mocksLeft === 0 && openMock?.testTypeId !== selectedProduct ? (
+            <span className="text-sm text-white/80 sm:max-w-64">
+              {tr("You've used this month's mock exams. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
+            </span>
           ) : (
             <Button
               onClick={() => {
@@ -1232,6 +1260,11 @@ export function PracticeTests() {
           <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
           <span className="text-sm text-muted">{tr("Pause any time, go back, and see the right answer after each question.")}</span>
         </div>
+        {practiceLeft === 0 && (
+          <p className="text-sm text-muted -mt-2">
+            {tr("You've used this month's practice tests. More on {{date}}. You can still finish a set you've started.", { date: formatShortDate(quota!.resetsOn) })}
+          </p>
+        )}
 
         {loadingExams ? (
           <p className="text-sm text-muted">{t("modules.starting")}</p>
@@ -1268,9 +1301,11 @@ export function PracticeTests() {
                     setPreTestDoneFor(null);
                     setPendingStart({ key: exam.id, mode: "practice", examId: exam.id });
                   }}
+                  // At the monthly limit, only an unfinished set can be resumed.
+                  disabled={practiceLeft === 0 && !exam.inProgress}
                   className="w-full"
                 >
-                  {exam.completed ? t("practiceTests.retake") : t("practiceTests.startExam")}
+                  {exam.inProgress ? tr("Resume") : exam.completed ? t("practiceTests.retake") : t("practiceTests.startExam")}
                 </Button>
               </div>
             ))}
@@ -1301,6 +1336,26 @@ export function PracticeTests() {
           { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
         ]}
       />
+
+      {myProgram && <ProgramCard mine={myProgram} testTypes={testTypes} onOpen={(id) => openProduct(id)} />}
+
+      {quota && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted -mt-2">
+          <span>
+            {quota.practicePerMonth === null
+              ? tr("Practice tests this month: {{used}} (no limit)", { used: quota.practiceUsed })
+              : tr("Practice tests this month: {{used}} of {{limit}}", { used: Math.min(quota.practiceUsed, quota.practicePerMonth), limit: quota.practicePerMonth })}
+          </span>
+          <span>
+            {quota.mocksPerMonth === null
+              ? tr("Mock exams this month: {{used}} (no limit)", { used: quota.mocksUsed })
+              : tr("Mock exams this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
+          </span>
+          {(quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (
+            <span className="text-xs">{tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}</span>
+          )}
+        </div>
+      )}
 
       {openMock?.testTypeId && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-navy/10 border border-navy/20 rounded-card px-5 py-4">
@@ -1387,6 +1442,41 @@ export function PracticeTests() {
           </div>
         </section>
       ))}
+    </div>
+  );
+}
+
+// The learner's program: target level and date, latest level, and the next
+// planned test.
+function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: CatalogueTestType[]; onOpen: (testTypeId: string) => void }) {
+  const { t } = useTranslation();
+  const p = mine.program;
+  const tt = testTypes.find((x) => x.id === p.testTypeId);
+  const next = mine.upcoming[0];
+  return (
+    <div className="bg-surface border border-rule rounded-card p-5 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+      <span className="h-12 w-12 rounded-2xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
+        <Target size={24} />
+      </span>
+      <div className="flex-1 flex flex-col gap-1">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Your program")}</span>
+        <span className="font-display font-bold text-lg text-ink">{p.name}</span>
+        <span className="text-sm text-muted">
+          {tt ? testTypeName(tt, t) : p.testTypeId} · {tr("Target {{level}} by {{date}}", { level: p.targetLevel, date: formatShortDate(p.targetDate) })}
+          {mine.latestLevel ? ` · ${tr("Your latest level: {{level}}", { level: mine.latestLevel })}` : ""}
+        </span>
+        <span className="text-xs text-muted">
+          {tr("{{done}} done, {{missed}} missed", { done: mine.done, missed: mine.missed })}
+          {next
+            ? ` · ${next.kind === "mock" ? tr("Next: mock exam on {{date}}", { date: formatShortDate(next.dueOn) }) : tr("Next: practice test on {{date}}", { date: formatShortDate(next.dueOn) })}`
+            : ""}
+        </span>
+      </div>
+      {tt && tt.status === "live" && (
+        <Button onClick={() => onOpen(p.testTypeId)} className="shrink-0">
+          {tr("Open the test")}
+        </Button>
+      )}
     </div>
   );
 }
