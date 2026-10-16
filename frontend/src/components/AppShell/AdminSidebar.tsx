@@ -129,12 +129,15 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
   const location = useLocation();
   const { user } = useAuth();
   const perms = (user?.permissions ?? {}) as Partial<StaffPermissions>;
-  const products = useBranding()?.products;
+  const branding = useBranding();
+  const products = branding?.products;
+  // A university's recruitment is Admissions.
+  const admissions = branding?.category === "university";
   // An Admin only sees pages their permissions allow; an organization only
   // the products it bought.
-  const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS).filter(
-    (n) => (!n.permission || user?.role !== "admin" || perms[n.permission]) && (!n.product || !products || products.includes(n.product)),
-  );
+  const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS)
+    .filter((n) => (!n.permission || user?.role !== "admin" || perms[n.permission]) && (!n.product || !products || products.includes(n.product)))
+    .map((n) => (admissions && n.to === ROUTES.ORG_ADMIN_RECRUITMENT ? { ...n, label: tr("Admissions") } : n));
   const integrityPath = navItems.find((n) => INTEGRITY_PATHS.has(n.to))?.to ?? null;
   const pendingReviews = usePendingReviewCount(Boolean(integrityPath), location.pathname);
 

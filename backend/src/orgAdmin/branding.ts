@@ -11,7 +11,7 @@ export const brandingRouter = Router();
 brandingRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const r = await pool.query(
-      `SELECT t.id, t.name, t.type, t.logo_path, t.brand_color, t.products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+      `SELECT t.id, t.name, t.type, t.category, t.logo_path, t.brand_color, t.products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
       [req.user!.id],
     );
     const t = r.rows[0];
@@ -25,6 +25,8 @@ brandingRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => 
       },
       // Which products the organization bought: the consoles show only those.
       products: t.products,
+      // A university's skills product is Campus and its recruitment product Admissions.
+      category: t.category,
       ...policy,
     });
   } catch (err) {

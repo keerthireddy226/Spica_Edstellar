@@ -11,8 +11,8 @@ import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
 
 const OPTIONS: [Product[], () => string, () => string][] = [
-  [["skills"], () => tr("Employee skills"), () => tr("Licenses, batches, Managers, learning and assessments for employees.")],
-  [["recruitment"], () => tr("Recruitment"), () => tr("Proctored tests for job candidates, paid per assessment.")],
+  [["skills"], () => tr("Employee skills"), () => tr("Licenses, batches, Managers, learning and assessments for employees. For a university: Campus, for students.")],
+  [["recruitment"], () => tr("Recruitment"), () => tr("Proctored tests for job candidates, paid per assessment. For a university: Admissions, for applicants.")],
   [["skills", "recruitment"], () => tr("Both"), () => tr("Employees and candidates, each with their own proctoring settings.")],
 ];
 

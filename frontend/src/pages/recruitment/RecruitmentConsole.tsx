@@ -16,6 +16,7 @@ import {
   decideAssessment,
   getAssessment,
   getCandidateReport,
+  confirmAssessment,
   getCredits,
   getJob,
   getJobs,
@@ -41,6 +42,7 @@ import {
   type TestKind,
 } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
+import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { trServer } from "@/i18n/serverText";
 
@@ -55,8 +57,31 @@ const STATUS_TEXT: Record<string, () => string> = {
   cancelled: () => tr("Cancelled"),
 };
 const STATUS_TONE = { invited: "muted", started: "navy", completed: "success", expired: "warning", cancelled: "muted" } as const;
-const DECISION_TEXT: Record<Decision, () => string> = { shortlisted: () => tr("Shortlisted"), rejected: () => tr("Rejected"), hired: () => tr("Hired") };
-const DECISION_TONE = { shortlisted: "navy", rejected: "error", hired: "success" } as const;
+const DECISION_TEXT: Record<Decision, () => string> = {
+  shortlisted: () => tr("Shortlisted"),
+  rejected: () => tr("Rejected"),
+  hired: () => tr("Hired"),
+  admitted: () => tr("Admitted"),
+  waitlisted: () => tr("Waitlisted"),
+  declined: () => tr("Declined"),
+};
+const DECISION_TONE: Record<Decision, "navy" | "error" | "success"> = {
+  shortlisted: "navy",
+  rejected: "error",
+  hired: "success",
+  admitted: "success",
+  waitlisted: "navy",
+  declined: "error",
+};
+// Admissions decisions match recruitment's for filters and counts.
+const DECISION_GROUP: Record<Decision, "shortlisted" | "hired" | "rejected"> = {
+  shortlisted: "shortlisted",
+  hired: "hired",
+  rejected: "rejected",
+  waitlisted: "shortlisted",
+  admitted: "hired",
+  declined: "rejected",
+};
 const INTEGRITY_TEXT: Record<string, () => string> = {
   in_progress: () => tr("Being checked"),
   clear: () => tr("No issues"),
@@ -150,6 +175,9 @@ function CandidateFeedback({ id }: { id: string }) {
 // One candidate: result, integrity, decision.
 export function CandidateReport({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const { user } = useAuth();
+  const adm = useAdmissions();
+  const [confirmLevel, setConfirmLevel] = useState<Cefr | "">("");
+  const [confirmNote, setConfirmNote] = useState("");
   const [a, setA] = useState<AssessmentReport | null>(null);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -158,6 +186,8 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
       .then((r) => {
         setA(r.assessment);
         setNote(r.assessment.decision_note ?? "");
+        setConfirmLevel(r.assessment.confirmed_level ?? r.assessment.result?.cefrLevel ?? "");
+        setConfirmNote(r.assessment.confirm_note ?? "");
       })
       .catch(() => {});
   }, [id]);
@@ -241,6 +271,45 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
           )}
         </Panel>
         {a.status === "completed" && <CandidateFeedback id={id} />}
+        {a.status === "completed" && adm && (
+          <Panel title={tr("Confirm the result")}>
+            <p className="text-xs text-muted">
+              {tr("The level comes from an AI-scored test. Read the feedback report, then confirm the level or correct it before deciding.")}
+            </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <select value={confirmLevel} onChange={(e) => setConfirmLevel(e.target.value as Cefr | "")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm cursor-pointer">
+                <option value="">{tr("Choose a level")}</option>
+                {(["A1", "A2", "B1", "B2", "C1", "C2"] as Cefr[]).map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </select>
+              <input
+                value={confirmNote}
+                onChange={(e) => setConfirmNote(e.target.value)}
+                placeholder={tr("Why, if you changed it (optional)")}
+                className="flex-1 min-w-48 rounded-input border border-rule bg-surface px-3 py-2 text-sm"
+              />
+              <Button
+                variant="secondary"
+                disabled={busy || !confirmLevel}
+                onClick={async () => {
+                  setBusy(true);
+                  await confirmAssessment(id, (confirmLevel || null) as Cefr | null, confirmNote.trim() || undefined).catch(() => {});
+                  setBusy(false);
+                  load();
+                  onChanged();
+                }}
+              >
+                {tr("Confirm level")}
+              </Button>
+            </div>
+            {a.confirmed_level && a.confirmed_at && (
+              <p className="text-xs text-success">
+                {tr("Confirmed {{level}} by {{who}} on {{date}}.", { level: a.confirmed_level, who: a.confirmed_by_name || tr("a colleague"), date: dateTime(a.confirmed_at) })}
+              </p>
+            )}
+          </Panel>
+        )}
         {a.status === "completed" && (
           <Panel title={tr("Decision")}>
             <textarea
@@ -250,16 +319,33 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
               placeholder={tr("Note for your team (optional)")}
               className="rounded-input border border-rule bg-surface px-3 py-2 text-sm"
             />
+            {adm && !a.confirmed_level && <p className="text-xs text-warning">{tr("Confirm the result first.")}</p>}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => decide("shortlisted")} disabled={busy}>
-                {tr("Shortlist")}
-              </Button>
-              <Button variant="secondary" onClick={() => decide("hired")} disabled={busy}>
-                {tr("Mark as hired")}
-              </Button>
-              <Button variant="secondary" onClick={() => decide("rejected")} disabled={busy}>
-                {tr("Reject")}
-              </Button>
+              {adm ? (
+                <>
+                  <Button onClick={() => decide("admitted")} disabled={busy || !a.confirmed_level}>
+                    {tr("Admit")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => decide("waitlisted")} disabled={busy || !a.confirmed_level}>
+                    {tr("Waitlist")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => decide("declined")} disabled={busy || !a.confirmed_level}>
+                    {tr("Decline")}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => decide("shortlisted")} disabled={busy}>
+                    {tr("Shortlist")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => decide("hired")} disabled={busy}>
+                    {tr("Mark as hired")}
+                  </Button>
+                  <Button variant="secondary" onClick={() => decide("rejected")} disabled={busy}>
+                    {tr("Reject")}
+                  </Button>
+                </>
+              )}
               {a.decision && (
                 <button onClick={() => decide(null)} disabled={busy} className="text-sm text-muted underline cursor-pointer">
                   {tr("Clear decision")}
@@ -368,6 +454,7 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
 }
 
 function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave: (j: JobInput) => Promise<void>; onCancel: () => void; locked?: boolean }) {
+  const adm = useAdmissions();
   const [f, setF] = useState<JobInput>({
     title: initial?.title ?? "",
     department: initial?.department ?? "",
@@ -394,7 +481,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
   return (
     <div className="flex flex-col gap-3 max-w-2xl">
       <label className="flex flex-col gap-1 text-sm text-ink">
-        {tr("Job title")}
+        {adm ? tr("Course and intake, e.g. MSc Data Science, September 2027") : tr("Job title")}
         <input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} className={input} />
       </label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -457,6 +544,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
 type CandidateFilter = "all" | "to_decide" | "shortlisted" | "hired" | "rejected" | "pending";
 
 function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; credits: number; onClose: () => void; onChanged: () => void }) {
+  const adm = useAdmissions();
   const [data, setData] = useState<{ job: Job; candidates: CandidateRow[] } | null>(null);
   const [tab, setTab] = useState("candidates");
   const [filter, setFilter] = useState<CandidateFilter>("all");
@@ -480,7 +568,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
           ? c.status === "completed" && !c.decision
           : filter === "pending"
             ? ["invited", "started", "expired"].includes(c.status)
-            : c.decision === filter,
+            : !!c.decision && DECISION_GROUP[c.decision] === filter,
     )
     .sort((a, b) => (sort === "level" ? rank(b) - rank(a) : new Date(b.invited_at).getTime() - new Date(a.invited_at).getTime()));
   const changed = () => {
@@ -516,11 +604,11 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
       stats={[
         { label: tr("Invited"), value: job.invited },
         { label: tr("Completed"), value: job.completed },
-        { label: tr("Shortlisted"), value: job.shortlisted },
-        { label: tr("Hired"), value: job.hired },
+        { label: adm ? tr("Waitlisted") : tr("Shortlisted"), value: job.shortlisted },
+        { label: adm ? tr("Admitted") : tr("Hired"), value: job.hired },
       ]}
       tabs={[
-        { key: "candidates", label: tr("Candidates"), count: candidates.length },
+        { key: "candidates", label: adm ? tr("Applicants") : tr("Candidates"), count: candidates.length },
         { key: "invite", label: tr("Invite") },
         { key: "details", label: tr("Details") },
       ]}
@@ -537,9 +625,9 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
               options={[
                 ["all", tr("All")],
                 ["to_decide", tr("To decide")],
-                ["shortlisted", tr("Shortlisted")],
-                ["hired", tr("Hired")],
-                ["rejected", tr("Rejected")],
+                ["shortlisted", adm ? tr("Waitlisted") : tr("Shortlisted")],
+                ["hired", adm ? tr("Admitted") : tr("Hired")],
+                ["rejected", adm ? tr("Declined") : tr("Rejected")],
                 ["pending", tr("Not finished")],
               ]}
             />
@@ -563,6 +651,11 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                   </button>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <ResultBadge result={c.result} min={job.min_cefr} />
+                    {adm && c.status === "completed" && (
+                      <StatusPill tone={c.confirmed_level ? "success" : "warning"}>
+                        {c.confirmed_level ? tr("Confirmed {{level}}", { level: c.confirmed_level }) : tr("To review")}
+                      </StatusPill>
+                    )}
                     <StatusPill tone={STATUS_TONE[c.status]}>{STATUS_TEXT[c.status]()}</StatusPill>
                     {c.integrity_status && c.status === "completed" && <StatusPill tone={INTEGRITY_TONE[c.integrity_status]}>{INTEGRITY_TEXT[c.integrity_status]()}</StatusPill>}
                     {c.decision && <StatusPill tone={DECISION_TONE[c.decision]}>{DECISION_TEXT[c.decision]()}</StatusPill>}
@@ -784,6 +877,7 @@ type Tab = "jobs" | "team" | "credits" | "settings";
 // Job openings, candidates and credits, for Org Admins and recruiters.
 export function RecruitmentConsole() {
   const { user } = useAuth();
+  const adm = useAdmissions();
   const isOrgAdmin = user?.role === "org_admin";
   const [overview, setOverview] = useState<RecruitmentOverview | null>(null);
   const [jobs, setJobs] = useState<Job[] | null>(null);
@@ -815,8 +909,8 @@ export function RecruitmentConsole() {
   }
   if (!overview) return null;
   const tabs: [Tab, string][] = [
-    ["jobs", tr("Job openings")],
-    ["team", tr("Recruiters")],
+    ["jobs", adm ? tr("Intakes") : tr("Job openings")],
+    ["team", adm ? tr("Admissions team") : tr("Recruiters")],
     ["credits", tr("Credits")],
   ];
   if (isOrgAdmin) tabs.push(["settings", tr("Settings")]);
@@ -825,27 +919,31 @@ export function RecruitmentConsole() {
   return (
     <div className="flex flex-col gap-5 w-full">
       <PageHeader
-        title={tr("Recruitment")}
-        subtitle={tr("Invite candidates to a proctored English test and compare their results before you hire.")}
+        title={adm ? tr("Admissions") : tr("Recruitment")}
+        subtitle={
+          adm
+            ? tr("Invite applicants to a proctored English admission test, review each result and decide.")
+            : tr("Invite candidates to a proctored English test and compare their results before you hire.")
+        }
         actions={
           <Button onClick={() => setCreating(true)}>
             <Plus size={15} className="inline mr-1.5" />
-            {tr("New job opening")}
+            {adm ? tr("New intake") : tr("New job opening")}
           </Button>
         }
       />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label={tr("Credits left")} value={overview.credits} sub={overview.credits <= 5 ? tr("Running low") : undefined} icon={Coins} index={0} />
-        <StatCard label={tr("Waiting for candidates")} value={overview.counts.open} icon={Mail} index={1} />
+        <StatCard label={adm ? tr("Waiting for applicants") : tr("Waiting for candidates")} value={overview.counts.open} icon={Mail} index={1} />
         <StatCard label={tr("Results to decide")} value={overview.counts.to_decide} icon={Users} index={2} />
-        <StatCard label={tr("Hired")} value={overview.counts.hired} icon={UserCheck} index={3} />
+        <StatCard label={adm ? tr("Admitted") : tr("Hired")} value={overview.counts.hired} icon={UserCheck} index={3} />
       </div>
       <FilterPills value={tab} onChange={setTab} options={tabs} />
 
       {tab === "jobs" && (
         <div className="flex flex-col gap-4">
           {creating && (
-            <Panel title={tr("New job opening")}>
+            <Panel title={adm ? tr("New intake") : tr("New job opening")}>
               <JobForm
                 onCancel={() => setCreating(false)}
                 onSave={async (j) => {
@@ -866,7 +964,15 @@ export function RecruitmentConsole() {
             ]}
           />
           {jobs === null ? null : visibleJobs.length === 0 ? (
-            <EmptyNote>{jobFilter === "open" ? tr("No open job openings. Create one to start inviting candidates.") : tr("No closed job openings.")}</EmptyNote>
+            <EmptyNote>
+              {adm
+                ? jobFilter === "open"
+                  ? tr("No open intakes. Create one to start inviting applicants.")
+                  : tr("No closed intakes.")
+                : jobFilter === "open"
+                  ? tr("No open job openings. Create one to start inviting candidates.")
+                  : tr("No closed job openings.")}
+            </EmptyNote>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {visibleJobs.map((j) => (
@@ -883,8 +989,8 @@ export function RecruitmentConsole() {
                     {[
                       [j.invited, tr("Invited")],
                       [j.completed, tr("Done")],
-                      [j.shortlisted, tr("Shortlist")],
-                      [j.hired, tr("Hired")],
+                      [j.shortlisted, adm ? tr("Waitlisted") : tr("Shortlist")],
+                      [j.hired, adm ? tr("Admitted") : tr("Hired")],
                     ].map(([n, l]) => (
                       <div key={String(l)} className="bg-paper-warm rounded-input py-1.5">
                         <p className="font-display font-bold text-ink">{n}</p>

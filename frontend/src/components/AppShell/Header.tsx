@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NotificationBell } from "@/components/NotificationBell";
-import { OrgBrandBadge, useBrandColor } from "@/components/AppShell/useBranding";
+import { OrgBrandBadge, useAdmissions, useBrandColor } from "@/components/AppShell/useBranding";
 
 import { tr } from "@/i18n/tr";
 function useTitleKey(pathname: string): string {
@@ -147,7 +147,11 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const titleKey = useTitleKey(location.pathname);
   // "Dashboard" alone didn't say which console this was.
-  const title = CONSOLE_TITLE_BY_ROUTE[location.pathname] ?? t(titleKey);
+  const admissions = useAdmissions();
+  const title =
+    admissions && (location.pathname === ROUTES.ORG_ADMIN_RECRUITMENT || location.pathname === ROUTES.RECRUITER_JOBS)
+      ? tr("Admissions")
+      : (CONSOLE_TITLE_BY_ROUTE[location.pathname] ?? t(titleKey));
   const brandColor = useBrandColor();
 
   return (

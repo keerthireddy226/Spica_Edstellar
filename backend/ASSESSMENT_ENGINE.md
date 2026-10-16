@@ -536,3 +536,34 @@ provided); cost in money (tokens are recorded; prices depend on the plan).
 Still open from Phase 6: universities' admissions results (Phase 7); the
 alert job wasn't run against real inboxes in development (it emails Org
 Admins); the decision rules (slack, 14 days, 2 missed) are starting values.
+
+## 20. Phase 7: built
+
+- **Segments**: a university (`tenants.category = 'university'`) has two
+  products under the existing switches: skills = **Campus** (students follow
+  programs towards a target, as companies' employees do) and recruitment =
+  **Admissions** (applicants take an admission test, paid in credits). Staff
+  switch them on per organization as before.
+- **Campus limits**: unlimited practice and a mock every two weeks
+  (`plan_quotas.extras.mockEveryDays = 14`, checked when a mock starts, with
+  the date the next one is allowed), full report.
+- **Admissions** (`migrations/1795100000000_university-admissions.sql`): the
+  recruitment console speaks of intakes, applicants and an admissions team;
+  applicant pages speak of the admissions office instead of a recruiter.
+  Decisions are Admit, Waitlist and Decline (recruitment keeps Shortlist,
+  Hire and Reject; each organization can only use its own set).
+- **Human review step**: before any admissions decision, an officer reads the
+  feedback report and confirms the level or corrects it
+  (`confirmed_level`, `confirmed_by`, `confirmed_at`, `confirm_note`; audit
+  `recruitment.result_confirmed`). Deciding without it is refused
+  (`result_not_confirmed`). Applicants show "To review" or "Confirmed B2" in
+  the list, and the CSV export has the confirmed level next to the
+  estimated one.
+- **Results per intake**: each intake's applicants with estimated and
+  confirmed levels, integrity, the report and the decision (the recruitment
+  views, relabelled), and the CSV export.
+
+Still open from Phase 7: Campus and Admissions aren't separately priced in
+the Plans & pricing page (Admissions uses recruitment credits, Campus the
+skills licenses with the education discount); applicant emails are the same
+neutral text as candidates'.

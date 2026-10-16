@@ -77,6 +77,8 @@ recruitmentRouter.get("/invite/:token", async (req, res, next) => {
     res.json({
       status: usable ? a.status : a.status === "completed" ? "completed" : "expired",
       organization: { name: a.org_name, logoUrl: null },
+      // A university's admission test: the wording speaks of admissions, not recruiters.
+      admissions: await isUniversity(a.tenant_id),
       job: { title: a.job_title, description: a.description },
       testKind: a.test_kind,
       firstName: a.first_name,
@@ -137,6 +139,7 @@ recruitmentRouter.get("/candidate/me", requireAuth, async (req: AuthedRequest, r
       id: a.id,
       status: live ? a.status : a.status === "completed" ? "completed" : "expired",
       organization: a.org_name,
+      admissions: await isUniversity(a.tenant_id),
       jobTitle: a.job_title,
       testKind: a.test_kind,
       examId: a.exam_id,
@@ -163,7 +166,7 @@ recruitmentRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, 
         `SELECT count(*) FILTER (WHERE status IN ('invited', 'started'))::int AS open,
            count(*) FILTER (WHERE status = 'completed' AND decision IS NULL)::int AS to_decide,
            count(*) FILTER (WHERE status = 'completed' AND completed_at > now() - interval '30 days')::int AS completed_30d,
-           count(*) FILTER (WHERE decision = 'hired')::int AS hired,
+           count(*) FILTER (WHERE decision IN ('hired', 'admitted'))::int AS hired,
            (SELECT count(*)::int FROM recruitment_jobs WHERE tenant_id = $1 AND status = 'open') AS open_jobs
          FROM recruitment_assessments WHERE tenant_id = $1`,
         [tenantId],
@@ -204,8 +207,9 @@ const JOB_SELECT = `
     count(a.id) FILTER (WHERE a.status <> 'cancelled')::int AS invited,
     count(a.id) FILTER (WHERE a.status = 'completed')::int AS completed,
     count(a.id) FILTER (WHERE a.status IN ('invited', 'started'))::int AS pending,
-    count(a.id) FILTER (WHERE a.decision = 'shortlisted')::int AS shortlisted,
-    count(a.id) FILTER (WHERE a.decision = 'hired')::int AS hired
+    -- Admissions: waitlisted and admitted count as shortlisted and hired.
+    count(a.id) FILTER (WHERE a.decision IN ('shortlisted', 'waitlisted'))::int AS shortlisted,
+    count(a.id) FILTER (WHERE a.decision IN ('hired', 'admitted'))::int AS hired
   FROM recruitment_jobs j
   LEFT JOIN recruitment_assessments a ON a.job_id = j.id
   LEFT JOIN users u ON u.id = j.created_by`;
@@ -285,7 +289,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
     if (!job) return res.status(404).json({ error: "job_not_found" });
     const candidates = await pool.query(
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
-         a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
+         a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
          concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name
        FROM recruitment_assessments a
@@ -370,6 +374,7 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
            si.status AS integrity_status, si.risk_level, si.risk_score, si.reasons AS integrity_reasons, si.reviewed_at AS integrity_reviewed_at,
            e.name AS exam_name, e.test_id AS exam_test_id, ts.test_code, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
            concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
+           concat_ws(' ', conf.first_name, conf.last_name) AS confirmed_by_name, t.category AS tenant_category,
            (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status
          FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
          LEFT JOIN session_integrity si ON si.session_id = a.session_id
@@ -377,6 +382,8 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
          LEFT JOIN exams e ON e.id = a.exam_id
          LEFT JOIN users inv ON inv.id = a.invited_by
          LEFT JOIN users dec ON dec.id = a.decided_by
+         LEFT JOIN users conf ON conf.id = a.confirmed_by
+         JOIN tenants t ON t.id = a.tenant_id
          WHERE a.id = $1 AND a.tenant_id = $2`,
         [req.params.id, tenantId],
       )
@@ -408,13 +415,60 @@ recruitmentRouter.get("/assessments/:id/report", requireAuth, async (req: Authed
   }
 });
 
-const decisionSchema = z.object({ decision: z.enum(["shortlisted", "rejected", "hired"]).nullable(), note: z.string().trim().max(1000).optional() });
+const RECRUITMENT_DECISIONS = ["shortlisted", "rejected", "hired"];
+const ADMISSIONS_DECISIONS = ["admitted", "waitlisted", "declined"];
+const decisionSchema = z.object({ decision: z.enum([...RECRUITMENT_DECISIONS, ...ADMISSIONS_DECISIONS] as [string, ...string[]]).nullable(), note: z.string().trim().max(1000).optional() });
+
+async function isUniversity(tenantId: string): Promise<boolean> {
+  return (await pool.query(`SELECT category FROM tenants WHERE id = $1`, [tenantId])).rows[0]?.category === "university";
+}
+
+// Admissions' human review step: an officer confirms (or corrects) the level
+// from the AI-scored test before any decision.
+const confirmSchema = z.object({ level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).nullable(), note: z.string().trim().max(1000).optional() });
+
+recruitmentRouter.post("/assessments/:id/confirm", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const b = confirmSchema.parse(req.body);
+    const r = await pool.query(
+      `UPDATE recruitment_assessments SET confirmed_level = $3, confirm_note = $4, confirmed_by = CASE WHEN $3::text IS NULL THEN NULL ELSE $5::uuid END,
+         confirmed_at = CASE WHEN $3::text IS NULL THEN NULL ELSE now() END
+       WHERE id = $1 AND tenant_id = $2 AND status = 'completed' RETURNING id, email, first_name, last_name, result`,
+      [req.params.id, tenantId, b.level, b.note ?? null, req.user!.id],
+    );
+    const a = r.rows[0];
+    if (!a) return res.status(404).json({ error: "assessment_not_found" });
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "recruitment.result_confirmed",
+      targetType: "candidate",
+      targetId: String(req.params.id),
+      targetLabel: [a.first_name, a.last_name].filter(Boolean).join(" ") || a.email,
+      details: { level: b.level, estimated: a.result?.cefrLevel ?? null },
+      ip: req.ip,
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 recruitmentRouter.post("/assessments/:id/decision", requireAuth, async (req: AuthedRequest, res, next) => {
   const tenantId = await recruiterTenant(req, res);
   if (!tenantId) return;
   try {
     const b = decisionSchema.parse(req.body);
+    // Universities decide on admissions, and only once a person confirmed the result.
+    const university = await isUniversity(tenantId);
+    if (b.decision && !(university ? ADMISSIONS_DECISIONS : RECRUITMENT_DECISIONS).includes(b.decision)) return res.status(400).json({ error: "invalid_decision" });
+    if (b.decision && university) {
+      const c = (await pool.query(`SELECT confirmed_level FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId])).rows[0];
+      if (c && !c.confirmed_level) return res.status(409).json({ error: "result_not_confirmed" });
+    }
     const r = await pool.query(
       `UPDATE recruitment_assessments SET decision = $3, decision_note = $4, decided_by = $5, decided_at = CASE WHEN $3::text IS NULL THEN NULL ELSE now() END
        WHERE id = $1 AND tenant_id = $2 AND status = 'completed' RETURNING id, job_id, email, first_name, last_name`,
@@ -455,7 +509,7 @@ recruitmentRouter.get("/jobs/:id/export.csv", requireAuth, async (req: AuthedReq
     if (!job) return res.status(404).json({ error: "job_not_found" });
     const rows = (
       await pool.query(
-        `SELECT a.first_name, a.last_name, a.email, a.status, a.result, a.decision, a.completed_at, si.status AS integrity, ts.test_code, e.test_id
+        `SELECT a.first_name, a.last_name, a.email, a.status, a.result, a.decision, a.confirmed_level, a.completed_at, si.status AS integrity, ts.test_code, e.test_id
          FROM recruitment_assessments a LEFT JOIN session_integrity si ON si.session_id = a.session_id
          LEFT JOIN sessions ts ON ts.id = a.session_id
          LEFT JOIN exams e ON e.id = a.exam_id
@@ -463,9 +517,9 @@ recruitmentRouter.get("/jobs/:id/export.csv", requireAuth, async (req: AuthedReq
         [req.params.id],
       )
     ).rows;
-    const header = ["First name", "Last name", "Email", "Test ID", "Attempt ID", "Status", "Level", "Score %", "Integrity", "Decision", "Completed"];
+    const header = ["First name", "Last name", "Email", "Test ID", "Attempt ID", "Status", "Level", "Confirmed level", "Score %", "Integrity", "Decision", "Completed"];
     const lines = rows.map((r) =>
-      [r.first_name, r.last_name, r.email, r.test_id ?? "", r.test_code ?? "", r.status, r.result?.cefrLevel ?? "", r.result?.overallPercent ?? "", r.integrity ?? "", r.decision ?? "", r.completed_at?.toISOString?.() ?? ""]
+      [r.first_name, r.last_name, r.email, r.test_id ?? "", r.test_code ?? "", r.status, r.result?.cefrLevel ?? "", r.confirmed_level ?? "", r.result?.overallPercent ?? "", r.integrity ?? "", r.decision ?? "", r.completed_at?.toISOString?.() ?? ""]
         .map(csvCell)
         .join(","),
     );

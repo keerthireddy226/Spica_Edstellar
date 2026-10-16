@@ -43,7 +43,9 @@ export function AssessInvite() {
         code === "already_completed"
           ? tr("You've already completed this assessment.")
           : code === "invite_expired" || code === "job_closed"
-            ? tr("This invitation has expired. Ask the recruiter for a new link.")
+            ? info?.admissions
+              ? tr("This invitation has expired. Ask the admissions office for a new link.")
+              : tr("This invitation has expired. Ask the recruiter for a new link.")
             : tr("Could not start the assessment. Try again."),
       );
       setBusy(false);
@@ -69,7 +71,9 @@ export function AssessInvite() {
               ? tr("Thank you. {{org}} has your results.", {
                   org: info.organization.name,
                 })
-              : tr("Ask the recruiter for a new link.")
+              : info.admissions
+                ? tr("Ask the admissions office for a new link.")
+                : tr("Ask the recruiter for a new link.")
           }
         />
       </CandidateShell>
@@ -80,7 +84,7 @@ export function AssessInvite() {
     [info.proctoring.microphone, <Mic key="m" size={16} />, tr("A microphone, in a quiet room")],
     [info.proctoring.screen, <MonitorUp key="s" size={16} />, tr("A computer: you'll share your entire screen")],
     [info.proctoring.idDocument, <IdCard key="i" size={16} />, tr("Your passport or national ID card")],
-    [info.proctoring.secureBrowser, <Lock key="l" size={16} />, tr("Safe Exam Browser, as your recruiter instructed")],
+    [info.proctoring.secureBrowser, <Lock key="l" size={16} />, info.admissions ? tr("Safe Exam Browser, as the admissions office instructed") : tr("Safe Exam Browser, as your recruiter instructed")],
   ];
   return (
     <CandidateShell org={info.organization.name}>
@@ -177,7 +181,7 @@ export function CandidateAssessmentPage() {
   if (a.status === "expired") {
     return (
       <CandidateShell org={a.organization}>
-        <CandidatePanel icon={<TimerOff size={26} />} title={tr("This invitation has expired")} subtitle={tr("Ask the recruiter for a new link.")} />
+        <CandidatePanel icon={<TimerOff size={26} />} title={tr("This invitation has expired")} subtitle={a.admissions ? tr("Ask the admissions office for a new link.") : tr("Ask the recruiter for a new link.")} />
       </CandidateShell>
     );
   }
@@ -209,7 +213,9 @@ export function CandidateAssessmentPage() {
         <ul className="flex flex-col gap-2 text-sm text-ink">
           {[
             tr("Sit in a quiet, well-lit room, alone."),
-            tr("Use headphones only if your recruiter allows them; keep your speakers at a normal volume."),
+            a.admissions
+              ? tr("Use headphones only if the admissions office allows them; keep your speakers at a normal volume.")
+              : tr("Use headphones only if your recruiter allows them; keep your speakers at a normal volume."),
             tr("Keep this tab open until the end. Leaving it is recorded."),
             tr("You have one attempt. Your answers save as you go, so a dropped connection doesn't lose them."),
           ].map((t) => (

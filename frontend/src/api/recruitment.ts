@@ -4,7 +4,8 @@ export type Product = "skills" | "recruitment";
 export type TestKind = "placement" | "fourSkills" | "speakingListening" | "writing" | "professional";
 export type Cefr = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type AssessmentStatus = "invited" | "started" | "completed" | "expired" | "cancelled";
-export type Decision = "shortlisted" | "rejected" | "hired";
+// Recruitment decisions; universities decide on admissions instead.
+export type Decision = "shortlisted" | "rejected" | "hired" | "admitted" | "waitlisted" | "declined";
 
 export interface AssessmentResult {
   kind: "placement" | "exam";
@@ -23,6 +24,8 @@ export interface AssessmentResult {
 export interface InviteInfo {
   status: "invited" | "started" | "completed" | "expired";
   organization: { name: string; logoUrl: string | null };
+  // A university's admission test (the page speaks of admissions).
+  admissions?: boolean;
   job: { title: string; description: string | null };
   testKind: TestKind;
   firstName: string | null;
@@ -42,6 +45,7 @@ export interface CandidateAssessment {
   id: string;
   status: "invited" | "started" | "completed" | "expired";
   organization: string;
+  admissions?: boolean;
   jobTitle: string;
   testKind: TestKind;
   examId: string | null;
@@ -123,6 +127,9 @@ export interface CandidateRow {
   decision: Decision | null;
   decision_note: string | null;
   decided_at: string | null;
+  // Admissions: the level an officer confirmed after reading the report.
+  confirmed_level?: Cefr | null;
+  confirmed_at?: string | null;
   invited_at: string;
   expires_at: string;
   started_at: string | null;
@@ -165,6 +172,14 @@ export interface AssessmentReport extends Omit<CandidateRow, "invited_by_name"> 
   identity_status: "pending" | "verified" | "rejected" | null;
   invited_by_name: string | null;
   decided_by_name: string | null;
+  confirmed_by_name?: string | null;
+  confirm_note?: string | null;
+  tenant_category?: string | null;
+}
+
+// Admissions' review step: confirm (or correct) the level; null clears it.
+export function confirmAssessment(id: string, level: Cefr | null, note?: string): Promise<{ ok: boolean }> {
+  return api(`/recruitment/assessments/${id}/confirm`, { method: "POST", body: JSON.stringify({ level, note }) });
 }
 
 export function getAssessment(id: string): Promise<{ assessment: AssessmentReport }> {

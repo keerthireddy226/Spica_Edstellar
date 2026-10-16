@@ -8,6 +8,8 @@ export interface Branding {
   allowedTestProducts: string[] | null;
   // What the organization bought: employee skills, recruitment, or both.
   products: ("skills" | "recruitment")[];
+  // "university": Campus (skills) and Admissions (recruitment).
+  category?: "company" | "university" | "other" | null;
 }
 
 let cached: Promise<Branding> | null = null;
@@ -62,4 +64,9 @@ export function OrgBrandBadge() {
 
 export function useBrandColor(): string | null {
   return useBranding()?.organization?.brandColor ?? null;
+}
+
+// A university's recruitment product is Admissions: applicants, programs, admit or decline.
+export function useAdmissions(): boolean {
+  return useBranding()?.category === "university";
 }

@@ -13,6 +13,8 @@ export interface Quota {
   practicePerMonth: number | null;
   mocksPerMonth: number | null;
   reportLevel: "summary" | "full";
+  // Campus: at least this many days between two mocks.
+  mockEveryDays: number | null;
 }
 
 export interface QuotaUsage extends Quota {
@@ -57,6 +59,7 @@ export async function learnerQuota(userId: string): Promise<Quota | null> {
     practicePerMonth: q.practice_per_month,
     mocksPerMonth: q.mocks_per_month,
     reportLevel: q.report_level,
+    mockEveryDays: typeof q.extras?.mockEveryDays === "number" ? q.extras.mockEveryDays : null,
   };
 }
 
@@ -89,6 +92,14 @@ export async function assertQuota(userId: string, kind: DeliveryMode): Promise<v
   const limit = kind === "mock" ? u.mocksPerMonth : u.practicePerMonth;
   const used = kind === "mock" ? u.mocksUsed : u.practiceUsed;
   if (limit !== null && used >= limit) throw new QuotaError({ kind, limit, used, resetsOn: u.resetsOn });
+  // Spacing between mocks (Campus: one every two weeks).
+  if (kind === "mock" && u.mockEveryDays) {
+    const last = (
+      await pool.query(`SELECT max(started_at) AS t FROM sessions WHERE user_id = $1 AND session_type = 'mocktest' AND delivery_mode = 'mock'`, [userId])
+    ).rows[0]?.t as Date | null;
+    const next = last ? new Date(last.getTime() + u.mockEveryDays * 86_400_000) : null;
+    if (next && next.getTime() > Date.now()) throw new QuotaError({ kind, limit: limit ?? 0, used, resetsOn: next.toISOString().slice(0, 10) });
+  }
 }
 
 // ---- Super Admin: editing the limits ----
