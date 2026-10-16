@@ -34,6 +34,9 @@ export function IntegrityResultNote({ sessionId }: { sessionId: string | null })
           ))}
         </ul>
       )}
+      {summary.reasons.some((r) => r.code === "noisy_answer") && (
+        <p className="text-sm text-ink">{tr("Background noise may have lowered your speaking score. Take speaking tests somewhere quieter.")}</p>
+      )}
       <p className="text-xs text-muted">
         {flagged
           ? tr("A reviewer will look at this test. Nothing is decided automatically, and your result may be held until the review is done.")

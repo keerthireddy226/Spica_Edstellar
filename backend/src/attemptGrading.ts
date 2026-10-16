@@ -6,6 +6,7 @@ import { gradeAttempt, type GradeResult } from "./placement/grading.js";
 import { computeFluencySignals, isTrulyCorrect, type StoredMannerScores } from "./placement/fluencySignals.js";
 import { scoreAudioFluency } from "./placement/geminiFluency.js";
 import { enqueue } from "./queue/queue.js";
+import { measureAnswerNoise, recordNoisyAnswer, type AnswerNoise } from "./proctoring/answerAudio.js";
 import { passThresholdForLevel } from "./placement/cefr.js";
 
 export const UPLOADS_DIR = path.join(process.cwd(), "uploads", "attempts");
@@ -101,6 +102,12 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   const effectiveResponseText = (item.input_method === "mic" ? geminiScores?.transcript || body.responseText : body.responseText) || undefined;
 
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
+  // Background noise in the recording, for the reviewer and the learner's feedback.
+  const noise: AnswerNoise | null =
+    item.input_method === "mic" && responseUri && !deferred
+      ? await measureAnswerNoise(path.join(UPLOADS_DIR, path.basename(responseUri)))
+      : null;
+
   const noSpeech = item.input_method === "mic" && heardNoSpeech(geminiScores, body.responseText);
   const grade: GradeResult = deferred
     ? { status: "pending", correct: null, score: null, method: null }
@@ -153,8 +160,8 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // A deferred answer keeps its recording length for the background grader's pace check.
   const mannerScores = deferred
     ? { durationMs: body.durationMs ?? null }
-    : freeSignals || geminiScores
-      ? { ...freeSignals, gemini: geminiScores ?? undefined }
+    : freeSignals || geminiScores || noise
+      ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined }
       : null;
 
   // Same UPSERT reasoning as attempts above (backed by a unique index on
@@ -167,6 +174,8 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
        status = EXCLUDED.status, model_version = EXCLUDED.model_version, updated_at = now()`,
     [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
   );
+
+  if (noise && !noSpeech) await recordNoisyAnswer(sessionId, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
 
   if (deferred && responseUri) {
     // Keyed by the recording, so re-recording an answer queues a fresh grading.
@@ -188,14 +197,16 @@ const BACKGROUND_TIMEOUT_MS = 60_000;
 export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boolean; timeoutMs?: number }): Promise<void> {
   const r = (
     await pool.query(
-      `SELECT a.response_uri, a.response_text, sc.status, sc.manner_scores,
+      `SELECT a.session_id, a.response_uri, a.response_text, sc.status, sc.manner_scores,
          i.item_type_id, i.answer_set, i.content, i.cefr_level, it.min_words, it.input_method
        FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
        WHERE a.id = $1`,
       [attemptId],
     )
   ).rows[0];
-  if (!r || r.status !== "pending" || !r.response_uri) return;
+  // Waiting for a grade, or a grading that failed (usually a Gemini timeout).
+  if (!r || (r.status !== "pending" && r.status !== "failed")) return;
+  if (!r.response_uri) return gradeTypedAnswerAgain(attemptId, r, opts.final, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
 
   const file = path.join(UPLOADS_DIR, path.basename(r.response_uri));
   const audio = await readFile(file).catch(() => null);
@@ -205,17 +216,39 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
 
   const responseText: string | null = geminiScores?.transcript || r.response_text || null;
   const noSpeech = heardNoSpeech(geminiScores, r.response_text);
-  const grade = noSpeech ? NO_SPEECH : await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined);
+  const noise = audio ? await measureAnswerNoise(file) : null;
+  const grade = noSpeech
+    ? NO_SPEECH
+    : await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
+  if (grade.status === "failed" && !opts.final) throw new Error("speaking grading: content grading didn't answer, will retry");
   const durationMs = r.manner_scores?.durationMs ?? null;
   const freeSignals = responseText ? computeFluencySignals(responseText, durationMs) : null;
-  const mannerScores = freeSignals || geminiScores ? { ...freeSignals, gemini: geminiScores ?? undefined } : null;
+  const mannerScores = freeSignals || geminiScores || noise ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined } : null;
   const modelVersion = noSpeech ? NO_SPEECH_VERSION : grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : grade.method === "exact-match" ? "exact-match-v1" : "n/a";
 
   await pool.query(`UPDATE attempts SET response_text = $2 WHERE id = $1`, [attemptId, responseText]);
-  // Only a still-pending score is written: a grading that finished first wins.
-  await pool.query(
-    `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, updated_at = now() WHERE attempt_id = $1 AND status = 'pending'`,
+  // Only a score still waiting (or failed) is written: a grading that finished first wins.
+  const updated = await pool.query(
+    `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, updated_at = now() WHERE attempt_id = $1 AND status IN ('pending', 'failed')`,
     [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
+  );
+  if (updated.rowCount && noise && !noSpeech) await recordNoisyAnswer(r.session_id, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
+}
+
+// A typed answer whose AI grading failed: grade the saved text again.
+async function gradeTypedAnswerAgain(
+  attemptId: string,
+  r: { response_text: string | null; item_type_id: string; answer_set: unknown; content: unknown; cefr_level: string | null; min_words: number | null },
+  final: boolean,
+  timeoutMs: number,
+): Promise<void> {
+  if (!r.response_text) return;
+  const grade = await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, r.response_text, timeoutMs);
+  if (grade.status === "failed" && !final) throw new Error("grading: AI grading didn't answer, will retry");
+  if (grade.status !== "scored") return;
+  await pool.query(
+    `UPDATE scores SET content_score = $2, status = 'scored', model_version = $3, updated_at = now() WHERE attempt_id = $1 AND status = 'failed'`,
+    [attemptId, grade.score, grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : "exact-match-v1"],
   );
 }
 
@@ -238,17 +271,25 @@ export async function finishPendingSpeaking(sessionId: string): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 1_000));
     pending = await pendingSpeaking(sessionId);
   }
-  await Promise.all(pending.map((id) => gradeSpeakingAttempt(id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking grading failed:", err))));
+  // Answers whose grading failed during the test (a Gemini timeout) get one more try now.
+  const failed = await pool.query(
+    `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id
+     WHERE a.session_id = $1 AND sc.status = 'failed' AND (a.response_uri IS NOT NULL OR coalesce(a.response_text, '') <> '')`,
+    [sessionId],
+  );
+  const ids = [...pending, ...failed.rows.map((x) => x.id as string)];
+  await Promise.all(ids.map((id) => gradeSpeakingAttempt(id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking grading failed:", err))));
 }
 
-// A recorded answer can be left ungraded: Gemini and the browser's speech
-// recognition both failed under older code, or every background try ran out.
-// Each one gets one more round of background tries (once per attempt).
+// An answer can be left ungraded or failed: a recording still waiting after
+// every background try, or an AI grading that timed out. Each one gets one
+// more round of background tries (once per attempt).
 export async function sweepStuckSpeaking(): Promise<number> {
   const r = await pool.query(
     `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
-     WHERE sc.status = 'pending' AND a.response_uri IS NOT NULL AND it.input_method = 'mic'
-       AND a.submitted_at BETWEEN now() - interval '30 days' AND now() - interval '10 minutes'`,
+     WHERE a.submitted_at BETWEEN now() - interval '30 days' AND now() - interval '10 minutes'
+       AND ((sc.status = 'pending' AND a.response_uri IS NOT NULL AND it.input_method = 'mic')
+         OR (sc.status = 'failed' AND (a.response_uri IS NOT NULL OR coalesce(a.response_text, '') <> '')))`,
   );
   let queued = 0;
   for (const { id } of r.rows) {

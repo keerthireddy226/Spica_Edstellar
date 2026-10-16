@@ -34,8 +34,9 @@ async function aiResult(
   cefrLevel: string | null,
   minWords: number | null,
   responseText: string,
+  timeoutMs?: number,
 ): Promise<GradeResult> {
-  const ai = await gradeWithAI(itemTypeId, content, answerSet, cefrLevel, minWords, responseText);
+  const ai = await gradeWithAI(itemTypeId, content, answerSet, cefrLevel, minWords, responseText, timeoutMs);
   // A null result here means the AI call broke, not that nothing was graded — recorded as "failed", not "pending".
   if (!ai) return { status: "failed", correct: null, score: null, method: "ai-text" };
   return {
@@ -53,11 +54,13 @@ export async function gradeAttempt(
   cefrLevel: string | null,
   minWords: number | null,
   responseText: string | undefined,
+  // Limit for an AI-graded answer; background grading can wait longer.
+  timeoutMs?: number,
 ): Promise<GradeResult> {
   if (!responseText) return PENDING;
 
   if (AI_GRADED_TYPES.has(itemTypeId)) {
-    return aiResult(itemTypeId, content, answerSet, cefrLevel, minWords, responseText);
+    return aiResult(itemTypeId, content, answerSet, cefrLevel, minWords, responseText, timeoutMs);
   }
 
   const set = (answerSet ?? {}) as Record<string, unknown>;

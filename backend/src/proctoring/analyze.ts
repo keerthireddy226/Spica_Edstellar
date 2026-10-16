@@ -34,6 +34,8 @@ const EVENT_WEIGHTS: Record<string, { each: number; cap: number }> = {
   background_speech: { each: 4, cap: 16 },
   screen_share_stopped: { each: 8, cap: 16 },
   screen_not_entire: { each: 10, cap: 10 },
+  // Not misconduct: listed so the learner and reviewer see it, adds no risk.
+  noisy_answer: { each: 0, cap: 0 },
 };
 
 // A snapshot counts as looking away when the head turns this far from the

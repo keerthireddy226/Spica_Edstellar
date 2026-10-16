@@ -108,6 +108,11 @@ const GRADE_SCHEMA = {
   required: ["score", "reason"],
 };
 
+// Measured 7-10 s per answer (Oct 2026), so the old 10 s limit failed about
+// one answer in three. A learner waiting for the next question gets 20 s;
+// background grading passes a longer limit.
+export const AI_GRADING_TIMEOUT_MS = 20_000;
+
 export async function gradeWithAI(
   itemTypeId: string,
   content: unknown,
@@ -115,6 +120,7 @@ export async function gradeWithAI(
   cefrLevel: string | null,
   minWords: number | null,
   responseText: string,
+  timeoutMs = AI_GRADING_TIMEOUT_MS,
 ): Promise<AiGradeResult | null> {
   const task = buildTask(itemTypeId, (content ?? {}) as Record<string, unknown>, (answerSet ?? {}) as Record<string, unknown>, minWords);
   if (!task) return null;
@@ -141,7 +147,7 @@ export async function gradeWithAI(
         // The same answer should get the same score.
         config: { responseMimeType: "application/json", responseJsonSchema: GRADE_SCHEMA, temperature: 0 },
       }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("gradeWithAI: timed out")), 10_000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("gradeWithAI: timed out")), timeoutMs)),
     ]);
     parsed = JSON.parse(response.text ?? "");
   } catch (err) {

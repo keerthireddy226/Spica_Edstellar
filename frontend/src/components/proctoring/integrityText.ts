@@ -39,6 +39,7 @@ export const REASON_TEXT: Record<string, () => string> = {
   camera_covered: () => tr("Camera covered or dark"),
   camera_frozen: () => tr("Camera picture froze"),
   background_speech: () => tr("Talking heard between answers"),
+  noisy_answer: () => tr("Loud background noise in spoken answers"),
   screen_share_stopped: () => tr("Stopped sharing the screen"),
   screen_not_entire: () => tr("Shared a window instead of the entire screen"),
   looking_away: () => tr("Snapshots looking away from the screen"),

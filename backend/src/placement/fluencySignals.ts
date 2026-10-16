@@ -33,6 +33,8 @@ export interface StoredMannerScores {
   wordsPerMinute?: number | null;
   fillerCount?: number;
   gemini?: { pronunciation: number; fluency: number; comment: string; model?: string; rubric?: string } | null;
+  // Background noise measured in the recording (see proctoring/answerAudio.ts).
+  noise?: { snrDb: number | null; noisy: boolean } | null;
 }
 
 // Delivery fails an otherwise correct spoken answer only when it's genuinely

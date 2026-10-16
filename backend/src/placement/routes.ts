@@ -8,7 +8,7 @@ import { recordCandidateResult } from "../recruitment/service.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendPlacementReminderEmail } from "../auth/mailer.js";
 import { submitAttemptSchema } from "./schemas.js";
-import { gradeAndSaveAttempt } from "../attemptGrading.js";
+import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
 import {
   CEFR_LEVELS,
   cefrRank,
@@ -468,6 +468,8 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       [req.params.sessionId, req.user!.id],
     );
     if (!sessionResult.rows[0]) return res.status(404).json({ error: "session_not_found_or_already_completed" });
+    // Answers whose grading failed during the test (a Gemini timeout) get one more try first.
+    await finishPendingSpeaking(req.params.sessionId as string).catch((err) => console.error("placement /complete: grading retry failed:", err));
 
     const summaryResult = await pool.query(
       `SELECT sc.status, sc.content_score, sc.manner_scores, it.skills, it.input_method, i.cefr_level
