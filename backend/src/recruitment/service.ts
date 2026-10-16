@@ -17,12 +17,6 @@ export const PRODUCTS = ["skills", "recruitment"] as const;
 export type Product = (typeof PRODUCTS)[number];
 export const TEST_KINDS = ["placement", "fourSkills", "speakingListening", "writing", "professional"] as const;
 export type TestKind = (typeof TEST_KINDS)[number];
-const PRODUCT_CODE_PREFIX: Record<string, string> = {
-  fourSkills: "fourskills",
-  writing: "writing",
-  professional: "professional",
-  speakingListening: "speaklisten",
-};
 
 // Rate card per candidate assessment, by credits bought at once (USD cents).
 export const ASSESSMENT_BANDS = [
@@ -137,7 +131,7 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
   // Practice-test products: each candidate gets one of the product's sets.
   let examIds: string[] = [];
   if (job.test_kind !== "placement") {
-    const ex = await pool.query(`SELECT id FROM exams WHERE is_active AND code LIKE $1`, [`${PRODUCT_CODE_PREFIX[job.test_kind]}-%`]);
+    const ex = await pool.query(`SELECT id FROM exams WHERE is_active AND test_type_id = $1`, [job.test_kind]);
     examIds = ex.rows.map((r) => r.id);
     if (examIds.length === 0) throw new RecruitmentError("no_exam_available");
   }

@@ -9,15 +9,11 @@ import { SsoSettingsSection } from "@/components/SsoSettingsSection";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { planErrorMessage } from "@/api/plans";
 import { ApiError } from "@/lib/api";
+import { getCatalogue } from "@/api/practiceTests";
+import { familyHeading, testTypeName } from "@/lib/testTypes";
+import { useTranslation } from "react-i18next";
 
 import { tr } from "@/i18n/tr";
-const PRODUCTS: [string, string][] = [
-  ["fourSkills", tr("Versant 4 Skills Essential")],
-  ["placement", tr("Versant English Placement Test")],
-  ["writing", tr("Versant Writing Test")],
-  ["professional", tr("Versant Professional English")],
-  ["speakingListening", tr("Versant Speaking & Listening")],
-];
 
 const TIME_ZONES: string[] = (() => {
   try {
@@ -43,6 +39,20 @@ export function OrgAdminSettings() {
   const hasSecurity = useHasFeature("security_policies");
   const hasMfaEnforcement = useHasFeature("mfa_enforcement");
   const hasIpAllowlist = useHasFeature("ip_allowlist");
+  const { t } = useTranslation();
+  // Live test types from the exam catalogue, as [id, "Family-style practice: name"].
+  const [products, setProducts] = useState<[string, string][]>([]);
+  useEffect(() => {
+    getCatalogue()
+      .then((r) =>
+        setProducts(
+          r.families.flatMap((f) =>
+            f.testTypes.filter((tt) => tt.status === "live").map((tt): [string, string] => [tt.id, `${familyHeading(f)}: ${testTypeName(tt, t)}`]),
+          ),
+        ),
+      )
+      .catch(() => {});
+  }, [t]);
   const [settings, setSettings] = useState<OrgSettings | null>(null);
   const [draft, setDraft] = useState<OrgSettings | null>(null);
   const [saving, setSaving] = useState(false);
@@ -324,13 +334,13 @@ export function OrgAdminSettings() {
           <input
             type="checkbox"
             checked={allProducts}
-            onChange={(e) => set("allowedTestProducts", e.target.checked ? null : PRODUCTS.map(([id]) => id))}
+            onChange={(e) => set("allowedTestProducts", e.target.checked ? null : products.map(([id]) => id))}
             className="h-4 w-4 accent-navy"
           />
           {tr("All practice tests")}</label>
         {!allProducts && (
           <div className="flex flex-col gap-2 pl-6">
-            {PRODUCTS.map(([id, label]) => {
+            {products.map(([id, label]) => {
               const on = draft.allowedTestProducts!.includes(id);
               const onlyOne = on && draft.allowedTestProducts!.length === 1;
               return (

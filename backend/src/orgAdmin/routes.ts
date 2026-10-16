@@ -14,7 +14,7 @@ import { HandoverError, newOrgAdminSchema, replaceOrgAdmin } from "./handover.js
 import { buildLearnerProfile } from "../learners/profile.js";
 import { ipAllowed, parseAllowlist } from "../auth/policy.js";
 import { normalizeTaxId, taxIdProblem } from "../payments/taxId.js";
-import { getOrgSettings, removeLogo, saveLogo, settingsSchema, updateOrgSettings } from "./settings.js";
+import { getOrgSettings, removeLogo, saveLogo, settingsSchema, UnknownTestTypeError, updateOrgSettings } from "./settings.js";
 import { BATCH_END_SQL, BatchStateError, archiveBatch, assertBatchActive, cloneBatch, completeBatch, reopenBatch } from "../batches/lifecycle.js";
 import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { startViewAs } from "../auth/viewAs.js";
@@ -1225,6 +1225,7 @@ orgAdminRouter.patch("/settings", requireAuth, async (req: AuthedRequest, res, n
     await updateOrgSettings(tenantId, body);
     res.json(await getOrgSettings(tenantId));
   } catch (err) {
+    if (err instanceof UnknownTestTypeError) return res.status(400).json({ error: "unknown_test_type" });
     next(err);
   }
 });

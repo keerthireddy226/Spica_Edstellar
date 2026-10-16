@@ -3,8 +3,8 @@ import path from "node:path";
 import sharp from "sharp";
 import { z } from "zod";
 import { pool } from "../db.js";
+import { testTypeIds } from "../catalogue/service.js";
 
-export const PRACTICE_TEST_PRODUCTS = ["fourSkills", "placement", "writing", "professional", "speakingListening"] as const;
 const LANGUAGES = ["en", "es", "fr", "de", "it", "nl", "pl", "da", "nb", "sv", "fi", "hi", "te", "ja", "zh", "vi"] as const;
 // Any IANA zone name the runtime understands, including aliases such as
 // Asia/Kolkata that aren't in Intl.supportedValuesOf's canonical list.
@@ -54,7 +54,8 @@ export const settingsSchema = z.object({
     .optional(),
   faceCheckRequired: z.boolean().optional(),
   // null = every product; otherwise at least one.
-  allowedTestProducts: z.array(z.enum(PRACTICE_TEST_PRODUCTS)).min(1).nullable().optional(),
+  // Test type ids from the exam catalogue; checked against it when saved.
+  allowedTestProducts: z.array(z.string().min(1).max(40)).min(1).nullable().optional(),
   mfaRequired: z.boolean().optional(),
   // null or [] = no restriction.
   ipAllowlist: z.array(z.string().trim().min(2).max(64)).max(50).nullable().optional(),
@@ -90,7 +91,13 @@ export async function getOrgSettings(tenantId: string): Promise<OrgSettings | nu
   };
 }
 
+export class UnknownTestTypeError extends Error {}
+
 export async function updateOrgSettings(tenantId: string, body: z.infer<typeof settingsSchema>) {
+  if (body.allowedTestProducts) {
+    const known = new Set(await testTypeIds());
+    if (body.allowedTestProducts.some((id) => !known.has(id))) throw new UnknownTestTypeError("unknown_test_type");
+  }
   const map: [keyof typeof body, string][] = [
     ["brandColor", "brand_color"],
     ["defaultLanguage", "default_language"],

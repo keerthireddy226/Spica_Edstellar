@@ -277,7 +277,8 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
 // collects; agreeing records it, and the record is linked to the test's
 // session when it starts, so the proctoring steps don't ask again.
 
-const PRE_TEST_KINDS = ["placement", "speakingListening", "fourSkills", "writing", "professional", "module"] as const;
+// "module", "placement", or a test type id from the exam catalogue.
+const preTestKind = z.string().regex(/^[A-Za-z]{2,40}$/);
 const TEST_CONSENT_PREFIX = "test-v1";
 // A held agreement is linked to a session that starts within this time.
 const TEST_CONSENT_VALID_HOURS = 3;
@@ -286,7 +287,7 @@ function testConsentVersion(policyVersion: string | null): string {
   return `${TEST_CONSENT_PREFIX}:${policyVersion ?? "practice"}`;
 }
 
-async function preTestInfo(userId: string, kind: (typeof PRE_TEST_KINDS)[number]) {
+async function preTestInfo(userId: string, kind: string) {
   const { policy } = await learnerPolicy(userId);
   const org = await learnerOrgPolicy(userId);
   const t = (await pool.query(`SELECT t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
@@ -304,7 +305,7 @@ async function preTestInfo(userId: string, kind: (typeof PRE_TEST_KINDS)[number]
   };
 }
 
-const kindSchema = z.enum(PRE_TEST_KINDS);
+const kindSchema = preTestKind;
 
 proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, next) => {
   try {

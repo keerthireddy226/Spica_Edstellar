@@ -17,21 +17,12 @@ import { activeAssessment, recordCandidateResult } from "../recruitment/service.
 import { levelSummary } from "../placement/levels.js";
 import { examPrefix, newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
+import { listCatalogue, liveTestType, testTypeOfExam } from "../catalogue/service.js";
 
 export const practiceTestsRouter = Router();
 
-// Frontend product id -> exams.code prefix (e.g. "fourskills-1"). Spellings
-// differ because the frontend ids predate this backend and already have
-// i18n keys (practiceTests.versantProduct.*) — translate here instead of
-// renaming either side.
-const PRODUCT_CODE_PREFIX: Record<string, string> = {
-  fourSkills: "fourskills",
-  placement: "placement",
-  writing: "writing",
-  professional: "professional",
-  speakingListening: "speaklisten",
-};
-const PRODUCT_IDS = Object.keys(PRODUCT_CODE_PREFIX);
+// Products are the catalogue's test types (catalogue/service.ts); a test
+// type's sets are the active exams with its test_type_id.
 
 interface PartBoundary {
   partId: string;
@@ -122,20 +113,18 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
   return { partBoundaries, items: await withAudioUrls(userId, items) };
 }
 
-// Set counts per product (feeds the ProductPicker's real "5 sets" copy).
+// The catalogue: exam families and their test types, with set counts and
+// whether this learner's organization allows each one.
 practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
-    // Cheaper to fetch all active exam codes once and bucket in JS than run
-    // 5 separate LIKE-prefix queries.
-    const codesResult = await pool.query(`SELECT code FROM exams WHERE is_active`);
-    const products = PRODUCT_IDS.map((id) => {
-      const prefix = PRODUCT_CODE_PREFIX[id];
-      const setCount = codesResult.rows.filter((r) => r.code.startsWith(`${prefix}-`)).length;
-      // Products an organization switched off stay listed but closed.
-      return { id, setCount, allowed: !allowedTestProducts || allowedTestProducts.includes(id) };
+    const families = await listCatalogue();
+    res.json({
+      families: families.map((f) => ({
+        ...f,
+        testTypes: f.testTypes.map((t) => ({ ...t, allowed: !allowedTestProducts || allowedTestProducts.includes(t.id) })),
+      })),
     });
-    res.json({ products });
   } catch (err) {
     next(err);
   }
@@ -144,8 +133,8 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
 // This product's 5 exam sets, each with its item count and this learner's completion.
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const prefix = PRODUCT_CODE_PREFIX[req.params.product as string];
-    if (!prefix) return res.status(404).json({ error: "unknown_product" });
+    const testType = await liveTestType(req.params.product as string);
+    if (!testType) return res.status(404).json({ error: "unknown_product" });
     const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts && !allowedTestProducts.includes(req.params.product as string)) {
       return res.status(403).json({ error: "product_not_enabled" });
@@ -165,9 +154,9 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
              )
          ) AS completed
        FROM exams e
-       WHERE e.is_active AND e.code LIKE $1
+       WHERE e.is_active AND e.test_type_id = $1
        ORDER BY e.code`,
-      [`${prefix}-%`, req.user!.id],
+      [testType.id, req.user!.id],
     );
     res.json({
       exams: result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed })),
@@ -190,8 +179,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
     const { allowedTestProducts } = req.user!.role === "candidate" ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts) {
-      const code = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [body.examId])).rows[0]?.code ?? "";
-      const product = PRODUCT_IDS.find((id) => code.startsWith(`${PRODUCT_CODE_PREFIX[id]}-`));
+      const product = await testTypeOfExam(body.examId);
       if (!product || !allowedTestProducts.includes(product)) return res.status(403).json({ error: "product_not_enabled" });
     }
 

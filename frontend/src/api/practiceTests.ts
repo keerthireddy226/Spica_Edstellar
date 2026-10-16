@@ -1,9 +1,25 @@
 import { api } from "@/lib/api";
 import type { TestItem } from "@/api/testSession";
 
-export interface ExamProduct {
+// The exam catalogue: families (Versant, LanguageCert) and their test types.
+export interface CatalogueTestType {
   id: string;
+  familyId: string;
+  name: string;
+  skills: ("listening" | "speaking" | "reading" | "writing")[];
+  cefrMin: string;
+  cefrMax: string;
+  durationMinutes: number;
+  status: "live" | "coming_soon" | "retired";
   setCount: number;
+  allowed: boolean;
+}
+
+export interface CatalogueFamily {
+  id: string;
+  name: string;
+  publisher: string;
+  testTypes: CatalogueTestType[];
 }
 
 export interface ExamSummary {
@@ -39,7 +55,12 @@ export interface ExamCompleteResult {
   skillPercents?: Partial<Record<"listening" | "speaking" | "reading" | "writing", number>> | null;
 }
 
-export function getProducts(): Promise<{ products: ExamProduct[] }> {
+// Every family and test type, for settings screens (no per-learner "allowed").
+export function getCatalogue(): Promise<{ families: CatalogueFamily[] }> {
+  return api("/catalogue");
+}
+
+export function getProducts(): Promise<{ families: CatalogueFamily[] }> {
   return api("/practice-tests/products");
 }
 

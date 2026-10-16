@@ -74,7 +74,8 @@ export async function getProctoringSetup(sessionId: string): Promise<ProctoringS
 }
 
 // What the next test collects, for the consent screen before it.
-export type PreTestKind = "placement" | "speakingListening" | "fourSkills" | "writing" | "professional" | "module";
+// "module", "placement", or a test type id from the exam catalogue.
+export type PreTestKind = string;
 
 export interface PreTestInfo {
   proctored: boolean;

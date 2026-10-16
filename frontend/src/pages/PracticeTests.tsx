@@ -11,9 +11,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Headphones,
-  BookOpen,
-  PenLine,
-  Briefcase,
   RotateCcw,
   MessageSquare,
   ListChecks,
@@ -25,12 +22,15 @@ import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
+import { familyHeading, familyNote, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import {
+  getProducts,
   getExamsForProduct,
   startExamSession,
   getExamSession,
   submitExamAttempt,
   completeExamSession,
+  type CatalogueFamily,
   type ExamSummary,
   type PartBoundary,
   type ExamCompleteResult,
@@ -74,37 +74,6 @@ interface CachedAnswer {
   durationMs?: number;
 }
 
-// "Written English — 35 minutes." -> "35": the last number in the product
-// description, in any language ("35 Minuten", "35 मिनट", "35分").
-function productMinutes(description: string): string | null {
-  return description.match(/(\d+)\D*$/)?.[1] ?? null;
-}
-
-// The real Versant exam products. Durations/skills sourced directly from
-// Pearson's own product pages.
-const VERSANT_PRODUCTS = ["speakingListening", "fourSkills", "writing", "professional", "placement"] as const;
-
-const PRODUCT_ICON: Record<(typeof VERSANT_PRODUCTS)[number], typeof Headphones> = {
-  speakingListening: Headphones,
-  fourSkills: BookOpen,
-  writing: PenLine,
-  professional: Briefcase,
-  placement: ClipboardCheck,
-};
-
-// Five genuinely distinct hues (checked against the actual CSS values, not
-// just token names — `listening` and `accent` are the same moss green, so
-// reusing both here made two cards look identical). Solid, not a pale tint —
-// a 15% wash of these warm/earthy tones reads as near-identical pastel; full
-// saturation is what actually makes five cards look five different colors.
-const PRODUCT_SOLID: Record<(typeof VERSANT_PRODUCTS)[number], string> = {
-  speakingListening: "bg-speaking", // terracotta
-  fourSkills: "bg-reading", // wheat/amber
-  writing: "bg-writing", // clay pink
-  professional: "bg-navy", // clay brown
-  placement: "bg-accent", // moss green
-};
-
 export function PracticeTests() {
   const { t } = useTranslation();
   const isCandidate = useAuth().user?.role === "candidate";
@@ -135,6 +104,15 @@ export function PracticeTests() {
   const [showDemo, setShowDemo] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  // The exam catalogue: families and their test types.
+  const [catalogue, setCatalogue] = useState<CatalogueFamily[] | null>(null);
+  useEffect(() => {
+    getProducts()
+      .then((r) => setCatalogue(r.families))
+      .catch(() => setCatalogue([]));
+  }, []);
+  const testTypes = catalogue?.flatMap((f) => f.testTypes) ?? [];
+  const selectedType = testTypes.find((tt) => tt.id === selectedProduct) ?? null;
   const [exams, setExams] = useState<ExamSummary[] | null>(null);
   // Which exam set a running/just-finished session belongs to — shown on
   // the score report so a learner can tell which test they just took.
@@ -555,7 +533,7 @@ export function PracticeTests() {
     return (
       <PreTestFlow
         kind={selectedProduct as PreTestKind}
-        minutes={productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`))}
+        minutes={selectedType ? String(selectedType.durationMinutes) : null}
         onBack={() => setPendingExamId(null)}
         onReady={() => setPreTestDoneFor(pendingExamId)}
       />
@@ -972,7 +950,7 @@ export function PracticeTests() {
       <TestDemo
         kind={selectedProduct}
         needs={deviceNeedsFor(selectedProduct)}
-        minutes={productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`))}
+        minutes={selectedType ? String(selectedType.durationMinutes) : null}
         doneLabel={tr("Close the demo")}
         onDone={() => setShowDemo(false)}
       />
@@ -981,16 +959,17 @@ export function PracticeTests() {
 
   // --- Exam (set) picker for the selected product ---
   if (selectedProduct) {
-    const Icon = PRODUCT_ICON[selectedProduct as (typeof VERSANT_PRODUCTS)[number]];
-    const productMins = productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`));
+    const Icon = testTypeIcon(selectedProduct);
+    const productMins = selectedType?.durationMinutes ?? null;
+    const colour = testTypeColour(selectedProduct);
     return (
       <div className="w-full flex flex-col gap-6">
         <LearnerHero
           onBack={backToProducts}
           backLabel={t("practiceTests.backToProducts")}
           eyebrow={t("nav.practiceTests")}
-          title={t(`practiceTests.versantProduct.${selectedProduct}`)}
-          subtitle={t(`practiceTests.versantProduct.${selectedProduct}Desc`)}
+          title={selectedType ? testTypeName(selectedType, t) : ""}
+          subtitle={selectedType ? testTypeDescription(selectedType, t) : ""}
           icon={Icon}
           stats={
             exams
@@ -1020,11 +999,11 @@ export function PracticeTests() {
                 key={exam.id}
                 className="relative overflow-hidden flex flex-col gap-4 bg-surface border border-rule rounded-card p-6 pt-7 shadow-sm hover:shadow-md transition-shadow"
               >
-                <span className={`absolute inset-x-0 top-0 h-1.5 ${PRODUCT_SOLID[selectedProduct as (typeof VERSANT_PRODUCTS)[number]]}`} />
+                <span className={`absolute inset-x-0 top-0 h-1.5 ${colour}`} />
                 <div className="flex items-start gap-4">
                   <span
                     className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 font-display font-bold text-lg ${
-                      exam.completed ? "bg-success text-white" : `${PRODUCT_SOLID[selectedProduct as (typeof VERSANT_PRODUCTS)[number]]} text-white`
+                      exam.completed ? "bg-success text-white" : `${colour} text-white`
                     }`}
                   >
                     {exam.completed ? <CheckCircle2 size={22} /> : i + 1}
@@ -1058,78 +1037,89 @@ export function PracticeTests() {
     );
   }
 
-  // --- Product picker ---
+  // --- Product picker: one group per exam family ---
+  const live = testTypes.filter((tt) => tt.status === "live");
+  const lengths = live.map((tt) => tt.durationMinutes);
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
         eyebrow={tr("Mock exams")}
         title={t("nav.practiceTests")}
-        subtitle={t("practiceTests.subtitle")}
+        subtitle={tr("Full-length, timed practice tests in the style of the major English exams.")}
         icon={ClipboardCheck}
         stats={[
-          { label: tr("Exam types"), value: VERSANT_PRODUCTS.length, icon: Layers },
-          { label: tr("Full sets to take"), value: VERSANT_PRODUCTS.length * 5, icon: ListChecks },
-          { label: tr("Length"), value: "17–60 min", icon: Clock },
-          { label: tr("Scored by section"), value: "Instant", icon: Award },
+          { label: tr("Exam types"), value: live.length, icon: Layers },
+          { label: tr("Full sets to take"), value: live.reduce((n, tt) => n + tt.setCount, 0), icon: ListChecks },
+          {
+            label: tr("Length"),
+            value: lengths.length ? tr("{{from}}-{{to}} min", { from: Math.min(...lengths), to: Math.max(...lengths) }) : "—",
+            icon: Clock,
+          },
+          { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
         ]}
       />
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-5">
-        {VERSANT_PRODUCTS.map((id, i) => {
-          const Icon = PRODUCT_ICON[id];
-          const minutes = productMinutes(t(`practiceTests.versantProduct.${id}Desc`));
-          // Products the learner's organization switched off stay visible but closed.
-          const enabled = !allowedProducts || allowedProducts.includes(id);
-          return (
-            <button
-              key={id}
-              onClick={() => enabled && openProduct(id)}
-              disabled={!enabled}
-              className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
-                // Three across, then two wider ones, so no card sits alone.
-                i < 3 ? "lg:col-span-2" : i === VERSANT_PRODUCTS.length - 1 ? "sm:col-span-2 lg:col-span-3" : "lg:col-span-3"
-              } ${
-                enabled
-                  ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
-                  : "opacity-55 cursor-not-allowed"
-              }`}
-            >
-              {!enabled && (
-                <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2 py-1 rounded-pill">
-                  {t("practiceTests.notEnabled")}
-                </span>
-              )}
-              {/* Oversized, very faint echo of the card's own icon — a
-                  decorative watermark, not another color block, so it adds
-                  presence without competing with the readable icon badge. */}
-              <Icon
-                size={140}
-                strokeWidth={1.5}
-                className="absolute -right-6 -bottom-6 text-ink/[0.04] group-hover:text-ink/[0.07] transition-colors pointer-events-none"
-              />
-              <span
-                className={`relative h-16 w-16 rounded-2xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110 ${PRODUCT_SOLID[id]}`}
-              >
-                <Icon size={28} strokeWidth={2} />
-              </span>
-              <div className="relative flex flex-col gap-1.5">
-                <span className="font-display font-bold text-lg text-ink leading-snug">{t(`practiceTests.versantProduct.${id}`)}</span>
-                <span className="text-sm text-muted leading-relaxed">{t(`practiceTests.versantProduct.${id}Desc`)}</span>
-              </div>
-              <div className="relative flex items-center gap-2 mt-auto">
-                {minutes && (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
-                    <Clock size={11} /> {tr("{{m}} min", { m: minutes })}
+      {(catalogue ?? []).map((family) => (
+        <section key={family.id} className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family)}</h2>
+            <p className="text-xs text-muted">{familyNote(family)}</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {family.testTypes.map((tt) => {
+              const Icon = testTypeIcon(tt.id);
+              const comingSoon = tt.status !== "live";
+              // Products the learner's organization switched off stay visible but closed.
+              const enabled = !comingSoon && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id));
+              return (
+                <button
+                  key={tt.id}
+                  onClick={() => enabled && openProduct(tt.id)}
+                  disabled={!enabled}
+                  className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
+                    enabled
+                      ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
+                      : "opacity-55 cursor-not-allowed"
+                  }`}
+                >
+                  {!enabled && (
+                    <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2 py-1 rounded-pill">
+                      {comingSoon ? tr("Coming soon") : t("practiceTests.notEnabled")}
+                    </span>
+                  )}
+                  {/* Oversized, very faint echo of the card's own icon: a
+                      decorative watermark, not another color block. */}
+                  <Icon
+                    size={140}
+                    strokeWidth={1.5}
+                    className="absolute -right-6 -bottom-6 text-ink/[0.04] group-hover:text-ink/[0.07] transition-colors pointer-events-none"
+                  />
+                  <span
+                    className={`relative h-16 w-16 rounded-2xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110 ${testTypeColour(tt.id)}`}
+                  >
+                    <Icon size={28} strokeWidth={2} />
                   </span>
-                )}
-                <span className="ml-auto flex items-center gap-1 text-xs font-bold text-ink transition-transform group-hover:translate-x-1">
-                  <ChevronRight size={16} strokeWidth={2.5} />
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+                  <div className="relative flex flex-col gap-1.5">
+                    <span className="font-display font-bold text-lg text-ink leading-snug">{testTypeName(tt, t)}</span>
+                    <span className="text-sm text-muted leading-relaxed">{testTypeDescription(tt, t)}</span>
+                  </div>
+                  <div className="relative flex items-center gap-2 mt-auto">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
+                      <Clock size={11} /> {tr("{{m}} min", { m: tt.durationMinutes })}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
+                      {tt.cefrMin}-{tt.cefrMax}
+                    </span>
+                    <span className="ml-auto flex items-center gap-1 text-xs font-bold text-ink transition-transform group-hover:translate-x-1">
+                      <ChevronRight size={16} strokeWidth={2.5} />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }
