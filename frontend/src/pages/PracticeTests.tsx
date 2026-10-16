@@ -20,6 +20,7 @@ import {
   Timer,
   BookOpenCheck,
   Target,
+  FileText,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -38,6 +39,8 @@ import {
   completeExamSession,
   getQuota,
   getMyProgram,
+  getHistory,
+  type HistoryEntry,
   type QuotaUsage,
   type MyProgram,
   type ExamSessionData,
@@ -140,6 +143,7 @@ export function PracticeTests() {
   // This month's tests against the learner's limits, and their program.
   const [quota, setQuota] = useState<QuotaUsage | null>(null);
   const [myProgram, setMyProgram] = useState<MyProgram | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   function loadProducts() {
     getProducts()
       .then((r) => {
@@ -152,6 +156,9 @@ export function PracticeTests() {
       .catch(() => {});
     getMyProgram()
       .then((r) => setMyProgram(r.program))
+      .catch(() => {});
+    getHistory()
+      .then((r) => setHistory(r.sessions))
       .catch(() => {});
   }
   const practiceLeft = quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null;
@@ -834,6 +841,11 @@ export function PracticeTests() {
           <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
         )}
         <IntegrityResultNote sessionId={sessionId} />
+        {sessionId && (
+          <Button onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", sessionId))} className="w-full flex items-center justify-center gap-2">
+            <FileText size={16} /> {tr("See your feedback report")}
+          </Button>
+        )}
         <div className="flex items-center gap-3 w-full">
           <Button variant="secondary" onClick={resetToExamList} className="flex-1">
             {t("practiceTests.backToExams")}
@@ -1355,6 +1367,34 @@ export function PracticeTests() {
             <span className="text-xs">{tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}</span>
           )}
         </div>
+      )}
+
+      {history.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-display font-bold text-base text-ink">{tr("Your recent results")}</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {history.slice(0, 8).map((h) => {
+              const tt = testTypes.find((x) => x.id === h.testTypeId);
+              return (
+                <button
+                  key={h.sessionId}
+                  onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
+                  className="shrink-0 w-56 text-left bg-surface border border-rule rounded-card p-3 flex flex-col gap-1 hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                    {h.deliveryMode === "mock" ? tr("Mock exam") : tr("Practice")} · {formatShortDate(h.completedAt)}
+                  </span>
+                  <span className="text-sm font-semibold text-ink truncate">{tt ? testTypeName(tt, t) : (h.examName ?? "")}</span>
+                  <span className="text-sm text-muted">
+                    {h.cefrLevel ?? "—"}
+                    {h.percent !== null ? ` · ${h.percent}%` : ""}
+                  </span>
+                  <span className="text-xs font-semibold text-navy-deep">{tr("Open the report")} →</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {openMock?.testTypeId && (

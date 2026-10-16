@@ -35,6 +35,8 @@ import {
 } from "./modes.js";
 import { QuotaError, assertQuota, listQuotas, quotaUsage } from "../programs/quotas.js";
 import { activeProgramOf, learnerProgram, recordProgramSession } from "../programs/service.js";
+import { enqueue } from "../queue/queue.js";
+import { learnerQuota } from "../programs/quotas.js";
 
 export const practiceTestsRouter = Router();
 
@@ -165,6 +167,58 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
       families: families.map((f) => ({
         ...f,
         testTypes: f.testTypes.map((t) => ({ ...t, allowed: !allowedTestProducts || allowedTestProducts.includes(t.id) })),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The feedback report of one finished test. Built on first request if it
+// wasn't (tests finished before reports existed), and again if the learner's
+// plan now includes the full report.
+practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const s = (
+      await pool.query(`SELECT id, completed_at FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`, [req.params.sessionId, req.user!.id])
+    ).rows[0];
+    if (!s) return res.status(404).json({ error: "session_not_found" });
+    if (!s.completed_at) return res.status(409).json({ error: "session_not_completed" });
+    const r = (await pool.query(`SELECT status, report_level, report, updated_at FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
+    const wanted = (await learnerQuota(req.user!.id))?.reportLevel ?? "full";
+    const stale = !r || r.status === "failed" || (r.status === "ready" && r.report_level === "summary" && wanted === "full");
+    if (stale) {
+      await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
+      if (!r || r.status === "failed") return res.json({ status: "pending", report: null });
+    }
+    res.json({ status: r.status, report: r.report });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The learner's finished practice tests and mocks, newest first, with their results.
+practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT s.id, s.test_code, s.delivery_mode, s.completed_at, s.result, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id, e.name AS exam_name, fr.status AS report_status
+       FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN feedback_reports fr ON fr.session_id = s.id
+       WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
+         AND EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+       ORDER BY s.completed_at DESC LIMIT 20`,
+      [req.user!.id],
+    );
+    res.json({
+      sessions: r.rows.map((x) => ({
+        sessionId: x.id,
+        testCode: x.test_code,
+        deliveryMode: x.delivery_mode ?? "practice",
+        completedAt: x.completed_at,
+        testTypeId: x.test_type_id,
+        examName: x.delivery_mode === "mock" ? null : x.exam_name,
+        cefrLevel: x.result?.cefrLevel ?? null,
+        percent: x.result?.overallPercent ?? null,
+        reportStatus: x.report_status ?? null,
       })),
     });
   } catch (err) {
@@ -595,6 +649,13 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     await finishProctoredSession(req.params.sessionId as string);
   } catch (err) {
     console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
+  }
+
+  // The feedback report is built in the background.
+  if (justFinished) {
+    await enqueue("report.build", { sessionId: req.params.sessionId }, { dedupeKey: `report.build:${req.params.sessionId}`, maxAttempts: 5 }).catch((err) =>
+      console.error("practiceTests /complete: report not queued:", err),
+    );
   }
 
   // A finished test ticks off the learner's program schedule.

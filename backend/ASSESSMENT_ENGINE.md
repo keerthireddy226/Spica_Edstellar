@@ -473,3 +473,36 @@ provided); cost in money (tokens are recorded; prices depend on the plan).
   estimated from the file size at 32 kbps, but Google's MP3s are 64 kbps.
   Lengths are now measured from the MP3 frames (`voice/mp3.ts`) and the
   stored ones were corrected (`scripts/fixAudioDurations.ts`).
+
+## 18. Phase 5: built
+
+- **Reports** (`migrations/1794900000000_feedback-reports.sql`,
+  `src/reports/feedbackReport.ts`): after every finished practice test or mock
+  a `report.build` job writes the report into `feedback_reports` (it waits,
+  by retrying, while recorded answers are still being graded). Model:
+  `GEMINI_REPORT_MODEL` (default `gemini-3.5-flash`); tokens are recorded.
+- **Per question** (full report): multiple choice shows the chosen and the
+  right option with the explanation written at generation time; older
+  questions without one get it written once, for the questions this learner
+  got wrong, and kept on the question for everyone after. Written answers:
+  one call per answer for errors (the exact words, the correction, the type:
+  spelling, grammar, vocabulary, punctuation or task, and a reason), a
+  corrected version keeping the learner's ideas, and a comment; errors whose
+  words aren't in the answer are dropped; British, American and Indian
+  spellings never count. Known-target speaking and typing (repeat, read
+  aloud, sentence builds, dictation, typing): a word-level alignment of the
+  transcript with the target (`wordDiff.ts`: different, missing and added
+  words; spelling variants and case are the same word; an accent can't
+  trigger it), with the sentence played by text-to-speech. Open speaking:
+  pace, fillers, clarity and the grader's comment, and a note when the
+  recording was noisy.
+- **Summary**: one call over the structured results (levels, by-skill
+  counts, writing error types, word differences, the program target if any):
+  an analysis and 3 next steps, each linked to a test type that practises
+  that skill.
+- **Plans**: the report level comes from `plan_quotas.report_level` (Free:
+  summary = levels, analysis and next steps; everyone else: full). A learner
+  who upgrades gets the full report rebuilt when they open it.
+- **Screens**: "See your feedback report" after each test; "Your recent
+  results" on Practice Tests; the report page shows the levels, analysis,
+  next steps and "only what to work on" or every question.

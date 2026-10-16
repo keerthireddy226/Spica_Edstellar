@@ -223,3 +223,77 @@ export interface MyProgram {
 export function getMyProgram(): Promise<{ program: MyProgram | null }> {
   return api("/practice-tests/program");
 }
+
+// ---- Feedback report (ASSESSMENT_ENGINE.md section 7) ----
+
+export interface WordOp {
+  op: "same" | "sub" | "missing" | "extra";
+  word?: string;
+  said?: string;
+}
+
+export interface ReportExplanation {
+  why?: string;
+  evidence?: string;
+  distractors?: string[];
+}
+
+export interface ReportQuestion {
+  itemId: string;
+  itemTypeId: string;
+  typeName: string;
+  part: string | null;
+  skills: string[];
+  level: string | null;
+  prompt: string;
+  answered: boolean;
+  status: string;
+  score: number | null;
+  choices?: { stem: string | null; options: string[]; chosen: number | null; correct: number | null; explanation?: ReportExplanation }[];
+  words?: { target: string; ops: WordOp[]; accuracy: number };
+  writing?: {
+    answer: string;
+    errors: { text: string; correction: string; type: "spelling" | "grammar" | "vocabulary" | "punctuation" | "task"; reason: string }[];
+    modelAnswer: string;
+    comment: string;
+  };
+  speech?: { transcript: string | null; wordsPerMinute: number | null; fillers: number | null; clarity: number | null; comment: string | null; noisy: boolean };
+  comment: string | null;
+}
+
+export interface FeedbackReport {
+  version: 1;
+  level: "summary" | "full";
+  deliveryMode: DeliveryMode;
+  testTypeId: string | null;
+  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; scoreBand: ScoreBand | null };
+  target: { level: string; date: string; programName: string } | null;
+  analysis: string;
+  nextSteps: { title: string; why: string; skill: string; link: { testTypeId: string } | null }[];
+  questions?: ReportQuestion[];
+}
+
+export interface ReportResponse {
+  status: "pending" | "ready" | "failed";
+  report: FeedbackReport | null;
+}
+
+export function getReport(sessionId: string): Promise<ReportResponse> {
+  return api(`/practice-tests/session/${sessionId}/report`);
+}
+
+export interface HistoryEntry {
+  sessionId: string;
+  testCode: string | null;
+  deliveryMode: DeliveryMode;
+  completedAt: string;
+  testTypeId: string | null;
+  examName: string | null;
+  cefrLevel: string | null;
+  percent: number | null;
+  reportStatus: "pending" | "ready" | "failed" | null;
+}
+
+export function getHistory(): Promise<{ sessions: HistoryEntry[] }> {
+  return api("/practice-tests/history");
+}

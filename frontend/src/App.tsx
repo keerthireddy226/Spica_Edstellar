@@ -30,6 +30,7 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Progress } from "@/pages/Progress";
 import { Modules } from "@/pages/Modules";
 import { PracticeTests } from "@/pages/PracticeTests";
+import { TestReport } from "@/pages/TestReport";
 import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
@@ -205,6 +206,7 @@ function App() {
           <Route path={ROUTES.PROGRESS} element={<Progress />} />
           <Route path={ROUTES.MODULES} element={<LicenseGate feature="practice"><Modules /></LicenseGate>} />
           <Route path={ROUTES.PRACTICE_TESTS} element={<LicenseGate feature="mocktest"><PracticeTests /></LicenseGate>} />
+          <Route path={ROUTES.TEST_REPORT} element={<TestReport />} />
           <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
           <Route path={ROUTES.PLANS} element={<Plans />} />

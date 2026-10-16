@@ -16,6 +16,7 @@ import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
 import { runProgramsDaily } from "../programs/service.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
+import { buildReport, reportReady } from "../reports/feedbackReport.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -30,6 +31,11 @@ export function registerJobs() {
   // on the browser's transcript rather than leave it ungraded.
   registerHandler("grading.speaking", (p, job) => gradeSpeakingAttempt(p.attemptId, { final: job.attempts >= 4 }));
   registerHandler("grading.speaking.retry", (p, job) => gradeSpeakingAttempt(p.attemptId, { final: job.attempts >= 3 }));
+  // The feedback report after a test; waits (retries) while recorded answers are still being graded.
+  registerHandler("report.build", async (p, job) => {
+    if (!(await reportReady(p.sessionId)) && job.attempts < 4) throw new Error("report: answers still being graded, will retry");
+    await buildReport(p.sessionId);
+  });
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
   every(15, "grading.speaking.sweep", async () => {
