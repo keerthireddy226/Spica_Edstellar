@@ -242,7 +242,9 @@ export function OrgAdminLicenses() {
           )}
           {s.unlicensedLearners > 0 && s.available > 0 && (
             <p className="text-sm text-ink bg-navy/5 border border-rule rounded-input px-3.5 py-2.5">
-              {tr("{{unlicensedLearners}} learner", { unlicensedLearners: s.unlicensedLearners })}{s.unlicensedLearners === 1 ? " has" : tr("s have")} {tr("no license and can't practice yet.")}{" "}
+              {s.unlicensedLearners === 1
+                ? tr("1 learner has no license and can't practice yet.")
+                : tr("{{n}} learners have no license and can't practice yet.", { n: s.unlicensedLearners })}{" "}
               <button onClick={() => { setTab("learners"); setFilter("none"); }} className="font-semibold underline cursor-pointer">
                 {tr("Show them")}</button>
             </p>

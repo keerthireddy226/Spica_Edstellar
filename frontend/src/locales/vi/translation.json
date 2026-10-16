@@ -692,8 +692,8 @@
     "enrollmentConsent": {
       "title": "Thiết lập xác minh khuôn mặt",
       "subtitle": "Giúp xác nhận đúng là bạn đang làm bài.",
-      "body": "Chúng tôi sẽ chụp ảnh khuôn mặt của bạn làm mẫu tham chiếu để xác minh danh tính. Ảnh này và các lần quét khuôn mặt được dùng để xác nhận danh tính trước các bài kiểm tra xếp lớp và buổi luyện tập (Học phần), và định kỳ trong quá trình làm — không chỉ một lần lúc bắt đầu. Được lưu trữ an toàn và chỉ dùng cho mục đích này.",
-      "checkboxLabel": "Tôi hiểu và đồng ý xác minh danh tính bằng khuôn mặt, bao gồm kiểm tra định kỳ trong khi làm bài và luyện tập.",
+      "body": "Chúng tôi sẽ chụp ảnh khuôn mặt của bạn để tạo ảnh tham chiếu cho việc xác minh danh tính. Trước và vào những thời điểm ngẫu nhiên (cứ mỗi 30 đến 90 giây) trong bài kiểm tra xếp lớp, bài thi thử và buổi luyện tập (Học phần), một ảnh mới sẽ được so sánh với ảnh tham chiếu để xác nhận đúng là bạn. Ảnh chỉ được dùng cho mục đích này, chỉ người duyệt trong tổ chức của bạn hoặc Edstellar mới xem được, và được lưu giữ cho đến khi tài khoản của bạn bị xóa hoặc hết thời hạn lưu giữ của tổ chức bạn.",
+      "checkboxLabel": "Tôi hiểu và đồng ý xác minh danh tính bằng khuôn mặt, bao gồm các lần kiểm tra vào những thời điểm ngẫu nhiên trong bài thi và buổi luyện tập.",
       "submit": "Tiếp tục",
       "decline": "Để sau"
     }

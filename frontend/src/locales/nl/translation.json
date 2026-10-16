@@ -262,7 +262,7 @@
     }
   },
   "placementTest": {
-    "typeIntroStart": "Start",
+    "typeIntroStart": "Starten",
     "loading": "Je toets wordt geladen…",
     "loadError": "Er ging iets mis bij het laden van je toets. Probeer het opnieuw.",
     "micError": "We hebben geen toegang tot je microfoon. Sta microfoontoegang toe en probeer het opnieuw.",
@@ -377,7 +377,7 @@
       "title": "Voordat je begint",
       "subtitle": "Deze toets bestaat uit meerdere onderdelen. In elk onderdeel doe je een andere opdracht.",
       "begin": "Start toets",
-      "startSection": "Start {{label}}"
+      "startSection": "{{label}} starten"
     },
     "versantProduct": {
       "speakingListeningDesc": "Spreken en luisteren — 17 minuten.",
@@ -584,8 +584,8 @@
     "statsStreak": "Huidige reeks",
     "statsStreakValue_one": "{{count}} dag",
     "statsStreakValue_other": "{{count}} dagen",
-    "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevel": "Niveau",
+    "statsLevelValue": "Niv. {{level}} · {{xp}} XP",
     "continuePracticeTitle": "Ga verder waar je gebleven was",
     "continuePracticeBody": "{{skill}} — {{answered}} van {{total}} beantwoord",
     "achievementsTitle": "Prestaties"
@@ -699,8 +699,8 @@
     "enrollmentConsent": {
       "title": "Gezichtsverificatie instellen",
       "subtitle": "Zo bevestigen we dat jij echt degene bent die de toets maakt.",
-      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Deze foto en gezichtsscans worden gebruikt om je identiteit te bevestigen vóór en regelmatig tijdens niveautests en oefensessies (Modules) — niet alleen eenmalig aan het begin. Veilig opgeslagen en alleen voor dit doel gebruikt.",
-      "checkboxLabel": "Ik begrijp het en geef toestemming voor gezichtsverificatie, inclusief regelmatige controles tijdens toetsen en oefensessies.",
+      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Vóór en op willekeurige momenten (elke 30 tot 90 seconden) tijdens niveautests, oefentoetsen en oefensessies (Modules) wordt een nieuwe foto daarmee vergeleken om te bevestigen dat jij het bent. Foto's worden alleen hiervoor gebruikt, alleen gezien door beoordelaars van je organisatie of van Edstellar, en bewaard tot je account wordt verwijderd of de bewaartermijn van je organisatie afloopt.",
+      "checkboxLabel": "Ik begrijp en ga akkoord met identiteitsverificatie via het gezicht, inclusief controles op willekeurige momenten tijdens toetsen en oefensessies.",
       "submit": "Doorgaan",
       "decline": "Niet nu"
     }
@@ -715,7 +715,7 @@
       "education": "Onderwijs",
       "finance": "Financiën",
       "operations": "Operations",
-      "management": "Management",
+      "management": "Beheer",
       "other": "Anders"
     },
     "gender": {

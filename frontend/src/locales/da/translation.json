@@ -523,13 +523,13 @@
   "recommendedPractice": {
     "title": "Udvalgt til dig",
     "startPractice": "Start øvelse",
-    "estimatedMinutes": "~{{minutes}} min"
+    "estimatedMinutes": "~{{minutes}} min."
   },
   "dailyChallenge": {
     "title": "Dagens udfordring",
     "subtitle": "En lille bonus for i dag",
     "wordTab": "Dagens ord",
-    "idiomTab": "Idiom",
+    "idiomTab": "Udtryk",
     "wordOfDay": "Dagens ord — tryk for at {{action}}",
     "reveal": "vise",
     "hide": "skjule",
@@ -580,7 +580,7 @@
     "statsSessions": "Øvesessioner",
     "statsQuestions": "Besvarede spørgsmål",
     "statsTime": "Øvetid",
-    "statsTimeValue": "{{minutes}} min",
+    "statsTimeValue": "{{minutes}} min.",
     "statsStreak": "Nuværende stime",
     "statsStreakValue_one": "{{count}} dag",
     "statsStreakValue_other": "{{count}} dage",
@@ -699,8 +699,8 @@
     "enrollmentConsent": {
       "title": "Konfigurer ansigtsbekræftelse",
       "subtitle": "Det hjælper med at bekræfte, at det virkelig er dig, der tager testen.",
-      "body": "Vi tager et billede af dit ansigt som reference til identitetsbekræftelse. Billedet og ansigtsscanninger bruges til at bekræfte din identitet før niveautest og øvesessioner (Moduler) og løbende under dem — ikke kun én gang i starten. Opbevares sikkert og bruges kun til dette formål.",
-      "checkboxLabel": "Jeg forstår og accepterer ansigtsbaseret identitetsbekræftelse, herunder løbende kontrol under test og øvelser.",
+      "body": "Vi tager et foto af dit ansigt for at oprette en reference til identitetsbekræftelse. Før og på tilfældige tidspunkter (hvert 30. til 90. sekund) under niveautests, prøvetest og øvelsessessioner (Moduler) sammenlignes et nyt foto med det for at bekræfte, at det er dig. Fotos bruges kun til dette, ses kun af bedømmere i din organisation eller hos Edstellar og opbevares, indtil din konto slettes, eller din organisations opbevaringsperiode udløber.",
+      "checkboxLabel": "Jeg forstår og giver samtykke til identitetsbekræftelse med ansigtsgenkendelse, også tjek på tilfældige tidspunkter under test og øvelsessessioner.",
       "submit": "Fortsæt",
       "decline": "Ikke nu"
     }

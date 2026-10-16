@@ -699,8 +699,8 @@
     "enrollmentConsent": {
       "title": "Ota kasvojen tunnistus käyttöön",
       "subtitle": "Näin varmistetaan, että testin tekee todella sinä.",
-      "body": "Otamme kasvoistasi kuvan henkilöllisyyden varmistamisen vertailukohdaksi. Kuvaa ja kasvoskannauksia käytetään henkilöllisyytesi vahvistamiseen ennen tasotestejä ja harjoituksia (Moduulit) sekä säännöllisesti niiden aikana — ei vain kerran alussa. Tallennetaan turvallisesti ja käytetään vain tähän tarkoitukseen.",
-      "checkboxLabel": "Ymmärrän ja hyväksyn kasvoihin perustuvan henkilöllisyyden varmistamisen, mukaan lukien säännölliset tarkistukset testien ja harjoitusten aikana.",
+      "body": "Otamme kuvan kasvoistasi henkilöllisyyden varmistamisen vertailukohdaksi. Ennen tasotestejä, harjoituskokeita ja harjoitusistuntoja (moduuleja) sekä niiden aikana satunnaisina hetkinä (30–90 sekunnin välein) uutta kuvaa verrataan siihen henkilöllisyytesi vahvistamiseksi. Kuvia käytetään vain tähän, niitä näkevät vain organisaatiosi tai Edstellarin tarkastajat, ja niitä säilytetään, kunnes tilisi poistetaan tai organisaatiosi säilytysaika päättyy.",
+      "checkboxLabel": "Ymmärrän ja hyväksyn henkilöllisyyden varmistamisen kasvojentunnistuksella, myös tarkistukset satunnaisina hetkinä kokeiden ja harjoitusistuntojen aikana.",
       "submit": "Jatka",
       "decline": "Ei nyt"
     }

@@ -529,7 +529,7 @@
     "title": "Dagens utmaning",
     "subtitle": "En liten bonus för i dag",
     "wordTab": "Dagens ord",
-    "idiomTab": "Idiom",
+    "idiomTab": "Uttryck",
     "wordOfDay": "Dagens ord — tryck för att {{action}}",
     "reveal": "visa",
     "hide": "dölja",
@@ -699,8 +699,8 @@
     "enrollmentConsent": {
       "title": "Ställ in ansiktsverifiering",
       "subtitle": "Det hjälper till att bekräfta att det verkligen är du som gör testet.",
-      "body": "Vi tar en bild av ditt ansikte som referens för identitetsverifiering. Bilden och ansiktsskanningar används för att bekräfta din identitet före nivåtester och övningssessioner (Moduler) och regelbundet under dem — inte bara en gång i början. Lagras säkert och används bara för detta syfte.",
-      "checkboxLabel": "Jag förstår och godkänner ansiktsbaserad identitetsverifiering, inklusive regelbundna kontroller under prov och övningar.",
+      "body": "Vi tar ett foto av ditt ansikte för att skapa en referens för identitetsverifiering. Före, och vid slumpmässiga tillfällen (var 30:e till 90:e sekund) under, nivåtest, övningsprov och övningssessioner (moduler) jämförs ett nytt foto med det för att bekräfta att det är du. Fotona används endast för detta ändamål, ses bara av granskare i din organisation eller på Edstellar och sparas tills ditt konto raderas eller tills din organisations lagringstid löper ut.",
+      "checkboxLabel": "Jag förstår och samtycker till identitetsverifiering med ansiktet, inklusive kontroller vid slumpmässiga tillfällen under prov och övningssessioner.",
       "submit": "Fortsätt",
       "decline": "Inte nu"
     }

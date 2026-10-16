@@ -721,8 +721,8 @@
     "enrollmentConsent": {
       "title": "Configurar verificación facial",
       "subtitle": "Esto ayuda a confirmar que eres realmente tú quien hace la prueba.",
-      "body": "Tomaremos una foto de tu rostro para crear una referencia de verificación de identidad. Esta foto y los escaneos faciales se usan para confirmar tu identidad antes y, periódicamente, durante las pruebas de nivelación y las sesiones de práctica (Módulos), no solo una vez al principio. Se guarda de forma segura y solo se usa para este fin.",
-      "checkboxLabel": "Entiendo y doy mi consentimiento para la verificación facial de identidad, incluidas comprobaciones periódicas durante las pruebas y las sesiones de práctica.",
+      "body": "Tomaremos una foto de tu rostro para crear una referencia de verificación de identidad. Antes de las pruebas de nivelación, las pruebas de práctica y las sesiones de práctica (Módulos), y en momentos aleatorios durante ellas (cada 30 a 90 segundos), se compara con ella una foto nueva para confirmar que eres tú. Las fotos solo se usan para esto, solo las ven los revisores de tu organización o de Edstellar, y se conservan hasta que se elimine tu cuenta o termine el periodo de conservación de tu organización.",
+      "checkboxLabel": "Entiendo y doy mi consentimiento para la verificación facial de identidad, incluidas comprobaciones en momentos aleatorios durante los exámenes y las sesiones de práctica.",
       "submit": "Continuar",
       "decline": "Ahora no"
     }

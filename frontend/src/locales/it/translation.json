@@ -699,8 +699,8 @@
     "enrollmentConsent": {
       "title": "Configura la verifica del volto",
       "subtitle": "Ci aiuta a confermare che sei davvero tu a fare il test.",
-      "body": "Scatteremo una foto del tuo volto come riferimento per la verifica dell'identità. Questa foto e le scansioni del volto servono a confermare la tua identità prima e periodicamente durante i test di piazzamento e le sessioni di esercizio (Moduli), non solo una volta all'inizio. Conservata in modo sicuro e usata solo per questo scopo.",
-      "checkboxLabel": "Ho capito e acconsento alla verifica dell'identità tramite volto, inclusi controlli periodici durante test ed esercizi.",
+      "body": "Scatteremo una foto del tuo volto per creare un riferimento per la verifica dell'identità. Prima e in momenti casuali (ogni 30-90 secondi) durante i test di piazzamento, i test di prova e le sessioni di pratica (Moduli), una nuova foto viene confrontata con essa per confermare che sei tu. Le foto vengono usate solo per questo, viste solo dai revisori della tua organizzazione o di Edstellar e conservate finché il tuo account non viene eliminato o termina il periodo di conservazione della tua organizzazione.",
+      "checkboxLabel": "Ho capito e acconsento alla verifica dell'identità tramite il volto, compresi controlli in momenti casuali durante i test e le sessioni di pratica.",
       "submit": "Continua",
       "decline": "Non ora"
     }
@@ -715,7 +715,7 @@
       "education": "Istruzione",
       "finance": "Finanza",
       "operations": "Operazioni",
-      "management": "Management",
+      "management": "Gestione",
       "other": "Altro"
     },
     "gender": {

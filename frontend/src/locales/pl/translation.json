@@ -262,7 +262,7 @@
     }
   },
   "placementTest": {
-    "typeIntroStart": "Start",
+    "typeIntroStart": "Rozpocznij",
     "loading": "Wczytywanie testu…",
     "loadError": "Coś poszło nie tak podczas wczytywania testu. Spróbuj ponownie.",
     "micError": "Nie mamy dostępu do mikrofonu. Zezwól na dostęp do mikrofonu i spróbuj ponownie.",
@@ -725,8 +725,8 @@
     "enrollmentConsent": {
       "title": "Skonfiguruj weryfikację twarzy",
       "subtitle": "Pomaga to potwierdzić, że to naprawdę Ty rozwiązujesz test.",
-      "body": "Zrobimy zdjęcie Twojej twarzy jako punkt odniesienia do weryfikacji tożsamości. To zdjęcie i skany twarzy służą do potwierdzania Twojej tożsamości przed testami poziomującymi i sesjami ćwiczeń (Moduły) oraz okresowo w ich trakcie — nie tylko raz na początku. Przechowywane bezpiecznie i używane wyłącznie w tym celu.",
-      "checkboxLabel": "Rozumiem i zgadzam się na weryfikację tożsamości za pomocą twarzy, w tym okresowe sprawdzanie podczas testów i ćwiczeń.",
+      "body": "Zrobimy zdjęcie Twojej twarzy, aby utworzyć wzorzec do weryfikacji tożsamości. Przed testami poziomującymi, testami próbnymi i sesjami ćwiczeń (Moduły) oraz w losowych momentach w ich trakcie (co 30–90 sekund) nowe zdjęcie jest z nim porównywane, aby potwierdzić, że to Ty. Zdjęcia są używane wyłącznie w tym celu, widzą je tylko weryfikatorzy z Twojej organizacji lub Edstellar i są przechowywane do czasu usunięcia Twojego konta lub do końca okresu przechowywania ustalonego przez Twoją organizację.",
+      "checkboxLabel": "Rozumiem i wyrażam zgodę na weryfikację tożsamości na podstawie twarzy, w tym kontrole w losowych momentach podczas testów i sesji ćwiczeń.",
       "submit": "Dalej",
       "decline": "Nie teraz"
     }

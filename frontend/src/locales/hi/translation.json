@@ -311,7 +311,7 @@
   "roadmap": {
     "loading": "आपका रोडमैप लोड हो रहा है…",
     "loadError": "आपका रोडमैप लोड करने में कुछ गलत हो गया। कृपया फिर से प्रयास करें।",
-    "pendingReviewBanner": "Your placement result is being reviewed for identity verification. You can keep using everything below in the meantime.",
+    "pendingReviewBanner": "पहचान सत्यापन के लिए आपके प्लेसमेंट परिणाम की समीक्षा हो रही है। इस बीच आप नीचे दी गई हर चीज़ का इस्तेमाल जारी रख सकते हैं।",
     "notReadyTitle": "आपका रोडमैप अभी तैयार नहीं है",
     "notReadyBody": "व्यक्तिगत योजना पाने के लिए अपनी प्लेसमेंट टेस्ट लें।",
     "notReadyBodyScheduled": "आपने अपनी प्लेसमेंट टेस्ट {{date}} के लिए शेड्यूल की है। जब भी आप तैयार हों इसे लें — आपका रोडमैप उसके तुरंत बाद बन जाएगा।",
@@ -606,8 +606,8 @@
     "statsStreak": "वर्तमान स्ट्रीक",
     "statsStreakValue_one": "{{count}} दिन",
     "statsStreakValue_other": "{{count}} दिन",
-    "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevel": "स्तर",
+    "statsLevelValue": "लेवल {{level}} · {{xp}} XP",
     "continuePracticeTitle": "जहाँ आपने छोड़ा था वहीं से जारी रखें",
     "continuePracticeBody": "{{skill}} — {{total}} में से {{answered}} जवाब दिए",
     "achievementsTitle": "उपलब्धियाँ"
@@ -679,52 +679,52 @@
     }
   },
   "faceCheck": {
-    "back": "Back",
+    "back": "वापस",
     "enroll": {
-      "title": "Set up face verification",
-      "success": "Face captured",
-      "proceed": "Continue",
-      "subtitle": "This is a one-time setup. We'll use this photo to confirm it's you before every mocktest, module, and practice test.",
-      "successSubtitle": "Setup done. Next, you'll see the test instructions before your mocktest begins."
+      "title": "चेहरा सत्यापन सेट अप करें",
+      "success": "चेहरा कैप्चर हुआ",
+      "proceed": "जारी रखें",
+      "subtitle": "यह एक बार का सेटअप है। हर मॉक टेस्ट, मॉड्यूल और अभ्यास परीक्षण से पहले यह पुष्टि करने के लिए कि यह आप ही हैं, हम इस फ़ोटो का इस्तेमाल करेंगे।",
+      "successSubtitle": "सेटअप पूरा हुआ। आगे, आपका मॉक टेस्ट शुरू होने से पहले आपको टेस्ट के निर्देश दिखेंगे।"
     },
     "verify": {
-      "title": "Quick face check",
-      "success": "Face verified",
-      "proceed": "Continue",
-      "mismatchError": "Face didn't match your enrolled photo. Please try again.",
+      "title": "चेहरे की त्वरित जाँच",
+      "success": "चेहरा सत्यापित हुआ",
+      "proceed": "जारी रखें",
+      "mismatchError": "चेहरा आपकी रजिस्टर की गई फ़ोटो से मेल नहीं खाता। फिर कोशिश करें।",
       "subtitle": {
-        "placement": "Confirming it's you before your mocktest begins.",
-        "practice": "Confirming it's you before this practice session.",
-        "practice_test": "Confirming it's you before this practice test."
+        "placement": "आपकी मॉक परीक्षा शुरू होने से पहले पुष्टि की जा रही है कि यह आप ही हैं।",
+        "practice": "इस अभ्यास सत्र से पहले पुष्टि की जा रही है कि यह आप ही हैं।",
+        "practice_test": "इस अभ्यास परीक्षण से पहले पुष्टि की जा रही है कि यह आप ही हैं।"
       },
-      "successSubtitle": "Identity confirmed. Moving on to your test."
+      "successSubtitle": "पहचान की पुष्टि हुई। अब आपके टेस्ट पर चलते हैं।"
     },
     "record": {
-      "capture": "Capture",
-      "checking": "Checking...",
-      "cameraError": "Could not access camera. Check permissions and try again.",
-      "error": "Something went wrong. Please try again.",
-      "tooShort": "Could not read your face clearly. Please try again."
+      "capture": "फ़ोटो लें",
+      "checking": "जाँच हो रही है...",
+      "cameraError": "कैमरा नहीं खुल सका। अनुमतियाँ जाँचें और फिर कोशिश करें।",
+      "error": "कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
+      "tooShort": "आपका चेहरा साफ़ नहीं दिखा। फिर कोशिश करें।"
     },
     "fallback": {
-      "otpButton": "Email me a code",
-      "otpSending": "Sending…",
-      "otpSentNotice": "Code sent — check your email.",
-      "otpPlaceholder": "6-digit code",
-      "otpVerify": "Verify code",
-      "otpVerifying": "Verifying…",
-      "otpResend": "Resend code",
-      "otpSuccess": "Code verified",
-      "otpSendError": "Something went wrong sending the code. Please try again.",
-      "otpInvalidError": "That code didn't work. Check it and try again."
+      "otpButton": "मुझे ईमेल पर कोड भेजें",
+      "otpSending": "भेजा जा रहा है…",
+      "otpSentNotice": "कोड भेज दिया गया — अपना ईमेल देखें।",
+      "otpPlaceholder": "6 अंकों का कोड",
+      "otpVerify": "कोड सत्यापित करें",
+      "otpVerifying": "सत्यापित हो रहा है…",
+      "otpResend": "कोड दोबारा भेजें",
+      "otpSuccess": "कोड सत्यापित हुआ",
+      "otpSendError": "कोड भेजते समय कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
+      "otpInvalidError": "वह कोड काम नहीं किया। उसे जाँचें और फिर कोशिश करें।"
     },
     "enrollmentConsent": {
-      "title": "Set up face verification",
-      "subtitle": "This helps confirm it's really you taking the test.",
-      "body": "We'll take a photo of your face to create a reference for identity verification. This photo and face scans are used to confirm your identity before, and periodically during, placement tests and practice sessions (Modules) — not just once at the start. Stored securely, used only for this purpose.",
-      "checkboxLabel": "I understand and consent to face identity verification, including periodic checks during tests and practice sessions.",
-      "submit": "Continue",
-      "decline": "Not now"
+      "title": "चेहरा सत्यापन सेट अप करें",
+      "subtitle": "इससे पुष्टि होती है कि टेस्ट सच में आप ही दे रहे हैं।",
+      "body": "पहचान सत्यापन का संदर्भ बनाने के लिए हम आपके चेहरे की एक फ़ोटो लेंगे। प्लेसमेंट टेस्ट, अभ्यास परीक्षण और अभ्यास सत्रों (मॉड्यूल) से पहले, और उनके दौरान रैंडम समय पर (हर 30 से 90 सेकंड में), एक नई फ़ोटो की तुलना इससे करके पुष्टि की जाती है कि यह आप ही हैं। फ़ोटो का इस्तेमाल सिर्फ़ इसी के लिए होता है, इन्हें सिर्फ़ आपके संगठन के समीक्षक या Edstellar देखते हैं, और इन्हें आपका खाता हटाए जाने या आपके संगठन की डेटा रखने की अवधि ख़त्म होने तक रखा जाता है।",
+      "checkboxLabel": "मैं चेहरे से पहचान सत्यापन को समझता/समझती हूँ और इसके लिए सहमति देता/देती हूँ, जिसमें टेस्ट और अभ्यास सत्रों के दौरान रैंडम समय पर होने वाली जाँच भी शामिल है।",
+      "submit": "जारी रखें",
+      "decline": "अभी नहीं"
     }
   },
   "demographics": {

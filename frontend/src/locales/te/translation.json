@@ -311,7 +311,7 @@
   "roadmap": {
     "loading": "మీ రోడ్‌మ్యాప్ లోడ్ అవుతోంది…",
     "loadError": "మీ రోడ్‌మ్యాప్‌ను లోడ్ చేయడంలో ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
-    "pendingReviewBanner": "Your placement result is being reviewed for identity verification. You can keep using everything below in the meantime.",
+    "pendingReviewBanner": "గుర్తింపు ధృవీకరణ కోసం మీ ప్లేస్‌మెంట్ ఫలితాన్ని సమీక్షిస్తున్నారు. ఈలోగా మీరు కింద ఉన్నవన్నీ ఉపయోగించుకోవచ్చు.",
     "notReadyTitle": "మీ రోడ్‌మ్యాప్ ఇంకా సిద్ధంగా లేదు",
     "notReadyBody": "వ్యక్తిగతీకరించిన ప్రణాళిక పొందడానికి మీ ప్లేస్‌మెంట్ టెస్ట్ తీసుకోండి.",
     "notReadyBodyScheduled": "మీరు మీ ప్లేస్‌మెంట్ టెస్ట్‌ను {{date}} కోసం షెడ్యూల్ చేసారు. మీరు సిద్ధంగా ఉన్నప్పుడు దాన్ని తీసుకోండి — మీ రోడ్‌మ్యాప్ వెంటనే తయారవుతుంది.",
@@ -606,8 +606,8 @@
     "statsStreak": "ప్రస్తుత స్ట్రీక్",
     "statsStreakValue_one": "{{count}} రోజు",
     "statsStreakValue_other": "{{count}} రోజులు",
-    "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevel": "స్థాయి",
+    "statsLevelValue": "స్థాయి {{level}} · {{xp}} XP",
     "continuePracticeTitle": "మీరు ఆపిన చోటు నుండి కొనసాగించండి",
     "continuePracticeBody": "{{skill}} — {{total}}లో {{answered}} సమాధానం ఇచ్చారు",
     "achievementsTitle": "విజయాలు"
@@ -679,52 +679,52 @@
     }
   },
   "faceCheck": {
-    "back": "Back",
+    "back": "వెనక్కి",
     "enroll": {
-      "title": "Set up face verification",
-      "success": "Face captured",
-      "proceed": "Continue",
-      "subtitle": "This is a one-time setup. We'll use this photo to confirm it's you before every mocktest, module, and practice test.",
-      "successSubtitle": "Setup done. Next, you'll see the test instructions before your mocktest begins."
+      "title": "ముఖ ధృవీకరణ సెటప్ చేయండి",
+      "success": "ముఖం క్యాప్చర్ అయింది",
+      "proceed": "కొనసాగించండి",
+      "subtitle": "ఇది ఒక్కసారి చేసే సెటప్. ప్రతి మాక్ టెస్ట్, మాడ్యూల్ మరియు అభ్యాస పరీక్షకు ముందు ఇది మీరేనని నిర్ధారించడానికి ఈ ఫోటోను ఉపయోగిస్తాం.",
+      "successSubtitle": "సెటప్ పూర్తయింది. తర్వాత, మీ మాక్ టెస్ట్ ప్రారంభమయ్యే ముందు టెస్ట్ సూచనలు కనిపిస్తాయి."
     },
     "verify": {
-      "title": "Quick face check",
-      "success": "Face verified",
-      "proceed": "Continue",
-      "mismatchError": "Face didn't match your enrolled photo. Please try again.",
+      "title": "త్వరిత ముఖ తనిఖీ",
+      "success": "ముఖం ధృవీకరించబడింది",
+      "proceed": "కొనసాగించండి",
+      "mismatchError": "ముఖం మీరు నమోదు చేసిన ఫోటోతో సరిపోలలేదు. మళ్లీ ప్రయత్నించండి.",
       "subtitle": {
-        "placement": "Confirming it's you before your mocktest begins.",
-        "practice": "Confirming it's you before this practice session.",
-        "practice_test": "Confirming it's you before this practice test."
+        "placement": "మీ మాక్ టెస్ట్ ప్రారంభమయ్యే ముందు ఇది మీరేనని నిర్ధారిస్తున్నాం.",
+        "practice": "ఈ సాధన సెషన్‌కు ముందు ఇది మీరేనని నిర్ధారిస్తున్నాం.",
+        "practice_test": "ఈ అభ్యాస పరీక్షకు ముందు ఇది మీరేనని నిర్ధారిస్తున్నాం."
       },
-      "successSubtitle": "Identity confirmed. Moving on to your test."
+      "successSubtitle": "గుర్తింపు నిర్ధారించబడింది. మీ టెస్ట్‌కు వెళ్తున్నాం."
     },
     "record": {
-      "capture": "Capture",
-      "checking": "Checking...",
-      "cameraError": "Could not access camera. Check permissions and try again.",
-      "error": "Something went wrong. Please try again.",
-      "tooShort": "Could not read your face clearly. Please try again."
+      "capture": "ఫోటో తీయండి",
+      "checking": "తనిఖీ చేస్తోంది...",
+      "cameraError": "కెమెరాను యాక్సెస్ చేయలేకపోయాం. అనుమతులు తనిఖీ చేసి మళ్లీ ప్రయత్నించండి.",
+      "error": "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "tooShort": "మీ ముఖం స్పష్టంగా కనిపించలేదు. మళ్లీ ప్రయత్నించండి."
     },
     "fallback": {
-      "otpButton": "Email me a code",
-      "otpSending": "Sending…",
-      "otpSentNotice": "Code sent — check your email.",
-      "otpPlaceholder": "6-digit code",
-      "otpVerify": "Verify code",
-      "otpVerifying": "Verifying…",
-      "otpResend": "Resend code",
-      "otpSuccess": "Code verified",
-      "otpSendError": "Something went wrong sending the code. Please try again.",
-      "otpInvalidError": "That code didn't work. Check it and try again."
+      "otpButton": "నాకు ఈమెయిల్‌లో కోడ్ పంపండి",
+      "otpSending": "పంపుతోంది…",
+      "otpSentNotice": "కోడ్ పంపారు — మీ ఈమెయిల్ చూడండి.",
+      "otpPlaceholder": "6 అంకెల కోడ్",
+      "otpVerify": "కోడ్ ధృవీకరించండి",
+      "otpVerifying": "ధృవీకరిస్తోంది…",
+      "otpResend": "కోడ్ మళ్లీ పంపండి",
+      "otpSuccess": "కోడ్ ధృవీకరించబడింది",
+      "otpSendError": "కోడ్ పంపడంలో ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "otpInvalidError": "ఆ కోడ్ పనిచేయలేదు. తనిఖీ చేసి మళ్లీ ప్రయత్నించండి."
     },
     "enrollmentConsent": {
-      "title": "Set up face verification",
-      "subtitle": "This helps confirm it's really you taking the test.",
-      "body": "We'll take a photo of your face to create a reference for identity verification. This photo and face scans are used to confirm your identity before, and periodically during, placement tests and practice sessions (Modules) — not just once at the start. Stored securely, used only for this purpose.",
-      "checkboxLabel": "I understand and consent to face identity verification, including periodic checks during tests and practice sessions.",
-      "submit": "Continue",
-      "decline": "Not now"
+      "title": "ముఖ ధృవీకరణ సెటప్ చేయండి",
+      "subtitle": "టెస్ట్ రాస్తున్నది నిజంగా మీరేనని నిర్ధారించడానికి ఇది సహాయపడుతుంది.",
+      "body": "గుర్తింపు ధృవీకరణ కోసం రిఫరెన్స్ సృష్టించడానికి మీ ముఖం ఫోటో తీసుకుంటాం. ప్లేస్‌మెంట్ టెస్ట్‌లు, అభ్యాస పరీక్షలు మరియు సాధన సెషన్‌లకు (మాడ్యూల్స్) ముందు, అలాగే వాటి సమయంలో యాదృచ్ఛిక సమయాల్లో (ప్రతి 30 నుండి 90 సెకన్లకు), ఇది మీరేనని నిర్ధారించడానికి కొత్త ఫోటోను దానితో పోలుస్తాం. ఫోటోలను దీని కోసం మాత్రమే ఉపయోగిస్తాం, మీ సంస్థ లేదా Edstellarలోని సమీక్షకులు మాత్రమే వాటిని చూస్తారు, మీ ఖాతా తొలగించే వరకు లేదా మీ సంస్థ నిలుపుదల వ్యవధి ముగిసే వరకు వాటిని ఉంచుతాం.",
+      "checkboxLabel": "పరీక్షలు మరియు సాధన సెషన్‌ల సమయంలో యాదృచ్ఛిక సమయాల్లో జరిగే తనిఖీలతో సహా, ముఖ గుర్తింపు ధృవీకరణను నేను అర్థం చేసుకున్నాను మరియు దానికి అంగీకరిస్తున్నాను.",
+      "submit": "కొనసాగించండి",
+      "decline": "ఇప్పుడు కాదు"
     }
   },
   "demographics": {

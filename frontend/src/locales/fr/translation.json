@@ -212,7 +212,7 @@
           "min30Desc": "Progrès solide et régulier",
           "min60": "1 heure",
           "min60Desc": "Préparation intensive",
-          "min90": "90+ minutes",
+          "min90": "90 minutes et plus",
           "min90Desc": "Mode immersion totale"
         }
       },
@@ -311,7 +311,7 @@
   "roadmap": {
     "loading": "Chargement de votre feuille de route…",
     "loadError": "Une erreur s'est produite lors du chargement de votre feuille de route. Veuillez réessayer.",
-    "pendingReviewBanner": "Your placement result is being reviewed for identity verification. You can keep using everything below in the meantime.",
+    "pendingReviewBanner": "Votre résultat de positionnement est en cours de vérification d'identité. En attendant, vous pouvez continuer à utiliser tout ce qui se trouve ci-dessous.",
     "notReadyTitle": "Votre feuille de route n'est pas encore prête",
     "notReadyBody": "Passez votre test de positionnement pour obtenir un plan personnalisé.",
     "notReadyBodyScheduled": "Vous avez planifié votre test de positionnement pour le {{date}}. Passez-le quand vous serez prêt(e) — votre feuille de route se créera juste après.",
@@ -364,8 +364,8 @@
   "practiceTests": {
     "subtitle": "Tests blancs complets et chronométrés, identiques aux véritables épreuves Versant.",
     "comingSoon": "Bientôt disponible",
-    "setsCount": "{{count}} set",
-    "setsCount_other": "{{count}} sets",
+    "setsCount": "{{count}} série",
+    "setsCount_other": "{{count}} séries",
     "questionsCount": "{{count}} question",
     "questionsCount_other": "{{count}} questions",
     "completed": "Terminé",
@@ -606,8 +606,8 @@
     "statsStreak": "Série actuelle",
     "statsStreakValue_one": "{{count}} jour",
     "statsStreakValue_other": "{{count}} jours",
-    "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevel": "Niveau",
+    "statsLevelValue": "Niv. {{level}} · {{xp}} XP",
     "continuePracticeTitle": "Reprenez où vous vous étiez arrêté(e)",
     "continuePracticeBody": "{{skill}} — {{answered}} sur {{total}} répondues",
     "achievementsTitle": "Réussites"
@@ -679,52 +679,52 @@
     }
   },
   "faceCheck": {
-    "back": "Back",
+    "back": "Retour",
     "enroll": {
-      "title": "Set up face verification",
-      "success": "Face captured",
-      "proceed": "Continue",
-      "subtitle": "This is a one-time setup. We'll use this photo to confirm it's you before every mocktest, module, and practice test.",
-      "successSubtitle": "Setup done. Next, you'll see the test instructions before your mocktest begins."
+      "title": "Configurer la vérification faciale",
+      "success": "Visage capturé",
+      "proceed": "Continuer",
+      "subtitle": "Cette configuration ne se fait qu'une fois. Nous utiliserons cette photo pour confirmer que c'est bien vous avant chaque examen blanc, module et test d'entraînement.",
+      "successSubtitle": "Configuration terminée. Vous allez maintenant voir les consignes du test avant le début de votre test blanc."
     },
     "verify": {
-      "title": "Quick face check",
-      "success": "Face verified",
-      "proceed": "Continue",
-      "mismatchError": "Face didn't match your enrolled photo. Please try again.",
+      "title": "Vérification faciale rapide",
+      "success": "Visage vérifié",
+      "proceed": "Continuer",
+      "mismatchError": "Le visage ne correspond pas à votre photo enregistrée. Réessayez.",
       "subtitle": {
-        "placement": "Confirming it's you before your mocktest begins.",
-        "practice": "Confirming it's you before this practice session.",
-        "practice_test": "Confirming it's you before this practice test."
+        "placement": "Nous vérifions que c'est bien vous avant le début de votre examen blanc.",
+        "practice": "Nous vérifions que c'est bien vous avant cette session d'entraînement.",
+        "practice_test": "Nous vérifions que c'est bien vous avant ce test d'entraînement."
       },
-      "successSubtitle": "Identity confirmed. Moving on to your test."
+      "successSubtitle": "Identité confirmée. Passons à votre test."
     },
     "record": {
-      "capture": "Capture",
-      "checking": "Checking...",
-      "cameraError": "Could not access camera. Check permissions and try again.",
-      "error": "Something went wrong. Please try again.",
-      "tooShort": "Could not read your face clearly. Please try again."
+      "capture": "Capturer",
+      "checking": "Vérification...",
+      "cameraError": "Impossible d'accéder à la caméra. Vérifiez les autorisations et réessayez.",
+      "error": "Un problème est survenu. Veuillez réessayer.",
+      "tooShort": "Impossible de bien lire votre visage. Réessayez."
     },
     "fallback": {
-      "otpButton": "Email me a code",
-      "otpSending": "Sending…",
-      "otpSentNotice": "Code sent — check your email.",
-      "otpPlaceholder": "6-digit code",
-      "otpVerify": "Verify code",
-      "otpVerifying": "Verifying…",
-      "otpResend": "Resend code",
-      "otpSuccess": "Code verified",
-      "otpSendError": "Something went wrong sending the code. Please try again.",
-      "otpInvalidError": "That code didn't work. Check it and try again."
+      "otpButton": "M'envoyer un code par e-mail",
+      "otpSending": "Envoi…",
+      "otpSentNotice": "Code envoyé — consultez vos e-mails.",
+      "otpPlaceholder": "Code à 6 chiffres",
+      "otpVerify": "Vérifier le code",
+      "otpVerifying": "Vérification…",
+      "otpResend": "Renvoyer le code",
+      "otpSuccess": "Code vérifié",
+      "otpSendError": "Un problème est survenu lors de l'envoi du code. Veuillez réessayer.",
+      "otpInvalidError": "Ce code n'a pas fonctionné. Vérifiez-le et réessayez."
     },
     "enrollmentConsent": {
-      "title": "Set up face verification",
-      "subtitle": "This helps confirm it's really you taking the test.",
-      "body": "We'll take a photo of your face to create a reference for identity verification. This photo and face scans are used to confirm your identity before, and periodically during, placement tests and practice sessions (Modules) — not just once at the start. Stored securely, used only for this purpose.",
-      "checkboxLabel": "I understand and consent to face identity verification, including periodic checks during tests and practice sessions.",
-      "submit": "Continue",
-      "decline": "Not now"
+      "title": "Configurer la vérification faciale",
+      "subtitle": "Cela permet de confirmer que c'est bien vous qui passez le test.",
+      "body": "Nous allons prendre une photo de votre visage pour créer une référence de vérification d'identité. Avant et à des moments aléatoires (toutes les 30 à 90 secondes) pendant les tests de positionnement, les tests d'entraînement et les sessions d'entraînement (Modules), une nouvelle photo est comparée à celle-ci pour confirmer que c'est bien vous. Les photos ne servent qu'à cela, ne sont vues que par les vérificateurs de votre organisation ou d'Edstellar, et sont conservées jusqu'à la suppression de votre compte ou la fin de la durée de conservation de votre organisation.",
+      "checkboxLabel": "Je comprends et j'accepte la vérification d'identité par reconnaissance faciale, y compris des contrôles à des moments aléatoires pendant les tests et les sessions d'entraînement.",
+      "submit": "Continuer",
+      "decline": "Pas maintenant"
     }
   },
   "demographics": {

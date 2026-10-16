@@ -262,7 +262,7 @@
     }
   },
   "placementTest": {
-    "typeIntroStart": "Start",
+    "typeIntroStart": "Starten",
     "loading": "Dein Test wird geladen…",
     "loadError": "Beim Laden deines Tests ist etwas schiefgelaufen. Bitte versuche es erneut.",
     "micError": "Wir konnten nicht auf dein Mikrofon zugreifen. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
@@ -589,7 +589,7 @@
     "statsStreak": "Aktuelle Serie",
     "statsStreakValue_one": "{{count}} Tag",
     "statsStreakValue_other": "{{count}} Tage",
-    "statsLevel": "Level",
+    "statsLevel": "Niveau",
     "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
     "continuePracticeTitle": "Mach dort weiter, wo du aufgehört hast",
     "continuePracticeBody": "{{skill}} – {{answered}} von {{total}} beantwortet",
@@ -704,8 +704,8 @@
     "enrollmentConsent": {
       "title": "Gesichtsverifizierung einrichten",
       "subtitle": "So stellen wir sicher, dass wirklich du den Test machst.",
-      "body": "Wir machen ein Foto deines Gesichts als Referenz für die Identitätsprüfung. Dieses Foto und Gesichtsscans dienen dazu, deine Identität vor und regelmäßig während Einstufungstests und Übungseinheiten (Module) zu bestätigen – nicht nur einmal zu Beginn. Sicher gespeichert und nur für diesen Zweck verwendet.",
-      "checkboxLabel": "Ich habe verstanden und stimme der Gesichtsverifizierung zu, einschließlich regelmäßiger Prüfungen während Tests und Übungseinheiten.",
+      "body": "Wir machen ein Foto deines Gesichts, um eine Referenz für die Identitätsprüfung zu erstellen. Vor und zu zufälligen Zeitpunkten (alle 30 bis 90 Sekunden) während Einstufungstests, Übungstests und Übungseinheiten (Module) wird ein neues Foto damit verglichen, um zu bestätigen, dass du es bist. Die Fotos werden nur dafür verwendet, nur von Prüfenden deiner Organisation oder von Edstellar gesehen und aufbewahrt, bis dein Konto gelöscht wird oder die Aufbewahrungsfrist deiner Organisation endet.",
+      "checkboxLabel": "Ich verstehe die Identitätsprüfung per Gesichtserkennung und stimme ihr zu, einschließlich Prüfungen zu zufälligen Zeitpunkten während Tests und Übungseinheiten.",
       "submit": "Weiter",
       "decline": "Nicht jetzt"
     }
@@ -720,7 +720,7 @@
       "education": "Bildung",
       "finance": "Finanzen",
       "operations": "Betrieb",
-      "management": "Management",
+      "management": "Verwaltung",
       "other": "Sonstiges"
     },
     "gender": {

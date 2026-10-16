@@ -65,7 +65,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
         />
         {(s.needsAttention > 0 || s.remindedLearners > 0) && (
           <p className="text-xs text-muted">
-            {tr("{{remindedLearners}} learner", { remindedLearners: s.remindedLearners })}{s.remindedLearners === 1 ? " has" : tr("s have")} {tr("been reminded")}{s.needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: s.needsAttention }) : ""}.
+            {s.remindedLearners === 1 ? tr("1 learner has been reminded") : tr("{{n}} learners have been reminded", { n: s.remindedLearners })}{s.needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: s.needsAttention }) : ""}.
           </p>
         )}
       </Card>
