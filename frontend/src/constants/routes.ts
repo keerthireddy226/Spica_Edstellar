@@ -94,6 +94,7 @@ export const ROUTES = {
   // the whole organization.
   MANAGER_DASHBOARD: "/manager/dashboard",
   MANAGER_BATCHES: "/manager/batches",
+  MANAGER_PROGRAMS: "/manager/programs",
   MANAGER_LEARNERS: "/manager/learners",
   MANAGER_PROFILE: "/manager/profile",
   MANAGER_ANALYTICS: "/manager/analytics",

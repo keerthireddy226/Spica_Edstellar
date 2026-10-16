@@ -80,6 +80,7 @@ const RECRUITER_NAV_ITEMS: NavItem[] = [
 const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.MANAGER_BATCHES, icon: Layers, label: tr("Batches") },
+  { to: ROUTES.MANAGER_PROGRAMS, icon: Target, label: tr("Programs") },
   { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: tr("Learners") },
   { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
   { to: ROUTES.MANAGER_ACTIVITY, icon: ScrollText, label: tr("Activity") },

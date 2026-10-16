@@ -305,6 +305,7 @@ function App() {
         >
           <Route path={ROUTES.MANAGER_DASHBOARD} element={<ManagerDashboard />} />
           <Route path={ROUTES.MANAGER_BATCHES} element={<ManagerBatches />} />
+          <Route path={ROUTES.MANAGER_PROGRAMS} element={<OrgAdminPrograms viewer="manager" />} />
           <Route path={ROUTES.MANAGER_LEARNERS} element={<ManagerLearners />} />
           <Route path={ROUTES.MANAGER_ACTIVITY} element={<ManagerActivity />} />
           <Route path={ROUTES.MANAGER_PROFILE} element={<AdminProfile />} />

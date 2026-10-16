@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { recordAudit } from "../audit/service.js";
 import { listQuotas, updateQuota } from "./quotas.js";
-import { ProgramError, createProgram, getProgram, listPrograms, programEditSchema, programJson, programMembers, programSchema, updateProgram } from "./service.js";
+import { pool } from "../db.js";
+import { ProgramError, createProgram, getProgram, listPrograms, programEditSchema, programJson, programSchema, updateProgram } from "./service.js";
+import { monitoringCsv, programMonitoring } from "./monitoring.js";
+import { enqueue } from "../queue/queue.js";
 
 // Org Admin: programs for the organization's batches. Mounted under /api/org-admin.
 export const programsAdminRouter = Router();
@@ -53,13 +56,94 @@ programsAdminRouter.post("/programs", requireAuth, async (req: AuthedRequest, re
   }
 });
 
-programsAdminRouter.get("/programs/:id", requireAuth, async (req: AuthedRequest, res, next) => {
-  const tenantId = orgAdminTenant(req, res);
-  if (!tenantId) return;
+// ---- Monitoring: shared by the Org Admin (/api/org-admin) and the batch's
+// Managers (/api/manager, read only). ----
+
+async function managerBatchIds(userId: string): Promise<string[]> {
+  return (await pool.query(`SELECT batch_id FROM batch_managers WHERE user_id = $1`, [userId])).rows.map((r) => r.batch_id as string);
+}
+
+// The program if this Org Admin's organization or this Manager's batch owns it.
+async function viewableProgram(req: AuthedRequest, res: Response) {
+  const role = req.user?.role;
+  if (!req.user?.tenantId || (role !== "org_admin" && role !== "manager")) {
+    res.status(403).json({ error: "forbidden" });
+    return null;
+  }
+  const p = z.string().uuid().safeParse(req.params.id).success ? await getProgram(String(req.params.id), req.user.tenantId) : null;
+  if (!p || (role === "manager" && !(await managerBatchIds(req.user.id)).includes(p.batch_id))) {
+    res.status(404).json({ error: "program_not_found" });
+    return null;
+  }
+  return p;
+}
+
+export const programViewRouter = Router();
+
+programViewRouter.get("/programs/:id", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const p = z.string().uuid().safeParse(req.params.id).success ? await getProgram(String(req.params.id), tenantId) : null;
-    if (!p) return res.status(404).json({ error: "program_not_found" });
-    res.json({ program: programJson(p), members: await programMembers(p) });
+    const p = await viewableProgram(req, res);
+    if (!p) return;
+    const alerts = await pool.query(
+      `SELECT a.user_id, a.kind, a.detail, a.created_at, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name
+       FROM program_alerts a JOIN users u ON u.id = a.user_id WHERE a.program_id = $1 AND a.created_at > now() - interval '30 days' ORDER BY a.created_at DESC LIMIT 50`,
+      [p.id],
+    );
+    res.json({
+      program: programJson(p),
+      members: await programMonitoring(p),
+      alerts: alerts.rows.map((a) => ({ userId: a.user_id, name: a.name, kind: a.kind, detail: a.detail, createdAt: a.created_at })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+programViewRouter.get("/programs/:id/export.csv", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const p = await viewableProgram(req, res);
+    if (!p) return;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="program-${p.name.replace(/[^A-Za-z0-9]+/g, "-").toLowerCase()}.csv"`);
+    res.send(monitoringCsv(p, await programMonitoring(p)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A member's finished test report (the same report the learner sees), with
+// the test's integrity status.
+programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const p = await viewableProgram(req, res);
+    if (!p) return;
+    if (!z.string().uuid().safeParse(req.params.sessionId).success) return res.status(404).json({ error: "session_not_found" });
+    const s = (
+      await pool.query(
+        `SELECT s.id, si.status AS integrity_status, si.risk_level FROM sessions s JOIN users u ON u.id = s.user_id
+         LEFT JOIN session_integrity si ON si.session_id = s.id
+         WHERE s.id = $1 AND u.batch_id = $2 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL`,
+        [req.params.sessionId, p.batch_id],
+      )
+    ).rows[0];
+    if (!s) return res.status(404).json({ error: "session_not_found" });
+    const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
+    if (!r || r.status === "failed") {
+      await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
+      return res.json({ status: "pending", report: null, integrity: { status: s.integrity_status, risk: s.risk_level } });
+    }
+    res.json({ status: r.status, report: r.report, integrity: { status: s.integrity_status, risk: s.risk_level } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A Manager's programs: those of the batches they manage.
+programViewRouter.get("/programs", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user?.role !== "manager" || !req.user.tenantId) return next();
+  try {
+    const batches = await managerBatchIds(req.user.id);
+    res.json({ programs: (await listPrograms(req.user.tenantId)).filter((p) => batches.includes(p.batchId)) });
   } catch (err) {
     next(err);
   }

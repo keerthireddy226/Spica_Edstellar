@@ -26,6 +26,7 @@ export type NotificationKind =
   | "plan_changed"
   | "org_admin_changed"
   | "batch_completed"
+  | "program_alert"
   | "batch_created"
   | "scheduled_report"
   | "invoice_requested"

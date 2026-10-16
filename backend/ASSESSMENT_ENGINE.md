@@ -506,3 +506,33 @@ provided); cost in money (tokens are recorded; prices depend on the plan).
 - **Screens**: "See your feedback report" after each test; "Your recent
   results" on Practice Tests; the report page shows the levels, analysis,
   next steps and "only what to work on" or every question.
+
+## 19. Phase 6: built
+
+- **Program dashboard** (`src/programs/monitoring.ts`, Org Admin > Programs
+  > a program): every member with their latest level (latest mock of the
+  test type, else the placement test) and skill levels against any skill
+  targets, levels across mocks, done and missed planned tests, last activity
+  and next test, and a status:
+  - at target: the gap to the target is closed;
+  - on track / at risk: from 2 mocks, a least-squares line through the levels
+    reaches the target by the target date (a quarter-level of slack) or not;
+  - with fewer mocks, at risk if 2 planned tests were missed, nothing was done
+    for 14 days, or 2+ levels remain with under 30 days left; otherwise "too
+    early to tell".
+  Counts per status filter the list; CSV export.
+- **Drill-down**: a member's mocks, each opening the same report the learner
+  sees, with the test's integrity status and risk.
+- **Alerts** (`program_alerts`, daily `programs.alerts` job): at risk,
+  inactive 14 days, a missed mock. Each is raised once a week per member (a
+  missed mock once per missed mock) and sent as one summary per program to
+  the Org Admins and the batch's Managers (in-app and email). The last 30
+  days' alerts show on the dashboard.
+- **Managers** (Manager > Programs): the programs of the batches they manage,
+  read only, with the same dashboard, reports and export.
+- **Recruiters**: a candidate's page has the feedback report (built after the
+  assessment; on first opening for assessments finished before reports).
+
+Still open from Phase 6: universities' admissions results (Phase 7); the
+alert job wasn't run against real inboxes in development (it emails Org
+Admins); the decision rules (slack, 14 days, 2 missed) are starting values.

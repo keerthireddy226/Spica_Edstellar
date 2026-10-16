@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
 import type { BatchDetails, BatchLicenseStats, ExamFocus, LearnerDetails } from "@/api/details";
-import type { Program } from "@/api/practiceTests";
+import type { Program, ReportResponse } from "@/api/practiceTests";
 
 // Batch fields beyond the basics, as the API returns them.
 export interface BatchExtras {
@@ -430,29 +430,60 @@ export interface ProgramSummary extends Program {
   items: { done: number; missed: number; due: number };
 }
 
+export type MemberStatus = "at_target" | "on_track" | "at_risk" | "too_early";
+
 export interface ProgramMember {
   userId: string;
   name: string;
   email: string;
   latestLevel: string | null;
+  skillLevels: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
+  levelSource: "mock" | "placement" | null;
   // CEFR steps still to go; null until the level is known.
   gap: number | null;
+  status: MemberStatus;
+  // The level the trend across mocks reaches by the target date.
+  projected: string | null;
+  statusReason: string;
+  mocks: { sessionId: string; date: string; cefrLevel: string | null; percent: number | null }[];
+  lastActivity: string | null;
+  inactiveDays: number | null;
   done: number;
   missed: number;
-  due: number;
+  missedMocks: number;
   next: { dueOn: string; kind: "practice" | "mock" } | null;
+  integrity: { status: string | null; risk: string | null } | null;
 }
 
-export function listPrograms(): Promise<{ programs: ProgramSummary[] }> {
-  return api("/org-admin/programs");
+export interface ProgramAlert {
+  userId: string;
+  name: string;
+  kind: "at_risk" | "inactive" | "missed_mock";
+  detail: string | null;
+  createdAt: string;
+}
+
+// Programs are seen by the Org Admin and, read only, by the batch's Managers.
+export type ProgramViewer = "org-admin" | "manager";
+
+export function listPrograms(viewer: ProgramViewer = "org-admin"): Promise<{ programs: ProgramSummary[] }> {
+  return api(`/${viewer}/programs`);
 }
 
 export function createProgram(input: ProgramInput): Promise<Program> {
   return api("/org-admin/programs", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function getProgramDetail(id: string): Promise<{ program: Program; members: ProgramMember[] }> {
-  return api(`/org-admin/programs/${id}`);
+export function getProgramDetail(id: string, viewer: ProgramViewer = "org-admin"): Promise<{ program: Program; members: ProgramMember[]; alerts: ProgramAlert[] }> {
+  return api(`/${viewer}/programs/${id}`);
+}
+
+export function programExportPath(id: string, viewer: ProgramViewer = "org-admin"): string {
+  return `/${viewer}/programs/${id}/export.csv`;
+}
+
+export function getMemberReport(programId: string, sessionId: string, viewer: ProgramViewer = "org-admin"): Promise<ReportResponse & { integrity?: { status: string | null; risk: string | null } }> {
+  return api(`/${viewer}/programs/${programId}/reports/${sessionId}`);
 }
 
 export function updateProgram(

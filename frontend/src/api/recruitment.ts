@@ -248,3 +248,8 @@ export function grantCredits(tenantId: string, amount: number, reason: "grant" |
 export function setAssessmentPrice(tenantId: string, customPriceCents: number | null): Promise<{ ok: boolean }> {
   return api(`/recruitment/admin/orgs/${tenantId}/price`, { method: "PUT", body: JSON.stringify({ customPriceCents }) });
 }
+
+// The candidate's feedback report (the same one learners get).
+export function getCandidateReport(id: string): Promise<import("@/api/practiceTests").ReportResponse> {
+  return api(`/recruitment/assessments/${id}/report`);
+}

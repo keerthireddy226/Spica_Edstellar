@@ -15,6 +15,7 @@ import {
   createJob,
   decideAssessment,
   getAssessment,
+  getCandidateReport,
   getCredits,
   getJob,
   getJobs,
@@ -40,6 +41,7 @@ import {
   type TestKind,
 } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
+import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { trServer } from "@/i18n/serverText";
 
 const CEFR: Cefr[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -124,6 +126,24 @@ function ResultDetails({ result }: { result: AssessmentResult }) {
       )}
       {(result.pendingCount ?? 0) > 0 && <p className="text-xs text-muted">{tr("{{n}} answers still being scored.", { n: result.pendingCount })}</p>}
     </div>
+  );
+}
+
+// The candidate's feedback report: question by question, writing corrections,
+// speaking notes. Opened on demand (it can take a minute to build).
+function CandidateFeedback({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Panel
+      title={tr("Feedback report")}
+      action={
+        <button onClick={() => setOpen((o) => !o)} className="text-sm font-semibold text-navy-deep underline cursor-pointer">
+          {open ? tr("Hide") : tr("Show")}
+        </button>
+      }
+    >
+      {open ? <FeedbackReportView load={() => getCandidateReport(id)} /> : <p className="text-xs text-muted">{tr("Every answer reviewed: what was right or wrong and why, writing corrected, and notes on speaking.")}</p>}
+    </Panel>
   );
 }
 
@@ -220,6 +240,7 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
             </div>
           )}
         </Panel>
+        {a.status === "completed" && <CandidateFeedback id={id} />}
         {a.status === "completed" && (
           <Panel title={tr("Decision")}>
             <textarea

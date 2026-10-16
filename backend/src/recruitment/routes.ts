@@ -3,6 +3,7 @@
 // Edstellar staff controls for an organization's products and credits.
 import { Router, type NextFunction, type Response } from "express";
 import { z } from "zod";
+import { enqueue } from "../queue/queue.js";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { hashToken } from "../auth/tokens.js";
@@ -383,6 +384,25 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
     if (!a) return res.status(404).json({ error: "assessment_not_found" });
     const { token_hash: _t, ...rest } = a;
     res.json({ assessment: rest });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The candidate's feedback report (built after the test; on first request for
+// tests finished before reports existed).
+recruitmentRouter.get("/assessments/:id/report", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const a = (await pool.query(`SELECT session_id, status FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId])).rows[0];
+    if (!a?.session_id || a.status !== "completed") return res.status(404).json({ error: "report_not_found" });
+    const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [a.session_id])).rows[0];
+    if (!r || r.status === "failed") {
+      await enqueue("report.build", { sessionId: a.session_id }, { dedupeKey: `report.build:${a.session_id}:${Date.now() >> 16}`, maxAttempts: 5 });
+      return res.json({ status: "pending", report: null });
+    }
+    res.json({ status: r.status, report: r.report });
   } catch (err) {
     next(err);
   }

@@ -14,6 +14,7 @@ import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
 import { runProgramsDaily } from "../programs/service.js";
+import { runProgramAlerts } from "../programs/monitoring.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
 import { buildReport, reportReady } from "../reports/feedbackReport.js";
@@ -68,6 +69,11 @@ export function registerJobs() {
   every(60, "programs.daily", async () => {
     const r = await runProgramsDaily();
     if (r.missed || r.completed || r.planned) console.log("programs:", r);
+  });
+  // Program alerts (at risk, inactive, missed mock) to Org Admins and Managers, once a day.
+  every(24 * 60, "programs.alerts", async () => {
+    const n = await runProgramAlerts();
+    if (n) console.log(`programs: ${n} alert summaries sent`);
   });
   // Question generation jobs interrupted by a restart carry on.
   every(15, "generation.resume", async () => {

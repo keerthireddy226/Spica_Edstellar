@@ -61,6 +61,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.MANAGER_ANALYTICS]: tr("Analytics"),
   [ROUTES.MANAGER_DASHBOARD]: tr("Manager Dashboard"),
   [ROUTES.MANAGER_BATCHES]: tr("Batches"),
+  [ROUTES.MANAGER_PROGRAMS]: tr("Programs"),
   [ROUTES.SUPER_ORGANIZATIONS]: tr("Organizations"),
   [ROUTES.SUPER_BILLING]: tr("Billing"),
   [ROUTES.SUPER_AUDIT]: tr("Audit log"),

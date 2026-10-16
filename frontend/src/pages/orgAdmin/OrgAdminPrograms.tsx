@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Target, Users, CalendarDays, X, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
+import { Plus, Target, Users, CalendarDays, X, CheckCircle2, AlertTriangle, Clock, Download } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { formatShortDate } from "@/api/licenses";
@@ -16,7 +16,13 @@ import {
   type ProgramDomain,
   type ProgramMember,
   type ProgramSummary,
+  type ProgramAlert,
+  type ProgramViewer,
+  getMemberReport,
+  programExportPath,
 } from "@/api/orgAdmin";
+import { downloadCsv } from "@/api/analytics";
+import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import type { Program } from "@/api/practiceTests";
 import { testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
@@ -207,22 +213,152 @@ function CreateProgramModal({
   );
 }
 
-function memberStatus(m: ProgramMember): { text: string; cls: string } {
-  if (m.latestLevel === null) return { text: tr("Level not known yet"), cls: "text-muted" };
-  if (m.gap === 0) return { text: tr("At target"), cls: "text-success" };
-  return { text: tr("CEFR levels to go: {{n}}", { n: m.gap }), cls: m.missed > 0 ? "text-error" : "text-navy-deep" };
+const STATUS: Record<ProgramMember["status"], { label: () => string; cls: string }> = {
+  at_target: { label: () => tr("At target"), cls: "bg-success/15 text-success" },
+  on_track: { label: () => tr("On track"), cls: "bg-navy/10 text-navy-deep" },
+  at_risk: { label: () => tr("At risk"), cls: "bg-error/15 text-error" },
+  too_early: { label: () => tr("Too early to tell"), cls: "bg-paper-warm text-muted" },
+};
+
+const ALERT_LABEL: Record<ProgramAlert["kind"], () => string> = {
+  at_risk: () => tr("At risk"),
+  inactive: () => tr("Inactive for 14 days"),
+  missed_mock: () => tr("Missed a mock exam"),
+};
+
+// A member's finished test report, as the learner sees it, with the test's integrity status.
+function MemberReportModal({ programId, sessionId, viewer, onClose }: { programId: string; sessionId: string; viewer: ProgramViewer; onClose: () => void }) {
+  const [integrity, setIntegrity] = useState<{ status: string | null; risk: string | null } | null>(null);
+  return (
+    <ModalShell title={tr("Mock exam report")} onClose={onClose}>
+      {integrity?.status && (
+        <p className="text-sm text-muted mb-3">
+          {tr("Test integrity: {{status}}", { status: integrity.status })}
+          {integrity.risk ? ` · ${tr("risk {{risk}}", { risk: integrity.risk })}` : ""}
+        </p>
+      )}
+      <FeedbackReportView
+        load={() =>
+          getMemberReport(programId, sessionId, viewer).then((r) => {
+            setIntegrity(r.integrity ?? null);
+            return r;
+          })
+        }
+      />
+    </ModalShell>
+  );
 }
 
-function ProgramDetailModal({ id, testTypes, onClose, onChanged }: { id: string; testTypes: CatalogueTestType[]; onClose: () => void; onChanged: () => void }) {
+function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; onOpenReport: (sessionId: string) => void }) {
   const { t } = useTranslation();
-  const [data, setData] = useState<{ program: Program; members: ProgramMember[] } | null>(null);
+  const [open, setOpen] = useState(false);
+  const st = STATUS[m.status];
+  return (
+    <>
+      <tr className="border-b border-rule/60 cursor-pointer hover:bg-paper-warm/60" onClick={() => setOpen((o) => !o)}>
+        <td className="py-2 pr-3">
+          <div className="text-ink font-medium">{m.name}</div>
+          <div className="text-xs text-muted">{m.email}</div>
+        </td>
+        <td className="py-2 pr-3">
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${st.cls}`} title={m.statusReason}>
+            {st.label()}
+          </span>
+        </td>
+        <td className="py-2 pr-3 font-mono">
+          {m.latestLevel ?? "—"}
+          {m.levelSource === "placement" && <span className="text-[10px] text-muted font-sans ml-1">{tr("placement")}</span>}
+        </td>
+        <td className="py-2 pr-3 text-xs font-mono">{m.mocks.length ? m.mocks.map((x) => x.cefrLevel ?? "?").join(" → ") : "—"}</td>
+        <td className="py-2 pr-3 text-xs">{m.projected ?? "—"}</td>
+        <td className={`py-2 pr-3 ${m.missed ? "text-error font-semibold" : ""}`}>
+          {m.done} / {m.missed}
+        </td>
+        <td className={`py-2 text-xs ${m.inactiveDays !== null && m.inactiveDays >= 14 ? "text-error" : "text-muted"}`}>
+          {m.lastActivity ? formatShortDate(m.lastActivity) : tr("Never")}
+        </td>
+      </tr>
+      {open && (
+        <tr className="border-b border-rule/60 bg-paper-warm/40">
+          <td colSpan={7} className="px-3 py-3">
+            <div className="flex flex-col gap-2 text-sm">
+              <div className="flex flex-wrap gap-2">
+                {(["listening", "speaking", "reading", "writing"] as const)
+                  .filter((s) => m.skillLevels?.[s])
+                  .map((s) => (
+                    <span key={s} className="bg-surface rounded-input px-2.5 py-1 text-xs">
+                      {t(`skills.${s}`)} <b>{m.skillLevels[s]}</b>
+                      {p.targetSkills[s] ? <span className="text-muted"> / {p.targetSkills[s]}</span> : null}
+                    </span>
+                  ))}
+              </div>
+              <p className="text-xs text-muted">{m.statusReason}</p>
+              {m.next && (
+                <p className="text-xs text-muted">
+                  {tr("Next:")} {m.next.kind === "mock" ? tr("Mock exam") : tr("Practice test")} · {formatShortDate(m.next.dueOn)}
+                </p>
+              )}
+              {m.mocks.length > 0 ? (
+                <ul className="flex flex-col gap-1">
+                  {[...m.mocks].reverse().map((x) => (
+                    <li key={x.sessionId} className="flex items-center gap-3 text-xs">
+                      <span className="w-24">{formatShortDate(x.date)}</span>
+                      <span className="font-mono w-10">{x.cefrLevel ?? "—"}</span>
+                      <span className="w-12">{x.percent !== null ? `${x.percent}%` : ""}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenReport(x.sessionId);
+                        }}
+                        className="font-semibold text-navy-deep hover:underline cursor-pointer"
+                      >
+                        {tr("Open the report")}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-muted">{tr("No mock exams yet.")}</p>
+              )}
+              {m.integrity?.status && (
+                <p className="text-xs text-muted">
+                  {tr("Latest mock's integrity: {{status}}", { status: m.integrity.status })}
+                  {m.integrity.risk ? ` (${m.integrity.risk})` : ""}
+                </p>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function ProgramDetailModal({
+  id,
+  testTypes,
+  viewer,
+  onClose,
+  onChanged,
+}: {
+  id: string;
+  testTypes: CatalogueTestType[];
+  viewer: ProgramViewer;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const { t } = useTranslation();
+  const [data, setData] = useState<{ program: Program; members: ProgramMember[]; alerts: ProgramAlert[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [targetDate, setTargetDate] = useState("");
   const [targetLevel, setTargetLevel] = useState("");
   const [busy, setBusy] = useState(false);
+  const [report, setReport] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | ProgramMember["status"]>("all");
+  const canEdit = viewer === "org-admin";
 
   function load() {
-    getProgramDetail(id)
+    getProgramDetail(id, viewer)
       .then((d) => {
         setData(d);
         setTargetDate(d.program.targetDate);
@@ -248,17 +384,42 @@ function ProgramDetailModal({ id, testTypes, onClose, onChanged }: { id: string;
 
   const p = data?.program;
   const tt = testTypes.find((x) => x.id === p?.testTypeId);
+  const counts = (s: ProgramMember["status"]) => data?.members.filter((m) => m.status === s).length ?? 0;
+  const shown = (data?.members ?? []).filter((m) => filter === "all" || m.status === filter);
   return (
     <ModalShell title={p?.name ?? tr("Program")} onClose={onClose}>
       {!data ? (
         <p className="text-sm text-muted">{error ?? tr("Loading…")}</p>
       ) : (
         <div className="flex flex-col gap-5">
-          <p className="text-sm text-muted">
-            {tt ? testTypeName(tt, t) : p!.testTypeId} · {tr("Target {{level}}", { level: p!.targetLevel })} · {formatShortDate(p!.startsOn)} – {formatShortDate(p!.targetDate)} ·{" "}
-            {STATUS_LABEL[p!.status]()}
-          </p>
-          {p!.status === "active" && (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-muted flex-1">
+              {tt ? testTypeName(tt, t) : p!.testTypeId} · {tr("Target {{level}}", { level: p!.targetLevel })} · {formatShortDate(p!.startsOn)} – {formatShortDate(p!.targetDate)} ·{" "}
+              {STATUS_LABEL[p!.status]()}
+            </p>
+            <Button
+              variant="secondary"
+              onClick={() => downloadCsv(programExportPath(id, viewer), "program.csv").catch(() => setError(tr("Export failed.")))}
+              className="flex items-center gap-2 !px-3 !py-1.5 text-sm"
+            >
+              <Download size={14} /> {tr("Export CSV")}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(["at_risk", "on_track", "at_target", "too_early"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFilter((f) => (f === s ? "all" : s))}
+                className={`rounded-input px-3 py-2 text-left cursor-pointer border ${filter === s ? "border-navy" : "border-transparent"} ${STATUS[s].cls}`}
+              >
+                <div className="text-xl font-display font-bold">{counts(s)}</div>
+                <div className="text-xs">{STATUS[s].label()}</div>
+              </button>
+            ))}
+          </div>
+
+          {canEdit && p!.status === "active" && (
             <div className="flex flex-wrap items-end gap-3 bg-paper-warm rounded-input p-4">
               <Field label={tr("Target level")}>
                 <select value={targetLevel} onChange={(e) => setTargetLevel(e.target.value)} className={`${inputClass} cursor-pointer`}>
@@ -283,7 +444,7 @@ function ProgramDetailModal({ id, testTypes, onClose, onChanged }: { id: string;
               </Button>
             </div>
           )}
-          {p!.status !== "archived" && p!.status !== "active" && (
+          {canEdit && p!.status !== "archived" && p!.status !== "active" && (
             <div className="flex gap-3">
               <Button variant="secondary" disabled={busy} onClick={() => save({ status: "active" })}>
                 {tr("Reopen")}
@@ -295,51 +456,55 @@ function ProgramDetailModal({ id, testTypes, onClose, onChanged }: { id: string;
           )}
           {error && <p className="text-sm text-error">{error}</p>}
 
+          {data.alerts.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Alerts in the last 30 days")}</span>
+              <ul className="text-sm flex flex-col gap-0.5">
+                {data.alerts.slice(0, 8).map((a, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-xs text-muted w-20 shrink-0">{formatShortDate(a.createdAt)}</span>
+                    <span className="text-ink">
+                      {a.name}: {ALERT_LABEL[a.kind]()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-muted uppercase tracking-wide border-b border-rule">
                   <th className="py-2 pr-3 font-semibold">{tr("Learner")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr("Status")}</th>
                   <th className="py-2 pr-3 font-semibold">{tr("Latest level")}</th>
-                  <th className="py-2 pr-3 font-semibold">{tr("Progress")}</th>
-                  <th className="py-2 pr-3 font-semibold">{tr("Done")}</th>
-                  <th className="py-2 pr-3 font-semibold">{tr("Missed")}</th>
-                  <th className="py-2 font-semibold">{tr("Next")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr("Mocks")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr("Projected")}</th>
+                  <th className="py-2 pr-3 font-semibold">{tr("Done / missed")}</th>
+                  <th className="py-2 font-semibold">{tr("Last activity")}</th>
                 </tr>
               </thead>
               <tbody>
-                {data.members.map((m) => {
-                  const st = memberStatus(m);
-                  return (
-                    <tr key={m.userId} className="border-b border-rule/60">
-                      <td className="py-2 pr-3">
-                        <div className="text-ink font-medium">{m.name}</div>
-                        <div className="text-xs text-muted">{m.email}</div>
-                      </td>
-                      <td className="py-2 pr-3 font-mono">{m.latestLevel ?? "—"}</td>
-                      <td className={`py-2 pr-3 ${st.cls}`}>{st.text}</td>
-                      <td className="py-2 pr-3">{m.done}</td>
-                      <td className={`py-2 pr-3 ${m.missed ? "text-error font-semibold" : ""}`}>{m.missed}</td>
-                      <td className="py-2 text-xs">
-                        {m.next ? `${m.next.kind === "mock" ? tr("Mock exam") : tr("Practice test")} · ${formatShortDate(m.next.dueOn)}` : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {shown.map((m) => (
+                  <MemberRowView key={m.userId} m={m} p={p!} onOpenReport={setReport} />
+                ))}
               </tbody>
             </table>
             {data.members.length === 0 && <p className="text-sm text-muted py-4">{tr("This batch has no learners yet.")}</p>}
           </div>
           <p className="text-xs text-muted">
-            {tr("Latest level: from the learner's latest mock exam of this test, or their placement test before their first mock.")}
+            {tr("Projected: the level the trend across a learner's mock exams reaches by the target date (from 2 mocks). Latest level comes from the latest mock, or the placement test before the first.")}
           </p>
         </div>
       )}
+      {report && <MemberReportModal programId={id} sessionId={report} viewer={viewer} onClose={() => setReport(null)} />}
     </ModalShell>
   );
 }
 
-export function OrgAdminPrograms() {
+// Org Admins manage programs; a batch's Managers see them read only.
+export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramViewer }) {
   const { t } = useTranslation();
   const [programs, setPrograms] = useState<ProgramSummary[] | null>(null);
   const [batches, setBatches] = useState<OrgBatch[]>([]);
@@ -349,17 +514,19 @@ export function OrgAdminPrograms() {
   const [viewing, setViewing] = useState<string | null>(null);
 
   function load() {
-    listPrograms()
+    listPrograms(viewer)
       .then((r) => setPrograms(r.programs))
       .catch(() => setError(tr("Could not load programs.")));
   }
   useEffect(() => {
     load();
-    getBatches()
-      .then((r) => setBatches(r.batches))
-      .catch(() => {});
+    if (viewer === "org-admin") {
+      getBatches()
+        .then((r) => setBatches(r.batches))
+        .catch(() => {});
+    }
     // Live tests the organization has turned on.
-    Promise.all([getCatalogue(), getOrgSettings().catch(() => null)])
+    Promise.all([getCatalogue(), viewer === "org-admin" ? getOrgSettings().catch(() => null) : Promise.resolve(null)])
       .then(([c, settings]) => {
         const allowed = settings?.allowedTestProducts ?? null;
         setTestTypes(c.families.flatMap((f) => f.testTypes).filter((x) => x.status === "live" && (!allowed || allowed.includes(x.id))));
@@ -379,9 +546,11 @@ export function OrgAdminPrograms() {
             {tr("Set an exam goal for a batch. Spica plans each member's practice tests and mock exams to reach it.")}
           </p>
         </div>
-        <Button onClick={() => setCreating(true)} disabled={freeBatches.length === 0 || testTypes.length === 0} className="flex items-center gap-2">
-          <Plus size={16} /> {tr("New program")}
-        </Button>
+        {viewer === "org-admin" && (
+          <Button onClick={() => setCreating(true)} disabled={freeBatches.length === 0 || testTypes.length === 0} className="flex items-center gap-2">
+            <Plus size={16} /> {tr("New program")}
+          </Button>
+        )}
       </div>
       {programs && freeBatches.length === 0 && batches.length > 0 && (
         <p className="text-xs text-muted -mt-2">{tr("Every active batch already has a program.")}</p>
@@ -458,7 +627,7 @@ export function OrgAdminPrograms() {
           }}
         />
       )}
-      {viewing && <ProgramDetailModal id={viewing} testTypes={testTypes} onClose={() => setViewing(null)} onChanged={load} />}
+      {viewing && <ProgramDetailModal id={viewing} testTypes={testTypes} viewer={viewer} onClose={() => setViewing(null)} onChanged={load} />}
     </div>
   );
 }
