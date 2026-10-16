@@ -17,6 +17,7 @@ import { runProgramsDaily } from "../programs/service.js";
 import { runProgramAlerts } from "../programs/monitoring.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
+import { continueAutoBuilds } from "../builder/autoBuild.js";
 import { buildReport, reportReady } from "../reports/feedbackReport.js";
 
 // Every queue the app uses, in one place.
@@ -74,6 +75,11 @@ export function registerJobs() {
   every(24 * 60, "programs.alerts", async () => {
     const n = await runProgramAlerts();
     if (n) console.log(`programs: ${n} alert summaries sent`);
+  });
+  // One-click tests waiting for AI-written questions finish once those are in.
+  every(1, "forms.autobuild", async () => {
+    const n = await continueAutoBuilds();
+    if (n) console.log(`builder: ${n} tests completed with AI questions`);
   });
   // Question generation jobs interrupted by a restart carry on.
   every(15, "generation.resume", async () => {

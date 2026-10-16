@@ -107,11 +107,16 @@ export function libraryRow(r: Record<string, unknown>, stats?: { n: number; mean
   };
 }
 
-export async function listLibrary(f: LibraryFilters, page: number, pageSize = 50) {
+export async function listLibrary(f: LibraryFilters, page: number, pageSize = 50, preferDomain?: string) {
   const params: unknown[] = [];
   const where = libraryWhere(f, params);
   const total = (await pool.query(`SELECT count(*)::int AS n FROM items i JOIN item_types it ON it.id = i.item_type_id ${where}`, params)).rows[0].n as number;
-  const r = await pool.query(`${LIBRARY_SELECT} ${where} ORDER BY i.item_type_id, i.cefr_level NULLS LAST, i.created_at LIMIT ${pageSize} OFFSET ${Math.max(0, page) * pageSize}`, params);
+  let order = "i.item_type_id, i.cefr_level NULLS LAST, i.created_at";
+  if (preferDomain) {
+    params.push(preferDomain);
+    order = `(i.domain = $${params.length}) DESC, ${order}`;
+  }
+  const r = await pool.query(`${LIBRARY_SELECT} ${where} ORDER BY ${order} LIMIT ${pageSize} OFFSET ${Math.max(0, page) * pageSize}`, params);
   const stats = await itemStats(r.rows.map((x) => x.id));
   const { mockLimits } = await import("../practiceTests/modes.js");
   const secs = await mockLimits(r.rows.map((x) => x.id));

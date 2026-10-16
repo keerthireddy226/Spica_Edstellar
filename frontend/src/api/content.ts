@@ -161,6 +161,8 @@ export interface LibraryFilters {
   ids?: string[];
   page?: number;
   pageSize?: number;
+  // Questions from this field first.
+  preferDomain?: string;
 }
 
 export function getLibrary(f: LibraryFilters): Promise<{ total: number; page: number; pageSize: number; items: LibraryItem[] }> {
@@ -245,6 +247,44 @@ export interface BuiltForm {
   approvedAt: string | null;
   createdAt: string;
   itemCount?: number;
+  // One-click builds: waiting for AI questions, complete, or still short.
+  buildStatus?: "ready" | "waiting_for_ai" | "short";
+  buildSummary?: BuildSummary | null;
+  publishWhenReady?: boolean;
+}
+
+export interface BuildSummary {
+  field: string | null;
+  sections: {
+    sortOrder: number;
+    label: string;
+    itemTypeId: string;
+    wanted: number;
+    chosen: number;
+    fromField: number | null;
+    missing: number;
+    aiRequested: number;
+    aiPossible: boolean;
+  }[];
+  needsMockApproval: string[];
+  aiErrors: string[];
+  published: boolean;
+  publishError: string | null;
+}
+
+// One click: picks every question, asks the AI for gaps it can fill, saves the test.
+export function createTestOneClick(body: {
+  testTypeId: string;
+  purpose: "practice" | "mock";
+  durationMinutes: number;
+  levelMin?: string;
+  levelMax?: string;
+  domain?: string;
+  sources?: LibrarySource[];
+  name?: string;
+  publish: boolean;
+}): Promise<{ id: string; status: "ready" | "waiting_for_ai" | "short"; summary: BuildSummary }> {
+  return api("/admin/content/builder/create", { method: "POST", body: JSON.stringify(body) });
 }
 
 export interface FormInput {

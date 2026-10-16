@@ -10,6 +10,7 @@ import { pool } from "../db.js";
 import { CEFR_LEVELS } from "../placement/cefr.js";
 import { SOURCES, itemUsage, listLibrary } from "./library.js";
 import { planCounts, testTypeLayout, type Layout } from "./layout.js";
+import { createTest, createTestSchema } from "./autoBuild.js";
 import { FormError, autofill, createForm, fillSchema, formSchema, formSeconds, getForm, listForms, publishForm, retireForm, updateForm } from "./forms.js";
 
 export const builderRouter = Router();
@@ -53,6 +54,8 @@ const librarySchema = z.object({
   exclude: z.array(z.string().uuid()).max(500).optional(),
   ids: z.array(z.string().uuid()).max(500).optional(),
   pageSize: z.coerce.number().int().min(1).max(500).default(50),
+  // Questions from this field first (the builder's picker).
+  preferDomain: z.string().max(40).optional(),
   page: z.coerce.number().int().min(0).max(10_000).default(0),
 });
 
@@ -86,6 +89,7 @@ builderRouter.get("/content/library", requireAuth, async (req: AuthedRequest, re
         },
         f.page,
         f.pageSize,
+        f.preferDomain,
       ),
     );
   } catch (err) {
@@ -174,6 +178,21 @@ builderRouter.post("/content/builder/seconds", requireAuth, async (req: AuthedRe
     res.json(await formSeconds(b.sections, layout ? sectionTimers(layout) : {}));
   } catch (err) {
     next(err);
+  }
+});
+
+// One click: pick every question, ask the AI for gaps it can fill, save the
+// test (and publish it when complete, if asked).
+builderRouter.post("/content/builder/create", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "contentReview"))) return;
+  try {
+    const body = createTestSchema.parse(req.body);
+    const r = await createTest(req.user!.id, body);
+    await audit(req, "content.form_created", r.id, { purpose: body.purpose, durationMinutes: body.durationMinutes, oneClick: true, publish: body.publish });
+    if (r.summary.published) await audit(req, "content.form_published", r.id);
+    res.status(201).json(r);
+  } catch (err) {
+    if (!formError(err, res)) next(err);
   }
 });
 

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search, X, Plus, Trash2, Wand2, Sparkles, Save, Send, Archive, Pencil, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Search, X, Plus, Trash2, Wand2, Sparkles, Save, Send, Archive, Pencil, CheckCircle2, Loader2, Rocket, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { Panel, StatusPill, EmptyNote } from "@/components/staff/StaffKit";
 import {
   autofillForm,
   createBuiltForm,
+  createTestOneClick,
   decideItem,
   formSeconds,
   getBuilderPlan,
@@ -20,6 +21,7 @@ import {
   startGeneration,
   updateBuiltForm,
   type BuilderTestType,
+  type BuildSummary,
   type BuiltForm,
   type ContentItem,
   type FormSeconds,
@@ -156,6 +158,7 @@ function LibraryTable({ items, onOpen, action }: { items: LibraryItem[]; onOpen:
                   {i.mockApproved && <span className="text-success">{tr("mock-approved")}</span>}
                   {i.status !== "approved" && <span className="text-warning">{i.status}</span>}
                   {i.formCount > 0 && <span>{tr("in {{n}} built tests", { n: i.formCount })}</span>}
+                  {i.domain !== "general" && <span className="text-navy-deep">{DOMAIN_LABEL[i.domain]?.() ?? i.domain}</span>}
                 </div>
               </td>
               <td className="py-2 pr-3 text-xs">{i.typeName}</td>
@@ -359,6 +362,7 @@ function SectionPicker({
       exclude,
       page,
       pageSize: 20,
+      preferDomain: draft.domain !== "general" ? draft.domain : undefined,
     })
       .then(setData)
       .catch(() => setData({ total: 0, items: [], pageSize: 20 }));
@@ -457,6 +461,8 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
                   <StatusPill tone={f.status === "published" ? "success" : f.status === "draft" ? "navy" : "muted"}>
                     {f.status === "published" ? tr("Published") : f.status === "draft" ? tr("Draft") : tr("Retired")}
                   </StatusPill>
+                  {f.status === "draft" && f.buildStatus === "waiting_for_ai" && <span className="block text-[11px] text-navy-deep mt-1">{tr("AI writing questions…")}</span>}
+                  {f.status === "draft" && f.buildStatus === "short" && <span className="block text-[11px] text-warning mt-1">{tr("Some parts are short")}</span>}
                 </td>
                 <td className="py-2 text-right whitespace-nowrap">
                   {f.status === "draft" && (
@@ -511,6 +517,78 @@ function publishError(err: unknown): string {
   }
 }
 
+// What a one-click build did: questions per part, from the chosen field,
+// what's missing and why, and what still needs a person.
+function BuildSummaryView({
+  summary,
+  status,
+  purpose,
+  onApproveAll,
+  busy,
+}: {
+  summary: BuildSummary;
+  status: "ready" | "waiting_for_ai" | "short";
+  purpose: "practice" | "mock";
+  onApproveAll: () => void;
+  busy: boolean;
+}) {
+  const total = summary.sections.reduce((n, s) => n + s.chosen, 0);
+  const wanted = summary.sections.reduce((n, s) => n + s.wanted, 0);
+  return (
+    <Panel title={tr("What was built")}>
+      <p className={`text-sm ${status === "ready" ? "text-success" : "text-warning"}`}>
+        {summary.published
+          ? tr("Complete and published: {{n}} questions.", { n: total })
+          : status === "ready"
+            ? tr("Complete: {{n}} questions. Check it below, then publish.", { n: total })
+            : status === "waiting_for_ai"
+              ? tr("Waiting for the AI's questions.")
+              : tr("{{n}} of {{w}} questions. Some parts are short (see below).", { n: total, w: wanted })}
+      </p>
+      {summary.publishError && <p className="text-sm text-error">{publishError(new ApiError(summary.publishError, { error: summary.publishError }))}</p>}
+      <ul className="flex flex-col gap-1 text-sm">
+        {summary.sections.map((s) => (
+          <li key={s.sortOrder} className="flex flex-wrap gap-x-3">
+            <span className={`font-medium ${s.missing ? "text-warning" : "text-ink"}`}>
+              {s.sortOrder}. {s.label}: {s.chosen} / {s.wanted}
+            </span>
+            {summary.field && s.fromField !== null && (
+              <span className="text-xs text-muted">
+                {tr("{{n}} from {{field}}, {{g}} general", { n: s.fromField, field: DOMAIN_LABEL[summary.field]?.() ?? summary.field, g: s.chosen - s.fromField })}
+              </span>
+            )}
+            {s.missing > 0 &&
+              (s.aiPossible ? (
+                <span className="text-xs text-muted">{tr("{{n}} missing; AI asked for {{a}}", { n: s.missing, a: s.aiRequested })}</span>
+              ) : (
+                <span className="text-xs text-warning">{tr("{{n}} missing; the AI can't write this question type yet, so add questions by hand or shorten the test.", { n: s.missing })}</span>
+              ))}
+          </li>
+        ))}
+      </ul>
+      {summary.aiErrors.length > 0 && (
+        <p className="text-xs text-error flex items-start gap-1">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {tr("The AI couldn't write some questions: {{e}}", { e: summary.aiErrors[0] })}
+        </p>
+      )}
+      {purpose === "mock" && summary.needsMockApproval.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-paper-warm rounded-input px-3 py-2">
+          <span className="text-sm text-ink flex-1">
+            {tr("{{n}} AI-written questions passed their checks but need a person's approval before a mock can use them. Review them in the Review tab, or approve them here.", {
+              n: summary.needsMockApproval.length,
+            })}
+          </span>
+          <Button variant="secondary" onClick={onApproveAll} disabled={busy} className="!py-1.5 text-xs">
+            {tr("Approve them for mocks and fill the gaps")}
+          </Button>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export function BuilderPanel() {
   const [testTypes, setTestTypes] = useState<BuilderTestType[]>([]);
   const [forms, setForms] = useState<BuiltForm[]>([]);
@@ -523,6 +601,17 @@ export function BuilderPanel() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [customDuration, setCustomDuration] = useState(false);
+  const [publishNow, setPublishNow] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [built, setBuilt] = useState<{ summary: BuildSummary; status: "ready" | "waiting_for_ai" | "short" } | null>(null);
+  // Still on this page (set on every mount: React mounts twice in development).
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   function loadForms() {
     listForms()
@@ -543,6 +632,7 @@ export function BuilderPanel() {
     setCustomDuration(false);
     setMissing([]);
     setMsg(null);
+    setBuilt(null);
   }
 
   // The plan follows the test type and duration.
@@ -586,6 +676,72 @@ export function BuilderPanel() {
     });
     setCustomDuration(!DURATION_PRESETS.includes(f.durationMinutes));
     setMsg(null);
+    setBuilt(f.buildSummary ? { summary: f.buildSummary, status: f.buildStatus ?? "ready" } : null);
+  }
+
+  // One click: pick, ask the AI for gaps, save; wait for the AI if needed.
+  async function createNow() {
+    if (!d) return;
+    setBusy(true);
+    setMsg(null);
+    setBuilt(null);
+    setProgress(tr("Picking questions and saving the test…"));
+    try {
+      const r = await createTestOneClick({
+        testTypeId: d.testTypeId,
+        purpose: d.purpose,
+        durationMinutes: d.durationMinutes,
+        levelMin: d.levelMin,
+        levelMax: d.levelMax,
+        domain: d.domain,
+        sources: d.sources.length ? d.sources : undefined,
+        name: d.name.trim() || undefined,
+        publish: publishNow,
+      });
+      let summary = r.summary;
+      let status = r.status;
+      if (status === "waiting_for_ai") {
+        const n = summary.sections.reduce((a, s) => a + s.aiRequested, 0);
+        setProgress(
+          tr("Writing {{n}} questions with AI and checking them. This takes a few minutes; you can leave and find the test under Built tests.", { n }),
+        );
+        for (let i = 0; i < 120 && mounted.current; i++) {
+          await sleep(5000);
+          const f = await getBuiltForm(r.id).catch(() => null);
+          if (f && f.form.buildStatus !== "waiting_for_ai") {
+            summary = f.form.buildSummary ?? summary;
+            status = f.form.buildStatus ?? "ready";
+            break;
+          }
+        }
+      }
+      if (!mounted.current) return;
+      setProgress(null);
+      loadForms();
+      if (summary.published) {
+        setD(null);
+        setBuilt({ summary, status });
+      } else {
+        await edit(r.id);
+        setBuilt({ summary, status });
+      }
+    } catch (err) {
+      setMsg({ ok: false, text: publishError(err) });
+    } finally {
+      if (mounted.current) {
+        setBusy(false);
+        setProgress(null);
+      }
+    }
+  }
+
+  async function approveAllAndFill() {
+    if (!d || !built) return;
+    setBusy(true);
+    for (const id of built.summary.needsMockApproval) await decideItem(id, { decision: "approve_mock" }).catch(() => {});
+    setBuilt({ ...built, summary: { ...built.summary, needsMockApproval: [] } });
+    setBusy(false);
+    await fill();
   }
 
   async function fill() {
@@ -783,7 +939,7 @@ export function BuilderPanel() {
                   <StatusPill tone="warning">{tr("Short form: published time is {{m}} min", { m: plan.officialMinutes })}</StatusPill>
                 )}
                 <span className="flex-1" />
-                <Button onClick={fill} disabled={busy} className="flex items-center gap-1.5 !py-1.5">
+                <Button variant="secondary" onClick={fill} disabled={busy} className="flex items-center gap-1.5 !py-1.5">
                   <Wand2 size={14} /> {chosenIds.length ? tr("Fill the rest automatically") : tr("Fill automatically")}
                 </Button>
                 {chosenIds.length > 0 && (
@@ -793,6 +949,26 @@ export function BuilderPanel() {
                 )}
               </div>
             )}
+            {!d.id && (
+              <div className="flex flex-wrap items-center gap-3 border border-navy/20 rounded-input px-4 py-3">
+                <Rocket size={18} className="text-navy-deep" />
+                <span className="text-sm text-ink flex-1">
+                  {tr("Create the whole test in one click: Spica picks every question, asks the AI for any it can write, and saves the test.")}
+                </span>
+                <label className="flex items-center gap-1.5 text-sm text-ink cursor-pointer">
+                  <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
+                  {tr("Publish right away")}
+                </label>
+                <Button onClick={createNow} disabled={busy} className="flex items-center gap-1.5">
+                  {progress ? <Loader2 size={15} className="animate-spin" /> : <Rocket size={15} />} {tr("Create the test")}
+                </Button>
+              </div>
+            )}
+            {progress && (
+              <p className="text-sm text-navy-deep flex items-center gap-2">
+                <Loader2 size={15} className="animate-spin" /> {progress}
+              </p>
+            )}
             {d.durationMinutes !== plan?.officialMinutes && d.purpose === "mock" && (
               <p className="text-xs text-muted">{tr("A mock at another length shows the learner's CEFR level but no estimated exam score.")}</p>
             )}
@@ -800,6 +976,8 @@ export function BuilderPanel() {
         )}
         {msg && <p className={`text-sm ${msg.ok ? "text-success" : "text-error"}`}>{msg.text}</p>}
       </Panel>
+
+      {built && <BuildSummaryView summary={built.summary} status={built.status} purpose={d?.purpose ?? "practice"} onApproveAll={approveAllAndFill} busy={busy} />}
 
       {d &&
         plan?.sections.map((s) => {

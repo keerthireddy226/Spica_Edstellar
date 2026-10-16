@@ -597,6 +597,21 @@ Admins, Managers and Recruiters never build tests; they use published ones.
   AI". Drafts can be edited; Publish checks every question (right type for
   its section, approved, approved for mocks in a mock) and records who
   published it; a published test can only be retired.
+- **One click** (`src/builder/autoBuild.ts`, "Create the test"): after
+  entering the details, one click picks every question, saves the test and
+  shows what was built. The field is a preference: questions from that field
+  come first and general ones fill the rest (a question from another field
+  counts like being 1.5 levels off target), and the summary says how many
+  came from the field. Parts that are still short: for LanguageCert types the
+  AI is asked for the missing questions (plus about 30% for ones that fail
+  their checks), in the chosen field; the test waits ("waiting for AI") and
+  the `forms.autobuild` job (every minute) fills the gaps once the AI's
+  questions are in. In a mock, AI questions also need a person's approval for
+  mocks first; the summary lists them with an "approve and fill" button. For
+  types the AI can't write (Versant), the summary says which part is short
+  and by how many. "Publish right away" publishes the test as soon as it's
+  complete; otherwise it stays a draft. The "Add questions" picker also lists
+  the field's questions first and shows each question's field.
 - **Short forms**: a test at another duration than the published one is a
   short form: labelled so, and a short-form mock shows the CEFR level but no
   estimated exam score range.

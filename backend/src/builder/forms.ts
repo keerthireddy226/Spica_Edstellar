@@ -51,15 +51,21 @@ const idx = (l: string | null | undefined) => CEFR_LEVELS.indexOf((l ?? "") as C
 interface Candidate extends FormRow {
   item_type_id: string;
   cefr_level: string | null;
+  domain: string;
   use_count: number;
 }
+
+// The chosen field is a preference: a question from another field (usually
+// "general") counts like being 1.5 levels off target, so it's used when the
+// field runs out, before leaving a gap.
+const OTHER_FIELD_COST = 1.5;
 
 // Approved questions that could fill one section.
 async function candidates(itemTypeId: string, f: LibraryFilters, mock: boolean): Promise<Candidate[]> {
   const params: unknown[] = [];
   const where = libraryWhere({ ...f, itemTypeId, status: "approved", mockApproved: mock ? true : undefined }, params);
   const r = await pool.query(
-    `SELECT i.id, i.item_type_id, i.cefr_level, i.content, coalesce(ep.exam_id::text, i.set_id::text, 'none') AS exam_id,
+    `SELECT i.id, i.item_type_id, i.cefr_level, i.domain, i.content, coalesce(ep.exam_id::text, i.set_id::text, 'none') AS exam_id,
        coalesce(i.exam_order, i.set_order, 0) AS exam_order, coalesce(ep.sort_order, 0) AS sort_order, coalesce(ep.part_label, '') AS part_label,
        (SELECT count(*)::int FROM form_items fi JOIN forms fo ON fo.id = fi.form_id AND fo.status <> 'retired' WHERE fi.item_id = i.id)
          + (CASE WHEN i.exam_part_id IS NULL THEN 0 ELSE 1 END) AS use_count
@@ -78,9 +84,12 @@ export async function autofill(input: z.infer<typeof fillSchema>) {
   const layout = await testTypeLayout(input.testTypeId);
   if (!layout) throw new FormError("unknown_test_type");
   const plan = planCounts(layout, input.durationMinutes);
-  const filters: LibraryFilters = { levelMin: input.levelMin ?? layout.cefrMin, levelMax: input.levelMax ?? layout.cefrMax, domain: input.domain || undefined, sources: input.sources };
+  const filters: LibraryFilters = { levelMin: input.levelMin ?? layout.cefrMin, levelMax: input.levelMax ?? layout.cefrMax, sources: input.sources };
+  const field = input.domain && input.domain !== "general" ? input.domain : null;
   const chosen: Record<string, string[]> = {};
   const missing: { sortOrder: number; itemTypeId: string; count: number }[] = [];
+  // Per section: how many chosen questions are from the chosen field.
+  const fromField: Record<string, number> = {};
   const used = new Set<string>(Object.values(input.keep ?? {}).flat());
   for (const s of layout.sections) {
     const want = plan.sections.find((p) => p.sortOrder === s.sortOrder)!.count;
@@ -88,22 +97,27 @@ export async function autofill(input: z.infer<typeof fillSchema>) {
     const picks = [...kept];
     const pool_ = (await candidates(s.itemTypeId, filters, input.purpose === "mock")).filter((c) => !used.has(c.id));
     const groups = shuffle(groupItems(pool_)).sort((a, b) => Math.min(...a.map((x) => x.use_count)) - Math.min(...b.map((x) => x.use_count)));
+    const cost = (g: Candidate[], target: string | null) => Math.abs(idx(g[0].cefr_level) - idx(target)) + (field && g[0].domain !== field ? OTHER_FIELD_COST : 0);
     // One target level per remaining slot; a group is taken by its first question's level.
     for (const target of levelTargets(s.levels, want).slice(picks.length)) {
       if (picks.length >= want) break;
       const room = want - picks.length;
       const fits = groups.filter((g) => g.length <= room && !g.some((x) => used.has(x.id)));
       if (!fits.length) break;
-      fits.sort((a, b) => Math.abs(idx(a[0].cefr_level) - idx(target)) - Math.abs(idx(b[0].cefr_level) - idx(target)) || a[0].use_count - b[0].use_count);
+      fits.sort((a, b) => cost(a, target) - cost(b, target) || a[0].use_count - b[0].use_count);
       for (const x of fits[0]) {
         picks.push(x.id);
         used.add(x.id);
       }
     }
     chosen[String(s.sortOrder)] = picks;
+    if (field) {
+      const domains = new Map((await pool.query(`SELECT id, domain FROM items WHERE id = ANY($1::uuid[])`, [picks])).rows.map((r) => [r.id, r.domain]));
+      fromField[String(s.sortOrder)] = picks.filter((id) => domains.get(id) === field).length;
+    }
     if (picks.length < want) missing.push({ sortOrder: s.sortOrder, itemTypeId: s.itemTypeId, count: want - picks.length });
   }
-  return { layout, plan, chosen, missing };
+  return { layout, plan, chosen, missing, fromField };
 }
 
 // Seconds the chosen questions take, per section and in total. A question
@@ -205,6 +219,23 @@ export async function updateForm(formId: string, input: z.infer<typeof formSchem
   }
 }
 
+// Replaces a draft's questions (the one-click build fills a draft in steps).
+export async function replaceItems(formId: string, layout: Layout, sections: Record<string, string[]>) {
+  checkDuplicates(sections);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await writeItems(client, formId, layout, sections);
+    await client.query(`UPDATE forms SET updated_at = now() WHERE id = $1`, [formId]);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function getForm(formId: string) {
   const f = (
     await pool.query(
@@ -243,6 +274,9 @@ export function formJson(f: Record<string, unknown>) {
     approvedAt: f.approved_at ?? null,
     createdAt: f.created_at,
     itemCount: (f.item_count as number | undefined) ?? undefined,
+    buildStatus: (f.build_status as "ready" | "waiting_for_ai" | "short" | undefined) ?? "ready",
+    buildSummary: (f.build_summary as Record<string, unknown> | null | undefined) ?? null,
+    publishWhenReady: !!f.publish_when_ready,
   };
 }
 
