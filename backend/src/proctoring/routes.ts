@@ -38,6 +38,7 @@ import {
   type ProctoringPolicy,
 } from "./policy.js";
 import { RecruitmentError, tenantProducts } from "../recruitment/service.js";
+import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 
 export const proctoringRouter = Router();
 
@@ -239,6 +240,7 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
     if (!own) return;
     const { si } = own;
     const p = si.policy;
+    if (consentMissing(si)) await attachTestConsent(req, si);
     let secureBrowser: boolean | null = null;
     if (p.secureBrowser) {
       secureBrowser = secureBrowserOk(p, req);
@@ -268,6 +270,111 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
     next(err);
   }
 });
+
+// ---------- Consent before a test ----------
+// Shown before every test (placement, practice test, module, candidate
+// assessment), right before the first face photo. It lists what that test
+// collects; agreeing records it, and the record is linked to the test's
+// session when it starts, so the proctoring steps don't ask again.
+
+const PRE_TEST_KINDS = ["placement", "speakingListening", "fourSkills", "writing", "professional", "module"] as const;
+const TEST_CONSENT_PREFIX = "test-v1";
+// A held agreement is linked to a session that starts within this time.
+const TEST_CONSENT_VALID_HOURS = 3;
+
+function testConsentVersion(policyVersion: string | null): string {
+  return `${TEST_CONSENT_PREFIX}:${policyVersion ?? "practice"}`;
+}
+
+async function preTestInfo(userId: string, kind: (typeof PRE_TEST_KINDS)[number]) {
+  const { policy } = await learnerPolicy(userId);
+  const org = await learnerOrgPolicy(userId);
+  const t = (await pool.query(`SELECT t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
+  // Modules are practice: no proctoring policy applies, only face checks and grading.
+  const proctored = kind !== "module" && policy.mode !== "off";
+  const { sebConfigKeys: _keys, ...visible } = policy;
+  return {
+    proctored,
+    policy: proctored ? visible : null,
+    biometric: proctored && usesBiometrics(policy),
+    faceCheck: org.faceCheckRequired,
+    retentionDays: policy.retentionDays,
+    recordingsMonths: (t?.retention_recordings_months as number | null) ?? null,
+    version: testConsentVersion(proctored ? consentVersion(policy) : null),
+  };
+}
+
+const kindSchema = z.enum(PRE_TEST_KINDS);
+
+proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json(await preTestInfo(req.user!.id, kindSchema.parse(req.query.kind)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ kind: kindSchema, accept: z.literal(true), biometric: z.boolean() }).parse(req.body);
+    const info = await preTestInfo(req.user!.id, body.kind);
+    const biometric = info.biometric && body.biometric;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      // Both rows share now(): that's how the biometric choice is found again.
+      const consent = await client.query(
+        `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring', $3) RETURNING id`,
+        [req.user!.id, info.version, req.ip],
+      );
+      if (biometric) {
+        await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring_biometric', $3)`, [
+          req.user!.id,
+          info.version,
+          req.ip,
+        ]);
+      }
+      await client.query("COMMIT");
+      res.status(201).json({ consentId: consent.rows[0].id, biometricOptOut: info.biometric && !body.biometric });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The agreement given on the consent screen, sent with the first setup call
+// of the session it was given for.
+async function attachTestConsent(req: AuthedRequest, si: IntegrityRow) {
+  const id = String(req.header("x-test-consent") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+  const c = (
+    await pool.query(
+      `SELECT id, granted_at, consent_version FROM consent_records
+       WHERE id = $1 AND user_id = $2 AND consent_type = 'proctoring' AND revoked_at IS NULL
+         AND granted_at > now() - make_interval(hours => $3)`,
+      [id, req.user!.id, TEST_CONSENT_VALID_HOURS],
+    )
+  ).rows[0];
+  // Agreed to different wording (the policy changed meanwhile): ask again.
+  if (!c || c.consent_version !== testConsentVersion(consentVersion(si.policy))) return;
+  const bio = await pool.query(
+    `SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'proctoring_biometric' AND granted_at = $2 AND revoked_at IS NULL`,
+    [req.user!.id, c.granted_at],
+  );
+  const optOut = usesBiometrics(si.policy) && !bio.rows[0];
+  await pool.query(`UPDATE session_integrity SET consent_record_id = $2, biometric_opt_out = $3, updated_at = now() WHERE session_id = $1`, [
+    si.session_id,
+    c.id,
+    optOut,
+  ]);
+  si.consent_record_id = c.id;
+  si.biometric_opt_out = optOut;
+}
 
 const consentSchema = z.object({ accept: z.literal(true), biometric: z.boolean() });
 

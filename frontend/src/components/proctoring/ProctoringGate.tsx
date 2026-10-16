@@ -82,7 +82,7 @@ function useStepCamera(enabled: boolean, audio = false) {
   return { videoRef, stream, error, capture };
 }
 
-const MONITORED: { key: keyof ProctoringSetup["policy"]; label: () => string }[] = [
+export const MONITORED: { key: keyof ProctoringSetup["policy"]; label: () => string }[] = [
   { key: "lockdown", label: () => tr("Copy and paste are turned off; leaving the test tab is recorded") },
   { key: "requireFullscreen", label: () => tr("The test runs in full screen") },
   { key: "multiMonitorCheck", label: () => tr("Second screens are detected (Chrome and Edge)") },
@@ -94,7 +94,10 @@ const MONITORED: { key: keyof ProctoringSetup["policy"]; label: () => string }[]
   { key: "liveMonitoring", label: () => tr("A proctor may watch live and message you") },
   { key: "videoRecording", label: () => tr("Your camera is recorded during the test") },
   { key: "screenRecording", label: () => tr("Your entire screen is recorded during the test") },
-  { key: "audioMonitoring", label: () => tr("The microphone listens between answers; talking is recorded as short clips") },
+  {
+    key: "audioMonitoring",
+    label: () => tr("The microphone listens between answers (talking is recorded as short clips), and spoken answers are checked for loud background noise"),
+  },
   { key: "typingPattern", label: () => tr("Your typing rhythm (timing only, never the text) is compared across answers") },
 ];
 

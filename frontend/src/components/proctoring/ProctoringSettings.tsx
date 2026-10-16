@@ -52,7 +52,8 @@ const GROUPS: { title: () => string; icon: typeof Monitor; flags: { key: Flag; l
       {
         key: "audioMonitoring",
         label: () => tr("Listen for talking"),
-        hint: () => tr("The microphone stays on between answers; talking or whispering is flagged with a short clip."),
+        hint: () =>
+          tr("The microphone stays on between answers; talking or whispering is flagged with a short clip. Spoken answers are checked for loud background noise."),
       },
     ],
   },

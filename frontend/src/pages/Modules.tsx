@@ -59,6 +59,7 @@ import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
+import { TestConsent } from "@/components/pretest/TestConsent";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import {
@@ -501,6 +502,8 @@ export function Modules() {
   // fallback, or SetPicker) but not yet actually begun — the Voice Check
   // gate below renders while this is set, and only calls the real
   // handleStart once it completes.
+  // Agreed to the consent screen for the pending start; asked again for every session.
+  const [consented, setConsented] = useState(false);
   const [pendingStart, setPendingStart] = useState<{ skill: SkillTag; count?: number; itemTypeId?: string; setId?: string } | null>(
     null,
   );
@@ -993,12 +996,20 @@ export function Modules() {
     if (pendingStart && faceEnrolled === false) return null;
     if (pendingStart && faceEnrolled) {
       const { skill, count, itemTypeId, setId } = pendingStart;
+      // What the session collects comes first, then the face check.
+      if (!consented) {
+        return <TestConsent kind="module" onBack={() => setPendingStart(null)} onAgreed={() => setConsented(true)} />;
+      }
       return (
         <FaceCheck
           mode="verify"
           purpose="practice"
-          onBack={() => setPendingStart(null)}
+          onBack={() => {
+            setConsented(false);
+            setPendingStart(null);
+          }}
           onComplete={() => {
+            setConsented(false);
             setPendingStart(null);
             handleStart(skill, count, itemTypeId, setId);
           }}

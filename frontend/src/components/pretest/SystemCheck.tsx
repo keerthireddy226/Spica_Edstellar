@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Mic, Monitor, Play, RotateCcw, Square, Volume2, Wifi, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Mic, Monitor, Play, RotateCcw, Square, Volume2, VolumeX, Wifi, XCircle } from "lucide-react";
 import { Button } from "@/components/Button";
 import {
   MAX_PING_MS,
@@ -8,9 +8,6 @@ import {
   connectionPasses,
   holdForSession,
   measureConnection,
-  recentPass,
-  rememberPass,
-  summarizeCheck,
   type ConnectionResult,
   type DeviceCheckResult,
   type DeviceNeeds,
@@ -213,7 +210,22 @@ function useMicCheck() {
     setTimeout(() => recorder.state === "recording" && recorder.stop(), RECORD_SECONDS * 1000);
   }, []);
 
-  return { stage, setStage, level, noise, devices, deviceId, clipUrl, open, record, release };
+  // Measures the room again, for a learner who moved somewhere quieter.
+  const [noiseBusy, setNoiseBusy] = useState(false);
+  const remeasureNoise = useCallback(async () => {
+    const stream = streamRef.current;
+    if (!stream) return;
+    setNoiseBusy(true);
+    samplesRef.current = [];
+    await new Promise((r) => setTimeout(r, NOISE_SECONDS * 1000));
+    const samples = samplesRef.current ?? [];
+    samplesRef.current = null;
+    const avg = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
+    if (streamRef.current === stream) setNoise(avg > NOISY_RMS ? "noisy" : "quiet");
+    setNoiseBusy(false);
+  }, []);
+
+  return { stage, setStage, level, noise, noiseBusy, devices, deviceId, clipUrl, open, record, release, remeasureNoise };
 }
 
 function LevelMeter({ level }: { level: number }) {
@@ -238,17 +250,13 @@ function browserIssues(needs: DeviceNeeds): { blocking: string[]; warnings: stri
 // noise. Only a passed check lets the learner continue.
 export function SystemCheck({
   needs,
-  allowRemembered,
   onPassed,
   onBack,
 }: {
   needs: DeviceNeeds;
-  // A pass from the last 24 hours on this browser can be reused.
-  allowRemembered: boolean;
   onPassed: (r: DeviceCheckResult) => void;
   onBack?: () => void;
 }) {
-  const [remembered, setRemembered] = useState(() => (allowRemembered ? recentPass(needs) : null));
   const [issues] = useState(() => browserIssues(needs));
   const [conn, setConn] = useState<{ status: RowStatus; result?: ConnectionResult }>({ status: "running" });
   const [speaker, setSpeaker] = useState<"idle" | "playing" | "asked" | "pass" | "fail">("idle");
@@ -262,37 +270,13 @@ export function SystemCheck({
   }, []);
 
   useEffect(() => {
-    if (!remembered) runConnection();
-  }, [remembered, runConnection]);
+    runConnection();
+  }, [runConnection]);
 
-  function finish(result: DeviceCheckResult, fresh: boolean) {
+  function finish(result: DeviceCheckResult) {
     mic.release();
-    if (fresh) rememberPass(result);
     holdForSession(result);
     onPassed(result);
-  }
-
-  if (remembered) {
-    return (
-      <Shell onBack={onBack}>
-        <div className="flex items-start gap-3 bg-success/10 border border-success/30 rounded-card p-4">
-          <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" />
-          <div className="text-sm text-ink">
-            <p className="font-semibold">{tr("This device passed a check at {{time}}.", { time: new Date(remembered.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) })}</p>
-            <p className="text-xs text-muted mt-1">{summarizeCheck(remembered)}</p>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button variant="secondary" className="flex-1" onClick={() => setRemembered(null)}>
-            <RotateCcw size={15} className="inline mr-1.5" />
-            {tr("Run the check again")}
-          </Button>
-          <Button className="flex-1" onClick={() => finish(remembered, false)}>
-            {tr("Continue")}
-          </Button>
-        </div>
-      </Shell>
-    );
   }
 
   const connOk = conn.status === "pass";
@@ -303,12 +287,13 @@ export function SystemCheck({
 
   const speakerStatus: RowStatus = !connOk ? "waiting" : speaker === "pass" ? "pass" : speaker === "fail" ? "fail" : speaker === "playing" ? "running" : "active";
   const micActive = connOk && speakerOk;
+  // Measured as soon as the microphone opens; a noisy room warns but never blocks.
+  const noiseStatus: RowStatus =
+    mic.stage === "noise" || mic.noiseBusy ? "running" : mic.noise === "noisy" ? "warn" : mic.noise === "quiet" ? "pass" : "waiting";
   const micStatus: RowStatus = !micActive
     ? "waiting"
     : mic.stage === "pass"
-      ? mic.noise === "noisy"
-        ? "warn"
-        : "pass"
+      ? "pass"
       : ["denied", "not_found", "busy", "unsupported", "silent"].includes(mic.stage)
         ? "fail"
         : ["asking", "noise", "recording"].includes(mic.stage)
@@ -413,15 +398,37 @@ export function SystemCheck({
           icon={<Mic size={18} />}
           title={tr("Microphone")}
           status={micStatus}
+          summary={mic.stage === "pass" ? tr("Your microphone works.") : tr("Your browser needs microphone access, for spoken answers and to check the room is quiet.")}
+        >
+          {mic.stage !== "pass" && <MicBody mic={mic} />}
+        </Row>
+      )}
+
+      {needs.mic && (
+        <Row
+          icon={<VolumeX size={18} />}
+          title={tr("Background noise")}
+          status={noiseStatus}
           summary={
-            mic.stage === "pass"
-              ? mic.noise === "noisy"
-                ? tr("Your microphone works, but the room sounds noisy.")
-                : tr("Your microphone works and the room is quiet.")
-              : tr("Speaking questions are recorded, so your browser needs microphone access.")
+            mic.noise === "quiet" && !mic.noiseBusy
+              ? tr("The room is quiet.")
+              : mic.noise === "noisy" && !mic.noiseBusy
+                ? tr("The room sounds noisy.")
+                : tr("Measured when the microphone turns on: stay quiet for 3 seconds.")
           }
         >
-          <MicBody mic={mic} />
+          {mic.noise === "noisy" && !mic.noiseBusy && (
+            <>
+              <p className="text-xs text-ink bg-warning/15 rounded-input p-3">
+                {tr("Background noise can lower your speaking score. Move somewhere quieter or close the windows. Even a fan can be noisy.")}
+              </p>
+              <Button variant="secondary" className="self-start" disabled={mic.stage === "recording"} onClick={mic.remeasureNoise}>
+                <RotateCcw size={15} className="inline mr-1.5" />
+                {tr("Check the room again")}
+              </Button>
+            </>
+          )}
+          {mic.noiseBusy && <p className="text-sm text-ink">{tr("Stay quiet for a moment while we listen to the room...")}</p>}
         </Row>
       )}
 
@@ -436,7 +443,6 @@ export function SystemCheck({
               noise: needs.mic ? mic.noise : null,
               at: new Date().toISOString(),
             },
-            true,
           )
         }
       >
@@ -448,13 +454,7 @@ export function SystemCheck({
 
 function MicBody({ mic }: { mic: ReturnType<typeof useMicCheck> }) {
   const { stage } = mic;
-  if (stage === "pass") {
-    return mic.noise === "noisy" ? (
-      <p className="text-xs text-ink bg-warning/15 rounded-input p-3">
-        {tr("Background noise can lower your speaking score. Move somewhere quieter or close the windows. Even a fan can be noisy.")}
-      </p>
-    ) : null;
-  }
+  if (stage === "pass") return null;
   if (stage === "idle") {
     return (
       <Button variant="secondary" className="self-start" onClick={() => mic.open()}>
@@ -500,7 +500,7 @@ function MicBody({ mic }: { mic: ReturnType<typeof useMicCheck> }) {
           <select
             className="text-sm text-ink bg-surface border border-rule rounded-input px-3 py-2"
             value={mic.deviceId}
-            disabled={stage === "recording" || stage === "noise"}
+            disabled={stage === "recording" || stage === "noise" || mic.noiseBusy}
             onChange={(e) => mic.open(e.target.value)}
           >
             {mic.devices.map((d, i) => (
@@ -522,7 +522,7 @@ function MicBody({ mic }: { mic: ReturnType<typeof useMicCheck> }) {
               {tr("Press Record and say:")} <span className="italic">{tr("“My name is … and I am ready for the test.”")}</span>
             </p>
           )}
-          <Button variant="secondary" className="self-start" onClick={mic.record}>
+          <Button variant="secondary" className="self-start" onClick={mic.record} disabled={mic.noiseBusy}>
             <Mic size={15} className="inline mr-1.5" />
             {stage === "silent" ? tr("Record again") : tr("Record ({{n}} seconds)", { n: RECORD_SECONDS })}
           </Button>
@@ -541,7 +541,7 @@ function MicBody({ mic }: { mic: ReturnType<typeof useMicCheck> }) {
             <Button className="!py-1.5" onClick={() => mic.setStage("pass")}>
               {tr("Yes, it sounds clear")}
             </Button>
-            <Button variant="secondary" className="!py-1.5" onClick={mic.record}>
+            <Button variant="secondary" className="!py-1.5" onClick={mic.record} disabled={mic.noiseBusy}>
               {tr("Record again")}
             </Button>
           </div>

@@ -94,7 +94,8 @@ export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): Pr
       roomScan: false,
       idVerification: false,
       liveMonitoring: false,
-      audioMonitoring: false,
+      // Listening for talking between answers, and noise checks on spoken answers.
+      audioMonitoring: true,
       videoRecording: false,
       screenRecording: false,
       typingPattern: false,
@@ -142,7 +143,6 @@ export function needsSecureProctoringPlan(p: ProctoringPolicy): boolean {
     p.secureBrowser ||
     p.roomScan ||
     p.voiceMatch ||
-    p.audioMonitoring ||
     p.videoRecording ||
     p.screenRecording ||
     p.typingPattern
@@ -155,10 +155,10 @@ const LATER_OPTIONS = ["audioMonitoring", "videoRecording", "screenRecording", "
 
 // Individuals: copy and paste blocked and randomized forms, no camera beyond
 // the face check they already do before a test.
-const INDIVIDUAL_POLICY: ProctoringPolicy = { ...presetPolicy("standard", "global"), webcamMonitoring: false, multiMonitorCheck: false };
+const INDIVIDUAL_POLICY: ProctoringPolicy = { ...presetPolicy("standard", "global"), webcamMonitoring: false, multiMonitorCheck: false, audioMonitoring: false };
 
 // An organization that never saved a policy keeps tests free of cameras:
-// the lockdown and randomized forms of the standard preset only.
+// the lockdown, randomized forms and listening of the standard preset.
 const UNSAVED_POLICY: ProctoringPolicy = { ...presetPolicy("standard", "global"), webcamMonitoring: false };
 
 export function normalizePolicy(stored: unknown): ProctoringPolicy {
@@ -210,5 +210,5 @@ export async function learnerPolicy(userId: string): Promise<{ policy: Proctorin
 // Consent wording version. Changing the wording means a new version, so
 // learners are asked again.
 export function consentVersion(p: ProctoringPolicy): string {
-  return `proctoring-v1-${p.region}`;
+  return `proctoring-v2-${p.region}`;
 }

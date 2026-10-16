@@ -111,7 +111,7 @@ export function TestDemo({
       {step === 0 && <NeedsStep needs={needs} minutes={minutes} />}
       {step === 1 && <RulesStep />}
       {step === 2 && <TipsStep skills={skillsFor(kind)} />}
-      {step === 3 && <TourStep needs={needs} />}
+      {step === 3 && <TourStep speaking={skillsFor(kind).includes("speaking")} />}
 
       {canHide && (
         <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
@@ -257,7 +257,8 @@ function tourText(spot: TourSpot, mic: boolean): string {
 }
 
 // The question screen as learners see it, with one control highlighted at a time.
-function TourStep({ needs }: { needs: DeviceNeeds }) {
+// The sample is a spoken question for tests with speaking, a typed one otherwise.
+function TourStep({ speaking }: { speaking: boolean }) {
   const [i, setI] = useState(0);
   const [recording, setRecording] = useState(false);
   const [plays, setPlays] = useState(0);
@@ -272,7 +273,7 @@ function TourStep({ needs }: { needs: DeviceNeeds }) {
         <div className="flex items-center justify-between gap-2 px-1">
           <span className={`flex items-center gap-2 rounded-pill pr-2 ${mark("part")}`}>
             <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold">A</span>
-            <span className="text-xs font-semibold text-ink">{needs.mic ? tr("Repeats") : tr("Dictation")}</span>
+            <span className="text-xs font-semibold text-ink">{speaking ? tr("Repeats") : tr("Dictation")}</span>
           </span>
           <span className={`text-xs font-mono text-muted rounded-pill px-2 py-0.5 ${mark("progress")}`}>
             {tr("Test ID")} SL-001 · 1 {tr("of")} 20
@@ -280,16 +281,16 @@ function TourStep({ needs }: { needs: DeviceNeeds }) {
         </div>
 
         <div className="relative bg-surface border border-rule rounded-card overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-1.5" style={{ backgroundColor: `var(--color-${needs.mic ? "speaking" : "listening"})` }} />
+          <div className="absolute top-0 inset-x-0 h-1.5" style={{ backgroundColor: `var(--color-${speaking ? "speaking" : "listening"})` }} />
           <div className="p-6 pt-5 flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{needs.mic ? tr("Repeats") : tr("Dictation")}</span>
+              <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{speaking ? tr("Repeats") : tr("Dictation")}</span>
               <span className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border text-navy-deep border-navy/20 bg-navy/10 ${mark("timer")}`}>
                 <Clock size={14} /> 0:15
               </span>
             </div>
             <p className="text-sm text-muted">
-              {needs.mic ? tr("Listen to the sentence, then repeat it exactly.") : tr("Listen to the sentence, then type exactly what you hear.")}
+              {speaking ? tr("Listen to the sentence, then repeat it exactly.") : tr("Listen to the sentence, then type exactly what you hear.")}
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -303,7 +304,7 @@ function TourStep({ needs }: { needs: DeviceNeeds }) {
               >
                 <Play size={16} /> {tr("Play audio")} <span className="text-xs text-muted font-normal">({tr("{{n}} plays left", { n: 2 - plays })})</span>
               </button>
-              {needs.mic ? (
+              {speaking ? (
                 <button
                   type="button"
                   disabled={spot !== "answer"}
@@ -331,7 +332,7 @@ function TourStep({ needs }: { needs: DeviceNeeds }) {
 
       <div className="flex items-start gap-3 bg-accent/10 border border-accent/30 rounded-card p-4">
         <MousePointerClick size={18} className="text-navy-deep shrink-0 mt-0.5" />
-        <p className="text-sm text-ink flex-1">{tourText(spot, needs.mic)}</p>
+        <p className="text-sm text-ink flex-1">{tourText(spot, speaking)}</p>
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setI(Math.max(0, i - 1))}

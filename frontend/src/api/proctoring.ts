@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { heldTestConsent } from "@/lib/testConsent";
 
 export type ProctoringMode = "off" | "standard" | "strict";
 export type ProctoringRegion = "global" | "eu" | "us" | "india";
@@ -66,7 +67,31 @@ async function sebHeaders(): Promise<Record<string, string>> {
 
 export async function getProctoringSetup(sessionId: string): Promise<ProctoringSetup> {
   const extra = await sebHeaders();
+  // The agreement from the consent screen before the test, linked to this session.
+  const consent = heldTestConsent();
+  if (consent) extra["X-Test-Consent"] = consent;
   return api(`/proctoring/sessions/${sessionId}/setup`, { headers: { "Content-Type": "application/json", ...extra } });
+}
+
+// What the next test collects, for the consent screen before it.
+export type PreTestKind = "placement" | "speakingListening" | "fourSkills" | "writing" | "professional" | "module";
+
+export interface PreTestInfo {
+  proctored: boolean;
+  policy: ProctoringSetup["policy"] | null;
+  biometric: boolean;
+  faceCheck: boolean;
+  retentionDays: number;
+  recordingsMonths: number | null;
+  version: string;
+}
+
+export function getPreTestInfo(kind: PreTestKind): Promise<PreTestInfo> {
+  return api(`/proctoring/pre-test?kind=${encodeURIComponent(kind)}`);
+}
+
+export function givePreTestConsent(kind: PreTestKind, biometric: boolean): Promise<{ consentId: string; biometricOptOut: boolean }> {
+  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, accept: true, biometric }) });
 }
 
 export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {

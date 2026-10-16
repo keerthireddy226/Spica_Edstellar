@@ -67,6 +67,8 @@ export function PlacementTest() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
+  // The last answer is in and the level is being worked out.
+  const [finishing, setFinishing] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   // Whether this page load is resuming a session that was already started.
   const [alreadyInProgress, setAlreadyInProgress] = useState<boolean | null>(null);
@@ -93,9 +95,10 @@ export function PlacementTest() {
   const readyToLoadSession = alreadyInProgress === true || faceChecked;
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
-  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
+  // Monitoring stops as soon as the last answer is in.
+  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary && !finishing);
   usePeriodicFaceCheck(
-    readyToLoadSession && !summary && !requireReverify,
+    readyToLoadSession && !summary && !finishing && !requireReverify,
     "placement",
     sessionId,
     () => setRequireReverify(true),
@@ -205,8 +208,12 @@ export function PlacementTest() {
       }
       return;
     }
-    const result = await completeSession(sessionId!);
-    setSummary(result);
+    setFinishing(true);
+    try {
+      setSummary(await completeSession(sessionId!));
+    } finally {
+      setFinishing(false);
+    }
   }
 
   async function handleSubmit() {
@@ -380,6 +387,18 @@ export function PlacementTest() {
   }
 
   if (!current) return null;
+
+  if (finishing) {
+    return (
+      <div className="app-surface min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-lg bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-3 items-center text-center">
+          <CheckCircle2 size={32} className="text-success" />
+          <h1 className="font-display font-bold text-xl text-ink">{tr("Test finished")}</h1>
+          <p className="text-sm text-muted">{tr("Monitoring has stopped. Working out your level.")}</p>
+        </div>
+      </div>
+    );
+  }
 
   // Proctoring steps (consent, ID, room scan, voice sample) come before the test.
   if (sessionId && !proctor.ready) {

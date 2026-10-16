@@ -52,6 +52,7 @@ import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
+import type { PreTestKind } from "@/api/proctoring";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -73,9 +74,10 @@ interface CachedAnswer {
   durationMs?: number;
 }
 
-// "About 35 minutes" -> "35", for the demo's time card.
+// "Written English — 35 minutes." -> "35": the last number in the product
+// description, in any language ("35 Minuten", "35 मिनट", "35分").
 function productMinutes(description: string): string | null {
-  return description.match(/(\d+)\s*min/)?.[1] ?? null;
+  return description.match(/(\d+)\D*$/)?.[1] ?? null;
 }
 
 // The real Versant exam products. Durations/skills sourced directly from
@@ -206,13 +208,17 @@ export function PracticeTests() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<ExamCompleteResult | null>(null);
+  // The last answer is in and the score is being worked out.
+  const [finishing, setFinishing] = useState(false);
   // The organization's proctoring for this session: pre-test steps, then
   // monitoring until the score report shows.
-  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary);
+  // Monitoring stops as soon as the last answer is in: scoring can take a
+  // while, and the learner has finished.
+  const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary && !finishing);
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(
-    Boolean(sessionId) && !summary && !requireReverify,
+    Boolean(sessionId) && !summary && !finishing && !requireReverify,
     "practice_test",
     sessionId,
     () => setRequireReverify(true),
@@ -433,11 +439,14 @@ export function PracticeTests() {
     // question screen with a scary error when they've genuinely finished.
     // Show a pending-score fallback instead; the session is marked complete
     // server-side regardless (or will be on a retry from the score screen).
+    setFinishing(true);
     try {
       const result = await completeExamSession(sessionId);
       setSummary(result);
     } catch {
       setSummary({ gradedCount: 0, correctCount: 0, pendingCount: items.length, failedCount: 0, skippedCount: 0, overallPercent: 0, partResults: [] });
+    } finally {
+      setFinishing(false);
     }
   }
 
@@ -545,7 +554,7 @@ export function PracticeTests() {
   if (pendingExamId && preTestDoneFor !== pendingExamId && selectedProduct) {
     return (
       <PreTestFlow
-        kind={selectedProduct}
+        kind={selectedProduct as PreTestKind}
         minutes={productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`))}
         onBack={() => setPendingExamId(null)}
         onReady={() => setPreTestDoneFor(pendingExamId)}
@@ -657,6 +666,16 @@ export function PracticeTests() {
             {t("modules.backToDashboard")}
           </Button>
         </div>
+      </div>
+    );
+  }
+
+  if (finishing) {
+    return (
+      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-3 items-center text-center">
+        <CheckCircle2 size={32} className="text-success" />
+        <h1 className="font-display font-bold text-xl text-ink">{tr("Test finished")}</h1>
+        <p className="text-sm text-muted">{tr("Monitoring has stopped. Scoring your answers; this can take up to a minute.")}</p>
       </div>
     );
   }
@@ -963,6 +982,7 @@ export function PracticeTests() {
   // --- Exam (set) picker for the selected product ---
   if (selectedProduct) {
     const Icon = PRODUCT_ICON[selectedProduct as (typeof VERSANT_PRODUCTS)[number]];
+    const productMins = productMinutes(t(`practiceTests.versantProduct.${selectedProduct}Desc`));
     return (
       <div className="w-full flex flex-col gap-6">
         <LearnerHero
@@ -978,7 +998,7 @@ export function PracticeTests() {
                   { label: tr("Sets"), value: exams.length, icon: ClipboardCheck },
                   { label: tr("Completed"), value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
                   { label: tr("Questions per set"), value: exams[0]?.itemCount ?? "—", icon: ListChecks },
-                  { label: tr("Timing"), value: t(`practiceTests.versantProduct.${selectedProduct}Desc`).match(/\d+\s*min/)?.[0] ?? "—", icon: Clock },
+                  { label: tr("Timing"), value: productMins ? tr("{{m}} min", { m: productMins }) : "—", icon: Clock },
                 ]
               : undefined
           }
@@ -1057,7 +1077,7 @@ export function PracticeTests() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-5">
         {VERSANT_PRODUCTS.map((id, i) => {
           const Icon = PRODUCT_ICON[id];
-          const durationMatch = t(`practiceTests.versantProduct.${id}Desc`).match(/\d+\s*minutes/);
+          const minutes = productMinutes(t(`practiceTests.versantProduct.${id}Desc`));
           // Products the learner's organization switched off stay visible but closed.
           const enabled = !allowedProducts || allowedProducts.includes(id);
           return (
@@ -1097,9 +1117,9 @@ export function PracticeTests() {
                 <span className="text-sm text-muted leading-relaxed">{t(`practiceTests.versantProduct.${id}Desc`)}</span>
               </div>
               <div className="relative flex items-center gap-2 mt-auto">
-                {durationMatch && (
+                {minutes && (
                   <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
-                    <Clock size={11} /> {durationMatch[0]}
+                    <Clock size={11} /> {tr("{{m}} min", { m: minutes })}
                   </span>
                 )}
                 <span className="ml-auto flex items-center gap-1 text-xs font-bold text-ink transition-transform group-hover:translate-x-1">

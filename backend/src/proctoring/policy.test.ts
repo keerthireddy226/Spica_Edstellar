@@ -27,11 +27,19 @@ describe("presetPolicy", () => {
 });
 
 describe("normalizePolicy", () => {
-  it("gives an organization that never saved a policy no camera", () => {
+  it("gives an organization that never saved a policy no camera, but listens to the microphone", () => {
     const p = normalizePolicy(null);
     expect(p.mode).toBe("standard");
     expect(p.webcamMonitoring).toBe(false);
-    expect(needsConsent(p)).toBe(false);
+    expect(p.audioMonitoring).toBe(true);
+    // Listening needs the learner's agreement, but no paid plan.
+    expect(needsConsent(p)).toBe(true);
+    expect(needsSecureProctoringPlan(p)).toBe(false);
+  });
+
+  it("keeps listening off for a policy saved before it existed", () => {
+    const p = normalizePolicy({ mode: "standard", region: "global", webcamMonitoring: true });
+    expect(p.audioMonitoring).toBe(false);
   });
 
   it("fills missing fields from the matching preset", () => {

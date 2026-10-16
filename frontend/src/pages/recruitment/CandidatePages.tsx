@@ -184,8 +184,7 @@ export function CandidateAssessmentPage() {
   if (preparing && !started) {
     return (
       <div className="app-surface min-h-screen px-4 sm:px-6 py-10">
-        {/* One attempt only: always a fresh check, never a remembered one. */}
-        <PreTestFlow kind={a.testKind} minutes={TEST_MINUTES[a.testKind]} allowRemembered={false} onBack={() => setPreparing(false)} onReady={() => !busy && begin()} />
+        <PreTestFlow kind={a.testKind} minutes={TEST_MINUTES[a.testKind]} onBack={() => setPreparing(false)} onReady={() => !busy && begin()} />
       </div>
     );
   }

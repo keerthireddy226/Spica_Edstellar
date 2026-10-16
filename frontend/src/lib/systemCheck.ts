@@ -1,6 +1,6 @@
 // The device check before a test: connection speed, what each test needs,
-// the 24-hour "already passed" memory, and handing the result to the
-// session's integrity timeline once the session exists.
+// and handing the result to the session's integrity timeline once the
+// session exists. The check runs before every test; a pass is never reused.
 import { sendProctoringEvents } from "@/api/proctoring";
 
 export const MIN_DOWN_MBPS = 1;
@@ -12,9 +12,11 @@ export interface DeviceNeeds {
   speaker: boolean;
 }
 
-// The Writing test only listens (dictation); every other test also records speech.
-export function deviceNeedsFor(kind: string): DeviceNeeds {
-  return kind === "writing" ? { mic: false, speaker: true } : { mic: true, speaker: true };
+// Every test checks the microphone and room noise as well as the speakers,
+// including the Writing test: the microphone is also how a monitored test
+// listens for talking.
+export function deviceNeedsFor(_kind: string): DeviceNeeds {
+  return { mic: true, speaker: true };
 }
 
 export interface ConnectionResult {
@@ -111,32 +113,6 @@ export function summarizeCheck(r: DeviceCheckResult): string {
   parts.push(r.mic === "ok" ? "microphone OK" : "microphone not needed");
   if (r.noise) parts.push(r.noise === "quiet" ? "quiet room" : "noisy room");
   return parts.join(" · ");
-}
-
-// ---- Remembered pass (per browser, 24 hours) ----
-
-const PASS_KEY = "spica.deviceCheck";
-const PASS_VALID_MS = 24 * 3600_000;
-
-export function rememberPass(r: DeviceCheckResult) {
-  try {
-    localStorage.setItem(PASS_KEY, JSON.stringify(r));
-  } catch {
-    // Storage blocked: the check simply runs again next time.
-  }
-}
-
-// A pass from the last 24 hours that covered everything this test needs.
-export function recentPass(needs: DeviceNeeds): DeviceCheckResult | null {
-  try {
-    const r = JSON.parse(localStorage.getItem(PASS_KEY) ?? "null") as DeviceCheckResult | null;
-    if (!r || Date.now() - Date.parse(r.at) > PASS_VALID_MS) return null;
-    if (needs.mic && r.mic !== "ok") return null;
-    if (needs.speaker && r.speaker !== "ok") return null;
-    return r;
-  } catch {
-    return null;
-  }
 }
 
 // ---- Demo preference ----
