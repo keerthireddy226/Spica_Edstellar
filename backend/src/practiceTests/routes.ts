@@ -36,7 +36,7 @@ interface PartBoundary {
 async function selectExamItems(examId: string) {
   const result = await pool.query(
     `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
-       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds,
+       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds, it.prep_seconds, it.min_words, it.max_words,
        ep.id AS exam_part_id, ep.part_label, ep.sort_order
      FROM items i
      JOIN item_types it ON it.id = i.item_type_id
@@ -71,7 +71,7 @@ async function selectRandomizedItems(examId: string) {
   if (ids.length === 0) return { rows: [], partIdByOrder: new Map<number, string>() };
   const result = await pool.query(
     `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
-       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds,
+       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds, it.prep_seconds, it.min_words, it.max_words,
        ep.id AS exam_part_id, ep.part_label, ep.sort_order
      FROM items i
      JOIN item_types it ON it.id = i.item_type_id
@@ -94,7 +94,7 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
   const partBoundaries: PartBoundary[] = (sessionRow.composition?.partBoundaries as PartBoundary[]) ?? [];
   const itemsResult = await pool.query(
     `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
-       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds
+       it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds, it.prep_seconds, it.min_words, it.max_words
      FROM items i JOIN item_types it ON it.id = i.item_type_id
      WHERE i.id = ANY($1::uuid[])`,
     [itemIds],

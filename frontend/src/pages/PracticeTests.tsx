@@ -60,6 +60,8 @@ import {
   getSpokenSegments,
   getVisibleText,
   getPassageAndQuestion,
+  getGroupQuestions,
+  parseGroupAnswer,
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
@@ -726,7 +728,12 @@ export function PracticeTests() {
 
   // --- Running session ---
   if (sessionId && current) {
-    const canSubmit = current.inputMethod === "mic" ? !recording && !!audioBlobUrl : answerText.trim() !== "";
+    const canSubmit =
+      current.inputMethod === "mic"
+        ? !recording && !!audioBlobUrl
+        : current.inputMethod === "mcq_group"
+          ? parseGroupAnswer(answerText, getGroupQuestions(current).length).every((x) => x !== null)
+          : answerText.trim() !== "";
     const progressPct = Math.round((index / items.length) * 100);
     return (
       <div className="max-w-4xl mx-auto flex flex-col gap-3">
@@ -828,7 +835,7 @@ export function PracticeTests() {
                 </div>
                 <div className="relative rounded-card bg-accent/10 border border-accent/25 p-5 pt-8 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden">
                   <span className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-wider text-accent">
-                    {t("practiceTests.youSay")}
+                    {current.inputMethod === "mic" ? t("practiceTests.youSay") : tr("Your answer")}
                   </span>
                   <MessageSquare size={64} strokeWidth={1.5} className="absolute -right-3 -bottom-3 text-accent/10 pointer-events-none" />
                   <AnswerInputControl

@@ -10,6 +10,11 @@ export const AUDIO_FIRST_TYPES = new Set([
   "conversations",
   "passage_comprehension",
   "response_selection",
+  "lc_listen_mcq",
+  "lc_listen_reply",
+  "lc_listen_dialogue",
+  "lc_listen_conversation",
+  "lc_listen_long",
 ]);
 
 // Tailwind can't resolve a dynamic `text-${skill}` class at build time — spelled out directly.
@@ -39,6 +44,21 @@ export const ITEM_TYPE_META: Record<string, { name: string; skills: ("listening"
   sentence_completion: { name: "Sentence Completion", skills: ["writing"] },
   typing: { name: "Typing", skills: ["writing"] },
   email_writing: { name: "E-Mail Writing", skills: ["writing"] },
+  lc_listen_mcq: { name: "Short Utterances", skills: ["listening"] },
+  lc_listen_reply: { name: "Best Reply", skills: ["listening"] },
+  lc_listen_dialogue: { name: "Complete the Dialogue", skills: ["listening"] },
+  lc_listen_conversation: { name: "Short Conversations", skills: ["listening"] },
+  lc_listen_long: { name: "Longer Listening", skills: ["listening"] },
+  lc_read_short: { name: "Short Texts", skills: ["reading"] },
+  lc_read_cloze: { name: "Gapped Text", skills: ["reading"] },
+  lc_read_gap: { name: "Gapped Sentences", skills: ["reading"] },
+  lc_read_long: { name: "Longer Texts", skills: ["reading"] },
+  lc_write_task1: { name: "Writing Task 1", skills: ["writing"] },
+  lc_write_task2: { name: "Writing Task 2", skills: ["writing"] },
+  lc_speak_personal: { name: "Personal Questions", skills: ["speaking"] },
+  lc_speak_discussion: { name: "Discussion", skills: ["speaking"] },
+  lc_speak_presentation: { name: "Presenting a Topic", skills: ["speaking"] },
+  lc_speak_followup: { name: "Follow-up Questions", skills: ["speaking"] },
 };
 
 // Authored dialogue content is literal "A: ... B: ..." — read aloud as-is
@@ -52,6 +72,8 @@ export function formatSpeakers(dialogue: string): string {
 
 export function getSpokenSegments(item: TestItem): string[] {
   const c = item.content as Record<string, unknown>;
+  // LanguageCert-style listening: the recording's script. KEEP IN SYNC with backend spokenText.ts.
+  if (typeof c.audio === "string") return [formatSpeakers(c.audio)];
   if (item.itemTypeId === "sentence_builds" && Array.isArray(c.groups)) return c.groups as string[];
   // Types with a heard passage/dialogue AND a follow-up question — both get
   // spoken, in order, not just whichever field a generic fallback finds first.
@@ -77,11 +99,36 @@ export function getPassageAndQuestion(item: TestItem): { passage: string; questi
   if (item.itemTypeId === "reading_comprehension" && typeof c.passage === "string" && typeof c.question === "string") {
     return { passage: c.passage, question: c.question };
   }
+  if (item.itemTypeId === "lc_read_short" && typeof c.text === "string" && typeof c.question === "string") {
+    return { passage: c.text, question: c.question };
+  }
   return null;
 }
 
 // Multiple-choice option labels for "radio" input-method items
 // (response_selection, reading_comprehension) — empty for every other type.
+// Grouped questions (one recording or text, several questions).
+export interface GroupQuestion {
+  stem?: string;
+  options: string[];
+}
+
+export function getGroupQuestions(item: TestItem): GroupQuestion[] {
+  const c = item.content as Record<string, unknown>;
+  return Array.isArray(c.questions) ? (c.questions as GroupQuestion[]) : [];
+}
+
+// The answer to a grouped item is a JSON array of chosen option indexes.
+export function parseGroupAnswer(answerText: string, count: number): (number | null)[] {
+  let parsed: unknown = null;
+  try {
+    parsed = JSON.parse(answerText);
+  } catch {
+    // Nothing chosen yet.
+  }
+  return Array.from({ length: count }, (_, i) => (Array.isArray(parsed) && Number.isInteger(parsed[i]) ? (parsed[i] as number) : null));
+}
+
 export function getOptions(item: TestItem): string[] {
   const c = item.content as Record<string, unknown>;
   return Array.isArray(c.options) ? (c.options as string[]) : [];

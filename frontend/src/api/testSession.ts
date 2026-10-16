@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 
-type InputMethod = "mic" | "text" | "textarea" | "radio" | "two-phase";
+type InputMethod = "mic" | "text" | "textarea" | "radio" | "two-phase" | "mcq_group";
 
 export interface TestItem {
   id: string;
@@ -13,6 +13,11 @@ export interface TestItem {
   timerSeconds: number | null;
   twoPhaseReadSeconds?: number | null;
   twoPhaseWriteSeconds?: number | null;
+  // Preparation time before a spoken answer can start (LanguageCert-style speaking).
+  prepSeconds?: number | null;
+  // Word range for writing tasks, shown as a counter.
+  minWords?: number | null;
+  maxWords?: number | null;
   attempted?: boolean;
   responseText?: string | null;
   // Pre-generated AI voice audio for this item in the learner's preferred

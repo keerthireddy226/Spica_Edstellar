@@ -9,6 +9,8 @@ function formatSpeakers(dialogue: string): string {
 }
 
 export function getSpokenSegments(itemTypeId: string, content: Record<string, unknown>): string[] {
+  // LanguageCert-style listening: the recording's script (a dialogue uses "A:"/"B:").
+  if (typeof content.audio === "string") return [formatSpeakers(content.audio)];
   if (itemTypeId === "sentence_builds" && Array.isArray(content.groups)) return content.groups as string[];
   if (typeof content.dialogue === "string" && typeof content.question === "string") {
     return [formatSpeakers(content.dialogue), content.question];
@@ -33,4 +35,9 @@ export const AUDIO_FIRST_TYPES = new Set([
   "conversations",
   "passage_comprehension",
   "response_selection",
+  "lc_listen_mcq",
+  "lc_listen_reply",
+  "lc_listen_dialogue",
+  "lc_listen_conversation",
+  "lc_listen_long",
 ]);

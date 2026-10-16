@@ -128,6 +128,27 @@ describe("gradeAttempt", () => {
     });
   });
 
+  describe("LanguageCert-style multiple choice", () => {
+    it("grades a single question by option index", async () => {
+      expect((await gradeAttempt("lc_read_gap", { correctIndex: 2 }, {}, "B1", null, "2")).correct).toBe(true);
+      expect((await gradeAttempt("lc_listen_mcq", { correctIndex: 2 }, {}, "B1", null, "0")).correct).toBe(false);
+    });
+
+    it("scores a grouped question by the share answered correctly", async () => {
+      const result = await gradeAttempt("lc_read_long", { correct: [0, 1, 2, 0, 1] }, {}, "B1", null, "[0,1,2,0,2]");
+      expect(result).toMatchObject({ status: "scored", score: 0.8, correct: true, method: "exact-match" });
+    });
+
+    it("counts an unanswered question in a group as wrong", async () => {
+      const result = await gradeAttempt("lc_listen_conversation", { correct: [1, 2] }, {}, "B1", null, "[1,null]");
+      expect(result.score).toBe(0.5);
+    });
+
+    it("is pending when the group answer isn't readable", async () => {
+      expect((await gradeAttempt("lc_read_cloze", { correct: [0, 1] }, {}, "B1", null, "not json")).status).toBe("pending");
+    });
+  });
+
   it("falls back to pending for an item type with no grading rule at all", async () => {
     const result = await gradeAttempt("some_unhandled_type", {}, {}, "A1", null, "anything");
     expect(result).toEqual({ status: "pending", correct: null, score: null, method: null });

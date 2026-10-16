@@ -80,12 +80,37 @@ export async function gradeAttempt(
     }
     // Multiple-choice: client submits the option's index as a string (e.g. "1") — exact to grade.
     case "response_selection":
-    case "reading_comprehension": {
+    case "reading_comprehension":
+    case "lc_listen_mcq":
+    case "lc_listen_reply":
+    case "lc_listen_dialogue":
+    case "lc_read_short":
+    case "lc_read_gap": {
       const correctIndex = set.correctIndex;
       if (typeof correctIndex !== "number") return PENDING;
       const givenIndex = Number(responseText);
       if (!Number.isInteger(givenIndex)) return PENDING;
       return exactResult(givenIndex === correctIndex);
+    }
+    // One recording or text with several questions: the client submits the
+    // chosen option per question as a JSON array ("[0,2,1]"); the score is the
+    // share answered correctly, one mark per question.
+    case "lc_listen_conversation":
+    case "lc_listen_long":
+    case "lc_read_cloze":
+    case "lc_read_long": {
+      const correct = set.correct;
+      if (!Array.isArray(correct) || correct.length === 0) return PENDING;
+      let given: unknown;
+      try {
+        given = JSON.parse(responseText);
+      } catch {
+        return PENDING;
+      }
+      if (!Array.isArray(given)) return PENDING;
+      const right = correct.filter((c, i) => Number.isInteger(given[i]) && given[i] === c).length;
+      const score = right / correct.length;
+      return { status: "scored", correct: score >= passThresholdForLevel(cefrLevel), score, method: "exact-match" };
     }
     // A copy-the-passage-exactly typing drill — there's a definite target
     // text, so a word-level diff (not an AI judgment call) is the right tool.

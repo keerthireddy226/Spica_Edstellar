@@ -11,6 +11,10 @@ export function toItemPayload(row: {
   timer_seconds: number | null;
   two_phase_read_seconds: number | null;
   two_phase_write_seconds: number | null;
+  // Only selected where the screen needs them (practice tests).
+  prep_seconds?: number | null;
+  min_words?: number | null;
+  max_words?: number | null;
 }) {
   return {
     id: row.id,
@@ -23,5 +27,8 @@ export function toItemPayload(row: {
     timerSeconds: row.timer_seconds,
     twoPhaseReadSeconds: row.two_phase_read_seconds,
     twoPhaseWriteSeconds: row.two_phase_write_seconds,
+    prepSeconds: row.prep_seconds ?? null,
+    minWords: row.min_words ?? null,
+    maxWords: row.max_words ?? null,
   };
 }

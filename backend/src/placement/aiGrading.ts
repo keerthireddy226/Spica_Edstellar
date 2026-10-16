@@ -53,6 +53,10 @@ const SPOKEN_TYPES = new Set([
   "story_retelling",
   "speaking_situations",
   "open_questions",
+  "lc_speak_personal",
+  "lc_speak_discussion",
+  "lc_speak_presentation",
+  "lc_speak_followup",
 ]);
 const SPOKEN_RULE =
   "This is an automatic transcript of speech. Ignore spelling, punctuation and capital letters, and don't penalize the speaker's accent or a word the transcript obviously misheard. Judge the content, the grammar and the vocabulary.";
@@ -94,6 +98,20 @@ function buildTask(
       return `The learner was given this situation and had to respond to it appropriately: "${str(content.situation)}". This is a transcript of their spoken response.`;
     case "open_questions":
       return `The learner was asked this open-ended question, and should give their own genuine answer: "${str(content.prompt)}". This is a transcript of their spoken answer.`;
+    // LanguageCert-style writing, marked like the LTE: task fulfilment, organisation, grammar, vocabulary.
+    case "lc_write_task1":
+    case "lc_write_task2": {
+      const range = itemTypeId === "lc_write_task1" ? "60 to 100" : "200 to 250";
+      return `Writing task: "${str(content.prompt)}". It should be ${range} words. Judge task fulfilment (all points covered, right format and register), organisation, grammar range and accuracy, and vocabulary range and accuracy.`;
+    }
+    // LanguageCert-style speaking, marked like the LTE: task completion, fluency, grammar, vocabulary.
+    case "lc_speak_personal":
+    case "lc_speak_followup":
+      return `The learner was asked: "${str(content.prompt)}". This is a transcript of their spoken answer. Judge whether it answers the question with relevant detail, and its fluency, grammar and vocabulary.`;
+    case "lc_speak_discussion":
+      return `The learner had to discuss this situation and these ideas, say which are best and why, and reach a decision: "${str(content.prompt)}" Ideas: ${JSON.stringify(content.ideas ?? [])}. This is a transcript of their spoken answer. Judge task completion (ideas compared, opinions justified, a decision reached), fluency and coherence, grammar and vocabulary.`;
+    case "lc_speak_presentation":
+      return `The learner had to talk for about 2 minutes on this topic: "${str(content.prompt)}" Points to cover: ${JSON.stringify(content.points ?? [])}. This is a transcript of their talk. Judge task completion (topic developed, points covered), fluency and coherence, grammar and vocabulary.`;
     default:
       return null;
   }
@@ -199,4 +217,10 @@ export const AI_GRADED_TYPES = new Set([
   "story_retelling",
   "speaking_situations",
   "open_questions",
+  "lc_write_task1",
+  "lc_write_task2",
+  "lc_speak_personal",
+  "lc_speak_discussion",
+  "lc_speak_presentation",
+  "lc_speak_followup",
 ]);
