@@ -10,6 +10,16 @@ import { passThresholdForLevel } from "./placement/cefr.js";
 
 export const UPLOADS_DIR = path.join(process.cwd(), "uploads", "attempts");
 
+// Gemini listened and heard no speech, and the browser heard none either: the
+// answer is empty, so it scores 0 like any empty answer instead of waiting
+// for a grade that will never come.
+const NO_SPEECH: GradeResult = { status: "scored", correct: false, score: 0, method: null };
+const NO_SPEECH_VERSION = "no-speech-v1";
+
+function heardNoSpeech(gemini: { transcript: string } | null, browserText: string | null | undefined): boolean {
+  return !!gemini && !gemini.transcript.trim() && !browserText?.trim();
+}
+
 export interface AttemptBody {
   itemId: string;
   responseText?: string;
@@ -91,9 +101,12 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   const effectiveResponseText = (item.input_method === "mic" ? geminiScores?.transcript || body.responseText : body.responseText) || undefined;
 
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
+  const noSpeech = item.input_method === "mic" && heardNoSpeech(geminiScores, body.responseText);
   const grade: GradeResult = deferred
     ? { status: "pending", correct: null, score: null, method: null }
-    : await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, effectiveResponseText);
+    : noSpeech
+      ? NO_SPEECH
+      : await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, effectiveResponseText);
   const responseText = effectiveResponseText ?? null;
 
   // Resubmitting the same item in a session replaces the old attempt instead
@@ -124,8 +137,9 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // model_version is NOT NULL, so a genuinely ungraded (pending/failed, no
   // method) attempt gets an honest "n/a" instead of falsely claiming
   // exact-match-v1 was the method used.
-  const modelVersion =
-    grade.method === "ai-text"
+  const modelVersion = noSpeech
+    ? NO_SPEECH_VERSION
+    : grade.method === "ai-text"
       ? "gemini-3.5-flash-lite-v1"
       : grade.method === "text-diff"
         ? "text-diff-v1"
@@ -190,11 +204,12 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   if (!geminiScores && !opts.final) throw new Error("speaking grading: Gemini didn't answer, will retry");
 
   const responseText: string | null = geminiScores?.transcript || r.response_text || null;
-  const grade = await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined);
+  const noSpeech = heardNoSpeech(geminiScores, r.response_text);
+  const grade = noSpeech ? NO_SPEECH : await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined);
   const durationMs = r.manner_scores?.durationMs ?? null;
   const freeSignals = responseText ? computeFluencySignals(responseText, durationMs) : null;
   const mannerScores = freeSignals || geminiScores ? { ...freeSignals, gemini: geminiScores ?? undefined } : null;
-  const modelVersion = grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : grade.method === "exact-match" ? "exact-match-v1" : "n/a";
+  const modelVersion = noSpeech ? NO_SPEECH_VERSION : grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : grade.method === "exact-match" ? "exact-match-v1" : "n/a";
 
   await pool.query(`UPDATE attempts SET response_text = $2 WHERE id = $1`, [attemptId, responseText]);
   // Only a still-pending score is written: a grading that finished first wins.
@@ -224,4 +239,20 @@ export async function finishPendingSpeaking(sessionId: string): Promise<void> {
     pending = await pendingSpeaking(sessionId);
   }
   await Promise.all(pending.map((id) => gradeSpeakingAttempt(id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking grading failed:", err))));
+}
+
+// A recorded answer can be left ungraded: Gemini and the browser's speech
+// recognition both failed under older code, or every background try ran out.
+// Each one gets one more round of background tries (once per attempt).
+export async function sweepStuckSpeaking(): Promise<number> {
+  const r = await pool.query(
+    `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+     WHERE sc.status = 'pending' AND a.response_uri IS NOT NULL AND it.input_method = 'mic'
+       AND a.submitted_at BETWEEN now() - interval '30 days' AND now() - interval '10 minutes'`,
+  );
+  let queued = 0;
+  for (const { id } of r.rows) {
+    if (await enqueue("grading.speaking.retry", { attemptId: id }, { dedupeKey: `grading.speaking.retry:${id}`, maxAttempts: 3 })) queued++;
+  }
+  return queued;
 }
