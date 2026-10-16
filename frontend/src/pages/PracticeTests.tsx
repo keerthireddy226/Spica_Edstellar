@@ -17,6 +17,8 @@ import {
   Layers,
   Award,
   PlayCircle,
+  Timer,
+  BookOpenCheck,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -27,9 +29,14 @@ import {
   getProducts,
   getExamsForProduct,
   startExamSession,
+  startMockSession,
   getExamSession,
+  markItemShown,
   submitExamAttempt,
+  getPracticeFeedback,
   completeExamSession,
+  type ExamSessionData,
+  type PracticeFeedback,
   type CatalogueFamily,
   type ExamSummary,
   type PartBoundary,
@@ -52,7 +59,8 @@ import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
-import type { PreTestKind } from "@/api/proctoring";
+import type { DeliveryMode, PreTestKind } from "@/api/proctoring";
+import { AnswerFeedback } from "@/components/AnswerFeedback";
 import {
   AUDIO_FIRST_TYPES,
   SKILL_BADGE_CLASS,
@@ -67,6 +75,18 @@ import {
 import { tr } from "@/i18n/tr";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
+
+// A Start, Retake or mock exam waiting for its pre-test steps. key tells
+// one start from another (a set id, or "mock:" and the test type).
+interface PendingStart {
+  key: string;
+  mode: DeliveryMode;
+  examId?: string;
+  testTypeId?: string;
+}
+
+// Mock exams: how long the time-up warning shows red.
+const MOCK_WARNING_SECONDS = 10;
 
 interface CachedAnswer {
   responseText: string;
@@ -90,14 +110,14 @@ export function PracticeTests() {
       .then((res) => setFaceEnrolled(res.enrolled))
       .catch(() => setFaceEnrolled(true));
   }, []);
-  // Set when "Start"/"Retake" is clicked — gates the actual session start
-  // behind a face check, same pattern as Modules/Placement.
-  const [pendingExamId, setPendingExamId] = useState<string | null>(null);
+  // Set when "Start"/"Retake"/"Start mock exam" is clicked — gates the
+  // actual session start behind a face check, same pattern as Modules/Placement.
+  const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
   useEffect(() => {
-    if (pendingExamId && faceEnrolled === false) {
+    if (pendingStart && faceEnrolled === false) {
       navigate(ROUTES.FACE_ENROLLMENT, { state: { next: `${location.pathname}${location.search}` } });
     }
-  }, [pendingExamId, faceEnrolled, navigate, location.pathname, location.search]);
+  }, [pendingStart, faceEnrolled, navigate, location.pathname, location.search]);
   // Set by a mid-session spoof detection — re-shows the gate, session stays intact.
   const [requireReverify, setRequireReverify] = useState(false);
   // The exam whose device check and demo are done; the face check comes next.
@@ -108,11 +128,17 @@ export function PracticeTests() {
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   // The exam catalogue: families and their test types.
   const [catalogue, setCatalogue] = useState<CatalogueFamily[] | null>(null);
-  useEffect(() => {
+  // The learner's mock exam in progress, if any (one at a time).
+  const [openMock, setOpenMock] = useState<{ sessionId: string; testTypeId: string | null } | null>(null);
+  function loadProducts() {
     getProducts()
-      .then((r) => setCatalogue(r.families))
+      .then((r) => {
+        setCatalogue(r.families);
+        setOpenMock(r.openMock);
+      })
       .catch(() => setCatalogue([]));
-  }, []);
+  }
+  useEffect(loadProducts, []);
   const testTypes = catalogue?.flatMap((f) => f.testTypes) ?? [];
   const selectedType = testTypes.find((tt) => tt.id === selectedProduct) ?? null;
   const [exams, setExams] = useState<ExamSummary[] | null>(null);
@@ -120,7 +146,7 @@ export function PracticeTests() {
   // the score report so a learner can tell which test they just took.
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [loadingExams, setLoadingExams] = useState(false);
-  const activeTestId = exams?.find((e) => e.id === activeExamId)?.testId ?? null;
+  const activeTestIdOfSet = exams?.find((e) => e.id === activeExamId)?.testId ?? null;
 
   function openProduct(productId: string) {
     setSelectedProduct(productId);
@@ -163,6 +189,21 @@ export function PracticeTests() {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [testCode, setTestCode] = useState<string | null>(null);
+  // Practice: go back, feedback after each answer. Mock: exam conditions.
+  const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("practice");
+  const isMock = deliveryMode === "mock";
+  // A mock mixes questions from every set, so it has no set Test ID.
+  const activeTestId = isMock ? null : activeTestIdOfSet;
+  // Mock exams: the server's clock minus this computer's, and when the whole
+  // exam ends (server time).
+  const clockOffsetRef = useRef(0);
+  const mockDeadlineRef = useRef<number | null>(null);
+  // Mock: when the current question's time runs out (this computer's clock).
+  const questionEndsAtRef = useRef<number | null>(null);
+  const [mockSecondsLeft, setMockSecondsLeft] = useState<number | null>(null);
+  const timeUpFiredRef = useRef(false);
+  // Practice: feedback on the answer just submitted.
+  const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
   const [partBoundaries, setPartBoundaries] = useState<PartBoundary[]>([]);
   const [items, setItems] = useState<TestItem[]>([]);
   const [index, setIndex] = useState(0);
@@ -224,9 +265,13 @@ export function PracticeTests() {
 
   // Shared by a fresh start and a refresh-resume — both hand it the same
   // { sessionId, partBoundaries, items } shape.
-  function applySessionData(res: { sessionId: string; testCode: string | null; examId: string; partBoundaries: PartBoundary[]; items: TestItem[] }) {
+  function applySessionData(res: ExamSessionData) {
     setSessionId(res.sessionId);
     setTestCode(res.testCode);
+    setDeliveryMode(res.deliveryMode ?? "practice");
+    clockOffsetRef.current = res.timing ? Date.parse(res.timing.serverNow) - Date.now() : 0;
+    mockDeadlineRef.current = res.timing?.deadlineAt ? Date.parse(res.timing.deadlineAt) : null;
+    setFeedback(null);
     setActiveExamId(res.examId);
     setPartBoundaries(res.partBoundaries);
     setItems(res.items);
@@ -239,7 +284,8 @@ export function PracticeTests() {
     setSummary(null);
     reportHeldCheck(res.sessionId);
 
-    const isFreshStart = res.items.every((item) => !item.attempted);
+    // A mock question already shown has its clock running: no overview again.
+    const isFreshStart = res.items.every((item) => !item.attempted && (item.secondsLeft ?? null) === null);
     setShowExamOverview(isFreshStart);
     // Resuming mid-section shouldn't re-interrupt with that section's
     // intro — mark every part up to and including the resumed one as
@@ -260,14 +306,16 @@ export function PracticeTests() {
     );
   }
 
-  async function handleStartExam(examId: string) {
+  async function handleStartExam(start: PendingStart) {
     setStarting(true);
     setError(null);
     try {
-      const res = await startExamSession(examId);
+      const res = start.mode === "mock" ? await startMockSession(start.testTypeId!) : await startExamSession(start.examId!);
       applySessionData(res);
-    } catch {
-      setError(t("practiceTests.loadError"));
+    } catch (err) {
+      const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
+      setError(code === "mock_in_progress" ? tr("You have another mock exam in progress. Finish it first.") : t("practiceTests.loadError"));
+      loadProducts();
     } finally {
       setStarting(false);
     }
@@ -335,11 +383,12 @@ export function PracticeTests() {
     setPlayCount(playCountsRef.current[index] ?? 0);
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
+    setFeedback(null);
   }, [index]);
 
-  // Live countdown, display-only — doesn't gate or auto-submit anything.
+  // Practice: a live countdown as a guide — doesn't gate or auto-submit anything.
   useEffect(() => {
-    if (!current?.timerSeconds) {
+    if (isMock || !current?.timerSeconds) {
       setRemainingSeconds(null);
       return;
     }
@@ -349,7 +398,74 @@ export function PracticeTests() {
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, current?.timerSeconds]);
+  }, [index, current?.timerSeconds, isMock]);
+
+  // Mock: a question's clock starts on the server the first time it shows
+  // (after the overview and section instructions), so a reload or a closed
+  // tab doesn't stop it. At 0:00 the answer so far is submitted.
+  const questionVisible = Boolean(sessionId && current && !showExamOverview && !showSectionIntro && proctor.ready && !summary && !finishing);
+  useEffect(() => {
+    if (!isMock || !questionVisible || !sessionId || !current) return;
+    questionEndsAtRef.current = null;
+    timeUpFiredRef.current = false;
+    setMockSecondsLeft(null);
+    // The whole exam's time is over (a learner coming back much later): finish it.
+    if (mockDeadlineRef.current !== null && Date.now() + clockOffsetRef.current > mockDeadlineRef.current) {
+      finishTest();
+      return;
+    }
+    let cancelled = false;
+    const startClock = (seconds: number | null | undefined) => {
+      if (cancelled || seconds === null || seconds === undefined) return;
+      questionEndsAtRef.current = Date.now() + seconds * 1000;
+      setMockSecondsLeft(seconds);
+    };
+    markItemShown(sessionId, current.id)
+      .then((r) => startClock(r.secondsLeft))
+      // Offline for a moment: count down locally; the server still enforces its own time.
+      .catch(() => startClock(current.secondsLeft ?? current.limitSeconds));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMock, questionVisible, sessionId, current?.id]);
+
+  const timeUpRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    if (!isMock) return;
+    const timer = setInterval(() => {
+      const end = questionEndsAtRef.current;
+      if (end === null) return;
+      const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      setMockSecondsLeft(left);
+      if (left === 0 && !timeUpFiredRef.current) {
+        timeUpFiredRef.current = true;
+        timeUpRef.current();
+      }
+    }, 250);
+    return () => clearInterval(timer);
+  }, [isMock]);
+
+  // Practice: a recorded answer is scored in the background; check back for its feedback.
+  useEffect(() => {
+    if (feedback?.status !== "pending" || !sessionId || !current) return;
+    const itemId = current.id;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      getPracticeFeedback(sessionId, itemId)
+        .then((r) => {
+          if (r.feedback.status !== "pending") {
+            setFeedback(r.feedback);
+            clearInterval(timer);
+          }
+        })
+        .catch(() => {});
+      if (tries >= 15) clearInterval(timer);
+    }, 3000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback?.status, sessionId, current?.id]);
 
   function handleStartReading() {
     if (!current) return;
@@ -412,6 +528,10 @@ export function PracticeTests() {
       setIndex(index + 1);
       return;
     }
+    await finishTest();
+  }
+
+  async function finishTest() {
     if (!sessionId) return;
     // Every item was already submitted successfully by this point (this
     // only runs after handleSubmit's own submitExamAttempt succeeded) — a
@@ -441,6 +561,12 @@ export function PracticeTests() {
     return err instanceof ApiError && (err.body as { error?: string } | undefined)?.error === "session_already_completed";
   }
 
+  // Mock: the question was already answered (a double click, or a reload
+  // after the answer went in): carry on with the next one.
+  function isAlreadyAnsweredError(err: unknown): boolean {
+    return err instanceof ApiError && (err.body as { error?: string } | undefined)?.error === "already_answered";
+  }
+
   async function recoverAlreadyCompletedSession() {
     if (!sessionId) return;
     try {
@@ -451,24 +577,32 @@ export function PracticeTests() {
     }
   }
 
-  async function handleSubmit() {
+  // recorded: a recording stopped by the mock's time-up, not yet in state.
+  async function handleSubmit(recorded?: { audioBase64: string; audioMimeType: string; durationMs: number; transcript: string }) {
     if (!current || !sessionId) return;
     setSubmitting(true);
     setError(null);
     try {
-      await submitExamAttempt(sessionId, {
+      const res = await submitExamAttempt(sessionId, {
         itemId: current.id,
-        responseText: answerText.trim() || undefined,
-        audioBase64: pendingAudio?.base64,
-        audioMimeType: pendingAudio?.mimeType,
-        durationMs: recordingDurationMs ?? undefined,
+        responseText: (recorded ? recorded.transcript : answerText).trim() || undefined,
+        audioBase64: recorded?.audioBase64 ?? pendingAudio?.base64,
+        audioMimeType: recorded?.audioMimeType ?? pendingAudio?.mimeType,
+        durationMs: recorded?.durationMs ?? recordingDurationMs ?? undefined,
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
+      // Practice: show how the answer did before moving on.
+      if (res.feedback) {
+        setFeedback(res.feedback);
+        return;
+      }
       await finishOrAdvance();
     } catch (err) {
       if (isAlreadyCompletedError(err)) {
         await recoverAlreadyCompletedSession();
+      } else if (isAlreadyAnsweredError(err)) {
+        await finishOrAdvance();
       } else {
         setError(t("placementTest.submitError"));
       }
@@ -492,6 +626,8 @@ export function PracticeTests() {
     } catch (err) {
       if (isAlreadyCompletedError(err)) {
         await recoverAlreadyCompletedSession();
+      } else if (isAlreadyAnsweredError(err)) {
+        await finishOrAdvance();
       } else {
         setError(t("placementTest.submitError"));
       }
@@ -500,14 +636,33 @@ export function PracticeTests() {
     }
   }
 
+  // Mock: time's up. A recording in progress is stopped and sent; whatever
+  // was typed or chosen is sent; nothing at all counts as unanswered.
+  async function handleTimeUp() {
+    if (submitting || !current) return;
+    if (recording) {
+      const r = await stopRecording();
+      if (r.blob) {
+        return handleSubmit({ audioBase64: await blobToBase64(r.blob), audioMimeType: r.mimeType, durationMs: r.durationMs, transcript: r.transcript ?? "" });
+      }
+      return handleSkip();
+    }
+    if (answerText.trim() || pendingAudio) return handleSubmit();
+    return handleSkip();
+  }
+  timeUpRef.current = () => void handleTimeUp();
+
   function handleBack() {
-    if (index === 0) return;
+    if (index === 0 || isMock) return;
     cacheCurrentAnswer();
     setIndex(index - 1);
   }
 
   function resetToExamList() {
     setSessionId(null);
+    setDeliveryMode("practice");
+    setFeedback(null);
+    loadProducts();
     setTestCode(null);
     setItems([]);
     setPartBoundaries([]);
@@ -531,27 +686,28 @@ export function PracticeTests() {
 
   // A Start/Retake was clicked: the device check and demo come first, then
   // the face check (same pattern as Modules/Placement) gates the session start.
-  if (pendingExamId && preTestDoneFor !== pendingExamId && selectedProduct) {
+  if (pendingStart && preTestDoneFor !== pendingStart.key && selectedProduct) {
     return (
       <PreTestFlow
         kind={selectedProduct as PreTestKind}
+        mode={pendingStart.mode}
         minutes={selectedType ? String(selectedType.durationMinutes) : null}
-        onBack={() => setPendingExamId(null)}
-        onReady={() => setPreTestDoneFor(pendingExamId)}
+        onBack={() => setPendingStart(null)}
+        onReady={() => setPreTestDoneFor(pendingStart.key)}
       />
     );
   }
-  if (pendingExamId) {
+  if (pendingStart) {
     if (faceEnrolled === null || faceEnrolled === false) return null; // enrollment redirect effect above handles the false case
     return (
       <FaceCheck
         mode="verify"
         purpose="practice_test"
-        onBack={() => setPendingExamId(null)}
+        onBack={() => setPendingStart(null)}
         onComplete={() => {
-          const examId = pendingExamId;
-          setPendingExamId(null);
-          handleStartExam(examId);
+          const start = pendingStart;
+          setPendingStart(null);
+          handleStartExam(start);
         }}
       />
     );
@@ -570,7 +726,7 @@ export function PracticeTests() {
         <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
           <CheckCircle2 size={32} />
         </div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("practiceTests.scoreReport.title")}</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">{summary.deliveryMode === "mock" ? tr("Mock exam report") : t("practiceTests.scoreReport.title")}</h1>
         <div className="flex flex-wrap justify-center gap-2 -mt-2">
           {activeTestId && <TestIdTag code={activeTestId} />}
           {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} label={tr("Attempt ID")} />}
@@ -592,7 +748,23 @@ export function PracticeTests() {
             <span className="text-4xl font-display font-bold text-ink">{summary.overallPercent}%</span>
             <span className="text-xs text-muted uppercase tracking-wide">{t("practiceTests.scoreReport.overall")}</span>
           </div>
+          {summary.scoreBand && (
+            <div className="flex-1 max-w-40 flex flex-col items-center gap-1 bg-accent/10 rounded-card py-3">
+              <span className="text-3xl font-display font-bold text-ink">
+                {summary.scoreBand.from}-{summary.scoreBand.to}
+              </span>
+              <span className="text-xs text-muted uppercase tracking-wide">{tr("Estimated score")}</span>
+            </div>
+          )}
         </div>
+        {summary.scoreBand && (
+          <p className="text-xs text-muted -mt-2">
+            {tr("The score range {{family}} publishes for level {{level}}. An estimate from this mock, not an official score.", {
+              family: catalogue?.find((f) => f.id === selectedType?.familyId)?.name ?? "",
+              level: summary.scoreBand.level,
+            })}
+          </p>
+        )}
         {summary.skillLevels && Object.keys(summary.skillLevels).length > 0 && (
           <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(["listening", "speaking", "reading", "writing"] as const)
@@ -681,6 +853,16 @@ export function PracticeTests() {
           {testCode && <TestIdTag code={testCode} label={tr("Attempt ID")} />}
         </div>
         <p className="text-sm text-muted -mt-2">{t("practiceTests.overview.subtitle")}</p>
+        {isMock && (
+          <div className="w-full flex items-start gap-2.5 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
+            <Timer size={18} className="text-navy-deep shrink-0 mt-0.5" />
+            <span>
+              {tr(
+                "Mock exam: each question has its own time limit, and the clock keeps running if you leave the page. When time runs out, your answer so far is sent. You can't go back to a question.",
+              )}
+            </span>
+          </div>
+        )}
         <div className="w-full flex flex-col gap-2 text-left">
           {partBoundaries.map((part, i) => (
             <div key={part.partId} className="flex items-center gap-3 bg-paper-warm rounded-input px-4 py-2.5">
@@ -735,6 +917,7 @@ export function PracticeTests() {
           ? parseGroupAnswer(answerText, getGroupQuestions(current).length).every((x) => x !== null)
           : answerText.trim() !== "";
     const progressPct = Math.round((index / items.length) * 100);
+    const shownSeconds = isMock ? mockSecondsLeft : feedback ? null : remainingSeconds;
     return (
       <div className="max-w-4xl mx-auto flex flex-col gap-3">
         {overlay}
@@ -750,6 +933,9 @@ export function PracticeTests() {
             <span />
           )}
           <span className="text-xs font-mono text-muted">
+            <span className={`mr-3 font-sans font-semibold uppercase tracking-wide ${isMock ? "text-navy-deep" : "text-accent"}`}>
+              {isMock ? tr("Mock exam") : tr("Practice")}
+            </span>
             {activeTestId && <span className="mr-3">{tr("Test ID")} {activeTestId}</span>}
             {testCode && <span className="hidden sm:inline mr-3">{tr("Attempt ID")} {testCode}</span>}
             {t("placementTest.progress", { current: index + 1, total: items.length })}
@@ -774,14 +960,15 @@ export function PracticeTests() {
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
-                {remainingSeconds !== null ? (
+                {shownSeconds !== null ? (
                   <span
+                    title={isMock ? tr("Time left for this question") : tr("Suggested time")}
                     className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
-                      remainingSeconds <= 5 ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
+                      shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5) ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
                     }`}
                   >
-                    <Clock size={16} />
-                    {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
+                    {isMock ? <Timer size={16} /> : <Clock size={16} />}
+                    {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
                   </span>
                 ) : null}
               </div>
@@ -802,6 +989,8 @@ export function PracticeTests() {
 
             <h2 className="font-display font-bold text-lg text-ink text-center leading-snug">{current.questionInstruction}</h2>
 
+            {/* Practice feedback: the question stays visible, its answer locked. */}
+            <div className={feedback ? "pointer-events-none flex flex-col gap-5" : "contents"} aria-disabled={!!feedback}>
             {needsAudioFirst ? (
               // Versant-style two-panel layout: a dark "You hear" box (audio
               // prompt, no text shown — revealing the transcript would give
@@ -920,28 +1109,42 @@ export function PracticeTests() {
                 )}
               </>
             )}
+            </div>
+
+            {feedback && <AnswerFeedback item={current} feedback={feedback} />}
 
             {error && <p className="text-sm text-error text-center">{error}</p>}
           </div>
 
           <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
-            <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
-              <ArrowLeft size={20} />
-            </Button>
-            <button
-              onClick={handleSkip}
-              disabled={submitting || recording}
-              className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-1"
-            >
-              {t("placementTest.skip")}
-            </button>
-            <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="flex-1">
-              {submitting
-                ? t("placementTest.submitting")
-                : index + 1 < items.length
-                  ? t("practiceTests.saveAndNext")
-                  : t("placementTest.finish")}
-            </Button>
+            {feedback ? (
+              <Button onClick={() => finishOrAdvance()} className="flex-1">
+                {index + 1 < items.length ? tr("Next question") : t("placementTest.finish")}
+              </Button>
+            ) : (
+              <>
+                {/* Mock exams are forward only. */}
+                {!isMock && (
+                  <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
+                    <ArrowLeft size={20} />
+                  </Button>
+                )}
+                <button
+                  onClick={handleSkip}
+                  disabled={submitting || recording}
+                  className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-1"
+                >
+                  {t("placementTest.skip")}
+                </button>
+                <Button onClick={() => handleSubmit()} disabled={!canSubmit || submitting} className="flex-1">
+                  {submitting
+                    ? t("placementTest.submitting")
+                    : index + 1 < items.length
+                      ? t("practiceTests.saveAndNext")
+                      : t("placementTest.finish")}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -996,6 +1199,40 @@ export function PracticeTests() {
           <PlayCircle size={16} /> {tr("Watch the test demo")}
         </button>
 
+        {error && <p className="text-sm text-error">{error}</p>}
+
+        {/* Mock exam: one per test type, built from questions the learner hasn't seen. */}
+        <div className="relative overflow-hidden bg-navy text-white rounded-card p-6 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+          <span className="h-12 w-12 rounded-2xl bg-lime text-navy flex items-center justify-center shrink-0">
+            <Timer size={24} />
+          </span>
+          <div className="flex-1 flex flex-col gap-1">
+            <span className="font-display font-bold text-lg">{tr("Mock exam")}</span>
+            <span className="text-sm text-white/80 leading-relaxed">
+              {tr("Exam conditions: strict timing for each question, no going back, no answers until the end. Questions you haven't seen before. A full report with your estimated level at the end.")}
+            </span>
+          </div>
+          {openMock && openMock.testTypeId && openMock.testTypeId !== selectedProduct ? (
+            <span className="text-sm text-white/80 sm:max-w-56">{tr("You have another mock exam in progress. Finish it first.")}</span>
+          ) : (
+            <Button
+              onClick={() => {
+                setPreTestDoneFor(null);
+                setPendingStart({ key: `mock:${selectedProduct}`, mode: "mock", testTypeId: selectedProduct });
+              }}
+              className="shrink-0 !bg-lime !text-navy"
+            >
+              {openMock?.testTypeId === selectedProduct ? tr("Resume mock exam") : tr("Start mock exam")}
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 -mb-2">
+          <BookOpenCheck size={18} className="text-accent" />
+          <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
+          <span className="text-sm text-muted">{tr("Pause any time, go back, and see the right answer after each question.")}</span>
+        </div>
+
         {loadingExams ? (
           <p className="text-sm text-muted">{t("modules.starting")}</p>
         ) : (
@@ -1029,7 +1266,7 @@ export function PracticeTests() {
                   onClick={() => {
                     // Every Start or Retake gets its own check.
                     setPreTestDoneFor(null);
-                    setPendingExamId(exam.id);
+                    setPendingStart({ key: exam.id, mode: "practice", examId: exam.id });
                   }}
                   className="w-full"
                 >
@@ -1064,6 +1301,30 @@ export function PracticeTests() {
           { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
         ]}
       />
+
+      {openMock?.testTypeId && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-navy/10 border border-navy/20 rounded-card px-5 py-4">
+          <Timer size={20} className="text-navy-deep shrink-0" />
+          <span className="flex-1 text-sm text-ink">
+            {tr("You have a mock exam in progress: {{name}}. Its clock keeps running.", {
+              name: (() => {
+                const tt = testTypes.find((x) => x.id === openMock.testTypeId);
+                return tt ? testTypeName(tt, t) : "";
+              })(),
+            })}
+          </span>
+          <Button
+            onClick={() => {
+              openProduct(openMock.testTypeId!);
+              setPreTestDoneFor(null);
+              setPendingStart({ key: `mock:${openMock.testTypeId}`, mode: "mock", testTypeId: openMock.testTypeId! });
+            }}
+            className="shrink-0"
+          >
+            {tr("Resume mock exam")}
+          </Button>
+        </div>
+      )}
 
       {(catalogue ?? []).map((family) => (
         <section key={family.id} className="flex flex-col gap-3">

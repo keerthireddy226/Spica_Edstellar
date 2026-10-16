@@ -4,7 +4,7 @@
 import { pool } from "../db.js";
 import { notifyFlagged } from "./alerts.js";
 import { enqueue } from "../queue/queue.js";
-import { learnerPolicy, needsConsent, normalizePolicy } from "./policy.js";
+import { needsConsent, normalizePolicy, sessionPolicy } from "./policy.js";
 import { runTypingCheck } from "./typing.js";
 
 export interface IntegrityReason {
@@ -228,6 +228,6 @@ export async function proctoringBlock(sessionId: string, userId: string): Promis
   const si = (await pool.query(`SELECT terminated_at, consent_record_id, policy FROM session_integrity WHERE session_id = $1`, [sessionId])).rows[0];
   if (si?.terminated_at) return "session_terminated";
   if (si) return needsConsent(normalizePolicy(si.policy)) && !si.consent_record_id ? "proctoring_setup_required" : null;
-  const { policy } = await learnerPolicy(userId);
+  const { policy } = await sessionPolicy(sessionId, userId);
   return policy.mode !== "off" && needsConsent(policy) ? "proctoring_setup_required" : null;
 }

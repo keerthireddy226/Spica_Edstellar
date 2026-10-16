@@ -20,6 +20,10 @@ export interface TestItem {
   maxWords?: number | null;
   attempted?: boolean;
   responseText?: string | null;
+  // Mock exams: this question's time limit, and the seconds left once it has
+  // been shown (the server's clock).
+  limitSeconds?: number | null;
+  secondsLeft?: number | null;
   // Pre-generated AI voice audio for this item in the learner's preferred
   // voice, or null if it hasn't been batch-generated yet (see backend/
   // scripts/generateItemAudio.ts) — playSpokenAudio() falls back to browser

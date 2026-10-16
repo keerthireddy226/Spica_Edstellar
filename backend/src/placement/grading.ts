@@ -8,6 +8,8 @@ export type GradeResult = {
   correct: boolean | null;
   score: number | null;
   method: "exact-match" | "text-diff" | "ai-text" | null;
+  // The AI grader's one-sentence reason (AI-graded answers only).
+  reason?: string;
 };
 
 // British, Indian and American spellings of a word count as the same answer.
@@ -44,6 +46,7 @@ async function aiResult(
     correct: ai.score >= passThresholdForLevel(cefrLevel),
     score: ai.score,
     method: "ai-text",
+    reason: ai.reason || undefined,
   };
 }
 

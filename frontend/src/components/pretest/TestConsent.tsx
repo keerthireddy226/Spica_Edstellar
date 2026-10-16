@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, Camera, CheckCircle2, Mic, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { MONITORED } from "@/components/proctoring/ProctoringGate";
-import { getPreTestInfo, givePreTestConsent, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
+import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { holdTestConsent } from "@/lib/testConsent";
 import { tr } from "@/i18n/tr";
 
@@ -18,22 +18,32 @@ function Item({ icon, text }: { icon: ReactNode; text: string }) {
 // Before every test, right before the first face photo: what this test
 // collects, who sees it, how long it's kept. Agreeing is recorded and linked
 // to the test's session, so the proctoring steps don't ask again.
-export function TestConsent({ kind, onAgreed, onBack }: { kind: PreTestKind; onAgreed: () => void; onBack?: () => void }) {
+export function TestConsent({
+  kind,
+  mode,
+  onAgreed,
+  onBack,
+}: {
+  kind: PreTestKind;
+  mode?: DeliveryMode;
+  onAgreed: () => void;
+  onBack?: () => void;
+}) {
   const [info, setInfo] = useState<PreTestInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    getPreTestInfo(kind)
+    getPreTestInfo(kind, mode)
       .then(setInfo)
       .catch(() => setError(tr("Could not load what this test collects. Try again.")));
-  }, [kind]);
+  }, [kind, mode]);
 
   async function accept(biometric: boolean) {
     setBusy(true);
     setError(null);
     try {
-      const r = await givePreTestConsent(kind, biometric);
+      const r = await givePreTestConsent(kind, biometric, mode);
       holdTestConsent(r.consentId);
       onAgreed();
     } catch {

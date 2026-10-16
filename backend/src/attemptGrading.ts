@@ -168,11 +168,11 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // attempt_id) — two concurrent gradings of the same attempt can't each
   // insert their own scores row.
   await pool.query(
-    `INSERT INTO scores (attempt_id, content_score, manner_scores, status, model_version) VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO scores (attempt_id, content_score, manner_scores, status, model_version, reason) VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (attempt_id) DO UPDATE SET
        content_score = EXCLUDED.content_score, manner_scores = EXCLUDED.manner_scores,
-       status = EXCLUDED.status, model_version = EXCLUDED.model_version, updated_at = now()`,
-    [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
+       status = EXCLUDED.status, model_version = EXCLUDED.model_version, reason = EXCLUDED.reason, updated_at = now()`,
+    [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion, grade.reason ?? null],
   );
 
   if (noise && !noSpeech) await recordNoisyAnswer(sessionId, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
@@ -229,8 +229,8 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   await pool.query(`UPDATE attempts SET response_text = $2 WHERE id = $1`, [attemptId, responseText]);
   // Only a score still waiting (or failed) is written: a grading that finished first wins.
   const updated = await pool.query(
-    `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, updated_at = now() WHERE attempt_id = $1 AND status IN ('pending', 'failed')`,
-    [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion],
+    `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, reason = $6, updated_at = now() WHERE attempt_id = $1 AND status IN ('pending', 'failed')`,
+    [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion, grade.reason ?? null],
   );
   if (updated.rowCount && noise && !noSpeech) await recordNoisyAnswer(r.session_id, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
 }
@@ -247,8 +247,8 @@ async function gradeTypedAnswerAgain(
   if (grade.status === "failed" && !final) throw new Error("grading: AI grading didn't answer, will retry");
   if (grade.status !== "scored") return;
   await pool.query(
-    `UPDATE scores SET content_score = $2, status = 'scored', model_version = $3, updated_at = now() WHERE attempt_id = $1 AND status = 'failed'`,
-    [attemptId, grade.score, grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : "exact-match-v1"],
+    `UPDATE scores SET content_score = $2, status = 'scored', model_version = $3, reason = $4, updated_at = now() WHERE attempt_id = $1 AND status = 'failed'`,
+    [attemptId, grade.score, grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : "exact-match-v1", grade.reason ?? null],
   );
 }
 

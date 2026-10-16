@@ -4,7 +4,7 @@
 // together and in order.
 import { pool } from "../db.js";
 
-interface FormRow {
+export interface FormRow {
   id: string;
   exam_id: string;
   exam_order: number;
@@ -23,8 +23,8 @@ function sharedText(content: Record<string, unknown>): string | null {
   return best;
 }
 
-function groupItems(rows: FormRow[]): FormRow[][] {
-  const groups: FormRow[][] = [];
+export function groupItems<T extends FormRow>(rows: T[]): T[][] {
+  const groups: T[][] = [];
   for (const row of rows) {
     const last = groups[groups.length - 1];
     const prev = last?.[last.length - 1];
@@ -35,7 +35,7 @@ function groupItems(rows: FormRow[]): FormRow[][] {
   return groups;
 }
 
-function shuffle<T>(list: T[]): T[] {
+export function shuffle<T>(list: T[]): T[] {
   const a = [...list];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

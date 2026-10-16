@@ -87,12 +87,15 @@ export interface PreTestInfo {
   version: string;
 }
 
-export function getPreTestInfo(kind: PreTestKind): Promise<PreTestInfo> {
-  return api(`/proctoring/pre-test?kind=${encodeURIComponent(kind)}`);
+// mode: a practice test's practice or mock mode. Practice mode isn't monitored.
+export type DeliveryMode = "practice" | "mock";
+
+export function getPreTestInfo(kind: PreTestKind, mode?: DeliveryMode): Promise<PreTestInfo> {
+  return api(`/proctoring/pre-test?kind=${encodeURIComponent(kind)}${mode ? `&mode=${mode}` : ""}`);
 }
 
-export function givePreTestConsent(kind: PreTestKind, biometric: boolean): Promise<{ consentId: string; biometricOptOut: boolean }> {
-  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, accept: true, biometric }) });
+export function givePreTestConsent(kind: PreTestKind, biometric: boolean, mode?: DeliveryMode): Promise<{ consentId: string; biometricOptOut: boolean }> {
+  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric }) });
 }
 
 export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {

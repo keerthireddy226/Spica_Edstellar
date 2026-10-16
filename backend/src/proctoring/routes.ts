@@ -27,6 +27,7 @@ import {
   PROCTORING_REGIONS,
   consentVersion,
   learnerPolicy,
+  sessionPolicy,
   needsConsent,
   needsSecureProctoringPlan,
   policySchema,
@@ -206,7 +207,7 @@ async function ownSession(req: AuthedRequest, res: Response): Promise<{ session:
     res.status(404).json({ error: "session_not_found" });
     return null;
   }
-  const { policy, tenantId } = await learnerPolicy(req.user!.id);
+  const { policy, tenantId } = await sessionPolicy(s.id, req.user!.id);
   await pool.query(
     `INSERT INTO session_integrity (session_id, user_id, tenant_id, session_type, policy) VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (session_id) DO NOTHING`,
@@ -287,12 +288,14 @@ function testConsentVersion(policyVersion: string | null): string {
   return `${TEST_CONSENT_PREFIX}:${policyVersion ?? "practice"}`;
 }
 
-async function preTestInfo(userId: string, kind: string) {
+// mode: a practice test's practice or mock mode (candidates always take a mock).
+async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
   const { policy } = await learnerPolicy(userId);
   const org = await learnerOrgPolicy(userId);
-  const t = (await pool.query(`SELECT t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
-  // Modules are practice: no proctoring policy applies, only face checks and grading.
-  const proctored = kind !== "module" && policy.mode !== "off";
+  const t = (await pool.query(`SELECT u.role, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
+  // Modules and practice mode are practice: no proctoring policy applies, only face checks and grading.
+  const practice = kind === "module" || (mode === "practice" && t?.role !== "candidate");
+  const proctored = !practice && policy.mode !== "off";
   const { sebConfigKeys: _keys, ...visible } = policy;
   return {
     proctored,
@@ -306,10 +309,13 @@ async function preTestInfo(userId: string, kind: string) {
 }
 
 const kindSchema = preTestKind;
+const DELIVERY_MODES = ["practice", "mock"] as const;
+type DeliveryMode = (typeof DELIVERY_MODES)[number];
+const modeSchema = z.enum(DELIVERY_MODES).optional();
 
 proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    res.json(await preTestInfo(req.user!.id, kindSchema.parse(req.query.kind)));
+    res.json(await preTestInfo(req.user!.id, kindSchema.parse(req.query.kind), modeSchema.parse(req.query.mode)));
   } catch (err) {
     next(err);
   }
@@ -317,8 +323,8 @@ proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, n
 
 proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const body = z.object({ kind: kindSchema, accept: z.literal(true), biometric: z.boolean() }).parse(req.body);
-    const info = await preTestInfo(req.user!.id, body.kind);
+    const body = z.object({ kind: kindSchema, mode: modeSchema, accept: z.literal(true), biometric: z.boolean() }).parse(req.body);
+    const info = await preTestInfo(req.user!.id, body.kind, body.mode);
     const biometric = info.biometric && body.biometric;
     const client = await pool.connect();
     try {

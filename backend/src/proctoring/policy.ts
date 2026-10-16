@@ -207,6 +207,20 @@ export async function learnerPolicy(userId: string): Promise<{ policy: Proctorin
   return { policy: normalizePolicy(t.proctoring), tenantId: t.id };
 }
 
+// Practice sessions are for learning: no proctoring, only the face check an
+// organization may ask for before any test. Mock exams and candidates'
+// assessments keep the full policy (ASSESSMENT_ENGINE.md section 5).
+export function practicePolicy(p: ProctoringPolicy): ProctoringPolicy {
+  return { ...presetPolicy("off", p.region), retentionDays: p.retentionDays };
+}
+
+// The policy for one session: the learner's, made light for a practice session.
+export async function sessionPolicy(sessionId: string, userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
+  const { policy, tenantId } = await learnerPolicy(userId);
+  const s = (await pool.query(`SELECT delivery_mode FROM sessions WHERE id = $1`, [sessionId])).rows[0];
+  return { policy: s?.delivery_mode === "practice" ? practicePolicy(policy) : policy, tenantId };
+}
+
 // Consent wording version. Changing the wording means a new version, so
 // learners are asked again.
 export function consentVersion(p: ProctoringPolicy): string {

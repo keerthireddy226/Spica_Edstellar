@@ -139,9 +139,10 @@ unless a starter bank is generated earlier (decision D3).
 | Limits | Practice quota per month | Mock quota per month, at most one open mock at a time |
 | Result | Per-question review + skill summary | Exam-style report: estimated level overall and per skill, estimated family score band, readiness against the target |
 
-Server-side enforcement for mocks: the server stores each section's deadline and
-rejects answers after it (plus a 5 s network allowance). The client timer is only
-for display.
+Server-side enforcement for mocks: the server times each question from when it
+is first shown and records an answer that comes after its limit (plus 15 s for
+uploads) as unanswered; the whole mock also has a deadline. The client timer is
+only for display and to send the answer at 0:00. See section 15.
 
 ## 6. Question generation pipeline (Phase 4)
 
@@ -315,5 +316,45 @@ screens, and an update to this file.
 
 Still open from Phase 1: two-voice dialogues (each listening script is read by
 one voice, with "Speaker A/B" spoken); more sets per test type (Phase 4
-generation); LanguageCert estimated scores on the result page (needs the
-score scale in `exam_families.score_scale`).
+generation). (LanguageCert estimated scores: done in Phase 2, on mock reports.)
+
+## 15. Phase 2: built
+
+- **Modes** (`migrations/1794600000000_practice-and-mock-modes.sql`,
+  `src/practiceTests/modes.ts`): `sessions.delivery_mode` is `practice` or
+  `mock`. A learner practises one set, or starts a mock of a test type; a
+  candidate's assessment is always a mock. Existing sessions were marked
+  practice, and candidates' sessions mock.
+- **Mock form**: laid out like the test type's first set (same sections, same
+  number of questions); each section's questions come from every set, groups
+  the learner has seen least first (seen = answered, or shown in
+  `session_item_views`); questions sharing a passage stay together. One open
+  mock at a time (409 `mock_in_progress`).
+- **Timing**: each question's limit = its answer time + one play of its
+  recording + 5 s + reading time (two-phase) + preparation time (speaking). A
+  second play comes out of the answer time, as in the real exam. With this,
+  LanguageCert A1-B1 Listening & Reading is 72.5 minutes (published: 70) and
+  Speaking 9.6 minutes (published: 10-14). The clock starts on the server when a
+  question is first shown (`POST /session/:id/view`), so a reload or a closed
+  tab doesn't stop it. The whole mock must end within the sum of its limits +
+  30 s per part + 10 minutes. An answer after a question's limit + 15 s, or
+  after the deadline, is saved as unanswered. Mock exams are forward only
+  (409 `already_answered`). At the end, questions never reached are recorded
+  as unanswered.
+- **Practice feedback**: after each answer, the correct option(s), model text or
+  key points, and the AI grader's one-sentence reason (`scores.reason`, now
+  stored for every AI-graded answer). A recorded answer's feedback is fetched
+  when its background grading finishes (`GET /session/:id/feedback/:itemId`).
+- **Monitoring**: practice sessions get no proctoring policy
+  (`practicePolicy`, `sessionPolicy`); the consent screen asks with the mode.
+  Mocks keep the organization's policy.
+- **Report**: a mock's report shows the family's published score range for the
+  estimated level overall and per skill (LanguageCert: C2 90-100, C1 75-89, B2
+  60-74, B1 40-59, A2 20-39, A1 10-19). Versant publishes no scale in
+  `exam_families.score_scale` yet.
+
+Still open from Phase 2: practice still runs set by set, not a random draw
+avoiding recent repeats; monthly practice and mock quotas come with Phase 3;
+"readiness against the target" needs Phase 3's programs; an untouched open
+practice session holding questions retired since it started is replaced by a
+fresh one, but one already started keeps them.

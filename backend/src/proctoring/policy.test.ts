@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { needsConsent, needsSecureProctoringPlan, normalizePolicy, presetPolicy, usesBiometrics } from "./policy.js";
+import { needsConsent, needsSecureProctoringPlan, normalizePolicy, practicePolicy, presetPolicy, usesBiometrics } from "./policy.js";
 
 describe("presetPolicy", () => {
   it("turns everything off in off mode", () => {
@@ -53,5 +53,15 @@ describe("normalizePolicy", () => {
     const p = normalizePolicy({ mode: "nonsense", retentionDays: "x" });
     expect(p.mode).toBe("standard");
     expect(p.retentionDays).toBe(90);
+  });
+});
+
+describe("practicePolicy", () => {
+  it("turns proctoring off for practice but keeps the region and retention", () => {
+    const p = practicePolicy(presetPolicy("strict", "eu"));
+    expect(p.mode).toBe("off");
+    expect(p.region).toBe("eu");
+    expect(needsConsent(p)).toBe(false);
+    expect(p.retentionDays).toBe(30);
   });
 });
