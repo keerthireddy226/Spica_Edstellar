@@ -79,6 +79,12 @@ export const AUDIT_VERBS: Record<string, string> = {
   "plan.products_changed": tr("changed the products"),
   "plan.credits_granted": tr("changed assessment credits"),
   "plan.quota_changed": tr("changed monthly test limits"),
+  "content.generation_started": tr("asked AI to write questions"),
+  "content.item_approve": tr("approved a question for practice"),
+  "content.item_approve_mock": tr("approved a question for practice and mocks"),
+  "content.item_remove_mock": tr("removed a question from mocks"),
+  "content.item_reject": tr("rejected a question"),
+  "content.set_assembled": tr("made a new test set"),
 };
 
 // Detail values that read better as words.

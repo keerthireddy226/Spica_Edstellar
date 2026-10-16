@@ -44,11 +44,12 @@ async function seenItemIds(userId: string): Promise<Set<string>> {
 // One mock form for this test type, in section order, each section as long
 // as the template's. Questions come from every set of the test type; groups of
 // questions the learner has seen least come first (ties in random order), and
-// questions sharing one passage stay together. A section the pool can't fill
-// exactly uses the template's own questions.
+// questions sharing one passage stay together. Only questions a person
+// approved for mocks are used. A section the pool can't fill exactly uses
+// the template's own questions.
 export async function mockFormItemIds(testTypeId: string, userId: string, templateExamId: string): Promise<string[]> {
   const r = await pool.query(
-    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content
+    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, i.mock_approved
      FROM exams e
      JOIN exam_parts ep ON ep.exam_id = e.id
      JOIN items i ON i.exam_part_id = ep.id
@@ -56,7 +57,7 @@ export async function mockFormItemIds(testTypeId: string, userId: string, templa
      ORDER BY ep.sort_order, e.code, i.exam_order`,
     [testTypeId],
   );
-  const rows: FormRow[] = r.rows;
+  const rows: (FormRow & { mock_approved: boolean })[] = r.rows;
   const seen = await seenItemIds(userId);
   const ids: string[] = [];
   for (const sortOrder of [...new Set(rows.map((x) => x.sort_order))]) {
@@ -64,7 +65,7 @@ export async function mockFormItemIds(testTypeId: string, userId: string, templa
     const own = section.filter((x) => x.exam_id === templateExamId);
     const target = own.length;
     if (target === 0) continue;
-    const groups = shuffle(groupItems(section))
+    const groups = shuffle(groupItems(section.filter((x) => x.mock_approved)))
       .map((g) => ({ g, seen: g.filter((x) => seen.has(x.id)).length / g.length }))
       .sort((a, b) => a.seen - b.seen)
       .map((x) => x.g);
@@ -95,16 +96,18 @@ function wordCount(v: unknown): number {
   return 0;
 }
 
+// Recordings play twice, as in the real exam (and the player's limit).
+const PLAYS = 2;
+
 // Seconds a mock allows for one question: its answer time, plus listening
-// to its recording once, reading time (two-phase items) and preparation time
-// (speaking). A second play comes out of the answer time, as in the real
-// exam: this way LanguageCert A1-B1 Listening adds up to its published 30
-// minutes (15 min of answer time + 15 min of recordings).
+// to its recording twice, reading time (two-phase items) and preparation
+// time (speaking). With measured recording lengths, LanguageCert A1-B1
+// Listening comes to 32 minutes (published: 30) and A1-C2 to 54 (published: 50).
 export function allowedSeconds(row: Omit<TimingRow, "id">): number {
   const answer = row.timer_seconds ?? row.estimated_seconds ?? 60;
   const audioSeconds =
     row.audio_ms != null ? row.audio_ms / 1000 : row.content?.audio != null ? wordCount(row.content.audio) / WORDS_PER_SECOND : 0;
-  const listening = audioSeconds > 0 ? Math.ceil(audioSeconds) + 5 : 0;
+  const listening = audioSeconds > 0 ? Math.ceil(PLAYS * audioSeconds) + 5 : 0;
   return answer + listening + (row.two_phase_read_seconds ?? 0) + (row.prep_seconds ?? 0);
 }
 

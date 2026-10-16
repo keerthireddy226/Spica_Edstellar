@@ -67,6 +67,8 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.SUPER_SYSTEM]: tr("System"),
   [ROUTES.SUPER_INSIGHTS]: tr("Insights"),
   [ROUTES.SUPER_PLANS]: tr("Plans & pricing"),
+  [ROUTES.SUPER_CONTENT]: tr("Question bank"),
+  [ROUTES.ADMIN_CONSOLE_CONTENT]: tr("Question bank"),
   [ROUTES.ADMIN_CONSOLE_ADMINS]: tr("Admins"),
   [ROUTES.ADMIN_CONSOLE_INSIGHTS]: tr("Insights"),
   [ROUTES.ADMIN_CONSOLE_PLANS]: tr("Plans & pricing"),

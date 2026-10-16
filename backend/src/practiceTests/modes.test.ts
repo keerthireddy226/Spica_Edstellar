@@ -21,14 +21,14 @@ describe("allowedSeconds", () => {
     expect(allowedSeconds(base)).toBe(45);
   });
 
-  it("adds one play of the recording and a few seconds", () => {
-    expect(allowedSeconds({ ...base, timer_seconds: 30, audio_ms: 20_000 })).toBe(30 + 20 + 5);
+  it("adds two plays of the recording and a few seconds", () => {
+    expect(allowedSeconds({ ...base, timer_seconds: 30, audio_ms: 20_000 })).toBe(30 + 40 + 5);
   });
 
   it("estimates the recording from the script when none is generated", () => {
-    // 25 words at 2.5 words a second = 10 s.
+    // 25 words at 2.5 words a second = 10 s, played twice.
     const script = Array.from({ length: 25 }, () => "word").join(" ");
-    expect(allowedSeconds({ ...base, timer_seconds: 30, content: { audio: script } })).toBe(30 + 10 + 5);
+    expect(allowedSeconds({ ...base, timer_seconds: 30, content: { audio: script } })).toBe(30 + 20 + 5);
   });
 
   it("adds reading and preparation time", () => {

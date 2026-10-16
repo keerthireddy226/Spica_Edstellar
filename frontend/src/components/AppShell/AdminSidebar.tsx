@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -27,6 +27,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.SUPER_INSIGHTS, icon: Lightbulb, label: tr("Insights") },
   { to: ROUTES.SUPER_BILLING, icon: CreditCard, label: tr("Billing") },
   { to: ROUTES.SUPER_PLANS, icon: Gem, label: tr("Plans & pricing") },
+  { to: ROUTES.SUPER_CONTENT, icon: FileStack, label: tr("Question bank") },
   { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: tr("Placement reviews") },
   { to: ROUTES.SUPER_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: tr("Audit log") },
@@ -45,6 +46,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_INSIGHTS, icon: Lightbulb, label: tr("Insights"), permission: "viewReports" },
   { to: ROUTES.ADMIN_CONSOLE_BILLING, icon: CreditCard, label: tr("Billing") },
   { to: ROUTES.ADMIN_CONSOLE_PLANS, icon: Gem, label: tr("Plans & pricing") },
+  { to: ROUTES.ADMIN_CONSOLE_CONTENT, icon: FileStack, label: tr("Question bank"), permission: "contentReview" },
   { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: tr("Placement reviews"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: tr("Audit log") },

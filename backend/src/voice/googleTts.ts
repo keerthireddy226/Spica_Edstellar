@@ -1,3 +1,5 @@
+import { mp3DurationMs } from "./mp3.js";
+
 // Real AI-generated item audio (male/female), batch-generated. Fails closed to null on any error.
 
 export type VoiceGender = "male" | "female";
@@ -20,7 +22,14 @@ export interface SynthesizedSpeech {
   durationMs: number | null;
 }
 
-export async function synthesizeSpeech(text: string, voice: VoiceGender, accent: Accent = "en-US"): Promise<SynthesizedSpeech | null> {
+// opts.ssml: `text` is SSML (e.g. with <break> tags). opts.speakingRate: 1 =
+// normal; slower for lower levels.
+export async function synthesizeSpeech(
+  text: string,
+  voice: VoiceGender,
+  accent: Accent = "en-US",
+  opts: { ssml?: boolean; speakingRate?: number } = {},
+): Promise<SynthesizedSpeech | null> {
   const apiKey = process.env.GOOGLE_TTS_API_KEY;
   if (!apiKey) return null;
   try {
@@ -28,9 +37,9 @@ export async function synthesizeSpeech(text: string, voice: VoiceGender, accent:
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        input: { text },
+        input: opts.ssml ? { ssml: text } : { text },
         voice: { languageCode: accent, name: VOICE_NAME[accent][voice] },
-        audioConfig: { audioEncoding: "MP3" },
+        audioConfig: { audioEncoding: "MP3", ...(opts.speakingRate ? { speakingRate: opts.speakingRate } : {}) },
       }),
     });
     if (!res.ok) {
@@ -40,11 +49,10 @@ export async function synthesizeSpeech(text: string, voice: VoiceGender, accent:
     const json = (await res.json()) as { audioContent?: string };
     if (!json.audioContent) return null;
     const audioBuffer = Buffer.from(json.audioContent, "base64");
-    // Google doesn't return an exact duration — estimated from the MP3's
-    // byte size at its default encoding bitrate (good enough; nothing reads
-    // this for playback timing today, only item_audio.duration_ms).
-    const MP3_BITRATE_KBPS = 32;
-    const durationMs = Math.round((audioBuffer.byteLength * 8) / MP3_BITRATE_KBPS);
+    // Google doesn't return a duration: measured from the MP3's frames (it
+    // used to be estimated at 32 kbps, but the audio is 64 kbps, which
+    // doubled every length).
+    const durationMs = mp3DurationMs(audioBuffer);
     return { audioBuffer, mimeType: "audio/mpeg", durationMs };
   } catch (err) {
     console.error("synthesizeSpeech: request failed:", err);

@@ -14,6 +14,8 @@ import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
 import { runProgramsDaily } from "../programs/service.js";
+import { resumeStaleJobs } from "../generation/pipeline.js";
+import { flagByStatistics } from "../generation/stats.js";
 
 // Every queue the app uses, in one place.
 export function registerJobs() {
@@ -60,6 +62,15 @@ export function registerJobs() {
   every(60, "programs.daily", async () => {
     const r = await runProgramsDaily();
     if (r.missed || r.completed || r.planned) console.log("programs:", r);
+  });
+  // Question generation jobs interrupted by a restart carry on.
+  every(15, "generation.resume", async () => {
+    await resumeStaleJobs();
+  });
+  // Questions whose answers look wrong statistically go back to review.
+  every(24 * 60, "content.statistics", async () => {
+    const n = await flagByStatistics();
+    if (n) console.log(`content: ${n} questions sent to review on their statistics`);
   });
   every(60, "contracts.renewals", async () => {
     await runContractRenewalAlerts();

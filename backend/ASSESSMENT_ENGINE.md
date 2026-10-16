@@ -330,11 +330,12 @@ generation). (LanguageCert estimated scores: done in Phase 2, on mock reports.)
   the learner has seen least first (seen = answered, or shown in
   `session_item_views`); questions sharing a passage stay together. One open
   mock at a time (409 `mock_in_progress`).
-- **Timing**: each question's limit = its answer time + one play of its
-  recording + 5 s + reading time (two-phase) + preparation time (speaking). A
-  second play comes out of the answer time, as in the real exam. With this,
-  LanguageCert A1-B1 Listening & Reading is 72.5 minutes (published: 70) and
-  Speaking 9.6 minutes (published: 10-14). The clock starts on the server when a
+- **Timing**: each question's limit = its answer time + two plays of its
+  recording + 5 s + reading time (two-phase) + preparation time (speaking).
+  With measured recording lengths (see section 17: stored lengths used to be
+  double), LanguageCert A1-B1 Listening comes to 32 minutes (published: 30),
+  A1-C2 Listening to 54 (published: 50), and Speaking 9.6 minutes
+  (published: 10-14). The clock starts on the server when a
   question is first shown (`POST /session/:id/view`), so a reload or a closed
   tab doesn't stop it. The whole mock must end within the sum of its limits +
   30 s per part + 10 minutes. An answer after a question's limit + 15 s, or
@@ -403,3 +404,72 @@ university Admissions tier (Phase 7); the report level (summary / full) is
 stored but used from Phase 5; the program field (banking, BPO, IT) picks
 questions once Phase 4 generates domain questions; on track / at risk and
 alerts come with Phase 6 monitoring; Managers don't see programs yet.
+
+## 17. Phase 4: built
+
+- **Jobs** (`migrations/1794800000000_question-generation.sql`,
+  `src/generation/`): staff with the Content review permission ask for N
+  questions of one type, level and field for a test type (Question bank >
+  Write questions). A job writes them in batches of 5 and checks each one; it
+  runs outside the job queue's worker (a job takes minutes and would hold up
+  speaking grading), records a heartbeat, and is resumed by the
+  `generation.resume` job after a restart. Tokens are counted per job.
+- **Models**: questions are written by `GEMINI_GENERATION_MODEL` (default
+  `gemini-3.5-flash`; the Gemini key in use is on the free tier, where Pro
+  models have no quota, so D6's stronger model needs billing first) and
+  checked by `GEMINI_CHECK_MODEL` (default `gemini-3.5-flash-lite`).
+  Busy-model (503) and rate-limit (429) answers are retried with backoff.
+- **Brief** (`brief.ts`): the type's format, CEFR descriptors for the level,
+  the field's context, diversity rules (names and places across regions, no
+  brands, advice or upsetting content, the key spread across positions), the
+  topics already used at that level, and 2 approved questions of the type as a
+  guide to format. Each question comes with an explanation (why the key is
+  right, the words that give it away, why each option is right or wrong).
+- **Checks** (`checks.ts`, recorded in `items.filters_passed`):
+  format (the rules of `scripts/validateExamSets.py`, ported);
+  answer key (the check model answers blind; it must agree and find no other
+  defensible option); level (the check model's estimate within one level of
+  the target); sensitivity and clarity (the same call); near-duplicates
+  (gemini-embedding-001, 768 dimensions, cosine against the bank and the
+  batch, threshold 0.92: distinct questions measured at most 0.86-0.92, copies
+  1.0); recording (listening: recorded once the rest passed, length within
+  the type's limit). Not built: the vocabulary-band check (no word-frequency
+  list in the repo yet; the level estimate stands in).
+- **Status**: every check passed = approved for practice. Anything failed =
+  the review queue, not used. Mocks use only questions a person approved for
+  them (`items.mock_approved`; the Phase 2 mock form now draws only those).
+  The 4,818 questions already approved when this shipped were marked approved
+  for mocks ("Approved before review" in the queue) so existing mocks keep
+  working; reviewers can go through them and remove any from mocks. To make
+  them all wait for a person instead:
+  `UPDATE items SET mock_approved = false WHERE review_decision = 'grandfathered';`
+- **Review** (Question bank > Review): needs review, waiting for mock
+  approval, approved before review, rejected. A reviewer sees the question
+  with the key marked, the explanation, every check with its notes, the
+  recordings, and answer statistics; edits the JSON; approves for practice,
+  for practice and mocks, removes from mocks, rejects; or runs the checks
+  again. Every decision is in the audit log.
+- **Recordings** (`voice/scriptAudio.ts`): a dialogue's A and B turns are read
+  by a man and a woman (the learner's chosen voice reads A), with a pause
+  between turns, one accent per recording rotated across US, British, Indian
+  and Australian, slower at A1-A2 (0.85-0.9) and slightly faster at C2.
+- **Sets** (Question bank > Sets, `assembly.ts`): a new set copies the test
+  type's first set (parts, types, counts, per-question time limits) and takes
+  approved questions not yet in a set, matching each slot's level where it
+  can; a mock-ready set uses only mock-approved questions. It goes live for
+  practice at once.
+- **In use** (`stats.ts`, daily `content.statistics` job): with 30 or more
+  scored answers, a question whose average score is 95%+ or 10%- or whose
+  score goes down as learners' overall result goes up goes back to review
+  (not one a person reviewed in the last 90 days).
+
+Still open from Phase 4: Versant question types (only the 14 LanguageCert-style
+types can be written); whole-form approval of mocks (questions are approved
+one by one and mock forms are drawn per learner as in Phase 2); the
+vocabulary-band check; comparing against published exam material (none
+provided); cost in money (tokens are recorded; prices depend on the plan).
+- **Recording lengths fixed**: every stored recording length
+  (`item_audio.duration_ms`, 5,118 rows) was double the real one: it was
+  estimated from the file size at 32 kbps, but Google's MP3s are 64 kbps.
+  Lengths are now measured from the MP3 frames (`voice/mp3.ts`) and the
+  stored ones were corrected (`scripts/fixAudioDurations.ts`).
