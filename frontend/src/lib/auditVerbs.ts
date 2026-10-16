@@ -85,6 +85,9 @@ export const AUDIT_VERBS: Record<string, string> = {
   "content.item_remove_mock": tr("removed a question from mocks"),
   "content.item_reject": tr("rejected a question"),
   "content.set_assembled": tr("made a new test set"),
+  "content.form_created": tr("built a test"),
+  "content.form_published": tr("published a built test"),
+  "content.form_retired": tr("retired a built test"),
 };
 
 // Detail values that read better as words.

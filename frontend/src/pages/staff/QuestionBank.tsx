@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, XCircle, Sparkles, RefreshCw, Layers, ListChecks } from "lucide-react";
+import { Sparkles, RefreshCw, Layers, ListChecks } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { PageHeader, Panel, FilterPills, StatusPill, EmptyNote } from "@/components/staff/StaffKit";
@@ -18,26 +18,8 @@ import {
   type QueueState,
 } from "@/api/content";
 import { tr } from "@/i18n/tr";
-
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-const CHECK_LABEL: Record<string, () => string> = {
-  schema: () => tr("Format"),
-  key: () => tr("Answer key (blind check)"),
-  level: () => tr("Level"),
-  sensitivity: () => tr("Sensitivity and bias"),
-  clarity: () => tr("Clarity"),
-  duplicate: () => tr("Near-duplicates"),
-  audio: () => tr("Recording"),
-  review: () => tr("Level, sensitivity and clarity"),
-};
-const DOMAIN_LABEL: Record<string, () => string> = {
-  general: () => tr("General"),
-  banking: () => tr("Banking"),
-  bpo: () => tr("BPO and customer support"),
-  it: () => tr("IT"),
-  insurance: () => tr("Insurance"),
-  healthcare: () => tr("Healthcare"),
-};
+import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS } from "@/components/staff/contentShared";
+import { BuilderPanel, LibraryPanel } from "@/pages/staff/AssessmentBuilder";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
@@ -91,11 +73,18 @@ function GeneratePanel({ overview, onStarted }: { overview: ContentOverview; onS
         <label className="flex flex-col gap-1 text-xs text-muted">
           {tr("Test")}
           <select value={testTypeId} onChange={(e) => setTestTypeId(e.target.value)} className={`${inputClass} cursor-pointer`}>
-            {overview.testTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
+            {(["LanguageCert", "Versant"] as const).map((fam) => {
+              const list = overview.testTypes.filter((t) => familyOf(t.id) === fam);
+              return list.length ? (
+                <optgroup key={fam} label={fam}>
+                  {list.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {fam} · {t.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null;
+            })}
           </select>
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted">
@@ -139,7 +128,12 @@ function GeneratePanel({ overview, onStarted }: { overview: ContentOverview; onS
   );
 }
 
-function JobsPanel({ jobs, names }: { jobs: GenerationJob[]; names: Record<string, string> }) {
+// The exam family of a test type (LanguageCert test types start with "lc").
+function familyOf(testTypeId: string): "LanguageCert" | "Versant" {
+  return testTypeId.startsWith("lc") ? "LanguageCert" : "Versant";
+}
+
+function JobsPanel({ jobs, names, testTypes }: { jobs: GenerationJob[]; names: Record<string, string>; testTypes: ContentOverview["testTypes"] }) {
   if (jobs.length === 0) return null;
   return (
     <Panel title={tr("Recent requests")}>
@@ -160,7 +154,8 @@ function JobsPanel({ jobs, names }: { jobs: GenerationJob[]; names: Record<strin
               <tr key={j.id} className="border-b border-rule/60 align-top">
                 <td className="py-2 pr-3">
                   <div className="text-ink">
-                    {names[j.itemTypeId] ?? j.itemTypeId} · {j.level} · {DOMAIN_LABEL[j.domain]?.() ?? j.domain}
+                    {familyOf(j.testTypeId)} · {testTypes.find((t) => t.id === j.testTypeId)?.name ?? j.testTypeId} · {names[j.itemTypeId] ?? j.itemTypeId} · {j.level} ·{" "}
+                    {DOMAIN_LABEL[j.domain]?.() ?? j.domain}
                   </div>
                   <div className="text-xs text-muted">
                     {new Date(j.createdAt).toLocaleString()} · {j.createdBy ?? ""}
@@ -250,99 +245,6 @@ function BankPanel({ overview, onAssembled }: { overview: ContentOverview; onAss
 }
 
 // ---- Review ----
-
-function correctIndexes(item: ContentItem): number[] {
-  const a = item.answerSet ?? {};
-  if (typeof a.correctIndex === "number") return [a.correctIndex];
-  return Array.isArray(a.correct) ? (a.correct as number[]) : [];
-}
-
-function Options({ options, correct }: { options: string[]; correct: number | undefined }) {
-  return (
-    <ol className="flex flex-col gap-1 mt-1">
-      {options.map((o, i) => (
-        <li key={i} className={`text-sm flex gap-2 ${i === correct ? "text-success font-semibold" : "text-ink"}`}>
-          <span className="font-mono text-xs mt-0.5">{String.fromCharCode(65 + i)}</span>
-          {o}
-          {i === correct && <CheckCircle2 size={14} className="mt-0.5 shrink-0" />}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-// The question as a reviewer reads it: script or text, questions, options with the key marked.
-function ItemView({ item }: { item: ContentItem }) {
-  const c = item.content as Record<string, unknown>;
-  const key = correctIndexes(item);
-  const main = (c.audio ?? c.passage ?? c.text ?? c.sentence ?? c.prompt) as string | undefined;
-  return (
-    <div className="flex flex-col gap-3">
-      {main && (
-        <div>
-          <span className="text-[11px] uppercase tracking-wide text-muted">{c.audio ? tr("Recording script") : c.prompt ? tr("Task") : tr("Text")}</span>
-          <p className="text-sm text-ink whitespace-pre-wrap bg-paper-warm rounded-input p-3 mt-1">{main}</p>
-        </div>
-      )}
-      {typeof c.question === "string" && <p className="text-sm font-semibold text-ink">{c.question}</p>}
-      {Array.isArray(c.options) && <Options options={c.options as string[]} correct={key[0]} />}
-      {Array.isArray(c.questions) &&
-        (c.questions as { stem?: string; options: string[] }[]).map((q, i) => (
-          <div key={i}>
-            <p className="text-sm font-semibold text-ink">
-              {i + 1}. {q.stem ?? tr("Gap ({{n}})", { n: i + 1 })}
-            </p>
-            <Options options={q.options ?? []} correct={key[i]} />
-          </div>
-        ))}
-      {Array.isArray(c.ideas) && (
-        <ul className="list-disc pl-5 text-sm text-ink">
-          {(c.ideas as string[]).map((x) => (
-            <li key={x}>{x}</li>
-          ))}
-        </ul>
-      )}
-      {Array.isArray(c.points) && (
-        <ul className="list-disc pl-5 text-sm text-ink">
-          {(c.points as string[]).map((x) => (
-            <li key={x}>{x}</li>
-          ))}
-        </ul>
-      )}
-      {item.audio && item.audio.length > 0 && (
-        <div className="flex flex-col gap-1">
-          {item.audio.map((a) => (
-            <div key={a.voice} className="flex items-center gap-2 text-xs text-muted">
-              <span className="w-28">
-                {a.voice === "male" ? tr("Man reads A") : tr("Woman reads A")} · {a.accent} · {a.seconds} s
-              </span>
-              <audio controls src={a.uri} className="h-8" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ChecksView({ checks }: { checks: ContentItem["checks"] }) {
-  if (!checks) return <p className="text-xs text-muted">{tr("No automatic checks (added before the pipeline).")}</p>;
-  return (
-    <ul className="flex flex-col gap-1">
-      {Object.entries(checks).map(([name, c]) => (
-        <li key={name} className="text-xs flex items-start gap-1.5">
-          {c.ok ? <CheckCircle2 size={14} className="text-success shrink-0" /> : <XCircle size={14} className="text-error shrink-0" />}
-          <span className="text-ink">
-            <span className="font-semibold">{CHECK_LABEL[name]?.() ?? name}</span>
-            {typeof c.estimate === "string" && ` · ${c.estimate}`}
-            {typeof c.similarity === "number" && ` · ${Math.round((c.similarity as number) * 100)}%`}
-            {(c.notes ?? []).length > 0 && <span className="text-muted"> — {(c.notes ?? []).join("; ")}</span>}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function ReviewDetail({ id, onDone }: { id: string; onDone: () => void }) {
   const [item, setItem] = useState<ContentItem | null>(null);
@@ -559,10 +461,12 @@ function ReviewPanel({ overview, refresh }: { overview: ContentOverview; refresh
 
 // Question bank: write questions with AI, review them, and turn approved
 // ones into new sets (ASSESSMENT_ENGINE.md section 6).
+type Tab = "review" | "generate" | "library" | "create" | "sets";
+
 export function QuestionBank() {
   const [overview, setOverview] = useState<ContentOverview | null>(null);
   const [jobs, setJobs] = useState<GenerationJob[]>([]);
-  const [tab, setTab] = useState<"review" | "generate" | "sets">("review");
+  const [tab, setTab] = useState<Tab>("review");
   const [error, setError] = useState<string | null>(null);
 
   function refresh() {
@@ -588,25 +492,29 @@ export function QuestionBank() {
     <div className="flex flex-col gap-5 w-full">
       <PageHeader
         title={tr("Question bank")}
-        subtitle={tr("Write questions with AI, check and review them, and turn approved ones into new practice and mock sets.")}
+        subtitle={tr("See every question, build tests from them, write new ones with AI, and review them.")}
       />
-      <FilterPills<"review" | "generate" | "sets">
+      <FilterPills<Tab>
         value={tab}
         onChange={setTab}
         options={[
           ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
           ["generate", tr("Write questions")],
+          ["library", tr("Library")],
+          ["create", tr("Create test")],
           ["sets", tr("Sets")],
         ]}
       />
       {tab === "generate" && (
         <>
           <GeneratePanel overview={overview} onStarted={refresh} />
-          <JobsPanel jobs={jobs} names={overview.itemTypeNames} />
+          <JobsPanel jobs={jobs} names={overview.itemTypeNames} testTypes={overview.testTypes} />
         </>
       )}
       {tab === "review" && <ReviewPanel overview={overview} refresh={refresh} />}
       {tab === "sets" && <BankPanel overview={overview} onAssembled={refresh} />}
+      {tab === "library" && <LibraryPanel itemTypeNames={overview.itemTypeNames} />}
+      {tab === "create" && <BuilderPanel />}
       <p className="text-xs text-muted flex items-center gap-1.5">
         <Layers size={13} />
         <ListChecks size={13} />

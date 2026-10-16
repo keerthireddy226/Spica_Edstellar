@@ -36,6 +36,7 @@ import {
 import { QuotaError, assertQuota, listQuotas, quotaUsage } from "../programs/quotas.js";
 import { activeProgramOf, learnerProgram, recordProgramSession } from "../programs/service.js";
 import { enqueue } from "../queue/queue.js";
+import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.js";
 import { learnerQuota } from "../programs/quotas.js";
 
 export const practiceTestsRouter = Router();
@@ -122,7 +123,9 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
      WHERE i.id = ANY($1::uuid[])`,
     [itemIds],
   );
-  const byId = new Map(itemsResult.rows.map((r) => [r.id, r]));
+  // A built test's own time limits.
+  const timers = (sessionRow.composition?.timers as Record<string, number> | undefined) ?? {};
+  const byId = new Map(itemsResult.rows.map((r) => [r.id, { ...r, timer_seconds: timers[r.id] ?? r.timer_seconds }]));
   const attemptsResult = await pool.query(`SELECT item_id, response_text FROM attempts WHERE session_id = $1`, [sessionRow.id]);
   const attemptByItem = new Map(attemptsResult.rows.map((r) => [r.item_id, r.response_text]));
   // A mock's questions carry their limit and, once shown, the seconds left.
@@ -201,8 +204,10 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
 practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const r = await pool.query(
-      `SELECT s.id, s.test_code, s.delivery_mode, s.completed_at, s.result, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id, e.name AS exam_name, fr.status AS report_status
-       FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN feedback_reports fr ON fr.session_id = s.id
+      `SELECT s.id, s.test_code, s.delivery_mode, s.completed_at, s.result, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id,
+         coalesce(e.name, fo.name) AS exam_name, fr.status AS report_status
+       FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
+       LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
          AND EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
        ORDER BY s.completed_at DESC LIMIT 20`,
@@ -281,8 +286,24 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
        ORDER BY e.code`,
       [testType.id, req.user!.id],
     );
+    // Practice tests built in the assessment builder, after the sets.
+    const forms = await practiceForms(testType.id, req.user!.id);
     res.json({
-      exams: result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed, inProgress: r.in_progress })),
+      exams: [
+        ...result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed, inProgress: r.in_progress, source: "set" })),
+        ...forms.map((f) => ({
+          id: f.id,
+          code: f.code,
+          testId: f.code,
+          name: f.name,
+          itemCount: f.item_count,
+          completed: f.completed,
+          inProgress: f.in_progress,
+          source: "form",
+          durationMinutes: f.duration_minutes,
+          shortForm: f.short_form,
+        })),
+      ],
     });
   } catch (err) {
     next(err);
@@ -294,10 +315,12 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
 const startSessionSchema = z
   .object({
     examId: z.string().uuid().optional(),
+    // A practice test built in the assessment builder (a published form).
+    formId: z.string().uuid().optional(),
     testTypeId: z.string().min(1).max(60).optional(),
     mode: z.enum(["practice", "mock"]).default("practice"),
   })
-  .refine((b) => b.examId || (b.mode === "mock" && b.testTypeId), { message: "examId or testTypeId required" });
+  .refine((b) => b.examId || b.formId || (b.mode === "mock" && b.testTypeId), { message: "examId, formId or testTypeId required" });
 
 // Resumes an open session for the same set (practice) or test type (mock)
 // instead of starting a new one.
@@ -311,7 +334,12 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       const a = await activeAssessment(req.user!.id);
       if (!a || !body.examId || a.exam_id !== body.examId) return res.status(403).json({ error: "candidate_not_allowed" });
     }
-    const testTypeId = body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!;
+    // A built practice test: published, for practice, and not for candidates.
+    const builtForm = body.formId && !candidate
+      ? (await pool.query(`SELECT id, test_type_id, code, duration_minutes, short_form FROM forms WHERE id = $1 AND status = 'published' AND purpose = 'practice'`, [body.formId])).rows[0]
+      : null;
+    if (body.formId && !builtForm) return res.status(404).json({ error: "unknown_form" });
+    const testTypeId: string = builtForm ? builtForm.test_type_id : body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!;
     if (!testTypeId || !(await liveTestType(testTypeId))) return res.status(404).json({ error: "unknown_product" });
     const { allowedTestProducts } = candidate ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts && !allowedTestProducts.includes(testTypeId)) return res.status(403).json({ error: "product_not_enabled" });
@@ -323,9 +351,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
             await pool.query(
               `SELECT id, composition, test_code, delivery_mode FROM sessions
                WHERE user_id = $1 AND session_type = 'mocktest' AND delivery_mode = 'practice' AND completed_at IS NULL
-                 AND composition->>'examId' = $2
+                 AND coalesce(composition->>'formId', composition->>'examId') = $2
                ORDER BY started_at DESC LIMIT 1`,
-              [req.user!.id, body.examId],
+              [req.user!.id, builtForm?.id ?? body.examId],
             )
           ).rows[0];
     // An untouched practice session holding questions retired since it
@@ -349,6 +377,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         sessionId: existing.id,
         testCode: existing.test_code,
         examId: existing.composition.examId,
+        formId: existing.composition.formId ?? null,
         testTypeId: existingType,
         deliveryMode: mode,
         partBoundaries,
@@ -371,9 +400,20 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const program = candidate ? null : await activeProgramOf(req.user!.id);
     const programId = program?.test_type_id === testTypeId ? program.id : null;
 
-    let examId = body.examId;
+    let examId: string | null = body.examId ?? null;
     let form: Awaited<ReturnType<typeof selectFormItems>> | null = null;
-    if (mode === "mock" && !candidate) {
+    // A built test (assessment builder): its questions, time limits and duration.
+    let built: { id: string; code: string; durationMinutes: number; shortForm: boolean; timers: Record<string, number> } | null = null;
+    // Published mock forms are used before the per-learner draw.
+    const mockForm = mode === "mock" && !candidate ? await pickMockForm(testTypeId, req.user!.id) : null;
+    const formToUse: { id: string; code: string; duration_minutes: number; short_form: boolean } | null =
+      builtForm ?? (mockForm ? (await pool.query(`SELECT id, code, duration_minutes, short_form FROM forms WHERE id = $1`, [mockForm.id])).rows[0] : null);
+    if (formToUse) {
+      const fr = await formSessionRows(formToUse.id);
+      form = { rows: fr.rows, partIdByOrder: fr.partIdByOrder };
+      built = { id: formToUse.id, code: formToUse.code, durationMinutes: formToUse.duration_minutes, shortForm: formToUse.short_form, timers: fr.timers };
+      examId = null;
+    } else if (mode === "mock" && !candidate) {
       // A learner's mock: questions they haven't seen, laid out like the first set.
       const template = await mockTemplateExam(testTypeId);
       if (!template) return res.status(404).json({ error: "no_exam_items_available" });
@@ -384,21 +424,46 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       const { policy } = await learnerPolicy(req.user!.id);
       if (policy.randomizedForms) form = await selectRandomizedItems(examId!);
     }
-    const rows = form?.rows.length ? form.rows : await selectExamItems(examId!);
+    const formRows = form?.rows ?? [];
+    if (built && formRows.length === 0) return res.status(404).json({ error: "no_exam_items_available" });
+    const rows = formRows.length ? formRows : await selectExamItems(examId!);
     if (rows.length === 0) {
       return res.status(404).json({ error: "no_exam_items_available" });
     }
-    const partBoundaries = derivePartBoundaries(rows, form?.rows.length ? form.partIdByOrder : undefined);
+    const builtTest = built;
+    const partBoundaries = derivePartBoundaries(rows, formRows.length ? form?.partIdByOrder : undefined);
     const itemIds = rows.map((r) => r.id);
+    const timers = builtTest?.timers ?? {};
     const mock: MockComposition | null =
-      mode === "mock" ? await mockLimits(itemIds).then((limits) => ({ limits, deadlineAt: mockDeadline(limits, partBoundaries.length).toISOString() })) : null;
+      mode === "mock"
+        ? await mockLimits(itemIds, timers).then((limits) => {
+            // A built mock's whole-test deadline follows its duration (never shorter than its questions need).
+            const byQuestions = mockDeadline(limits, partBoundaries.length).getTime();
+            const byDuration = builtTest ? Date.now() + (builtTest.durationMinutes + 10) * 60_000 : 0;
+            return { limits, deadlineAt: new Date(Math.max(byQuestions, byDuration)).toISOString() };
+          })
+        : null;
 
-    const examCode = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [examId])).rows[0]?.code ?? "";
+    const examCode = examId ? ((await pool.query(`SELECT code FROM exams WHERE id = $1`, [examId])).rows[0]?.code ?? "") : "";
     const testCode = newTestCode(examPrefix(examCode));
     const sessionResult = await pool.query(
       `INSERT INTO sessions (user_id, session_type, mode, composition, test_code, delivery_mode, program_id)
        VALUES ($1, 'mocktest', 'coach', $2, $3, $4, $5) RETURNING id`,
-      [req.user!.id, JSON.stringify({ examId, testTypeId, itemIds, partBoundaries, randomized: !!form?.rows.length, ...mock }), testCode, mode, programId],
+      [
+        req.user!.id,
+        JSON.stringify({
+          examId,
+          testTypeId,
+          itemIds,
+          partBoundaries,
+          randomized: !!formRows.length && !builtTest,
+          ...(builtTest ? { formId: builtTest.id, formCode: builtTest.code, durationMinutes: builtTest.durationMinutes, shortForm: builtTest.shortForm, timers } : {}),
+          ...mock,
+        }),
+        testCode,
+        mode,
+        programId,
+      ],
     );
 
     await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
@@ -407,6 +472,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       sessionId: sessionResult.rows[0].id,
       testCode,
       examId,
+      formId: builtTest?.id ?? null,
       testTypeId,
       deliveryMode: mode,
       partBoundaries,
@@ -432,6 +498,7 @@ practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRe
       sessionId: session.id,
       testCode: session.test_code,
       examId: session.composition?.examId ?? null,
+      formId: session.composition?.formId ?? null,
       testTypeId: session.composition?.testTypeId ?? null,
       deliveryMode: session.delivery_mode ?? "practice",
       completed: !!session.completed_at,
@@ -610,7 +677,8 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     // The same CEFR level logic as the placement test, from each question's level.
     const level = levelSummary(rows);
     // A mock's estimated score range on the exam family's scale, where it publishes one.
-    const scale = deliveryMode === "mock" ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
+    // A short form isn't the exam's format, so its score range wouldn't mean anything.
+    const scale = deliveryMode === "mock" && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
     const skillScoreBands = level?.skillLevels
       ? Object.fromEntries(Object.entries(level.skillLevels as Record<string, string | null>).map(([k, v]) => [k, bandForLevel(scale, v)]))
       : null;

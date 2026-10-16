@@ -111,8 +111,9 @@ export function allowedSeconds(row: Omit<TimingRow, "id">): number {
   return answer + listening + (row.two_phase_read_seconds ?? 0) + (row.prep_seconds ?? 0);
 }
 
-// Each question's limit, by item id.
-export async function mockLimits(itemIds: string[]): Promise<Record<string, number>> {
+// Each question's limit, by item id. `timers`: a built test's own answer
+// times for some questions (they replace the question's usual one).
+export async function mockLimits(itemIds: string[], timers: Record<string, number> = {}): Promise<Record<string, number>> {
   const r = await pool.query(
     `SELECT i.id, i.content, COALESCE(i.timer_seconds, it.timer_seconds) AS timer_seconds, it.estimated_seconds,
        it.two_phase_read_seconds, it.prep_seconds,
@@ -121,7 +122,7 @@ export async function mockLimits(itemIds: string[]): Promise<Record<string, numb
      WHERE i.id = ANY($1::uuid[])`,
     [itemIds],
   );
-  return Object.fromEntries((r.rows as TimingRow[]).map((row) => [row.id, allowedSeconds(row)]));
+  return Object.fromEntries((r.rows as TimingRow[]).map((row) => [row.id, allowedSeconds({ ...row, timer_seconds: timers[row.id] ?? row.timer_seconds })]));
 }
 
 // When the whole mock must be finished.

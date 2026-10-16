@@ -35,6 +35,11 @@ export interface ExamSummary {
   completed: boolean;
   // An unfinished practice session of this set to resume.
   inProgress: boolean;
+  // "form": a test built by Edstellar staff from the question bank.
+  source?: "set" | "form";
+  durationMinutes?: number;
+  // Not the exam's published length.
+  shortForm?: boolean;
 }
 
 export interface PartBoundary {
@@ -89,6 +94,8 @@ export interface ExamSessionData {
   sessionId: string;
   testCode: string | null;
   examId: string;
+  // A built test (assessment builder), instead of a set.
+  formId?: string | null;
   testTypeId: string | null;
   deliveryMode: DeliveryMode;
   partBoundaries: PartBoundary[];
@@ -101,6 +108,11 @@ export interface ExamSessionData {
 // Practice: one set. A candidate's assigned set always runs as a mock.
 export function startExamSession(examId: string): Promise<ExamSessionData> {
   return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ examId, mode: "practice" }) });
+}
+
+// A practice test built in the assessment builder.
+export function startFormSession(formId: string): Promise<ExamSessionData> {
+  return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ formId, mode: "practice" }) });
 }
 
 // A mock exam of a test type: exam conditions, questions the learner hasn't

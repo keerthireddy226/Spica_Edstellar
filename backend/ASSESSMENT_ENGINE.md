@@ -567,3 +567,53 @@ Still open from Phase 7: Campus and Admissions aren't separately priced in
 the Plans & pricing page (Admissions uses recruitment credits, Campus the
 skills licenses with the education discount); applicant emails are the same
 neutral text as candidates'.
+
+## 21. Assessment builder: built
+
+For Edstellar staff only (Super Admins; Admins with Content review). Org
+Admins, Managers and Recruiters never build tests; they use published ones.
+
+- **Library** (Question bank > Library, `src/builder/library.ts`): every
+  question in Spica, wherever it comes from: modules (items in module sets),
+  practice and mock sets, the placement test, AI-written ones not in a set.
+  Filters: exam family, test type (question types that fit it), question
+  type, skill, level range, field, source, status, approved for mocks, text.
+  Each row shows where it's used, the time it takes in a test, how often it
+  was answered and the average score; a question opens in full with its
+  checks, recordings and every built test using it.
+- **Create test** (`src/builder/layout.ts`, `forms.ts`): choose the test
+  (grouped by exam), practice or mock, **duration**, level range, field and
+  sources. The duration starts at the published time (e.g. 70 min for
+  LanguageCert Listening & Reading A1-B1) and can be any of 15-120 min or a
+  custom number. The builder keeps every section of the test's first set and
+  scales each section's question count so the questions' time (answer time,
+  recordings played twice, reading and preparation) lands within about 5% of
+  the duration, at least one question per section (so a 30-minute writing
+  task can't be shortened). "Fill automatically" picks questions per section
+  with the first set's level spread, least-used first, passage groups kept
+  together; "Add questions" picks by hand from matching questions. A mock
+  takes only questions approved for mocks (a reviewer can approve them from
+  the builder). A section that comes up short offers "Write the missing with
+  AI". Drafts can be edited; Publish checks every question (right type for
+  its section, approved, approved for mocks in a mock) and records who
+  published it; a published test can only be retired.
+- **Short forms**: a test at another duration than the published one is a
+  short form: labelled so, and a short-form mock shows the CEFR level but no
+  estimated exam score range.
+- **Data** (`migrations/1795200000000_test-forms.sql`): `forms` (test type,
+  template set, purpose, name, code such as LB-F001, duration, short form,
+  levels, field, status, who built and approved it) and `form_items` (form,
+  question, section, order, time limit). A question can be in any number of
+  forms; nothing is moved or copied, and existing sets keep working.
+- **In use**: a published practice form is listed with the test type's
+  practice sets (with its duration and "short form") and runs with its own
+  time limits, also after a reload. Learners' mocks of a test type use its
+  published mock forms first (the one they've seen least), with the whole-test
+  deadline following the form's duration (never shorter than its questions
+  need); without one, mocks are drawn per learner as in Phase 2. Every
+  build, publish and retire is in the audit log.
+
+Still open: recruitment and admissions invitations still use the test type's
+sets, not built forms; Versant module questions can fill Versant tests, but
+LanguageCert sections need LanguageCert question types (mostly from the
+starter sets and AI); new screens are in English only.

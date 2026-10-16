@@ -32,6 +32,7 @@ import {
   getExamsForProduct,
   startExamSession,
   startMockSession,
+  startFormSession,
   getExamSession,
   markItemShown,
   submitExamAttempt,
@@ -92,6 +93,8 @@ interface PendingStart {
   key: string;
   mode: DeliveryMode;
   examId?: string;
+  // A practice test built by staff (assessment builder).
+  formId?: string;
   testTypeId?: string;
 }
 
@@ -297,7 +300,8 @@ export function PracticeTests() {
     clockOffsetRef.current = res.timing ? Date.parse(res.timing.serverNow) - Date.now() : 0;
     mockDeadlineRef.current = res.timing?.deadlineAt ? Date.parse(res.timing.deadlineAt) : null;
     setFeedback(null);
-    setActiveExamId(res.examId);
+    // A built test is listed with the sets under its own id.
+    setActiveExamId(res.formId ?? res.examId);
     setPartBoundaries(res.partBoundaries);
     setItems(res.items);
     const firstUnattempted = res.items.findIndex((item) => !item.attempted);
@@ -335,7 +339,8 @@ export function PracticeTests() {
     setStarting(true);
     setError(null);
     try {
-      const res = start.mode === "mock" ? await startMockSession(start.testTypeId!) : await startExamSession(start.examId!);
+      const res =
+        start.mode === "mock" ? await startMockSession(start.testTypeId!) : start.formId ? await startFormSession(start.formId) : await startExamSession(start.examId!);
       applySessionData(res);
     } catch (err) {
       const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
@@ -1298,7 +1303,11 @@ export function PracticeTests() {
                   </span>
                   <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <span className="font-display font-bold text-base text-ink">{exam.name || `Set ${i + 1}`}</span>
-                    <span className="text-sm text-muted">{t("practiceTests.questionsCount", { count: exam.itemCount })}</span>
+                    <span className="text-sm text-muted">
+                      {t("practiceTests.questionsCount", { count: exam.itemCount })}
+                      {exam.durationMinutes ? ` · ${tr("{{m}} min", { m: exam.durationMinutes })}` : ""}
+                      {exam.shortForm ? ` · ${tr("short form")}` : ""}
+                    </span>
                     <span className="self-start text-[11px] font-mono font-semibold text-ink bg-paper-warm border border-rule rounded-pill px-2 py-0.5">
                       {tr("Test ID")} {exam.testId}
                     </span>
@@ -1311,7 +1320,7 @@ export function PracticeTests() {
                   onClick={() => {
                     // Every Start or Retake gets its own check.
                     setPreTestDoneFor(null);
-                    setPendingStart({ key: exam.id, mode: "practice", examId: exam.id });
+                    setPendingStart(exam.source === "form" ? { key: exam.id, mode: "practice", formId: exam.id } : { key: exam.id, mode: "practice", examId: exam.id });
                   }}
                   // At the monthly limit, only an unfinished set can be resumed.
                   disabled={practiceLeft === 0 && !exam.inProgress}
