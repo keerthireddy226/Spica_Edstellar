@@ -1247,8 +1247,9 @@ function ModulesPage() {
         // round controls). A typed/selected answer is a wide control, so
         // forcing it next to a small round button looked cramped — that
         // case stacks instead: Play centered above, full-width answer below.
-        <div className={current.inputMethod === "mic" ? "flex items-center justify-center gap-10" : "flex flex-col gap-4"}>
-          <div className={`flex flex-col items-center gap-2 ${current.inputMethod === "mic" ? "" : "self-center"}`}>
+        // Mic: two equal columns, so the full-width record control can't squeeze Play.
+        <div className={current.inputMethod === "mic" ? "grid grid-cols-2 items-start gap-6" : "flex flex-col gap-4"}>
+          <div className={`flex flex-col items-center gap-3 ${current.inputMethod === "mic" ? "" : "self-center"}`}>
             <button
               onClick={handlePlay}
               disabled={playing || recording}
@@ -1256,7 +1257,7 @@ function ModulesPage() {
             >
               <Volume2 size={22} />
             </button>
-            <span className="text-xs text-muted">
+            <span className="text-sm font-medium text-muted whitespace-nowrap">
               {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
             </span>
           </div>
