@@ -6,11 +6,15 @@
 //
 // Off unless SUPABASE_URL, SUPABASE_SERVICE_KEY and FILE_MIRROR_BUCKET are set,
 // so local development is unchanged.
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
+import type { NextFunction, Request, Response } from "express";
 
 const ROOTS = ["uploads", "private"];
 const SCAN_MS = 15_000;
+// Downloads land here first (outside the mirrored folders), then move in.
+const TMP_DIR = ".file-mirror-tmp";
 
 interface Config {
   url: string;
@@ -117,8 +121,8 @@ async function scan(c: Config) {
   }
 }
 
-// Downloads the bucket's files that aren't on disk yet, then starts the scan.
-// Runs before the server listens, so files are there for the first request.
+// Lists the bucket and starts the scan; files not on disk yet are downloaded
+// in the background, or on demand when asked for first.
 export async function startFileMirror(): Promise<void> {
   const c = config();
   if (!c) return;
@@ -138,31 +142,73 @@ export async function startFileMirror(): Promise<void> {
     console.error("[file-mirror] could not list the bucket:", (err as Error).message);
     remote = [];
   }
+  for (const o of remote) remoteKeys.add(o.key);
   const local = await localFiles();
-  let downloaded = 0;
   const queue = remote.filter((o) => local.get(o.key)?.size !== o.size);
-  // A few downloads at a time.
-  await Promise.all(
-    Array.from({ length: 8 }, async () => {
-      for (let o = queue.shift(); o; o = queue.shift()) {
-        const r = await fetch(objectUrl(c, o.key), { headers: headers(c) });
-        if (!r.ok) {
-          console.error(`[file-mirror] download ${o.key}: ${r.status}`);
-          continue;
-        }
-        await mkdir(path.dirname(o.key), { recursive: true });
-        await writeFile(o.key, Buffer.from(await r.arrayBuffer()));
-        downloaded++;
-      }
-    }),
-  );
-  // Everything now on disk that the bucket has counts as synced.
-  const after = await localFiles();
-  const inBucket = new Set(remote.map((o) => o.key));
-  synced = new Map([...after].filter(([k]) => inBucket.has(k)));
-  console.log(`[file-mirror] ${remote.length} files in ${c.bucket}, ${downloaded} downloaded in ${Math.round((Date.now() - started) / 1000)}s`);
+  // Files already on disk and in the bucket count as synced.
+  synced = new Map([...local].filter(([k]) => remoteKeys.has(k)));
+  console.log(`[file-mirror] ${remote.length} files in ${c.bucket}, ${queue.length} to download`);
+  active = c;
   setInterval(() => void scan(c), SCAN_MS).unref();
-  void scan(c);
+  // Download in the background (a few at a time) so the server starts at
+  // once; a file asked for before its turn is fetched on demand.
+  let downloaded = 0;
+  void Promise.all(
+    Array.from({ length: 6 }, async () => {
+      for (let o = queue.shift(); o; o = queue.shift()) if (await ensureLocal(o.key)) downloaded++;
+    }),
+  ).then(() => console.log(`[file-mirror] ${downloaded} files downloaded in ${Math.round((Date.now() - started) / 1000)}s`));
+}
+
+// The bucket's files, and the mirror once started.
+const remoteKeys = new Set<string>();
+let active: Config | null = null;
+const inFlight = new Map<string, Promise<boolean>>();
+
+// Downloads one bucket file to its local path unless it's already there.
+// Written to a temporary file first, so the scan never uploads half a file.
+function ensureLocal(key: string): Promise<boolean> {
+  const c = active;
+  if (!c || !remoteKeys.has(key)) return Promise.resolve(false);
+  const pending = inFlight.get(key);
+  if (pending) return pending;
+  const job = (async () => {
+    if (await stat(key).catch(() => null)) return false;
+    const r = await fetch(objectUrl(c, key), { headers: headers(c) });
+    if (!r.ok) {
+      console.error(`[file-mirror] download ${key}: ${r.status}`);
+      return false;
+    }
+    const tmp = path.join(TMP_DIR, `${randomUUID()}`);
+    await mkdir(TMP_DIR, { recursive: true });
+    await writeFile(tmp, Buffer.from(await r.arrayBuffer()));
+    await mkdir(path.dirname(key), { recursive: true });
+    await rename(tmp, key);
+    const st = await stat(key);
+    synced.set(key, { size: st.size, mtimeMs: st.mtimeMs });
+    return true;
+  })()
+    .catch((err) => {
+      console.error(`[file-mirror] download ${key}:`, (err as Error).message);
+      return false;
+    })
+    .finally(() => inFlight.delete(key));
+  inFlight.set(key, job);
+  return job;
+}
+
+// Before express.static("uploads"): a file not downloaded yet is fetched now.
+export function mirrorMissingUploads(req: Request, _res: Response, next: NextFunction) {
+  if (!active) return next();
+  let rel: string;
+  try {
+    rel = path.posix.normalize(decodeURIComponent(req.path));
+  } catch {
+    return next();
+  }
+  const key = `uploads${rel}`;
+  if (rel.includes("..") || !key.startsWith("uploads/")) return next();
+  ensureLocal(key).finally(() => next());
 }
 
 // One-off seeding: uploads every local file the bucket doesn't have yet

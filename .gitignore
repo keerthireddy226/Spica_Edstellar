@@ -13,3 +13,4 @@ backend/private/
 backend/models/*
 !backend/models/*.onnx
 !backend/models/*.traineddata.gz
+backend/.file-mirror-tmp/

@@ -7,7 +7,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { ZodError } from "zod";
 import { pool } from "./db.js";
-import { startFileMirror } from "./storage/mirror.js";
+import { mirrorMissingUploads, startFileMirror } from "./storage/mirror.js";
 import { authRouter } from "./auth/routes.js";
 import { onboardingRouter } from "./onboarding/routes.js";
 import { placementRouter } from "./placement/routes.js";
@@ -83,7 +83,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 // Voice enrollment samples and attempt recordings live here — requiring a
 // real session (not just an unguessable filename) before serving any of it.
-app.use("/uploads", requireAuth, express.static("uploads"));
+app.use("/uploads", requireAuth, mirrorMissingUploads, express.static("uploads"));
 
 app.get("/api/health", async (_req, res, next) => {
   try {
@@ -150,7 +150,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: "internal_server_error" });
 });
 
-// On hosts without a lasting disk, bring the files back before serving.
+// On hosts without a lasting disk, bring the files back (in the background).
 await startFileMirror();
 
 const port = process.env.PORT ?? 4000;
