@@ -1218,7 +1218,15 @@ export function PracticeTests() {
           onBack={backToProducts}
           backLabel={t("practiceTests.backToProducts")}
           eyebrow={t("nav.practiceTests")}
-          title={selectedType ? testTypeName(selectedType, t) : ""}
+          // The exam the test is modelled on, e.g. "Versant-style English 4-Skills Essentials Test".
+          title={
+            selectedType
+              ? tr("{{family}}-style {{test}}", {
+                  family: catalogue?.find((f) => f.id === selectedType.familyId)?.name ?? "",
+                  test: testTypeName(selectedType, t),
+                })
+              : ""
+          }
           subtitle={selectedType ? testTypeDescription(selectedType, t) : ""}
           icon={Icon}
           stats={
