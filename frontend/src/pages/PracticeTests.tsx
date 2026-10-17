@@ -25,6 +25,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
+import { MockExamList } from "@/components/practice/MockExamList";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import { familyHeading, familyNote, testTypeBadgeTime, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import {
@@ -1241,7 +1242,17 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           subtitle={selectedType ? testTypeDescription(selectedType, t) : ""}
           icon={Icon}
           stats={
-            exams
+            isMockSection && selectedType
+              ? [
+                  { label: tr("Length"), value: tr("{{m}} min", { m: selectedType.durationMinutes }), icon: Clock },
+                  { label: tr("Levels"), value: `${selectedType.cefrMin}-${selectedType.cefrMax}`, icon: Award },
+                  {
+                    label: tr("Mocks left this month"),
+                    value: mocksLeft === null ? tr("No limit") : mocksLeft,
+                    icon: Timer,
+                  },
+                ]
+              : exams
               ? [
                   { label: tr("Sets"), value: exams.length, icon: ClipboardCheck },
                   { label: tr("Completed"), value: exams.filter((e) => e.completed).length, icon: CheckCircle2 },
@@ -1378,16 +1389,47 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const families = (catalogue ?? []).map((f) => ({ ...f, testTypes: f.testTypes.filter(visibleType) })).filter((f) => f.testTypes.length > 0);
   const live = testTypes.filter((tt) => tt.status === "live" && visibleType(tt));
   const lengths = live.map((tt) => tt.durationMinutes);
+  const programCard = myProgram && (
+    <ProgramCard
+      mine={myProgram}
+      testTypes={testTypes}
+      onOpen={(id) => {
+        const nextIsMock = myProgram.upcoming[0]?.kind === "mock";
+        if (nextIsMock !== isMockSection) navigate(`${nextIsMock ? ROUTES.MOCK_EXAMS : ROUTES.PRACTICE_TESTS}?product=${encodeURIComponent(id)}`);
+        else openProduct(id);
+      }}
+    />
+  );
+  const reportsLink = history.length > 0 && (
+    <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer -mt-2">
+      <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
+    </button>
+  );
+  if (isMockSection) {
+    return (
+      <div className="w-full flex flex-col gap-6">
+        <MockExamList
+          families={families}
+          quota={quota}
+          history={history}
+          openMock={openMock}
+          onStart={(id) => {
+            openProduct(id);
+            setPreTestDoneFor(null);
+            setPendingStart({ key: `mock:${id}`, mode: "mock", testTypeId: id });
+          }}
+        />
+        {programCard}
+        {reportsLink}
+      </div>
+    );
+  }
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
-        eyebrow={isMockSection ? tr("Exam conditions") : tr("Practice at your own pace")}
-        title={isMockSection ? tr("Mock Exams") : t("nav.practiceTests")}
-        subtitle={
-          isMockSection
-            ? tr("Timed like the real exam, questions you haven't seen, and a full report at the end.")
-            : tr("Full practice tests in the style of the major English exams: pause, go back and see the right answer after each question.")
-        }
+        eyebrow={tr("Practice at your own pace")}
+        title={t("nav.practiceTests")}
+        subtitle={tr("Full practice tests in the style of the major English exams: pause, go back and see the right answer after each question.")}
         icon={ClipboardCheck}
         stats={[
           { label: tr("Exam types"), value: live.length, icon: Layers },
@@ -1401,17 +1443,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         ]}
       />
 
-      {myProgram && (
-        <ProgramCard
-          mine={myProgram}
-          testTypes={testTypes}
-          onOpen={(id) => {
-            const nextIsMock = myProgram.upcoming[0]?.kind === "mock";
-            if (nextIsMock !== isMockSection) navigate(`${nextIsMock ? ROUTES.MOCK_EXAMS : ROUTES.PRACTICE_TESTS}?product=${encodeURIComponent(id)}`);
-            else openProduct(id);
-          }}
-        />
-      )}
+      {programCard}
 
       {quota && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted -mt-2">
@@ -1431,40 +1463,12 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         </div>
       )}
 
-      {history.length > 0 && (
-        <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer -mt-2">
-          <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
-        </button>
-      )}
-
-      {isMockSection && openMock?.testTypeId && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-navy/10 border border-navy/20 rounded-card px-5 py-4">
-          <Timer size={20} className="text-navy-deep shrink-0" />
-          <span className="flex-1 text-sm text-ink">
-            {tr("You have a mock exam in progress: {{name}}. Its clock keeps running.", {
-              name: (() => {
-                const tt = testTypes.find((x) => x.id === openMock.testTypeId);
-                return tt ? testTypeName(tt, t) : "";
-              })(),
-            })}
-          </span>
-          <Button
-            onClick={() => {
-              openProduct(openMock.testTypeId!);
-              setPreTestDoneFor(null);
-              setPendingStart({ key: `mock:${openMock.testTypeId}`, mode: "mock", testTypeId: openMock.testTypeId! });
-            }}
-            className="shrink-0"
-          >
-            {tr("Resume mock exam")}
-          </Button>
-        </div>
-      )}
+      {reportsLink}
 
       {families.map((family) => (
         <section key={family.id} className="flex flex-col gap-3">
           <div>
-            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family, isMockSection)}</h2>
+            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family)}</h2>
             <p className="text-xs text-muted">{familyNote(family)}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
