@@ -7,6 +7,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { ZodError } from "zod";
 import { pool } from "./db.js";
+import { startFileMirror } from "./storage/mirror.js";
 import { authRouter } from "./auth/routes.js";
 import { onboardingRouter } from "./onboarding/routes.js";
 import { placementRouter } from "./placement/routes.js";
@@ -148,6 +149,9 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   res.status(500).json({ error: "internal_server_error" });
 });
+
+// On hosts without a lasting disk, bring the files back before serving.
+await startFileMirror();
 
 const port = process.env.PORT ?? 4000;
 const server = app.listen(port, () => {
