@@ -80,8 +80,8 @@ export interface PlannedSection {
 
 // How many questions each section gets for `minutes`: every section keeps at
 // least one question, counts scale in proportion to the published layout, and
-// the total lands within about 5% of the duration where the sections allow it
-// (one 30-minute writing task can't be made shorter).
+// the total never goes over the duration and stops short of it by less than
+// one more question (one 30-minute writing task can't be made shorter).
 export function planCounts(layout: Pick<Layout, "officialMinutes" | "templateSeconds" | "sections">, minutes: number): { sections: PlannedSection[]; plannedSeconds: number } {
   // Seconds the chosen duration stands for, in the template's own time scale.
   const target = minutes * 60 * (layout.templateSeconds / Math.max(1, layout.officialMinutes * 60));
@@ -90,15 +90,15 @@ export function planCounts(layout: Pick<Layout, "officialMinutes" | "templateSec
   const total = () => layout.sections.reduce((n, s, i) => n + counts[i] * s.avgSeconds, 0);
   // Most over-represented section first when cutting, most under-represented when adding.
   const share = (i: number) => counts[i] / layout.sections[i].officialCount;
-  for (let guard = 0; guard < 500 && total() > target * 1.05; guard++) {
+  for (let guard = 0; guard < 500 && total() > target; guard++) {
     const candidates = counts.map((c, i) => i).filter((i) => counts[i] > 1);
     if (!candidates.length) break;
     const i = candidates.sort((a, b) => share(b) - share(a) || layout.sections[b].avgSeconds - layout.sections[a].avgSeconds)[0];
     counts[i]--;
   }
-  for (let guard = 0; guard < 500 && total() < target * 0.95; guard++) {
+  for (let guard = 0; guard < 500 && total() < target; guard++) {
     const order = counts.map((c, i) => i).sort((a, b) => share(a) - share(b) || layout.sections[a].avgSeconds - layout.sections[b].avgSeconds);
-    const i = order.find((k) => total() + layout.sections[k].avgSeconds <= target * 1.05) ?? null;
+    const i = order.find((k) => total() + layout.sections[k].avgSeconds <= target) ?? null;
     if (i === null) break;
     counts[i]++;
   }

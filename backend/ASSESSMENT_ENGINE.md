@@ -679,3 +679,35 @@ starter sets and AI); new screens are in English only.
   a filter for all, mock exams or practice tests. Each one opens its report.
 - Gemini: errors from the daily quota are not retried (they fail fast), and the
   timeout timer is cleared so scripts exit straight away.
+
+## 24. Simpler Question bank, exact durations, AI-only tests, delete, face check done
+
+- **Question bank tabs**: Create a test (default), All questions, Write with AI,
+  Review. Each tab has one line saying what it's for. The Sets tab is gone
+  (Create a test replaces it). All questions shows search, test, question type
+  and level, and the other filters sit behind "More filters". Recent AI
+  requests show the error in plain words (daily limit, busy, timeout) instead
+  of the raw API response, and no token counts.
+- **Create a test**: the duration starts at the real exam's time. The page
+  says how many questions the test gets and how many minutes they fill.
+  Minutes are in test time: question seconds × (published minutes ÷ the
+  published test's question seconds). Picking questions by hand is behind
+  "Or pick the questions yourself".
+- **Exact duration** (`planCounts`): the plan never goes over the chosen
+  duration and stops short of it by less than one more question. The one
+  exception is a duration below one question per part; the page says so.
+- **Questions from**: "From the question bank" (as before: approved bank
+  questions, the AI writes the gaps) or "New questions written by AI"
+  (`questions: "ai"`). In AI mode, every part whose type the AI can write
+  (`GENERATABLE_TYPES`) takes only questions from this build's own AI
+  requests (`aiJobIds` → `generationJobIds` filter). Other parts use the bank.
+  AI requests are split per level, following the template's level spread.
+- **Delete a built test**: `DELETE /api/admin/content/forms/:id`, only when no
+  session used it (`form_in_use` 409 otherwise; retire it instead). Audited as
+  `content.form_deleted`. Retired tests are hidden under "Show retired".
+- **Face check done**: `users.face_check_done` (migration 1795500000000). When
+  true, `learnerOrgPolicy` reports `faceCheckRequired: false`, so the person is
+  never asked to enroll or verify their face. It was set on 2026-10-17 for all
+  learner accounts and keerthi.r@edstellar.com while the product is being
+  built. To switch face checks back on:
+  `UPDATE users SET face_check_done = false;`

@@ -119,3 +119,11 @@ export function ChecksView({ checks }: { checks: ContentItem["checks"] }) {
     </ul>
   );
 }
+
+// The AI service's error in plain words.
+export function aiErrorText(error: string): string {
+  if (/429|quota|RESOURCE_EXHAUSTED/i.test(error)) return tr("The AI's daily limit is used up. Try again tomorrow, or move the Gemini key to a paid plan.");
+  if (/503|UNAVAILABLE|high demand|overloaded/i.test(error)) return tr("The AI was busy. Try again in a few minutes.");
+  if (/timed? ?out/i.test(error)) return tr("The AI took too long. Try again.");
+  return tr("The AI couldn't write these questions. Try again.");
+}

@@ -31,6 +31,8 @@ export interface LibraryFilters {
   q?: string;
   excludeIds?: string[];
   ids?: string[];
+  // Only questions these AI requests wrote.
+  generationJobIds?: string[];
 }
 
 // WHERE clause and parameters for the filters (shared by the library and the builder).
@@ -54,6 +56,7 @@ export function libraryWhere(f: LibraryFilters, params: unknown[]): string {
   if (f.mockApproved !== undefined) w.push(`i.mock_approved = ${add(f.mockApproved)}`);
   if (f.q) w.push(`(i.content::text ILIKE ${add(`%${f.q}%`)} OR i.topic ILIKE $${params.length})`);
   if (f.ids) w.push(`i.id = ANY(${add(f.ids)}::uuid[])`);
+  if (f.generationJobIds) w.push(`i.generation_job_id = ANY(${add(f.generationJobIds)}::uuid[])`);
   if (f.excludeIds?.length) w.push(`NOT (i.id = ANY(${add(f.excludeIds)}::uuid[]))`);
   return w.length ? `WHERE ${w.join(" AND ")}` : "";
 }

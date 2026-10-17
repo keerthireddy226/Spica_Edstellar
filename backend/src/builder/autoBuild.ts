@@ -13,6 +13,9 @@ export const createTestSchema = fillSchema.extend({
   name: z.string().trim().max(120).optional(),
   // Publish in the same click when everything is ready.
   publish: z.boolean().default(false),
+  // "bank": questions already in Spica, the AI writes only what's missing.
+  // "ai": the AI writes new questions for every part it can write.
+  questions: z.enum(["bank", "ai"]).default("bank"),
 });
 type CreateInput = z.infer<typeof createTestSchema>;
 
@@ -31,7 +34,7 @@ export interface SectionSummary {
 }
 
 export interface BuildSummary {
-  params: Omit<CreateInput, "name" | "publish">;
+  params: Omit<CreateInput, "name" | "publish"> & { aiJobIds?: string[] };
   field: string | null;
   sections: SectionSummary[];
   // AI-written questions a mock can't use until a person approves them for mocks.
@@ -44,14 +47,18 @@ export interface BuildSummary {
 
 const idx = (l: string | null | undefined) => CEFR_LEVELS.indexOf((l ?? "") as CefrLevel);
 
-// The level most of a section's missing slots aim at, within the chosen range.
-function levelForMissing(layout: Layout, sortOrder: number, wanted: number, have: number, min: string, max: string): string {
+// The levels a section's missing slots aim at (within the chosen range), with
+// how many of each, so the AI writes the same level spread as the real test.
+function levelsForMissing(layout: Layout, sortOrder: number, wanted: number, have: number, min: string, max: string): Map<string, number> {
   const s = layout.sections.find((x) => x.sortOrder === sortOrder)!;
-  const targets = levelTargets(s.levels, wanted).slice(have).filter(Boolean) as string[];
+  const mid = CEFR_LEVELS[Math.round((idx(min) + idx(max)) / 2)];
   const counts = new Map<string, number>();
-  for (const t of targets) counts.set(t, (counts.get(t) ?? 0) + 1);
-  const mode = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? CEFR_LEVELS[Math.round((idx(min) + idx(max)) / 2)];
-  return CEFR_LEVELS[Math.max(idx(min), Math.min(idx(max), idx(mode)))];
+  for (const t of levelTargets(s.levels, wanted).slice(have)) {
+    const at = idx(t) < 0 ? idx(mid) : idx(t);
+    const l = CEFR_LEVELS[Math.max(idx(min), Math.min(idx(max), at))];
+    counts.set(l, (counts.get(l) ?? 0) + 1);
+  }
+  return counts;
 }
 
 function summarize(layout: Layout, r: Awaited<ReturnType<typeof autofill>>, field: string | null, aiRequested: Record<string, number>): SectionSummary[] {
@@ -87,23 +94,26 @@ export async function createTest(userId: string, input: CreateInput) {
   const levelMin = input.levelMin ?? layout.cefrMin;
   const levelMax = input.levelMax ?? layout.cefrMax;
   const field = input.domain && input.domain !== "general" ? input.domain : null;
-  const r = await autofill({ ...input, levelMin, levelMax, keep: undefined });
+  // "ai": parts the AI can write take no bank questions (an empty job list matches none).
+  const aiOnly = input.questions === "ai";
+  const r = await autofill({ ...input, levelMin, levelMax, keep: undefined, aiJobIds: aiOnly ? [] : undefined });
 
-  // Ask the AI for the gaps it can fill (a few extra, as some won't pass their checks).
+  // Ask the AI for the gaps it can fill, one request per level (a few extra,
+  // as some won't pass their checks).
   const aiRequested: Record<string, number> = {};
   const jobIds: string[] = [];
   for (const m of r.missing) {
     if (!GENERATABLE_TYPES.includes(m.itemTypeId)) continue;
     const have = (r.chosen[String(m.sortOrder)] ?? []).length;
-    const wanted = have + m.count;
-    const count = Math.min(50, m.count + Math.max(1, Math.ceil(m.count * 0.3)));
-    const level = levelForMissing(layout, m.sortOrder, wanted, have, levelMin, levelMax);
-    const j = await pool.query(
-      `INSERT INTO generation_jobs (test_type_id, item_type_id, cefr_level, domain, requested, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [input.testTypeId, m.itemTypeId, level, field ?? "general", count, userId],
-    );
-    jobIds.push(j.rows[0].id);
-    aiRequested[String(m.sortOrder)] = count;
+    for (const [level, n] of levelsForMissing(layout, m.sortOrder, have + m.count, have, levelMin, levelMax)) {
+      const count = Math.min(50, n + Math.max(1, Math.ceil(n * 0.3)));
+      const j = await pool.query(
+        `INSERT INTO generation_jobs (test_type_id, item_type_id, cefr_level, domain, requested, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [input.testTypeId, m.itemTypeId, level, field ?? "general", count, userId],
+      );
+      jobIds.push(j.rows[0].id);
+      aiRequested[String(m.sortOrder)] = (aiRequested[String(m.sortOrder)] ?? 0) + count;
+    }
   }
 
   const name = input.name?.trim() || `${(await pool.query(`SELECT name FROM test_types WHERE id = $1`, [input.testTypeId])).rows[0]?.name ?? "Test"} · ${input.durationMinutes} min`;
@@ -118,7 +128,17 @@ export async function createTest(userId: string, input: CreateInput) {
     sections: r.chosen,
   });
   const summary: BuildSummary = {
-    params: { testTypeId: input.testTypeId, purpose: input.purpose, durationMinutes: input.durationMinutes, levelMin, levelMax, domain: input.domain, sources: input.sources },
+    params: {
+      testTypeId: input.testTypeId,
+      purpose: input.purpose,
+      durationMinutes: input.durationMinutes,
+      levelMin,
+      levelMax,
+      domain: input.domain,
+      sources: input.sources,
+      questions: input.questions,
+      ...(aiOnly ? { aiJobIds: jobIds } : {}),
+    },
     field,
     sections: summarize(layout, r, field, aiRequested),
     needsMockApproval: [],

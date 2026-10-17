@@ -202,7 +202,10 @@ export interface PlanSection {
   avgSeconds: number;
 }
 
-export function getBuilderPlan(testTypeId: string, durationMinutes: number): Promise<{ officialMinutes: number; cefrMin: string; cefrMax: string; plannedSeconds: number; sections: PlanSection[] }> {
+export function getBuilderPlan(
+  testTypeId: string,
+  durationMinutes: number,
+): Promise<{ officialMinutes: number; cefrMin: string; cefrMax: string; plannedSeconds: number; scale: number; sections: PlanSection[] }> {
   return api(`/admin/content/builder/plan?testTypeId=${encodeURIComponent(testTypeId)}&durationMinutes=${durationMinutes}`);
 }
 
@@ -282,6 +285,8 @@ export function createTestOneClick(body: {
   domain?: string;
   sources?: LibrarySource[];
   name?: string;
+  // "ai": the AI writes new questions for every part it can write.
+  questions?: "bank" | "ai";
   publish: boolean;
 }): Promise<{ id: string; status: "ready" | "waiting_for_ai" | "short"; summary: BuildSummary }> {
   return api("/admin/content/builder/create", { method: "POST", body: JSON.stringify(body) });
@@ -320,4 +325,8 @@ export function publishBuiltForm(id: string): Promise<{ ok: boolean }> {
 
 export function retireBuiltForm(id: string): Promise<{ ok: boolean }> {
   return api(`/admin/content/forms/${id}/retire`, { method: "POST" });
+}
+
+export function deleteBuiltForm(id: string): Promise<{ ok: boolean }> {
+  return api(`/admin/content/forms/${id}`, { method: "DELETE" });
 }

@@ -170,15 +170,17 @@ export async function applyLearnerDefaults(tenantId: string, userId: string): Pr
 // Individuals: yes, all, and yes.
 export async function learnerOrgPolicy(userId: string): Promise<{ faceCheckRequired: boolean; allowedTestProducts: string[] | null; modulesEnabled: boolean }> {
   const r = await pool.query(
-    `SELECT u.role, t.type, t.face_check_required, t.allowed_test_products, t.learner_modules FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+    `SELECT u.role, u.face_check_done, t.type, t.face_check_required, t.allowed_test_products, t.learner_modules FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
     [userId],
   );
   const t = r.rows[0];
+  // Staff marked this person's face check as done (testing accounts).
+  const done = t?.face_check_done === true;
   // Candidates are identified by the proctoring steps instead (ID selfie,
   // snapshots), never by a learner's face enrollment.
   if (t?.role === "candidate") return { faceCheckRequired: false, allowedTestProducts: null, modulesEnabled: false };
-  if (!t || t.type !== "cohort") return { faceCheckRequired: true, allowedTestProducts: null, modulesEnabled: true };
-  return { faceCheckRequired: t.face_check_required, allowedTestProducts: t.allowed_test_products, modulesEnabled: t.learner_modules };
+  if (!t || t.type !== "cohort") return { faceCheckRequired: !done, allowedTestProducts: null, modulesEnabled: true };
+  return { faceCheckRequired: t.face_check_required && !done, allowedTestProducts: t.allowed_test_products, modulesEnabled: t.learner_modules };
 }
 
 // Blocks starting or answering module practice for learners whose

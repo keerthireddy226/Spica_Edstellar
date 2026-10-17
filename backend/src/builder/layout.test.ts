@@ -21,12 +21,15 @@ describe("planCounts", () => {
     expect(p.sections.map((s) => s.count)).toEqual(sections.map((s) => s.officialCount));
   });
 
-  it("shortens to about the chosen duration, keeping every section", () => {
-    const p = planCounts(layout, 30);
-    expect(p.sections.every((s) => s.count >= 1)).toBe(true);
-    const target = 30 * 60 * (templateSeconds / (70 * 60));
-    expect(p.plannedSeconds).toBeLessThanOrEqual(target * 1.05);
-    expect(p.plannedSeconds).toBeGreaterThanOrEqual(target * 0.95);
+  it("shortens to the chosen duration without going over, keeping every section", () => {
+    for (const minutes of [30, 45, 60]) {
+      const p = planCounts(layout, minutes);
+      expect(p.sections.every((s) => s.count >= 1)).toBe(true);
+      const target = minutes * 60 * (templateSeconds / (70 * 60));
+      expect(p.plannedSeconds).toBeLessThanOrEqual(target);
+      // Short by less than the shortest question.
+      expect(target - p.plannedSeconds).toBeLessThan(Math.min(...sections.map((s) => s.avgSeconds)));
+    }
   });
 
   it("lengthens in proportion", () => {

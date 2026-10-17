@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Sparkles, RefreshCw, Layers, ListChecks } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { PageHeader, Panel, FilterPills, StatusPill, EmptyNote } from "@/components/staff/StaffKit";
 import {
-  assembleSet,
   decideItem,
   getContentItem,
   getContentOverview,
@@ -18,7 +17,7 @@ import {
   type QueueState,
 } from "@/api/content";
 import { tr } from "@/i18n/tr";
-import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS } from "@/components/staff/contentShared";
+import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { BuilderPanel, LibraryPanel } from "@/pages/staff/AssessmentBuilder";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -61,12 +60,9 @@ function GeneratePanel({ overview, onStarted }: { overview: ContentOverview; onS
   }
 
   return (
-    <Panel title={tr("Write new questions")}>
+    <Panel title={tr("Write new questions with AI")}>
       <p className="text-xs text-muted">
-        {tr("Written by {{gen}}, checked by {{check}}. Questions that pass every check are approved for practice; the rest wait for review. Mocks always need a person's approval.", {
-          gen: overview.models.generation,
-          check: overview.models.check,
-        })}
+        {tr("Pick the test, the question type, the level and how many. Questions that pass the automatic checks go into the bank for practice; mock exams use them after you approve them in Review. Only LanguageCert-style types can be written so far.")}
         {!overview.ttsEnabled && ` ${tr("Text-to-speech isn't set up, so listening questions get recordings later.")}`}
       </p>
       <div className="flex flex-wrap items-end gap-3">
@@ -136,110 +132,35 @@ function familyOf(testTypeId: string): "LanguageCert" | "Versant" {
 function JobsPanel({ jobs, names, testTypes }: { jobs: GenerationJob[]; names: Record<string, string>; testTypes: ContentOverview["testTypes"] }) {
   if (jobs.length === 0) return null;
   return (
-    <Panel title={tr("Recent requests")}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted uppercase tracking-wide border-b border-rule">
-              <th className="py-2 pr-3 font-semibold">{tr("Questions")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("Status")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("Written")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("Passed")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("To review")}</th>
-              <th className="py-2 font-semibold">{tr("Tokens")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map((j) => (
-              <tr key={j.id} className="border-b border-rule/60 align-top">
-                <td className="py-2 pr-3">
-                  <div className="text-ink">
-                    {familyOf(j.testTypeId)} · {testTypes.find((t) => t.id === j.testTypeId)?.name ?? j.testTypeId} · {names[j.itemTypeId] ?? j.itemTypeId} · {j.level} ·{" "}
-                    {DOMAIN_LABEL[j.domain]?.() ?? j.domain}
-                  </div>
-                  <div className="text-xs text-muted">
-                    {new Date(j.createdAt).toLocaleString()} · {j.createdBy ?? ""}
-                  </div>
-                  {j.error && <div className="text-xs text-error break-all">{j.error.slice(0, 200)}</div>}
-                </td>
-                <td className="py-2 pr-3">
-                  <StatusPill tone={j.status === "done" ? "success" : j.status === "failed" ? "error" : "navy"}>
-                    {j.status === "done" ? tr("Done") : j.status === "failed" ? tr("Failed") : j.status === "running" ? tr("Running") : tr("Queued")}
-                  </StatusPill>
-                </td>
-                <td className="py-2 pr-3">
-                  {j.produced} / {j.requested}
-                </td>
-                <td className="py-2 pr-3 text-success">{j.passed}</td>
-                <td className={`py-2 pr-3 ${j.failed ? "text-warning" : ""}`}>{j.failed}</td>
-                <td className="py-2 text-xs text-muted">
-                  {j.inputTokens.toLocaleString()} / {j.outputTokens.toLocaleString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Panel>
-  );
-}
-
-// ---- Bank and sets ----
-
-function BankPanel({ overview, onAssembled }: { overview: ContentOverview; onAssembled: () => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function assemble(testTypeId: string, mockOnly: boolean) {
-    setBusy(`${testTypeId}:${mockOnly}`);
-    setMessage(null);
-    try {
-      const r = await assembleSet(testTypeId, mockOnly);
-      setMessage(tr("New set {{id}} is live for learners.", { id: r.testId }));
-      onAssembled();
-    } catch {
-      setMessage(tr("Not enough approved questions for a full set yet."));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  return (
-    <Panel title={tr("Sets from approved questions")}>
-      <p className="text-xs text-muted">
-        {tr("A new set copies the layout of the test's first set and takes approved questions that aren't in a set yet. A mock-ready set uses only questions approved for mocks.")}
-      </p>
-      {message && <p className="text-sm text-ink">{message}</p>}
-      <div className="flex flex-col gap-3">
-        {overview.testTypes.map((t) => {
-          const plan = overview.plans.find((p) => p.testTypeId === t.id);
-          return (
-            <div key={t.id} className="rounded-input bg-paper-warm px-4 py-3 flex flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="font-semibold text-ink flex-1">{t.name}</span>
-                <Button variant="secondary" disabled={!plan?.practice?.complete || !!busy} onClick={() => assemble(t.id, false)} className="!py-1.5 text-xs">
-                  {tr("Make a practice set")}
-                </Button>
-                <Button variant="secondary" disabled={!plan?.mock?.complete || !!busy} onClick={() => assemble(t.id, true)} className="!py-1.5 text-xs">
-                  {tr("Make a mock-ready set")}
-                </Button>
+    <Panel title={tr("Recent AI requests")}>
+      <ul className="flex flex-col divide-y divide-rule/60">
+        {jobs.map((j) => (
+          <li key={j.id} className="py-2 flex flex-wrap items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-ink">
+                {tr("{{n}} × {{type}}, {{level}}", { n: j.requested, type: names[j.itemTypeId] ?? j.itemTypeId, level: j.level })}
+                <span className="text-muted">
+                  {" "}
+                  · {testTypes.find((t) => t.id === j.testTypeId)?.name ?? j.testTypeId}
+                  {j.domain !== "general" && ` · ${DOMAIN_LABEL[j.domain]?.() ?? j.domain}`}
+                </span>
               </div>
-              {plan?.practice && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-                  {plan.practice.parts.map((p, i) => {
-                    const mock = plan.mock?.parts[i];
-                    return (
-                      <span key={`${p.label}${i}`} className={p.available < p.needed ? "text-warning" : ""}>
-                        {p.label}: {tr("{{available}} of {{needed}} ready ({{mock}} for mocks)", { available: p.available, needed: p.needed, mock: mock?.available ?? 0 })}
-                      </span>
-                    );
-                  })}
+              <div className="text-xs text-muted">
+                {new Date(j.createdAt).toLocaleString()} · {j.createdBy ?? ""}
+              </div>
+              {j.status === "failed" && j.error && <div className="text-xs text-error">{aiErrorText(j.error)}</div>}
+              {j.status === "done" && (
+                <div className="text-xs text-muted">
+                  {tr("{{p}} ready to use, {{r}} waiting for review", { p: j.passed, r: j.failed })}
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
+            <StatusPill tone={j.status === "done" ? "success" : j.status === "failed" ? "error" : "navy"}>
+              {j.status === "done" ? tr("Done") : j.status === "failed" ? tr("Failed") : j.status === "running" ? tr("Writing…") : tr("Queued")}
+            </StatusPill>
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }
@@ -459,14 +380,21 @@ function ReviewPanel({ overview, refresh }: { overview: ContentOverview; refresh
   );
 }
 
-// Question bank: write questions with AI, review them, and turn approved
-// ones into new sets (ASSESSMENT_ENGINE.md section 6).
-type Tab = "review" | "generate" | "library" | "create" | "sets";
+// Question bank: create tests, see every question, write new ones with AI and
+// review them (ASSESSMENT_ENGINE.md sections 6 and 21).
+type Tab = "create" | "library" | "generate" | "review";
+
+const TAB_NOTE: Record<Tab, () => string> = {
+  create: () => tr("Make a practice test or a mock exam for learners."),
+  library: () => tr("Browse and search every question."),
+  generate: () => tr("Ask the AI to write more questions."),
+  review: () => tr("Check AI-written questions before learners get them."),
+};
 
 export function QuestionBank() {
   const [overview, setOverview] = useState<ContentOverview | null>(null);
   const [jobs, setJobs] = useState<GenerationJob[]>([]);
-  const [tab, setTab] = useState<Tab>("review");
+  const [tab, setTab] = useState<Tab>("create");
   const [error, setError] = useState<string | null>(null);
 
   function refresh() {
@@ -492,19 +420,21 @@ export function QuestionBank() {
     <div className="flex flex-col gap-5 w-full">
       <PageHeader
         title={tr("Question bank")}
-        subtitle={tr("See every question, build tests from them, write new ones with AI, and review them.")}
+        subtitle={tr("Create tests and manage the questions in them.")}
       />
-      <FilterPills<Tab>
-        value={tab}
-        onChange={setTab}
-        options={[
-          ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
-          ["generate", tr("Write questions")],
-          ["library", tr("Library")],
-          ["create", tr("Create test")],
-          ["sets", tr("Sets")],
-        ]}
-      />
+      <div className="flex flex-col gap-1.5">
+        <FilterPills<Tab>
+          value={tab}
+          onChange={setTab}
+          options={[
+            ["create", tr("Create a test")],
+            ["library", tr("All questions")],
+            ["generate", tr("Write with AI")],
+            ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
+          ]}
+        />
+        <p className="text-xs text-muted">{TAB_NOTE[tab]()}</p>
+      </div>
       {tab === "generate" && (
         <>
           <GeneratePanel overview={overview} onStarted={refresh} />
@@ -512,14 +442,8 @@ export function QuestionBank() {
         </>
       )}
       {tab === "review" && <ReviewPanel overview={overview} refresh={refresh} />}
-      {tab === "sets" && <BankPanel overview={overview} onAssembled={refresh} />}
       {tab === "library" && <LibraryPanel itemTypeNames={overview.itemTypeNames} />}
       {tab === "create" && <BuilderPanel />}
-      <p className="text-xs text-muted flex items-center gap-1.5">
-        <Layers size={13} />
-        <ListChecks size={13} />
-        {tr("Only LanguageCert-style question types can be written so far.")}
-      </p>
     </div>
   );
 }

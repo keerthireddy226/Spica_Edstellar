@@ -88,6 +88,7 @@ export const AUDIT_VERBS: Record<string, string> = {
   "content.form_created": tr("built a test"),
   "content.form_published": tr("published a built test"),
   "content.form_retired": tr("retired a built test"),
+  "content.form_deleted": tr("deleted a built test"),
 };
 
 // Detail values that read better as words.

@@ -11,7 +11,7 @@ import { CEFR_LEVELS } from "../placement/cefr.js";
 import { SOURCES, itemUsage, listLibrary } from "./library.js";
 import { planCounts, testTypeLayout, type Layout } from "./layout.js";
 import { createTest, createTestSchema } from "./autoBuild.js";
-import { FormError, autofill, createForm, fillSchema, formSchema, formSeconds, getForm, listForms, publishForm, retireForm, updateForm } from "./forms.js";
+import { FormError, autofill, createForm, deleteForm, fillSchema, formSchema, formSeconds, getForm, listForms, publishForm, retireForm, updateForm } from "./forms.js";
 
 export const builderRouter = Router();
 
@@ -27,6 +27,7 @@ const FORM_ERROR_STATUS: Record<FormError["code"], number> = {
   not_approved: 400,
   not_mock_approved: 400,
   duplicate_item: 400,
+  form_in_use: 409,
 };
 
 function formError(err: unknown, res: Response): boolean {
@@ -141,6 +142,9 @@ builderRouter.get("/content/builder/plan", requireAuth, async (req: AuthedReques
       cefrMin: layout.cefrMin,
       cefrMax: layout.cefrMax,
       plannedSeconds: plan.plannedSeconds,
+      // Question seconds to test minutes: the published test's questions add
+      // up to its published duration, so the same scale shows a form's length.
+      scale: (layout.officialMinutes * 60) / Math.max(1, layout.templateSeconds),
       sections: layout.sections.map((s) => {
         const p = plan.sections.find((x) => x.sortOrder === s.sortOrder)!;
         return {
@@ -273,6 +277,31 @@ builderRouter.post("/content/forms/:id/retire", requireAuth, async (req: AuthedR
     if (!uuid.safeParse(req.params.id).success) return res.status(404).json({ error: "form_not_found" });
     await retireForm(String(req.params.id));
     await audit(req, "content.form_retired", String(req.params.id));
+    res.json({ ok: true });
+  } catch (err) {
+    if (!formError(err, res)) next(err);
+  }
+});
+
+// Only a test nobody has taken; others are retired.
+builderRouter.delete("/content/forms/:id", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "contentReview"))) return;
+  try {
+    if (!uuid.safeParse(req.params.id).success) return res.status(404).json({ error: "form_not_found" });
+    const id = String(req.params.id);
+    const f = (await pool.query(`SELECT code, name FROM forms WHERE id = $1`, [id])).rows[0];
+    await deleteForm(id);
+    await recordAudit({
+      tenantId: null,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "content.form_deleted",
+      targetType: "form",
+      targetId: id,
+      targetLabel: f ? `${f.code} ${f.name}` : null,
+      details: {},
+      ip: req.ip ?? null,
+    });
     res.json({ ok: true });
   } catch (err) {
     if (!formError(err, res)) next(err);

@@ -8,6 +8,7 @@ import { pool } from "../db.js";
 import { CEFR_LEVELS, type CefrLevel } from "../placement/cefr.js";
 import { groupItems, shuffle, type FormRow } from "../proctoring/forms.js";
 import { mockLimits } from "../practiceTests/modes.js";
+import { GENERATABLE_TYPES } from "../generation/specs.js";
 import { SOURCES, libraryWhere, type LibraryFilters } from "./library.js";
 import { levelTargets, planCounts, testTypeLayout, type Layout } from "./layout.js";
 
@@ -23,6 +24,9 @@ export const fillSchema = z.object({
   sources: z.array(z.enum(SOURCES)).optional(),
   // Questions already chosen (kept), by section.
   keep: z.record(z.string(), z.array(z.string().uuid())).optional(),
+  // "ai": question types the AI can write come only from these AI requests
+  // (new questions, not the bank); other types still come from the bank.
+  aiJobIds: z.array(z.string().uuid()).optional(),
 });
 
 export const formSchema = z.object({
@@ -39,7 +43,7 @@ export const formSchema = z.object({
 
 export class FormError extends Error {
   constructor(
-    public code: "unknown_test_type" | "form_not_found" | "not_draft" | "empty_section" | "wrong_type" | "not_approved" | "not_mock_approved" | "duplicate_item",
+    public code: "unknown_test_type" | "form_not_found" | "not_draft" | "empty_section" | "wrong_type" | "not_approved" | "not_mock_approved" | "duplicate_item" | "form_in_use",
     public detail: Record<string, unknown> = {},
   ) {
     super(code);
@@ -95,7 +99,10 @@ export async function autofill(input: z.infer<typeof fillSchema>) {
     const want = plan.sections.find((p) => p.sortOrder === s.sortOrder)!.count;
     const kept = (input.keep?.[String(s.sortOrder)] ?? []).slice(0, want);
     const picks = [...kept];
-    const pool_ = (await candidates(s.itemTypeId, filters, input.purpose === "mock")).filter((c) => !used.has(c.id));
+    const aiOnly = input.aiJobIds && GENERATABLE_TYPES.includes(s.itemTypeId);
+    const pool_ = (await candidates(s.itemTypeId, aiOnly ? { ...filters, sources: undefined, generationJobIds: input.aiJobIds } : filters, input.purpose === "mock")).filter(
+      (c) => !used.has(c.id),
+    );
     const groups = shuffle(groupItems(pool_)).sort((a, b) => Math.min(...a.map((x) => x.use_count)) - Math.min(...b.map((x) => x.use_count)));
     const cost = (g: Candidate[], target: string | null) => Math.abs(idx(g[0].cefr_level) - idx(target)) + (field && g[0].domain !== field ? OTHER_FIELD_COST : 0);
     // One target level per remaining slot; a group is taken by its first question's level.
@@ -316,6 +323,15 @@ export async function publishForm(formId: string, userId: string) {
 
 export async function retireForm(formId: string) {
   const r = await pool.query(`UPDATE forms SET status = 'retired', updated_at = now() WHERE id = $1 AND status <> 'retired' RETURNING id`, [formId]);
+  if (!r.rowCount) throw new FormError("form_not_found");
+}
+
+// Deletes a test nobody has taken (a test someone took is retired instead, so
+// their results keep pointing at it).
+export async function deleteForm(formId: string) {
+  const used = await pool.query(`SELECT 1 FROM sessions WHERE composition->>'formId' = $1 LIMIT 1`, [formId]);
+  if (used.rowCount) throw new FormError("form_in_use");
+  const r = await pool.query(`DELETE FROM forms WHERE id = $1 RETURNING id`, [formId]);
   if (!r.rowCount) throw new FormError("form_not_found");
 }
 

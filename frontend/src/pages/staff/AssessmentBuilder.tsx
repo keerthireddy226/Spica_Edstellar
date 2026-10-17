@@ -18,6 +18,7 @@ import {
   listForms,
   publishBuiltForm,
   retireBuiltForm,
+  deleteBuiltForm,
   startGeneration,
   updateBuiltForm,
   type BuilderTestType,
@@ -30,7 +31,7 @@ import {
   type LibrarySource,
   type PlanSection,
 } from "@/api/content";
-import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS } from "@/components/staff/contentShared";
+import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { tr } from "@/i18n/tr";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -188,6 +189,7 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
   const [data, setData] = useState<{ total: number; items: LibraryItem[]; pageSize: number } | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [allTypes, setAllTypes] = useState<Record<string, string>>(itemTypeNames);
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     getBuilderTestTypes()
@@ -209,14 +211,13 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
   };
 
   return (
-    <Panel title={tr("Question library")}>
-      <p className="text-xs text-muted">{tr("Every question in Spica: modules, practice and mock sets, the placement test, and AI-written ones. Click a question to see it in full.")}</p>
+    <Panel title={tr("All questions")}>
+      <p className="text-xs text-muted">{tr("Every question in Spica. Click one to see it in full.")}</p>
       <div className="flex flex-wrap gap-2 items-end">
-        <select value={f.family ?? ""} onChange={(e) => set({ family: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
-          <option value="">{tr("Every exam")}</option>
-          <option value="languagecert">LanguageCert</option>
-          <option value="versant">Versant</option>
-        </select>
+        <label className="flex items-center gap-1.5 border border-rule rounded-input px-2 bg-paper">
+          <Search size={14} className="text-muted" />
+          <input value={q} onChange={(e) => (setPage(0), setQ(e.target.value))} placeholder={tr("Search text or topic")} className="py-2 text-sm bg-transparent focus:outline-none w-48" />
+        </label>
         <select value={f.testTypeId ?? ""} onChange={(e) => set({ testTypeId: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any test")}</option>
           <TestTypeOptions testTypes={testTypes.filter((t) => !f.family || t.familyId === f.family)} />
@@ -231,28 +232,36 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
               </option>
             ))}
         </select>
+        <select
+          value={f.levelMin && f.levelMin === f.levelMax ? f.levelMin : ""}
+          onChange={(e) => set({ levelMin: e.target.value || undefined, levelMax: e.target.value || undefined })}
+          className={`${inputClass} cursor-pointer`}
+          aria-label={tr("Level")}
+        >
+          <option value="">{tr("Any level")}</option>
+          {LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+        <button onClick={() => setMore((m) => !m)} className="text-sm text-navy-deep hover:underline cursor-pointer py-2">
+          {more ? tr("Fewer filters") : tr("More filters")}
+        </button>
+      </div>
+      {more && (
+      <div className="flex flex-wrap gap-2 items-end">
+        <select value={f.family ?? ""} onChange={(e) => set({ family: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
+          <option value="">{tr("Every exam")}</option>
+          <option value="languagecert">LanguageCert</option>
+          <option value="versant">Versant</option>
+        </select>
         <select value={f.skill ?? ""} onChange={(e) => set({ skill: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any skill")}</option>
           <option value="listening">{tr("Listening")}</option>
           <option value="speaking">{tr("Speaking")}</option>
           <option value="reading">{tr("Reading")}</option>
           <option value="writing">{tr("Writing")}</option>
-        </select>
-        <select value={f.levelMin ?? ""} onChange={(e) => set({ levelMin: e.target.value || undefined })} className={`${inputClass} cursor-pointer`} aria-label={tr("Lowest level")}>
-          <option value="">{tr("From A1")}</option>
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {tr("From {{l}}", { l })}
-            </option>
-          ))}
-        </select>
-        <select value={f.levelMax ?? ""} onChange={(e) => set({ levelMax: e.target.value || undefined })} className={`${inputClass} cursor-pointer`} aria-label={tr("Highest level")}>
-          <option value="">{tr("To C2")}</option>
-          {LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {tr("To {{l}}", { l })}
-            </option>
-          ))}
         </select>
         <select value={f.domain ?? ""} onChange={(e) => set({ domain: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any field")}</option>
@@ -273,12 +282,11 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
           <option value="true">{tr("Approved for mocks")}</option>
           <option value="false">{tr("Practice only")}</option>
         </select>
-        <label className="flex items-center gap-1.5 border border-rule rounded-input px-2 bg-paper">
-          <Search size={14} className="text-muted" />
-          <input value={q} onChange={(e) => (setPage(0), setQ(e.target.value))} placeholder={tr("Search text or topic")} className="py-2 text-sm bg-transparent focus:outline-none w-48" />
-        </label>
       </div>
+      )}
+      {more && (
       <div className="flex flex-wrap gap-1.5">
+        <span className="text-xs text-muted self-center mr-1">{tr("Where from:")}</span>
         {SOURCES.map((s) => {
           const on = (f.sources ?? []).includes(s);
           return (
@@ -292,6 +300,7 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
           );
         })}
       </div>
+      )}
       {!data ? (
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : data.items.length === 0 ? (
@@ -411,6 +420,9 @@ function SectionPicker({
 function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]; testTypes: BuilderTestType[]; onEdit: (id: string) => void; onChanged: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showRetired, setShowRetired] = useState(false);
+  const retired = forms.filter((f) => f.status === "retired").length;
+  const shown = showRetired ? forms : forms.filter((f) => f.status !== "retired");
   async function act(id: string, f: () => Promise<unknown>, done: string) {
     setBusy(id);
     setMsg(null);
@@ -426,8 +438,18 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
   }
   if (forms.length === 0) return null;
   return (
-    <Panel title={tr("Built tests")}>
+    <Panel
+      title={tr("Built tests")}
+      action={
+        retired > 0 ? (
+          <button onClick={() => setShowRetired((x) => !x)} className="text-xs text-navy-deep hover:underline cursor-pointer">
+            {showRetired ? tr("Hide retired") : tr("Show retired ({{n}})", { n: retired })}
+          </button>
+        ) : undefined
+      }
+    >
       {msg && <p className="text-sm text-ink">{msg}</p>}
+      {shown.length === 0 && <EmptyNote>{tr("No tests yet.")}</EmptyNote>}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -441,7 +463,7 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
             </tr>
           </thead>
           <tbody>
-            {forms.map((f) => (
+            {shown.map((f) => (
               <tr key={f.id} className="border-b border-rule/60">
                 <td className="py-2 pr-3">
                   <div className="text-ink font-medium">
@@ -485,6 +507,15 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
                       <Archive size={13} />
                     </Button>
                   )}
+                  <Button
+                    variant="secondary"
+                    onClick={() => window.confirm(tr("Delete {{code}} for good? This can't be undone.", { code: f.code })) && act(f.id, () => deleteBuiltForm(f.id), tr("Deleted."))}
+                    disabled={busy === f.id}
+                    className="!px-2 !py-1 text-xs ml-1"
+                    title={tr("Delete")}
+                  >
+                    <Trash2 size={13} />
+                  </Button>
                 </td>
               </tr>
             ))}
@@ -512,6 +543,8 @@ function publishError(err: unknown): string {
       return tr("The same question is in the test twice.");
     case "not_draft":
       return tr("Only drafts can be changed. Retire this test and build a new one.");
+    case "form_in_use":
+      return tr("Someone has already taken this test, so it can't be deleted. Retire it instead.");
     default:
       return tr("Could not save. Try again.");
   }
@@ -568,7 +601,7 @@ function BuildSummaryView({
       </ul>
       {summary.aiErrors.length > 0 && (
         <p className="text-xs text-error flex items-start gap-1">
-          <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {tr("The AI couldn't write some questions: {{e}}", { e: summary.aiErrors[0] })}
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {aiErrorText(summary.aiErrors[0])}
         </p>
       )}
       {purpose === "mock" && summary.needsMockApproval.length > 0 && (
@@ -593,7 +626,7 @@ export function BuilderPanel() {
   const [testTypes, setTestTypes] = useState<BuilderTestType[]>([]);
   const [forms, setForms] = useState<BuiltForm[]>([]);
   const [d, setD] = useState<Draft | null>(null);
-  const [plan, setPlan] = useState<{ officialMinutes: number; plannedSeconds: number; sections: PlanSection[] } | null>(null);
+  const [plan, setPlan] = useState<{ officialMinutes: number; plannedSeconds: number; scale: number; sections: PlanSection[] } | null>(null);
   const [details, setDetails] = useState<Record<string, LibraryItem>>({});
   const [seconds, setSeconds] = useState<FormSeconds | null>(null);
   const [missing, setMissing] = useState<{ sortOrder: number; itemTypeId: string; count: number }[]>([]);
@@ -604,6 +637,10 @@ export function BuilderPanel() {
   const [publishNow, setPublishNow] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [built, setBuilt] = useState<{ summary: BuildSummary; status: "ready" | "waiting_for_ai" | "short" } | null>(null);
+  // Where "Create the test" takes questions from.
+  const [questionsFrom, setQuestionsFrom] = useState<"bank" | "ai">("bank");
+  // Picking questions by hand (the section lists).
+  const [manual, setManual] = useState(false);
   // Still on this page (set on every mount: React mounts twice in development).
   const mounted = useRef(true);
   useEffect(() => {
@@ -633,6 +670,7 @@ export function BuilderPanel() {
     setMissing([]);
     setMsg(null);
     setBuilt(null);
+    setManual(false);
   }
 
   // The plan follows the test type and duration.
@@ -697,6 +735,7 @@ export function BuilderPanel() {
         sources: d.sources.length ? d.sources : undefined,
         name: d.name.trim() || undefined,
         publish: publishNow,
+        questions: questionsFrom,
       });
       let summary = r.summary;
       let status = r.status;
@@ -819,13 +858,18 @@ export function BuilderPanel() {
   }
 
   const set = (patch: Partial<Draft>) => setD((x) => (x ? { ...x, ...patch } : x));
-  const plannedMin = seconds ? minutes(seconds.total) : 0;
+  // Question time in test minutes (the published test's questions fill its published time).
+  const testMin = (secs: number) => Math.round((secs * (plan?.scale ?? 1)) / 60);
+  const chosenMin = seconds ? testMin(seconds.total) : 0;
+  const plannedMin = plan ? testMin(plan.plannedSeconds) : 0;
+  const plannedCount = plan?.sections.reduce((n, x) => n + x.count, 0) ?? 0;
+  const showSections = !!d && (!!d.id || manual);
 
   return (
     <div className="flex flex-col gap-4">
       <Panel title={tr("Create a test")}>
         <p className="text-xs text-muted">
-          {tr("Build a practice set or a mock from questions already in Spica. Only Edstellar staff build tests; organizations use the published ones.")}
+          {tr("Choose the test and fill in the details. The duration starts at the real exam's time; change it for a shorter or longer test.")}
         </p>
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-muted">
@@ -911,33 +955,56 @@ export function BuilderPanel() {
         </div>
         {d && (
           <>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted mr-1">{tr("Take questions from:")}</span>
-              {SOURCES.map((s) => {
-                const on = d.sources.includes(s);
-                return (
-                  <button
-                    key={s}
-                    onClick={() => set({ sources: on ? d.sources.filter((x) => x !== s) : [...d.sources, s] })}
-                    className={`text-xs px-2.5 py-1 rounded-pill border cursor-pointer ${on ? "bg-navy text-white border-navy" : "border-rule text-muted hover:text-ink"}`}
-                  >
-                    {SOURCE_LABEL[s]()}
-                  </button>
-                );
-              })}
-              {d.sources.length === 0 && <span className="text-xs text-muted">{tr("(any)")}</span>}
-            </div>
             {plan && (
-              <div className="flex flex-wrap items-center gap-3 bg-paper-warm rounded-input px-4 py-3 text-sm">
-                <span className="text-ink">
-                  {tr("Chosen duration: {{d}} min", { d: d.durationMinutes })} ·{" "}
-                  <span className={Math.abs(plannedMin - d.durationMinutes) > d.durationMinutes * 0.1 && chosenIds.length ? "text-warning font-semibold" : ""}>
-                    {tr("Questions chosen take {{m}} min", { m: plannedMin })}
-                  </span>
-                </span>
-                {d.durationMinutes !== plan.officialMinutes && (
-                  <StatusPill tone="warning">{tr("Short form: published time is {{m}} min", { m: plan.officialMinutes })}</StatusPill>
+              <p className="text-sm text-ink bg-paper-warm rounded-input px-4 py-3">
+                {tr("{{n}} questions, {{m}} min of the {{d}} min.", { n: plannedCount, m: plannedMin, d: d.durationMinutes })}{" "}
+                {plannedMin > d.durationMinutes + 1 && (
+                  <span className="text-warning">{tr("This exam can't be shorter than about {{m}} min (one question per part).", { m: plannedMin })}</span>
                 )}
+                {d.durationMinutes !== plan.officialMinutes && <span className="text-muted">{tr("The real exam takes {{m}} min.", { m: plan.officialMinutes })}</span>}
+              </p>
+            )}
+            {!d.id && (
+              <div className="flex flex-col gap-3 border border-navy/20 rounded-input px-4 py-3">
+                <span className="text-sm font-semibold text-ink">{tr("Questions")}</span>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {(
+                    [
+                      ["bank", tr("From the question bank"), tr("Approved questions already in Spica, matched to the test's parts and levels. The AI writes only what's missing.")],
+                      ["ai", tr("New questions written by AI"), tr("The AI writes fresh questions for every part it can write (LanguageCert types). Other parts use the bank. Takes a few minutes.")],
+                    ] as const
+                  ).map(([k, label, note]) => (
+                    <label key={k} className={`flex gap-2 rounded-input border px-3 py-2 cursor-pointer ${questionsFrom === k ? "border-navy bg-navy/5" : "border-rule"}`}>
+                      <input type="radio" name="questionsFrom" checked={questionsFrom === k} onChange={() => setQuestionsFrom(k)} className="mt-1" />
+                      <span className="flex flex-col">
+                        <span className="text-sm text-ink font-medium">{label}</span>
+                        <span className="text-xs text-muted">{note}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-1.5 text-sm text-ink cursor-pointer">
+                    <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
+                    {tr("Publish when it's complete")}
+                  </label>
+                  <span className="flex-1" />
+                  {!manual && (
+                    <button onClick={() => setManual(true)} className="text-sm text-navy-deep hover:underline cursor-pointer">
+                      {tr("Or pick the questions yourself")}
+                    </button>
+                  )}
+                  <Button onClick={createNow} disabled={busy} className="flex items-center gap-1.5">
+                    {progress ? <Loader2 size={15} className="animate-spin" /> : <Rocket size={15} />} {tr("Create the test")}
+                  </Button>
+                </div>
+              </div>
+            )}
+            {showSections && plan && (
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span className={Math.abs(chosenMin - d.durationMinutes) > Math.max(2, d.durationMinutes * 0.1) && chosenIds.length ? "text-warning font-semibold" : "text-ink"}>
+                  {tr("Questions chosen: {{n}}, about {{m}} min", { n: chosenIds.length, m: chosenMin })}
+                </span>
                 <span className="flex-1" />
                 <Button variant="secondary" onClick={fill} disabled={busy} className="flex items-center gap-1.5 !py-1.5">
                   <Wand2 size={14} /> {chosenIds.length ? tr("Fill the rest automatically") : tr("Fill automatically")}
@@ -947,21 +1014,6 @@ export function BuilderPanel() {
                     {tr("Clear")}
                   </Button>
                 )}
-              </div>
-            )}
-            {!d.id && (
-              <div className="flex flex-wrap items-center gap-3 border border-navy/20 rounded-input px-4 py-3">
-                <Rocket size={18} className="text-navy-deep" />
-                <span className="text-sm text-ink flex-1">
-                  {tr("Create the whole test in one click: Spica picks every question, asks the AI for any it can write, and saves the test.")}
-                </span>
-                <label className="flex items-center gap-1.5 text-sm text-ink cursor-pointer">
-                  <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />
-                  {tr("Publish right away")}
-                </label>
-                <Button onClick={createNow} disabled={busy} className="flex items-center gap-1.5">
-                  {progress ? <Loader2 size={15} className="animate-spin" /> : <Rocket size={15} />} {tr("Create the test")}
-                </Button>
               </div>
             )}
             {progress && (
@@ -979,7 +1031,7 @@ export function BuilderPanel() {
 
       {built && <BuildSummaryView summary={built.summary} status={built.status} purpose={d?.purpose ?? "practice"} onApproveAll={approveAllAndFill} busy={busy} />}
 
-      {d &&
+      {showSections &&
         plan?.sections.map((s) => {
           const list = d.sections[String(s.sortOrder)] ?? [];
           const miss = missing.find((m) => m.sortOrder === s.sortOrder);
@@ -990,7 +1042,7 @@ export function BuilderPanel() {
               title={`${s.sortOrder}. ${s.label}`}
               action={
                 <span className={`text-xs ${list.length < s.count ? "text-warning" : "text-muted"}`}>
-                  {tr("{{have}} of {{need}} questions · {{m}} min", { have: list.length, need: s.count, m: minutes(secs) })}
+                  {tr("{{have}} of {{need}} questions · {{m}} min", { have: list.length, need: s.count, m: testMin(secs) })}
                 </span>
               }
             >
@@ -1058,12 +1110,16 @@ export function BuilderPanel() {
           <Button variant="secondary" onClick={() => setD(null)} disabled={busy}>
             {tr("Cancel")}
           </Button>
+          {showSections && (
+            <>
           <Button variant="secondary" onClick={() => save(false)} disabled={busy || chosenIds.length === 0} className="flex items-center gap-1.5">
             <Save size={14} /> {tr("Save draft")}
           </Button>
           <Button onClick={() => save(true)} disabled={busy || chosenIds.length === 0} className="flex items-center gap-1.5">
             <Send size={14} /> {tr("Publish")}
           </Button>
+            </>
+          )}
         </div>
       )}
 
