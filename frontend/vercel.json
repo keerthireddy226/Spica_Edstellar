@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://naples-byte-summer-shipped.trycloudflare.com/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://naples-byte-summer-shipped.trycloudflare.com/uploads/:path*" },
+    { "source": "/api/:path*", "destination": "https://suit-water-outer-colleges.trycloudflare.com/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://suit-water-outer-colleges.trycloudflare.com/uploads/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
