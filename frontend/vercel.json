@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://appreciate-donna-earn-appropriate.trycloudflare.com/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://appreciate-donna-earn-appropriate.trycloudflare.com/uploads/:path*" },
+    { "source": "/api/:path*", "destination": "https://untitled-teams-clara-lead.trycloudflare.com/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://untitled-teams-clara-lead.trycloudflare.com/uploads/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
