@@ -7,6 +7,8 @@ import { generateJson, type Usage } from "../generation/gemini.js";
 import { learnerQuota } from "../programs/quotas.js";
 import { activeProgramOf } from "../programs/service.js";
 import { wordDiff, diffSummary, type WordOp } from "./wordDiff.js";
+import { isTrulyCorrect } from "../placement/fluencySignals.js";
+import { passThresholdForLevel } from "../placement/cefr.js";
 
 export const REPORT_MODEL = process.env.GEMINI_REPORT_MODEL || "gemini-3.5-flash";
 const SKILLS = ["listening", "speaking", "reading", "writing"] as const;
@@ -69,6 +71,11 @@ export interface ReportQuestion {
   // Spoken open answers.
   speech?: { transcript: string | null; wordsPerMinute: number | null; fillers: number | null; clarity: number | null; comment: string | null; noisy: boolean };
   comment: string | null;
+  // right, wrong, skipped (not answered) or still being scored.
+  outcome: "right" | "wrong" | "skipped" | "pending";
+  // The expected answer of a question that isn't multiple choice (a sentence
+  // to say or type, an accepted answer, or the points a good answer covers).
+  expected?: { text?: string; points?: string[] };
 }
 
 export interface NextStep {
@@ -79,8 +86,13 @@ export interface NextStep {
 }
 
 export interface FeedbackReport {
-  version: 1;
+  version: 2;
   level: "summary" | "full";
+  // How many questions were right, wrong, skipped or still being scored.
+  counts: { total: number; right: number; wrong: number; skipped: number; pending: number };
+  // Some wrong or skipped multiple-choice questions have no explanation yet
+  // (the AI was unavailable): the report is rebuilt later to add them.
+  explanationsMissing: boolean;
   deliveryMode: string;
   testTypeId: string | null;
   overall: { cefrLevel: string | null; percent: number | null; skillLevels: Json | null; scoreBand: Json | null };
@@ -97,6 +109,49 @@ function promptOf(r: AttemptRow): string {
   const c = r.content;
   const main = str(c.question) || str(c.prompt) || str(c.sentence) || str(c.situation) || str(c.text) || str(c.audio) || str(c.passage) || str(c.story);
   return short(main.replace(/\s+/g, " ").trim());
+}
+
+// A summary from the numbers alone: what was right, wrong and skipped, and
+// the weakest skills to practise next.
+function plainSummary(rows: AttemptRow[], outcomes: ReportQuestion["outcome"][]) {
+  const right = outcomes.filter((o) => o === "right").length;
+  const wrong = outcomes.filter((o) => o === "wrong").length;
+  const skipped = outcomes.filter((o) => o === "skipped").length;
+  const bySkill = SKILLS.map((sk) => {
+    const idx = rows.map((r, i) => (r.skills.includes(sk) ? i : -1)).filter((i) => i >= 0);
+    const ok = idx.filter((i) => outcomes[i] === "right").length;
+    return { skill: sk, total: idx.length, share: idx.length ? ok / idx.length : 1 };
+  })
+    .filter((x) => x.total > 0)
+    .sort((a, b) => a.share - b.share);
+  const parts = [`You answered ${right} of ${rows.length} questions correctly.`];
+  if (wrong) parts.push(`${wrong === 1 ? "1 was" : `${wrong} were`} wrong: below you can see the right answer for each and why.`);
+  if (skipped) parts.push(`You skipped ${skipped}; answering every question, even when unsure, raises your score.`);
+  return {
+    analysis: parts.join(" "),
+    nextSteps: bySkill.slice(0, 3).map((x) => ({
+      title: `Practise ${x.skill}`,
+      why: `${Math.round(x.share * 100)}% of your ${x.skill} answers were right in this test.`,
+      skill: x.skill,
+    })),
+  };
+}
+
+// Right, wrong, skipped or still being scored (the same "correct" rule as the result).
+function outcomeOf(r: AttemptRow): ReportQuestion["outcome"] {
+  if (!(r.response_text || r.response_uri)) return "skipped";
+  if (r.status !== "scored" || r.content_score === null) return "pending";
+  return isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores as never, passThresholdForLevel) ? "right" : "wrong";
+}
+
+// What a right answer looks like, for questions that aren't multiple choice.
+function expectedAnswer(r: AttemptRow): ReportQuestion["expected"] {
+  const a = (r.answer_set ?? {}) as Json;
+  const text = str(a.correct) || str(a.exact) || (Array.isArray(a.acceptable_answers) ? str(a.acceptable_answers[0]) : "") || str(a.corrected);
+  if (text) return { text };
+  if (Array.isArray(a.key_points) && a.key_points.length) return { points: (a.key_points as unknown[]).map(String) };
+  if (r.item_type_id === "reading" && str(r.content.text)) return { text: str(r.content.text) };
+  return undefined;
 }
 
 const WRITING_TYPES = new Set(["email_writing", "free_writing", "lc_write_task1", "lc_write_task2", "summary_and_opinion", "passage_reconstruction"]);
@@ -163,7 +218,8 @@ const EXPLAIN_SCHEMA = {
 // Older questions have no explanation: write them once for the questions this
 // learner got wrong, and keep them on the question for everyone after.
 async function fillExplanations(rows: AttemptRow[], usage: Usage): Promise<void> {
-  const need = rows.filter((r) => (r.input_method === "radio" || r.input_method === "mcq_group") && !r.explanation && r.answered_wrong);
+  // Wrong and skipped ones: the learner needs to see why the key is right.
+  const need = rows.filter((r) => (r.input_method === "radio" || r.input_method === "mcq_group") && !r.explanation && (r.answered_wrong || !(r.response_text || r.response_uri)));
   if (need.length === 0) return;
   const prompt = `For each multiple-choice English test question below, explain to a learner why the correct option is right (one or two simple sentences) and give the exact words in the text or recording script that show it. Return one entry per question in the item, in order.
 
@@ -298,8 +354,11 @@ export async function buildReport(sessionId: string): Promise<void> {
           status: r.status,
           score: r.content_score === null ? null : Number(r.content_score),
           comment: r.reason,
+          outcome: "pending",
         };
         q.choices = parseChoices(r);
+        q.outcome = outcomeOf(r);
+        if (!q.choices) q.expected = expectedAnswer(r);
         const target = answered ? knownTarget(r) : null;
         if (target && r.response_text) {
           const ops = wordDiff(target, r.response_text);
@@ -350,21 +409,41 @@ By skill: ${JSON.stringify(bySkill)}
 Writing errors by type: ${JSON.stringify(writingErrors)}
 Words said or typed differently from a target: ${wordIssues}
 Address the learner as "you". Be honest and encouraging, specific, and simple (B1 English). Then give exactly 3 next steps, each a concrete thing to practise, for the weakest skills first. Never mention accents as a problem.`;
-    const summary = await generateJson<{ analysis: string; nextSteps: { title: string; why: string; skill: string }[] }>({ model: REPORT_MODEL, prompt: summaryPrompt, schema: SUMMARY_SCHEMA, temperature: 0.3 });
-    usage.inputTokens += summary.usage.inputTokens;
-    usage.outputTokens += summary.usage.outputTokens;
+    const outcomes = rows.map(outcomeOf);
+    // The AI summary; without it (the AI is busy or over its limit) a plain one
+    // from the numbers, so the learner still gets their report.
+    let summaryData: { analysis: string; nextSteps: { title: string; why: string; skill: string }[] };
+    try {
+      const summary = await generateJson<typeof summaryData>({ model: REPORT_MODEL, prompt: summaryPrompt, schema: SUMMARY_SCHEMA, temperature: 0.3 });
+      usage.inputTokens += summary.usage.inputTokens;
+      usage.outputTokens += summary.usage.outputTokens;
+      summaryData = summary.data;
+    } catch (err) {
+      console.error("report: summary failed, using the plain one:", err);
+      summaryData = plainSummary(rows, outcomes);
+    }
     const nextSteps: NextStep[] = await Promise.all(
-      (summary.data.nextSteps ?? []).slice(0, 3).map(async (n) => ({ ...n, link: await skillLink(n.skill, testTypeId) })),
+      (summaryData.nextSteps ?? []).slice(0, 3).map(async (n) => ({ ...n, link: await skillLink(n.skill, testTypeId) })),
     );
 
     const report: FeedbackReport = {
-      version: 1,
+      version: 2,
       level,
+      explanationsMissing: questions.some(
+        (q) => (q.outcome === "wrong" || q.outcome === "skipped") && (q.choices ?? []).some((c) => !c.explanation?.why),
+      ),
+      counts: {
+        total: rows.length,
+        right: outcomes.filter((o) => o === "right").length,
+        wrong: outcomes.filter((o) => o === "wrong").length,
+        skipped: outcomes.filter((o) => o === "skipped").length,
+        pending: outcomes.filter((o) => o === "pending").length,
+      },
       deliveryMode: s.delivery_mode ?? "practice",
       testTypeId,
       overall: { cefrLevel: s.result?.cefrLevel ?? null, percent: s.result?.overallPercent ?? null, skillLevels: s.result?.skillLevels ?? null, scoreBand: s.result?.scoreBand ?? null },
       target,
-      analysis: summary.data.analysis ?? "",
+      analysis: summaryData.analysis ?? "",
       nextSteps,
       ...(level === "full" ? { questions } : {}),
     };

@@ -96,8 +96,8 @@ export function testTypeColour(id: string): string {
 
 // "Versant-style practice": Spica prepares people for these exams and isn't
 // affiliated with their publishers.
-export function familyHeading(f: CatalogueFamily): string {
-  return tr("{{name}}-style practice", { name: f.name });
+export function familyHeading(f: CatalogueFamily, mock = false): string {
+  return mock ? tr("{{name}}-style mock exams", { name: f.name }) : tr("{{name}}-style practice", { name: f.name });
 }
 
 export function familyNote(f: CatalogueFamily): string {

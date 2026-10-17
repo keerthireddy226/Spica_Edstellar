@@ -19,6 +19,8 @@ export const ROUTES = {
   PROGRESS: "/progress",
   MODULES: "/modules",
   PRACTICE_TESTS: "/practice-tests",
+  MOCK_EXAMS: "/mock-exams",
+  MY_REPORTS: "/my-reports",
   TEST_REPORT: "/practice-tests/report/:sessionId",
   TUTOR: "/tutor",
   PROFILE: "/profile",

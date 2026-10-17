@@ -19,10 +19,44 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
   return <div className={`bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 ${className}`}>{children}</div>;
 }
 
+// Right, wrong, skipped or still being scored (older reports: from the score).
+function outcome(q: ReportQuestion): "right" | "wrong" | "skipped" | "pending" {
+  if (q.outcome) return q.outcome;
+  if (!q.answered) return "skipped";
+  if (q.score === null) return "pending";
+  return q.score >= 0.75 ? "right" : "wrong";
+}
+
+const OUTCOME: Record<ReturnType<typeof outcome>, { label: () => string; cls: string }> = {
+  right: { label: () => tr("Right"), cls: "bg-success/15 text-success" },
+  wrong: { label: () => tr("Wrong"), cls: "bg-error/15 text-error" },
+  skipped: { label: () => tr("Skipped"), cls: "bg-warning/15 text-warning" },
+  pending: { label: () => tr("Being scored"), cls: "bg-paper-warm text-muted" },
+};
+
 function StatusIcon({ q }: { q: ReportQuestion }) {
-  if (!q.answered) return <MinusCircle size={18} className="text-muted shrink-0" />;
-  if (q.score === null) return <Loader2 size={18} className="text-muted shrink-0" />;
-  return q.score >= 0.75 ? <CheckCircle2 size={18} className="text-success shrink-0" /> : <XCircle size={18} className="text-error shrink-0" />;
+  const o = outcome(q);
+  if (o === "skipped") return <MinusCircle size={18} className="text-warning shrink-0" />;
+  if (o === "pending") return <Loader2 size={18} className="text-muted shrink-0" />;
+  return o === "right" ? <CheckCircle2 size={18} className="text-success shrink-0" /> : <XCircle size={18} className="text-error shrink-0" />;
+}
+
+// The right answer for a question that isn't multiple choice, and why.
+function Expected({ q }: { q: ReportQuestion }) {
+  if (!q.expected) return null;
+  return (
+    <div className="text-sm bg-success/10 rounded-input px-3 py-2 flex flex-col gap-1">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-success">{q.expected.points ? tr("A good answer covers") : tr("Correct answer")}</span>
+      {q.expected.text && <span className="text-ink">{q.expected.text}</span>}
+      {q.expected.points && (
+        <ul className="list-disc pl-5 text-ink">
+          {q.expected.points.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function Choices({ q }: { q: ReportQuestion }) {
@@ -44,7 +78,7 @@ function Choices({ q }: { q: ReportQuestion }) {
               );
             })}
           </ul>
-          {c.chosen === null && <p className="text-xs text-muted">{tr("Not answered.")}</p>}
+          {c.chosen === null && <p className="text-xs text-warning">{tr("You skipped this. The right answer is marked in green.")}</p>}
           {c.explanation?.why && (
             <p className="text-sm text-ink bg-paper-warm rounded-input px-3 py-2">
               {c.explanation.why}
@@ -177,6 +211,7 @@ function Speech({ q }: { q: ReportQuestion }) {
 
 function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
   const { t } = useTranslation();
+  const o = outcome(q);
   return (
     <Card>
       <div className="flex items-start gap-2">
@@ -188,22 +223,38 @@ function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
           </div>
           <p className="text-sm text-ink mt-1">{q.prompt}</p>
         </div>
+        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill shrink-0 ${OUTCOME[o].cls}`}>{OUTCOME[o].label()}</span>
       </div>
-      {!q.answered && !q.choices && <p className="text-xs text-muted">{tr("Not answered.")}</p>}
+      {o === "skipped" && !q.choices && <p className="text-xs text-warning">{tr("You skipped this question.")}</p>}
       {q.choices && <Choices q={q} />}
       {q.words && <Words q={q} />}
       {q.writing && <Writing q={q} />}
       {q.speech && <Speech q={q} />}
-      {q.comment && !q.writing && !q.choices && <p className="text-xs text-muted">{q.comment}</p>}
+      {!q.choices && !q.words && o !== "right" && <Expected q={q} />}
+      {q.comment && !q.writing && !q.choices && (
+        <p className="text-sm text-ink">
+          <span className="font-semibold">{tr("Why:")}</span> {q.comment}
+        </p>
+      )}
     </Card>
   );
 }
 
 function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: boolean }) {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<"wrong" | "all">("wrong");
+  const [filter, setFilter] = useState<"review" | "wrong" | "skipped" | "all">("review");
   const qs = report.questions ?? [];
-  const shown = filter === "all" ? qs : qs.filter((q) => !q.answered || (q.score !== null && q.score < 0.75));
+  const counts = report.counts ?? {
+    total: qs.length,
+    right: qs.filter((q) => outcome(q) === "right").length,
+    wrong: qs.filter((q) => outcome(q) === "wrong").length,
+    skipped: qs.filter((q) => outcome(q) === "skipped").length,
+    pending: qs.filter((q) => outcome(q) === "pending").length,
+  };
+  const shown = qs.filter((q) => {
+    const o = outcome(q);
+    return filter === "all" || (filter === "review" ? o === "wrong" || o === "skipped" : o === filter);
+  });
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -242,6 +293,23 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
           <p className="text-sm text-muted flex items-center gap-1.5">
             <Target size={15} /> {tr("Your target: {{level}} by {{date}} ({{program}})", { level: report.target.level, date: report.target.date, program: report.target.programName })}
           </p>
+        )}
+        {counts.total > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(
+              [
+                ["right", tr("Right"), counts.right],
+                ["wrong", tr("Wrong"), counts.wrong],
+                ["skipped", tr("Skipped"), counts.skipped],
+                ["all", tr("Questions"), counts.total],
+              ] as const
+            ).map(([k, label, n]) => (
+              <div key={k} className={`rounded-input px-3 py-2 ${k === "all" ? "bg-paper-warm" : OUTCOME[k].cls}`}>
+                <div className="text-xl font-display font-bold">{n}</div>
+                <div className="text-xs">{label}</div>
+              </div>
+            ))}
+          </div>
         )}
         <p className="text-sm text-ink leading-relaxed">{report.analysis}</p>
       </Card>
@@ -282,12 +350,17 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-3">
             <h2 className="font-display font-bold text-lg text-ink flex-1">{tr("Question by question")}</h2>
-            <select value={filter} onChange={(e) => setFilter(e.target.value as "wrong" | "all")} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
-              <option value="wrong">{tr("Only what to work on")}</option>
-              <option value="all">{tr("All questions")}</option>
+            <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
+              <option value="review">{tr("Wrong and skipped ({{n}})", { n: counts.wrong + counts.skipped })}</option>
+              <option value="wrong">{tr("Wrong ({{n}})", { n: counts.wrong })}</option>
+              <option value="skipped">{tr("Skipped ({{n}})", { n: counts.skipped })}</option>
+              <option value="all">{tr("All questions ({{n}})", { n: counts.total })}</option>
             </select>
           </div>
-          {shown.length === 0 && <p className="text-sm text-success">{tr("Nothing to work on here: every answer was right.")}</p>}
+          {report.explanationsMissing && (
+            <p className="text-sm text-muted">{tr("Explanations for some answers are still being written. The right answers are shown now; open this report again later for the reasons.")}</p>
+          )}
+          {shown.length === 0 && <p className="text-sm text-success">{filter === "all" ? tr("No questions.") : tr("Nothing here.")}</p>}
           {shown.map((q) => (
             <QuestionCard key={q.itemId} q={q} n={qs.indexOf(q) + 1} />
           ))}

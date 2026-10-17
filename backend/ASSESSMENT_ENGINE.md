@@ -649,3 +649,33 @@ starter sets and AI); new screens are in English only.
   recommendations are hidden, "start practice" buttons go to Practice Tests,
   and the server refuses to start module practice (403 `modules_disabled`).
   Test org (the demo) has Modules off.
+
+## 23. Mock Exams section, report after every test, My reports
+
+- **Separate sections.** Learners have three entries in the sidebar: Practice
+  Tests (`/practice-tests`), Mock Exams (`/mock-exams`, behind the `mocktest`
+  licence feature) and My reports (`/my-reports`). Both test pages use the same
+  `PracticeTests` component with `section="practice" | "mock"`: practice shows
+  the practice sets only, mock shows the mock card only. A program's "Open the
+  test" goes to the section that matches the next scheduled item.
+- **Report right after the test.** The summary screen shows the full feedback
+  report inline under the result (no extra click). It refreshes while the
+  report is still being built.
+- **Report v2** (`backend/src/reports/feedbackReport.ts`). Each question has an
+  `outcome` (right, wrong, skipped, pending) and, for open answers, an
+  `expected` answer (the key, the accepted answer, the corrected text or the
+  key points). The report has `counts` and `explanationsMissing`. AI
+  explanations are written for wrong **and** skipped multiple-choice questions.
+  When the summary call fails (for example the Gemini daily quota), a plain
+  summary is built from the numbers. Reports older than version 2 are rebuilt
+  when opened. A report with missing explanations is rebuilt at most once an
+  hour while someone opens it. Learners see a note that the reasons are still
+  being written.
+- **Report view.** It shows the count tiles (right, wrong, skipped, questions)
+  and an outcome badge on every question. The right answer is in green and the
+  learner's wrong answer is struck through, with "Why" from the explanation. The
+  filter defaults to "Wrong and skipped".
+- **My reports.** Every finished practice test and mock exam (latest 200), with
+  a filter for all, mock exams or practice tests. Each one opens its report.
+- Gemini: errors from the daily quota are not retried (they fail fast), and the
+  timeout timer is cleared so scripts exit straight away.

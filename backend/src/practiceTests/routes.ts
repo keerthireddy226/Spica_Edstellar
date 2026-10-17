@@ -188,11 +188,17 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
     if (!s) return res.status(404).json({ error: "session_not_found" });
     if (!s.completed_at) return res.status(409).json({ error: "session_not_completed" });
     const r = (await pool.query(`SELECT status, report_level, report, updated_at FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
+    // Explanations the AI couldn't write at the time: try again (at most hourly), showing this report meanwhile.
+    if (r?.status === "ready" && r.report?.explanationsMissing && Date.now() - new Date(r.updated_at).getTime() > 3_600_000) {
+      await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 22}`, maxAttempts: 2 });
+    }
     const wanted = (await learnerQuota(req.user!.id))?.reportLevel ?? "full";
-    const stale = !r || r.status === "failed" || (r.status === "ready" && r.report_level === "summary" && wanted === "full");
+    // Reports made before skipped questions and answer explanations (version 2) are rebuilt.
+    const outdated = r?.status === "ready" && (r.report?.version ?? 1) < 2;
+    const stale = !r || r.status === "failed" || outdated || (r.status === "ready" && r.report_level === "summary" && wanted === "full");
     if (stale) {
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
-      if (!r || r.status === "failed") return res.json({ status: "pending", report: null });
+      if (!r || r.status === "failed" || outdated) return res.json({ status: "pending", report: null });
     }
     res.json({ status: r.status, report: r.report });
   } catch (err) {
@@ -209,8 +215,7 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
        FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
        LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
-         AND EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
-       ORDER BY s.completed_at DESC LIMIT 20`,
+       ORDER BY s.completed_at DESC LIMIT 200`,
       [req.user!.id],
     );
     res.json({

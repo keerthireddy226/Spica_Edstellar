@@ -29,6 +29,8 @@ function retryDelayMs(err: unknown, attempt: number): number | null {
   const e = err as { status?: number; message?: string };
   const status = e.status ?? Number(/"code":\s*(\d{3})/.exec(String(e.message))?.[1]);
   if (status !== 503 && status !== 429 && status !== 500) return null;
+  // A daily limit ("PerDay", or "retry in 13h20m…") won't pass in seconds.
+  if (/PerDay|retry in \d+h/i.test(String(e.message))) return null;
   const hint = /retry in (\d+(?:\.\d+)?)s/i.exec(String(e.message));
   if (hint && Number(hint[1]) > 60) return null;
   return hint ? Number(hint[1]) * 1000 + 500 : [5_000, 15_000, 40_000][attempt] ?? null;
@@ -53,14 +55,23 @@ export async function generateJson<T>(opts: {
   temperature: number;
   timeoutMs?: number;
 }): Promise<{ data: T; usage: Usage }> {
-  const response = await withRetries(() => Promise.race([
-    getClient().models.generateContent({
-      model: opts.model,
-      contents: [{ role: "user", parts: [{ text: opts.prompt }] }],
-      config: { responseMimeType: "application/json", responseJsonSchema: opts.schema, temperature: opts.temperature },
-    }),
-    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`${opts.model}: timed out`)), opts.timeoutMs ?? 180_000)),
-  ]));
+  const response = await withRetries(async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        getClient().models.generateContent({
+          model: opts.model,
+          contents: [{ role: "user", parts: [{ text: opts.prompt }] }],
+          config: { responseMimeType: "application/json", responseJsonSchema: opts.schema, temperature: opts.temperature },
+        }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(`${opts.model}: timed out`)), opts.timeoutMs ?? 180_000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  });
   const meta = response.usageMetadata;
   return {
     data: JSON.parse(response.text ?? "") as T,

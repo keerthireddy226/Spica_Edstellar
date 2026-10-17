@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText } from "lucide-react";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -156,7 +156,23 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             to={ROUTES.PRACTICE_TESTS}
             icon={ClipboardList}
             label={t("nav.practiceTests")}
-            isActive={location.pathname.startsWith(ROUTES.PRACTICE_TESTS)}
+            isActive={location.pathname.startsWith(ROUTES.PRACTICE_TESTS) && !location.pathname.startsWith("/practice-tests/report/")}
+            locked={locked}
+            onClick={onClose}
+          />
+          <NavEntry
+            to={ROUTES.MOCK_EXAMS}
+            icon={Timer}
+            label={tr("Mock Exams")}
+            isActive={location.pathname.startsWith(ROUTES.MOCK_EXAMS)}
+            locked={locked}
+            onClick={onClose}
+          />
+          <NavEntry
+            to={ROUTES.MY_REPORTS}
+            icon={FileText}
+            label={tr("My reports")}
+            isActive={location.pathname === ROUTES.MY_REPORTS || location.pathname.startsWith("/practice-tests/report/")}
             locked={locked}
             onClick={onClose}
           />

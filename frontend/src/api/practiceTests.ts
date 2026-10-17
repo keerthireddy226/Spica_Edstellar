@@ -271,11 +271,16 @@ export interface ReportQuestion {
   };
   speech?: { transcript: string | null; wordsPerMinute: number | null; fillers: number | null; clarity: number | null; comment: string | null; noisy: boolean };
   comment: string | null;
+  outcome?: "right" | "wrong" | "skipped" | "pending";
+  // The expected answer of a question that isn't multiple choice.
+  expected?: { text?: string; points?: string[] };
 }
 
 export interface FeedbackReport {
-  version: 1;
+  version: 1 | 2;
   level: "summary" | "full";
+  counts?: { total: number; right: number; wrong: number; skipped: number; pending: number };
+  explanationsMissing?: boolean;
   deliveryMode: DeliveryMode;
   testTypeId: string | null;
   overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; scoreBand: ScoreBand | null };

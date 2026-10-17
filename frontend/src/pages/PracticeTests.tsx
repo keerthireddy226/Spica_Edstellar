@@ -41,6 +41,7 @@ import {
   getQuota,
   getMyProgram,
   getHistory,
+  getReport,
   type HistoryEntry,
   type QuotaUsage,
   type MyProgram,
@@ -71,6 +72,8 @@ import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
 import type { DeliveryMode, PreTestKind } from "@/api/proctoring";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
+import { FeedbackReportView } from "@/components/report/FeedbackReportView";
+import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { formatShortDate } from "@/api/licenses";
 import {
   AUDIO_FIRST_TYPES,
@@ -109,7 +112,11 @@ interface CachedAnswer {
   durationMs?: number;
 }
 
-export function PracticeTests() {
+// Practice tests and mock exams are separate sections of the learner app,
+// sharing this page: "practice" lists practice sets, "mock" the mock exams.
+export function PracticeTests({ section = "practice" }: { section?: "practice" | "mock" }) {
+  const isMockSection = section === "mock";
+  const license = useMyLicense();
   const { t } = useTranslation();
   const isCandidate = useAuth().user?.role === "candidate";
   const allowedProducts = useBranding()?.allowedTestProducts ?? null;
@@ -758,7 +765,8 @@ export function PracticeTests() {
   // branch would always win and the score screen could never show at all.
   if (summary) {
     return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+      <div className="flex flex-col gap-6 w-full">
+      <div className="max-w-lg w-full mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
         <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
           <CheckCircle2 size={32} />
         </div>
@@ -846,11 +854,6 @@ export function PracticeTests() {
           <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
         )}
         <IntegrityResultNote sessionId={sessionId} />
-        {sessionId && (
-          <Button onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", sessionId))} className="w-full flex items-center justify-center gap-2">
-            <FileText size={16} /> {tr("See your feedback report")}
-          </Button>
-        )}
         <div className="flex items-center gap-3 w-full">
           <Button variant="secondary" onClick={resetToExamList} className="flex-1">
             {t("practiceTests.backToExams")}
@@ -859,6 +862,14 @@ export function PracticeTests() {
             {t("modules.backToDashboard")}
           </Button>
         </div>
+      </div>
+      {/* The feedback report, right under the result: what was wrong or skipped, the right answers and why. */}
+      {sessionId && (
+        <div className="max-w-4xl w-full mx-auto flex flex-col gap-3">
+          <h2 className="font-display font-bold text-xl text-ink">{tr("Your feedback report")}</h2>
+          <FeedbackReportView load={() => getReport(sessionId)} upgradeLink={!!license?.individual} />
+        </div>
+      )}
       </div>
     );
   }
@@ -1251,6 +1262,7 @@ export function PracticeTests() {
         {error && <p className="text-sm text-error">{error}</p>}
 
         {/* Mock exam: one per test type, built from questions the learner hasn't seen. */}
+        {isMockSection && (
         <div className="relative overflow-hidden bg-navy text-white rounded-card p-6 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
           <span className="h-12 w-12 rounded-2xl bg-lime text-navy flex items-center justify-center shrink-0">
             <Timer size={24} />
@@ -1279,6 +1291,17 @@ export function PracticeTests() {
             </Button>
           )}
         </div>
+        )}
+        {isMockSection && quota && (
+          <p className="text-sm text-muted">
+            {quota.mocksPerMonth === null
+              ? tr("Mock exams this month: {{used}} (no limit)", { used: quota.mocksUsed })
+              : tr("Mock exams this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
+          </p>
+        )}
+
+        {!isMockSection && (
+        <>
 
         <div className="flex items-center gap-2 -mb-2">
           <BookOpenCheck size={18} className="text-accent" />
@@ -1340,6 +1363,8 @@ export function PracticeTests() {
             ))}
           </div>
         )}
+        </>
+        )}
       </div>
     );
   }
@@ -1356,9 +1381,13 @@ export function PracticeTests() {
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
-        eyebrow={tr("Mock exams")}
-        title={t("nav.practiceTests")}
-        subtitle={tr("Full-length, timed practice tests in the style of the major English exams.")}
+        eyebrow={isMockSection ? tr("Exam conditions") : tr("Practice at your own pace")}
+        title={isMockSection ? tr("Mock Exams") : t("nav.practiceTests")}
+        subtitle={
+          isMockSection
+            ? tr("Timed like the real exam, questions you haven't seen, and a full report at the end.")
+            : tr("Full practice tests in the style of the major English exams: pause, go back and see the right answer after each question.")
+        }
         icon={ClipboardCheck}
         stats={[
           { label: tr("Exam types"), value: live.length, icon: Layers },
@@ -1372,7 +1401,17 @@ export function PracticeTests() {
         ]}
       />
 
-      {myProgram && <ProgramCard mine={myProgram} testTypes={testTypes} onOpen={(id) => openProduct(id)} />}
+      {myProgram && (
+        <ProgramCard
+          mine={myProgram}
+          testTypes={testTypes}
+          onOpen={(id) => {
+            const nextIsMock = myProgram.upcoming[0]?.kind === "mock";
+            if (nextIsMock !== isMockSection) navigate(`${nextIsMock ? ROUTES.MOCK_EXAMS : ROUTES.PRACTICE_TESTS}?product=${encodeURIComponent(id)}`);
+            else openProduct(id);
+          }}
+        />
+      )}
 
       {quota && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted -mt-2">
@@ -1393,34 +1432,12 @@ export function PracticeTests() {
       )}
 
       {history.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="font-display font-bold text-base text-ink">{tr("Your recent results")}</h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {history.slice(0, 8).map((h) => {
-              const tt = testTypes.find((x) => x.id === h.testTypeId);
-              return (
-                <button
-                  key={h.sessionId}
-                  onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
-                  className="shrink-0 w-56 text-left bg-surface border border-rule rounded-card p-3 flex flex-col gap-1 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                    {h.deliveryMode === "mock" ? tr("Mock exam") : tr("Practice")} · {formatShortDate(h.completedAt)}
-                  </span>
-                  <span className="text-sm font-semibold text-ink truncate">{tt ? testTypeName(tt, t) : (h.examName ?? "")}</span>
-                  <span className="text-sm text-muted">
-                    {h.cefrLevel ?? "—"}
-                    {h.percent !== null ? ` · ${h.percent}%` : ""}
-                  </span>
-                  <span className="text-xs font-semibold text-navy-deep">{tr("Open the report")} →</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer -mt-2">
+          <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
+        </button>
       )}
 
-      {openMock?.testTypeId && (
+      {isMockSection && openMock?.testTypeId && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-navy/10 border border-navy/20 rounded-card px-5 py-4">
           <Timer size={20} className="text-navy-deep shrink-0" />
           <span className="flex-1 text-sm text-ink">
@@ -1447,7 +1464,7 @@ export function PracticeTests() {
       {families.map((family) => (
         <section key={family.id} className="flex flex-col gap-3">
           <div>
-            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family)}</h2>
+            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family, isMockSection)}</h2>
             <p className="text-xs text-muted">{familyNote(family)}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

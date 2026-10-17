@@ -405,7 +405,8 @@ recruitmentRouter.get("/assessments/:id/report", requireAuth, async (req: Authed
     const a = (await pool.query(`SELECT session_id, status FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId])).rows[0];
     if (!a?.session_id || a.status !== "completed") return res.status(404).json({ error: "report_not_found" });
     const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [a.session_id])).rows[0];
-    if (!r || r.status === "failed") {
+    // Missing, failed, or made before skipped questions and answer explanations (version 2).
+    if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < 2)) {
       await enqueue("report.build", { sessionId: a.session_id }, { dedupeKey: `report.build:${a.session_id}:${Date.now() >> 16}`, maxAttempts: 5 });
       return res.json({ status: "pending", report: null });
     }
