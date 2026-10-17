@@ -377,6 +377,8 @@ export interface OrgSettings {
   reminderDefaultEnabled: boolean;
   reminderDefaultTime: string;
   faceCheckRequired: boolean;
+  // Modules (one skill at a time) for the organization's learners.
+  modulesEnabled: boolean;
   allowedTestProducts: string[] | null;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;

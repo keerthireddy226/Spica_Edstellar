@@ -643,3 +643,9 @@ starter sets and AI); new screens are in English only.
   schedules cap mocks the same way.
 - When an organization allows only some tests (Settings), its learners see
   only those on Practice Tests; the others are hidden instead of greyed out.
+- An organization can switch Modules off for its learners (Org Admin >
+  Settings > "Modules for learners", `tenants.learner_modules`): Modules
+  disappear from the learner menu and Overview, the Roadmap's module
+  recommendations are hidden, "start practice" buttons go to Practice Tests,
+  and the server refuses to start module practice (403 `modules_disabled`).
+  Test org (the demo) has Modules off.

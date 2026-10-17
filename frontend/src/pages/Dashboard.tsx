@@ -1,3 +1,4 @@
+import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -61,6 +62,7 @@ const MODULE_STATUS_KEY: Record<ModuleStatus, string> = {
 function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const modulesOn = useModulesEnabled();
 
   return (
     <div className="grid grid-cols-2 gap-3">
@@ -70,7 +72,7 @@ function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
         return (
           <button
             key={m.skill}
-            onClick={() => navigate(`${ROUTES.MODULES}?skill=${m.skill}`)}
+            onClick={() => navigate(modulesOn ? `${ROUTES.MODULES}?skill=${m.skill}` : ROUTES.PRACTICE_TESTS)}
             className="group text-left rounded-card p-4 flex flex-col gap-3 border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
             style={{ background: `color-mix(in srgb, ${color} 10%, var(--color-surface))`, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
           >
@@ -98,6 +100,7 @@ function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
 
 // Daily habit checklist (practiced today?), distinct from Roadmap's all-time "Recommended Practice".
 function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
+  const modulesOn = useModulesEnabled();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -129,7 +132,9 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
             {!task.done && (
               <Button
                 variant="secondary"
-                onClick={() => navigate(`${ROUTES.MODULES}?skill=${task.skill}&count=${Math.max(1, task.itemTarget - task.itemsCompletedToday)}`)}
+                onClick={() =>
+                  navigate(modulesOn ? `${ROUTES.MODULES}?skill=${task.skill}&count=${Math.max(1, task.itemTarget - task.itemsCompletedToday)}` : ROUTES.PRACTICE_TESTS)
+                }
                 className="shrink-0"
               >
                 <span className="flex items-center gap-1.5">
@@ -149,9 +154,11 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
 function ContinuePracticeCard({ practice }: { practice: InProgressPractice }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const modulesOn = useModulesEnabled();
   const Icon = SKILL_ICONS[practice.skill];
   const color = SKILL_COLOR[practice.skill];
   const pct = practice.total > 0 ? Math.round((practice.answered / practice.total) * 100) : 0;
+  if (!modulesOn) return null;
 
   return (
     <button
@@ -179,12 +186,14 @@ function ContinuePracticeCard({ practice }: { practice: InProgressPractice }) {
 function QuickLinks() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const links = [
+  const modulesOn = useModulesEnabled();
+  const all = [
     { to: ROUTES.MODULES, label: t("nav.modules"), hint: tr("Practise one skill at a time"), icon: Layers, color: "#b5653f" },
     { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock exams"), icon: ClipboardCheck, color: "#c9965c" },
     { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: tr("Chat in English with your coach"), icon: MessageCircle, color: "#6e9660" },
     { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: tr("Your skills, streaks and badges"), icon: BarChart3, color: "#a8613f" },
   ];
+  const links = modulesOn ? all : all.filter((l) => l.to !== ROUTES.MODULES);
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {links.map((l) => (
@@ -256,6 +265,7 @@ function AchievementBadges({ badges }: { badges: Badge[] }) {
 function LearnerDashboard() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const modulesOn = useModulesEnabled();
   const [data, setData] = useState<DashboardData | null>(null);
   const [notReady, setNotReady] = useState<{ scheduledFor: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -326,7 +336,7 @@ function LearnerDashboard() {
                 <Map size={18} strokeWidth={1.8} /> {t("dashboardHome.viewRoadmap")}
               </span>
             </Button>
-            <Button onClick={() => navigate(`${ROUTES.MODULES}?skill=${startSkill}`)}>
+            <Button onClick={() => navigate(modulesOn ? `${ROUTES.MODULES}?skill=${startSkill}` : ROUTES.PRACTICE_TESTS)}>
               <span className="flex items-center gap-1.5">
                 {t("dashboardHome.startPractice")}
                 {showStartNudge && <ArrowRight size={18} strokeWidth={2.2} className="nudge-arrow" />}

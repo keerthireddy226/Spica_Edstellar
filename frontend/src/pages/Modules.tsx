@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { useTranslation } from "react-i18next";
 import {
   Volume2,
@@ -474,7 +475,14 @@ function SetPicker({
   );
 }
 
+// The organization may have switched Modules off: send learners to Practice Tests.
 export function Modules() {
+  const modulesOn = useModulesEnabled();
+  if (!modulesOn) return <Navigate to={ROUTES.PRACTICE_TESTS} replace />;
+  return <ModulesPage />;
+}
+
+function ModulesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();

@@ -1,3 +1,4 @@
+import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -63,6 +64,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   const myLicense = useMyLicense();
   const [searchParams] = useSearchParams();
   const hasPlacement = useHasPlacement();
+  // The organization may have switched Modules off for its learners.
+  const modulesOn = useModulesEnabled();
   const locked = hasPlacement !== true;
   const onModulesPage = location.pathname === ROUTES.MODULES;
   const [modulesExpanded, setModulesExpanded] = useState(onModulesPage);
@@ -116,7 +119,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             locked={locked}
             onClick={onClose}
           />
-          {locked ? (
+          {!modulesOn ? null : locked ? (
             <span className={lockedClasses}>
               <BookOpen size={22} strokeWidth={1.8} />
               {t("nav.modules")}

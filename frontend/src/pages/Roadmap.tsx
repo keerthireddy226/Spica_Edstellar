@@ -1,3 +1,4 @@
+import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -302,9 +303,12 @@ function RoadmapTimeline({ milestones, daysSinceStart }: { milestones: RoadmapMi
 }
 
 function RecommendedPractice({ practice, hasPracticed }: { practice: RoadmapData["recommendedPractice"]; hasPracticed: boolean }) {
+  // Module recommendations, so none when the organization switched Modules off.
+  const modulesOn = useModulesEnabled();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  if (!modulesOn) return null;
   return (
     <LearnerCard title={t("recommendedPractice.title")} icon={ListChecks} color="var(--color-success)" className="!gap-2">
       {practice.items.map((item) => (

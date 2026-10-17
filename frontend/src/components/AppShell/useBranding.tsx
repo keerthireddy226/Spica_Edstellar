@@ -8,6 +8,9 @@ export interface Branding {
   allowedTestProducts: string[] | null;
   // What the organization bought: employee skills, recruitment, or both.
   products: ("skills" | "recruitment")[];
+  // Modules for this organization's learners (off when an engagement covers
+  // only practice tests and mock exams).
+  modulesEnabled?: boolean;
   // "university": Campus (skills) and Admissions (recruitment).
   category?: "company" | "university" | "other" | null;
 }
@@ -69,4 +72,9 @@ export function useBrandColor(): string | null {
 // A university's recruitment product is Admissions: applicants, programs, admit or decline.
 export function useAdmissions(): boolean {
   return useBranding()?.category === "university";
+}
+
+// Whether learners get Modules (true until the branding has loaded).
+export function useModulesEnabled(): boolean {
+  return useBranding()?.modulesEnabled !== false;
 }

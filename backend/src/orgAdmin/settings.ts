@@ -28,6 +28,8 @@ export interface OrgSettings {
   reminderDefaultTime: string;
   faceCheckRequired: boolean;
   allowedTestProducts: string[] | null;
+  // Modules (one skill at a time) for this organization's learners.
+  modulesEnabled: boolean;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;
   sessionIdleMinutes: number | null;
@@ -53,6 +55,7 @@ export const settingsSchema = z.object({
     .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
     .optional(),
   faceCheckRequired: z.boolean().optional(),
+  modulesEnabled: z.boolean().optional(),
   // null = every product; otherwise at least one.
   // Test type ids from the exam catalogue; checked against it when saved.
   allowedTestProducts: z.array(z.string().min(1).max(40)).min(1).nullable().optional(),
@@ -67,7 +70,7 @@ export const settingsSchema = z.object({
 export async function getOrgSettings(tenantId: string): Promise<OrgSettings | null> {
   const r = await pool.query(
     `SELECT logo_path, brand_color, default_language, timezone, reminder_default_enabled,
-       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products,
+       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products, learner_modules,
        mfa_required, ip_allowlist, session_idle_minutes, password_min_length, invite_expiry_hours
      FROM tenants WHERE id = $1`,
     [tenantId],
@@ -82,6 +85,7 @@ export async function getOrgSettings(tenantId: string): Promise<OrgSettings | nu
     reminderDefaultEnabled: t.reminder_default_enabled,
     reminderDefaultTime: t.reminder_default_time,
     faceCheckRequired: t.face_check_required,
+    modulesEnabled: t.learner_modules,
     allowedTestProducts: t.allowed_test_products,
     mfaRequired: t.mfa_required,
     ipAllowlist: t.ip_allowlist,
@@ -106,6 +110,7 @@ export async function updateOrgSettings(tenantId: string, body: z.infer<typeof s
     ["reminderDefaultTime", "reminder_default_time"],
     ["faceCheckRequired", "face_check_required"],
     ["allowedTestProducts", "allowed_test_products"],
+    ["modulesEnabled", "learner_modules"],
     ["mfaRequired", "mfa_required"],
     ["ipAllowlist", "ip_allowlist"],
     ["sessionIdleMinutes", "session_idle_minutes"],
@@ -160,17 +165,33 @@ export async function applyLearnerDefaults(tenantId: string, userId: string): Pr
   }
 }
 
-// For a learner: does their organization require face checks, and which
-// practice-test products may they take? Individuals: yes, and all.
-export async function learnerOrgPolicy(userId: string): Promise<{ faceCheckRequired: boolean; allowedTestProducts: string[] | null }> {
+// For a learner: does their organization require face checks, which
+// practice-test products may they take, and do they get Modules?
+// Individuals: yes, all, and yes.
+export async function learnerOrgPolicy(userId: string): Promise<{ faceCheckRequired: boolean; allowedTestProducts: string[] | null; modulesEnabled: boolean }> {
   const r = await pool.query(
-    `SELECT u.role, t.type, t.face_check_required, t.allowed_test_products FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
+    `SELECT u.role, t.type, t.face_check_required, t.allowed_test_products, t.learner_modules FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
     [userId],
   );
   const t = r.rows[0];
   // Candidates are identified by the proctoring steps instead (ID selfie,
   // snapshots), never by a learner's face enrollment.
-  if (t?.role === "candidate") return { faceCheckRequired: false, allowedTestProducts: null };
-  if (!t || t.type !== "cohort") return { faceCheckRequired: true, allowedTestProducts: null };
-  return { faceCheckRequired: t.face_check_required, allowedTestProducts: t.allowed_test_products };
+  if (t?.role === "candidate") return { faceCheckRequired: false, allowedTestProducts: null, modulesEnabled: false };
+  if (!t || t.type !== "cohort") return { faceCheckRequired: true, allowedTestProducts: null, modulesEnabled: true };
+  return { faceCheckRequired: t.face_check_required, allowedTestProducts: t.allowed_test_products, modulesEnabled: t.learner_modules };
+}
+
+// Blocks starting or answering module practice for learners whose
+// organization switched Modules off (reads stay open: history, reports).
+export function requireModules() {
+  return async (req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) => {
+    const user = (req as unknown as { user?: { id: string; role: string } }).user;
+    if (req.method === "GET" || req.method === "HEAD" || !user || user.role !== "learner") return next();
+    try {
+      if ((await learnerOrgPolicy(user.id)).modulesEnabled) return next();
+      res.status(403).json({ error: "modules_disabled" });
+    } catch (err) {
+      next(err);
+    }
+  };
 }
