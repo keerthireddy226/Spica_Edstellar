@@ -46,6 +46,7 @@ import { SKILL_TINT_CLASSES, SKILL_RING_COLOR } from "@/lib/skillTints";
 import {
   getAvailability,
   getTypeProgress,
+  testsLine,
   getUnits,
   getSets,
   startPracticeSession,
@@ -78,8 +79,7 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
-import type { ReportQuestion } from "@/api/practiceTests";
-import { QuestionCard, QuestionReview } from "@/components/report/FeedbackReportView";
+import { QuestionReview } from "@/components/report/FeedbackReportView";
 import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 // Fallback reading time for a two-phase item with no server-set duration.
@@ -355,6 +355,11 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
                 <span className="font-display font-bold text-base text-ink leading-snug">{meta.name}</span>
                 <span className="text-xs text-muted leading-relaxed">{t(`modules.typeDesc.${typeId}`)}</span>
               </div>
+              {progress[typeId]?.tests.length ? (
+                <span className="text-[11px] text-muted">
+                  <span className="font-semibold text-ink">{tr("Versant tests:")}</span> {testsLine(progress[typeId].tests)}
+                </span>
+              ) : null}
               <TypeProgressLine p={progress[typeId]} />
               <span className="mt-auto flex items-center gap-1 text-xs font-semibold text-navy-deep">
                 {(progress[typeId]?.started ?? 0) > 0 ? tr("Continue") : tr("Practise")}{" "}
@@ -755,8 +760,6 @@ function ModulesPage() {
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
   // The set being taken: skill, sub-module, level and set name.
   const [context, setContext] = useState<PracticeContext | null>(null);
-  // The answer just submitted, checked: what was heard or typed, right or wrong.
-  const [feedback, setFeedback] = useState<ReportQuestion | null>(null);
   // Countdown beeps off for every question (remembered).
   const [muted, setMuted] = useState(loadMuted);
   // Stops once the score report shows — nothing left to verify identity
@@ -897,15 +900,14 @@ function ModulesPage() {
     setHasPlayed(!!cached);
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
-    setFeedback(null);
   }, [index]);
 
   // Each question's countdown: its whole time (listening, reading, answering).
-  // It stops once the answer is checked; at zero a recording in progress is
-  // stopped and kept, and the learner submits or moves on.
+  // At zero a recording in progress is stopped and kept, and the learner
+  // submits or moves on.
   const questionSeconds = current?.questionSeconds ?? current?.timerSeconds ?? null;
   useEffect(() => {
-    if (!questionSeconds || feedback || showTypeIntro) {
+    if (!questionSeconds || showTypeIntro) {
       if (!questionSeconds) setRemainingSeconds(null);
       return;
     }
@@ -915,7 +917,7 @@ function ModulesPage() {
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, questionSeconds, !!feedback, showTypeIntro]);
+  }, [index, questionSeconds, showTypeIntro]);
   // A new question starts its own full countdown.
   useEffect(() => {
     setRemainingSeconds(questionSeconds);
@@ -923,7 +925,7 @@ function ModulesPage() {
   }, [index]);
   // Beeps in the last 5 seconds (unless muted); time up stops a recording.
   useEffect(() => {
-    if (remainingSeconds === null || feedback) return;
+    if (remainingSeconds === null) return;
     if (remainingSeconds > 0 && remainingSeconds <= 5 && !muted) beep();
     if (remainingSeconds === 0) {
       if (!muted) beep(440, 400);
@@ -1000,7 +1002,7 @@ function ModulesPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await submitPracticeAttempt(sessionId, {
+      await submitPracticeAttempt(sessionId, {
         itemId: current.id,
         responseText: answerText.trim() || undefined,
         audioBase64: pendingAudio?.base64,
@@ -1009,9 +1011,9 @@ function ModulesPage() {
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
-      // Show the checked answer first; the learner moves on from there.
-      if (res.review) setFeedback(res.review);
-      else await finishOrAdvance();
+      // Straight to the next question: right and wrong answers are shown
+      // together at the end (results), not after each one.
+      await finishOrAdvance();
     } catch {
       setError(t("placementTest.submitError"));
     } finally {
@@ -1038,18 +1040,6 @@ function ModulesPage() {
     }
   }
 
-  async function continueAfterFeedback() {
-    setSubmitting(true);
-    try {
-      setFeedback(null);
-      await finishOrAdvance();
-    } catch {
-      setError(t("placementTest.submitError"));
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   function handleBack() {
     if (index === 0) return;
     cacheCurrentAnswer();
@@ -1060,7 +1050,6 @@ function ModulesPage() {
     setSessionId(null);
     setItems([]);
     setSummary(null);
-    setFeedback(null);
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
@@ -1213,6 +1202,7 @@ function ModulesPage() {
           <p className="text-xs uppercase tracking-wide text-muted">
             {[c?.skill ? t(`skills.${c.skill}`) : null, c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
           </p>
+          {c?.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
           <div className="flex items-center gap-4">
             <ProgressRing percent={pct} size={72} strokeWidth={6} colorClass={pct >= 80 ? "text-success" : pct >= 50 ? "text-navy" : "text-warning"}>
               <span className="font-display font-bold text-lg text-ink">{pct}%</span>
@@ -1318,6 +1308,7 @@ function ModulesPage() {
                     {context?.unitName || context?.setName ? " · " : ""}
                     <span className="font-mono">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
                   </span>
+                  {context?.tests?.length ? <span className="text-[11px] text-muted">{tr("Versant: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
               </div>
               {remainingSeconds !== null ? (
@@ -1477,18 +1468,10 @@ function ModulesPage() {
         </>
       )}
 
-          {remainingSeconds === 0 && !feedback && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
-          {feedback && <QuestionCard q={feedback} />}
+          {remainingSeconds === 0 && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
           {error && <p className="text-sm text-error text-center">{error}</p>}
         </div>
 
-        {feedback ? (
-          <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
-            <Button onClick={continueAfterFeedback} disabled={submitting} className="flex-1">
-              {index + 1 < items.length ? tr("Next question") : tr("See your results")}
-            </Button>
-          </div>
-        ) : (
         <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
           <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
             <ArrowLeft size={20} />
@@ -1501,10 +1484,9 @@ function ModulesPage() {
             {t("placementTest.skip")}
           </button>
           <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="flex-1">
-            {submitting ? t("placementTest.submitting") : tr("Check my answer")}
+            {submitting ? t("placementTest.submitting") : index + 1 < items.length ? t("placementTest.next") : t("placementTest.finish")}
           </Button>
         </div>
-        )}
       </div>
     </div>
   );

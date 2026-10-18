@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/Button";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import type { TestItem } from "@/api/testSession";
-import type { PracticeContext } from "@/api/practiceSession";
+import { testsLine, type PracticeContext } from "@/api/practiceSession";
 import { AUDIO_FIRST_TYPES } from "@/lib/testItemDisplay";
 import { tr } from "@/i18n/tr";
 
@@ -41,7 +41,7 @@ function scoringNote(items: TestItem[]): string[] {
       notes.push(tr("Your recording is turned into text and checked against the right answer. A short answer with the key words is enough."));
     if (["open_questions", "story_retelling", "speaking_situations"].some((t) => types.has(t)))
       notes.push(tr("Your recording is turned into text and judged on what you say (the task), grammar, vocabulary and how smoothly you speak."));
-    notes.push(tr("After each answer you see what we heard and whether it was right. If we heard nothing, check your microphone."));
+    notes.push(tr("At the end you see which answers were right, the right answers, and your recordings to listen to."));
   }
   if (methods.has("text") || methods.has("textarea") || methods.has("two-phase")) {
     if (["dictation", "typing", "sentence_completion"].some((t) => types.has(t)))
@@ -110,6 +110,9 @@ export function ModuleGuide({
           {[context?.skill ? t(`skills.${context.skill}`) : null, context?.unitName, context?.setName].filter(Boolean).join(" · ")}
         </p>
         <h1 className="font-display font-bold text-2xl text-ink mt-1">{typeName}</h1>
+        {context?.tests?.length ? (
+          <p className="text-sm text-navy-deep mt-1">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(context.tests) })}</p>
+        ) : null}
         <p className="text-sm text-ink mt-2 leading-relaxed">{instruction}</p>
       </div>
       <div className="flex flex-col gap-2">

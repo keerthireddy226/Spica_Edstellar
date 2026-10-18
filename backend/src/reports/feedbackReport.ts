@@ -355,7 +355,11 @@ function baseQuestion(r: AttemptRow): ReportQuestion {
     outcome: outcomeOf(r),
   };
   q.choices = parseChoices(r);
-  if (!q.choices) q.expected = expectedAnswer(r);
+  if (!q.choices) {
+    // A sentence to repeat, read or build has its text as the answer.
+    const target = knownTarget(r);
+    q.expected = expectedAnswer(r) ?? (target ? { text: target } : undefined);
+  }
   if (answered && !q.choices) {
     const text = r.response_text?.trim() || null;
     q.given = { text, audioUri: r.response_uri, noSpeech: r.input_method === "mic" && !!r.response_uri && !text };

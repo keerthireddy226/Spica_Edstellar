@@ -118,6 +118,24 @@ async function selectSetItems(setId: string) {
   return result.rows;
 }
 
+// The live tests (of shown exam families) each question type is part of, so a
+// sub-module can say which Versant tests it prepares for.
+async function testsByType(): Promise<Map<string, { id: string; name: string }[]>> {
+  const r = await pool.query(
+    `SELECT ep.item_type_id, tt.id, tt.name, min(tt.sort_order) AS sort
+     FROM exam_parts ep JOIN exams e ON e.id = ep.exam_id AND e.is_active
+     JOIN test_types tt ON tt.id = e.test_type_id JOIN exam_families f ON f.id = tt.family_id AND f.active
+     WHERE tt.status = 'live' GROUP BY ep.item_type_id, tt.id, tt.name ORDER BY sort`,
+  );
+  const m = new Map<string, { id: string; name: string }[]>();
+  for (const x of r.rows) {
+    const list = m.get(x.item_type_id) ?? [];
+    list.push({ id: x.id, name: x.name });
+    m.set(x.item_type_id, list);
+  }
+  return m;
+}
+
 // Each sub-module (question type) of a skill: how many sets it has, how many
 // this learner finished and how many they started (feeds TypePicker).
 practiceRouter.get("/types", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -143,7 +161,10 @@ practiceRouter.get("/types", requireAuth, async (req: AuthedRequest, res, next) 
        FROM s GROUP BY s.item_type_id`,
       [req.user!.id, skill],
     );
-    res.json({ types: r.rows.map((x) => ({ itemTypeId: x.item_type_id, setCount: x.set_count, done: x.done, started: x.started })) });
+    const tests = await testsByType();
+    res.json({
+      types: r.rows.map((x) => ({ itemTypeId: x.item_type_id, setCount: x.set_count, done: x.done, started: x.started, tests: tests.get(x.item_type_id) ?? [] })),
+    });
   } catch (err) {
     next(err);
   }
@@ -433,10 +454,7 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
 
     const { attemptId, grade, wasCorrect } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
-    // What was heard or typed, right or wrong, and the expected answer, shown
-    // straight after the answer (practice: learn from each question).
-    const [review] = await reviewQuestions(session.id, [body.itemId]).then((qs) => qs.filter((q) => q.itemId === body.itemId));
-    res.status(201).json({ attemptId, status: grade.status, correct, review: review ?? null });
+    res.status(201).json({ attemptId, status: grade.status, correct });
   } catch (err) {
     next(err);
   }
@@ -447,7 +465,8 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
 // finished, else simply the next one).
 async function setContext(userId: string, setId: string | null, skill: string | null, itemTypeId: string | null) {
   const typeName = itemTypeId ? ((await pool.query(`SELECT name FROM item_types WHERE id = $1`, [itemTypeId])).rows[0]?.name ?? null) : null;
-  if (!setId || !skill) return { context: { skill, itemTypeId, typeName, unitName: null, setName: null }, next: null };
+  const byType = await testsByType();
+  if (!setId || !skill) return { context: { skill, itemTypeId, typeName, unitName: null, setName: null, tests: itemTypeId ? (byType.get(itemTypeId) ?? []) : [] }, next: null };
   const all = (
     await pool.query(
       `SELECT st.id, st.name, u.id AS unit_id, u.name AS unit_name, u.item_type_id, it.name AS type_name,
@@ -467,7 +486,14 @@ async function setContext(userId: string, setId: string | null, skill: string | 
   const after = at >= 0 ? all.slice(at + 1) : [];
   const nxt = after.find((r) => !r.done) ?? after[0] ?? null;
   return {
-    context: { skill, itemTypeId: cur?.item_type_id ?? itemTypeId, typeName: cur?.type_name ?? typeName, unitName: cur?.unit_name ?? null, setName: cur?.name ?? null },
+    context: {
+      skill,
+      itemTypeId: cur?.item_type_id ?? itemTypeId,
+      typeName: cur?.type_name ?? typeName,
+      unitName: cur?.unit_name ?? null,
+      setName: cur?.name ?? null,
+      tests: byType.get(cur?.item_type_id ?? itemTypeId ?? "") ?? [],
+    },
     next: nxt ? { setId: nxt.id, setName: nxt.name, unitId: nxt.unit_id, unitName: nxt.unit_name } : null,
   };
 }

@@ -9,6 +9,8 @@ export interface PracticeContext {
   typeName: string | null;
   unitName: string | null;
   setName: string | null;
+  // The Versant tests this sub-module's questions are part of.
+  tests?: { id: string; name: string }[];
 }
 
 export interface PracticeSummary {
@@ -33,6 +35,7 @@ export interface TypeProgress {
   setCount: number;
   done: number;
   started: number;
+  tests: { id: string; name: string }[];
 }
 
 export interface SkillAvailability {
@@ -102,7 +105,7 @@ export function startPracticeSession(
 export function submitPracticeAttempt(
   sessionId: string,
   payload: { itemId: string; responseText?: string; audioBase64?: string; audioMimeType?: string; durationMs?: number; activeMs?: number },
-): Promise<{ attemptId: string; status: string; correct: boolean | null; review: ReportQuestion | null }> {
+): Promise<{ attemptId: string; status: string; correct: boolean | null }> {
   return api(`/practice/session/${sessionId}/attempts`, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -111,4 +114,18 @@ export function submitPracticeAttempt(
 
 export function completePracticeSession(sessionId: string): Promise<PracticeSummary> {
   return api(`/practice/session/${sessionId}/complete`, { method: "POST" });
+}
+
+// Short names of the Versant tests, for "Prepares you for" lines.
+const SHORT_TEST_NAME: Record<string, string> = {
+  fourSkills: "4 Skills Essentials",
+  speakingListening: "Speaking & Listening",
+  writing: "Writing",
+  professional: "Professional English",
+  placement: "Placement",
+};
+
+export function testsLine(tests: { id: string; name: string }[] | undefined): string {
+  if (!tests?.length) return "";
+  return tests.map((t) => SHORT_TEST_NAME[t.id] ?? t.name).join(" · ");
 }

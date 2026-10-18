@@ -197,7 +197,6 @@ function Speech({ q }: { q: ReportQuestion }) {
   const s = q.speech!;
   return (
     <div className="flex flex-col gap-2">
-      {s.transcript && <p className="text-sm text-ink italic bg-paper-warm rounded-input p-3">“{s.transcript}”</p>}
       <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted">
         {s.wordsPerMinute !== null && <span>{tr("Pace: {{n}} words a minute", { n: s.wordsPerMinute })}</span>}
         {s.fillers !== null && <span>{tr("Fillers (um, uh): {{n}}", { n: s.fillers })}</span>}
@@ -209,21 +208,27 @@ function Speech({ q }: { q: ReportQuestion }) {
   );
 }
 
-// The learner's own answer, right or wrong: the text (unless another block
-// already shows it) and their recording.
+// The learner's own answer, right or wrong: a typed answer's text (unless
+// another block already shows it), or a spoken answer's recording. Spoken
+// answers show no transcript: speech-to-text can mishear a right answer.
 function Given({ q }: { q: ReportQuestion }) {
   const g = q.given;
   if (!g) return null;
-  const showText = !q.words && !q.writing && !q.speech && g.text;
+  const showText = !g.audioUri && !q.words && !q.writing && !q.speech && g.text;
   return (
     <div className="flex flex-col gap-1.5">
       {showText && (
         <p className="text-sm text-ink">
-          <span className="font-semibold">{q.given?.audioUri ? tr("What we heard:") : tr("Your answer:")}</span> {g.text}
+          <span className="font-semibold">{tr("Your answer:")}</span> {g.text}
         </p>
       )}
       {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Listen to it below; if it's silent or noisy, check your microphone before the next question.")}</p>}
-      {g.audioUri && <audio controls preload="none" src={g.audioUri} className="h-9 w-full max-w-sm" />}
+      {g.audioUri && (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted">{tr("Your recording")}</span>
+          <audio controls preload="none" src={g.audioUri} className="h-9 w-full max-w-sm" />
+        </div>
+      )}
     </div>
   );
 }
@@ -246,11 +251,11 @@ export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
       </div>
       {o === "skipped" && !q.choices && <p className="text-xs text-warning">{tr("You skipped this question.")}</p>}
       {q.choices && <Choices q={q} />}
-      {q.words && <Words q={q} />}
+      {q.words && !q.given?.audioUri && <Words q={q} />}
       {q.writing && <Writing q={q} />}
       {q.speech && <Speech q={q} />}
       <Given q={q} />
-      {!q.choices && !q.words && o !== "right" && <Expected q={q} />}
+      {!q.choices && (!q.words || q.given?.audioUri) && o !== "right" && <Expected q={q} />}
       {q.comment && !q.writing && !q.choices && (
         <p className="text-sm text-ink">
           <span className="font-semibold">{tr("Why:")}</span> {q.comment}
