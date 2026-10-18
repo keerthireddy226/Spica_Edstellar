@@ -909,9 +909,11 @@ function ModulesPage() {
   // At zero a recording in progress is stopped and kept, and the learner
   // submits or moves on.
   const questionSeconds = current?.questionSeconds ?? current?.timerSeconds ?? null;
-  // Only while a question is on screen: not behind the guide, the results or
-  // the pickers (the last question's countdown used to beep on the results).
-  const questionOnScreen = !!sessionId && !summary && !showTypeIntro;
+  // Only while a question is being answered: it stops the moment Skip or Next
+  // is pressed (saving and checking a spoken answer takes a few seconds), and
+  // never runs behind the guide, the results or the pickers. The next question
+  // starts its own full countdown.
+  const questionOnScreen = !!sessionId && !summary && !showTypeIntro && !submitting;
   useEffect(() => {
     if (!questionSeconds || !questionOnScreen) {
       if (!questionSeconds || summary || !sessionId) setRemainingSeconds(null);
