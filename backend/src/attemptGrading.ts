@@ -93,7 +93,7 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // is also the fallback content-grading text below.
   const geminiScores =
     item.input_method === "mic" && body.audioBase64 && !deferred
-      ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level)
+      ? await scoreAudioFluency(body.audioBase64, body.audioMimeType ?? "audio/webm", item.cefr_level, undefined, questionOf(item.content))
       : null;
 
   // A spoken answer is graded on Gemini's transcript of the recording: the
@@ -113,8 +113,8 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
     ? { status: "pending", correct: null, score: null, method: null }
     : noSpeech
       ? NO_SPEECH
-      : await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, effectiveResponseText);
-  const responseText = effectiveResponseText ?? null;
+      : await gradeWithSecondOpinion(item, effectiveResponseText, item.input_method === "mic" ? body.responseText : undefined);
+  const responseText = (grade as GradeResult & { usedText?: string }).usedText ?? effectiveResponseText ?? null;
 
   // Resubmitting the same item in a session replaces the old attempt instead
   // of stacking a second one — an UPSERT (backed by a unique index on
@@ -190,6 +190,31 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
 
 const BACKGROUND_TIMEOUT_MS = 60_000;
 
+// The question a spoken answer replies to, if the question type has one.
+function questionOf(content: unknown): string | undefined {
+  const q = (content as { question?: unknown } | null)?.question;
+  return typeof q === "string" && q.trim() ? q : undefined;
+}
+
+const norm = (s: string | undefined) => (s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+
+// Grades the AI transcript of a spoken answer and, when that's not fully right
+// and the browser heard something different, the browser's transcript too: the
+// better grade counts. Speech-to-text mishears short answers ("cat" as
+// "ticket"); two independent listeners make a right answer marked wrong rarer.
+// usedText: the transcript the kept grade came from.
+async function gradeWithSecondOpinion(
+  item: Omit<GradedItem, "input_method">,
+  primary: string | undefined,
+  browser: string | undefined,
+  timeoutMs?: number,
+): Promise<GradeResult & { usedText?: string }> {
+  const first = await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, primary, timeoutMs);
+  if (first.status !== "scored" || (first.score ?? 0) >= 1 || !browser?.trim() || norm(browser) === norm(primary)) return first;
+  const second = await gradeAttempt(item.item_type_id, item.answer_set, item.content, item.cefr_level, item.min_words, browser, timeoutMs);
+  return second.status === "scored" && (second.score ?? 0) > (first.score ?? 0) ? { ...second, usedText: browser } : first;
+}
+
 // Grades a recorded answer that was saved without waiting for Gemini. Retried
 // by the queue when Gemini doesn't answer; the last try (final) grades on the
 // browser's transcript rather than leave the answer ungraded. Does nothing if
@@ -211,15 +236,17 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   const file = path.join(UPLOADS_DIR, path.basename(r.response_uri));
   const audio = await readFile(file).catch(() => null);
   const mime = file.endsWith(".m4a") ? "audio/mp4" : "audio/webm";
-  const geminiScores = audio ? await scoreAudioFluency(audio.toString("base64"), mime, r.cefr_level, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS) : null;
+  const geminiScores = audio ? await scoreAudioFluency(audio.toString("base64"), mime, r.cefr_level, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS, questionOf(r.content)) : null;
   if (!geminiScores && !opts.final) throw new Error("speaking grading: Gemini didn't answer, will retry");
 
-  const responseText: string | null = geminiScores?.transcript || r.response_text || null;
+  const transcript: string | null = geminiScores?.transcript || r.response_text || null;
   const noSpeech = heardNoSpeech(geminiScores, r.response_text);
   const noise = audio ? await measureAnswerNoise(file) : null;
+  // r.response_text is still the browser's transcript here (saved with the answer).
   const grade = noSpeech
     ? NO_SPEECH
-    : await gradeAttempt(r.item_type_id, r.answer_set, r.content, r.cefr_level, r.min_words, responseText ?? undefined, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
+    : await gradeWithSecondOpinion(r, transcript ?? undefined, r.response_text ?? undefined, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
+  const responseText: string | null = (grade as GradeResult & { usedText?: string }).usedText ?? transcript;
   if (grade.status === "failed" && !opts.final) throw new Error("speaking grading: content grading didn't answer, will retry");
   const durationMs = r.manner_scores?.durationMs ?? null;
   const freeSignals = responseText ? computeFluencySignals(responseText, durationMs) : null;

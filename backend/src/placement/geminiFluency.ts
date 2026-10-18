@@ -62,6 +62,9 @@ export async function scoreAudioFluency(
   audioMimeType: string,
   cefrLevel: string | null,
   timeoutMs = SPEAKING_TIMEOUT_MS,
+  // The question being answered (never the answer): helps tell apart short
+  // words that sound alike ("cat" was heard as "ticket" with no context).
+  question?: string,
 ): Promise<GeminiFluencyResult | null> {
   const ai = getClient();
   if (!ai) return null;
@@ -71,7 +74,11 @@ export async function scoreAudioFluency(
   // and hallucinate on silence (4/6 trials); verifying real speech is present first fixed it (0/6).
   const prompt = `Listen carefully to the attached audio. First, determine: does this recording contain any actual audible human speech at all? If the recording is silent, contains only noise/static, or has no discernible spoken words, you must respond with pronunciation 0, fluency 0, and clearly state no speech was detected — do not guess or assume speech occurred. Only if you can actually hear real spoken words, judge what you genuinely hear (a ${level}-level English learner's recording) — how it sounds, not the words' content.
 
-Score intelligibility (the "pronunciation" field) and fluency from 0 to 1. Judge them as a listener used to international English would, not against any one native accent. An Indian, African, British, American or any other accent is never an error and must not lower either score. Lower intelligibility only when sounds, word stress or rhythm make words hard to understand. 1 = every word is easy to understand; 0 = the speech can't be understood. Never use any other scale. Transcribe exactly what was said, in standard English spelling, without correcting the speaker's grammar.`;
+Score intelligibility (the "pronunciation" field) and fluency from 0 to 1. Judge them as a listener used to international English would, not against any one native accent. An Indian, African, British, American or any other accent is never an error and must not lower either score. Lower intelligibility only when sounds, word stress or rhythm make words hard to understand. 1 = every word is easy to understand; 0 = the speech can't be understood. Never use any other scale. Transcribe exactly what was said, in standard English spelling, without correcting the speaker's grammar.${
+    question
+      ? ` The speaker is answering this question: "${question}". Answers are often one or two words. Use the question only to tell apart words that sound alike; never write words you can't hear.`
+      : ""
+  }`;
 
   try {
     // Same reasoning as aiGrading.ts's timeout: an unguarded audio-grading
