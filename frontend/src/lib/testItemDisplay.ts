@@ -87,7 +87,10 @@ export function getSpokenSegments(item: TestItem): string[] {
 
 export function getVisibleText(item: TestItem): string {
   const c = item.content as Record<string, unknown>;
-  return (c.text ?? c.question ?? c.sentence ?? c.passage ?? c.prompt ?? c.situation ?? "") as string;
+  const text = (c.text ?? c.question ?? c.sentence ?? c.passage ?? c.prompt ?? c.situation ?? "") as string;
+  // Sentence Completion: the word to put in the right form, when there is one.
+  const hint = typeof c.hint_word === "string" ? c.hint_word.trim() : "";
+  return hint ? `${text}  (${hint})` : text;
 }
 
 // Types showing a passage plus a separate question, not one field — read silently, then answer.

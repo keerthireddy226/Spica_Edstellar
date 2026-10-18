@@ -1,3 +1,4 @@
+import { REPORT_VERSION } from "../reports/feedbackReport.js";
 import { z } from "zod";
 import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { Router } from "express";
@@ -194,7 +195,7 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
     }
     const wanted = (await learnerQuota(req.user!.id))?.reportLevel ?? "full";
     // Reports made before skipped questions and answer explanations (version 2) are rebuilt.
-    const outdated = r?.status === "ready" && (r.report?.version ?? 1) < 2;
+    const outdated = r?.status === "ready" && (r.report?.version ?? 1) < REPORT_VERSION;
     const stale = !r || r.status === "failed" || outdated || (r.status === "ready" && r.report_level === "summary" && wanted === "full");
     if (stale) {
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });

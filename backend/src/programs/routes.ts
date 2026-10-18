@@ -1,3 +1,4 @@
+import { REPORT_VERSION } from "../reports/feedbackReport.js";
 import { Router, type Response } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -129,7 +130,7 @@ programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (re
     if (!s) return res.status(404).json({ error: "session_not_found" });
     const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
     // Missing, failed, or made before skipped questions and answer explanations (version 2).
-    if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < 2)) {
+    if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < REPORT_VERSION)) {
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
       return res.json({ status: "pending", report: null, integrity: { status: s.integrity_status, risk: s.risk_level } });
     }

@@ -35,6 +35,8 @@ import {
   Target,
   Trophy,
   GraduationCap,
+  VolumeX,
+  CircleDot,
 } from "lucide-react";
 import { LearnerHero, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { ROUTES } from "@/constants/routes";
@@ -43,6 +45,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { SKILL_TINT_CLASSES, SKILL_RING_COLOR } from "@/lib/skillTints";
 import {
   getAvailability,
+  getTypeProgress,
   getUnits,
   getSets,
   startPracticeSession,
@@ -51,6 +54,8 @@ import {
   submitPracticeAttempt,
   completePracticeSession,
   type PracticeSummary,
+  type PracticeContext,
+  type TypeProgress,
   type SkillAvailability,
   type PracticeUnit,
   type PracticeSet,
@@ -73,6 +78,10 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
+import type { ReportQuestion } from "@/api/practiceTests";
+import { QuestionCard, QuestionReview } from "@/components/report/FeedbackReportView";
+import { ModuleGuide } from "@/components/practice/ModuleGuide";
+import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -301,6 +310,13 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
   const { t } = useTranslation();
   const Icon = SKILL_ICONS[skill];
   const types = SKILL_TYPES[skill];
+  // Sets done and started per sub-module, so the learner sees what they've tried.
+  const [progress, setProgress] = useState<Record<string, TypeProgress>>({});
+  useEffect(() => {
+    getTypeProgress(skill)
+      .then((r) => setProgress(Object.fromEntries(r.types.map((x) => [x.itemTypeId, x]))))
+      .catch(() => {});
+  }, [skill]);
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -339,13 +355,37 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
                 <span className="font-display font-bold text-base text-ink leading-snug">{meta.name}</span>
                 <span className="text-xs text-muted leading-relaxed">{t(`modules.typeDesc.${typeId}`)}</span>
               </div>
+              <TypeProgressLine p={progress[typeId]} />
               <span className="mt-auto flex items-center gap-1 text-xs font-semibold text-navy-deep">
-                {tr("Practise")}{" "}<ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
+                {(progress[typeId]?.started ?? 0) > 0 ? tr("Continue") : tr("Practise")}{" "}
+                <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
               </span>
             </button>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// A sub-module's progress: all done, some done or started, or not tried yet.
+function TypeProgressLine({ p }: { p: TypeProgress | undefined }) {
+  if (!p || p.setCount === 0) return null;
+  const pct = Math.round((p.done / p.setCount) * 100);
+  const all = p.done === p.setCount;
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="h-1.5 rounded-full bg-rule overflow-hidden">
+        <div className={`h-full rounded-full ${all ? "bg-success" : "bg-navy"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className={`flex items-center gap-1 text-[11px] font-semibold ${all ? "text-success" : p.started > 0 ? "text-navy-deep" : "text-muted"}`}>
+        {all ? <CheckCircle2 size={12} /> : p.started > 0 ? <CircleDot size={12} /> : null}
+        {all
+          ? tr("All {{n}} sets done", { n: p.setCount })
+          : p.started > 0
+            ? tr("{{done}} of {{n}} sets done", { done: p.done, n: p.setCount })
+            : tr("Not started · {{n}} sets", { n: p.setCount })}
+      </span>
     </div>
   );
 }
@@ -456,7 +496,7 @@ function SetPicker({
             >
               <span
                 className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 font-display font-bold text-lg transition-transform group-hover:scale-110 ${
-                  set.completed ? "bg-success/15 text-success" : "bg-accent/15 text-accent"
+                  set.completed ? "bg-success/15 text-success" : set.started ? "bg-navy/15 text-navy-deep" : "bg-accent/15 text-accent"
                 }`}
               >
                 {set.completed ? <CheckCircle2 size={22} /> : i + 1}
@@ -464,6 +504,8 @@ function SetPicker({
               <span className="flex-1 text-base font-semibold text-ink">{set.name}</span>
               {set.completed ? (
                 <span className="text-xs font-semibold text-success shrink-0">{t("modules.setCompleted")}</span>
+              ) : set.started ? (
+                <span className="text-xs font-semibold text-navy-deep shrink-0">{tr("Started")}</span>
               ) : (
                 <ChevronRight size={20} className="text-muted shrink-0 transition-transform group-hover:translate-x-1" />
               )}
@@ -645,9 +687,10 @@ function ModulesPage() {
   // first — Placement already had this via getCurrentSession, practice didn't.
   const [resumeChecked, setResumeChecked] = useState(false);
   useEffect(() => {
-    function applyResumedSession(res: { sessionId: string; items: TestItem[] }) {
+    function applyResumedSession(res: { sessionId: string; items: TestItem[]; context?: PracticeContext }) {
       setSessionId(res.sessionId);
       setItems(res.items);
+      setContext(res.context ?? null);
       const firstUnattempted = res.items.findIndex((item) => !item.attempted);
       setIndex(firstUnattempted === -1 ? 0 : firstUnattempted);
       setAnswers(
@@ -710,6 +753,12 @@ function ModulesPage() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
+  // The set being taken: skill, sub-module, level and set name.
+  const [context, setContext] = useState<PracticeContext | null>(null);
+  // The answer just submitted, checked: what was heard or typed, right or wrong.
+  const [feedback, setFeedback] = useState<ReportQuestion | null>(null);
+  // Countdown beeps off for every question (remembered).
+  const [muted, setMuted] = useState(loadMuted);
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice", sessionId, () => setRequireReverify(true));
@@ -737,6 +786,7 @@ function ModulesPage() {
       const res = await startPracticeSession(skill, count, itemTypeId, setId);
       setSessionId(res.sessionId);
       setItems(res.items);
+      setContext(res.context ?? null);
       // Tags the URL with this exact session so a refresh resumes it by id
       // instead of falling back to skill/type guesswork — clearing the
       // browse-picker params at the same time, since we're done browsing.
@@ -847,22 +897,40 @@ function ModulesPage() {
     setHasPlayed(!!cached);
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
+    setFeedback(null);
   }, [index]);
 
-  // Live countdown, display-only (mirrors PlacementTest.tsx) — doesn't gate
-  // or auto-submit anything.
+  // Each question's countdown: its whole time (listening, reading, answering).
+  // It stops once the answer is checked; at zero a recording in progress is
+  // stopped and kept, and the learner submits or moves on.
+  const questionSeconds = current?.questionSeconds ?? current?.timerSeconds ?? null;
   useEffect(() => {
-    if (!current?.timerSeconds) {
-      setRemainingSeconds(null);
+    if (!questionSeconds || feedback || showTypeIntro) {
+      if (!questionSeconds) setRemainingSeconds(null);
       return;
     }
-    setRemainingSeconds(current.timerSeconds);
+    setRemainingSeconds((prev) => prev ?? questionSeconds);
     const interval = setInterval(() => {
       setRemainingSeconds((prev) => (prev === null ? null : Math.max(0, prev - 1)));
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, current?.timerSeconds]);
+  }, [index, questionSeconds, !!feedback, showTypeIntro]);
+  // A new question starts its own full countdown.
+  useEffect(() => {
+    setRemainingSeconds(questionSeconds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+  // Beeps in the last 5 seconds (unless muted); time up stops a recording.
+  useEffect(() => {
+    if (remainingSeconds === null || feedback) return;
+    if (remainingSeconds > 0 && remainingSeconds <= 5 && !muted) beep();
+    if (remainingSeconds === 0) {
+      if (!muted) beep(440, 400);
+      if (recording) void handleToggleRecord();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remainingSeconds]);
 
   function handleStartReading() {
     if (!current) return;
@@ -932,7 +1000,7 @@ function ModulesPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await submitPracticeAttempt(sessionId, {
+      const res = await submitPracticeAttempt(sessionId, {
         itemId: current.id,
         responseText: answerText.trim() || undefined,
         audioBase64: pendingAudio?.base64,
@@ -941,7 +1009,9 @@ function ModulesPage() {
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
-      await finishOrAdvance();
+      // Show the checked answer first; the learner moves on from there.
+      if (res.review) setFeedback(res.review);
+      else await finishOrAdvance();
     } catch {
       setError(t("placementTest.submitError"));
     } finally {
@@ -968,6 +1038,18 @@ function ModulesPage() {
     }
   }
 
+  async function continueAfterFeedback() {
+    setSubmitting(true);
+    try {
+      setFeedback(null);
+      await finishOrAdvance();
+    } catch {
+      setError(t("placementTest.submitError"));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   function handleBack() {
     if (index === 0) return;
     cacheCurrentAnswer();
@@ -978,6 +1060,7 @@ function ModulesPage() {
     setSessionId(null);
     setItems([]);
     setSummary(null);
+    setFeedback(null);
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
@@ -1091,30 +1174,89 @@ function ModulesPage() {
   }
 
   if (summary) {
+    const qs = summary.questions ?? [];
+    const right = qs.filter((q) => q.outcome === "right").length;
+    const wrong = qs.filter((q) => q.outcome === "wrong").length;
+    const skipped = qs.filter((q) => q.outcome === "skipped").length;
+    const pending = qs.filter((q) => q.outcome === "pending").length;
+    const total = qs.length || summary.gradedCount + summary.pendingCount;
+    const pct = total ? Math.round((right / total) * 100) : 0;
+    // The message follows the score: no "Nice work" for 2 of 5.
+    const headline =
+      total === 0 || pending === total
+        ? tr("Set finished")
+        : pct >= 80
+          ? tr("Great work")
+          : pct >= 50
+            ? tr("Good effort")
+            : tr("Keep practising");
+    const advice =
+      pending > 0
+        ? tr("{{n}} answers are still being scored; they'll show here when you open this set again.", { n: pending })
+        : pct >= 80
+          ? tr("You're ready for the next set.")
+          : pct >= 50
+            ? tr("Look at the ones you missed below, then try the next set.")
+            : tr("Go through the right answers below. Try this set again or move to the next one.");
+    const c = summary.context ?? context;
+    const backToSets = () => {
+      resetToPicker();
+      if (c?.skill && c.itemTypeId) {
+        setPickerSkill(c.skill);
+        setPickerType({ skill: c.skill, itemTypeId: c.itemTypeId });
+        updateBrowseParams({ pSkill: c.skill, pType: c.itemTypeId });
+      }
+    };
     return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
-        <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
-          <CheckCircle2 size={32} />
+      <div className="max-w-3xl mx-auto w-full flex flex-col gap-5">
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+          <p className="text-xs uppercase tracking-wide text-muted">
+            {[c?.skill ? t(`skills.${c.skill}`) : null, c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
+          </p>
+          <div className="flex items-center gap-4">
+            <ProgressRing percent={pct} size={72} strokeWidth={6} colorClass={pct >= 80 ? "text-success" : pct >= 50 ? "text-navy" : "text-warning"}>
+              <span className="font-display font-bold text-lg text-ink">{pct}%</span>
+            </ProgressRing>
+            <div>
+              <h1 className="font-display font-bold text-2xl text-ink">{headline}</h1>
+              <p className="text-sm text-ink">{tr("{{right}} of {{total}} right.", { right, total })}</p>
+              <p className="text-sm text-muted">{advice}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="bg-success/10 rounded-card py-2">
+              <div className="font-display font-bold text-xl text-success">{right}</div>
+              <div className="text-xs text-muted">{tr("Right")}</div>
+            </div>
+            <div className="bg-error/10 rounded-card py-2">
+              <div className="font-display font-bold text-xl text-error">{wrong}</div>
+              <div className="text-xs text-muted">{tr("Wrong")}</div>
+            </div>
+            <div className="bg-warning/10 rounded-card py-2">
+              <div className="font-display font-bold text-xl text-warning">{skipped}</div>
+              <div className="text-xs text-muted">{tr("Skipped")}</div>
+            </div>
+          </div>
+          {summary.failedCount > 0 && <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>}
+          <div className="flex flex-wrap items-center gap-3">
+            {summary.next && c?.skill && (
+              <Button
+                onClick={() => {
+                  const next = summary.next!;
+                  resetToPicker();
+                  setPendingStart({ skill: c.skill!, itemTypeId: c.itemTypeId ?? undefined, setId: next.setId });
+                }}
+                className="flex-1 min-w-48"
+              >
+                {tr("Next set: {{name}}", { name: summary.next.unitName === c.unitName ? summary.next.setName : `${summary.next.unitName} · ${summary.next.setName}` })}
+              </Button>
+            )}
+            <Button variant="secondary" onClick={backToSets} className="flex-1 min-w-40">
+              {tr("Back to sets")}
+            </Button>
+          </div>
         </div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("modules.sessionComplete")}</h1>
-        <p className="text-sm text-muted">
-          {t("placementTest.resultsSummary", {
-            correct: summary.correctCount,
-            graded: summary.gradedCount,
-            pending: summary.pendingCount,
-          })}
-        </p>
-        {summary.failedCount > 0 && (
-          <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
-        )}
-        <div className="flex items-center gap-3 w-full">
-          <Button variant="secondary" onClick={resetToPicker} className="flex-1">
-            {t("modules.practiceAgain")}
-          </Button>
-          <Button onClick={() => navigate(ROUTES.DASHBOARD)} className="flex-1">
-            {t("modules.backToDashboard")}
-          </Button>
-        </div>
+        {qs.length > 0 && <QuestionReview questions={qs} initialFilter="all" />}
       </div>
     );
   }
@@ -1122,21 +1264,15 @@ function ModulesPage() {
   if (!current) return null;
 
   if (showTypeIntro) {
-    const typeMeta = ITEM_TYPE_META[current.itemTypeId];
-    const TypeIntroIcon = ITEM_TYPE_ICON[current.itemTypeId] ?? Headphones;
     return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
-        <span className="h-14 w-14 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center">
-          <TypeIntroIcon size={26} strokeWidth={2} />
-        </span>
-        <div>
-          <h1 className="font-display font-bold text-xl text-ink">{typeMeta?.name}</h1>
-          <p className="text-sm text-muted mt-2 leading-relaxed">{current.instructionText}</p>
-        </div>
-        <Button onClick={() => setShowTypeIntro(false)} className="w-full">
-          {t("modules.startPractice")}
-        </Button>
-      </div>
+      <ModuleGuide
+        items={items}
+        context={context}
+        typeName={ITEM_TYPE_META[current.itemTypeId]?.name ?? context?.typeName ?? ""}
+        instruction={current.instructionText}
+        onStart={() => setShowTypeIntro(false)}
+        onBack={resetToPicker}
+      />
     );
   }
 
@@ -1177,19 +1313,36 @@ function ModulesPage() {
                 </ProgressRing>
                 <div className="flex flex-col">
                   <span className="font-display font-bold text-sm text-ink leading-tight">{meta?.name}</span>
-                  <span className="text-[11px] font-mono text-muted">
-                    {t("placementTest.progress", { current: index + 1, total: items.length })}
+                  <span className="text-[11px] text-muted">
+                    {[context?.unitName, context?.setName].filter(Boolean).join(" · ")}
+                    {context?.unitName || context?.setName ? " · " : ""}
+                    <span className="font-mono">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
                   </span>
                 </div>
               </div>
               {remainingSeconds !== null ? (
-                <span
-                  className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
-                    remainingSeconds <= 5 ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
-                  }`}
-                >
-                  <Clock size={16} />
-                  {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
+                      remainingSeconds <= 5 ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
+                    }`}
+                  >
+                    <Clock size={16} />
+                    {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setMuted((m) => {
+                        saveMuted(!m);
+                        return !m;
+                      });
+                    }}
+                    className="h-7 w-7 rounded-full border border-rule flex items-center justify-center text-muted hover:text-ink cursor-pointer"
+                    aria-label={muted ? tr("Turn the countdown beeps on") : tr("Mute the countdown beeps")}
+                    title={muted ? tr("Turn the countdown beeps on") : tr("Mute the countdown beeps")}
+                  >
+                    {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                  </button>
                 </span>
               ) : null}
             </div>
@@ -1324,9 +1477,18 @@ function ModulesPage() {
         </>
       )}
 
+          {remainingSeconds === 0 && !feedback && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
+          {feedback && <QuestionCard q={feedback} />}
           {error && <p className="text-sm text-error text-center">{error}</p>}
         </div>
 
+        {feedback ? (
+          <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
+            <Button onClick={continueAfterFeedback} disabled={submitting} className="flex-1">
+              {index + 1 < items.length ? tr("Next question") : tr("See your results")}
+            </Button>
+          </div>
+        ) : (
         <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
           <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
             <ArrowLeft size={20} />
@@ -1339,9 +1501,10 @@ function ModulesPage() {
             {t("placementTest.skip")}
           </button>
           <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="flex-1">
-            {submitting ? t("placementTest.submitting") : index + 1 < items.length ? t("placementTest.next") : t("placementTest.finish")}
+            {submitting ? t("placementTest.submitting") : tr("Check my answer")}
           </Button>
         </div>
+        )}
       </div>
     </div>
   );

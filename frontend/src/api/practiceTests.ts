@@ -274,10 +274,12 @@ export interface ReportQuestion {
   outcome?: "right" | "wrong" | "skipped" | "pending";
   // The expected answer of a question that isn't multiple choice.
   expected?: { text?: string; points?: string[] };
+  // What the learner typed or said, and their recording.
+  given?: { text: string | null; audioUri: string | null; noSpeech: boolean };
 }
 
 export interface FeedbackReport {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   level: "summary" | "full";
   counts?: { total: number; right: number; wrong: number; skipped: number; pending: number };
   explanationsMissing?: boolean;

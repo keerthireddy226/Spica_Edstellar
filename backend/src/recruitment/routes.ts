@@ -1,6 +1,7 @@
 // Recruitment API: the candidate's invitation link, the recruiter console
 // (job openings, invitations, results, decisions, team, credits), and the
 // Edstellar staff controls for an organization's products and credits.
+import { REPORT_VERSION } from "../reports/feedbackReport.js";
 import { Router, type NextFunction, type Response } from "express";
 import { z } from "zod";
 import { enqueue } from "../queue/queue.js";
@@ -406,7 +407,7 @@ recruitmentRouter.get("/assessments/:id/report", requireAuth, async (req: Authed
     if (!a?.session_id || a.status !== "completed") return res.status(404).json({ error: "report_not_found" });
     const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [a.session_id])).rows[0];
     // Missing, failed, or made before skipped questions and answer explanations (version 2).
-    if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < 2)) {
+    if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < REPORT_VERSION)) {
       await enqueue("report.build", { sessionId: a.session_id }, { dedupeKey: `report.build:${a.session_id}:${Date.now() >> 16}`, maxAttempts: 5 });
       return res.json({ status: "pending", report: null });
     }

@@ -76,7 +76,13 @@ export interface ReportQuestion {
   // The expected answer of a question that isn't multiple choice (a sentence
   // to say or type, an accepted answer, or the points a good answer covers).
   expected?: { text?: string; points?: string[] };
+  // What the learner typed or said (the transcript), right or wrong, and their
+  // recording; noSpeech: a recording in which no words were heard.
+  given?: { text: string | null; audioUri: string | null; noSpeech: boolean };
 }
+
+// Reports older than this are rebuilt when opened.
+export const REPORT_VERSION = 3;
 
 export interface NextStep {
   title: string;
@@ -86,7 +92,7 @@ export interface NextStep {
 }
 
 export interface FeedbackReport {
-  version: 2;
+  version: typeof REPORT_VERSION;
   level: "summary" | "full";
   // How many questions were right, wrong, skipped or still being scored.
   counts: { total: number; right: number; wrong: number; skipped: number; pending: number };
@@ -107,7 +113,9 @@ const short = (s: string, n = 220) => (s.length > n ? `${s.slice(0, n - 1)}…` 
 
 function promptOf(r: AttemptRow): string {
   const c = r.content;
-  const main = str(c.question) || str(c.prompt) || str(c.sentence) || str(c.situation) || str(c.text) || str(c.audio) || str(c.passage) || str(c.story);
+  // Sentence Builds has only its word groups: without them every one looked the same.
+  const groups = Array.isArray(c.groups) ? (c.groups as unknown[]).map(String).join(" / ") : "";
+  const main = str(c.question) || str(c.prompt) || str(c.sentence) || str(c.situation) || str(c.text) || str(c.audio) || str(c.passage) || str(c.story) || groups;
   return short(main.replace(/\s+/g, " ").trim());
 }
 
@@ -307,6 +315,76 @@ async function skillLink(skill: string, testTypeId: string | null): Promise<{ te
   return r.rows[0] ? { testTypeId: r.rows[0].id } : null;
 }
 
+// A session's answers in the order the questions were shown.
+async function loadAttemptRows(sessionId: string, order: string[]): Promise<AttemptRow[]> {
+  const rows = (
+    await pool.query(
+      `SELECT a.id AS attempt_id, a.item_id, i.item_type_id, it.input_method, it.skills, it.name AS type_name, ep.part_label,
+         i.content, i.answer_set, i.explanation, i.cefr_level, a.response_text, a.response_uri,
+         coalesce(sc.status, 'pending') AS status, sc.content_score, sc.reason, sc.manner_scores
+       FROM attempts a JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+       LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN scores sc ON sc.attempt_id = a.id
+       WHERE a.session_id = $1`,
+      [sessionId],
+    )
+  ).rows as AttemptRow[];
+  rows.sort((x, y) => order.indexOf(x.item_id) - order.indexOf(y.item_id));
+  for (const r of rows) {
+    const answered = !!(r.response_text || r.response_uri);
+    r.answered_wrong = answered && r.status === "scored" && Number(r.content_score) < 1;
+  }
+  return rows;
+}
+
+// Everything about one answer that needs no AI: the outcome, the options or
+// the expected answer, what the learner gave, and the word-by-word comparison.
+function baseQuestion(r: AttemptRow): ReportQuestion {
+  const answered = !!(r.response_text || r.response_uri);
+  const q: ReportQuestion = {
+    itemId: r.item_id,
+    itemTypeId: r.item_type_id,
+    typeName: r.type_name,
+    part: r.part_label,
+    skills: r.skills,
+    level: r.cefr_level,
+    prompt: promptOf(r),
+    answered,
+    status: r.status,
+    score: r.content_score === null ? null : Number(r.content_score),
+    comment: r.reason,
+    outcome: outcomeOf(r),
+  };
+  q.choices = parseChoices(r);
+  if (!q.choices) q.expected = expectedAnswer(r);
+  if (answered && !q.choices) {
+    const text = r.response_text?.trim() || null;
+    q.given = { text, audioUri: r.response_uri, noSpeech: r.input_method === "mic" && !!r.response_uri && !text };
+  }
+  const target = answered ? knownTarget(r) : null;
+  if (target && r.response_text) {
+    const ops = wordDiff(target, r.response_text);
+    q.words = { target, ops, accuracy: Math.round(diffSummary(ops).accuracy * 100) / 100 };
+  }
+  if (answered && r.input_method === "mic" && !target) {
+    const m = (r.manner_scores ?? {}) as { wordsPerMinute?: number; fillerCount?: number; gemini?: { pronunciation?: number; comment?: string }; noise?: { noisy?: boolean } };
+    q.speech = {
+      transcript: r.response_text,
+      wordsPerMinute: m.wordsPerMinute ?? null,
+      fillers: m.fillerCount ?? null,
+      clarity: m.gemini?.pronunciation ?? null,
+      comment: m.gemini?.comment ?? null,
+      noisy: !!m.noise?.noisy,
+    };
+  }
+  return q;
+}
+
+// Question-by-question review without any AI call (the Practice Modules
+// results screen): saved explanations are shown, none are written.
+export async function reviewQuestions(sessionId: string, order: string[]): Promise<ReportQuestion[]> {
+  return (await loadAttemptRows(sessionId, order)).map(baseQuestion);
+}
+
 export async function buildReport(sessionId: string): Promise<void> {
   const s = (await pool.query(`SELECT id, user_id, delivery_mode, composition, result, program_id FROM sessions WHERE id = $1`, [sessionId])).rows[0];
   if (!s) return;
@@ -319,67 +397,18 @@ export async function buildReport(sessionId: string): Promise<void> {
     [sessionId, level, REPORT_MODEL],
   );
   try {
-    const order: string[] = (s.composition?.itemIds as string[]) ?? [];
-    const rows = (
-      await pool.query(
-        `SELECT a.id AS attempt_id, a.item_id, i.item_type_id, it.input_method, it.skills, it.name AS type_name, ep.part_label,
-           i.content, i.answer_set, i.explanation, i.cefr_level, a.response_text, a.response_uri,
-           coalesce(sc.status, 'pending') AS status, sc.content_score, sc.reason, sc.manner_scores
-         FROM attempts a JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
-         LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN scores sc ON sc.attempt_id = a.id
-         WHERE a.session_id = $1`,
-        [sessionId],
-      )
-    ).rows as AttemptRow[];
-    rows.sort((x, y) => order.indexOf(x.item_id) - order.indexOf(y.item_id));
-    for (const r of rows) {
-      const answered = !!(r.response_text || r.response_uri);
-      r.answered_wrong = answered && r.status === "scored" && Number(r.content_score) < 1;
-    }
+    const rows = await loadAttemptRows(sessionId, (s.composition?.itemIds as string[]) ?? []);
 
     const questions: ReportQuestion[] = [];
     if (level === "full") {
       await fillExplanations(rows, usage).catch((err) => console.error("report: explanations failed:", err));
       for (const r of rows) {
-        const answered = !!(r.response_text || r.response_uri);
-        const q: ReportQuestion = {
-          itemId: r.item_id,
-          itemTypeId: r.item_type_id,
-          typeName: r.type_name,
-          part: r.part_label,
-          skills: r.skills,
-          level: r.cefr_level,
-          prompt: promptOf(r),
-          answered,
-          status: r.status,
-          score: r.content_score === null ? null : Number(r.content_score),
-          comment: r.reason,
-          outcome: "pending",
-        };
-        q.choices = parseChoices(r);
-        q.outcome = outcomeOf(r);
-        if (!q.choices) q.expected = expectedAnswer(r);
-        const target = answered ? knownTarget(r) : null;
-        if (target && r.response_text) {
-          const ops = wordDiff(target, r.response_text);
-          q.words = { target, ops, accuracy: Math.round(diffSummary(ops).accuracy * 100) / 100 };
-        }
-        if (answered && WRITING_TYPES.has(r.item_type_id) && (r.response_text ?? "").trim().length > 0) {
+        const q = baseQuestion(r);
+        if (q.answered && WRITING_TYPES.has(r.item_type_id) && (r.response_text ?? "").trim().length > 0) {
           q.writing = await writingFeedback(r, usage).catch((err) => {
             console.error("report: writing feedback failed:", err);
             return undefined;
           });
-        }
-        if (answered && r.input_method === "mic" && !target) {
-          const m = (r.manner_scores ?? {}) as { wordsPerMinute?: number; fillerCount?: number; gemini?: { pronunciation?: number; comment?: string }; noise?: { noisy?: boolean } };
-          q.speech = {
-            transcript: r.response_text,
-            wordsPerMinute: m.wordsPerMinute ?? null,
-            fillers: m.fillerCount ?? null,
-            clarity: m.gemini?.pronunciation ?? null,
-            comment: m.gemini?.comment ?? null,
-            noisy: !!m.noise?.noisy,
-          };
         }
         questions.push(q);
       }
@@ -427,7 +456,7 @@ Address the learner as "you". Be honest and encouraging, specific, and simple (B
     );
 
     const report: FeedbackReport = {
-      version: 2,
+      version: REPORT_VERSION,
       level,
       explanationsMissing: questions.some(
         (q) => (q.outcome === "wrong" || q.outcome === "skipped") && (q.choices ?? []).some((c) => !c.explanation?.why),

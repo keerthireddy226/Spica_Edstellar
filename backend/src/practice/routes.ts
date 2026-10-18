@@ -1,3 +1,5 @@
+import { mockLimits } from "../practiceTests/modes.js";
+import { reviewQuestions } from "../reports/feedbackReport.js";
 import { z } from "zod";
 import { Router } from "express";
 import { pool } from "../db.js";
@@ -116,6 +118,37 @@ async function selectSetItems(setId: string) {
   return result.rows;
 }
 
+// Each sub-module (question type) of a skill: how many sets it has, how many
+// this learner finished and how many they started (feeds TypePicker).
+practiceRouter.get("/types", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const skill = req.query.skill;
+    if (typeof skill !== "string") return res.status(400).json({ error: "skill_required" });
+    const r = await pool.query(
+      `WITH s AS (
+         SELECT st.id, u.item_type_id FROM sets st JOIN units u ON u.id = st.unit_id
+         WHERE EXISTS (SELECT 1 FROM items i WHERE i.set_id = st.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $2))
+       )
+       SELECT s.item_type_id, count(*)::int AS set_count,
+         count(*) FILTER (WHERE EXISTS (
+           SELECT 1 FROM sessions se WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
+             AND se.composition->>'setId' = s.id::text
+             -- Same rule as a set's "completed": every question answered, none skipped.
+             AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL)
+         ))::int AS done,
+         count(*) FILTER (WHERE EXISTS (
+           SELECT 1 FROM sessions se JOIN attempts a ON a.session_id = se.id
+           WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.composition->>'setId' = s.id::text
+         ))::int AS started
+       FROM s GROUP BY s.item_type_id`,
+      [req.user!.id, skill],
+    );
+    res.json({ types: r.rows.map((x) => ({ itemTypeId: x.item_type_id, setCount: x.set_count, done: x.done, started: x.started })) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Units for one item type, with each unit's set count and completed count (feeds UnitPicker).
 practiceRouter.get("/units", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -176,14 +209,19 @@ practiceRouter.get("/units/:unitId/sets", requireAuth, async (req: AuthedRequest
              AND NOT EXISTS (
                SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL
              )
-         ) AS completed
+         ) AS completed,
+         -- Opened and at least one question answered or skipped.
+         EXISTS (
+           SELECT 1 FROM sessions se JOIN attempts a ON a.session_id = se.id
+           WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.composition->>'setId' = s.id::text
+         ) AS started
        FROM sets s
        WHERE s.unit_id = $1
          AND EXISTS (SELECT 1 FROM items i WHERE i.set_id = s.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $3))
        ORDER BY s.order_index`,
       [req.params.unitId, req.user!.id, skill],
     );
-    res.json({ sets: result.rows.map((r) => ({ id: r.id, name: r.name, completed: r.completed })) });
+    res.json({ sets: result.rows.map((r) => ({ id: r.id, name: r.name, completed: r.completed, started: r.started })) });
   } catch (err) {
     next(err);
   }
@@ -217,6 +255,13 @@ practiceRouter.get("/availability", requireAuth, async (req: AuthedRequest, res,
 });
 
 // Shared by the resume-below (filtered by skill/type/set) and /session/current (no filter).
+// Each question's countdown: the whole time for it (recordings played, reading,
+// preparation and answering), as in a mock exam.
+async function withQuestionTimes<T extends { id: string }>(items: T[]): Promise<(T & { questionSeconds: number | null })[]> {
+  const limits = await mockLimits(items.map((i) => i.id));
+  return items.map((i) => ({ ...i, questionSeconds: limits[i.id] ?? null }));
+}
+
 async function loadResumedSession(userId: string, sessionRow: { id: string; composition: Record<string, unknown> }) {
   const itemIds: string[] = (sessionRow.composition?.itemIds as string[]) ?? [];
   const itemsResult = await pool.query(
@@ -237,7 +282,7 @@ async function loadResumedSession(userId: string, sessionRow: { id: string; comp
       attempted: attemptByItem.has(row!.id),
       responseText: attemptByItem.get(row!.id) ?? null,
     }));
-  return withAudioUrls(userId, resumedItems);
+  return withQuestionTimes(await withAudioUrls(userId, resumedItems));
 }
 
 // Resumes any already-in-progress session instead of minting a new item set.
@@ -261,10 +306,12 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
       body.setId ? [req.user!.id, body.setId] : [req.user!.id, body.skill, body.itemTypeId ?? null],
     );
     if (existing.rows[0]) {
+      const c = existing.rows[0].composition ?? {};
       return res.json({
         sessionId: existing.rows[0].id,
         skill: body.skill,
         items: await loadResumedSession(req.user!.id, existing.rows[0]),
+        context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
       });
     }
 
@@ -292,7 +339,8 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
       skill: body.skill,
-      items: await withAudioUrls(req.user!.id, items.map(toItemPayload)),
+      items: await withQuestionTimes(await withAudioUrls(req.user!.id, items.map(toItemPayload))),
+      context: (await setContext(req.user!.id, body.setId ?? null, body.skill, body.itemTypeId ?? (items[0]?.item_type_id as string) ?? null)).context,
     });
   } catch (err) {
     next(err);
@@ -310,11 +358,13 @@ practiceRouter.get("/session/current", requireAuth, async (req: AuthedRequest, r
     );
     if (!existing.rows[0]) return res.json({ inProgress: false });
 
+    const c = existing.rows[0].composition ?? {};
     res.json({
       inProgress: true,
       sessionId: existing.rows[0].id,
-      skill: existing.rows[0].composition?.skill ?? null,
+      skill: c.skill ?? null,
       items: await loadResumedSession(req.user!.id, existing.rows[0]),
+      context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
     });
   } catch (err) {
     next(err);
@@ -353,11 +403,13 @@ practiceRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRequest
         responseText: attemptByItem.get(row!.id) ?? null,
       }));
 
+    const c = session.composition ?? {};
     res.json({
       sessionId: session.id,
-      skill: session.composition?.skill ?? null,
+      skill: c.skill ?? null,
       completed: !!session.completed_at,
-      items: await withAudioUrls(req.user!.id, sessionItems),
+      items: await withQuestionTimes(await withAudioUrls(req.user!.id, sessionItems)),
+      context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
     });
   } catch (err) {
     next(err);
@@ -381,11 +433,44 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
 
     const { attemptId, grade, wasCorrect } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
-    res.status(201).json({ attemptId, status: grade.status, correct });
+    // What was heard or typed, right or wrong, and the expected answer, shown
+    // straight after the answer (practice: learn from each question).
+    const [review] = await reviewQuestions(session.id, [body.itemId]).then((qs) => qs.filter((q) => q.itemId === body.itemId));
+    res.status(201).json({ attemptId, status: grade.status, correct, review: review ?? null });
   } catch (err) {
     next(err);
   }
 });
+
+// Where a finished set sits: its sub-module, level and name, and the set to
+// take next (the next one in the same sub-module and skill this learner hasn't
+// finished, else simply the next one).
+async function setContext(userId: string, setId: string | null, skill: string | null, itemTypeId: string | null) {
+  const typeName = itemTypeId ? ((await pool.query(`SELECT name FROM item_types WHERE id = $1`, [itemTypeId])).rows[0]?.name ?? null) : null;
+  if (!setId || !skill) return { context: { skill, itemTypeId, typeName, unitName: null, setName: null }, next: null };
+  const all = (
+    await pool.query(
+      `SELECT st.id, st.name, u.id AS unit_id, u.name AS unit_name, u.item_type_id, it.name AS type_name,
+         EXISTS (
+           SELECT 1 FROM sessions se WHERE se.user_id = $3 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
+             AND se.composition->>'setId' = st.id::text
+         ) AS done
+       FROM sets st JOIN units u ON u.id = st.unit_id JOIN item_types it ON it.id = u.item_type_id
+       WHERE u.item_type_id = (SELECT u2.item_type_id FROM sets s2 JOIN units u2 ON u2.id = s2.unit_id WHERE s2.id = $1)
+         AND EXISTS (SELECT 1 FROM items i WHERE i.set_id = st.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $2))
+       ORDER BY u.order_index, st.order_index`,
+      [setId, skill, userId],
+    )
+  ).rows;
+  const at = all.findIndex((r) => r.id === setId);
+  const cur = all[at];
+  const after = at >= 0 ? all.slice(at + 1) : [];
+  const nxt = after.find((r) => !r.done) ?? after[0] ?? null;
+  return {
+    context: { skill, itemTypeId: cur?.item_type_id ?? itemTypeId, typeName: cur?.type_name ?? typeName, unitName: cur?.unit_name ?? null, setName: cur?.name ?? null },
+    next: nxt ? { setId: nxt.id, setName: nxt.name, unitId: nxt.unit_id, unitName: nxt.unit_name } : null,
+  };
+}
 
 // Unlike placement, completing a practice session never writes a placement
 // or roadmap row — it's just a tally of how this set went.
@@ -394,10 +479,11 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
     const sessionResult = await pool.query(
       `UPDATE sessions SET completed_at = now()
        WHERE id = $1 AND user_id = $2 AND session_type = 'practice' AND completed_at IS NULL
-       RETURNING id`,
+       RETURNING id, composition`,
       [req.params.sessionId, req.user!.id],
     );
     if (!sessionResult.rows[0]) return res.status(404).json({ error: "session_not_found_or_already_completed" });
+    const composition = sessionResult.rows[0].composition ?? {};
 
     const summaryResult = await pool.query(
       `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, i.cefr_level
@@ -419,7 +505,14 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
     const failedCount = summaryResult.rows.filter((r) => r.status === "failed").length;
 
     await checkAndAwardBadges(req.user!.id);
-    res.json({ gradedCount: graded.length, correctCount, pendingCount, failedCount });
+    res.json({
+      gradedCount: graded.length,
+      correctCount,
+      pendingCount,
+      failedCount,
+      questions: await reviewQuestions(req.params.sessionId as string, composition.itemIds ?? []),
+      ...(await setContext(req.user!.id, composition.setId ?? null, composition.skill ?? null, composition.itemTypeId ?? null)),
+    });
   } catch (err) {
     next(err);
   }

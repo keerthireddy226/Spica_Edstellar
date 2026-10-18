@@ -11,6 +11,8 @@ export interface TestItem {
   instructionText: string;
   questionInstruction: string;
   timerSeconds: number | null;
+  // Practice Modules: the whole time for the question (listening, reading, answering).
+  questionSeconds?: number | null;
   twoPhaseReadSeconds?: number | null;
   twoPhaseWriteSeconds?: number | null;
   // Preparation time before a spoken answer can start (LanguageCert-style speaking).

@@ -209,7 +209,26 @@ function Speech({ q }: { q: ReportQuestion }) {
   );
 }
 
-function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
+// The learner's own answer, right or wrong: the text (unless another block
+// already shows it) and their recording.
+function Given({ q }: { q: ReportQuestion }) {
+  const g = q.given;
+  if (!g) return null;
+  const showText = !q.words && !q.writing && !q.speech && g.text;
+  return (
+    <div className="flex flex-col gap-1.5">
+      {showText && (
+        <p className="text-sm text-ink">
+          <span className="font-semibold">{q.given?.audioUri ? tr("What we heard:") : tr("Your answer:")}</span> {g.text}
+        </p>
+      )}
+      {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Listen to it below; if it's silent or noisy, check your microphone before the next question.")}</p>}
+      {g.audioUri && <audio controls preload="none" src={g.audioUri} className="h-9 w-full max-w-sm" />}
+    </div>
+  );
+}
+
+export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
   const { t } = useTranslation();
   const o = outcome(q);
   return (
@@ -218,7 +237,7 @@ function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
         <StatusIcon q={q} />
         <div className="flex-1 min-w-0">
           <div className="text-xs text-muted">
-            {n}. {q.typeName} · {q.skills.map((s) => t(`skills.${s}`)).join(", ")}
+            {n ? `${n}. ` : ""}{q.typeName} · {q.skills.map((s) => t(`skills.${s}`)).join(", ")}
             {q.level ? ` · ${q.level}` : ""}
           </div>
           <p className="text-sm text-ink mt-1">{q.prompt}</p>
@@ -230,6 +249,7 @@ function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
       {q.words && <Words q={q} />}
       {q.writing && <Writing q={q} />}
       {q.speech && <Speech q={q} />}
+      <Given q={q} />
       {!q.choices && !q.words && o !== "right" && <Expected q={q} />}
       {q.comment && !q.writing && !q.choices && (
         <p className="text-sm text-ink">
@@ -240,9 +260,41 @@ function QuestionCard({ q, n }: { q: ReportQuestion; n: number }) {
   );
 }
 
+// Every question with a filter: right, wrong or skipped, the learner's answer
+// and the right one. Shared by the feedback report and Practice Modules results.
+export function QuestionReview({ questions: qs, initialFilter = "review", note }: { questions: ReportQuestion[]; initialFilter?: "review" | "wrong" | "skipped" | "all"; note?: string }) {
+  const [filter, setFilter] = useState(initialFilter);
+  const counts = {
+    total: qs.length,
+    wrong: qs.filter((q) => outcome(q) === "wrong").length,
+    skipped: qs.filter((q) => outcome(q) === "skipped").length,
+  };
+  const shown = qs.filter((q) => {
+    const o = outcome(q);
+    return filter === "all" || (filter === "review" ? o === "wrong" || o === "skipped" : o === filter);
+  });
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <h2 className="font-display font-bold text-lg text-ink flex-1">{tr("Question by question")}</h2>
+        <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
+          <option value="review">{tr("Wrong and skipped ({{n}})", { n: counts.wrong + counts.skipped })}</option>
+          <option value="wrong">{tr("Wrong ({{n}})", { n: counts.wrong })}</option>
+          <option value="skipped">{tr("Skipped ({{n}})", { n: counts.skipped })}</option>
+          <option value="all">{tr("All questions ({{n}})", { n: counts.total })}</option>
+        </select>
+      </div>
+      {note && <p className="text-sm text-muted">{note}</p>}
+      {shown.length === 0 && <p className="text-sm text-success">{filter === "all" ? tr("No questions.") : tr("Nothing here.")}</p>}
+      {shown.map((q) => (
+        <QuestionCard key={q.itemId} q={q} n={qs.indexOf(q) + 1} />
+      ))}
+    </div>
+  );
+}
+
 function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: boolean }) {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState<"review" | "wrong" | "skipped" | "all">("review");
   const qs = report.questions ?? [];
   const counts = report.counts ?? {
     total: qs.length,
@@ -251,10 +303,6 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
     skipped: qs.filter((q) => outcome(q) === "skipped").length,
     pending: qs.filter((q) => outcome(q) === "pending").length,
   };
-  const shown = qs.filter((q) => {
-    const o = outcome(q);
-    return filter === "all" || (filter === "review" ? o === "wrong" || o === "skipped" : o === filter);
-  });
   return (
     <div className="flex flex-col gap-5">
       <Card>
@@ -347,24 +395,14 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
           )}
         </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <h2 className="font-display font-bold text-lg text-ink flex-1">{tr("Question by question")}</h2>
-            <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
-              <option value="review">{tr("Wrong and skipped ({{n}})", { n: counts.wrong + counts.skipped })}</option>
-              <option value="wrong">{tr("Wrong ({{n}})", { n: counts.wrong })}</option>
-              <option value="skipped">{tr("Skipped ({{n}})", { n: counts.skipped })}</option>
-              <option value="all">{tr("All questions ({{n}})", { n: counts.total })}</option>
-            </select>
-          </div>
-          {report.explanationsMissing && (
-            <p className="text-sm text-muted">{tr("Explanations for some answers are still being written. The right answers are shown now; open this report again later for the reasons.")}</p>
-          )}
-          {shown.length === 0 && <p className="text-sm text-success">{filter === "all" ? tr("No questions.") : tr("Nothing here.")}</p>}
-          {shown.map((q) => (
-            <QuestionCard key={q.itemId} q={q} n={qs.indexOf(q) + 1} />
-          ))}
-        </div>
+        <QuestionReview
+          questions={qs}
+          note={
+            report.explanationsMissing
+              ? tr("Explanations for some answers are still being written. The right answers are shown now; open this report again later for the reasons.")
+              : undefined
+          }
+        />
       )}
     </div>
   );
