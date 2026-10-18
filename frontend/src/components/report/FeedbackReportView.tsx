@@ -255,7 +255,7 @@ export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
       {q.writing && <Writing q={q} />}
       {q.speech && <Speech q={q} />}
       <Given q={q} />
-      {!q.choices && (!q.words || q.given?.audioUri) && o !== "right" && <Expected q={q} />}
+      {!q.choices && (!q.words || q.given?.audioUri) && <Expected q={q} />}
       {q.comment && !q.writing && !q.choices && (
         <p className="text-sm text-ink">
           <span className="font-semibold">{tr("Why:")}</span> {q.comment}
@@ -267,10 +267,19 @@ export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
 
 // Every question with a filter: right, wrong or skipped, the learner's answer
 // and the right one. Shared by the feedback report and Practice Modules results.
-export function QuestionReview({ questions: qs, initialFilter = "review", note }: { questions: ReportQuestion[]; initialFilter?: "review" | "wrong" | "skipped" | "all"; note?: string }) {
+export function QuestionReview({
+  questions: qs,
+  initialFilter = "review",
+  note,
+}: {
+  questions: ReportQuestion[];
+  initialFilter?: "review" | "right" | "wrong" | "skipped" | "all";
+  note?: string;
+}) {
   const [filter, setFilter] = useState(initialFilter);
   const counts = {
     total: qs.length,
+    right: qs.filter((q) => outcome(q) === "right").length,
     wrong: qs.filter((q) => outcome(q) === "wrong").length,
     skipped: qs.filter((q) => outcome(q) === "skipped").length,
   };
@@ -284,6 +293,7 @@ export function QuestionReview({ questions: qs, initialFilter = "review", note }
         <h2 className="font-display font-bold text-lg text-ink flex-1">{tr("Question by question")}</h2>
         <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
           <option value="review">{tr("Wrong and skipped ({{n}})", { n: counts.wrong + counts.skipped })}</option>
+          <option value="right">{tr("Right ({{n}})", { n: counts.right })}</option>
           <option value="wrong">{tr("Wrong ({{n}})", { n: counts.wrong })}</option>
           <option value="skipped">{tr("Skipped ({{n}})", { n: counts.skipped })}</option>
           <option value="all">{tr("All questions ({{n}})", { n: counts.total })}</option>
