@@ -909,9 +909,12 @@ function ModulesPage() {
   // At zero a recording in progress is stopped and kept, and the learner
   // submits or moves on.
   const questionSeconds = current?.questionSeconds ?? current?.timerSeconds ?? null;
+  // Only while a question is on screen: not behind the guide, the results or
+  // the pickers (the last question's countdown used to beep on the results).
+  const questionOnScreen = !!sessionId && !summary && !showTypeIntro;
   useEffect(() => {
-    if (!questionSeconds || showTypeIntro) {
-      if (!questionSeconds) setRemainingSeconds(null);
+    if (!questionSeconds || !questionOnScreen) {
+      if (!questionSeconds || summary || !sessionId) setRemainingSeconds(null);
       return;
     }
     setRemainingSeconds((prev) => prev ?? questionSeconds);
@@ -920,7 +923,7 @@ function ModulesPage() {
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, questionSeconds, showTypeIntro]);
+  }, [index, questionSeconds, questionOnScreen]);
   // A new question starts its own full countdown.
   useEffect(() => {
     setRemainingSeconds(questionSeconds);
@@ -928,7 +931,7 @@ function ModulesPage() {
   }, [index]);
   // Beeps in the last 5 seconds (unless muted); time up stops a recording.
   useEffect(() => {
-    if (remainingSeconds === null) return;
+    if (remainingSeconds === null || !questionOnScreen) return;
     if (remainingSeconds > 0 && remainingSeconds <= 5 && !muted) beep();
     if (remainingSeconds === 0) {
       if (!muted) beep(440, 400);
