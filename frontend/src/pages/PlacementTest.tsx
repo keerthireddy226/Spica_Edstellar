@@ -22,6 +22,8 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { SystemCheck } from "@/components/pretest/SystemCheck";
+import { deviceNeedsFor } from "@/lib/systemCheck";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { reportHeldCheck } from "@/lib/systemCheck";
 import { FaceCheck } from "@/components/FaceCheck";
@@ -79,6 +81,8 @@ export function PlacementTest() {
   // Device check and demo, before the face check on a fresh start. A
   // candidate already did them on the assessment page.
   const [preTestDone, setPreTestDone] = useState(isCandidate);
+  // A test resumed after a page reload shows the device check before going on.
+  const [resumeCheckDone, setResumeCheckDone] = useState(isCandidate);
   // Set by a mid-test spoof detection — re-shows the same gate, not a new screen.
   const [requireReverify, setRequireReverify] = useState(false);
 
@@ -257,6 +261,17 @@ export function PlacementTest() {
     return (
       <div className="app-surface min-h-screen flex items-center justify-center px-4">
         <p className="text-sm text-muted">{t("placementTest.loading")}</p>
+      </div>
+    );
+  }
+
+  if (alreadyInProgress && !resumeCheckDone) {
+    return (
+      <div className="app-surface min-h-screen px-4 py-10 flex flex-col gap-3 items-center">
+        <p className="text-sm text-muted text-center">{tr("Before you continue, a quick check of your internet, speakers and microphone.")}</p>
+        <div className="w-full max-w-2xl">
+          <SystemCheck needs={deviceNeedsFor("placement")} onPassed={() => setResumeCheckDone(true)} />
+        </div>
       </div>
     );
   }

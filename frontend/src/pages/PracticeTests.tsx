@@ -68,6 +68,7 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
@@ -369,6 +370,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   // tagged in the URL (set by applySessionData above) instead of landing
   // back on the product picker mid-test.
   const [resumeChecked, setResumeChecked] = useState(false);
+  // A test resumed after a page reload shows the device check before going on.
+  const [resumeNeedsCheck, setResumeNeedsCheck] = useState(false);
   useEffect(() => {
     // Restores the exam-picker list on a refresh even if there's no active
     // session to resume (e.g. refreshing before starting one) — harmless to
@@ -384,7 +387,11 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     }
     getExamSession(sessionIdParam)
       .then((res) => {
-        if (!res.completed) applySessionData(res);
+        if (!res.completed) {
+          applySessionData(res);
+          // Resuming after a reload: the device check comes first again.
+          setResumeNeedsCheck(true);
+        }
       })
       .catch(() => {})
       .finally(() => setResumeChecked(true));
@@ -726,6 +733,15 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
 
   if (requireReverify) {
     return <FaceCheck mode="verify" purpose="practice_test" onComplete={() => setRequireReverify(false)} />;
+  }
+
+  if (resumeNeedsCheck && sessionId) {
+    return (
+      <div className="max-w-2xl mx-auto flex flex-col gap-3">
+        <p className="text-sm text-muted text-center">{tr("Before you continue, a quick check of your internet, speakers and microphone.")}</p>
+        <SystemCheck needs={deviceNeedsFor(selectedProduct ?? "")} onPassed={() => setResumeNeedsCheck(false)} />
+      </div>
+    );
   }
 
   // A Start/Retake was clicked: the device check and demo come first, then

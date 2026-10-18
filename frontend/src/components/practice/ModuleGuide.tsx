@@ -9,34 +9,6 @@ import { testsLine, type PracticeContext } from "@/api/practiceSession";
 import { AUDIO_FIRST_TYPES } from "@/lib/testItemDisplay";
 import { tr } from "@/i18n/tr";
 
-// A device check passed within this time isn't asked for again.
-const CHECK_VALID_MS = 60 * 60 * 1000;
-const CHECK_KEY = "spica.moduleCheckAt";
-
-// Minutes since the last passed check that covered what this set needs
-// (a microphone and speakers check counts for an internet-only set, not the
-// other way round), if within CHECK_VALID_MS.
-function checkedMinutesAgo(needs: { mic: boolean; speaker: boolean }): number | null {
-  try {
-    const c = JSON.parse(sessionStorage.getItem(CHECK_KEY) ?? "null") as { at: number; mic: boolean; speaker: boolean } | null;
-    if (!c || (needs.mic && !c.mic) || (needs.speaker && !c.speaker)) return null;
-    const ago = Date.now() - c.at;
-    return ago < CHECK_VALID_MS ? Math.floor(ago / 60000) : null;
-  } catch {
-    return null;
-  }
-}
-
-function markChecked(needs: { mic: boolean; speaker: boolean }) {
-  try {
-    const before = JSON.parse(sessionStorage.getItem(CHECK_KEY) ?? "null") as { mic: boolean; speaker: boolean } | null;
-    // What an earlier check covered still counts.
-    sessionStorage.setItem(CHECK_KEY, JSON.stringify({ at: Date.now(), mic: needs.mic || !!before?.mic, speaker: needs.speaker || !!before?.speaker }));
-  } catch {
-    // Storage blocked: the check is simply asked again next time.
-  }
-}
-
 // How an answer of this kind is scored, in plain words.
 function scoringNote(items: TestItem[]): string[] {
   const methods = new Set(items.map((i) => i.inputMethod));
@@ -61,10 +33,9 @@ function scoringNote(items: TestItem[]): string[] {
   return notes;
 }
 
-// Before every Practice Modules set: a device check (internet always, speakers
-// when the set plays audio, microphone when answers are spoken), then how it
-// works and how it's scored. A check passed within the hour shows as a short
-// card the learner can redo or skip.
+// Every time a Practice Modules set starts or resumes: a device check
+// (internet always, speakers when the set plays audio, microphone when answers
+// are spoken), then how it works and how it's scored.
 export function ModuleGuide({
   items,
   context,
@@ -72,7 +43,10 @@ export function ModuleGuide({
   instruction,
   onStart,
   onBack,
+  resumeAt,
 }: {
+  // Resuming: the question the learner continues from (1-based).
+  resumeAt?: number;
   items: TestItem[];
   context: PracticeContext | null;
   typeName: string;
@@ -83,31 +57,8 @@ export function ModuleGuide({
   const { t } = useTranslation();
   const needsMic = items.some((i) => i.inputMethod === "mic");
   const needsSpeaker = items.some((i) => AUDIO_FIRST_TYPES.has(i.itemTypeId));
-  const [lastCheck] = useState(() => checkedMinutesAgo({ mic: needsMic, speaker: needsSpeaker }));
-  const [stage, setStage] = useState<"check" | "recent" | "guide">(lastCheck === null ? "check" : "recent");
+  const [stage, setStage] = useState<"check" | "guide">("check");
   const checks = [tr("internet"), needsSpeaker ? tr("speakers") : null, needsMic ? tr("microphone") : null].filter(Boolean).join(", ");
-
-  if (stage === "recent") {
-    return (
-      <div className="max-w-2xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-4">
-        <h1 className="font-display font-bold text-xl text-ink">{tr("Device check")}</h1>
-        <p className="flex items-start gap-2.5 text-sm text-ink">
-          <CheckCircle2 size={18} className="text-success shrink-0 mt-0.5" />
-          {lastCheck === 0
-            ? tr("Your device ({{checks}}) passed the check a moment ago.", { checks })
-            : tr("Your device ({{checks}}) passed the check {{n}} min ago.", { checks, n: lastCheck })}
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" onClick={() => setStage("check")} className="flex-1 min-w-40">
-            {tr("Check again")}
-          </Button>
-          <Button onClick={() => setStage("guide")} className="flex-1 min-w-40">
-            {tr("Continue")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (stage === "check") {
     return (
@@ -116,10 +67,7 @@ export function ModuleGuide({
         <SystemCheck
           needs={{ mic: needsMic, speaker: needsSpeaker }}
           onBack={onBack}
-          onPassed={() => {
-            markChecked({ mic: needsMic, speaker: needsSpeaker });
-            setStage("guide");
-          }}
+          onPassed={() => setStage("guide")}
         />
       </div>
     );
@@ -166,7 +114,7 @@ export function ModuleGuide({
         ))}
       </div>
       <Button onClick={onStart} className="w-full">
-        {tr("Start")}
+        {resumeAt ? tr("Resume from question {{n}} of {{total}}", { n: resumeAt, total: items.length }) : tr("Start")}
       </Button>
     </div>
   );

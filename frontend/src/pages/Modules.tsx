@@ -703,6 +703,8 @@ function ModulesPage() {
           res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : [])),
         ),
       );
+      // A resumed set (page reload) gets the device check again too.
+      setShowTypeIntro(true);
     }
 
     const sessionIdParam = searchParams.get("session");
@@ -817,7 +819,8 @@ function ModulesPage() {
         ),
       );
       setSummary(null);
-      setShowTypeIntro(res.items.every((item) => !item.attempted));
+      // The device check and guide on every start and resume.
+      setShowTypeIntro(true);
     } catch {
       setError(t("modules.startError"));
     } finally {
@@ -1262,6 +1265,7 @@ function ModulesPage() {
         instruction={current.instructionText}
         onStart={() => setShowTypeIntro(false)}
         onBack={resetToPicker}
+        resumeAt={items.some((i) => i.attempted) ? index + 1 : undefined}
       />
     );
   }
