@@ -29,16 +29,19 @@ export const placementRouter = Router();
 
 const REMINDER_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// 20 questions total, spread across these types/skills (chosen adaptively per type, not a fixed easy/medium/hard split).
+// 29 questions, about 30 minutes at the full time per question, spread across
+// these types (chosen adaptively per type, not a fixed easy/medium/hard split).
+// Weighted so speaking and listening (Read Aloud, Repeats, Short Answers,
+// Sentence Builds, Open Questions, Dictation) count as much as reading and writing.
 const ITEMS_PER_TYPE: Record<string, number> = {
-  reading: 3,
-  repeats: 2,
-  short_answer: 2,
-  sentence_builds: 2,
-  dictation: 3,
-  sentence_completion: 3,
+  reading: 4,
+  repeats: 4,
+  short_answer: 4,
+  sentence_builds: 3,
+  dictation: 4,
+  sentence_completion: 4,
   reading_comprehension: 3,
-  open_questions: 1,
+  open_questions: 2,
   email_writing: 1,
 };
 

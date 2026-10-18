@@ -29,13 +29,13 @@ function dayKey(d: Date): string {
 dashboardRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const placementResult = await pool.query(
-      `SELECT skill_percents, cefr_level FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`,
+      `SELECT skill_percents, cefr_level, taken_at FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`,
       [req.user!.id],
     );
     const placement = placementResult.rows[0];
 
     const profileResult = await pool.query(
-      `SELECT daily_minutes_preference, assessment_scheduled_for, access_window_start_date
+      `SELECT daily_minutes_preference, assessment_scheduled_for, access_window_start_date, goal_level
        FROM participant_profiles WHERE user_id = $1`,
       [req.user!.id],
     );
@@ -198,6 +198,8 @@ dashboardRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
       modules,
       todaysTasks,
       stats: { sessions, questionsCompleted, practiceMinutes, streakDays, accuracyPercent, level, totalXp },
+      // The learner's English level from their level test, and their goal.
+      englishLevel: { cefr: placement.cefr_level ?? null, testedAt: placement.taken_at ?? null, goal: profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : null },
       badges,
       inProgressPractice,
     });

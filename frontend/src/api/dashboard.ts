@@ -54,6 +54,8 @@ export interface DashboardData {
   modules: DashboardModule[];
   todaysTasks: TodaysTask[];
   stats: DashboardStats;
+  // English level from the level test (CEFR), when it was taken, and the goal.
+  englishLevel?: { cefr: string | null; testedAt: string | null; goal: string | null };
   badges: Badge[];
   inProgressPractice: InProgressPractice | null;
 }

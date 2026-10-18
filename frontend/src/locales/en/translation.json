@@ -261,7 +261,7 @@
     "scheduleSent": "We've emailed you a reminder link.",
     "scheduleLaterError": "Something went wrong sending your reminder email. Please try again.",
     "info": {
-      "timing": "Timed — plan for about 15–20 minutes",
+      "timing": "Timed — plan for about 30 minutes",
       "covers": "Covers speaking, listening, reading and writing",
       "graded": "This is graded and your voice is recorded for scoring — answer honestly, on your own, without outside help.",
       "equipment": "Make sure you have headphones and a microphone ready"
@@ -605,7 +605,7 @@
     "statsStreakValue_one": "{{count}} day",
     "statsStreakValue_other": "{{count}} days",
     "statsLevel": "Level",
-    "statsLevelValue": "Lvl {{level}} · {{xp}} XP",
+    "statsLevelValue": "Badge level {{level}} · {{xp}} XP",
     "continuePracticeTitle": "Continue where you left off",
     "continuePracticeBody": "{{skill}} — {{answered}} of {{total}} answered",
     "achievementsTitle": "Achievements"

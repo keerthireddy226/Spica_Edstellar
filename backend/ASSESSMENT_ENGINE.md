@@ -711,3 +711,33 @@ starter sets and AI); new screens are in English only.
   learner accounts and keerthi.r@edstellar.com while the product is being
   built. To switch face checks back on:
   `UPDATE users SET face_check_done = false;`
+
+## 25. Versant focus and the learner experience (2026-10-18)
+
+- **Versant only for now.** LanguageCert is hidden with `exam_families.active =
+  false` (migration 1795600000000): the catalogue, practice tests, mock exams,
+  My reports, the staff library, the test builder and AI writing skip it.
+  Questions, recordings and results stay. Onboarding no longer asks which
+  exam, and drops the university and immigration reasons. Organizations can't
+  be created as universities. The front-end switches are in
+  `frontend/src/lib/focus.ts`. No question audio is generated until asked.
+- **Practice Modules** (renamed from Modules):
+  - each sub-module shows its sets done or started (`GET /practice/types`);
+    sets show "Started";
+  - before a set: a device check (microphone, speakers, connection; once an
+    hour) and a guide to how it works and how answers are scored
+    (`ModuleGuide`);
+  - every question has a countdown of its whole time (`questionSeconds`, the
+    mock timing). It beeps in the last 5 seconds, with a mute that is
+    remembered; at zero a recording stops and is kept;
+  - after each answer, the checked answer (`review` from
+    `POST /practice/session/:id/attempts`): what was heard or typed, right or
+    wrong, and the right answer;
+  - results: a score-based message, counts, every question
+    (`reviewQuestions`, no AI), the sub-module and set, and a Next set button.
+- **Reports v3:** every question shows the learner's own answer and recording
+  (`given`), says when no words were heard, and Sentence Builds show their
+  word groups.
+- **Level test (placement):** 29 questions, about 30 minutes, weighted
+  towards speaking and listening. The result explains the level, and Overview
+  always shows "Your English level" with the goal.

@@ -44,6 +44,7 @@ import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
 import { tr } from "@/i18n/tr";
+import { CEFR_MEANING, levelsToGo } from "@/lib/cefrMeaning";
 import { trServer } from "@/i18n/serverText";
 const SKILL_ICONS: Record<SkillTag, typeof Headphones> = {
   listening: Headphones,
@@ -151,6 +152,37 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
 }
 
 // Surfaces an unfinished practice session so the learner doesn't have to remember which skill they left off on.
+// The learner's English level from their level test, what it means, and the
+// distance to their goal: always visible, so "which level am I?" has an answer.
+function EnglishLevelCard({ level }: { level: NonNullable<DashboardData["englishLevel"]> }) {
+  const navigate = useNavigate();
+  const cefr = level.cefr!;
+  const toGo = level.goal ? levelsToGo(cefr, level.goal) : null;
+  return (
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center shrink-0">
+        <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
+        <span className="text-[9px] uppercase tracking-wide mt-1">CEFR</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-display font-bold text-lg text-ink">{tr("Your English level: {{level}}", { level: cefr })}</p>
+        <p className="text-sm text-muted">{CEFR_MEANING[cefr]?.() ?? ""}</p>
+        <p className="text-xs text-muted mt-1">
+          {level.testedAt ? tr("From your level test on {{date}}.", { date: new Date(level.testedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) }) : ""}{" "}
+          {level.goal
+            ? toGo
+              ? tr("Your goal is {{goal}}: {{n}} level(s) to go.", { goal: level.goal, n: toGo })
+              : tr("You've reached your goal of {{goal}}.", { goal: level.goal })
+            : ""}
+        </p>
+      </div>
+      <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)} className="shrink-0">
+        {tr("Your plan to the next level")}
+      </Button>
+    </div>
+  );
+}
+
 function ContinuePracticeCard({ practice }: { practice: InProgressPractice }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -351,6 +383,8 @@ function LearnerDashboard() {
           { label: t("dashboardHome.statsStreak"), value: t("dashboardHome.statsStreakValue", { count: stats.streakDays }), icon: Flame },
         ]}
       />
+
+      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} />}
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 

@@ -37,8 +37,9 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
+import { CEFR_MEANING } from "@/lib/cefrMeaning";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
-const TOTAL_QUESTIONS = 20;
+const TOTAL_QUESTIONS = 29;
 
 export function PlacementTest() {
   const isCandidate = useAuth().user?.role === "candidate";
@@ -263,7 +264,7 @@ export function PlacementTest() {
   if (!readyToLoadSession && !preTestDone) {
     return (
       <div className="app-surface min-h-screen px-4 py-10">
-        <PreTestFlow kind="placement" minutes="30–45" onBack={() => navigate(-1)} onReady={() => setPreTestDone(true)} />
+        <PreTestFlow kind="placement" minutes="30" onBack={() => navigate(-1)} onReady={() => setPreTestDone(true)} />
       </div>
     );
   }
@@ -329,6 +330,7 @@ export function PlacementTest() {
               {t("placementTest.yourLevel", { level: summary.cefrLevel })}
             </h1>
             {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} label={tr("Attempt ID")} className="mt-2" />}
+            {CEFR_MEANING[summary.cefrLevel] && <p className="text-sm text-ink mt-2">{CEFR_MEANING[summary.cefrLevel]()}</p>}
             <p className="text-xs text-muted mt-2">{t("placementTest.levelDisclaimer")}</p>
             {summary.cefrCappedByGap && (
               <p className="text-xs text-muted mt-1 italic">{t("placementTest.gapCappedNote")}</p>
