@@ -602,7 +602,8 @@ export function PlacementTest() {
           >
             {t("placementTest.skip")}
           </button>
-          <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="min-w-[220px]">
+          {/* With no answer, Next moves on like Skip, so nobody is stuck. */}
+          <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording} className="min-w-[220px]">
             {submitting ? t("placementTest.submitting") : t("placementTest.next")}
           </Button>
         </div>
