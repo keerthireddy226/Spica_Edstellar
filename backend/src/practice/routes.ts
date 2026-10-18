@@ -151,12 +151,11 @@ practiceRouter.get("/types", requireAuth, async (req: AuthedRequest, res, next) 
          count(*) FILTER (WHERE EXISTS (
            SELECT 1 FROM sessions se WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
              AND se.composition->>'setId' = s.id::text
-             -- Same rule as a set's "completed": every question answered, none skipped.
-             AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL)
          ))::int AS done,
+         -- Opened and not finished yet.
          count(*) FILTER (WHERE EXISTS (
-           SELECT 1 FROM sessions se JOIN attempts a ON a.session_id = se.id
-           WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.composition->>'setId' = s.id::text
+           SELECT 1 FROM sessions se
+           WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NULL AND se.composition->>'setId' = s.id::text
          ))::int AS started
        FROM s GROUP BY s.item_type_id`,
       [req.user!.id, skill],
@@ -188,10 +187,6 @@ practiceRouter.get("/units", requireAuth, async (req: AuthedRequest, res, next) 
                SELECT 1 FROM sessions se
                WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
                  AND se.composition->>'setId' = s.id::text
-                 -- Every item answered with a real response, not skipped blank.
-                 AND NOT EXISTS (
-                   SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL
-                 )
              )
          )::int AS completed_count
        FROM units u LEFT JOIN sets s ON s.unit_id = u.id
@@ -221,28 +216,41 @@ practiceRouter.get("/units/:unitId/sets", requireAuth, async (req: AuthedRequest
     if (typeof skill !== "string") return res.status(400).json({ error: "skill_required" });
     const result = await pool.query(
       `SELECT s.id, s.name, s.order_index,
+         -- The learner's latest finished run of this set (skips included).
+         (SELECT se.id FROM sessions se
+          WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL AND se.composition->>'setId' = s.id::text
+          ORDER BY se.completed_at DESC LIMIT 1) AS last_session_id,
+         (SELECT se.composition->'itemIds' FROM sessions se
+          WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL AND se.composition->>'setId' = s.id::text
+          ORDER BY se.completed_at DESC LIMIT 1) AS last_item_ids,
+         -- Opened and not finished yet.
          EXISTS (
            SELECT 1 FROM sessions se
-           WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
-             AND se.composition->>'setId' = s.id::text
-             -- Every item answered with a real response, not skipped blank —
-             -- completed_at alone only means "reached the end of the list".
-             AND NOT EXISTS (
-               SELECT 1 FROM attempts a WHERE a.session_id = se.id AND a.response_text IS NULL AND a.response_uri IS NULL
-             )
-         ) AS completed,
-         -- Opened and at least one question answered or skipped.
-         EXISTS (
-           SELECT 1 FROM sessions se JOIN attempts a ON a.session_id = se.id
-           WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.composition->>'setId' = s.id::text
-         ) AS started
+           WHERE se.user_id = $2 AND se.session_type = 'practice' AND se.completed_at IS NULL AND se.composition->>'setId' = s.id::text
+         ) AS in_progress
        FROM sets s
        WHERE s.unit_id = $1
          AND EXISTS (SELECT 1 FROM items i WHERE i.set_id = s.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $3))
        ORDER BY s.order_index`,
       [req.params.unitId, req.user!.id, skill],
     );
-    res.json({ sets: result.rows.map((r) => ({ id: r.id, name: r.name, completed: r.completed, started: r.started })) });
+    const sets = await Promise.all(
+      result.rows.map(async (r) => {
+        let lastResult: { right: number; total: number; skipped: number } | null = null;
+        if (r.last_session_id) {
+          const qs = await reviewQuestions(r.last_session_id, (r.last_item_ids as string[]) ?? []);
+          const total = ((r.last_item_ids as string[]) ?? []).length || qs.length;
+          lastResult = {
+            right: qs.filter((q) => q.outcome === "right").length,
+            // Questions with no answer row at all count as skipped too.
+            skipped: total - qs.filter((q) => q.answered).length,
+            total,
+          };
+        }
+        return { id: r.id, name: r.name, completed: !!r.last_session_id, started: !!r.in_progress, lastResult };
+      }),
+    );
+    res.json({ sets });
   } catch (err) {
     next(err);
   }

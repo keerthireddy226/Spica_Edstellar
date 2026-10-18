@@ -33,6 +33,7 @@ export interface PracticeSummary {
 export interface TypeProgress {
   itemTypeId: string;
   setCount: number;
+  // Sets finished at least once, and sets opened but not finished.
   done: number;
   started: number;
   tests: { id: string; name: string }[];
@@ -54,9 +55,12 @@ export interface PracticeUnit {
 export interface PracticeSet {
   id: string;
   name: string;
+  // Finished at least once (reached the end; skipped questions included).
   completed: boolean;
-  // Opened and at least one question answered or skipped.
+  // Opened and not finished yet.
   started: boolean;
+  // The latest finished run: right answers, questions, skipped.
+  lastResult: { right: number; total: number; skipped: number } | null;
 }
 
 export function getAvailability(): Promise<{ availability: SkillAvailability[] }> {

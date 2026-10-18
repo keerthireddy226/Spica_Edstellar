@@ -362,7 +362,7 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
               ) : null}
               <TypeProgressLine p={progress[typeId]} />
               <span className="mt-auto flex items-center gap-1 text-xs font-semibold text-navy-deep">
-                {(progress[typeId]?.started ?? 0) > 0 ? tr("Continue") : tr("Practise")}{" "}
+                {(progress[typeId]?.started ?? 0) + (progress[typeId]?.done ?? 0) > 0 ? tr("Continue") : tr("Practise")}{" "}
                 <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
               </span>
             </button>
@@ -383,12 +383,12 @@ function TypeProgressLine({ p }: { p: TypeProgress | undefined }) {
       <div className="h-1.5 rounded-full bg-rule overflow-hidden">
         <div className={`h-full rounded-full ${all ? "bg-success" : "bg-navy"}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className={`flex items-center gap-1 text-[11px] font-semibold ${all ? "text-success" : p.started > 0 ? "text-navy-deep" : "text-muted"}`}>
-        {all ? <CheckCircle2 size={12} /> : p.started > 0 ? <CircleDot size={12} /> : null}
+      <span className={`flex items-center gap-1 text-[11px] font-semibold ${all ? "text-success" : p.done + p.started > 0 ? "text-navy-deep" : "text-muted"}`}>
+        {all ? <CheckCircle2 size={12} /> : p.done + p.started > 0 ? <CircleDot size={12} /> : null}
         {all
           ? tr("All {{n}} sets done", { n: p.setCount })
-          : p.started > 0
-            ? tr("{{done}} of {{n}} sets done", { done: p.done, n: p.setCount })
+          : p.done + p.started > 0
+            ? `${tr("{{done}} of {{n}} sets done", { done: p.done, n: p.setCount })}${p.started ? ` · ${tr("{{n}} in progress", { n: p.started })}` : ""}`
             : tr("Not started · {{n}} sets", { n: p.setCount })}
       </span>
     </div>
@@ -506,11 +506,19 @@ function SetPicker({
               >
                 {set.completed ? <CheckCircle2 size={22} /> : i + 1}
               </span>
-              <span className="flex-1 text-base font-semibold text-ink">{set.name}</span>
-              {set.completed ? (
-                <span className="text-xs font-semibold text-success shrink-0">{t("modules.setCompleted")}</span>
-              ) : set.started ? (
-                <span className="text-xs font-semibold text-navy-deep shrink-0">{tr("Started")}</span>
+              <span className="flex-1 min-w-0 flex flex-col">
+                <span className="text-base font-semibold text-ink">{set.name}</span>
+                {set.lastResult && (
+                  <span className="text-xs text-muted">
+                    {tr("{{right}} of {{total}} right", { right: set.lastResult.right, total: set.lastResult.total })}
+                    {set.lastResult.skipped ? ` · ${tr("{{n}} skipped", { n: set.lastResult.skipped })}` : ""}
+                  </span>
+                )}
+              </span>
+              {set.started ? (
+                <span className="text-xs font-semibold text-navy-deep shrink-0">{tr("In progress")}</span>
+              ) : set.completed ? (
+                <span className="text-xs font-semibold text-success shrink-0">{tr("Done")}</span>
               ) : (
                 <ChevronRight size={20} className="text-muted shrink-0 transition-transform group-hover:translate-x-1" />
               )}
