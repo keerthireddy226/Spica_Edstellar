@@ -426,11 +426,17 @@ export function QuestionBank() {
         <FilterPills<Tab>
           value={tab}
           onChange={setTab}
+          // AI writing only covers LanguageCert-style types, hidden for now
+          // (exam_families.active); its tabs come back with them.
           options={[
             ["create", tr("Create a test")],
             ["library", tr("All questions")],
-            ["generate", tr("Write with AI")],
-            ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
+            ...(overview.testTypes.length
+              ? ([
+                  ["generate", tr("Write with AI")],
+                  ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
+                ] as [Tab, string, number?][])
+              : []),
           ]}
         />
         <p className="text-xs text-muted">{TAB_NOTE[tab]()}</p>

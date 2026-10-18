@@ -564,7 +564,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
           <Target size={28} className="text-navy-deep" />
           <p className="font-semibold text-ink">{tr("No programs yet")}</p>
           <p className="text-sm text-muted max-w-md">
-            {tr("A program sets a target level and date for a batch, for example LanguageCert 4 Skills B2 by 15 December.")}
+            {tr("A program sets a target level and date for a batch, for example Versant 4 Skills B2 by 15 December.")}
           </p>
         </div>
       ) : (

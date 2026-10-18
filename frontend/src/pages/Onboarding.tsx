@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -173,7 +174,8 @@ function emptyForm(): FormState {
   return {
     firstName: "",
     lastName: "",
-    examPreference: null,
+    // Versant is the only exam offered for now (lib/focus.ts).
+    examPreference: "versant",
     goalLevel: null,
     scoreTarget: "",
     examReason: null,
@@ -441,9 +443,7 @@ export function Onboarding() {
   }
 
   if (step === 2) {
-    const examOptions = (
-      ["versant", "ielts", "toefl", "pte", "cambridge", "other"] as const
-    ).map((value) => ({
+    const examOptions = SHOWN_EXAM_PREFERENCES.map((value) => ({
       value,
       label: t(`onboarding.wizard.examGoal.exam.${value}`),
       desc: t(`onboarding.wizard.examGoal.exam.${value}Desc`),
@@ -456,13 +456,15 @@ export function Onboarding() {
     const invalid = form.examPreference === null || form.goalLevel === null;
     return (
       <WizardShell stepIndex={2} onNext={next} onBack={back} nextDisabled={invalid}>
-        <div>
-          <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.examGoal.examTitle")}</h2>
-          <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.examGoal.examSubtitle")}</p>
-          <OptionGrid options={examOptions} selected={form.examPreference} onSelect={(v) => patch({ examPreference: v })} />
-        </div>
-        <div className="pt-2 border-t border-rule">
-          <h3 className="font-display font-bold text-lg text-ink mt-4">{t("onboarding.wizard.examGoal.goalTitle")}</h3>
+        {examOptions.length > 1 && (
+          <div>
+            <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.examGoal.examTitle")}</h2>
+            <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.examGoal.examSubtitle")}</p>
+            <OptionGrid options={examOptions} selected={form.examPreference} onSelect={(v) => patch({ examPreference: v })} />
+          </div>
+        )}
+        <div className={examOptions.length > 1 ? "pt-2 border-t border-rule" : ""}>
+          <h3 className={`font-display font-bold text-lg text-ink ${examOptions.length > 1 ? "mt-4" : ""}`}>{t("onboarding.wizard.examGoal.goalTitle")}</h3>
           <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.examGoal.goalSubtitle")}</p>
           <OptionGrid options={goalOptions} selected={form.goalLevel} onSelect={(v) => patch({ goalLevel: v })} />
           <div className="mt-4">
@@ -480,7 +482,7 @@ export function Onboarding() {
   }
 
   if (step === 3) {
-    const reasonOptions = (["university", "job", "immigration", "promotion", "personal"] as const).map((value) => ({
+    const reasonOptions = (["university", "job", "immigration", "promotion", "personal"] as const).filter((v) => !HIDDEN_EXAM_REASONS.includes(v)).map((value) => ({
       value,
       label: t(`onboarding.wizard.reasonTimeline.reason.${value}`),
     }));

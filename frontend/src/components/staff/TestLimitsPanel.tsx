@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SHOW_UNIVERSITIES } from "@/lib/focus";
 import { Button } from "@/components/Button";
 import { Panel } from "@/components/staff/StaffKit";
 import { getPlanQuotas, savePlanQuota, type PlanQuota } from "@/api/admin";
@@ -79,7 +80,7 @@ export function TestLimitsPanel() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((q) => {
+            {rows.filter((q) => SHOW_UNIVERSITIES || (q.segment !== "university" && q.tier !== "campus")).map((q) => {
               const key = `${q.segment}/${q.tier}`;
               const d = draft[key];
               const changed = d && (d.practice !== toBox(q.practicePerMonth) || d.mocks !== toBox(q.mocksPerMonth) || d.report !== q.reportLevel);

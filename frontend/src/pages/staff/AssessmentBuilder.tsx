@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SHOW_AI_WRITTEN_TESTS } from "@/lib/focus";
 import { Search, X, Plus, Trash2, Wand2, Sparkles, Save, Send, Archive, Pencil, CheckCircle2, Loader2, Rocket, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
@@ -38,7 +39,7 @@ const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm 
 const DOMAINS = ["general", "banking", "bpo", "it", "insurance", "healthcare"];
 
 const SOURCE_LABEL: Record<LibrarySource, () => string> = {
-  module: () => tr("Modules"),
+  module: () => tr("Practice Modules"),
   test_set: () => tr("Practice and mock sets"),
   placement: () => tr("Placement test"),
   ai: () => tr("AI-written, not in a set"),
@@ -251,11 +252,6 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
       </div>
       {more && (
       <div className="flex flex-wrap gap-2 items-end">
-        <select value={f.family ?? ""} onChange={(e) => set({ family: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
-          <option value="">{tr("Every exam")}</option>
-          <option value="languagecert">LanguageCert</option>
-          <option value="versant">Versant</option>
-        </select>
         <select value={f.skill ?? ""} onChange={(e) => set({ skill: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any skill")}</option>
           <option value="listening">{tr("Listening")}</option>
@@ -966,6 +962,8 @@ export function BuilderPanel() {
             )}
             {!d.id && (
               <div className="flex flex-col gap-3 border border-navy/20 rounded-input px-4 py-3">
+                {SHOW_AI_WRITTEN_TESTS && (
+                <>
                 <span className="text-sm font-semibold text-ink">{tr("Questions")}</span>
                 <div className="grid sm:grid-cols-2 gap-2">
                   {(
@@ -983,6 +981,8 @@ export function BuilderPanel() {
                     </label>
                   ))}
                 </div>
+                </>
+                )}
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-1.5 text-sm text-ink cursor-pointer">
                     <input type="checkbox" checked={publishNow} onChange={(e) => setPublishNow(e.target.checked)} />

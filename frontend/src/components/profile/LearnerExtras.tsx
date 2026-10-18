@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { Building2, Flame, Mail, Pencil, Target, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EXAM_FOCUS_LABEL, type ExamFocus } from "@/api/details";
@@ -206,7 +207,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
           <div className="grid sm:grid-cols-2 gap-3">
             <select {...f("examPreference")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Exam")}</option>
-              {EXAMS.map(([k, l]) => (
+              {EXAMS.filter(([k]) => (SHOWN_EXAM_PREFERENCES as readonly string[]).includes(k) || k === g.examPreference).map(([k, l]) => (
                 <option key={k} value={k}>
                   {l}
                 </option>
@@ -225,7 +226,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
             <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
             <select {...f("examReason")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Why are you preparing?")}</option>
-              {REASONS.map(([k, l]) => (
+              {REASONS.filter(([k]) => !HIDDEN_EXAM_REASONS.includes(k) || k === g.examReason).map(([k, l]) => (
                 <option key={k} value={k}>
                   {l}
                 </option>

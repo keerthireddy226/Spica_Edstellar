@@ -220,14 +220,14 @@ export function OrgAdminSettings() {
       </Section>
 
       <Section
-        title={tr("Modules for learners")}
-        description={tr("Modules let learners practise one skill at a time. Turn them off when your learners should only take practice tests and mock exams.")}
+        title={tr("Practice Modules for learners")}
+        description={tr("Practice Modules let learners practise one skill at a time. Turn them off when your learners should only take practice tests and mock exams.")}
       >
         <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
           <input type="checkbox" checked={draft.modulesEnabled} onChange={(e) => set("modulesEnabled", e.target.checked)} className="h-4 w-4 accent-navy" />
-          {tr("Learners can use Modules")}
+          {tr("Learners can use Practice Modules")}
         </label>
-        {!draft.modulesEnabled && <p className="text-xs text-muted">{tr("Modules are hidden from learners; their Overview and Roadmap point to Practice Tests instead.")}</p>}
+        {!draft.modulesEnabled && <p className="text-xs text-muted">{tr("Practice Modules are hidden from learners; their Overview and Roadmap point to Practice Tests instead.")}</p>}
       </Section>
 
       <Section

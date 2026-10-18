@@ -26,7 +26,7 @@ async function generatableTestTypes() {
      FROM test_types tt
      JOIN exams e ON e.test_type_id = tt.id AND e.is_active
      JOIN exam_parts ep ON ep.exam_id = e.id
-     WHERE tt.status = 'live'
+     WHERE tt.status = 'live' AND EXISTS (SELECT 1 FROM exam_families f WHERE f.id = tt.family_id AND f.active)
      GROUP BY tt.id ORDER BY tt.sort_order`,
   );
   return r.rows

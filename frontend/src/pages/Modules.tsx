@@ -227,7 +227,7 @@ function SkillPicker({
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
-        eyebrow={t("nav.modules")}
+        eyebrow={tr("One skill at a time")}
         title={t("modules.title")}
         subtitle={t("modules.subtitle")}
         icon={Layers}

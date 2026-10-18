@@ -117,7 +117,7 @@ builderRouter.get("/content/builder/test-types", requireAuth, async (req: Authed
     const r = await pool.query(
       `SELECT tt.id, tt.name, tt.duration_minutes, tt.cefr_min, tt.cefr_max, f.id AS family_id, f.name AS family_name
        FROM test_types tt JOIN exam_families f ON f.id = tt.family_id
-       WHERE tt.status = 'live' AND EXISTS (SELECT 1 FROM exams e WHERE e.test_type_id = tt.id AND e.is_active)
+       WHERE tt.status = 'live' AND f.active AND EXISTS (SELECT 1 FROM exams e WHERE e.test_type_id = tt.id AND e.is_active)
        ORDER BY f.sort_order, tt.sort_order`,
     );
     res.json({

@@ -112,7 +112,8 @@ export function libraryRow(r: Record<string, unknown>, stats?: { n: number; mean
 
 export async function listLibrary(f: LibraryFilters, page: number, pageSize = 50, preferDomain?: string) {
   const params: unknown[] = [];
-  const where = libraryWhere(f, params);
+  // Questions of hidden exam families (exam_families.active = false) aren't listed.
+  const where = `${libraryWhere(f, params) || "WHERE true"} AND (${FAMILY_SQL}) IN (SELECT id FROM exam_families WHERE active)`;
   const total = (await pool.query(`SELECT count(*)::int AS n FROM items i JOIN item_types it ON it.id = i.item_type_id ${where}`, params)).rows[0].n as number;
   let order = "i.item_type_id, i.cefr_level NULLS LAST, i.created_at";
   if (preferDomain) {

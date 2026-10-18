@@ -215,6 +215,9 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
        FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
        LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
+         -- Results of hidden exam families (LanguageCert for now) aren't listed.
+         AND NOT EXISTS (SELECT 1 FROM test_types tt JOIN exam_families f ON f.id = tt.family_id
+                         WHERE tt.id = coalesce(s.composition->>'testTypeId', e.test_type_id) AND NOT f.active)
        ORDER BY s.completed_at DESC LIMIT 200`,
       [req.user!.id],
     );

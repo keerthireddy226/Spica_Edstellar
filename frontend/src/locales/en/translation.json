@@ -352,7 +352,7 @@
     "roadmap": "Roadmap",
     "overview": "Overview",
     "progress": "Progress",
-    "modules": "Modules",
+    "modules": "Practice Modules",
     "practiceTests": "Practice Tests",
     "tutor": "Tutor",
     "profile": "Profile"
@@ -719,7 +719,7 @@
     "enrollmentConsent": {
       "title": "Set up face verification",
       "subtitle": "This helps confirm it's really you taking the test.",
-      "body": "We'll take a photo of your face to create a reference for identity verification. Before, and at random moments (every 30 to 90 seconds) during, placement tests, practice tests and practice sessions (Modules), a new photo is compared with it to confirm it's you. Photos are used only for this, seen only by reviewers at your organization or Edstellar, and kept until your account is deleted or your organization's retention period ends.",
+      "body": "We'll take a photo of your face to create a reference for identity verification. Before, and at random moments (every 30 to 90 seconds) during, placement tests, practice tests and practice sessions (Practice Modules), a new photo is compared with it to confirm it's you. Photos are used only for this, seen only by reviewers at your organization or Edstellar, and kept until your account is deleted or your organization's retention period ends.",
       "checkboxLabel": "I understand and consent to face identity verification, including checks at random moments during tests and practice sessions.",
       "submit": "Continue",
       "decline": "Not now"

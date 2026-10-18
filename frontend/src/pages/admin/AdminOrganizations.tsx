@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { SHOW_UNIVERSITIES } from "@/lib/focus";
 import { TIER_LABELS } from "@/api/plans";
 import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw, KeyRound } from "lucide-react";
 import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
@@ -135,11 +136,12 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={tr("e.g. Acme Corp, Anna University")}
+              placeholder={SHOW_UNIVERSITIES ? tr("e.g. Acme Corp, Anna University") : tr("e.g. Acme Corp")}
               className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
             />
           </div>
 
+          {SHOW_UNIVERSITIES && (
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Type")}</label>
             <div className="grid grid-cols-2 gap-3">
@@ -158,6 +160,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
               ))}
             </div>
           </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
@@ -464,6 +467,7 @@ function EditOrgModal({
               className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
             />
           </div>
+          {(SHOW_UNIVERSITIES || org.category === "university") && (
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Type")}</label>
             <div className="grid grid-cols-2 gap-3">
@@ -482,6 +486,7 @@ function EditOrgModal({
               ))}
             </div>
           </div>
+          )}
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3 pt-1">
             <Button type="submit" disabled={submitting} className="flex-1">
@@ -718,7 +723,9 @@ export function AdminOrganizations() {
 
       <div className="flex items-center gap-3 flex-wrap">
         <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, Org Admin, industry or owner")} />
-        <SelectFilter label={tr("Type")} value={type} onChange={setType} options={[["all", tr("All types")], ["company", tr("Companies")], ["university", tr("Universities")]]} />
+        {SHOW_UNIVERSITIES && (
+          <SelectFilter label={tr("Type")} value={type} onChange={setType} options={[["all", tr("All types")], ["company", tr("Companies")], ["university", tr("Universities")]]} />
+        )}
         <SelectFilter
           label={tr("Plan")}
           value={tier}
