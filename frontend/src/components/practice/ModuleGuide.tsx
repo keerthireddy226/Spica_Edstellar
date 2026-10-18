@@ -13,17 +13,25 @@ import { tr } from "@/i18n/tr";
 const CHECK_VALID_MS = 60 * 60 * 1000;
 const CHECK_KEY = "spica.moduleCheckAt";
 
-function recentlyChecked(): boolean {
+// Minutes since the last passed check that covered what this set needs
+// (a microphone and speakers check counts for an internet-only set, not the
+// other way round), if within CHECK_VALID_MS.
+function checkedMinutesAgo(needs: { mic: boolean; speaker: boolean }): number | null {
   try {
-    return Date.now() - Number(sessionStorage.getItem(CHECK_KEY) ?? 0) < CHECK_VALID_MS;
+    const c = JSON.parse(sessionStorage.getItem(CHECK_KEY) ?? "null") as { at: number; mic: boolean; speaker: boolean } | null;
+    if (!c || (needs.mic && !c.mic) || (needs.speaker && !c.speaker)) return null;
+    const ago = Date.now() - c.at;
+    return ago < CHECK_VALID_MS ? Math.floor(ago / 60000) : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-function markChecked() {
+function markChecked(needs: { mic: boolean; speaker: boolean }) {
   try {
-    sessionStorage.setItem(CHECK_KEY, String(Date.now()));
+    const before = JSON.parse(sessionStorage.getItem(CHECK_KEY) ?? "null") as { mic: boolean; speaker: boolean } | null;
+    // What an earlier check covered still counts.
+    sessionStorage.setItem(CHECK_KEY, JSON.stringify({ at: Date.now(), mic: needs.mic || !!before?.mic, speaker: needs.speaker || !!before?.speaker }));
   } catch {
     // Storage blocked: the check is simply asked again next time.
   }
@@ -53,8 +61,10 @@ function scoringNote(items: TestItem[]): string[] {
   return notes;
 }
 
-// Before a Practice Modules set: a device check (microphone, speakers and
-// connection) when the set uses them, then how it works and how it's scored.
+// Before every Practice Modules set: a device check (internet always, speakers
+// when the set plays audio, microphone when answers are spoken), then how it
+// works and how it's scored. A check passed within the hour shows as a short
+// card the learner can redo or skip.
 export function ModuleGuide({
   items,
   context,
@@ -73,17 +83,41 @@ export function ModuleGuide({
   const { t } = useTranslation();
   const needsMic = items.some((i) => i.inputMethod === "mic");
   const needsSpeaker = items.some((i) => AUDIO_FIRST_TYPES.has(i.itemTypeId));
-  const [stage, setStage] = useState<"check" | "guide">((needsMic || needsSpeaker) && !recentlyChecked() ? "check" : "guide");
+  const [lastCheck] = useState(() => checkedMinutesAgo({ mic: needsMic, speaker: needsSpeaker }));
+  const [stage, setStage] = useState<"check" | "recent" | "guide">(lastCheck === null ? "check" : "recent");
+  const checks = [tr("internet"), needsSpeaker ? tr("speakers") : null, needsMic ? tr("microphone") : null].filter(Boolean).join(", ");
+
+  if (stage === "recent") {
+    return (
+      <div className="max-w-2xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-4">
+        <h1 className="font-display font-bold text-xl text-ink">{tr("Device check")}</h1>
+        <p className="flex items-start gap-2.5 text-sm text-ink">
+          <CheckCircle2 size={18} className="text-success shrink-0 mt-0.5" />
+          {lastCheck === 0
+            ? tr("Your device ({{checks}}) passed the check a moment ago.", { checks })
+            : tr("Your device ({{checks}}) passed the check {{n}} min ago.", { checks, n: lastCheck })}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="secondary" onClick={() => setStage("check")} className="flex-1 min-w-40">
+            {tr("Check again")}
+          </Button>
+          <Button onClick={() => setStage("guide")} className="flex-1 min-w-40">
+            {tr("Continue")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (stage === "check") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-3">
-        <p className="text-sm text-muted text-center">{tr("First a quick check of your microphone, speakers and internet, so your answers are captured clearly.")}</p>
+        <p className="text-sm text-muted text-center">{tr("First a quick check of your {{checks}}, so the set runs smoothly and your answers are captured.", { checks })}</p>
         <SystemCheck
           needs={{ mic: needsMic, speaker: needsSpeaker }}
           onBack={onBack}
           onPassed={() => {
-            markChecked();
+            markChecked({ mic: needsMic, speaker: needsSpeaker });
             setStage("guide");
           }}
         />
