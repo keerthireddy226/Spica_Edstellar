@@ -985,14 +985,15 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         : current.inputMethod === "mcq_group"
           ? parseGroupAnswer(answerText, getGroupQuestions(current).length).every((x) => x !== null)
           : answerText.trim() !== "";
-    // Nothing answered yet: Save and next moves on like Skip, so the learner
-    // is never stuck (e.g. after the time ran out). A partly answered group
-    // must be finished or skipped, so its answers aren't thrown away.
+    // Save and next needs an answer, except once the question's time has run
+    // out with nothing given: then it moves on like Skip. A partly answered
+    // group must be finished or skipped, so its answers aren't thrown away.
     const nothingGiven =
       !audioBlobUrl &&
       (current.inputMethod === "mcq_group"
         ? parseGroupAnswer(answerText, getGroupQuestions(current).length).every((x) => x === null)
         : answerText.trim() === "");
+    const timeUpEmpty = nothingGiven && (isMock ? mockSecondsLeft : remainingSeconds) === 0;
     const progressPct = Math.round((index / items.length) * 100);
     const shownSeconds = isMock ? mockSecondsLeft : feedback ? null : remainingSeconds;
     return (
@@ -1215,7 +1216,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                 </button>
                 <Button
                   onClick={() => (canSubmit ? handleSubmit() : handleSkip())}
-                  disabled={submitting || recording || (!canSubmit && !nothingGiven)}
+                  disabled={submitting || recording || (!canSubmit && !timeUpEmpty)}
                   className="flex-1"
                 >
                   {submitting

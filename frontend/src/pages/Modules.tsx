@@ -1500,10 +1500,9 @@ function ModulesPage() {
           >
             {t("placementTest.skip")}
           </button>
-          {/* Always usable: with no answer it moves on like Skip (the question
-              counts as skipped), so the learner is never stuck, e.g. after
-              the time ran out. Only a recording in progress must be stopped first. */}
-          <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording} className="flex-1">
+          {/* Needs an answer, except once the question's time has run out: then
+              it moves on like Skip (the question counts as skipped). */}
+          <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording || (!canSubmit && remainingSeconds !== 0)} className="flex-1">
             {submitting ? t("placementTest.submitting") : index + 1 < items.length ? t("placementTest.next") : t("placementTest.finish")}
           </Button>
         </div>
