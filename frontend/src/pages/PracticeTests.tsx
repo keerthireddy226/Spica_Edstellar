@@ -1494,16 +1494,18 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                   <div className="flex flex-col gap-1.5 -mt-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-ink">
-                        {tr("Question {{n}} of {{total}}", { n: Math.min(exam.progress.seen + 1, exam.progress.total), total: exam.progress.total })}
+                        {exam.progress.seen > 0
+                          ? tr("You stopped at question {{n}} of {{total}}", { n: Math.min(exam.progress.seen + 1, exam.progress.total), total: exam.progress.total })
+                          : tr("Not started yet · {{total}} questions", { total: exam.progress.total })}
                       </span>
-                      <span className="text-muted">{tr("{{n}} answered", { n: exam.progress.answered })}</span>
+                      <span className="text-muted">{tr("{{n}} of {{total}} answered", { n: exam.progress.answered, total: exam.progress.total })}</span>
                     </div>
                     <div className="h-2 rounded-pill bg-rule overflow-hidden">
                       <div className="h-full rounded-pill bg-navy transition-all" style={{ width: `${Math.round((exam.progress.seen / Math.max(1, exam.progress.total)) * 100)}%` }} />
                     </div>
                   </div>
                 )}
-                {exam.finished && !exam.completed && exams?.[i + 1]?.locked && (
+                {exam.finished && !exam.completed && !exam.inProgress && exams?.[i + 1]?.locked && (
                   <p className="text-xs text-warning -mt-1">{tr("Finished with questions skipped. Retake it and answer every question to unlock Set {{n}}.", { n: i + 2 })}</p>
                 )}
                 <Button

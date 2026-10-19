@@ -34,9 +34,9 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
   const view = step ? stepView(step, (s) => t(`skills.${s}`), modulesOn) : null;
 
   return (
-    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+    <section className="bg-surface border border-rule rounded-card shadow-sm p-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display font-bold text-lg text-ink">{title ?? tr("Your level in each module")}</h2>
+        <h2 className="font-display font-bold text-base text-ink">{title ?? tr("Your level in each module")}</h2>
         {data.currentLevel && <span className="text-sm text-muted">{tr("Overall: {{level}}", { level: data.currentLevel })}</span>}
       </div>
 
@@ -50,39 +50,39 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
             <button
               key={skill}
               onClick={() => modulesOn && navigate(`${ROUTES.MODULES}?skill=${skill}`)}
-              className={`relative text-left rounded-card border p-4 flex flex-col gap-2 transition-all ${modulesOn ? "cursor-pointer hover:shadow-md" : "cursor-default"} ${
+              className={`relative text-left rounded-input border px-3 py-2.5 flex flex-col gap-1.5 transition-all ${modulesOn ? "cursor-pointer hover:shadow-md" : "cursor-default"} ${
                 next ? "border-accent bg-accent/5 ring-2 ring-accent/30" : "border-rule bg-paper-warm/50"
               }`}
             >
               {next && (
-                <span className="absolute -top-2.5 right-3 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-pill bg-accent text-white">
+                <span className="absolute -top-2 right-2 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-pill bg-accent text-white">
                   {tr("Practise next")}
                 </span>
               )}
-              <div className="flex items-center gap-2">
-                <Icon size={18} className={SKILL_RING_COLOR[skill]} />
-                <span className="text-sm font-semibold text-ink">{t(`skills.${skill}`)}</span>
+              <div className="flex items-center gap-1.5">
+                <Icon size={15} className={SKILL_RING_COLOR[skill]} />
+                <span className="text-xs font-semibold text-ink flex-1">{t(`skills.${skill}`)}</span>
+                <span className="font-display font-bold text-lg text-ink leading-none">{level}</span>
               </div>
-              <span className="font-display font-bold text-3xl text-ink leading-none">{level}</span>
               {/* Where the level sits on A1-C2. */}
-              <div className="flex gap-1" aria-label={tr("{{level}} of A1 to C2", { level })}>
+              <div className="flex gap-0.5" aria-label={tr("{{level}} of A1 to C2", { level })}>
                 {LEVELS.map((l, i) => (
-                  <span key={l} className={`h-1.5 flex-1 rounded-full ${i <= at ? "bg-navy" : "bg-rule"}`} />
+                  <span key={l} className={`h-1 flex-1 rounded-full ${i <= at ? "bg-navy" : "bg-rule"}`} />
                 ))}
               </div>
-              <span className="text-[11px] text-muted">{at >= 5 ? tr("Top level") : tr("Next: {{level}}", { level: LEVELS[at + 1] })}</span>
+              <span className="text-[10px] text-muted">{at >= 5 ? tr("Top level") : tr("Next: {{level}}", { level: LEVELS[at + 1] })}</span>
             </button>
           );
         })}
       </div>
 
       {view && (
-        <div className="rounded-card bg-accent/10 border border-accent/30 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-          <Sparkles size={20} className="text-accent shrink-0" />
+        <div className="rounded-input bg-accent/10 border border-accent/30 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <Sparkles size={18} className="text-accent shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Recommended next")}</p>
-            <p className="font-semibold text-ink">{view.title}</p>
-            <p className="text-sm text-muted">{view.why}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{tr("Recommended next")}</p>
+            <p className="text-sm font-semibold text-ink">{view.title}</p>
+            <p className="text-xs text-muted">{view.why}</p>
           </div>
           <Button onClick={() => navigate(view.href)} className="shrink-0">
             <span className="flex items-center gap-1.5">

@@ -23,15 +23,23 @@ export function stepView(step: NextStep, skillName: (s: SkillTag) => string, mod
         cta: tr("Go to practice tests"),
         href: ROUTES.PRACTICE_TESTS,
       };
-    case "retry":
+    case "retry": {
       if (!modulesOn) return null;
+      const skill = skillName(step.skill).toLowerCase();
+      const n = Math.min(5, step.count);
       return {
         icon: RotateCcw,
-        title: tr("Retry your mistakes"),
-        why: tr("{{n}} {{skill}} questions you got wrong earlier are waiting. Getting them right now makes them stick.", { n: step.count, skill: skillName(step.skill).toLowerCase() }),
-        cta: tr("Retry 5 questions"),
+        title: tr("Retry your {{skill}} mistakes", { skill }),
+        why:
+          (step.types?.length
+            ? tr("{{n}} {{skill}} questions you got wrong earlier are waiting, from {{types}}.", { n: step.count, skill, types: step.types.join(", ") })
+            : tr("{{n}} {{skill}} questions you got wrong earlier are waiting.", { n: step.count, skill })) +
+          " " +
+          tr("You'll do {{n}} of them again in Practice Modules ({{skillName}}).", { n, skillName: skillName(step.skill) }),
+        cta: tr("Retry {{n}} {{skill}} questions", { n, skill }),
         href: `${ROUTES.MODULES}?skill=${step.skill}&retry=1`,
       };
+    }
     case "set":
       if (!modulesOn) return null;
       return {

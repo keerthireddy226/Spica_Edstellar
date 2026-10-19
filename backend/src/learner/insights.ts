@@ -156,7 +156,8 @@ async function weakestSkill(userId: string, types: TypeAccuracy[]): Promise<Skil
 export type NextStep =
   | { kind: "mock"; daysLeft: number }
   | { kind: "practice_test"; daysSince: number | null }
-  | { kind: "retry"; skill: SkillTag; count: number }
+  // types: the question types of the 5 questions the retry set will hold.
+  | { kind: "retry"; skill: SkillTag; count: number; types: string[] }
   | {
       kind: "set";
       skill: SkillTag;
@@ -209,7 +210,13 @@ export async function nextStep(userId: string): Promise<NextStep | null> {
 
   const retry = await retryCounts(userId);
   const retrySkill = SKILLS.reduce((a, b) => (retry[b] > retry[a] ? b : a));
-  if (retry[retrySkill] >= RETRY_SET_SIZE) return { kind: "retry", skill: retrySkill, count: retry[retrySkill] };
+  if (retry[retrySkill] >= RETRY_SET_SIZE) {
+    const ids = (await retryItems(userId, retrySkill)).slice(0, RETRY_SET_SIZE).map((x) => x.itemId);
+    const types = (
+      await pool.query(`SELECT DISTINCT it.name FROM items i JOIN item_types it ON it.id = i.item_type_id WHERE i.id = ANY($1::uuid[]) ORDER BY it.name`, [ids])
+    ).rows.map((r) => r.name as string);
+    return { kind: "retry", skill: retrySkill, count: retry[retrySkill], types };
+  }
 
   // Otherwise the next set on the weakest skill's path.
   const skill = await weakestSkill(userId, await recentTypeAccuracy(userId));

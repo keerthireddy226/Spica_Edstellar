@@ -79,7 +79,7 @@ export interface GoalStatus {
 export type NextStep =
   | { kind: "mock"; daysLeft: number }
   | { kind: "practice_test"; daysSince: number | null }
-  | { kind: "retry"; skill: SkillTag; count: number }
+  | { kind: "retry"; skill: SkillTag; count: number; types?: string[] }
   | {
       kind: "set";
       skill: SkillTag;
