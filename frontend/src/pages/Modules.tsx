@@ -58,6 +58,7 @@ import {
   getPracticeSession,
   submitPracticeAttempt,
   completePracticeSession,
+  nextCheckQuestion,
   type PracticeSummary,
   type PracticeContext,
   type TypeProgress,
@@ -330,11 +331,13 @@ function TypePicker({
   onSelect,
   onStartSet,
   onOpenUnit,
+  onStartCheck,
 }: {
   skill: SkillTag;
   starting: boolean;
   onBack: () => void;
   onSelect: (typeId: string) => void;
+  onStartCheck: () => void;
   onStartSet: (itemTypeId: string, setId: string) => void;
   onOpenUnit: (itemTypeId: string, unitId: string, unitName: string) => void;
 }) {
@@ -390,7 +393,7 @@ function TypePicker({
       </div>
 
       {tab === "path" ? (
-        <MyPath skill={skill} starting={starting} onStartSet={onStartSet} onOpenUnit={onOpenUnit} />
+        <MyPath skill={skill} starting={starting} onStartSet={onStartSet} onOpenUnit={onOpenUnit} onStartCheck={onStartCheck} />
       ) : (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {types.map((typeId, i) => {
@@ -737,7 +740,7 @@ function ModulesPage() {
   // handleStart once it completes.
   // Agreed to the consent screen for the pending start; asked again for every session.
   const [consented, setConsented] = useState(false);
-  const [pendingStart, setPendingStart] = useState<{ skill: SkillTag; count?: number; itemTypeId?: string; setId?: string; retry?: boolean } | null>(
+  const [pendingStart, setPendingStart] = useState<{ skill: SkillTag; count?: number; itemTypeId?: string; setId?: string; retry?: boolean; check?: boolean } | null>(
     null,
   );
   // Mirrors pickerSkill/pickerType/pickerUnit into the URL (pSkill/pType/pUnit/pUnitName)
@@ -977,11 +980,11 @@ function ModulesPage() {
       .finally(() => setLoadingAvailability(false));
   }, []);
 
-  async function handleStart(skill: SkillTag, count?: number, itemTypeId?: string, setId?: string, retry?: boolean) {
+  async function handleStart(skill: SkillTag, count?: number, itemTypeId?: string, setId?: string, retry?: boolean, check?: boolean) {
     setStarting(true);
     setError(null);
     try {
-      const res = await startPracticeSession(skill, count, itemTypeId, setId, retry);
+      const res = await startPracticeSession(skill, count, itemTypeId, setId, retry, check);
       setSessionId(res.sessionId);
       setItems(res.items);
       setContext(res.context ?? null);
@@ -1033,7 +1036,7 @@ function ModulesPage() {
     // updateBrowseParams setting pSkill/pType/pUnit (as the learner clicks
     // into Type/Unit/Set) doesn't look like a fresh deep-link and wipe them
     // straight back out.
-    const raw = `${searchParams.get("skill")}|${searchParams.get("type")}|${searchParams.get("count")}|${searchParams.get("set")}|${searchParams.get("retry")}`;
+    const raw = `${searchParams.get("skill")}|${searchParams.get("type")}|${searchParams.get("count")}|${searchParams.get("set")}|${searchParams.get("retry")}|${searchParams.get("check")}`;
     const firstRun = !autoStartMounted.current;
     autoStartMounted.current = true;
     if (lastAutoStart.current === raw) return;
@@ -1049,6 +1052,7 @@ function ModulesPage() {
     // From Overview's "next step": one exact set, or a review of past mistakes.
     const setId = searchParams.get("set");
     const retry = searchParams.get("retry") === "1";
+    const check = searchParams.get("check") === "1";
     if (skill === "listening" || skill === "speaking" || skill === "reading" || skill === "writing") {
       // A skill link always wins over what's showing, even mid-session — attempts save per item, so nothing's lost.
       setSessionId(null);
@@ -1068,8 +1072,8 @@ function ModulesPage() {
           { replace: true },
         );
       }
-      if (setId || retry) {
-        setPendingStart({ skill, setId: setId ?? undefined, retry: retry || undefined });
+      if (setId || retry || check) {
+        setPendingStart({ skill, setId: setId ?? undefined, retry: retry || undefined, check: check || undefined });
       } else if (itemTypeId) {
         setPendingStart({ skill, count: count ? Number(count) : undefined, itemTypeId });
       } else {
@@ -1192,6 +1196,15 @@ function ModulesPage() {
   }
 
   async function finishOrAdvance() {
+    // A Level check picks each next question from the answers so far.
+    if (context?.check && sessionId && index + 1 >= items.length) {
+      const step = await nextCheckQuestion(sessionId);
+      if (!step.done) {
+        setItems((prev) => [...prev, step.item]);
+        setIndex(index + 1);
+        return;
+      }
+    }
     if (index + 1 < items.length) {
       setIndex(index + 1);
     } else if (sessionId) {
@@ -1281,7 +1294,7 @@ function ModulesPage() {
     if (pendingStart && faceEnrolled === null) return null;
     if (pendingStart && faceEnrolled === false) return null;
     if (pendingStart && faceEnrolled) {
-      const { skill, count, itemTypeId, setId, retry } = pendingStart;
+      const { skill, count, itemTypeId, setId, retry, check } = pendingStart;
       // What the session collects comes first, then the face check.
       if (!consented) {
         return <TestConsent kind="module" onBack={() => setPendingStart(null)} onAgreed={() => setConsented(true)} />;
@@ -1297,7 +1310,7 @@ function ModulesPage() {
           onComplete={() => {
             setConsented(false);
             setPendingStart(null);
-            handleStart(skill, count, itemTypeId, setId, retry);
+            handleStart(skill, count, itemTypeId, setId, retry, check);
           }}
         />
       );
@@ -1351,6 +1364,10 @@ function ModulesPage() {
           }}
           onStartSet={(itemTypeId, setId) => {
             setPendingStart({ skill: pickerSkill, itemTypeId, setId });
+            updateBrowseParams(null);
+          }}
+          onStartCheck={() => {
+            setPendingStart({ skill: pickerSkill, check: true });
             updateBrowseParams(null);
           }}
           onOpenUnit={(itemTypeId, unitId, unitName) => {
@@ -1419,10 +1436,10 @@ function ModulesPage() {
     const change = summary.pathChange;
     return (
       <div className="max-w-3xl mx-auto w-full flex flex-col gap-5">
-        {(celebrate || change?.direction === "up") && <Confetti key={sessionId ?? "done"} pieces={levelDone || change?.direction === "up" ? 160 : 90} />}
+        {(celebrate || change?.direction === "up" || (summary.checkResult && summary.checkResult.level > summary.checkResult.from)) && <Confetti key={sessionId ?? "done"} pieces={levelDone || change?.direction === "up" ? 160 : 90} />}
         <div className="bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
           <p className="text-xs uppercase tracking-wide text-muted">
-            {[c?.skill ? t(`skills.${c.skill}`) : null, c?.retry ? tr("Mistakes to retry") : c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
+            {[c?.skill ? t(`skills.${c.skill}`) : null, c?.check ? tr("Level check") : c?.retry ? tr("Mistakes to retry") : c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
           </p>
           {c?.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
           <div className="flex items-center gap-4">
@@ -1449,6 +1466,29 @@ function ModulesPage() {
               <div className="text-xs text-muted">{tr("Skipped")}</div>
             </div>
           </div>
+          {summary.checkResult && c?.skill && (
+            <div className="rounded-card bg-navy/5 border border-navy/20 px-4 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="h-16 w-16 rounded-2xl bg-navy text-white flex flex-col items-center justify-center shrink-0">
+                <span className="font-display font-bold text-2xl leading-none">{summary.checkResult.level}</span>
+              </div>
+              <p className="text-sm text-ink flex-1">
+                <span className="font-semibold block text-base">{tr("Your {{skill}} level: {{level}}", { skill: t(`skills.${c.skill}`).toLowerCase(), level: summary.checkResult.level })}</span>
+                {summary.checkResult.level === summary.checkResult.from
+                  ? tr("Same as before. Your path stays at {{level}}.", { level: summary.checkResult.level })
+                  : tr("Your path moves from {{from}} to {{to}} for every {{skill}} question type.", { from: summary.checkResult.from, to: summary.checkResult.level, skill: t(`skills.${c.skill}`).toLowerCase() })}
+              </p>
+              <Button
+                onClick={() => {
+                  resetToPicker();
+                  setPickerSkill(c.skill!);
+                  updateBrowseParams({ pSkill: c.skill! });
+                }}
+                className="shrink-0"
+              >
+                {tr("Continue my path")}
+              </Button>
+            </div>
+          )}
           <SetDoneStrip summary={summary} />
           {levelDone && progress && (
             <div className="rounded-card bg-success/10 border border-success/30 px-4 py-3 flex items-center gap-3">
@@ -1532,7 +1572,9 @@ function ModulesPage() {
   // through to pending/manual review server-side, rather than blocking
   // submission entirely.
   const canSubmit = current.inputMethod === "mic" ? !recording && !!audioBlobUrl : answerText.trim() !== "";
-  const progressPct = Math.round((index / items.length) * 100);
+  // A Level check doesn't know its length in advance: count up to its most questions.
+  const shownTotal = context?.check ? Math.max(items.length, context.checkMax ?? items.length) : items.length;
+  const progressPct = Math.round((index / shownTotal) * 100);
   const primarySkill = (meta?.skills ?? current.skills)[0];
   const TypeIcon = ITEM_TYPE_ICON[current.itemTypeId] ?? Headphones;
 
@@ -1567,7 +1609,9 @@ function ModulesPage() {
                   <span className="text-[11px] text-muted">
                     {[context?.unitName, context?.setName].filter(Boolean).join(" · ")}
                     {context?.unitName || context?.setName ? " · " : ""}
-                    <span className="font-mono">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
+                    <span className="font-mono">
+                      {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : t("placementTest.progress", { current: index + 1, total: items.length })}
+                    </span>
                   </span>
                   {context?.tests?.length ? <span className="text-[11px] text-muted">{tr("Versant: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
@@ -1723,7 +1767,7 @@ function ModulesPage() {
         </div>
 
         <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
-          <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
+          <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording || !!context?.check} className="!px-3.5">
             <ArrowLeft size={20} />
           </Button>
           <button
@@ -1736,7 +1780,7 @@ function ModulesPage() {
           {/* Needs an answer, except once the question's time has run out: then
               it moves on like Skip (the question counts as skipped). */}
           <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording || (!canSubmit && remainingSeconds !== 0)} className="flex-1">
-            {submitting ? t("placementTest.submitting") : index + 1 < items.length ? t("placementTest.next") : t("placementTest.finish")}
+            {submitting ? t("placementTest.submitting") : index + 1 < items.length || context?.check ? t("placementTest.next") : t("placementTest.finish")}
           </Button>
         </div>
       </div>

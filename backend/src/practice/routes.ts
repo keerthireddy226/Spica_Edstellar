@@ -14,7 +14,8 @@ import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { retryCounts, retryItems, RETRY_SET_SIZE } from "../learner/insights.js";
-import { skillPath, updatePathAfterSet, pathLevels } from "../learner/path.js";
+import { skillPath, updatePathAfterSet, pathLevels, type Level } from "../learner/path.js";
+import { applyCheckResult, checkStartLevel, decide, pickCheckItem, quickJudge, settleCheck, MAX_CHECK_QUESTIONS, type CheckAnswer } from "../learner/levelCheck.js";
 
 export const practiceRouter = Router();
 
@@ -38,6 +39,8 @@ const startSessionSchema = z.object({
   setId: z.string().uuid().optional(),
   // A review set of this skill's questions answered wrong earlier.
   retry: z.boolean().optional(),
+  // The adaptive Level check of this skill.
+  check: z.boolean().optional(),
 });
 
 // Spreads `count` across the skill's item types and difficulty, preferring unseen items.
@@ -341,6 +344,11 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
     const body = startSessionSchema.parse(req.body);
     const count = body.count ?? (body.itemTypeId ? DEFAULT_TASK_ITEMS : DEFAULT_ITEMS);
 
+    if (body.check) {
+      const started = await startLevelCheck(req.user!.id, body.skill);
+      return started ? res.status(201).json(started) : res.status(404).json({ error: "no_practice_items_available" });
+    }
+
     // A Set-based session matches on setId alone (already fully specific).
     const existing = await pool.query(
       body.retry
@@ -488,8 +496,11 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
     if (!session) return res.status(404).json({ error: "session_not_found" });
     if (session.completed_at) return res.status(409).json({ error: "session_already_completed" });
 
-    const graded = await gradeAndSaveAttempt(session.id, body);
+    const check = (await pool.query(`SELECT composition FROM sessions WHERE id = $1`, [session.id])).rows[0].composition?.check === true;
+    // A Level check judges the answer itself and grades recordings in the background.
+    const graded = await gradeAndSaveAttempt(session.id, body, { deferSpeaking: check });
     if (!graded) return res.status(404).json({ error: "item_not_found" });
+    if (check) await recordCheckAnswer(session.id, body.itemId, body.responseText);
 
     const { attemptId, grade, wasCorrect } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
@@ -540,8 +551,86 @@ async function setContext(userId: string, setId: string | null, skill: string | 
 // A session's context, flagged when it is a "mistakes to retry" review set.
 async function contextOf(userId: string, c: Record<string, unknown>) {
   const { context } = await setContext(userId, (c.setId as string) ?? null, (c.skill as string) ?? null, (c.itemTypeId as string) ?? null);
-  return { ...context, retry: c.retry === true };
+  return { ...context, retry: c.retry === true, check: c.check === true, checkMax: c.check === true ? MAX_CHECK_QUESTIONS : undefined };
 }
+
+// --- Level check -------------------------------------------------------------
+
+async function itemPayloads(userId: string, ids: string[]) {
+  return withQuestionTimes(await withAudioUrls(userId, (await selectItemsById(ids)).map(toItemPayload)));
+}
+
+// Resumes an open Level check of this skill, or starts one at the skill's path level.
+async function startLevelCheck(userId: string, skill: SkillTag) {
+  const open = (
+    await pool.query(
+      `SELECT id, composition FROM sessions WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
+         AND composition->>'check' = 'true' AND composition->>'skill' = $2 ORDER BY started_at DESC LIMIT 1`,
+      [userId, skill],
+    )
+  ).rows[0];
+  if (open) return { sessionId: open.id, skill, items: await loadResumedSession(userId, open), context: await contextOf(userId, open.composition) };
+  const start = await checkStartLevel(userId, skill);
+  const first = await pickCheckItem(userId, skill, start, [], []);
+  if (!first) return null;
+  const composition = { skill, check: true, checkStart: start, checkAnswers: [], itemIds: [first] };
+  const id = (await pool.query(`INSERT INTO sessions (user_id, session_type, mode, composition) VALUES ($1, 'practice', 'coach', $2) RETURNING id`, [userId, composition])).rows[0].id;
+  return { sessionId: id, skill, items: await itemPayloads(userId, [first]), context: await contextOf(userId, composition) };
+}
+
+async function recordCheckAnswer(sessionId: string, itemId: string, responseText: string | undefined) {
+  const item = (await pool.query(`SELECT item_type_id, content, answer_set, cefr_level FROM items WHERE id = $1`, [itemId])).rows[0];
+  if (!item) return;
+  const answer: CheckAnswer = { itemId, level: item.cefr_level, right: quickJudge(item.item_type_id, item.content, item.answer_set, responseText) };
+  // Re-answering a question replaces its earlier judgement.
+  await pool.query(
+    `UPDATE sessions SET composition = jsonb_set(composition, '{checkAnswers}',
+       coalesce((SELECT jsonb_agg(x) FROM jsonb_array_elements(composition->'checkAnswers') x WHERE x->>'itemId' <> $2), '[]'::jsonb) || $3::jsonb)
+     WHERE id = $1`,
+    [sessionId, itemId, JSON.stringify([answer])],
+  );
+}
+
+// After each answer in a Level check: the next question, or the result.
+practiceRouter.post("/session/:sessionId/check-next", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const row = (
+      await pool.query(`SELECT id, composition FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'practice' AND completed_at IS NULL`, [
+        req.params.sessionId,
+        req.user!.id,
+      ])
+    ).rows[0];
+    if (!row || row.composition?.check !== true) return res.status(404).json({ error: "session_not_found" });
+    const c = row.composition;
+    const itemIds: string[] = c.itemIds ?? [];
+    // A question left without an answer counts as wrong.
+    const judged: CheckAnswer[] = c.checkAnswers ?? [];
+    const levels = new Map(
+      (await pool.query(`SELECT id, cefr_level, item_type_id FROM items WHERE id = ANY($1::uuid[])`, [itemIds])).rows.map((r) => [r.id, r]),
+    );
+    const answers = itemIds.map((id) => judged.find((a) => a.itemId === id) ?? { itemId: id, level: levels.get(id)?.cefr_level as Level, right: false });
+    let decision = decide(c.checkStart as Level, answers);
+    let nextId: string | null = null;
+    if (!decision.done) {
+      nextId = await pickCheckItem(req.user!.id, c.skill, decision.level, itemIds, itemIds.map((id) => levels.get(id)?.item_type_id));
+      // No question left at that level: settle on what's known so far.
+      if (!nextId) decision = { done: true, result: settleCheck(c.checkStart as Level, answers) };
+    }
+    if (decision.done) {
+      const result = { level: decision.result, from: c.checkStart };
+      await pool.query(`UPDATE sessions SET composition = composition || $2::jsonb WHERE id = $1`, [row.id, JSON.stringify({ checkResult: result })]);
+      await applyCheckResult(req.user!.id, c.skill, decision.result);
+      return res.json({ done: true, result });
+    }
+    await pool.query(`UPDATE sessions SET composition = jsonb_set(composition, '{itemIds}', (composition->'itemIds') || $2::jsonb) WHERE id = $1`, [
+      row.id,
+      JSON.stringify([nextId]),
+    ]);
+    res.json({ done: false, item: (await itemPayloads(req.user!.id, [nextId!]))[0] });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Sets of this level (unit) finished, for this skill.
 async function unitProgress(userId: string, setId: string, skill: string) {
@@ -708,8 +797,10 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
       pendingCount,
       failedCount,
       questions: await reviewQuestions(req.params.sessionId as string, composition.itemIds ?? []),
-      context: { ...ctx.context, retry: composition.retry === true },
+      context: { ...ctx.context, retry: composition.retry === true, check: composition.check === true },
       next: ctx.next,
+      // A Level check's result: the skill's level now, and where it started.
+      checkResult: composition.checkResult ?? null,
     });
   } catch (err) {
     next(err);

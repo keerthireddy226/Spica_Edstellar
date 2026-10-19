@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, CheckCircle2, ChevronRight, Route, TrendingUp } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronRight, Gauge, Route, TrendingUp } from "lucide-react";
 import { Button } from "@/components/Button";
 import { getSkillPath, type SkillPath } from "@/api/practiceSession";
 import type { SkillTag } from "@/api/testSession";
@@ -15,9 +15,11 @@ export function MyPath({
   starting,
   onStartSet,
   onOpenUnit,
+  onStartCheck,
 }: {
   skill: SkillTag;
   starting: boolean;
+  onStartCheck: () => void;
   onStartSet: (itemTypeId: string, setId: string) => void;
   onOpenUnit: (itemTypeId: string, unitId: string, unitName: string) => void;
 }) {
@@ -50,7 +52,7 @@ export function MyPath({
           <div className="min-w-0">
             <p className="font-display font-bold text-lg text-ink">{tr("Your {{skill}} path", { skill: t(`skills.${skill}`).toLowerCase() })}</p>
             <p className="text-sm text-muted">
-              {tr("It starts at your level-test level. Finish 7 sets of a question type at 70% or more to move it up a level.")}
+              {tr("It starts at your level from the level test or a level check. Finish 7 sets of a question type at 70% or more to move it up a level.")}
             </p>
             <div className="flex items-center gap-1 mt-2" aria-hidden="true">
               {LEVELS.map((l) => (
@@ -80,6 +82,17 @@ export function MyPath({
             </Button>
           </div>
         )}
+      </div>
+
+      <div className="rounded-card border border-dashed border-navy/30 bg-navy/5 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <Gauge size={22} className="text-navy-deep shrink-0" />
+        <p className="text-sm text-ink flex-1">
+          <span className="font-semibold">{tr("Not sure {{level}} is right?", { level: path.level })}</span>{" "}
+          {tr("Take a short {{skill}} level check (about 5 minutes). It adapts to your answers and sets your path level.", { skill: t(`skills.${skill}`).toLowerCase() })}
+        </p>
+        <Button variant="secondary" onClick={onStartCheck} disabled={starting} className="shrink-0">
+          {tr("Check my level")}
+        </Button>
       </div>
 
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">

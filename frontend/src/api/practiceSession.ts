@@ -13,6 +13,9 @@ export interface PracticeContext {
   tests?: { id: string; name: string }[];
   // A "mistakes to retry" review set, not a regular set.
   retry?: boolean;
+  // An adaptive Level check of the skill, and its most questions.
+  check?: boolean;
+  checkMax?: number;
 }
 
 export interface PracticeSummary {
@@ -33,6 +36,8 @@ export interface PracticeSummary {
   streakDays?: number;
   newBadges?: { id: string; title: string; icon: string }[];
   unitProgress?: { unitName: string; done: number; total: number; levelComplete: boolean } | null;
+  // A Level check's result: the skill's level now, and where the check started.
+  checkResult?: { level: string; from: string } | null;
   // "My path" moved: a level passed (up) or two weak sets in a row (down).
   pathChange?: { itemTypeId: string; typeName: string; skill: string; from: string; to: string; direction: "up" | "down" } | null;
 }
@@ -111,8 +116,14 @@ export function startPracticeSession(
   itemTypeId?: string,
   setId?: string,
   retry?: boolean,
+  check?: boolean,
 ): Promise<{ sessionId: string; skill: SkillTag; items: TestItem[]; context?: PracticeContext }> {
-  return api("/practice/session", { method: "POST", body: JSON.stringify({ skill, count, itemTypeId, setId, retry }) });
+  return api("/practice/session", { method: "POST", body: JSON.stringify({ skill, count, itemTypeId, setId, retry, check }) });
+}
+
+// After each answer in a Level check: the next question, or the result.
+export function nextCheckQuestion(sessionId: string): Promise<{ done: false; item: TestItem } | { done: true; result: { level: string; from: string } }> {
+  return api(`/practice/session/${sessionId}/check-next`, { method: "POST" });
 }
 
 export function submitPracticeAttempt(
