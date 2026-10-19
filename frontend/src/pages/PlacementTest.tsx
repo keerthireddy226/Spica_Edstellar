@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Volume2, CheckCircle2, Clock, X, Headphones, BookOpen, MessageSquare, ArrowRightCircle } from "lucide-react";
+import { Volume2, CheckCircle2, Clock, X, ArrowRightCircle } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import {
@@ -537,7 +537,6 @@ export function PlacementTest() {
               <span className="text-xs font-semibold text-muted">{needsAudioFirst ? t("practiceTests.youHear") : tr("You read")}</span>
               {needsAudioFirst ? (
                 <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
-                  <Headphones size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-navy/25 pointer-events-none" />
                   <button
                     onClick={handlePlay}
                     disabled={playing || recording}
@@ -552,7 +551,6 @@ export function PlacementTest() {
                 </div>
               ) : (
                 <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
-                  <BookOpen size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-navy/20 pointer-events-none" />
                   {getPassageAndQuestion(current) ? (
                     <>
                       <p className="relative text-sm leading-relaxed whitespace-pre-wrap">{getPassageAndQuestion(current)!.passage}</p>
@@ -579,7 +577,6 @@ export function PlacementTest() {
                     : undefined
                 }
               >
-                {current.inputMethod === "mic" && <MessageSquare size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />}
                 <div className="relative w-full">
                   <AnswerInputControl
                     item={current}
