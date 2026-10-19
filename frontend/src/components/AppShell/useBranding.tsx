@@ -15,10 +15,18 @@ export interface Branding {
   category?: "company" | "university" | "other" | null;
 }
 
+// Kept per signed-in person: signing in as someone else in the same tab must
+// not reuse the last person's policies (a staff account's "face check on"
+// once showed a face check to a learner who doesn't need one).
 let cached: Promise<Branding> | null = null;
+let cachedFor: string | null = null;
 const listeners = new Set<(b: Branding) => void>();
 
-export function getBranding(): Promise<Branding> {
+export function getBranding(userId?: string): Promise<Branding> {
+  if (userId !== undefined && userId !== cachedFor) {
+    cached = null;
+    cachedFor = userId;
+  }
   if (!cached) cached = api<Branding>("/branding/me").catch((err) => {
     cached = null;
     throw err;
@@ -40,7 +48,8 @@ export function useBranding(): Branding | null {
   useEffect(() => {
     if (!user) return;
     let live = true;
-    getBranding()
+    setB(null);
+    getBranding(user.id)
       .then((x) => live && setB(x))
       .catch(() => {});
     listeners.add(setB);
@@ -48,7 +57,7 @@ export function useBranding(): Branding | null {
       live = false;
       listeners.delete(setB);
     };
-  }, [user]);
+  }, [user?.id]);
   return b;
 }
 
