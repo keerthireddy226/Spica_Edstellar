@@ -66,3 +66,47 @@ export const saveMyGoals = (g: {
   dailyMinutes?: number;
   examReason?: string;
 }) => api<{ ok: true }>("/me/goals", { method: "PATCH", body: JSON.stringify(g) });
+
+// The learner's group this week (when their organization turned it on).
+export interface GroupBoard {
+  enabled: boolean;
+  group?: string;
+  hidden?: boolean;
+  size?: number;
+  active?: number;
+  points?: { points: number; sets: number; correct: number; tests: number; activeDays: number };
+  weekStart?: string;
+  // Fewer than `needed` practised this week: no ranking shown yet.
+  quiet?: boolean;
+  needed?: number;
+  rank?: number;
+  topPercent?: number;
+  topHalf?: boolean;
+  climbed?: number | null;
+  pointsToTopHalf?: number;
+  top?: { name: string | null; points: number; rank: number; me: boolean }[];
+}
+
+export function getGroupBoard(): Promise<GroupBoard> {
+  return api("/me/leaderboard");
+}
+
+export function setBoardNameHidden(hidden: boolean): Promise<{ hidden: boolean }> {
+  return api("/me/leaderboard-visibility", { method: "PATCH", body: JSON.stringify({ hidden }) });
+}
+
+// A batch's board for its admin or managers.
+export interface BatchBoard {
+  enabled: boolean;
+  group: string | null;
+  weekStart: string;
+  rows: { id: string; name: string; hidden: boolean; rank: number; points: number; sets: number; correct: number; tests: number; activeDays: number; level: string | null; lastActive: string | null }[];
+}
+
+export function getBatchBoard(scope: "org-admin" | "manager", batchId: string): Promise<BatchBoard> {
+  return api(`/${scope}/batches/${batchId}/leaderboard`);
+}
+
+export function setBatchBoardEnabled(batchId: string, enabled: boolean): Promise<{ enabled: boolean }> {
+  return api(`/org-admin/batches/${batchId}/leaderboard`, { method: "PATCH", body: JSON.stringify({ enabled }) });
+}

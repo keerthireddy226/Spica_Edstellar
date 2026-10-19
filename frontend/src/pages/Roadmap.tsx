@@ -9,6 +9,7 @@ import { MotivationalBar } from "@/components/MotivationalBar";
 import { getJourney, getRoadmap, type Journey, type RoadmapData } from "@/api/roadmap";
 import { Checkpoints, JourneyHero, PathToGoal, SkillProgress, ThisWeek } from "@/components/journey/JourneyParts";
 import { NextStepCard } from "@/components/learner/GoalCards";
+import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
 import { ApiError } from "@/lib/api";
 import { WORD_BANK, IDIOM_BANK, WORD_CHALLENGES } from "@/data/dailyContent";
 
@@ -209,6 +210,7 @@ export function Roadmap() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-5">
           <ThisWeek j={journeyData} />
+          <GroupBoardCard />
         </div>
       </div>
 

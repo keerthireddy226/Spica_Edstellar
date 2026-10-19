@@ -34,6 +34,7 @@ import { NextStepCard } from "@/components/learner/GoalCards";
 import { JourneySummary } from "@/components/journey/JourneyParts";
 import { getJourney, type Journey } from "@/api/roadmap";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
+import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
 import {
   getDashboard,
   type DashboardData,
@@ -437,6 +438,8 @@ function LearnerDashboard() {
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 
       <NextStepCard />
+
+      <GroupBoardCard />
 
       {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} />}
 

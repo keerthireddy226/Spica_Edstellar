@@ -20,6 +20,7 @@ import { auditCsv, listAudit, recordAudit } from "../audit/service.js";
 import { startViewAs } from "../auth/viewAs.js";
 import { notify } from "../notifications/service.js";
 import { SESSION_COOKIE } from "../auth/tokens.js";
+import { adminBoard } from "../learner/leaderboard.js";
 
 export const orgAdminRouter = Router();
 
@@ -442,6 +443,34 @@ orgAdminRouter.patch("/batches/:id", requireAuth, async (req: AuthedRequest, res
     const ok = await updateBatch(String(req.params.id), tenantId, batchEditSchema.parse(req.body));
     if (!ok) return res.status(404).json({ error: "batch_not_found" });
     res.json({ id: req.params.id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The batch's group leaderboard this week, and turning it on or off for its learners.
+orgAdminRouter.get("/batches/:id/leaderboard", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const own = await pool.query(`SELECT 1 FROM batches WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId]);
+    if (!own.rowCount) return res.status(404).json({ error: "batch_not_found" });
+    res.json(await adminBoard(String(req.params.id)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+orgAdminRouter.patch("/batches/:id/leaderboard", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z.object({ enabled: z.boolean() }).parse(req.body);
+    const r = await pool.query(`UPDATE batches SET leaderboard_enabled = $3 WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId, body.enabled]);
+    if (!r.rowCount) return res.status(404).json({ error: "batch_not_found" });
+    res.json({ enabled: body.enabled });
   } catch (err) {
     next(err);
   }

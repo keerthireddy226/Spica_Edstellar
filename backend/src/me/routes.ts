@@ -5,6 +5,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { learnerAccess } from "../licenses/service.js";
 import { getLearnerStats } from "../gamification/stats.js";
 import { rebuildRoadmap } from "../roadmap/save.js";
+import { learnerBoard } from "../learner/leaderboard.js";
 
 // The signed-in person's own profile extras: work details, what they've
 // done recently, a summary of their role, and (for learners) their
@@ -231,6 +232,28 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
     // A new goal, exam date or daily time gets a new study plan.
     if (b.goalLevel !== undefined || b.examDate !== undefined || b.dailyMinutes !== undefined) await rebuildRoadmap(req.user!.id);
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The learner's group this week (when their organization turned it on).
+meRouter.get("/leaderboard", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
+  try {
+    res.json(await learnerBoard(req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Show or hide the learner's name on their group's board.
+meRouter.patch("/leaderboard-visibility", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
+  try {
+    const body = z.object({ hidden: z.boolean() }).parse(req.body);
+    await pool.query(`UPDATE users SET leaderboard_hidden = $2 WHERE id = $1`, [req.user!.id, body.hidden]);
+    res.json({ hidden: body.hidden });
   } catch (err) {
     next(err);
   }

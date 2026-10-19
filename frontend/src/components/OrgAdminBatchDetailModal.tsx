@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Badge, DetailModal } from "@/components/DetailModal";
+import { BatchLeaderboardSection } from "@/components/BatchLeaderboardSection";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { BatchFixedLicenses } from "@/components/licenses/BatchFixedLicenses";
 import { BatchFormModal } from "@/components/BatchFormModal";
@@ -204,6 +205,8 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
           }}
         />
       )}
+
+      <BatchLeaderboardSection batchId={batchId} scope="org-admin" />
 
       {viewingLearnerId && (
         <LearnerProfileModal

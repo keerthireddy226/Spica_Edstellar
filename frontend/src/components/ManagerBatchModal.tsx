@@ -3,6 +3,7 @@ import { Award, CheckCircle2, Copy, Layers, Pencil } from "lucide-react";
 import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchFormModal } from "@/components/BatchFormModal";
 import { Badge, DetailModal } from "@/components/DetailModal";
+import { BatchLeaderboardSection } from "@/components/BatchLeaderboardSection";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Button } from "@/components/Button";
@@ -253,6 +254,8 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
           saveDetails={(id, d) => managerUpdateLearnerDetails(id, d).then(load)}
         />
       )}
+      <BatchLeaderboardSection batchId={batchId} scope="manager" />
+
       {editing && (
         <BatchFormModal
           title={tr("Edit batch")}

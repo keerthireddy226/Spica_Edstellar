@@ -24,6 +24,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { createAndInviteUser } from "../auth/invite.js";
 import { moveLearnerSchema, moveLearnerToBatch } from "../batches/moveLearner.js";
+import { adminBoard } from "../learner/leaderboard.js";
 
 export const managerRouter = Router();
 
@@ -644,6 +645,18 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
 
 // Managers can close out and reuse their batches; archiving and reopening
 // stay with the Org Admin.
+// The managed batch's group leaderboard this week.
+managerRouter.get("/batches/:id/leaderboard", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireManager(req, res)) return;
+  try {
+    const batchId = await requireManagedBatch(req, res);
+    if (!batchId) return;
+    res.json(await adminBoard(batchId));
+  } catch (err) {
+    next(err);
+  }
+});
+
 managerRouter.post("/batches/:id/complete", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireManager(req, res)) return;
   try {
