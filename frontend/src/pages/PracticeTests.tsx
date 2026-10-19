@@ -724,6 +724,27 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     setIndex(index - 1);
   }
 
+  // The sidebar link (no ?product or ?session in the URL) always opens the
+  // main page, even from a test's set list or a test in progress (which
+  // stays saved to resume).
+  useEffect(() => {
+    if (searchParams.get("product") || searchParams.get("session")) return;
+    if (!selectedProduct && !sessionId && !pendingStart && !summary) return;
+    setPendingStart(null);
+    setPreTestDoneFor(null);
+    setResumeNeedsCheck(false);
+    setSessionId(null);
+    setDeliveryMode("practice");
+    setFeedback(null);
+    setTestCode(null);
+    setItems([]);
+    setPartBoundaries([]);
+    setSummary(null);
+    setSelectedProduct(null);
+    loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.key]);
+
   function resetToExamList() {
     setSessionId(null);
     setDeliveryMode("practice");
