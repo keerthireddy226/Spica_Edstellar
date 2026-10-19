@@ -8,6 +8,8 @@ import type { SkillTag } from "../gamification/stats.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { goalStatus, nextStep, retryCounts, type GoalStatus, type NextStep } from "./insights.js";
 import { LEVELS, PASS_SETS, overallFromSkills, skillPath, type Level, type SkillPath } from "./path.js";
+import { quotaUsage } from "../programs/quotas.js";
+import { scheduleTests } from "./testSchedule.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -54,7 +56,16 @@ export interface Journey {
   skills: { skill: SkillTag; level: Level; startLevel: Level | null; progressPercent: number; partWay: number }[];
   steps: { level: Level; skills: { skill: SkillTag; state: "done" | "now" | "later"; partWay: number }[] }[];
   week: JourneyTask[];
-  checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag }[];
+  // Past tests come first (done, with their level), then today and the plan.
+  checkpoints: {
+    date: string;
+    kind: "practice_test" | "level_check" | "mock" | "exam" | "today";
+    done: boolean;
+    skill?: SkillTag;
+    level?: string;
+    // A mock placed on the day new mocks arrive.
+    onReset?: boolean;
+  }[];
   nextStep: NextStep | null;
 }
 
@@ -146,28 +157,53 @@ export async function journey(userId: string): Promise<Journey> {
     }
   }
 
-  // A full mock a week before the exam (or one this month without a date).
+  // --- Test plan: weekly practice tests with mocks spaced by the allowance ---
   const lastMock = lastOf("mock");
   const examDate = goal.examDate;
-  const mockDue = examDate ? new Date(new Date(examDate).getTime() - 7 * DAY_MS) : null;
-  const mockDone = mockDue
-    ? !!lastMock && new Date(lastMock).getTime() > mockDue.getTime() - 21 * DAY_MS
-    : !!lastMock && new Date(lastMock).getMonth() === new Date().getMonth() && new Date(lastMock).getFullYear() === new Date().getFullYear();
-  if (!mockDue || mockDue.getTime() - Date.now() < 21 * DAY_MS) {
-    week.push({ id: "mock", kind: "mock", done: mockDone, date: mockDue ? dateOnly(mockDue) : undefined, href: "/mock-exams" });
+  const quota = await quotaUsage(userId).catch(() => null);
+  const slots = scheduleTests({
+    today: new Date(),
+    examDate: examDate ? new Date(examDate) : null,
+    lastPractice: lastPractice ? new Date(lastPractice) : null,
+    lastMock: lastMock ? new Date(lastMock) : null,
+    mocksPerMonth: quota ? quota.mocksPerMonth : 2,
+    mocksLeft: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null,
+    resetsOn: quota ? new Date(quota.resetsOn) : null,
+  });
+  // This week's mock (when one falls in the next 7 days), or one just done.
+  const mockDoneThisWeek = !!lastMock && Date.now() - new Date(lastMock).getTime() < 7 * DAY_MS;
+  const nextMock = slots.find((x) => x.kind === "mock");
+  if (mockDoneThisWeek || (nextMock && nextMock.date.getTime() - Date.now() < 7 * DAY_MS)) {
+    week.push({
+      id: "mock",
+      kind: "mock",
+      done: mockDoneThisWeek,
+      date: nextMock ? dateOnly(nextMock.date) : undefined,
+      count: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : undefined,
+      target: quota?.mocksPerMonth ?? undefined,
+      href: "/mock-exams",
+    });
   }
 
-  // --- Checkpoints up to the exam ---
-  const checkpoints: Journey["checkpoints"] = [{ date: dateOnly(new Date()), kind: "today", done: true }];
-  const nextPractice = practiceDone ? new Date(new Date(lastPractice!).getTime() + 7 * DAY_MS) : new Date();
-  const until = examDate ? new Date(examDate).getTime() : Date.now() + 28 * DAY_MS;
-  for (let d = nextPractice.getTime(), n = 0; d < until && n < 4; d += 7 * DAY_MS, n++) {
-    checkpoints.push({ date: dateOnly(new Date(d)), kind: "practice_test", done: false });
-  }
+  // --- Checkpoints: recent tests (with their level), today, the plan, exam day ---
+  const past = (
+    await pool.query(
+      `SELECT delivery_mode, completed_at, result->>'cefrLevel' AS level FROM sessions
+       WHERE user_id = $1 AND session_type = 'mocktest' AND completed_at IS NOT NULL AND coalesce(composition->>'abandoned', 'false') <> 'true'
+       ORDER BY completed_at DESC LIMIT 3`,
+      [userId],
+    )
+  ).rows.reverse();
+  const checkpoints: Journey["checkpoints"] = past.map((t) => ({
+    date: dateOnly(new Date(t.completed_at)),
+    kind: t.delivery_mode === "mock" ? ("mock" as const) : ("practice_test" as const),
+    done: true,
+    level: t.level ?? undefined,
+  }));
+  checkpoints.push({ date: dateOnly(new Date()), kind: "today", done: true });
   for (const t of week.filter((x) => x.kind === "level_check" && !x.done)) checkpoints.push({ date: dateOnly(new Date()), kind: "level_check", done: false, skill: t.skill });
-  if (mockDue) checkpoints.push({ date: dateOnly(mockDue), kind: "mock", done: mockDone });
+  for (const slot of slots) checkpoints.push({ date: dateOnly(slot.date), kind: slot.kind, done: false, onReset: slot.onReset });
   if (examDate) checkpoints.push({ date: examDate, kind: "exam", done: false });
-  checkpoints.sort((a, b) => a.date.localeCompare(b.date) || (a.kind === "today" ? -1 : b.kind === "today" ? 1 : 0));
 
   return {
     current,

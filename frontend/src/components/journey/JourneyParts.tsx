@@ -175,7 +175,14 @@ function taskText(task: JourneyTask, skillName: (s: SkillTag) => string): { icon
     case "level_check":
       return { icon: Gauge, title: tr("Level check: {{skill}} (a test came out lower)", { skill: task.skill ? skillName(task.skill) : "" }) };
     case "mock":
-      return { icon: Timer, title: task.date ? tr("Mock exam by {{date}}", { date: formatShortDate(task.date) }) : tr("A mock exam this month") };
+      return {
+        icon: Timer,
+        title: task.done
+          ? tr("Mock exam this week")
+          : task.target != null
+            ? tr("Mock exam on {{date}} · {{left}} of {{n}} left this month", { date: formatShortDate(task.date ?? null), left: task.count ?? 0, n: task.target })
+            : tr("Mock exam on {{date}}", { date: formatShortDate(task.date ?? null) }),
+      };
   }
 }
 
@@ -216,11 +223,14 @@ export function ThisWeek({ j }: { j: Journey }) {
   );
 }
 
-// The dated checkpoints up to the exam.
+// The test plan on a timeline: recent tests (done, with their level), today,
+// then practice tests and mocks spaced by the monthly allowance, up to the exam.
 export function Checkpoints({ j }: { j: Journey }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   if (j.checkpoints.length < 2) return null;
-  const label = (c: Journey["checkpoints"][number]) =>
+  type C = Journey["checkpoints"][number];
+  const label = (c: C) =>
     c.kind === "today"
       ? tr("Today")
       : c.kind === "practice_test"
@@ -230,29 +240,63 @@ export function Checkpoints({ j }: { j: Journey }) {
           : c.kind === "mock"
             ? tr("Mock exam")
             : tr("Exam day");
+  const href = (c: C) =>
+    c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
+  const Icon = (c: C) => (c.kind === "exam" ? Flag : c.kind === "mock" ? Timer : c.kind === "level_check" ? Gauge : c.kind === "practice_test" ? ClipboardList : null);
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
-      <h2 className="font-display font-bold text-base text-ink flex items-center gap-2">
-        <CalendarDays size={17} className="text-accent" /> {tr("Checkpoints")}
-      </h2>
-      <div className="overflow-x-auto">
-        <ol className="flex items-start min-w-max gap-0">
-          {j.checkpoints.map((c, i) => (
-            <li key={`${c.kind}-${c.date}-${i}`} className="flex flex-col items-center w-32 relative">
-              {i > 0 && <span className="absolute top-3 right-1/2 w-full h-0.5 bg-rule -z-0" aria-hidden="true" />}
-              <span
-                className={`relative z-10 h-6 w-6 rounded-full flex items-center justify-center ${
-                  c.kind === "exam" ? "bg-accent text-white" : c.kind === "today" ? "bg-navy text-white" : c.done ? "bg-success text-white" : "bg-surface border-2 border-navy/40"
-                }`}
-              >
-                {c.kind === "exam" ? <Flag size={12} /> : c.done ? <Check size={12} /> : null}
-              </span>
-              <span className="text-xs font-semibold text-ink mt-1.5 text-center">{label(c)}</span>
-              <span className="text-[11px] text-muted">{formatShortDate(c.date)}</span>
-            </li>
-          ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display font-bold text-base text-ink flex items-center gap-2">
+          <CalendarDays size={17} className="text-accent" /> {tr("Test plan")}
+        </h2>
+        <span className="flex items-center gap-3 text-[11px] text-muted">
+          <span className="flex items-center gap-1">
+            <ClipboardList size={12} /> {tr("Practice test")}
+          </span>
+          <span className="flex items-center gap-1 text-accent">
+            <Timer size={12} /> {tr("Mock exam")}
+          </span>
+        </span>
+      </div>
+      <div className="overflow-x-auto pb-1">
+        <ol className="flex items-start min-w-max">
+          {j.checkpoints.map((c, i) => {
+            const I = Icon(c);
+            const link = !c.done ? href(c) : null;
+            const mock = c.kind === "mock";
+            return (
+              <li key={`${c.kind}-${c.date}-${i}`} className="flex flex-col items-center w-28 relative">
+                {i > 0 && <span className={`absolute top-4 right-1/2 w-full h-0.5 ${c.done || c.kind === "today" ? "bg-navy/40" : "bg-rule"}`} aria-hidden="true" />}
+                <button
+                  disabled={!link}
+                  onClick={() => link && navigate(link)}
+                  className={`relative z-10 h-8 w-8 rounded-full flex items-center justify-center ${link ? "cursor-pointer hover:scale-110 transition-transform" : "cursor-default"} ${
+                    c.kind === "exam"
+                      ? "bg-accent text-white"
+                      : c.kind === "today"
+                        ? "bg-navy text-white ring-4 ring-navy/15"
+                        : c.done
+                          ? "bg-success text-white"
+                          : mock
+                            ? "bg-accent/15 text-accent border-2 border-accent"
+                            : "bg-surface text-navy-deep border-2 border-navy/40"
+                  }`}
+                >
+                  {c.done && c.kind !== "today" ? <Check size={14} /> : I ? <I size={14} /> : null}
+                </button>
+                <span className={`text-xs font-semibold mt-1.5 text-center ${mock ? "text-accent" : "text-ink"}`}>{label(c)}</span>
+                <span className="text-[11px] text-muted">{formatShortDate(c.date)}</span>
+                {c.done && c.level && <span className="text-[11px] font-semibold text-success">{c.level}</span>}
+                {c.onReset && <span className="text-[10px] text-muted text-center leading-tight">{tr("new mocks that day")}</span>}
+              </li>
+            );
+          })}
         </ol>
       </div>
+      {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, with a final mock the week before.")}</p>}
+      {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
+        <p className="text-xs text-warning">{tr("No mock exam is left in this month's allowance before your exam. See the Mock Exams page for when new ones arrive.")}</p>
+      )}
     </section>
   );
 }
