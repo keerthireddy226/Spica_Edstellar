@@ -838,7 +838,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           </p>
         )}
         {summary.pathCompare && Object.keys(summary.pathCompare).length > 0 ? (
-          <SkillLevelCompare compare={summary.pathCompare} percents={summary.skillPercents} />
+          <SkillLevelCompare compare={summary.pathCompare} percents={summary.skillPercents} kind={summary.deliveryMode === "mock" ? "mock" : "practice"} />
         ) : summary.skillLevels && Object.keys(summary.skillLevels).length > 0 && (
           <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(["listening", "speaking", "reading", "writing"] as const)

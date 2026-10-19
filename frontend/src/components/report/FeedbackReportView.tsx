@@ -304,7 +304,7 @@ export function QuestionReview({
   );
 }
 
-function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: boolean }) {
+function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgradeLink: boolean; kind?: "practice" | "mock" }) {
   const { t } = useTranslation();
   const qs = report.questions ?? [];
   const counts = report.counts ?? {
@@ -348,7 +348,7 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
             </div>
           )}
         </div>
-        {report.overall.pathCompare && Object.keys(report.overall.pathCompare).length > 0 && <SkillLevelCompare compare={report.overall.pathCompare} />}
+        {report.overall.pathCompare && Object.keys(report.overall.pathCompare).length > 0 && <SkillLevelCompare compare={report.overall.pathCompare} kind={kind} />}
         {report.target && (
           <p className="text-sm text-muted flex items-center gap-1.5">
             <Target size={15} /> {tr("Your target: {{level}} by {{date}} ({{program}})", { level: report.target.level, date: report.target.date, program: report.target.programName })}
@@ -459,7 +459,7 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   return (
     <div className="flex flex-col gap-4">
       {about}
-      <Report report={data.report} upgradeLink={upgradeLink} />
+      <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} />
     </div>
   );
 }
