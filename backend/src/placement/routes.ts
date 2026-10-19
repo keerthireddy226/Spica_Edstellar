@@ -10,19 +10,18 @@ import { sendPlacementReminderEmail } from "../auth/mailer.js";
 import { submitAttemptSchema } from "./schemas.js";
 import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
 import {
-  CEFR_LEVELS,
   cefrRank,
   START_LEVEL,
   stepLevel,
   type CefrLevel,
 } from "./cefr.js";
-import { buildRoadmap, type AccessDuration, type SkillTag } from "./roadmapBuilder.js";
 import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, type ScoredAttemptRow } from "./levels.js";
 import { newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
+import { saveRoadmap } from "../roadmap/save.js";
 import { z } from "zod";
 
 export const placementRouter = Router();
@@ -427,42 +426,6 @@ placementRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Au
     next(err);
   }
 });
-
-async function saveRoadmap(userId: string, cefrLevel: CefrLevel, roadmapSkillPercents: Record<SkillTag, number>) {
-  const profileResult = await pool.query(
-    `SELECT goal_level, exam_date, access_duration, daily_minutes_preference FROM participant_profiles WHERE user_id = $1`,
-    [userId],
-  );
-  const profile = profileResult.rows[0] ?? {};
-  const goalLevel: CefrLevel =
-    profile.goal_level && profile.goal_level !== "unsure"
-      ? profile.goal_level
-      : CEFR_LEVELS[Math.min(cefrRank(cefrLevel) + 1, CEFR_LEVELS.length - 1)];
-
-  const roadmap = buildRoadmap({
-    assessedLevel: cefrLevel,
-    goalLevel,
-    examDate: profile.exam_date ? new Date(profile.exam_date).toISOString().slice(0, 10) : null,
-    accessDuration: (profile.access_duration as AccessDuration) ?? "3months",
-    dailyMinutesPreference: profile.daily_minutes_preference ?? 30,
-    skillPercents: roadmapSkillPercents,
-  });
-
-  const roadmapResult = await pool.query(
-    `INSERT INTO roadmaps (user_id, pace, minutes_per_day, total_hours_estimate) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [userId, roadmap.pace, roadmap.minutesPerDay, roadmap.totalHoursEstimate],
-  );
-  const roadmapId = roadmapResult.rows[0].id;
-
-  for (const m of roadmap.milestones) {
-    await pool.query(
-      `INSERT INTO roadmap_milestones (roadmap_id, level, label, target_day_offset, focus_skill) VALUES ($1, $2, $3, $4, $5)`,
-      [roadmapId, m.level, m.labelType, m.targetDayOffset, m.focusSkill],
-    );
-  }
-
-  return { goalLevel };
-}
 
 placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: AuthedRequest, res, next) => {
   try {

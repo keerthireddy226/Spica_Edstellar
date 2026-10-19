@@ -13,6 +13,7 @@ import type { SkillTag } from "../placement/roadmapBuilder.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
+import { levelSuggestion, retryCounts, retryItems, RETRY_SET_SIZE } from "../learner/insights.js";
 
 export const practiceRouter = Router();
 
@@ -34,6 +35,8 @@ const startSessionSchema = z.object({
   // When set, the session is exactly this Set's items, in authored order —
   // a fixed lesson, not a spread/adaptive sample. Takes priority over count.
   setId: z.string().uuid().optional(),
+  // A review set of this skill's questions answered wrong earlier.
+  retry: z.boolean().optional(),
 });
 
 // Spreads `count` across the skill's item types and difficulty, preferring unseen items.
@@ -116,6 +119,18 @@ async function selectSetItems(setId: string) {
     [setId],
   );
   return result.rows;
+}
+
+// Given questions, in the given order.
+async function selectItemsById(ids: string[]) {
+  const result = await pool.query(
+    `SELECT i.id, i.item_type_id, i.content, it.input_method, it.instruction_text, it.question_instruction, it.timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds
+     FROM items i JOIN item_types it ON it.id = i.item_type_id
+     WHERE i.id = ANY($1::uuid[]) AND i.status = 'approved'`,
+    [ids],
+  );
+  const byId = new Map(result.rows.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id)).filter((r): r is (typeof result.rows)[number] => !!r);
 }
 
 // The live tests (of shown exam families) each question type is part of, so a
@@ -322,7 +337,12 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
 
     // A Set-based session matches on setId alone (already fully specific).
     const existing = await pool.query(
-      body.setId
+      body.retry
+        ? `SELECT id, composition FROM sessions
+           WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
+             AND composition->>'retry' = 'true' AND composition->>'skill' = $2
+           ORDER BY started_at DESC LIMIT 1`
+        : body.setId
         ? `SELECT id, composition FROM sessions
            WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
              AND composition->>'setId' = $2
@@ -332,7 +352,7 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
              AND composition->>'skill' = $2
              AND composition->>'itemTypeId' IS NOT DISTINCT FROM $3
            ORDER BY started_at DESC LIMIT 1`,
-      body.setId ? [req.user!.id, body.setId] : [req.user!.id, body.skill, body.itemTypeId ?? null],
+      body.retry ? [req.user!.id, body.skill] : body.setId ? [req.user!.id, body.setId] : [req.user!.id, body.skill, body.itemTypeId ?? null],
     );
     if (existing.rows[0]) {
       const c = existing.rows[0].composition ?? {};
@@ -340,13 +360,15 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
         sessionId: existing.rows[0].id,
         skill: body.skill,
         items: await loadResumedSession(req.user!.id, existing.rows[0]),
-        context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
+        context: await contextOf(req.user!.id, c),
       });
     }
 
-    const items = body.setId
-      ? await selectSetItems(body.setId)
-      : await selectPracticeItems(req.user!.id, body.skill, count, body.itemTypeId);
+    const items = body.retry
+      ? await selectItemsById((await retryItems(req.user!.id, body.skill)).slice(0, RETRY_SET_SIZE).map((x) => x.itemId))
+      : body.setId
+        ? await selectSetItems(body.setId)
+        : await selectPracticeItems(req.user!.id, body.skill, count, body.itemTypeId);
     if (items.length === 0) {
       return res.status(404).json({ error: "no_practice_items_available" });
     }
@@ -360,6 +382,7 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
           skill: body.skill,
           itemTypeId: body.itemTypeId ?? null,
           setId: body.setId ?? null,
+          ...(body.retry ? { retry: true } : {}),
           itemIds: items.map((i) => i.id),
         }),
       ],
@@ -369,7 +392,9 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
       sessionId: sessionResult.rows[0].id,
       skill: body.skill,
       items: await withQuestionTimes(await withAudioUrls(req.user!.id, items.map(toItemPayload))),
-      context: (await setContext(req.user!.id, body.setId ?? null, body.skill, body.itemTypeId ?? (items[0]?.item_type_id as string) ?? null)).context,
+      context: body.retry
+        ? { ...(await setContext(req.user!.id, null, body.skill, null)).context, retry: true }
+        : (await setContext(req.user!.id, body.setId ?? null, body.skill, body.itemTypeId ?? (items[0]?.item_type_id as string) ?? null)).context,
     });
   } catch (err) {
     next(err);
@@ -393,7 +418,7 @@ practiceRouter.get("/session/current", requireAuth, async (req: AuthedRequest, r
       sessionId: existing.rows[0].id,
       skill: c.skill ?? null,
       items: await loadResumedSession(req.user!.id, existing.rows[0]),
-      context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
+      context: await contextOf(req.user!.id, c),
     });
   } catch (err) {
     next(err);
@@ -438,7 +463,7 @@ practiceRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRequest
       skill: c.skill ?? null,
       completed: !!session.completed_at,
       items: await withQuestionTimes(await withAudioUrls(req.user!.id, sessionItems)),
-      context: (await setContext(req.user!.id, c.setId ?? null, c.skill ?? null, c.itemTypeId ?? null)).context,
+      context: await contextOf(req.user!.id, c),
     });
   } catch (err) {
     next(err);
@@ -506,6 +531,38 @@ async function setContext(userId: string, setId: string | null, skill: string | 
   };
 }
 
+// A session's context, flagged when it is a "mistakes to retry" review set.
+async function contextOf(userId: string, c: Record<string, unknown>) {
+  const { context } = await setContext(userId, (c.setId as string) ?? null, (c.skill as string) ?? null, (c.itemTypeId as string) ?? null);
+  return { ...context, retry: c.retry === true };
+}
+
+// Sets of this level (unit) finished, for this skill.
+async function unitProgress(userId: string, setId: string, skill: string) {
+  const r = await pool.query(
+    `SELECT u.name, count(st.id)::int AS total,
+       count(st.id) FILTER (WHERE EXISTS (
+         SELECT 1 FROM sessions se WHERE se.user_id = $3 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL AND se.composition->>'setId' = st.id::text
+       ))::int AS done
+     FROM units u JOIN sets st ON st.unit_id = u.id
+     WHERE u.id = (SELECT unit_id FROM sets WHERE id = $1)
+       AND EXISTS (SELECT 1 FROM items i WHERE i.set_id = st.id AND i.status = 'approved' AND (i.skill_tag IS NULL OR i.skill_tag = $2))
+     GROUP BY u.name`,
+    [setId, skill, userId],
+  );
+  const x = r.rows[0];
+  return x ? { unitName: x.name as string, done: x.done as number, total: x.total as number, levelComplete: x.done >= x.total } : null;
+}
+
+// How many wrong answers wait for a retry, per skill.
+practiceRouter.get("/retry", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ retry: await retryCounts(req.user!.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Unlike placement, completing a practice session never writes a placement
 // or roadmap row — it's just a tally of how this set went.
 practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -538,14 +595,23 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
     // temporary service problem, not "you didn't answer enough."
     const failedCount = summaryResult.rows.filter((r) => r.status === "failed").length;
 
-    await checkAndAwardBadges(req.user!.id);
+    const { newBadges, stats } = await checkAndAwardBadges(req.user!.id);
+    const ctx = await setContext(req.user!.id, composition.setId ?? null, composition.skill ?? null, composition.itemTypeId ?? null);
     res.json({
+      // For the "set done" moment: streak, new badges, how far through this
+      // level, and a nudge up or down a level after two strong or weak sets.
+      streakDays: stats.streakDays,
+      newBadges,
+      unitProgress: composition.setId ? await unitProgress(req.user!.id, composition.setId, composition.skill) : null,
+      levelSuggestion:
+        composition.setId && ctx.context.itemTypeId ? await levelSuggestion(req.user!.id, ctx.context.itemTypeId, composition.skill) : null,
       gradedCount: graded.length,
       correctCount,
       pendingCount,
       failedCount,
       questions: await reviewQuestions(req.params.sessionId as string, composition.itemIds ?? []),
-      ...(await setContext(req.user!.id, composition.setId ?? null, composition.skill ?? null, composition.itemTypeId ?? null)),
+      context: { ...ctx.context, retry: composition.retry === true },
+      next: ctx.next,
     });
   } catch (err) {
     next(err);

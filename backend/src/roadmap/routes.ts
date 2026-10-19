@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db.js";
+import { dateOnly } from "../lib/dateOnly.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 
 export const roadmapRouter = Router();
@@ -14,7 +15,7 @@ roadmapRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     const placement = placementResult.rows[0];
 
     const profileResult = await pool.query(
-      `SELECT goal_level, assessment_scheduled_for, access_window_start_date, access_window_duration_days
+      `SELECT goal_level, assessment_scheduled_for, access_window_start_date, access_window_duration_days, exam_date
        FROM participant_profiles WHERE user_id = $1`,
       [req.user!.id],
     );
@@ -98,6 +99,8 @@ roadmapRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
         reviewStatus: placement.status ?? "certified",
       },
       goalLevel: profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : placement.cefr_level,
+      // The plan counts down to the exam when there is one.
+      examDate: profile.exam_date ? dateOnly(profile.exam_date) : null,
       accessWindow:
         profile.access_window_start_date && profile.access_window_duration_days
           ? { startDate: profile.access_window_start_date, durationDays: profile.access_window_duration_days }

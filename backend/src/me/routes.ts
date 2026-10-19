@@ -4,6 +4,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { learnerAccess } from "../licenses/service.js";
 import { getLearnerStats } from "../gamification/stats.js";
+import { rebuildRoadmap } from "../roadmap/save.js";
 
 // The signed-in person's own profile extras: work details, what they've
 // done recently, a summary of their role, and (for learners) their
@@ -227,6 +228,8 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
          updated_at = now()`,
       [req.user!.id, b.examPreference ?? null, b.goalLevel ?? null, b.scoreTarget ?? null, b.examDate ?? null, b.dailyMinutes ?? null, b.examReason ?? null, b.examDate !== undefined],
     );
+    // A new goal, exam date or daily time gets a new study plan.
+    if (b.goalLevel !== undefined || b.examDate !== undefined || b.dailyMinutes !== undefined) await rebuildRoadmap(req.user!.id);
     res.json({ ok: true });
   } catch (err) {
     next(err);

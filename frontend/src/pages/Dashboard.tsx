@@ -30,6 +30,7 @@ import { Mascot } from "@/components/Mascot";
 import { ProgressRing } from "@/components/ProgressRing";
 import { useAuth } from "@/hooks/useAuth";
 import { LearnerHero, LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
+import { GoalCountdownCard, NextStepCard } from "@/components/learner/GoalCards";
 import {
   getDashboard,
   type DashboardData,
@@ -384,9 +385,13 @@ function LearnerDashboard() {
         ]}
       />
 
-      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} />}
+      {data.goal && <GoalCountdownCard goal={data.goal} level={data.englishLevel?.cefr ?? null} />}
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
+
+      <NextStepCard />
+
+      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} />}
 
       <MotivationalBar />
 

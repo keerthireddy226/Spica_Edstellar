@@ -4,6 +4,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { getLearnerStats, computeStreakDays, ALL_SKILLS, type SkillTag } from "../gamification/stats.js";
+import { goalStatus, nextStep, retryCounts } from "../learner/insights.js";
 
 export const dashboardRouter = Router();
 // Ceiling on items of one skill per day — avoids a long, repetitive same-skill grind.
@@ -202,7 +203,19 @@ dashboardRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
       englishLevel: { cefr: placement.cefr_level ?? null, testedAt: placement.taken_at ?? null, goal: profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : null },
       badges,
       inProgressPractice,
+      // Days to the exam and whether practice keeps pace with the plan.
+      goal: await goalStatus(req.user!.id),
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The one thing to do next, and wrong answers waiting for a retry per skill.
+dashboardRouter.get("/next-step", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const [step, retry] = await Promise.all([nextStep(req.user!.id), retryCounts(req.user!.id)]);
+    res.json({ nextStep: step, retry });
   } catch (err) {
     next(err);
   }

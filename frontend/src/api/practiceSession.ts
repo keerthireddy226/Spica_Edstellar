@@ -11,6 +11,8 @@ export interface PracticeContext {
   setName: string | null;
   // The Versant tests this sub-module's questions are part of.
   tests?: { id: string; name: string }[];
+  // A "mistakes to retry" review set, not a regular set.
+  retry?: boolean;
 }
 
 export interface PracticeSummary {
@@ -27,6 +29,12 @@ export interface PracticeSummary {
   context: PracticeContext;
   // The set to take next in this sub-module, if any.
   next: { setId: string; setName: string; unitId: string; unitName: string } | null;
+  // For the "set done" moment.
+  streakDays?: number;
+  newBadges?: { id: string; title: string; icon: string }[];
+  unitProgress?: { unitName: string; done: number; total: number; levelComplete: boolean } | null;
+  // After two strong (or weak) sets in a row: try the next level up (or down).
+  levelSuggestion?: { direction: "up" | "down"; unitId: string; unitName: string } | null;
 }
 
 // A sub-module's sets: how many, finished and started.
@@ -102,8 +110,9 @@ export function startPracticeSession(
   count?: number,
   itemTypeId?: string,
   setId?: string,
+  retry?: boolean,
 ): Promise<{ sessionId: string; skill: SkillTag; items: TestItem[]; context?: PracticeContext }> {
-  return api("/practice/session", { method: "POST", body: JSON.stringify({ skill, count, itemTypeId, setId }) });
+  return api("/practice/session", { method: "POST", body: JSON.stringify({ skill, count, itemTypeId, setId, retry }) });
 }
 
 export function submitPracticeAttempt(

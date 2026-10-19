@@ -58,6 +58,40 @@ export interface DashboardData {
   englishLevel?: { cefr: string | null; testedAt: string | null; goal: string | null };
   badges: Badge[];
   inProgressPractice: InProgressPractice | null;
+  goal?: GoalStatus;
+}
+
+export type PaceStatus = "new" | "on_track" | "slightly_behind" | "behind";
+
+// Days to the exam and whether the last 7 days of practice keep pace with the plan.
+export interface GoalStatus {
+  goalLevel: string | null;
+  examDate: string | null;
+  daysLeft: number | null;
+  minutesPerDay: number | null;
+  minutesLast7Days: number;
+  pace: PaceStatus;
+}
+
+export type NextStep =
+  | { kind: "mock"; daysLeft: number }
+  | { kind: "practice_test"; daysSince: number | null }
+  | { kind: "retry"; skill: SkillTag; count: number }
+  | {
+      kind: "set";
+      skill: SkillTag;
+      itemTypeId: string;
+      typeName: string;
+      unitId: string;
+      unitName: string;
+      setId: string;
+      setName: string;
+      why: "weak_type" | "untried_type" | "keep_going";
+      accuracy: number | null;
+    };
+
+export function getNextStep(): Promise<{ nextStep: NextStep | null; retry: Record<SkillTag, number> }> {
+  return api("/dashboard/next-step");
 }
 
 export function getDashboard(): Promise<DashboardData> {

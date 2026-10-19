@@ -39,6 +39,8 @@ import {
   CircleDot,
   Lightbulb,
   EyeOff,
+  Flame,
+  Award,
 } from "lucide-react";
 import { LearnerHero, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { ROUTES } from "@/constants/routes";
@@ -84,6 +86,7 @@ import { tr } from "@/i18n/tr";
 import { QuestionReview } from "@/components/report/FeedbackReportView";
 import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
+import { Confetti } from "@/components/Confetti";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -662,7 +665,7 @@ function ModulesPage() {
   // handleStart once it completes.
   // Agreed to the consent screen for the pending start; asked again for every session.
   const [consented, setConsented] = useState(false);
-  const [pendingStart, setPendingStart] = useState<{ skill: SkillTag; count?: number; itemTypeId?: string; setId?: string } | null>(
+  const [pendingStart, setPendingStart] = useState<{ skill: SkillTag; count?: number; itemTypeId?: string; setId?: string; retry?: boolean } | null>(
     null,
   );
   // Mirrors pickerSkill/pickerType/pickerUnit into the URL (pSkill/pType/pUnit/pUnitName)
@@ -901,11 +904,11 @@ function ModulesPage() {
       .finally(() => setLoadingAvailability(false));
   }, []);
 
-  async function handleStart(skill: SkillTag, count?: number, itemTypeId?: string, setId?: string) {
+  async function handleStart(skill: SkillTag, count?: number, itemTypeId?: string, setId?: string, retry?: boolean) {
     setStarting(true);
     setError(null);
     try {
-      const res = await startPracticeSession(skill, count, itemTypeId, setId);
+      const res = await startPracticeSession(skill, count, itemTypeId, setId, retry);
       setSessionId(res.sessionId);
       setItems(res.items);
       setContext(res.context ?? null);
@@ -957,7 +960,7 @@ function ModulesPage() {
     // updateBrowseParams setting pSkill/pType/pUnit (as the learner clicks
     // into Type/Unit/Set) doesn't look like a fresh deep-link and wipe them
     // straight back out.
-    const raw = `${searchParams.get("skill")}|${searchParams.get("type")}|${searchParams.get("count")}`;
+    const raw = `${searchParams.get("skill")}|${searchParams.get("type")}|${searchParams.get("count")}|${searchParams.get("set")}|${searchParams.get("retry")}`;
     const firstRun = !autoStartMounted.current;
     autoStartMounted.current = true;
     if (lastAutoStart.current === raw) return;
@@ -970,6 +973,9 @@ function ModulesPage() {
     const skill = searchParams.get("skill");
     const count = searchParams.get("count");
     const itemTypeId = searchParams.get("type");
+    // From Overview's "next step": one exact set, or a review of past mistakes.
+    const setId = searchParams.get("set");
+    const retry = searchParams.get("retry") === "1";
     if (skill === "listening" || skill === "speaking" || skill === "reading" || skill === "writing") {
       // A skill link always wins over what's showing, even mid-session — attempts save per item, so nothing's lost.
       setSessionId(null);
@@ -989,7 +995,9 @@ function ModulesPage() {
           { replace: true },
         );
       }
-      if (itemTypeId) {
+      if (setId || retry) {
+        setPendingStart({ skill, setId: setId ?? undefined, retry: retry || undefined });
+      } else if (itemTypeId) {
         setPendingStart({ skill, count: count ? Number(count) : undefined, itemTypeId });
       } else {
         setPendingStart(null);
@@ -1200,7 +1208,7 @@ function ModulesPage() {
     if (pendingStart && faceEnrolled === null) return null;
     if (pendingStart && faceEnrolled === false) return null;
     if (pendingStart && faceEnrolled) {
-      const { skill, count, itemTypeId, setId } = pendingStart;
+      const { skill, count, itemTypeId, setId, retry } = pendingStart;
       // What the session collects comes first, then the face check.
       if (!consented) {
         return <TestConsent kind="module" onBack={() => setPendingStart(null)} onAgreed={() => setConsented(true)} />;
@@ -1216,7 +1224,7 @@ function ModulesPage() {
           onComplete={() => {
             setConsented(false);
             setPendingStart(null);
-            handleStart(skill, count, itemTypeId, setId);
+            handleStart(skill, count, itemTypeId, setId, retry);
           }}
         />
       );
@@ -1321,11 +1329,26 @@ function ModulesPage() {
         updateBrowseParams({ pSkill: c.skill, pType: c.itemTypeId });
       }
     };
+    const progress = summary.unitProgress;
+    const levelDone = !!progress?.levelComplete;
+    // Celebrate a decent set (and every finished level); a weak one gets encouragement instead.
+    const celebrate = pending < total && (pct >= 50 || levelDone);
+    const suggestion = summary.levelSuggestion;
+    const openUnit = (unitId: string, unitName: string) => {
+      resetToPicker();
+      if (c?.skill && c.itemTypeId) {
+        setPickerSkill(c.skill);
+        setPickerType({ skill: c.skill, itemTypeId: c.itemTypeId });
+        setPickerUnit({ skill: c.skill, itemTypeId: c.itemTypeId, unitId, unitName });
+        updateBrowseParams({ pSkill: c.skill, pType: c.itemTypeId, pUnit: unitId, pUnitName: unitName });
+      }
+    };
     return (
       <div className="max-w-3xl mx-auto w-full flex flex-col gap-5">
+        {celebrate && <Confetti key={sessionId ?? "done"} pieces={levelDone ? 160 : 90} />}
         <div className="bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
           <p className="text-xs uppercase tracking-wide text-muted">
-            {[c?.skill ? t(`skills.${c.skill}`) : null, c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
+            {[c?.skill ? t(`skills.${c.skill}`) : null, c?.retry ? tr("Mistakes to retry") : c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
           </p>
           {c?.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
           <div className="flex items-center gap-4">
@@ -1352,6 +1375,27 @@ function ModulesPage() {
               <div className="text-xs text-muted">{tr("Skipped")}</div>
             </div>
           </div>
+          <SetDoneStrip summary={summary} />
+          {levelDone && progress && (
+            <div className="rounded-card bg-success/10 border border-success/30 px-4 py-3 flex items-center gap-3">
+              <Trophy size={22} className="text-success shrink-0" />
+              <p className="text-sm text-ink">
+                <span className="font-semibold">{tr("Level complete!")}</span> {tr("You finished all {{n}} sets in {{level}}.", { n: progress.total, level: progress.unitName })}
+              </p>
+            </div>
+          )}
+          {suggestion && (
+            <div className="rounded-card bg-navy/5 border border-navy/20 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+              <p className="text-sm text-ink flex-1">
+                {suggestion.direction === "up"
+                  ? tr("Two strong sets in a row. You're ready to try {{level}}.", { level: suggestion.unitName })
+                  : tr("These sets are hard right now. Build up at {{level}} first, then come back.", { level: suggestion.unitName })}
+              </p>
+              <Button variant="secondary" onClick={() => openUnit(suggestion.unitId, suggestion.unitName)} className="shrink-0">
+                {suggestion.direction === "up" ? tr("Try {{level}}", { level: suggestion.unitName.split(" ")[0] }) : tr("Practise {{level}}", { level: suggestion.unitName.split(" ")[0] })}
+              </Button>
+            </div>
+          )}
           {summary.failedCount > 0 && <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>}
           <div className="flex flex-wrap items-center gap-3">
             {summary.next && c?.skill && (
@@ -1604,6 +1648,41 @@ function ModulesPage() {
             {submitting ? t("placementTest.submitting") : index + 1 < items.length ? t("placementTest.next") : t("placementTest.finish")}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Under a finished set's score: how far through the level, the streak, and
+// any badge earned with this set.
+function SetDoneStrip({ summary }: { summary: PracticeSummary }) {
+  const progress = summary.unitProgress;
+  const badges = summary.newBadges ?? [];
+  if (!progress && !summary.streakDays && !badges.length) return null;
+  return (
+    <div className="flex flex-col gap-3">
+      {progress && (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span className="font-semibold text-ink">{tr("Set {{done}} of {{total}} done in {{level}}", { done: progress.done, total: progress.total, level: progress.unitName })}</span>
+            <span>{Math.round((progress.done / Math.max(1, progress.total)) * 100)}%</span>
+          </div>
+          <div className="h-2 rounded-pill bg-rule overflow-hidden">
+            <div className="h-full rounded-pill bg-success transition-all duration-700" style={{ width: `${(progress.done / Math.max(1, progress.total)) * 100}%` }} />
+          </div>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {!!summary.streakDays && (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-pill bg-warning/15 text-ink">
+            <Flame size={14} className="text-warning" /> {tr("{{n}}-day streak", { n: summary.streakDays })}
+          </span>
+        )}
+        {badges.map((b) => (
+          <span key={b.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-pill bg-navy/10 text-navy-deep animate-[pulse_1.2s_ease-in-out_2]">
+            <Award size={14} /> {tr("Badge unlocked: {{name}}", { name: b.title })}
+          </span>
+        ))}
       </div>
     </div>
   );

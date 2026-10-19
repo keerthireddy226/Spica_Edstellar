@@ -26,6 +26,7 @@ import { MotivationalBar } from "@/components/MotivationalBar";
 import { StatCard } from "@/components/staff/StaffKit";
 import { LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { getRoadmap, type RoadmapData, type RoadmapMilestone } from "@/api/roadmap";
+import { tr } from "@/i18n/tr";
 import { getDashboard, getDailyProgress } from "@/api/dashboard";
 import { meetsGoal, percentToCefr } from "@/lib/cefr";
 import { ApiError } from "@/lib/api";
@@ -56,6 +57,7 @@ function Hero({
   currentLevel,
   goalLevel,
   daysAccessLeft,
+  daysToExam,
   progressPercent,
   goalMet,
 }: {
@@ -63,6 +65,7 @@ function Hero({
   currentLevel: string;
   goalLevel: string;
   daysAccessLeft: number | null;
+  daysToExam: number | null;
   progressPercent: number;
   goalMet: boolean;
 }) {
@@ -110,12 +113,17 @@ function Hero({
               </div>
             );
           })}
-          {daysAccessLeft !== null && (
+          {daysToExam !== null ? (
+            <div className="ml-3 sm:ml-5 bg-surface/80 rounded-2xl px-4 py-2.5 text-center">
+              <div className="text-[9px] font-mono uppercase text-muted">{tr("Days to exam")}</div>
+              <div className={`font-display font-bold text-xl ${daysToExam <= 14 ? "text-error" : "text-ink"}`}>{daysToExam}</div>
+            </div>
+          ) : daysAccessLeft !== null ? (
             <div className="ml-3 sm:ml-5 bg-surface/80 rounded-2xl px-4 py-2.5 text-center">
               <div className="text-[9px] font-mono uppercase text-muted">{t("roadmap.daysLeftLabel")}</div>
               <div className="font-display font-bold text-xl text-ink">{daysAccessLeft}</div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -535,6 +543,8 @@ export function Roadmap() {
   const { placement, roadmap, goalLevel, accessWindow, firstName, recommendedPractice } = data;
   const goalMet = meetsGoal(placement.cefrLevel, goalLevel);
   const daysAccessLeft = accessWindow ? Math.max(0, accessWindow.durationDays + daysUntil(accessWindow.startDate)) : null;
+  const examDays = data.examDate ? daysUntil(data.examDate) : null;
+  const daysToExam = examDays !== null && examDays >= 0 ? examDays : null;
   const daysSinceStart = accessWindow ? -daysUntil(accessWindow.startDate) : 0;
   // How many of the plan's milestones should already be reached by today,
   // given their scheduled day-offset — the same time-driven logic the
@@ -558,6 +568,7 @@ export function Roadmap() {
         currentLevel={placement.cefrLevel}
         goalLevel={goalLevel}
         daysAccessLeft={daysAccessLeft}
+        daysToExam={daysToExam}
         progressPercent={progressPercent}
         goalMet={goalMet}
       />

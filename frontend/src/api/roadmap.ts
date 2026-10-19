@@ -23,6 +23,7 @@ export interface RoadmapData {
   };
   goalLevel: CefrLevel;
   accessWindow: { startDate: string; durationDays: number } | null;
+  examDate?: string | null;
   roadmap: {
     pace: "maintenance" | "light" | "steady" | "intensive";
     minutesPerDay: number;

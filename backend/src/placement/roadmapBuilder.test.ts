@@ -118,3 +118,17 @@ describe("daysUntil", () => {
     expect(daysUntil(in5Days)).toBe(5);
   });
 });
+
+describe("buildRoadmap daily minutes", () => {
+  it("uses the learner's own daily time when it is more than the plan needs", () => {
+    const plan = buildRoadmap({
+      assessedLevel: "B1",
+      goalLevel: "B2",
+      examDate: null,
+      accessDuration: "6months",
+      dailyMinutesPreference: 60,
+      skillPercents: { listening: 50, speaking: 50, reading: 50, writing: 50 },
+    });
+    expect(plan.minutesPerDay).toBe(60);
+  });
+});

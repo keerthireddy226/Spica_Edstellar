@@ -70,7 +70,8 @@ export function buildRoadmap(input: BuildRoadmapInput): RoadmapPlan {
     : accessDurationToDays(input.accessDuration, input.examDate);
 
   const neededMinutesPerDay = Math.ceil((totalHoursEstimate * 60) / Math.max(daysAvailable, 7));
-  const minutesPerDay = Math.min(90, Math.max(15, neededMinutesPerDay));
+  // The learner's own daily time counts when it's more than the plan needs.
+  const minutesPerDay = Math.min(90, Math.max(15, neededMinutesPerDay, input.dailyMinutesPreference || 0));
 
   const weakestFirst = (Object.entries(input.skillPercents) as [SkillTag, number][])
     .sort((a, b) => a[1] - b[1])

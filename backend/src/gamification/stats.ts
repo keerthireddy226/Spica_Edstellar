@@ -161,14 +161,21 @@ const ACHIEVEMENT_CHECKS: AchievementCheck[] = [
 // Called after a practice or placement session completes. Idempotent —
 // user_achievements' primary key is (user_id, achievement_id), so an
 // already-earned badge is just skipped, never duplicated or re-timestamped.
-export async function checkAndAwardBadges(userId: string): Promise<void> {
+// Returns the badges earned just now (for the "badge unlocked" moment) and
+// the stats they were judged on.
+export async function checkAndAwardBadges(userId: string): Promise<{ newBadges: { id: string; title: string; icon: string }[]; stats: LearnerStats }> {
   const stats = await getLearnerStats(userId);
   const newlyMet = ACHIEVEMENT_CHECKS.filter((c) => c.met(stats));
-  if (newlyMet.length === 0) return;
-  await pool.query(
-    `INSERT INTO user_achievements (user_id, achievement_id)
-     SELECT $1, unnest($2::text[])
-     ON CONFLICT (user_id, achievement_id) DO NOTHING`,
+  if (newlyMet.length === 0) return { newBadges: [], stats };
+  const inserted = await pool.query(
+    `WITH ins AS (
+       INSERT INTO user_achievements (user_id, achievement_id)
+       SELECT $1, unnest($2::text[])
+       ON CONFLICT (user_id, achievement_id) DO NOTHING
+       RETURNING achievement_id
+     )
+     SELECT a.id, a.title, a.icon FROM ins JOIN achievements a ON a.id = ins.achievement_id`,
     [userId, newlyMet.map((c) => c.id)],
   );
+  return { newBadges: inserted.rows, stats };
 }
