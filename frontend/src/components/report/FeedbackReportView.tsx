@@ -208,27 +208,22 @@ function Speech({ q }: { q: ReportQuestion }) {
   );
 }
 
-// The learner's own answer, right or wrong: a typed answer's text (unless
-// another block already shows it), or a spoken answer's recording. Spoken
-// answers show no transcript: speech-to-text can mishear a right answer.
+// The learner's own answer, right or wrong: the typed text, or for a spoken
+// answer what we heard (unless the word-by-word block already shows it). Same
+// view in Practice Modules, practice tests and mock exams; no recording player.
 function Given({ q }: { q: ReportQuestion }) {
   const g = q.given;
   if (!g) return null;
-  const showText = !g.audioUri && !q.words && !q.writing && !q.speech && g.text;
+  const spoken = !!g.audioUri;
+  const showText = !q.words && !q.writing && g.text;
   return (
     <div className="flex flex-col gap-1.5">
       {showText && (
         <p className="text-sm text-ink">
-          <span className="font-semibold">{tr("Your answer:")}</span> {g.text}
+          <span className="font-semibold">{spoken ? tr("What we heard:") : tr("Your answer:")}</span> {g.text}
         </p>
       )}
-      {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Listen to it below; if it's silent or noisy, check your microphone before the next question.")}</p>}
-      {g.audioUri && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted">{tr("Your recording")}</span>
-          <audio controls preload="none" src={g.audioUri} className="h-9 w-full max-w-sm" />
-        </div>
-      )}
+      {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Check your microphone before your next test.")}</p>}
     </div>
   );
 }
@@ -251,11 +246,11 @@ export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
       </div>
       {o === "skipped" && !q.choices && <p className="text-xs text-warning">{tr("You skipped this question.")}</p>}
       {q.choices && <Choices q={q} />}
-      {q.words && !q.given?.audioUri && <Words q={q} />}
+      {q.words && <Words q={q} />}
       {q.writing && <Writing q={q} />}
       {q.speech && <Speech q={q} />}
       <Given q={q} />
-      {!q.choices && (!q.words || q.given?.audioUri) && <Expected q={q} />}
+      {!q.choices && !q.words && <Expected q={q} />}
       {q.comment && !q.writing && !q.choices && (
         <p className="text-sm text-ink">
           <span className="font-semibold">{tr("Why:")}</span> {q.comment}
