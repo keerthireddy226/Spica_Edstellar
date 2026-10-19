@@ -10,9 +10,7 @@ import {
   Clock,
   CheckCircle2,
   ChevronRight,
-  Headphones,
   RotateCcw,
-  MessageSquare,
   ListChecks,
   Layers,
   Award,
@@ -1019,26 +1017,32 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     return (
       <div className="max-w-4xl mx-auto flex flex-col gap-3">
         {overlay}
-        <div className="flex items-center justify-between px-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           {currentPart ? (
-            <div className="flex items-center gap-2">
-              <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
+            <div className="flex items-center gap-2.5">
+              <span className="h-8 w-8 rounded-full bg-navy text-lime flex items-center justify-center text-sm font-bold shrink-0">
                 {String.fromCharCode(65 + currentPartIndex)}
               </span>
-              <span className="text-xs font-semibold text-ink">{currentPart.label}</span>
+              <div className="flex flex-col">
+                <span className="font-display font-bold text-base text-ink leading-tight">{currentPart.label}</span>
+                <span className="text-[11px] text-muted">
+                  {tr("Section {{n}} of {{total}}", { n: currentPartIndex + 1, total: partBoundaries.length })}
+                </span>
+              </div>
             </div>
           ) : (
             <span />
           )}
-          <span className="text-xs font-mono text-muted">
-            <span className={`mr-3 font-sans font-semibold uppercase tracking-wide ${isMock ? "text-navy-deep" : "text-accent"}`}>
+          <div className="flex items-center gap-2">
+            <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
               {isMock ? tr("Mock exam") : tr("Practice")}
             </span>
-            {activeTestId && <span className="mr-3">{tr("Test ID")} {activeTestId}</span>}
-            {testCode && <span className="hidden sm:inline mr-3">{tr("Attempt ID")} {testCode}</span>}
-            {t("placementTest.progress", { current: index + 1, total: items.length })}
-          </span>
+            <span className="text-sm font-semibold text-ink">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
+          </div>
         </div>
+        <p className="text-[11px] font-mono text-muted px-1 -mt-2">
+          {[activeTestId ? `${tr("Test ID")} ${activeTestId}` : null, testCode ? `${tr("Attempt ID")} ${testCode}` : null].filter(Boolean).join(" · ")}
+        </p>
 
         {/* Mock: every question says how it moves on, since there are no
             Skip/Next buttons for spoken answers. */}
@@ -1098,7 +1102,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
               </div>
             </div>
 
-            <h2 className="font-display font-bold text-lg text-ink text-center leading-snug">{current.questionInstruction}</h2>
+            <h2 className="font-display font-bold text-lg text-ink text-center leading-snug bg-paper-warm/70 border border-rule rounded-card px-4 py-3">
+              {current.questionInstruction}
+            </h2>
 
             {/* Practice feedback: the question stays visible, its answer locked. */}
             <div className={feedback ? "pointer-events-none flex flex-col gap-5" : "contents"} aria-disabled={!!feedback}>
@@ -1110,10 +1116,15 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
               // the actual answer control.
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="relative rounded-card bg-navy text-lime p-5 pt-8 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden">
-                  <span className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-wider text-lime/70">
-                    {t("practiceTests.youHear")}
+                  <span className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-lime/90">
+                    <span className="h-5 w-5 rounded-full bg-lime/20 flex items-center justify-center text-[10px]">1</span>
+                    {tr("Listen")} · {t("practiceTests.youHear")}
                   </span>
-                  <Headphones size={64} strokeWidth={1.5} className="absolute -right-3 -bottom-3 text-lime/10 pointer-events-none" />
+                  {hasPlayed && !playing && (
+                    <span className="absolute top-3 right-4 flex items-center gap-1 text-[11px] font-semibold text-lime">
+                      <CheckCircle2 size={13} /> {tr("Played")}
+                    </span>
+                  )}
                   <button
                     onClick={handlePlay}
                     disabled={playing || recording || playCount >= MAX_PLAYS}
@@ -1133,11 +1144,19 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                   )}
                   <span className="text-[10px] text-lime/60">{t("practiceTests.playsRemaining", { count: Math.max(0, MAX_PLAYS - playCount) })}</span>
                 </div>
-                <div className="relative rounded-card bg-accent/10 border border-accent/25 p-5 pt-8 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden">
-                  <span className="absolute top-3 left-4 text-[10px] font-mono uppercase tracking-wider text-accent">
-                    {current.inputMethod === "mic" ? t("practiceTests.youSay") : tr("Your answer")}
+                <div
+                  className={`relative rounded-card border p-5 pt-9 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden transition-colors ${
+                    hasPlayed ? "bg-navy/10 border-navy/30" : "bg-paper-warm/60 border-rule"
+                  }`}
+                >
+                  <span className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-navy-deep">
+                    <span className="h-5 w-5 rounded-full bg-navy/15 flex items-center justify-center text-[10px]">2</span>
+                    {tr("Answer")} · {current.inputMethod === "mic" ? t("practiceTests.youSay") : tr("Your answer")}
                   </span>
-                  <MessageSquare size={64} strokeWidth={1.5} className="absolute -right-3 -bottom-3 text-accent/10 pointer-events-none" />
+                  {!hasPlayed && <p className="text-xs text-muted text-center">{tr("Play the question first, then answer here.")}</p>}
+                  {hasPlayed && current.inputMethod === "mic" && !recording && !audioBlobUrl && (
+                    <p className="text-xs text-navy-deep text-center">{tr("Press the microphone and answer in your own words.")}</p>
+                  )}
                   <AnswerInputControl
                     item={current}
                     answerText={answerText}
