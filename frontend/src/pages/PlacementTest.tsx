@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Volume2, CheckCircle2, Clock, X } from "lucide-react";
+import { Volume2, CheckCircle2, Clock, X, Headphones, BookOpen, MessageSquare, ArrowRightCircle } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import {
@@ -485,8 +485,8 @@ export function PlacementTest() {
         </div>
 
         <span className="absolute left-1/2 -translate-x-1/2 font-logo tracking-tight flex items-baseline gap-1.5">
-          <span className="font-bold text-base text-logo-primary">{tr("Spica")}</span>
-          <span className="italic text-xs text-logo-accent">{tr("by Edstellar")}</span>
+          <span className="font-bold text-base text-navy-deep">{tr("Spica")}</span>
+          <span className="italic text-xs text-muted">{tr("by Edstellar")}</span>
         </span>
 
         <div className="flex items-center gap-3">
@@ -508,104 +508,104 @@ export function PlacementTest() {
         <div className="h-full bg-navy transition-all" style={{ width: `${progressPct}%` }} />
       </div>
 
-      {/* Fixed (not max-) height — the same for every question, regardless
-          of content — so the Skip/Next bar below it always lands on the
-          exact same pixel position. Content is centered inside this fixed
-          box rather than pinned to its top, so a short question doesn't
-          read as a big dead gap — the leftover space splits above and
-          below it instead of collecting in one place. Only a genuinely
-          long passage scrolls, via the overflow-y-auto here. */}
-      <div
-        className="overflow-y-auto flex flex-col items-center justify-center px-5 py-6"
-        style={{ height: "calc(100vh - 220px)" }}
-      >
-        <div className="w-full max-w-md flex flex-col gap-5">
-          <div className="flex flex-col items-center gap-2 text-center">
+      {/* Exam-style question screen (like the real Versant test): the
+          section letter and task, an instruction bar, then "You hear" /
+          "You read" next to "You say" / "Your answer", with the buttons
+          under the panels. Fixed height so the buttons never jump. */}
+      <div className="overflow-y-auto flex-1 px-4 sm:px-8 py-6" style={{ height: "calc(100vh - 120px)" }}>
+        <div className="max-w-5xl mx-auto w-full bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
+          <div className="flex flex-wrap items-center gap-3 px-6 pt-5 pb-4">
+            <span className="h-10 w-10 rounded-full bg-navy text-lime flex items-center justify-center font-display font-bold text-lg shrink-0">
+              {String.fromCharCode(65 + Math.max(0, [...seenTypesRef.current].indexOf(current.itemTypeId)))}
+            </span>
+            <h1 className="font-display font-bold text-xl sm:text-2xl text-navy-deep flex-1 min-w-0">{meta?.name}</h1>
             <div className="flex items-center gap-1.5">
               {current.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill border ${SKILL_BADGE_CLASS[skill]}`}
-                >
+                <span key={skill} className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill border ${SKILL_BADGE_CLASS[skill]}`}>
                   {t(`skills.${skill}`)}
                 </span>
               ))}
             </div>
-            <span className="text-[11px] font-mono uppercase tracking-[0.15em] text-muted font-semibold">{meta?.name}</span>
-            <h1 className="font-display font-bold text-lg sm:text-xl text-ink leading-snug">
-              {current.questionInstruction}
-            </h1>
+          </div>
+          <div className="bg-paper-warm border-y border-rule px-6 py-3">
+            <p className="text-sm font-semibold text-ink">{current.questionInstruction}</p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            {needsAudioFirst ? (
-              <div className="flex justify-center">
-                <button
-                  onClick={handlePlay}
-                  disabled={playing || recording}
-                  className="h-14 w-14 rounded-full bg-navy text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <Volume2 size={22} />
-                </button>
-              </div>
-            ) : getPassageAndQuestion(current) ? (
-              <div className="flex flex-col gap-2.5">
-                <p
-                  className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 whitespace-pre-wrap leading-relaxed shadow-sm"
-                  style={{ borderLeftColor: `var(--color-${current.skills[0]})` }}
-                >
-                  {getPassageAndQuestion(current)!.passage}
-                </p>
-                <p className="text-sm font-semibold text-ink px-1">{getPassageAndQuestion(current)!.question}</p>
-              </div>
-            ) : (
-              <p
-                className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
-                style={{ borderLeftColor: `var(--color-${current.skills[0]})` }}
+          <div className="p-6 grid md:grid-cols-2 gap-5">
+            {/* Left: what the learner hears or reads. */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold text-muted">{needsAudioFirst ? t("practiceTests.youHear") : tr("You read")}</span>
+              {needsAudioFirst ? (
+                <div className="relative rounded-card bg-[#3f3f3f] text-white min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
+                  <Headphones size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />
+                  <button
+                    onClick={handlePlay}
+                    disabled={playing || recording}
+                    className="h-16 w-16 rounded-full bg-white text-navy-deep flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
+                    aria-label={t("placementTest.play")}
+                  >
+                    <Volume2 size={26} />
+                  </button>
+                  <span className="text-sm text-white/85">
+                    {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
+                  </span>
+                </div>
+              ) : (
+                <div className="relative rounded-card bg-[#3f3f3f] text-white min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
+                  <BookOpen size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/15 pointer-events-none" />
+                  {getPassageAndQuestion(current) ? (
+                    <>
+                      <p className="relative text-sm leading-relaxed whitespace-pre-wrap">{getPassageAndQuestion(current)!.passage}</p>
+                      <p className="relative text-sm font-semibold">{getPassageAndQuestion(current)!.question}</p>
+                    </>
+                  ) : (
+                    <p className="relative text-base leading-relaxed text-center">{visibleText}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right: the learner's answer. */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold text-muted">{current.inputMethod === "mic" ? t("practiceTests.youSay") : tr("Your answer")}</span>
+              <div
+                className={`relative rounded-card min-h-[220px] p-5 flex flex-col items-center justify-center gap-2 overflow-hidden ${
+                  current.inputMethod === "mic" ? "bg-[#1f3a68] text-white [&_.text-muted]:!text-white/85" : "bg-paper border border-rule"
+                }`}
               >
-                {visibleText}
-              </p>
-            )}
-
-            {needsAudioFirst && (
-              <p className="text-xs text-muted text-center -mt-1">
-                {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
-              </p>
-            )}
-
-            <AnswerInputControl
-              item={current}
-              answerText={answerText}
-              onAnswerTextChange={setAnswerText}
-              recording={recording}
-              onToggleRecord={handleToggleRecord}
-              audioBlobUrl={audioBlobUrl}
-              needsAudioFirst={needsAudioFirst}
-              hasPlayed={hasPlayed}
-              playing={playing}
-            />
-
-            {error && <p className="text-sm text-error text-center">{error}</p>}
+                {current.inputMethod === "mic" && <MessageSquare size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />}
+                <div className="relative w-full">
+                  <AnswerInputControl
+                    item={current}
+                    answerText={answerText}
+                    onAnswerTextChange={setAnswerText}
+                    recording={recording}
+                    onToggleRecord={handleToggleRecord}
+                    audioBlobUrl={audioBlobUrl}
+                    needsAudioFirst={needsAudioFirst}
+                    hasPlayed={hasPlayed}
+                    playing={playing}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Its own fixed-height bar, outside the content box above — since
-          that box is now a constant height for every question, this footer
-          always sits at the same place on screen too. */}
-      <div className="shrink-0 border-t border-rule bg-surface px-5 py-3">
-        <div className="max-w-md mx-auto flex items-center justify-center">
-          <button
-            onClick={handleSkip}
-            disabled={submitting || recording}
-            className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-w-[160px] px-6 py-2 text-center"
-          >
-            {t("placementTest.skip")}
-          </button>
-          {/* Needs an answer, except once the time has run out: then Next moves on like Skip. */}
-          <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording || (!canSubmit && remainingSeconds !== 0)} className="min-w-[220px]">
-            {submitting ? t("placementTest.submitting") : t("placementTest.next")}
-          </Button>
+          {error && <p className="text-sm text-error text-center -mt-2 pb-2">{error}</p>}
+
+          <div className="flex items-center justify-end gap-3 px-6 pb-6">
+            <button
+              onClick={handleSkip}
+              disabled={submitting || recording}
+              className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
+            >
+              {t("placementTest.skip")}
+            </button>
+            {/* Needs an answer, except once the time has run out: then Next moves on like Skip. */}
+            <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording || (!canSubmit && remainingSeconds !== 0)} className="min-w-[180px] flex items-center justify-center gap-1.5">
+              {submitting ? t("placementTest.submitting") : t("placementTest.next")} {!submitting && <ArrowRightCircle size={17} />}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
