@@ -1,4 +1,4 @@
-import { REPORT_VERSION } from "../reports/feedbackReport.js";
+import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
 import { Router, type Response } from "express";
 import { z } from "zod";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -132,9 +132,9 @@ programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (re
     // Missing, failed, or made before skipped questions and answer explanations (version 2).
     if (!r || r.status === "failed" || (r.status === "ready" && (r.report?.version ?? 1) < REPORT_VERSION)) {
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
-      return res.json({ status: "pending", report: null, integrity: { status: s.integrity_status, risk: s.risk_level } });
+      return res.json({ status: "pending", report: null, about: await reportAbout(s.id), integrity: { status: s.integrity_status, risk: s.risk_level } });
     }
-    res.json({ status: r.status, report: r.report, integrity: { status: s.integrity_status, risk: s.risk_level } });
+    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id), integrity: { status: s.integrity_status, risk: s.risk_level } });
   } catch (err) {
     next(err);
   }

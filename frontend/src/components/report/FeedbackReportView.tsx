@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { CheckCircle2, XCircle, MinusCircle, Volume2, Target, Sparkles, Loader2, Lightbulb } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { speak } from "@/hooks/useVoiceRecorder";
-import type { FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
+import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 
 const ERROR_TYPE: Record<string, () => string> = {
@@ -447,13 +447,45 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   if (error) return <p className="text-sm text-error">{tr("Could not load the report.")}</p>;
+  const about = data?.about ? <AboutLine about={data.about} /> : null;
   if (!data || (data.status === "pending" && !data.report)) {
     return (
-      <p className="text-sm text-muted flex items-center gap-2">
-        <Loader2 size={16} className="animate-spin" /> {tr("Writing your report. This takes up to a minute.")}
-      </p>
+      <div className="flex flex-col gap-3">
+        {about}
+        <p className="text-sm text-muted flex items-center gap-2">
+          <Loader2 size={16} className="animate-spin" /> {tr("Writing your report. This takes up to a minute.")}
+        </p>
+      </div>
     );
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
-  return <Report report={data.report} upgradeLink={upgradeLink} />;
+  return (
+    <div className="flex flex-col gap-4">
+      {about}
+      <Report report={data.report} upgradeLink={upgradeLink} />
+    </div>
+  );
+}
+
+// Which test the report is for: practice test or mock exam, the test, set, date and code.
+function AboutLine({ about }: { about: ReportAbout }) {
+  const mock = about.deliveryMode === "mock";
+  const test = about.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <span className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${mock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
+        {mock ? tr("Mock exam") : tr("Practice test")}
+      </span>
+      {test && <span className="font-display font-bold text-ink">{test}</span>}
+      <span className="text-sm text-muted">
+        {[
+          about.setName,
+          about.completedAt ? new Date(about.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null,
+          about.testCode ? tr("Test ID {{code}}", { code: about.testCode }) : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </span>
+    </div>
+  );
 }

@@ -1,4 +1,4 @@
-import { REPORT_VERSION } from "../reports/feedbackReport.js";
+import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
 import { z } from "zod";
 import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { Router } from "express";
@@ -199,9 +199,9 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
     const stale = !r || r.status === "failed" || outdated || (r.status === "ready" && r.report_level === "summary" && wanted === "full");
     if (stale) {
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
-      if (!r || r.status === "failed" || outdated) return res.json({ status: "pending", report: null });
+      if (!r || r.status === "failed" || outdated) return res.json({ status: "pending", report: null, about: await reportAbout(s.id) });
     }
-    res.json({ status: r.status, report: r.report });
+    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id) });
   } catch (err) {
     next(err);
   }

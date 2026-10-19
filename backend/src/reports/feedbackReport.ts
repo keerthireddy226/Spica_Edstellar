@@ -81,6 +81,42 @@ export interface ReportQuestion {
   given?: { text: string | null; audioUri: string | null; noSpeech: boolean };
 }
 
+// What a report is about, shown at its top: practice test or mock exam, the
+// test and exam family, the set, its code and when it was taken.
+export interface ReportAbout {
+  deliveryMode: "practice" | "mock";
+  testTypeName: string | null;
+  familyName: string | null;
+  setName: string | null;
+  testCode: string | null;
+  completedAt: string | null;
+}
+
+export async function reportAbout(sessionId: string): Promise<ReportAbout | null> {
+  const r = (
+    await pool.query(
+      `SELECT s.delivery_mode, s.test_code, s.completed_at, tt.name AS test_type_name, f.name AS family_name, coalesce(e.name, fo.name) AS set_name
+       FROM sessions s
+       LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
+       LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
+       LEFT JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', e.test_type_id, fo.test_type_id)
+       LEFT JOIN exam_families f ON f.id = tt.family_id
+       WHERE s.id = $1`,
+      [sessionId],
+    )
+  ).rows[0];
+  if (!r) return null;
+  return {
+    deliveryMode: r.delivery_mode === "mock" ? "mock" : "practice",
+    testTypeName: r.test_type_name ?? null,
+    familyName: r.family_name ?? null,
+    // A mock is built from questions across sets: it has no set name.
+    setName: r.delivery_mode === "mock" ? null : (r.set_name ?? null),
+    testCode: r.test_code ?? null,
+    completedAt: r.completed_at ? new Date(r.completed_at).toISOString() : null,
+  };
+}
+
 // Reports older than this are rebuilt when opened.
 export const REPORT_VERSION = 3;
 

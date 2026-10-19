@@ -292,9 +292,20 @@ export interface FeedbackReport {
   questions?: ReportQuestion[];
 }
 
+// What a report is about: practice test or mock exam, the test, set and date.
+export interface ReportAbout {
+  deliveryMode: "practice" | "mock";
+  testTypeName: string | null;
+  familyName: string | null;
+  setName: string | null;
+  testCode: string | null;
+  completedAt: string | null;
+}
+
 export interface ReportResponse {
   status: "pending" | "ready" | "failed";
   report: FeedbackReport | null;
+  about?: ReportAbout | null;
 }
 
 export function getReport(sessionId: string): Promise<ReportResponse> {
