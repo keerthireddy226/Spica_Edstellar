@@ -88,7 +88,9 @@ export async function monthUsage(userId: string, from: Date): Promise<{ practice
   const r = await pool.query(
     `SELECT count(*) FILTER (WHERE delivery_mode = 'practice')::int AS practice, count(*) FILTER (WHERE delivery_mode = 'mock')::int AS mock
      FROM sessions
-     WHERE user_id = $1 AND session_type = 'mocktest' AND started_at >= $2`,
+     WHERE user_id = $1 AND session_type = 'mocktest' AND started_at >= $2
+       -- A mock that ran out of time with nothing answered doesn't count.
+       AND coalesce(composition->>'abandoned', 'false') <> 'true'`,
     [userId, from],
   );
   return { practice: r.rows[0].practice, mock: r.rows[0].mock };

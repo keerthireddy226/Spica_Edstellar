@@ -268,6 +268,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const [summary, setSummary] = useState<ExamCompleteResult | null>(null);
   // The last answer is in and the score is being worked out.
   const [finishing, setFinishing] = useState(false);
+  // A mock's time ran out while the learner was away: it was finished on return.
+  const [timeRanOut, setTimeRanOut] = useState(false);
   // The organization's proctoring for this session: pre-test steps, then
   // monitoring until the score report shows.
   // Monitoring stops as soon as the last answer is in: scoring can take a
@@ -462,6 +464,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     setMockSecondsLeft(null);
     // The whole exam's time is over (a learner coming back much later): finish it.
     if (mockDeadlineRef.current !== null && Date.now() + clockOffsetRef.current > mockDeadlineRef.current) {
+      setTimeRanOut(true);
       finishTest();
       return;
     }
@@ -788,6 +791,11 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           <CheckCircle2 size={32} />
         </div>
         <h1 className="font-display font-bold text-2xl text-ink">{summary.deliveryMode === "mock" ? tr("Mock exam report") : t("practiceTests.scoreReport.title")}</h1>
+        {timeRanOut && (
+          <p className="text-sm text-warning -mt-2">
+            {tr("This mock exam's time ran out while you were away, so it was finished with the answers you'd given. Questions you hadn't answered count as skipped.")}
+          </p>
+        )}
         <div className="flex flex-wrap justify-center gap-2 -mt-2">
           {activeTestId && <TestIdTag code={activeTestId} />}
           {(summary.testCode ?? testCode) && <TestIdTag code={(summary.testCode ?? testCode)!} label={tr("Attempt ID")} />}

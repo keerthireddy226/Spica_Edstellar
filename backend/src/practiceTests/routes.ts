@@ -149,7 +149,22 @@ function mockTiming(c: MockComposition) {
 }
 
 // The learner's open mock exam, if any: one at a time.
+// A mock whose time ran out while the learner was away, with nothing
+// answered, is set aside (abandoned): it isn't finished with every question
+// skipped, doesn't count towards the month's mocks or show in their reports,
+// and the learner starts a fresh one. One with answers is finished as usual.
+async function setAsideExpiredMocks(userId: string): Promise<void> {
+  await pool.query(
+    `UPDATE sessions s SET completed_at = now(), composition = s.composition || '{"abandoned": true}'::jsonb
+     WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NULL
+       AND (s.composition->>'deadlineAt')::timestamptz < now()
+       AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))`,
+    [userId],
+  );
+}
+
 async function openMock(userId: string): Promise<{ id: string; composition: Record<string, unknown>; test_code: string; delivery_mode: DeliveryMode } | null> {
+  await setAsideExpiredMocks(userId);
   const r = await pool.query(
     `SELECT id, composition, test_code, delivery_mode FROM sessions
      WHERE user_id = $1 AND session_type = 'mocktest' AND delivery_mode = 'mock' AND completed_at IS NULL
@@ -216,6 +231,7 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
        FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
        LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
+         AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
          -- Results of hidden exam families (LanguageCert for now) aren't listed.
          AND NOT EXISTS (SELECT 1 FROM test_types tt JOIN exam_families f ON f.id = tt.family_id
                          WHERE tt.id = coalesce(s.composition->>'testTypeId', e.test_type_id) AND NOT f.active)
@@ -495,6 +511,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
 
 practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    // Reloading a mock that ran out of time with nothing answered: it's set
+    // aside (comes back as completed), not finished with every question skipped.
+    await setAsideExpiredMocks(req.user!.id);
     const sessionResult = await pool.query(
       `SELECT id, composition, completed_at, test_code, delivery_mode FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
       [req.params.sessionId, req.user!.id],
