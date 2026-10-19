@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { GraduationCap } from "lucide-react";
+import { tr } from "@/i18n/tr";
+import { useBranding } from "@/components/AppShell/useBranding";
+import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -24,17 +28,18 @@ import { getRoadmap } from "@/api/roadmap";
 
 /* Shared step chrome + small controls, local to this page */
 
-const TOTAL_STEPS = 7;
-
 function WizardShell({
   stepIndex,
+  total,
   children,
   onNext,
   onBack,
   nextDisabled,
   nextLabel,
 }: {
+  // Position among the steps this learner sees, and how many there are.
   stepIndex: number;
+  total: number;
   children: React.ReactNode;
   onNext?: () => void;
   onBack?: () => void;
@@ -45,14 +50,21 @@ function WizardShell({
   return (
     <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-4">
+        <div className="flex items-center gap-2.5 text-navy-deep">
+          <span className="h-9 w-9 rounded-input bg-navy text-lime flex items-center justify-center">
+            <GraduationCap size={20} strokeWidth={1.8} />
+          </span>
+          <span className="font-logo font-bold text-2xl">Spica</span>
+          <span className="font-logo italic text-sm text-muted">{tr("by Edstellar")}</span>
+        </div>
         <div className="flex items-center gap-2.5">
           <div className="flex-1 flex gap-1.5">
-            {Array.from({ length: TOTAL_STEPS }, (_, i) => (
+            {Array.from({ length: total }, (_, i) => (
               <div key={i} className={`h-1 flex-1 rounded-full ${i <= stepIndex ? "bg-navy" : "bg-rule"}`} />
             ))}
           </div>
           <span className="text-xs text-muted whitespace-nowrap">
-            {t("onboarding.wizard.stepLabel", { current: stepIndex + 1, total: TOTAL_STEPS })}
+            {t("onboarding.wizard.stepLabel", { current: stepIndex + 1, total })}
           </span>
         </div>
         <div className="bg-surface border border-rule rounded-card p-8 flex flex-col gap-6">{children}</div>
@@ -201,6 +213,8 @@ export function Onboarding() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const branding = useBranding();
+  const license = useMyLicense();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -265,8 +279,51 @@ export function Onboarding() {
     setForm((prev) => ({ ...prev, ...fields }));
   }
 
-  const next = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  // A learner added by an organization already has access from it: the
+  // "how long do you want access" step is skipped and set from the licence,
+  // and the exam-booking questions (applied? days to prepare?) aren't asked.
+  const isOrgLearner = !!branding?.organization;
+  const visibleSteps = [0, 1, 2, 3, 4, 5, 6].filter((i) => !(isOrgLearner && i === 5));
+  const position = Math.max(0, visibleSteps.indexOf(step));
+  const shell = { stepIndex: position, total: visibleSteps.length };
+  const next = () => setStep((s) => visibleSteps[visibleSteps.indexOf(s) + 1] ?? s);
+  const back = () => setStep((s) => visibleSteps[visibleSteps.indexOf(s) - 1] ?? s);
+
+  useEffect(() => {
+    if (!isOrgLearner) return;
+    const daysLeft = license?.accessEndsAt ? Math.max(7, Math.ceil((Date.parse(license.accessEndsAt) - Date.now()) / 86_400_000)) : 30;
+    setForm((f) => ({
+      ...f,
+      hasAppliedForExam: f.hasAppliedForExam ?? false,
+      targetPrepDays: f.targetPrepDays ?? daysLeft,
+      accessDuration: f.accessDuration ?? (daysLeft <= 45 ? "1month" : daysLeft <= 120 ? "3months" : "6months"),
+    }));
+  }, [isOrgLearner, license?.accessEndsAt]);
+
+  // Answers so far survive a page refresh (kept in this browser until onboarding is finished).
+  const draftKey = user ? `spica.onboardingDraft.${user.id}` : null;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!draftKey || checkingProfile || restored.current) return;
+    restored.current = true;
+    try {
+      const saved = JSON.parse(localStorage.getItem(draftKey) ?? "null") as { step: number; form: FormState } | null;
+      if (saved?.form) {
+        setForm((f) => ({ ...f, ...saved.form }));
+        setStep(saved.step ?? 0);
+      }
+    } catch {
+      // Unreadable draft: start from the first step.
+    }
+  }, [draftKey, checkingProfile]);
+  useEffect(() => {
+    if (!draftKey || !restored.current) return;
+    try {
+      localStorage.setItem(draftKey, JSON.stringify({ step, form }));
+    } catch {
+      // Storage blocked: a refresh starts again.
+    }
+  }, [draftKey, step, form]);
 
   async function handleFinish() {
     // Unreachable via the UI — each step's "Next" stays disabled until its
@@ -301,6 +358,11 @@ export function Onboarding() {
         ageBand: form.ageBand,
         demographicsConsent: form.demographicsConsent,
       });
+      try {
+        if (draftKey) localStorage.removeItem(draftKey);
+      } catch {
+        // Nothing to clear.
+      }
       navigate(ROUTES.PLACEMENT, { replace: true });
     } catch {
       setError(t("onboarding.wizard.consent.error"));
@@ -314,9 +376,15 @@ export function Onboarding() {
   if (step === 0) {
     const invalid = !form.firstName.trim() || !form.lastName.trim();
     return (
-      <WizardShell stepIndex={0} onNext={next} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} nextDisabled={invalid}>
         <div>
-          <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.basics.title")}</h2>
+          <p className="text-sm text-navy-deep font-semibold">
+            {isOrgLearner && branding?.organization?.name
+              ? tr("Welcome to Spica, set up for you by {{org}}.", { org: branding.organization.name })
+              : tr("Welcome to Spica.")}{" "}
+            {tr("A few quick questions (about 2 minutes), then a 30-minute level test to find your English level.")}
+          </p>
+          <h2 className="font-display font-bold text-xl text-ink mt-3">{t("onboarding.wizard.basics.title")}</h2>
           <p className="text-sm text-muted mt-1">{t("onboarding.wizard.basics.subtitle")}</p>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
@@ -354,7 +422,7 @@ export function Onboarding() {
       !form.country || !form.city.trim() || form.jobRole === null || (needsConsent && !form.demographicsConsent);
     const selectClass = `${textInputClass} cursor-pointer`;
     return (
-      <WizardShell stepIndex={1} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} onBack={back} nextDisabled={invalid}>
         <div>
           <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.about.title")}</h2>
           <p className="text-sm text-muted mt-1">{t("onboarding.wizard.about.subtitle")}</p>
@@ -455,7 +523,7 @@ export function Onboarding() {
     }));
     const invalid = form.examPreference === null || form.goalLevel === null;
     return (
-      <WizardShell stepIndex={2} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} onBack={back} nextDisabled={invalid}>
         {examOptions.length > 1 && (
           <div>
             <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.examGoal.examTitle")}</h2>
@@ -488,18 +556,16 @@ export function Onboarding() {
     }));
     const invalid =
       form.examReason === null ||
-      form.hasAppliedForExam === null ||
-      (form.hasAppliedForExam && !form.examDate) ||
-      form.targetPrepDays === null ||
-      form.targetPrepDays <= 0;
+      (!isOrgLearner && (form.hasAppliedForExam === null || (form.hasAppliedForExam && !form.examDate) || form.targetPrepDays === null || form.targetPrepDays <= 0));
     return (
-      <WizardShell stepIndex={3} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} onBack={back} nextDisabled={invalid}>
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.reasonTimeline.reasonTitle")}</h2>
             <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.reasonTimeline.reasonSubtitle")}</p>
             <RadioGroup options={reasonOptions} selected={form.examReason} onSelect={(v) => patch({ examReason: v })} />
           </div>
+          {!isOrgLearner && (
           <div>
             <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.reasonTimeline.appliedTitle")}</h2>
             <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.reasonTimeline.appliedSubtitle")}</p>
@@ -541,6 +607,7 @@ export function Onboarding() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </WizardShell>
     );
@@ -558,7 +625,7 @@ export function Onboarding() {
     }));
     const invalid = form.pastAttemptsStatus === null || form.dailyMinutesPreference === null;
     return (
-      <WizardShell stepIndex={4} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} onBack={back} nextDisabled={invalid}>
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <h2 className="font-display font-bold text-xl text-ink">
@@ -621,7 +688,7 @@ export function Onboarding() {
     }));
     const invalid = form.accessDuration === null;
     return (
-      <WizardShell stepIndex={5} onNext={next} onBack={back} nextDisabled={invalid}>
+      <WizardShell {...shell} onNext={next} onBack={back} nextDisabled={invalid}>
         <div>
           <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.duration.title")}</h2>
           <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.duration.subtitle")}</p>
@@ -633,7 +700,7 @@ export function Onboarding() {
 
   // step === 6: consent
   return (
-    <WizardShell stepIndex={6} onNext={handleFinish} onBack={back} nextDisabled={!form.consentGiven || submitting} nextLabel={submitting ? t("onboarding.wizard.consent.submitting") : t("onboarding.wizard.consent.submit")}>
+    <WizardShell {...shell} onNext={handleFinish} onBack={back} nextDisabled={!form.consentGiven || submitting} nextLabel={submitting ? t("onboarding.wizard.consent.submitting") : t("onboarding.wizard.consent.submit")}>
       <div>
         <h2 className="font-display font-bold text-xl text-ink">{t("onboarding.wizard.consent.title")}</h2>
         <p className="text-sm text-muted mt-1">{t("onboarding.wizard.consent.subtitle")}</p>

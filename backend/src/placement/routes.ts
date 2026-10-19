@@ -475,7 +475,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
     await finishPendingSpeaking(req.params.sessionId as string).catch((err) => console.error("placement /complete: grading retry failed:", err));
 
     const summaryResult = await pool.query(
-      `SELECT sc.status, sc.content_score, sc.manner_scores, it.skills, it.input_method, i.cefr_level
+      `SELECT sc.status, sc.content_score, sc.manner_scores, it.skills, it.input_method, i.cefr_level, a.response_text, a.response_uri
        FROM attempts a
        JOIN scores sc ON sc.attempt_id = a.id
        JOIN items i ON i.id = a.item_id
@@ -483,7 +483,12 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
        WHERE a.session_id = $1`,
       [req.params.sessionId],
     );
-    const rows: ScoredAttemptRow[] = summaryResult.rows;
+    // A skipped question counts as wrong (score 0), not as "awaiting review":
+    // a learner who skipped everything used to get no level and no roadmap,
+    // and was sent back to the level test.
+    const rows: ScoredAttemptRow[] = summaryResult.rows.map((r) =>
+      r.status === "pending" && !r.response_text && !r.response_uri ? { ...r, status: "scored", content_score: 0 } : r,
+    );
     const graded = rows.filter((r) => r.status === "scored");
     // Each row's own CEFR level sets its own pass bar — see isTrulyCorrect.
     const correctCount = graded.filter(rowIsCorrect).length;

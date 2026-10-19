@@ -111,7 +111,7 @@ export function TestDemo({
       {step === 0 && <NeedsStep needs={needs} minutes={minutes} />}
       {step === 1 && <RulesStep />}
       {step === 2 && <TipsStep skills={skillsFor(kind)} />}
-      {step === 3 && <TourStep speaking={skillsFor(kind).includes("speaking")} />}
+      {step === 3 && <TourStep speaking={skillsFor(kind).includes("speaking")} total={kind === "placement" ? 29 : undefined} />}
 
       {canHide && (
         <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
@@ -258,7 +258,7 @@ function tourText(spot: TourSpot, mic: boolean): string {
 
 // The question screen as learners see it, with one control highlighted at a time.
 // The sample is a spoken question for tests with speaking, a typed one otherwise.
-function TourStep({ speaking }: { speaking: boolean }) {
+function TourStep({ speaking, total }: { speaking: boolean; total?: number }) {
   const [i, setI] = useState(0);
   const [recording, setRecording] = useState(false);
   const [plays, setPlays] = useState(0);
@@ -276,7 +276,8 @@ function TourStep({ speaking }: { speaking: boolean }) {
             <span className="text-xs font-semibold text-ink">{speaking ? tr("Repeats") : tr("Dictation")}</span>
           </span>
           <span className={`text-xs font-mono text-muted rounded-pill px-2 py-0.5 ${mark("progress")}`}>
-            {tr("Test ID")} SL-001 · 1 {tr("of")} 20
+            {/* A sample: no real test ID, and the level test's real length. */}
+            {total ? tr("Question 1 of {{n}}", { n: total }) : tr("Question 1")}
           </span>
         </div>
 

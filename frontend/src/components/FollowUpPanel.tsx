@@ -20,7 +20,7 @@ const ORDER: EngagementStatus[] = ["not_started", "inactive", "slow", "on_track"
 const TEMPLATES: Record<EngagementStatus, { title: string; message: (l: LearnerEngagement) => string }> = {
   not_started: {
     title: tr("Your English practice is ready"),
-    message: () => tr("Your access is active. Start with the placement test — it takes about 10 minutes and builds your personal plan."),
+    message: () => tr("Your access is active. Start with the level test — it takes about 30 minutes and builds your personal plan."),
   },
   inactive: {
     title: tr("Let's get back to practice"),

@@ -32,7 +32,7 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   star: Star,
 };
 const BADGE_COLORS = ["#b5653f", "#c9965c", "#6e9660", "#a8613f", "#8a8f4f", "#b97a62"];
-const TYPE: Record<string, string> = { practice: tr("Practice"), mocktest: tr("Mock test"), placement: tr("Placement test"), coach: tr("Tutor"), diagnostic: tr("Diagnostic"), drill: tr("Drill") };
+const TYPE: Record<string, string> = { practice: tr("Practice"), mocktest: tr("Mock test"), placement: tr("Level test"), coach: tr("Tutor"), diagnostic: tr("Diagnostic"), drill: tr("Drill") };
 
 function Card({ title, icon: Icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {
   return (
@@ -184,9 +184,9 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
         </Card>
 
         <div className="flex flex-col gap-6">
-          <Card title={tr("Placement history")} icon={Award} color="#b97a62">
+          <Card title={tr("Level test history")} icon={Award} color="#b97a62">
             {d.placements.length === 0 ? (
-              <p className="text-sm text-muted">{tr("Take the placement test to see your level here.")}</p>
+              <p className="text-sm text-muted">{tr("Take the level test to see your level here.")}</p>
             ) : (
               <div className="flex items-end gap-3 flex-wrap">
                 {d.placements.map((p, i) => (
