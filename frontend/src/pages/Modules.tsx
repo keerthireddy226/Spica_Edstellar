@@ -37,6 +37,8 @@ import {
   GraduationCap,
   VolumeX,
   CircleDot,
+  Lightbulb,
+  EyeOff,
 } from "lucide-react";
 import { LearnerHero, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { ROUTES } from "@/constants/routes";
@@ -369,6 +371,99 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Read-then-write questions (Passage Reconstruction): a two-step tracker, a
+// clear start card, the paragraph with a shrinking time bar, then the
+// writing box with a word count once the paragraph has gone.
+function TwoPhaseTask({
+  stage,
+  readSeconds,
+  writeSeconds,
+  readLeft,
+  passage,
+  answerText,
+  onAnswerTextChange,
+  onStart,
+}: {
+  stage: "idle" | "reading" | "writing";
+  readSeconds: number;
+  writeSeconds: number | null;
+  readLeft: number | null;
+  passage: string;
+  answerText: string;
+  onAnswerTextChange: (v: string) => void;
+  onStart: () => void;
+}) {
+  const words = answerText.trim() ? answerText.trim().split(/\s+/).length : 0;
+  const steps: [string, string, boolean, boolean][] = [
+    [tr("Read"), tr("{{n}}s", { n: readSeconds }), stage === "reading", stage === "writing"],
+    [tr("Write"), writeSeconds ? tr("{{n}}s", { n: writeSeconds }) : "", stage === "writing", false],
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-2">
+        {steps.map(([label, time, active, done], i) => (
+          <div key={label} className="flex items-center gap-2 flex-1">
+            <span
+              className={`flex items-center gap-2 flex-1 rounded-pill px-3 py-2 text-sm font-semibold border ${
+                active ? "bg-navy text-white border-navy" : done ? "bg-success/10 text-success border-success/30" : "bg-paper text-muted border-rule"
+              }`}
+            >
+              <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${active ? "bg-white/20" : done ? "bg-success/15" : "bg-paper-warm"}`}>
+                {done ? <CheckCircle2 size={14} /> : i + 1}
+              </span>
+              {label}
+              {time && <span className={`ml-auto text-xs font-mono ${active ? "text-white/80" : "text-muted"}`}>{time}</span>}
+            </span>
+            {i === 0 && <ChevronRight size={16} className="text-muted shrink-0" />}
+          </div>
+        ))}
+      </div>
+
+      {stage === "idle" && (
+        <div className="flex flex-col items-center text-center gap-3 rounded-card border border-dashed border-navy/30 bg-navy/5 px-6 py-8">
+          <span className="h-14 w-14 rounded-full bg-navy/15 text-navy-deep flex items-center justify-center">
+            <BookOpen size={26} />
+          </span>
+          <p className="font-display font-bold text-lg text-ink">{tr("Ready? The paragraph shows for {{n}} seconds", { n: readSeconds })}</p>
+          <p className="text-sm text-muted max-w-sm">{tr("Read it carefully. When the time is up it disappears, and you write it again in your own words.")}</p>
+          <Button onClick={onStart} className="mt-1">
+            {tr("Show the paragraph")}
+          </Button>
+        </div>
+      )}
+
+      {stage === "reading" && (
+        <div className="flex flex-col gap-2">
+          <div className="rounded-card bg-surface border border-rule shadow-sm p-5 text-base leading-relaxed text-ink">{passage}</div>
+          <div className="h-1.5 rounded-full bg-rule overflow-hidden">
+            <div className="h-full bg-navy transition-all duration-300 ease-linear" style={{ width: `${((readLeft ?? readSeconds) / readSeconds) * 100}%` }} />
+          </div>
+          <p className="text-xs text-muted text-right">{tr("Disappears in {{n}}s", { n: readLeft ?? readSeconds })}</p>
+        </div>
+      )}
+
+      {stage === "writing" && (
+        <div className="flex flex-col gap-2">
+          <p className="flex items-center gap-2 text-sm text-navy-deep bg-navy/10 rounded-input px-3 py-2">
+            <EyeOff size={15} /> {tr("Paragraph hidden: write it again in your own words.")}
+          </p>
+          <textarea
+            value={answerText}
+            onChange={(e) => onAnswerTextChange(e.target.value)}
+            onPaste={(e) => e.preventDefault()}
+            onDrop={(e) => e.preventDefault()}
+            placeholder={tr("Start writing here…")}
+            autoFocus
+            className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-base text-ink shadow-sm focus:border-navy focus:outline-none transition-colors leading-relaxed"
+            rows={6}
+          />
+          <p className="text-xs text-muted text-right">{tr("{{n}} words", { n: words })}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -784,6 +879,20 @@ function ModulesPage() {
   // it and switch to a blank textarea — testing recall, not copying.
   const [twoPhaseStage, setTwoPhaseStage] = useState<"idle" | "reading" | "writing">("idle");
   const twoPhaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Seconds left to read before the paragraph disappears.
+  const [readLeft, setReadLeft] = useState<number | null>(null);
+  useEffect(() => {
+    if (twoPhaseStage !== "reading") {
+      setReadLeft(null);
+      return;
+    }
+    const t0 = Date.now();
+    const total = current?.twoPhaseReadSeconds ?? DEFAULT_TWO_PHASE_READ_SECONDS;
+    setReadLeft(total);
+    const iv = setInterval(() => setReadLeft(Math.max(0, total - Math.floor((Date.now() - t0) / 1000))), 250);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [twoPhaseStage]);
 
   useEffect(() => {
     getAvailability()
@@ -1371,38 +1480,27 @@ function ModulesPage() {
               as a proper heading every time, not just once in the one-time
               type intro, so it's never just the vague "Answer the
               question." with no context. */}
-          <h2 className="font-display font-bold text-base text-ink leading-snug">{current.instructionText}</h2>
+          <div className="flex items-start gap-3 bg-paper-warm/70 border border-rule rounded-card px-4 py-3">
+            <span className="h-8 w-8 rounded-full bg-navy/15 text-navy-deep flex items-center justify-center shrink-0">
+              <Lightbulb size={16} />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("How this works")}</span>
+              <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
+            </div>
+          </div>
 
       {current.inputMethod === "two-phase" ? (
-        <>
-          {twoPhaseStage === "idle" ? (
-            <div className="flex justify-center">
-              <Button variant="secondary" onClick={handleStartReading}>
-                {t("modules.startReading")}
-              </Button>
-            </div>
-          ) : twoPhaseStage === "reading" ? (
-            <p
-              className="text-sm text-ink bg-paper-warm rounded-card border-l-4 p-4 leading-relaxed shadow-sm"
-              style={{ borderLeftColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
-            >
-              {getVisibleText(current)}
-            </p>
-          ) : (
-            <p className="text-sm text-muted italic text-center">{t("modules.passageHidden")}</p>
-          )}
-          {twoPhaseStage === "writing" && (
-            <textarea
-              value={answerText}
-              onChange={(e) => setAnswerText(e.target.value)}
-              onPaste={(e) => e.preventDefault()}
-              onDrop={(e) => e.preventDefault()}
-              placeholder={t("placementTest.answerPlaceholder")}
-              className="w-full rounded-card border border-rule bg-surface px-4 py-3 text-sm text-ink shadow-sm focus:border-navy focus:outline-none transition-colors"
-              rows={4}
-            />
-          )}
-        </>
+        <TwoPhaseTask
+          stage={twoPhaseStage}
+          readSeconds={current.twoPhaseReadSeconds ?? DEFAULT_TWO_PHASE_READ_SECONDS}
+          writeSeconds={current.twoPhaseWriteSeconds ?? null}
+          readLeft={readLeft}
+          passage={getVisibleText(current)}
+          answerText={answerText}
+          onAnswerTextChange={setAnswerText}
+          onStart={handleStartReading}
+        />
       ) : needsAudioFirst ? (
         // Mic answers pair naturally side by side with Play (two small
         // round controls). A typed/selected answer is a wide control, so
