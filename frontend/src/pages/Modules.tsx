@@ -90,6 +90,7 @@ import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 import { Confetti } from "@/components/Confetti";
 import { MyPath } from "@/components/practice/MyPath";
+import { markChecked, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
 import type { PracticeFeedback } from "@/api/practiceTests";
 // Fallback reading time for a two-phase item with no server-set duration.
@@ -651,7 +652,7 @@ function SetPicker({
   sets: PracticeSet[];
   loading: boolean;
   onBack: () => void;
-  onSelect: (setId: string) => void;
+  onSelect: (setId: string, started: boolean) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -671,7 +672,7 @@ function SetPicker({
           {sets.map((set, i) => (
             <button
               key={set.id}
-              onClick={() => onSelect(set.id)}
+              onClick={() => onSelect(set.id, set.started)}
               className="group text-left flex items-center gap-4 bg-surface border border-rule rounded-card p-6 transition-all cursor-pointer hover:border-rule-strong hover:-translate-y-0.5 hover:shadow-[0_12px_28px_-14px_rgba(0,0,0,0.28)]"
             >
               <span
@@ -888,8 +889,8 @@ function ModulesPage() {
           res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : [])),
         ),
       );
-      // A resumed set (page reload) gets the device check again too.
-      setShowTypeIntro(true);
+      // A resumed set (page reload): smart resume, see introFor.
+      void introFor(res.sessionId, res.items);
     }
 
     const sessionIdParam = searchParams.get("session");
@@ -959,6 +960,11 @@ function ModulesPage() {
   // this task works) on a genuinely fresh start — not shown again when
   // resuming a session already partway through, since that'd already been seen.
   const [showTypeIntro, setShowTypeIntro] = useState(false);
+  // Smart resume: checking quietly, the problem a quick check found (then the
+  // full check shows), or a "welcome back" line on the question screen.
+  const [checkingResume, setCheckingResume] = useState(false);
+  const [resumeProblem, setResumeProblem] = useState<QuickCheckProblem | null>(null);
+  const [welcomeBack, setWelcomeBack] = useState(false);
   // "two-phase" items (Passage Reconstruction): show the passage, then hide
   // it and switch to a blank textarea — testing recall, not copying.
   const [twoPhaseStage, setTwoPhaseStage] = useState<"idle" | "reading" | "writing">("idle");
@@ -984,6 +990,28 @@ function ModulesPage() {
       .catch(() => setAvailability(null))
       .finally(() => setLoadingAvailability(false));
   }, []);
+
+  // A fresh start shows the device check and guide. Coming back to a set
+  // already answered in skips them when it was in use here in the last 30
+  // minutes, else runs a quick check on its own and shows the full check
+  // only if that finds a problem.
+  async function introFor(id: string, list: TestItem[]) {
+    setResumeProblem(null);
+    if (!list.some((i) => i.attempted)) {
+      setWelcomeBack(false);
+      setShowTypeIntro(true);
+      return;
+    }
+    setCheckingResume(true);
+    const problem = await resumeNeedsFullCheck(id, list.some((i) => i.inputMethod === "mic")).catch(() => "internet" as const);
+    setCheckingResume(false);
+    if (problem) {
+      setResumeProblem(problem);
+      setShowTypeIntro(true);
+    } else {
+      setWelcomeBack(true);
+    }
+  }
 
   async function handleStart(skill: SkillTag, count?: number, itemTypeId?: string, setId?: string, retry?: boolean, check?: boolean) {
     setStarting(true);
@@ -1021,8 +1049,8 @@ function ModulesPage() {
       );
       setSummary(null);
       setFeedback(null);
-      // The device check and guide on every start and resume.
-      setShowTypeIntro(true);
+      // The device check and guide on a fresh start; smart resume otherwise.
+      void introFor(res.sessionId, res.items);
     } catch {
       setError(t("modules.startError"));
     } finally {
@@ -1259,6 +1287,8 @@ function ModulesPage() {
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
+      markChecked(sessionId);
+      setWelcomeBack(false);
       // How the answer did, before moving on (a spoken answer may still be
       // being scored: the learner can go on meanwhile).
       if (res.feedback) {
@@ -1279,6 +1309,8 @@ function ModulesPage() {
     setError(null);
     try {
       await submitPracticeAttempt(sessionId, { itemId: current.id, activeMs: Date.now() - questionShownAtRef.current });
+      markChecked(sessionId);
+      setWelcomeBack(false);
       setAnswers((prev) => {
         const next = { ...prev };
         delete next[index];
@@ -1360,7 +1392,13 @@ function ModulesPage() {
             setPickerUnit(null);
             updateBrowseParams({ pSkill: pickerUnit.skill, pType: pickerUnit.itemTypeId });
           }}
-          onSelect={(setId) => {
+          onSelect={(setId, started) => {
+            // Coming back to a set in progress skips the consent and face check.
+            if (started) {
+              updateBrowseParams(null);
+              void handleStart(pickerUnit.skill, undefined, pickerUnit.itemTypeId, setId);
+              return;
+            }
             setPendingStart({ skill: pickerUnit.skill, itemTypeId: pickerUnit.itemTypeId, setId });
             updateBrowseParams(null);
           }}
@@ -1588,6 +1626,8 @@ function ModulesPage() {
 
   if (!current) return null;
 
+  if (checkingResume) return <p className="text-sm text-muted text-center mt-10">{tr("Getting back to your set…")}</p>;
+
   if (showTypeIntro) {
     return (
       <ModuleGuide
@@ -1595,7 +1635,12 @@ function ModulesPage() {
         context={context}
         typeName={ITEM_TYPE_META[current.itemTypeId]?.name ?? context?.typeName ?? ""}
         instruction={current.instructionText}
-        onStart={() => setShowTypeIntro(false)}
+        onStart={() => {
+          markChecked(sessionId);
+          setResumeProblem(null);
+          setShowTypeIntro(false);
+        }}
+        problem={resumeProblem}
         onBack={resetToPicker}
         resumeAt={items.some((i) => i.attempted) ? index + 1 : undefined}
       />
@@ -1690,6 +1735,12 @@ function ModulesPage() {
               ))}
             </div>
           </div>
+
+          {welcomeBack && (
+            <p className="text-sm text-navy-deep bg-navy/5 border border-navy/15 rounded-input px-3 py-2 text-center">
+              {tr("Welcome back. You're on question {{n}} of {{total}}.", { n: index + 1, total: items.length })}
+            </p>
+          )}
 
           {/* The real task explanation ("Listen to the conversation and
               answer the question."), not the short per-item prompt — shown

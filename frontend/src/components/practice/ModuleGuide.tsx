@@ -44,9 +44,12 @@ export function ModuleGuide({
   onStart,
   onBack,
   resumeAt,
+  problem,
 }: {
   // Resuming: the question the learner continues from (1-based).
   resumeAt?: number;
+  // Resuming: what the quick automatic check found wrong.
+  problem?: "internet" | "mic" | null;
   items: TestItem[];
   context: PracticeContext | null;
   typeName: string;
@@ -63,11 +66,20 @@ export function ModuleGuide({
   if (stage === "check") {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-3">
-        <p className="text-sm text-muted text-center">{tr("First a quick check of your {{checks}}, so the set runs smoothly and your answers are captured.", { checks })}</p>
+        {problem ? (
+          <p className="text-sm text-warning text-center">
+            {problem === "mic"
+              ? tr("Welcome back. Your microphone isn't responding, so let's check it before you go on.")
+              : tr("Welcome back. Your connection looks unstable, so let's check it before you go on.")}
+          </p>
+        ) : (
+          <p className="text-sm text-muted text-center">{tr("First a quick check of your {{checks}}, so the set runs smoothly and your answers are captured.", { checks })}</p>
+        )}
         <SystemCheck
           needs={{ mic: needsMic, speaker: needsSpeaker }}
           onBack={onBack}
-          onPassed={() => setStage("guide")}
+          // Back from a break: once the devices pass, straight back to the question.
+          onPassed={() => (resumeAt ? onStart() : setStage("guide"))}
         />
       </div>
     );

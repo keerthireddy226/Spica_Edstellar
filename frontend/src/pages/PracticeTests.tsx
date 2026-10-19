@@ -70,6 +70,7 @@ import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
+import { markChecked, quickDeviceCheck, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
@@ -354,6 +355,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       const res =
         start.mode === "mock" ? await startMockSession(start.testTypeId!) : start.formId ? await startFormSession(start.formId) : await startExamSession(start.examId!);
       applySessionData(res);
+      markChecked(res.sessionId);
     } catch (err) {
       const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
       setError(
@@ -375,6 +377,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const [resumeChecked, setResumeChecked] = useState(false);
   // A test resumed after a page reload shows the device check before going on.
   const [resumeNeedsCheck, setResumeNeedsCheck] = useState(false);
+  const [resumeProblem, setResumeProblem] = useState<QuickCheckProblem | null>(null);
+  // Quietly checking the devices before resuming from the set list.
+  const [quickChecking, setQuickChecking] = useState(false);
   useEffect(() => {
     // Restores the exam-picker list on a refresh even if there's no active
     // session to resume (e.g. refreshing before starting one) — harmless to
@@ -392,8 +397,13 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       .then((res) => {
         if (!res.completed) {
           applySessionData(res);
-          // Resuming after a reload: the device check comes first again.
-          setResumeNeedsCheck(true);
+          // Resuming after a reload: straight on if this test was in use here
+          // in the last 30 minutes, else a quick check on its own; the full
+          // device check shows only if that finds a problem.
+          return resumeNeedsFullCheck(res.sessionId, deviceNeedsFor(productParam ?? "").mic).then((problem) => {
+            setResumeProblem(problem);
+            setResumeNeedsCheck(!!problem);
+          });
         }
       })
       .catch(() => {})
@@ -650,6 +660,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
+      markChecked(sessionId);
       // Straight on: right and wrong answers are in the report at the end
       // (feedback after each question is in Practice Modules, not tests).
       await finishOrAdvance();
@@ -734,6 +745,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   }
 
   if (!resumeChecked) return null;
+  if (quickChecking) return <p className="text-sm text-muted text-center mt-10">{tr("Getting back to your test…")}</p>;
 
   if (requireReverify) {
     return <FaceCheck mode="verify" purpose="practice_test" onComplete={() => setRequireReverify(false)} />;
@@ -742,8 +754,18 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   if (resumeNeedsCheck && sessionId) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-3">
-        <p className="text-sm text-muted text-center">{tr("Before you continue, a quick check of your internet, speakers and microphone.")}</p>
-        <SystemCheck needs={deviceNeedsFor(selectedProduct ?? "")} onPassed={() => setResumeNeedsCheck(false)} />
+        <p className="text-sm text-warning text-center">
+          {resumeProblem === "mic"
+            ? tr("Welcome back. Your microphone isn't responding, so let's check it before you go on.")
+            : tr("Welcome back. Your connection looks unstable, so let's check it before you go on.")}
+        </p>
+        <SystemCheck
+          needs={deviceNeedsFor(selectedProduct ?? "")}
+          onPassed={() => {
+            markChecked(sessionId);
+            setResumeNeedsCheck(false);
+          }}
+        />
       </div>
     );
   }
@@ -1506,10 +1528,20 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                   <p className="text-xs text-warning -mt-1">{tr("Finished with questions skipped. Retake it and answer every question to unlock Set {{n}}.", { n: i + 2 })}</p>
                 )}
                 <Button
-                  onClick={() => {
-                    // Every Start or Retake gets its own check.
+                  onClick={async () => {
+                    const start: PendingStart = exam.source === "form" ? { key: exam.id, mode: "practice", formId: exam.id } : { key: exam.id, mode: "practice", examId: exam.id };
+                    // Resume: a quick check on its own, then straight back to
+                    // the question (no demo or face check again). The full
+                    // checks show only if the quick check finds a problem.
+                    if (exam.inProgress) {
+                      setQuickChecking(true);
+                      const problem = await quickDeviceCheck(deviceNeedsFor(selectedProduct ?? "").mic).catch(() => "internet" as const);
+                      setQuickChecking(false);
+                      if (!problem) return handleStartExam(start);
+                    }
+                    // A Start or Retake gets its full check.
                     setPreTestDoneFor(null);
-                    setPendingStart(exam.source === "form" ? { key: exam.id, mode: "practice", formId: exam.id } : { key: exam.id, mode: "practice", examId: exam.id });
+                    setPendingStart(start);
                   }}
                   // At the monthly limit, only an unfinished set can be resumed;
                   // a locked set opens once the one before is finished.
@@ -1572,10 +1604,20 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           quota={quota}
           history={history}
           openMock={openMock}
-          onStart={(id) => {
+          onStart={async (id) => {
             openProduct(id);
-            setPreTestDoneFor(null);
-            setPendingStart({ key: `mock:${id}`, mode: "mock", testTypeId: id });
+            const key = `mock:${id}`;
+            // Resuming the open mock: a quick check on its own replaces the
+            // device check and demo; the identity check still runs.
+            if (openMock?.testTypeId === id) {
+              setQuickChecking(true);
+              const problem = await quickDeviceCheck(deviceNeedsFor(id).mic).catch(() => "internet" as const);
+              setQuickChecking(false);
+              setPreTestDoneFor(problem ? null : key);
+            } else {
+              setPreTestDoneFor(null);
+            }
+            setPendingStart({ key, mode: "mock", testTypeId: id });
           }}
         />
         {programCard}
