@@ -293,7 +293,7 @@ export function BulkLearnerUpload({
             </table>
           </div>
           <Button onClick={send} disabled={busy || ready === 0} className="self-start flex items-center gap-2">
-            <FileText size={16} /> {busy ? tr("Sending…") : tr("Send {{ready}} invite{{v}}", { ready: ready, v: ready === 1 ? "" : "s" })}
+            <FileText size={16} /> {busy ? tr("Sending…") : ready === 1 ? tr("Send 1 invite") : tr("Send {{n}} invites", { n: ready })}
           </Button>
         </>
       )}

@@ -25,14 +25,23 @@ const TEMPLATES: Record<EngagementStatus, { title: string; message: (l: LearnerE
   inactive: {
     title: tr("Let's get back to practice"),
     message: (l) =>
-      tr("You haven't practised in {{v}}.{{v2}} A 15-minute session today gets you back on track.", { v: l.lastActiveAt ? timeAgo(l.lastActiveAt).replace(" ago", "") : "a while", v2: l.targetCefr ? ` Your batch goal is ${l.targetCefr}.` : "" }),
+      [
+        l.lastActiveAt ? tr("You last practised {{ago}}.", { ago: timeAgo(l.lastActiveAt) }) : tr("You haven't practised in a while."),
+        l.targetCefr ? tr("Your batch goal is {{level}}.", { level: l.targetCefr }) : null,
+        tr("A 15-minute session today gets you back on track."),
+      ]
+        .filter(Boolean)
+        .join(" "),
   },
   slow: {
     title: tr("A little extra practice this week"),
-    message: (l) => tr("You're a bit behind the path to {{v}}. Try 20 minutes a day this week — it adds up fast.", { v: l.targetCefr ?? "your goal" }),
+    message: (l) =>
+      l.targetCefr
+        ? tr("You're a bit behind the path to {{level}}. Try 20 minutes a day this week — it adds up fast.", { level: l.targetCefr })
+        : tr("You're a bit behind the path to your goal. Try 20 minutes a day this week — it adds up fast."),
   },
   on_track: { title: tr("Great progress — keep it up"), message: () => tr("You're on track. Keep your daily practice going.") },
-  achieved: { title: tr("You reached your goal!"), message: (l) => tr("Congratulations on reaching {{v}}. Keep practising to stay sharp.", { v: l.targetCefr ?? "your goal" }) },
+  achieved: { title: tr("You reached your goal!"), message: (l) => (l.targetCefr ? tr("Congratulations on reaching {{level}}. Keep practising to stay sharp.", { level: l.targetCefr }) : tr("Congratulations on reaching your goal. Keep practising to stay sharp.")) },
 };
 
 function name(l: LearnerEngagement): string {
@@ -58,7 +67,14 @@ function ReminderModal({ learners, onClose, onSent }: { learners: LearnerEngagem
       const { results } = await sendReminders(learners.map((l) => l.id), title.trim(), message.trim());
       const sent = results.filter((r) => r.status === "sent").length;
       const skipped = results.filter((r) => r.status === "cooldown").length;
-      onSent(tr("Reminder sent to {{sent}} learner{{v}}{{v2}}.", { sent: sent, v: sent === 1 ? "" : "s", v2: skipped ? ` · ${skipped} skipped (reminded in the last 48h)` : "" }));
+      onSent(
+        [
+          sent === 1 ? tr("Reminder sent to 1 learner.") : tr("Reminder sent to {{n}} learners.", { n: sent }),
+          skipped ? tr("{{n}} skipped (reminded in the last 48h).", { n: skipped }) : null,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
     } catch {
       setError(tr("Couldn't send reminders."));
       setSending(false);
@@ -71,7 +87,7 @@ function ReminderModal({ learners, onClose, onSent }: { learners: LearnerEngagem
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">
-            {tr("Send reminder")}{learners.length > 1 ? tr(" to {{length}} learners", { length: learners.length }) : ` to ${name(learners[0])}`}
+            {learners.length > 1 ? tr("Send reminder to {{length}} learners", { length: learners.length }) : tr("Send reminder to {{name}}", { name: name(learners[0]) })}
           </h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
@@ -89,7 +105,7 @@ function ReminderModal({ learners, onClose, onSent }: { learners: LearnerEngagem
           </div>
           {cooling.length > 0 && (
             <p className="text-xs text-navy-deep bg-warning/10 rounded-input px-3 py-2">
-              {tr("{{length}} of them {{v}} reminded in the last 48 hours and will be skipped.", { length: cooling.length, v: cooling.length === 1 ? "was" : "were" })}</p>
+              {cooling.length === 1 ? tr("1 of them was reminded in the last 48 hours and will be skipped.") : tr("{{n}} of them were reminded in the last 48 hours and will be skipped.", { n: cooling.length })}</p>
           )}
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">

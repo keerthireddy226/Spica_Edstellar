@@ -255,13 +255,14 @@ export function decideLicenseRequest(id: string, approve: boolean, note?: string
 }
 
 export function describeLicenseRequest(r: Pick<LicenseRequest, "kind" | "quantity" | "batchName" | "learnerName">): string {
-  const n = `${r.quantity} license${r.quantity === 1 ? "" : "s"}`;
+  const one = r.quantity === 1;
   const target = r.batchName ?? tr("the Manager's own pool");
-  if (r.kind === "increase_allotment") return tr("{{n}} more for {{target}}", { n: n, target: target });
-  if (r.kind === "decrease_allotment") return tr("{{n}} fewer for {{target}}", { n: n, target: target });
+  if (r.kind === "increase_allotment") return one ? tr("1 license more for {{target}}", { target: target }) : tr("{{n}} licenses more for {{target}}", { n: r.quantity, target: target });
+  if (r.kind === "decrease_allotment") return one ? tr("1 license fewer for {{target}}", { target: target }) : tr("{{n}} licenses fewer for {{target}}", { n: r.quantity, target: target });
   if (r.kind === "learner_extension")
     return r.quantity === 1 ? tr("1 more month of access for {{name}}", { name: r.learnerName ?? tr("a learner") }) : tr("{{n}} more months of access for {{name}}", { n: r.quantity, name: r.learnerName ?? tr("a learner") });
-  return tr("Return {{quantity}} unused month{{v}} from {{v2}}", { quantity: r.quantity, v: r.quantity === 1 ? "" : "s", v2: r.learnerName ?? "a learner" });
+  const name = r.learnerName ?? tr("a learner");
+  return one ? tr("Return 1 unused month from {{name}}", { name: name }) : tr("Return {{n}} unused months from {{name}}", { n: r.quantity, name: name });
 }
 
 export const REQUEST_STATUS_CLASS: Record<LicenseRequest["status"], string> = {

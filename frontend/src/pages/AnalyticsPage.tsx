@@ -143,7 +143,7 @@ export function AnalyticsPage() {
               >
                 {batches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {tr("{{name}}· {{batchCode}}· {{learners}} learner{{v}}", { name: b.name, batchCode: b.batchCode, learners: b.learners, v: b.learners === 1 ? "" : "s" })}
+                    {b.learners === 1 ? tr("{{name}} · {{batchCode}} · 1 learner", { name: b.name, batchCode: b.batchCode }) : tr("{{name}} · {{batchCode}} · {{n}} learners", { name: b.name, batchCode: b.batchCode, n: b.learners })}
                   </option>
                 ))}
               </select>

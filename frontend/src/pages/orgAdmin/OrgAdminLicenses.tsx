@@ -54,20 +54,28 @@ function StatCard({ label, value, hint, icon: Icon, index }: { label: string; va
 }
 
 function eventSentence(e: LicenseEvent): string {
-  const n = `${e.quantity} license${e.quantity === 1 ? "" : "s"}`;
+  const one = e.quantity === 1;
+  const n = e.quantity;
+  const note = e.note ? ` (${trServer(e.note)})` : "";
   switch (e.kind) {
     case "purchase":
-      return tr("{{n}} purchased{{v}}", { n, v: e.note ? ` (${trServer(e.note)})` : "" });
+      return (one ? tr("1 license purchased") : tr("{{n}} licenses purchased", { n })) + note;
     case "credit":
-      return tr("{{n}} credited by Edstellar{{v}}", { n: n, v: e.note ? ` (${trServer(e.note)})` : "" });
+      return (one ? tr("1 license credited by Edstellar") : tr("{{n}} licenses credited by Edstellar", { n })) + note;
     case "comp":
-      return tr("{{n}} added complimentary{{v}}", { n: n, v: e.note ? ` (${trServer(e.note)})` : "" });
-    case "assign":
-      return tr("{{n}} assigned to {{v}}{{v2}}", { n: n, v: e.learnerEmail ?? tr("a learner"), v2: e.batchName ? ` · ${e.batchName}` : "" });
-    case "extend":
-      return tr("{{v}} extended by {{quantity}} month{{v2}}", { v: e.learnerEmail ?? "A learner", quantity: e.quantity, v2: e.quantity === 1 ? "" : "s" });
-    case "reclaim":
-      return tr("{{n}} unassigned from {{v}} back to the pool{{v2}}", { n: n, v: e.learnerEmail ?? tr("a learner"), v2: e.note ? ` — ${trServer(e.note)}` : "" });
+      return (one ? tr("1 license added complimentary") : tr("{{n}} licenses added complimentary", { n })) + note;
+    case "assign": {
+      const who = e.learnerEmail ?? tr("a learner");
+      return (one ? tr("1 license assigned to {{who}}", { who }) : tr("{{n}} licenses assigned to {{who}}", { n, who })) + (e.batchName ? ` · ${e.batchName}` : "");
+    }
+    case "extend": {
+      const who = e.learnerEmail ?? tr("A learner");
+      return one ? tr("{{who}} extended by 1 month", { who }) : tr("{{who}} extended by {{n}} months", { who, n });
+    }
+    case "reclaim": {
+      const who = e.learnerEmail ?? tr("a learner");
+      return (one ? tr("1 license unassigned from {{who}} back to the pool", { who }) : tr("{{n}} licenses unassigned from {{who}} back to the pool", { n, who })) + (e.note ? ` — ${trServer(e.note)}` : "");
+    }
     case "budget":
       return e.note ? trServer(e.note) : tr("{{batchName}} budget set to {{quantity}}", { batchName: e.batchName, quantity: e.quantity });
   }
@@ -238,7 +246,9 @@ export function OrgAdminLicenses() {
         <div className="flex flex-col gap-2">
           {poolExpiringSoon && (
             <p className="text-sm text-navy-deep bg-warning/10 border border-warning/25 rounded-input px-3.5 py-2.5">
-              {tr("{{nextPoolExpiryQuantity}} unassigned license{{v}} expire on {{formatShortDate}} — assign them before then.", { nextPoolExpiryQuantity: s.nextPoolExpiryQuantity, v: s.nextPoolExpiryQuantity === 1 ? "" : "s", formatShortDate: formatShortDate(s.nextPoolExpiry) })}</p>
+              {s.nextPoolExpiryQuantity === 1
+                ? tr("1 unassigned license expires on {{date}} — assign it before then.", { date: formatShortDate(s.nextPoolExpiry) })
+                : tr("{{n}} unassigned licenses expire on {{date}} — assign them before then.", { n: s.nextPoolExpiryQuantity, date: formatShortDate(s.nextPoolExpiry) })}</p>
           )}
           {s.unlicensedLearners > 0 && s.available > 0 && (
             <p className="text-sm text-ink bg-navy/5 border border-rule rounded-input px-3.5 py-2.5">
@@ -251,7 +261,9 @@ export function OrgAdminLicenses() {
           )}
           {s.expiredUnused > 0 && (
             <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-              {tr("{{expiredUnused}} license{{v}} expired unused (pool licenses are valid for 12 months after purchase).", { expiredUnused: s.expiredUnused, v: s.expiredUnused === 1 ? "" : "s" })}</p>
+              {s.expiredUnused === 1
+                ? tr("1 license expired unused (pool licenses are valid for 12 months after purchase).")
+                : tr("{{n}} licenses expired unused (pool licenses are valid for 12 months after purchase).", { n: s.expiredUnused })}</p>
           )}
         </div>
       )}

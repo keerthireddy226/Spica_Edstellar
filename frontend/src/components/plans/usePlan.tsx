@@ -57,7 +57,7 @@ export function PlanLockNote({ feature, compact = false }: { feature: PlanFeatur
     >
       <Lock size={15} className="text-navy mt-0.5 shrink-0" />
       <span>
-        {tr("{{label}} {{v}} on the {{tier}} plan.", { label: info.label, v: info.label.endsWith("s") ? "are" : "is", tier: tier })}{" "}
+        {info.label.endsWith("s") ? tr("{{label}} are on the {{tier}} plan.", { label: info.label, tier: tier }) : tr("{{label}} is on the {{tier}} plan.", { label: info.label, tier: tier })}{" "}
         {user?.role === "org_admin" ? (
           <Link to={ROUTES.ORG_ADMIN_PLAN} className="text-navy font-semibold hover:underline">
             {tr("See plans")}</Link>

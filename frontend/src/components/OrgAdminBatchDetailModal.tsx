@@ -69,7 +69,12 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   return (
     <DetailModal
       title={batch.name}
-      subtitle={tr("{{batchCode}} · {{v}} · Created {{formatDate}}{{v2}}", { batchCode: batch.batchCode, v: BATCH_STATUS_LABEL[batch.status], formatDate: formatDate(batch.createdAt), v2: batch.endDate ? ` · ${batch.status === "active" ? "Ends" : "Ended"} ${formatDate(batch.endDate)}` : "" })}
+      subtitle={[
+        tr("{{batchCode}} · {{status}} · Created {{date}}", { batchCode: batch.batchCode, status: BATCH_STATUS_LABEL[batch.status], date: formatDate(batch.createdAt) }),
+        batch.endDate ? (batch.status === "active" ? tr("Ends {{date}}", { date: formatDate(batch.endDate) }) : tr("Ended {{date}}", { date: formatDate(batch.endDate) })) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
       icon={Layers}
       badges={
         <>
@@ -147,7 +152,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                     <p className="text-xs text-muted">
-                      {tr("{{join}} {{v}} {{sessionCount}} session{{v2}} completed", { join: [l.employeeId, l.department, l.jobTitle].filter(Boolean).join(" · "), v: l.employeeId || l.department || l.jobTitle ? " · " : "", sessionCount: l.sessionCount, v2: l.sessionCount === 1 ? "" : "s" })}</p>
+                      {[l.employeeId, l.department, l.jobTitle, l.sessionCount === 1 ? tr("1 session completed") : tr("{{n}} sessions completed", { n: l.sessionCount })].filter(Boolean).join(" · ")}</p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
                   {certs.get(l.id) ? (

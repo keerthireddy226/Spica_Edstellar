@@ -79,11 +79,7 @@ export async function keepGoingStatus(userId: string) {
 // One line of progress for the admin's request: level, goal, tests done.
 export async function progressLine(userId: string): Promise<string> {
   const s = await keepGoingStatus(userId);
-  const bits = [
-    s.goal.current ? `Level now ${s.goal.current}` : null,
-    s.goal.goal ? `goal ${s.goal.goal}` : null,
-    `${s.sets.done} of ${s.sets.total} practice sets completed`,
-    s.access.accessEndsAt ? `access ends ${new Date(s.access.accessEndsAt).toISOString().slice(0, 10)}` : null,
-  ].filter(Boolean);
-  return `${bits.join(", ")}.`;
+  // One fixed sentence (dashes for what's unknown), so emails can translate it.
+  const ends = s.access.accessEndsAt ? new Date(s.access.accessEndsAt).toISOString().slice(0, 10) : "—";
+  return `Level now ${s.goal.current ?? "—"}, goal ${s.goal.goal ?? "—"}, ${s.sets.done} of ${s.sets.total} practice sets completed, access ends ${ends}.`;
 }

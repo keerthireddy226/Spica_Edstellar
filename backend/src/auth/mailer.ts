@@ -112,14 +112,14 @@ export async function sendNotificationEmail(args: { to: string; subject: string;
 }
 
 // The test plan's dates: the email lists them with Google Calendar links and
-// attaches the .ics file for Apple Calendar and Outlook.
+// attaches the .ics file for Apple Calendar and Outlook. The caller writes it
+// in the learner's language line by line.
 export async function sendCalendarEmail(args: { to: string; subject: string; text: string; ics: string }) {
-  const l = await localize(args.to, args.subject, args.text);
   await transporter.sendMail({
     from: process.env.SMTP_FROM ?? process.env.SMTP_USER,
     to: args.to,
-    subject: l.subject,
-    text: l.text,
+    subject: args.subject,
+    text: args.text,
     attachments: [{ filename: "spica-test-plan.ics", content: args.ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }],
   });
 }

@@ -136,22 +136,24 @@ export function AssignLicenseModal({
           </div>
 
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
-            {mode === "assign" ? (
-              <>
-                {tr("Uses")}{" "}<span className="font-semibold">{months}</span> {tr("license{{v}} from the pool. Access", { v: months === 1 ? "" : "s" })}{" "}
-                {isExtend ? "extends" : tr("starts today and runs")} {tr("until")}{" "}<span className="font-semibold">{formatShortDate(newEnd.toISOString())}</span>.
-              </>
-            ) : (
-              <>
-                {tr("Returns")}{" "}<span className="font-semibold">{Math.min(months, maxReclaim)}</span> {tr("unstarted month{{v}} to the pool. The month already running isn't refunded.", { v: months === 1 ? "" : "s" })}</>
-            )}
+            {mode === "assign"
+              ? isExtend
+                ? months === 1
+                  ? tr("Uses 1 license from the pool. Access extends until {{date}}.", { date: formatShortDate(newEnd.toISOString()) })
+                  : tr("Uses {{n}} licenses from the pool. Access extends until {{date}}.", { n: months, date: formatShortDate(newEnd.toISOString()) })
+                : months === 1
+                  ? tr("Uses 1 license from the pool. Access starts today and runs until {{date}}.", { date: formatShortDate(newEnd.toISOString()) })
+                  : tr("Uses {{n}} licenses from the pool. Access starts today and runs until {{date}}.", { n: months, date: formatShortDate(newEnd.toISOString()) })
+              : Math.min(months, maxReclaim) === 1
+                ? tr("Returns 1 unstarted month to the pool. The month already running isn't refunded.")
+                : tr("Returns {{n}} unstarted months to the pool. The month already running isn't refunded.", { n: Math.min(months, maxReclaim) })}
             <p className="text-xs text-muted mt-1">{poolHint}</p>
           </div>
 
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={submit} disabled={submitting} className="flex-1">
-              {submitting ? tr("Saving…") : mode === "assign" ? (isExtend ? tr("Extend by {{months}}", { months: months }) : `Assign ${months}`) : `Reclaim ${Math.min(months, maxReclaim)}`}
+              {submitting ? tr("Saving…") : mode === "assign" ? (isExtend ? tr("Extend by {{months}}", { months: months }) : tr("Assign {{months}}", { months })) : tr("Reclaim {{months}}", { months: Math.min(months, maxReclaim) })}
             </Button>
             <Button variant="secondary" onClick={onClose}>
               {tr("Cancel")}</Button>

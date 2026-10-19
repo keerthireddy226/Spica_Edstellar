@@ -169,13 +169,19 @@ export function OrgAdminBatches() {
                 </p>
               )}
               <div className="flex items-center gap-1.5 text-white/80 text-xs">
-                <Users size={13} /> {b.learnerCount}
-                {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner{{v}}", { v: (b.capacity ?? b.learnerCount) === 1 ? "" : "s" })}
+                <Users size={13} />{" "}
+                {b.capacity
+                  ? b.capacity === 1
+                    ? tr("{{n}} of 1 learner", { n: b.learnerCount })
+                    : tr("{{n}} of {{capacity}} learners", { n: b.learnerCount, capacity: b.capacity })
+                  : b.learnerCount === 1
+                    ? tr("1 learner")
+                    : tr("{{n}} learners", { n: b.learnerCount })}
                 {b.capacity && b.learnerCount >= b.capacity ? tr(" · full") : ""}
               </div>
               {b.durationMonths && (
                 <p className="text-xs text-white/70">
-                  {tr("{{durationMonths}} month{{v}}", { durationMonths: b.durationMonths, v: b.durationMonths === 1 ? "" : "s" })}
+                  {b.durationMonths === 1 ? tr("1 month") : tr("{{n}} months", { n: b.durationMonths })}
                   {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }) : ""}
                   {b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
                 </p>

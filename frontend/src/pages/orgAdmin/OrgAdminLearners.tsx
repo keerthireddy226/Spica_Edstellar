@@ -69,7 +69,7 @@ export function OrgAdminLearners() {
     try {
       const r = await deleteLearner(learner.id);
       setDeletingLearner(null);
-      if (r.reclaimedMonths) setNotice(tr("{{reclaimedMonths}} unused month{{v}} went back to your license pool.", { reclaimedMonths: r.reclaimedMonths, v: r.reclaimedMonths === 1 ? "" : "s" }));
+      if (r.reclaimedMonths) setNotice(r.reclaimedMonths === 1 ? tr("1 unused month went back to your license pool.") : tr("{{n}} unused months went back to your license pool.", { n: r.reclaimedMonths }));
       load();
     } catch {
       setError(tr("Could not delete that learner."));
@@ -95,7 +95,7 @@ export function OrgAdminLearners() {
     try {
       if (learner.active) {
         const r = await deactivateLearner(learner.id);
-        if (r.reclaimedMonths) setNotice(tr("{{reclaimedMonths}} unused month{{v}} went back to your license pool.", { reclaimedMonths: r.reclaimedMonths, v: r.reclaimedMonths === 1 ? "" : "s" }));
+        if (r.reclaimedMonths) setNotice(r.reclaimedMonths === 1 ? tr("1 unused month went back to your license pool.") : tr("{{n}} unused months went back to your license pool.", { n: r.reclaimedMonths }));
       } else await reactivateLearner(learner.id);
       load();
     } catch {

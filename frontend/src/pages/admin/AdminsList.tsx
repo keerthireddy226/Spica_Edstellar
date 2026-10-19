@@ -499,7 +499,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                 <div>
                   <p className="text-sm font-medium text-ink">{org.name}</p>
                   <p className="text-xs text-muted">
-                    {org.category === "university" ? tr("University") : tr("Organization")} · {tr("{{learnerCount}} learner{{v}}", { learnerCount: org.learnerCount, v: org.learnerCount === 1 ? "" : "s" })}
+                    {org.category === "university" ? tr("University") : tr("Organization")} · {org.learnerCount === 1 ? tr("1 learner") : tr("{{n}} learners", { n: org.learnerCount })}
                   </p>
                 </div>
                 <span
@@ -556,7 +556,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
                           <span className="text-muted text-xs ml-2">{mgr.email}</span>
                         </div>
                         <span className="text-xs text-muted shrink-0">
-                          {tr("{{learnerCount}} learner{{v}}", { learnerCount: mgr.learnerCount, v: mgr.learnerCount === 1 ? "" : "s" })}
+                          {mgr.learnerCount === 1 ? tr("1 learner") : tr("{{n}} learners", { n: mgr.learnerCount })}
                         </span>
                       </button>
                     ))}

@@ -108,7 +108,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                   <div className="flex justify-between text-sm">
                     <span className="font-medium text-ink">{meta.label}</span>
                     <span className="text-muted">
-                      {s?.accuracy != null ? tr("{{accuracy}}% accurate · {{answered}} answer{{v}}", { accuracy: s.accuracy, answered: s.answered, v: s.answered === 1 ? "" : "s" }) : tr("Not practised yet")}
+                      {s?.accuracy != null ? s.answered === 1 ? tr("{{accuracy}}% accurate · 1 answer", { accuracy: s.accuracy }) : tr("{{accuracy}}% accurate · {{n}} answers", { accuracy: s.accuracy, n: s.answered }) : tr("Not practised yet")}
                     </span>
                   </div>
                   <div className="h-2.5 rounded-full bg-rule overflow-hidden mt-1.5">
@@ -139,7 +139,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                   return (
                     <span
                       key={day.day}
-                      title={`${new Date(day.day).toDateString()}: ${day.sessions} session${day.sessions === 1 ? "" : "s"}, ${day.minutes} min`}
+                      title={`${new Date(day.day).toLocaleDateString()}: ${day.sessions === 1 ? tr("1 session, {{m}} min", { m: day.minutes }) : tr("{{n}} sessions, {{m}} min", { n: day.sessions, m: day.minutes })}`}
                       className="h-4 w-4 rounded-[4px]"
                       style={{ background: level === 0 ? "var(--color-rule)" : `color-mix(in srgb, var(--color-accent) ${25 + level * 18}%, var(--color-surface))` }}
                     />

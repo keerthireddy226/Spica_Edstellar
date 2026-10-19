@@ -107,7 +107,7 @@ function CreditModal({
             <input value={note} onChange={(e) => setNote(e.target.value)} className={inputClass} />
           </div>
           <p className="text-sm text-ink bg-paper-warm rounded-input px-3.5 py-2.5">
-            {tr("{{qty}} license{{v}}= {{qty2}} learner-month{{v2}}", { qty: qty, v: qty === 1 ? "" : "s", qty2: qty, v2: qty === 1 ? "" : "s" })} ·{" "}
+            {qty === 1 ? tr("1 license = 1 learner-month") : tr("{{n}} licenses = {{n}} learner-months", { n: qty })} ·{" "}
             <span className="font-semibold">{source === "comp" ? tr("no charge") : formatMoney(unitCents * qty)}</span>
             <span className="block text-xs text-muted mt-0.5">
               {tr("Unassigned licenses expire")}{" "}{customValidity ? Math.max(1, Math.floor(Number(validity) || 12)) : 12} {tr("months from today.")}</span>

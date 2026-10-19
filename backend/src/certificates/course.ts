@@ -193,8 +193,9 @@ export async function requestCertificate(userId: string): Promise<string> {
     await notify({
       userId: admin.id,
       kind: "certificate_request",
+      // Whole sentences, so they translate in the reader's language.
       title: `${who} asks for a course certificate`,
-      body: `Level ${status.level ?? "—"}${status.goal ? `, goal ${status.goal}` : ""}. ${status.practice.done} of ${status.practice.total} practice tests and ${status.mocks} mock exam${status.mocks === 1 ? "" : "s"} done.${versant ? ` Versant result uploaded: ${versant.overallLevel}.` : ""}`,
+      body: `Level ${status.level ?? "—"}. Goal ${status.goal ?? "—"}. Practice tests done: ${status.practice.done} of ${status.practice.total}. Mock exams: ${status.mocks}. Versant result: ${versant ? versant.overallLevel : "not uploaded"}.`,
       link: admin.link,
       email: true,
       sentBy: userId,

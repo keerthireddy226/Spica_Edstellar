@@ -90,7 +90,7 @@ export function AdminReview() {
               </p>
             </div>
             <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">
-              <ShieldAlert size={14} /> {tr("{{length}} flagged check{{v}}", { length: p.flagged_checks.length, v: p.flagged_checks.length === 1 ? "" : "s" })}
+              <ShieldAlert size={14} /> {p.flagged_checks.length === 1 ? tr("1 flagged check") : tr("{{n}} flagged checks", { n: p.flagged_checks.length })}
             </span>
           </div>
 

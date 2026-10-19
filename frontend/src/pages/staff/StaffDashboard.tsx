@@ -97,8 +97,13 @@ export function StaffDashboard() {
           index={0}
           icon={Building2}
           value={data.organizations.active}
-          label={tr("Active organization{{v}}", { v: data.organizations.active === 1 ? "" : "s" })}
-          sub={tr("{{companies}} companies · {{universities}} universities{{v}}", { companies: data.organizations.companies, universities: data.organizations.universities, v: data.organizations.pilots ? ` · ${data.organizations.pilots} on pilot` : "" })}
+          label={data.organizations.active === 1 ? tr("Active organization") : tr("Active organizations")}
+          sub={[
+            tr("{{companies}} companies · {{universities}} universities", { companies: data.organizations.companies, universities: data.organizations.universities }),
+            data.organizations.pilots ? tr("{{n}} on pilot", { n: data.organizations.pilots }) : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         />
         <StatCard
           index={1}
@@ -121,9 +126,11 @@ export function StaffDashboard() {
           label={tr("Paid this month")}
           sub={
             revenue
-              ? tr("Last month {{money}}{{v}}", { money: money(revenue.lastMonth, revenue.currency), v: owed ? ` · ${money(owed.total, owed.currency)} unpaid` : "" })
+              ? [tr("Last month {{money}}", { money: money(revenue.lastMonth, revenue.currency) }), owed ? tr("{{amount}} unpaid", { amount: money(owed.total, owed.currency) }) : null]
+                  .filter(Boolean)
+                  .join(" · ")
               : owed
-                ? `${money(owed.total, owed.currency)} unpaid`
+                ? tr("{{amount}} unpaid", { amount: money(owed.total, owed.currency) })
                 : tr("No payments yet")
           }
         />
@@ -133,7 +140,7 @@ export function StaffDashboard() {
         <Panel
           className="lg:col-span-2"
           title={tr("Needs attention")}
-          action={<span className="text-xs text-muted">{tr("{{length}} item{{v}}", { length: data.attention.length, v: data.attention.length === 1 ? "" : "s" })}</span>}
+          action={<span className="text-xs text-muted">{data.attention.length === 1 ? tr("1 item") : tr("{{n}} items", { n: data.attention.length })}</span>}
         >
           {data.attention.length === 0 ? (
             <EmptyNote>{tr("Nothing needs attention right now.")}</EmptyNote>
@@ -172,7 +179,7 @@ export function StaffDashboard() {
           )}
           {owed && (
             <Link to={r.billing} className="mt-1 rounded-input bg-paper-warm px-3 py-2.5 text-sm hover:bg-rule/40 transition-colors">
-              <span className="font-semibold text-ink">{tr("{{v}} unpaid invoice{{v2}}", { v: owed.count, v2: owed.count === 1 ? "" : "s" })}</span>
+              <span className="font-semibold text-ink">{owed.count === 1 ? tr("1 unpaid invoice") : tr("{{n}} unpaid invoices", { n: owed.count })}</span>
               <span className="text-muted"> · {money(owed.total, owed.currency)}</span>
               {owed.overdue > 0 && <span className="text-error font-semibold"> · {tr("{{overdue}} overdue", { overdue: owed.overdue })}</span>}
             </Link>
@@ -306,12 +313,12 @@ export function StaffDashboard() {
             <div className="flex items-center gap-3">
               <ServerCog size={20} className={data.system?.failedJobs ? "text-error" : "text-success"} />
               <div>
-                <p className="text-sm text-ink font-medium">{data.system?.failedJobs ? tr("{{failedJobs}} failed job{{v}}", { failedJobs: data.system.failedJobs, v: data.system.failedJobs === 1 ? "" : "s" }) : tr("All background jobs healthy")}</p>
+                <p className="text-sm text-ink font-medium">{data.system?.failedJobs ? data.system.failedJobs === 1 ? tr("1 failed job") : tr("{{n}} failed jobs", { n: data.system.failedJobs }) : tr("All background jobs healthy")}</p>
                 <p className="text-xs text-muted">{data.system?.readyJobs ?? 0} {tr("waiting to run")}</p>
               </div>
             </div>
             <p className="text-xs text-muted">
-              {tr("{{pendingReviews}} placement{{v}} waiting for identity review ·", { pendingReviews: data.pendingReviews, v: data.pendingReviews === 1 ? "" : "s" })}{" "}
+              {data.pendingReviews === 1 ? tr("1 placement waiting for identity review ·") : tr("{{n}} placements waiting for identity review ·", { n: data.pendingReviews })}{" "}
               <Link to={r.reviews} className="text-navy font-semibold hover:underline">
                 {tr("Review")}</Link>
             </p>

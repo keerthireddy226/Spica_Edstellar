@@ -57,7 +57,13 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
         jobRole: (more.jobRole || undefined) as JobRole | undefined,
       });
       onDone(
-        tr("Invite sent to {{email}}{{v}}.{{v2}}", { email: r.email, v: compMonths && !r.accessError ? ` with ${compMonths} free month${compMonths === 1 ? "" : "s"} of full access` : "", v2: r.accessError ? " The free months couldn't be added." : "" }),
+        r.accessError
+          ? tr("Invite sent to {{email}}. The free months couldn't be added.", { email: r.email })
+          : compMonths
+            ? compMonths === 1
+              ? tr("Invite sent to {{email}} with 1 free month of full access.", { email: r.email })
+              : tr("Invite sent to {{email}} with {{n}} free months of full access.", { email: r.email, n: compMonths })
+            : tr("Invite sent to {{email}}.", { email: r.email }),
       );
     } catch (err) {
       setError(err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has an account.") : tr("Something went wrong."));
@@ -94,7 +100,7 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
             <select value={compMonths} onChange={(e) => setCompMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {MONTHS.map((m) => (
                 <option key={m} value={m}>
-                  {m === 0 ? tr("None — free plan (they can upgrade themselves)") : tr("{{m}} month{{v}} complimentary", { m: m, v: m === 1 ? "" : "s" })}
+                  {m === 0 ? tr("None — free plan (they can upgrade themselves)") : m === 1 ? tr("1 month complimentary") : tr("{{n}} months complimentary", { n: m })}
                 </option>
               ))}
             </select>
@@ -144,8 +150,8 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
               maxRows={200}
               checkExisting={(emails) => validateIndividualEmails(emails).then((r) => r.existing)}
               submit={async (rows) => (await inviteIndividualsBulk(compMonths, rows.map(({ email, firstName, lastName }) => ({ email, firstName, lastName })))).results}
-              extraNote={compMonths ? tr("{{compMonths}} free month{{v}} each", { compMonths: compMonths, v: compMonths === 1 ? "" : "s" }) : null}
-              onDone={(n) => onDone(tr("{{n}} individual learner{{v}} invited.", { n: n, v: n === 1 ? "" : "s" }))}
+              extraNote={compMonths ? (compMonths === 1 ? tr("1 free month each") : tr("{{n}} free months each", { n: compMonths })) : null}
+              onDone={(n) => onDone(n === 1 ? tr("1 individual learner invited.") : tr("{{n}} individual learners invited.", { n: n }))}
             />
           </div>
         )}
@@ -441,7 +447,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
             <select value={grantMonths} onChange={(e) => setGrantMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {MONTHS.slice(1).map((m) => (
                 <option key={m} value={m}>
-                  {tr("{{m}} month{{v}}", { m: m, v: m === 1 ? "" : "s" })}
+                  {m === 1 ? tr("1 month") : tr("{{n}} months", { n: m })}
                 </option>
               ))}
             </select>
@@ -451,7 +457,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                 onClick={() => {
                   const g = granting;
                   setGranting(null);
-                  act(() => grantIndividualAccess(g.id, grantMonths), tr("{{grantMonths}} free month{{v}} given to {{email}}.", { grantMonths: grantMonths, v: grantMonths === 1 ? "" : "s", email: g.email }));
+                  act(() => grantIndividualAccess(g.id, grantMonths), grantMonths === 1 ? tr("1 free month given to {{email}}.", { email: g.email }) : tr("{{n}} free months given to {{email}}.", { n: grantMonths, email: g.email }));
                 }}
               >
                 {tr("Give access")}</Button>

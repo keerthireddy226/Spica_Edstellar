@@ -104,7 +104,7 @@ export function OrgAdminPlan() {
           <Clock size={20} className="text-warning mt-0.5 shrink-0" />
           <div className="flex-1">
             <p className="font-semibold text-ink">
-              {tr("Pilot —")}{" "}{pilotDaysLeft === 0 ? tr("ends today") : tr("{{pilotDaysLeft}} day{{v}} left", { pilotDaysLeft: pilotDaysLeft, v: pilotDaysLeft === 1 ? "" : "s" })}
+              {tr("Pilot —")}{" "}{pilotDaysLeft === 0 ? tr("ends today") : pilotDaysLeft === 1 ? tr("1 day left") : tr("{{n}} days left", { n: pilotDaysLeft })}
             </p>
             <p className="text-sm text-muted">
               {tr("Your pilot licenses lapse on {{formatShortDate}}. Buy licenses before then so learners keep their access.", { formatShortDate: formatShortDate(plan.pilotEndsAt) })}</p>

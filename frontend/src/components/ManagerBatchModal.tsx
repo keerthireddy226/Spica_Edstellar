@@ -88,7 +88,13 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
   return (
     <DetailModal
       title={b.name}
-      subtitle={`${b.batchCode} · ${BATCH_STATUS_LABEL[b.status]}${b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${fmt(b.endDate)}` : ""}`}
+      subtitle={[
+        b.batchCode,
+        BATCH_STATUS_LABEL[b.status],
+        b.endDate ? (b.status === "active" ? tr("Ends {{date}}", { date: fmt(b.endDate) }) : tr("Ended {{date}}", { date: fmt(b.endDate) })) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")}
       icon={Layers}
       badges={
         <>
@@ -119,7 +125,17 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                 run(
                   () => managerCompleteBatch(b.id),
                   (r) =>
-                    tr("{{name}} is complete.{{v}}{{v2}}", { name: b.name, v: r.certificatesIssued ? ` ${r.certificatesIssued} certificate${r.certificatesIssued === 1 ? "" : "s"} issued.` : "", v2: r.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to the organization.` : "" }),
+                    [
+                      tr("{{name}} is complete.", { name: b.name }),
+                      r.certificatesIssued ? (r.certificatesIssued === 1 ? tr("1 certificate issued.") : tr("{{n}} certificates issued.", { n: r.certificatesIssued })) : null,
+                      r.releasedLicenses
+                        ? r.releasedLicenses === 1
+                          ? tr("1 unused fixed license went back to the organization.")
+                          : tr("{{n}} unused fixed licenses went back to the organization.", { n: r.releasedLicenses })
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" "),
                 )
               }
             >
@@ -161,7 +177,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
             </div>
             <div>
               <p className="text-xs text-muted">{tr("From your pool")}</p>
-              <p className="text-ink">{tr("{{fromPool}} license-month{{v}}", { fromPool: b.licenses.fromPool, v: b.licenses.fromPool === 1 ? "" : "s" })}</p>
+              <p className="text-ink">{b.licenses.fromPool === 1 ? tr("1 license-month") : tr("{{n}} license-months", { n: b.licenses.fromPool })}</p>
             </div>
             <div>
               <p className="text-xs text-muted">{tr("Learners licensed")}</p>
@@ -218,7 +234,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                       <p className="text-xs text-muted">
-                        {tr("{{join}} {{sessionCount}} session{{v}}", { join: [l.employeeId, l.department, l.jobTitle].filter(Boolean).map((x) => `${x} · `).join(""), sessionCount: l.sessionCount, v: l.sessionCount === 1 ? "" : "s" })}
+                        {[l.employeeId, l.department, l.jobTitle, l.sessionCount === 1 ? tr("1 session") : tr("{{n}} sessions", { n: l.sessionCount })].filter(Boolean).join(" · ")}
                         {!l.hasLoggedIn ? tr(" · invite pending") : ""}
                         {!l.active ? tr(" · deactivated") : ""}
                       </p>

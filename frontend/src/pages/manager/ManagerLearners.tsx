@@ -106,7 +106,11 @@ function OnboardLearnerModal({
       onCreated(
         r.licenseError
           ? tr("Invite sent to {{email}}, but no license was assigned: {{v}}", { email: r.email, v: LICENSE_ERROR_TEXT[r.licenseError] ?? r.licenseError })
-          : tr("Invite sent to {{email}}{{v}}. They'll get an email to set their password.", { email: r.email, v: r.licenseMonths ? ` with ${r.licenseMonths} month${r.licenseMonths === 1 ? "" : "s"} of access` : "" }),
+          : r.licenseMonths
+            ? r.licenseMonths === 1
+              ? tr("Invite sent to {{email}} with 1 month of access. They'll get an email to set their password.", { email: r.email })
+              : tr("Invite sent to {{email}} with {{n}} months of access. They'll get an email to set their password.", { email: r.email, n: r.licenseMonths })
+            : tr("Invite sent to {{email}}. They'll get an email to set their password.", { email: r.email }),
       );
     } catch (err) {
       const code = err instanceof ApiError ? err.message : undefined;
@@ -159,21 +163,23 @@ function OnboardLearnerModal({
             <select value={licenseMonths} onChange={(e) => setLicenseMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {choices.map((m) => (
                 <option key={m} value={m}>
-                  {m === 0 ? tr("None — assign later") : tr("{{m}} month{{v}} ({{m2}} license{{v2}} each)", { m: m, v: m === 1 ? "" : "s", m2: m, v2: m === 1 ? "" : "s" })}
+                  {m === 0 ? tr("None — assign later") : m === 1 ? tr("1 month (1 license each)") : tr("{{n}} months ({{n}} licenses each)", { n: m })}
                 </option>
               ))}
             </select>
           </div>
           <div className={`sm:col-span-2 text-xs rounded-input px-3 py-2 ${short ? "bg-error/10 text-error" : "bg-paper-warm text-muted"}`}>
             <p>
-              {tr("Available for")}{" "}{batch?.name ?? tr("this batch")}: {fixedLeft !== null ? tr("{{fixedLeft}} fixed license{{v}} (used first)", { fixedLeft: fixedLeft, v: fixedLeft === 1 ? "" : "s" }) : tr("no fixed licenses")}
+              {tr("Available for")}{" "}{batch?.name ?? tr("this batch")}: {fixedLeft !== null ? fixedLeft === 1 ? tr("1 fixed license (used first)") : tr("{{n}} fixed licenses (used first)", { n: fixedLeft }) : tr("no fixed licenses")}
               {" · "}
               {poolLeft !== null ? tr("{{poolLeft}} in your pool", { poolLeft: poolLeft }) : tr("no pool allotted to you")}.
             </p>
             {short && (
               <p className="mt-0.5 font-semibold">
                 {count === 1
-                  ? tr("Not enough licenses for {{licenseMonths}} month{{v}}. Pick fewer months, or request more from your Org Admin.", { licenseMonths: licenseMonths, v: licenseMonths === 1 ? "" : "s" })
+                  ? licenseMonths === 1
+                    ? tr("Not enough licenses for 1 month. Pick fewer months, or request more from your Org Admin.")
+                    : tr("Not enough licenses for {{n}} months. Pick fewer months, or request more from your Org Admin.", { n: licenseMonths })
                   : tr("Enough for {{covered}} of {{v}} learners. The rest are invited without access — request more licenses from your Org Admin.", { covered: covered, v: count })}
               </p>
             )}
@@ -190,9 +196,9 @@ function OnboardLearnerModal({
               maxRows={200}
               checkExisting={(emails) => validateBulkEmails("manager", emails).then((r) => r.existing)}
               submit={async (rows) => (await managerOnboardLearnersBulk(batchId, rows, licenseMonths)).results}
-              extraNote={licenseMonths ? tr("{{licenseMonths}} month{{v}} of access each", { licenseMonths: licenseMonths, v: licenseMonths === 1 ? "" : "s" }) : null}
+              extraNote={licenseMonths ? (licenseMonths === 1 ? tr("1 month of access each") : tr("{{n}} months of access each", { n: licenseMonths })) : null}
               onReadyChange={setBulkCount}
-              onDone={(created) => onCreated(tr("{{created}} learner{{v}} invited.", { created: created, v: created === 1 ? "" : "s" }))}
+              onDone={(created) => onCreated(created === 1 ? tr("1 learner invited.") : tr("{{n}} learners invited.", { n: created }))}
             />
           </div>
         ) : (
@@ -391,7 +397,9 @@ export function ManagerLearners() {
                             const r = await managerDeactivateLearner(l.id);
                             setNotice(
                               r.returnRequested
-                                ? tr("Deactivated. A request to return {{returnRequested}} unused month{{v}} went to your Org Admin.", { returnRequested: r.returnRequested, v: r.returnRequested === 1 ? "" : "s" })
+                                ? r.returnRequested === 1
+                                  ? tr("Deactivated. A request to return 1 unused month went to your Org Admin.")
+                                  : tr("Deactivated. A request to return {{n}} unused months went to your Org Admin.", { n: r.returnRequested })
                                 : tr("Deactivated."),
                             );
                           } else {

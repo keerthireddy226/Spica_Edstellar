@@ -112,8 +112,9 @@ export async function createLearnerRequest(args: { tenantId: string; learnerId: 
     await notify({
       userId,
       kind: "license_request",
-      title: `${learner.label} asks for ${describe("learner_extension", args.months, null, null).replace(" for a learner", "")}`,
-      body: `${args.progress} Reason: ${reason}${isAdmin ? "" : " (Your Org Admin decides.)"}`,
+      // Whole sentences, so they translate in the reader's language.
+      title: args.months === 1 ? `${learner.label} asks for 1 more month of access` : `${learner.label} asks for ${args.months} more months of access`,
+      body: isAdmin ? `${args.progress} Reason: ${reason}` : `${args.progress} Reason: ${reason} (Your Org Admin decides.)`,
       link: isAdmin ? "/orgadmin/licenses?tab=requests" : "/manager/dashboard",
       email: true,
       sentBy: args.learnerId,

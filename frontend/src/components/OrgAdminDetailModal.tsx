@@ -107,7 +107,7 @@ export function OrgAdminDetailModal({
                     key={m.id}
                     initials={personInitials(m.firstName, m.lastName, m.email)}
                     title={[m.firstName, m.lastName].filter(Boolean).join(" ") || m.email}
-                    subtitle={tr("{{v}} · {{learnerCount}} learner{{v2}}", { v: m.batchNames.length === 0 ? "No batch" : m.batchNames.join(", "), learnerCount: m.learnerCount, v2: m.learnerCount === 1 ? "" : "s" })}
+                    subtitle={[m.batchNames.length === 0 ? tr("No batch") : m.batchNames.join(", "), m.learnerCount === 1 ? tr("1 learner") : tr("{{n}} learners", { n: m.learnerCount })].join(" · ")}
                     right={
                       <Pill tone={mStatus === "active" ? "good" : mStatus === "pending" ? "warn" : "bad"}>
                         {mStatus === "active" ? tr("Active") : mStatus === "pending" ? tr("Invite pending") : tr("Deactivated")}

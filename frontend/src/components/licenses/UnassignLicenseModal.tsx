@@ -76,8 +76,8 @@ export function UnassignLicenseModal({
         </div>
         <div className="px-6 py-5 flex flex-col gap-4">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{learnerName}</span> {tr("has {{totalMonths}} month{{v}} assigned:", { totalMonths: license.totalMonths, v: license.totalMonths === 1 ? "" : "s" })}{" "}
-            {license.currentEndsAt ? tr("1 running") : tr("none running")} {tr("and {{max}} not started yet.", { max: max })}</p>
+            {license.totalMonths === 1 ? tr("{{name}} has 1 month assigned.", { name: learnerName }) : tr("{{name}} has {{n}} months assigned.", { name: learnerName, n: license.totalMonths })}{" "}
+            {tr("Running now: {{running}}. Not started yet: {{max}}.", { running: license.currentEndsAt ? 1 : 0, max })}</p>
 
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Months to return to the pool")}</label>
@@ -117,15 +117,16 @@ export function UnassignLicenseModal({
           </div>
 
           <div className="rounded-input bg-paper-warm px-3.5 py-2.5 text-sm text-ink">
-            {tr("{{months}} license{{v}} go back to your pool. Access will now end on", { months: months, v: months === 1 ? "" : "s" })}{" "}
-            <span className="font-semibold">{formatShortDate(newEnd)}</span>.
+            {months === 1
+              ? tr("1 license goes back to your pool. Access will now end on {{date}}.", { date: formatShortDate(newEnd) })
+              : tr("{{n}} licenses go back to your pool. Access will now end on {{date}}.", { n: months, date: formatShortDate(newEnd) })}
             <p className="text-xs text-muted mt-1">{tr("The month already running can't be returned.")}</p>
           </div>
 
           {error && <p className="text-sm text-error">{error}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={submit} disabled={submitting || !finalReason} className="flex-1 !bg-error hover:!bg-error/90">
-              {submitting ? tr("Unassigning…") : `Unassign ${months}`}
+              {submitting ? tr("Unassigning…") : tr("Unassign {{months}}", { months })}
             </Button>
             <Button variant="secondary" onClick={onClose}>
               {tr("Cancel")}</Button>

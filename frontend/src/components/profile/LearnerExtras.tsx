@@ -68,7 +68,7 @@ export function ProgressSnapshot({ data }: { data: MyLearning }) {
       <p className="text-xs text-muted">
         {tr("Access:")}{" "}
         <span className="font-semibold text-ink">
-          {a.status === "active" ? `active${daysLeft != null ? tr(" · {{daysLeft}} day{{v}} left", { daysLeft: daysLeft, v: daysLeft === 1 ? "" : "s" }) : ""}` : a.status === "grace" ? tr("in grace period") : a.status === "expired" ? "ended" : tr("free plan")}
+          {a.status === "active" ? `${tr("active")}${daysLeft != null ? (daysLeft === 1 ? tr(" · 1 day left") : tr(" · {{n}} days left", { n: daysLeft })) : ""}` : a.status === "grace" ? tr("in grace period") : a.status === "expired" ? tr("ended") : tr("free plan")}
         </span>
         {a.accessEndsAt ? ` (until ${shortDate(a.accessEndsAt)})` : ""}
       </p>

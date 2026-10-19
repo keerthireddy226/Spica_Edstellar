@@ -105,7 +105,7 @@ export const ENGAGEMENT_CLASS: Record<EngagementStatus, string> = {
 };
 
 export function timeAgo(iso: string | null): string {
-  if (!iso) return "never";
+  if (!iso) return tr("never");
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 60) return tr("{{max}}m ago", { max: Math.max(mins, 0) });
   const hours = Math.round(mins / 60);

@@ -57,7 +57,12 @@ export function BatchLifecycleActions({
           onClick={() =>
             run(
               () => completeBatch(batchId),
-              (r) => tr("{{batchName}} marked complete.{{v}}", { batchName: batchName, v: r?.releasedLicenses ? ` ${r.releasedLicenses} unused fixed licenses went back to your pool.` : "" }),
+              (r) =>
+                r?.releasedLicenses
+                  ? r.releasedLicenses === 1
+                    ? tr("{{batchName}} marked complete. 1 unused fixed license went back to your pool.", { batchName: batchName })
+                    : tr("{{batchName}} marked complete. {{n}} unused fixed licenses went back to your pool.", { batchName: batchName, n: r.releasedLicenses })
+                  : tr("{{batchName}} marked complete.", { batchName: batchName }),
             )
           }
         >

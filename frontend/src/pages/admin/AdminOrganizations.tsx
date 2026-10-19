@@ -834,9 +834,9 @@ export function AdminOrganizations() {
 
               <p className="text-xs text-white/80">
                 {x?.contractEnd ? tr("Contract to {{shortDate}}", { shortDate: shortDate(x.contractEnd) }) : tr("No contract dates")}
-                {x?.unpaidInvoices ? tr(" · {{unpaidInvoices}} unpaid invoice{{v}}", { unpaidInvoices: x.unpaidInvoices, v: x.unpaidInvoices === 1 ? "" : "s" }) : ""}
+                {x?.unpaidInvoices ? (x.unpaidInvoices === 1 ? tr(" · 1 unpaid invoice") : tr(" · {{n}} unpaid invoices", { n: x.unpaidInvoices })) : ""}
                 {tr(" · Last activity {{ago}}", { ago: ago(x?.lastActivityAt) })}
-                {perms.isSuper ? tr(" · Owner: {{v}}", { v: x?.owner?.name ?? "none" }) : ""}
+                {perms.isSuper ? (x?.owner?.name ? tr(" · Owner: {{name}}", { name: x.owner.name }) : tr(" · Owner: none")) : ""}
               </p>
 
               <div className="flex items-center gap-2 flex-wrap">

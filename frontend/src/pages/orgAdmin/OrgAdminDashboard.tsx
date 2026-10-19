@@ -28,11 +28,14 @@ function activitySentence(item: OrgAdminOverview["activityFeed"][number]): strin
   const who = item.who.trim() || tr("Someone");
   switch (item.kind) {
     case "signup":
-      return tr("{{who}} — {{v}} onboarded", { who: who, v: item.detail === "manager" ? "Manager" : "Learner" });
+      return item.detail === "manager" ? tr("{{who}} — Manager onboarded", { who: who }) : tr("{{who}} — Learner onboarded", { who: who });
     case "session_completed":
       return tr("{{who}} completed a {{v}} session", { who: who, v: SESSION_TYPE_LABEL[item.detail ?? ""] ?? item.detail });
     case "placement":
-      return `${who}'s placement result: ${item.detail === "certified" ? tr("Certified") : item.detail === "fraud_confirmed" ? tr("Fraud flagged") : tr("Pending review")}`;
+      return tr("{{who}}'s placement result: {{result}}", {
+        who,
+        result: item.detail === "certified" ? tr("Certified") : item.detail === "fraud_confirmed" ? tr("Fraud flagged") : tr("Pending review"),
+      });
     default:
       return who;
   }

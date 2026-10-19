@@ -228,8 +228,14 @@ export function ManagerBatches() {
                   </span>
                 )}
                 <div className="flex items-center gap-1.5 text-white/85 text-xs">
-                  <Users size={13} /> {L.learners}
-                  {b.capacity ? ` of ${b.capacity}` : ""} {tr("learner{{v}}", { v: (b.capacity ?? L.learners) === 1 ? "" : "s" })}
+                  <Users size={13} />{" "}
+                  {b.capacity
+                    ? b.capacity === 1
+                      ? tr("{{n}} of 1 learner", { n: L.learners })
+                      : tr("{{n}} of {{capacity}} learners", { n: L.learners, capacity: b.capacity })
+                    : L.learners === 1
+                      ? tr("1 learner")
+                      : tr("{{n}} learners", { n: L.learners })}
                   {b.capacity && L.learners >= b.capacity ? tr(" · full") : ""}
                 </div>
                 {(b.startDate || b.endDate) && (
@@ -249,7 +255,7 @@ export function ManagerBatches() {
                   </span>
                   {b.defaultLicenseMonths != null && (
                     <span className="text-white/70">
-                      {tr("New learners get {{defaultLicenseMonths}} month{{v}}", { defaultLicenseMonths: b.defaultLicenseMonths, v: b.defaultLicenseMonths === 1 ? "" : "s" })}
+                      {b.defaultLicenseMonths === 1 ? tr("New learners get 1 month") : tr("New learners get {{n}} months", { n: b.defaultLicenseMonths })}
                     </span>
                   )}
                 </div>

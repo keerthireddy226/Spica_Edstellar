@@ -81,7 +81,9 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void }) {
         <div>
           <p className="text-sm text-muted">
             {status.enabled
-              ? tr("On since {{toLocaleDateString}}. {{recoveryCodesLeft}} recovery code{{v}} left.", { toLocaleDateString: new Date(status.enabledAt!).toLocaleDateString(), recoveryCodesLeft: status.recoveryCodesLeft, v: status.recoveryCodesLeft === 1 ? "" : "s" })
+              ? status.recoveryCodesLeft === 1
+                ? tr("On since {{date}}. 1 recovery code left.", { date: new Date(status.enabledAt!).toLocaleDateString() })
+                : tr("On since {{date}}. {{n}} recovery codes left.", { date: new Date(status.enabledAt!).toLocaleDateString(), n: status.recoveryCodesLeft })
               : tr("Ask for a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…) when you sign in.")}
             {status.requiredByOrganization && tr(" Your organization requires it.")}
           </p>

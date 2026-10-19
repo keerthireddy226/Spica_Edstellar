@@ -236,7 +236,7 @@ export function ago(iso: string | null | undefined): string {
   const hours = Math.round(mins / 60);
   if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  if (days < 30) return tr("{{days}} day{{v}} ago", { days: days, v: days === 1 ? "" : "s" });
+  if (days < 30) return days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days });
   return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 }
 

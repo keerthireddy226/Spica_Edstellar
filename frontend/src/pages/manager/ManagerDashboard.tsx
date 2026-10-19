@@ -158,7 +158,9 @@ export function ManagerDashboard() {
           ))}
         </div>
         <p className="text-xs text-muted">
-          {tr("{{fromFixed}} license-month{{v}} came from batches' fixed licenses and {{fromPool}} from your pool.", { fromFixed: overview.licenses.fromFixed, v: overview.licenses.fromFixed === 1 ? "" : "s", fromPool: overview.licenses.fromPool })}{budgets.some((b) => b.budget != null) &&
+          {overview.licenses.fromFixed === 1
+            ? tr("1 license-month came from batches' fixed licenses and {{fromPool}} from your pool.", { fromPool: overview.licenses.fromPool })
+            : tr("{{n}} license-months came from batches' fixed licenses and {{fromPool}} from your pool.", { n: overview.licenses.fromFixed, fromPool: overview.licenses.fromPool })}{budgets.some((b) => b.budget != null) &&
             tr(" Fixed licenses left: {{join}}.", { join: budgets
               .filter((b) => b.budget != null)
               .map((b) => `${b.batchName} ${b.remaining}`)
@@ -168,7 +170,7 @@ export function ManagerDashboard() {
 
       {myPool?.allotment != null && (myPool.remaining ?? 0) <= 2 && (
         <p className={`text-sm rounded-card px-4 py-3 border ${(myPool.remaining ?? 0) === 0 ? "bg-error/10 border-error/25 text-error" : "bg-warning/15 border-warning/30 text-navy-deep"}`}>
-          {(myPool.remaining ?? 0) === 0 ? tr("Your license pool is empty.") : tr("Only {{remaining}} license{{v}} left in your pool.", { remaining: myPool.remaining, v: myPool.remaining === 1 ? "" : "s" })}{" "}
+          {(myPool.remaining ?? 0) === 0 ? tr("Your license pool is empty.") : myPool.remaining === 1 ? tr("Only 1 license left in your pool.") : tr("Only {{n}} licenses left in your pool.", { n: myPool.remaining })}{" "}
           <button onClick={() => setRequestingFor("")} className="font-semibold underline cursor-pointer">
             {tr("Request more")}</button>
         </p>

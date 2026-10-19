@@ -54,11 +54,11 @@ export function BatchDetailsGrid({
           <Item label={tr("Level goal")} value={b.startCefr || b.targetCefr ? `${b.startCefr ?? "?"} → ${b.targetCefr ?? "?"}` : "—"} />
           <Item label={tr("Target cut score")} value={b.targetCutScore != null ? `${b.targetCutScore}%` : "—"} />
           <Item label={tr("Start date")} value={b.startDate ? fmt(b.startDate) : "—"} />
-          <Item label={tr("Duration")} value={b.durationMonths ? `${b.durationMonths} month${b.durationMonths === 1 ? "" : "s"}` : "—"} />
+          <Item label={tr("Duration")} value={b.durationMonths ? (b.durationMonths === 1 ? tr("1 month") : tr("{{n}} months", { n: b.durationMonths })) : "—"} />
           <Item label={tr("Practice goal")} value={b.weeklyMinutesGoal ? tr("{{weeklyMinutesGoal}} min a week", { weeklyMinutesGoal: b.weeklyMinutesGoal }) : "—"} />
           <Item
             label={tr("License months per new learner")}
-            value={b.defaultLicenseMonths != null ? `${b.defaultLicenseMonths} month${b.defaultLicenseMonths === 1 ? "" : "s"}` : "—"}
+            value={b.defaultLicenseMonths != null ? (b.defaultLicenseMonths === 1 ? tr("1 month") : tr("{{n}} months", { n: b.defaultLicenseMonths })) : "—"}
           />
           <Item label={tr("Practice reminders")} value={b.autoReminders ? tr("On") : tr("Off")} />
         </div>

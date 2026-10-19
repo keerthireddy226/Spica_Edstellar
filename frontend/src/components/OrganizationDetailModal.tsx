@@ -145,7 +145,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
                     initials={(mgr.name.trim() || mgr.email).slice(0, 2).toUpperCase()}
                     title={mgr.name.trim() || mgr.email}
                     subtitle={mgr.email}
-                    right={<Pill>{`${mgr.learnerCount} learner${mgr.learnerCount === 1 ? "" : "s"}`}</Pill>}
+                    right={<Pill>{mgr.learnerCount === 1 ? tr("1 learner") : tr("{{n}} learners", { n: mgr.learnerCount })}</Pill>}
                     onClick={() => setViewingManagerId(mgr.id)}
                   />
                 ))}

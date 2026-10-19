@@ -55,7 +55,7 @@ export function ManagerHandoverModal({
               {unused > 0 && (
                 <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                   <input type="checkbox" checked={movePool} onChange={(e) => setMovePool(e.target.checked)} className="h-4 w-4 accent-navy" />
-                  {tr("Move their {{unused}} unused license{{v}} to the new Manager's pool", { unused: unused, v: unused === 1 ? "" : "s" })}</label>
+                  {unused === 1 ? tr("Move their 1 unused license to the new Manager's pool") : tr("Move their {{n}} unused licenses to the new Manager's pool", { n: unused })}</label>
               )}
               <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
                 <input type="checkbox" checked={deactivate} onChange={(e) => setDeactivate(e.target.checked)} className="h-4 w-4 accent-navy" />
@@ -70,7 +70,15 @@ export function ManagerHandoverModal({
                 setBusy(true);
                 try {
                   const r = await handOverManager(from.id, { toManagerId: to, movePool, deactivate });
-                  onDone(tr("{{batchesMoved}} batch{{v}} handed over{{v2}}.", { batchesMoved: r.batchesMoved, v: r.batchesMoved === 1 ? "" : "es", v2: r.poolMoved ? `, with ${r.poolMoved} licenses` : "" }));
+                  onDone(
+                    r.batchesMoved === 1
+                      ? r.poolMoved
+                        ? tr("1 batch handed over, with {{licenses}} licenses.", { licenses: r.poolMoved })
+                        : tr("1 batch handed over.")
+                      : r.poolMoved
+                        ? tr("{{n}} batches handed over, with {{licenses}} licenses.", { n: r.batchesMoved, licenses: r.poolMoved })
+                        : tr("{{n}} batches handed over.", { n: r.batchesMoved }),
+                  );
                 } catch (err) {
                   setError(err instanceof ApiError ? tr("Couldn't hand over — check the new Manager's plan allows license pools.") : tr("Couldn't hand over."));
                   setBusy(false);

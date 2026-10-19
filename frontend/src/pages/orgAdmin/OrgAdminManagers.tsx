@@ -39,7 +39,7 @@ function relative(iso: string | null | undefined): string {
   const hours = Math.round(mins / 60);
   if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  return days < 30 ? tr("{{days}} day{{v}} ago", { days: days, v: days === 1 ? "" : "s" }) : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return days < 30 ? (days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days })) : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
 function StatCard({ label, value, icon: Icon, index }: { label: string; value: number | string; icon: LucideIcon; index: number }) {
@@ -354,7 +354,7 @@ export function OrgAdminManagers() {
     try {
       const r = await deleteManager(manager.id);
       setDeletingManager(null);
-      if (r.releasedLicenses) setJustInvited(tr("{{releasedLicenses}} unused license{{v}} from their pool went back to yours.", { releasedLicenses: r.releasedLicenses, v: r.releasedLicenses === 1 ? "" : "s" }));
+      if (r.releasedLicenses) setJustInvited(r.releasedLicenses === 1 ? tr("1 unused license from their pool went back to yours.") : tr("{{n}} unused licenses from their pool went back to yours.", { n: r.releasedLicenses }));
       load();
       refreshPlan();
     } catch {
@@ -369,7 +369,7 @@ export function OrgAdminManagers() {
     try {
       if (manager.active) {
         const r = await deactivateManager(manager.id);
-        if (r.releasedLicenses) setJustInvited(tr("{{releasedLicenses}} unused license{{v}} from their pool went back to yours.", { releasedLicenses: r.releasedLicenses, v: r.releasedLicenses === 1 ? "" : "s" }));
+        if (r.releasedLicenses) setJustInvited(r.releasedLicenses === 1 ? tr("1 unused license from their pool went back to yours.") : tr("{{n}} unused licenses from their pool went back to yours.", { n: r.releasedLicenses }));
       } else await reactivateManager(manager.id);
       load();
       refreshPlan();
@@ -407,7 +407,7 @@ export function OrgAdminManagers() {
       {managers && managers.length > 0 && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard index={0} icon={ShieldCheck} value={counts.active} label={tr("Active manager{{v}}", { v: counts.active === 1 ? "" : "s" })} />
+            <StatCard index={0} icon={ShieldCheck} value={counts.active} label={counts.active === 1 ? tr("Active manager") : tr("Active managers")} />
             <StatCard index={1} icon={Users} value={counts.learners} label={tr("Learners in their batches")} />
             <StatCard
               index={2}
@@ -415,18 +415,18 @@ export function OrgAdminManagers() {
               value={counts.allotted ? `${counts.used} / ${counts.allotted}` : "—"}
               label={counts.allotted ? tr("Pool licenses used · {{v}} left", { v: counts.allotted - counts.used }) : tr("No manager pools yet")}
             />
-            <StatCard index={3} icon={Inbox} value={counts.requests} label={tr("Pending license request{{v}}", { v: counts.requests === 1 ? "" : "s" })} />
+            <StatCard index={3} icon={Inbox} value={counts.requests} label={counts.requests === 1 ? tr("Pending license request") : tr("Pending license requests")} />
           </div>
 
           {(counts.pending > 0 || counts.requests > 0) && (
             <div className="flex flex-wrap gap-2 text-sm">
               {counts.pending > 0 && (
                 <span className="bg-warning/15 text-navy-deep border border-warning/30 rounded-pill px-3 py-1">
-                  {tr("{{pending}} invite{{v}} not accepted yet", { pending: counts.pending, v: counts.pending === 1 ? "" : "s" })}</span>
+                  {counts.pending === 1 ? tr("1 invite not accepted yet") : tr("{{n}} invites not accepted yet", { n: counts.pending })}</span>
               )}
               {counts.requests > 0 && (
                 <Link to={ROUTES.ORG_ADMIN_LICENSES} className="bg-navy/10 text-navy rounded-pill px-3 py-1 font-semibold hover:underline">
-                  {tr("Review {{requests}} license request{{v}}", { requests: counts.requests, v: counts.requests === 1 ? "" : "s" })} →
+                  {counts.requests === 1 ? tr("Review 1 license request") : tr("Review {{n}} license requests", { n: counts.requests })} →
                 </Link>
               )}
             </div>
@@ -555,7 +555,7 @@ export function OrgAdminManagers() {
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (
                       <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
-                        {m.pendingRequests} {tr("license request{{v}} waiting", { v: m.pendingRequests === 1 ? "" : "s" })}</Link>
+                        {m.pendingRequests === 1 ? tr("1 license request waiting") : tr("{{n}} license requests waiting", { n: m.pendingRequests })}</Link>
                     )}
                   </div>
 

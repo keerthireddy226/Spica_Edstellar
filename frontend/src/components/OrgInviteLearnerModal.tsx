@@ -62,7 +62,11 @@ export function OrgInviteLearnerModal({
       onDone(
         r.licenseError
           ? tr("Invite sent to {{email}}, but no license was assigned: {{v}}", { email: r.email, v: LICENSE_ERROR_TEXT[r.licenseError] ?? r.licenseError })
-          : tr("Invite sent to {{email}}{{v}}.", { email: r.email, v: licenseMonths ? ` with ${licenseMonths} month${licenseMonths === 1 ? "" : "s"} of access` : "" }),
+          : licenseMonths
+            ? licenseMonths === 1
+              ? tr("Invite sent to {{email}} with 1 month of access.", { email: r.email })
+              : tr("Invite sent to {{email}} with {{n}} months of access.", { email: r.email, n: licenseMonths })
+            : tr("Invite sent to {{email}}.", { email: r.email }),
       );
     } catch (err) {
       const code = err instanceof ApiError ? err.message : undefined;
@@ -116,7 +120,7 @@ export function OrgInviteLearnerModal({
             <select value={licenseMonths} onChange={(e) => setLicenseMonths(Number(e.target.value))} className={`${inputClass} cursor-pointer`}>
               {(LICENSE_CHOICES.includes(licenseMonths) ? LICENSE_CHOICES : [...LICENSE_CHOICES, licenseMonths].sort((a, b) => a - b)).map((m) => (
                 <option key={m} value={m}>
-                  {m === 0 ? tr("None — assign later") : tr("{{m}} month{{v}} ({{m2}} license{{v2}} each)", { m: m, v: m === 1 ? "" : "s", m2: m, v2: m === 1 ? "" : "s" })}
+                  {m === 0 ? tr("None — assign later") : m === 1 ? tr("1 month (1 license each)") : tr("{{n}} months ({{n}} licenses each)", { n: m })}
                 </option>
               ))}
             </select>
@@ -183,11 +187,13 @@ export function OrgInviteLearnerModal({
                 licenseMonths
                   ? shortOfLicenses
                     ? tr("needs {{needed}} licenses, only {{poolAvailable}} available — some learners won't get one", { needed: needed, poolAvailable: poolAvailable })
-                    : tr("{{licenseMonths}} month{{v}} of access each", { licenseMonths: licenseMonths, v: licenseMonths === 1 ? "" : "s" })
+                    : licenseMonths === 1
+                      ? tr("1 month of access each")
+                      : tr("{{n}} months of access each", { n: licenseMonths })
                   : null
               }
               onReadyChange={setBulkCount}
-              onDone={(created) => onDone(tr("{{created}} learner{{v}} invited.", { created: created, v: created === 1 ? "" : "s" }))}
+              onDone={(created) => onDone(created === 1 ? tr("1 learner invited.") : tr("{{n}} learners invited.", { n: created }))}
             />
           </div>
         )}

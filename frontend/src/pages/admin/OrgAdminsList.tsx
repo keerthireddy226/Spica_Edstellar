@@ -80,7 +80,7 @@ function AddOrgAdminModal({ onClose, onDone }: { onClose: () => void; onDone: (m
                   {orgs.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name}
-                      {o.hasOrgAdmin ? tr(" — current: {{v}}", { v: o.orgAdmin?.name ?? "Org Admin" }) : tr(" — no Org Admin")}
+                      {o.hasOrgAdmin ? (o.orgAdmin?.name ? tr(" — current: {{name}}", { name: o.orgAdmin.name }) : tr(" — current: Org Admin")) : tr(" — no Org Admin")}
                     </option>
                   ))}
                 </select>
@@ -156,7 +156,11 @@ export function OrgAdminsList() {
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
         title={tr("Org Admins")}
-        subtitle={tr("The main contact at each {{v}}organization{{v2}}. They manage batches, Managers, learners and licenses.", { v: perms.isSuper ? "" : "of your ", v2: perms.isSuper ? " and university" : "s" })}
+        subtitle={
+          perms.isSuper
+            ? tr("The main contact at each organization and university. They manage batches, Managers, learners and licenses.")
+            : tr("The main contact at each of your organizations. They manage batches, Managers, learners and licenses.")
+        }
         actions={
           perms.manageOrganizations && (
             <Button onClick={() => setAdding(true)} className="flex items-center gap-2 shrink-0">

@@ -55,7 +55,9 @@ export function DataGovernanceSection() {
             </p>
             <p className="text-xs text-muted">
               {dpaCurrent
-                ? tr("Accepted by {{v}} on {{toLocaleDateString}}.", { v: data.dpa.acceptedBy ?? "your organization", toLocaleDateString: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
+                ? data.dpa.acceptedBy
+                  ? tr("Accepted by {{name}} on {{date}}.", { name: data.dpa.acceptedBy, date: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
+                  : tr("Accepted by your organization on {{date}}.", { date: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
                 : data.dpa.acceptedVersion
                   ? tr("You accepted version {{acceptedVersion}}; a newer version needs accepting.", { acceptedVersion: data.dpa.acceptedVersion })
                   : tr("Not accepted yet.")}

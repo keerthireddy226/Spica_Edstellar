@@ -39,7 +39,7 @@ export function ManagersList() {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <PageHeader title={tr("Managers")} subtitle={tr("Managers run batches inside {{v}} organization{{v2}}. Their Org Admin adds and manages them.", { v: perms.isSuper ? "each" : "your", v2: perms.isSuper ? "" : "s" })} />
+      <PageHeader title={tr("Managers")} subtitle={perms.isSuper ? tr("Managers run batches inside each organization. Their Org Admin adds and manages them.") : tr("Managers run batches inside your organizations. Their Org Admin adds and manages them.")} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="pastel" palette="sand" index={0} icon={ShieldCheck} value={rows.filter((m) => status(m) === "active").length} label={tr("Active Managers")} />
         <StatCard variant="pastel" palette="sand" index={1} icon={UserX} value={rows.filter((m) => status(m) === "pending").length} label={tr("Invite not accepted")} />

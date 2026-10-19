@@ -151,7 +151,7 @@ export function ManagerDetailModal({
                   key={l.id}
                   initials={personInitials(l.firstName, l.lastName, l.email)}
                   title={[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}
-                  subtitle={tr("{{v}} · {{sessionCount}} session{{v2}} completed", { v: l.batchName ?? "No batch", sessionCount: l.sessionCount, v2: l.sessionCount === 1 ? "" : "s" })}
+                  subtitle={[l.batchName ?? tr("No batch"), l.sessionCount === 1 ? tr("1 session completed") : tr("{{n}} sessions completed", { n: l.sessionCount })].join(" · ")}
                   right={<Pill tone={l.active ? "good" : "bad"}>{l.active ? tr("Active") : tr("Deactivated")}</Pill>}
                   onClick={() => setViewingLearnerId(l.id)}
                 />

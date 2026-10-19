@@ -108,7 +108,6 @@ const FEATURE_LABELS: Record<string, string> = {
   secure_proctoring: tr("Secure proctoring"),
   po_invoicing: tr("Paying by invoice"),
 };
-const LIMIT_LABELS: Record<string, string> = { managers: tr("Managers"), batches: tr("Batches") };
 
 // Turns a plan gate from the API into a sentence; null if it wasn't one.
 export function planErrorMessage(err: unknown): string | null {
@@ -118,11 +117,14 @@ export function planErrorMessage(err: unknown): string | null {
     const tier = ["custom_pool_expiry", "ip_allowlist", "mfa_enforcement", "sso", "api_access", "data_governance"].includes(body.feature ?? "")
       ? tr("Enterprise plan")
       : tr("Business plan and above");
-    return tr("{{v}} is available on the {{tier}}.", { v: FEATURE_LABELS[body.feature ?? ""] ?? "This feature", tier: tier });
+    const feature = FEATURE_LABELS[body.feature ?? ""];
+    return feature ? tr("{{feature}} is available on the {{tier}}.", { feature: feature, tier: tier }) : tr("This feature is available on the {{tier}}.", { tier: tier });
   }
   if (body?.error === "plan_limit_reached") {
-    const what = (LIMIT_LABELS[body.limit ?? ""] ?? "items").toLowerCase();
-    return tr("Your {{v}} plan allows up to {{max}} {{what}}. Upgrade to Business for unlimited {{what2}}.", { v: TIER_LABELS[body.tier ?? "starter"], max: body.max, what: what, what2: what });
+    const plan = TIER_LABELS[body.tier ?? "starter"];
+    if (body.limit === "managers") return tr("Your {{plan}} plan allows up to {{max}} managers. Upgrade to Business for unlimited managers.", { plan: plan, max: body.max });
+    if (body.limit === "batches") return tr("Your {{plan}} plan allows up to {{max}} batches. Upgrade to Business for unlimited batches.", { plan: plan, max: body.max });
+    return tr("Your {{plan}} plan allows up to {{max}} items. Upgrade to Business for unlimited items.", { plan: plan, max: body.max });
   }
   return null;
 }

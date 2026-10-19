@@ -88,8 +88,12 @@ export function CheckoutReturn() {
             <h1 className="font-display font-bold text-xl text-ink">{tr("Payment successful")}</h1>
             <p className="text-sm text-muted">
               {result.kind === "individual_plan"
-                ? tr("{{quantity}} month{{v}} of full access added to your account.", { quantity: result.quantity, v: result.quantity === 1 ? "" : "s" })
-                : tr("{{quantity}} license{{v}} added to your pool — assign them from the Licenses page.", { quantity: result.quantity, v: result.quantity === 1 ? "" : "s" })}
+                ? result.quantity === 1
+                  ? tr("1 month of full access added to your account.")
+                  : tr("{{n}} months of full access added to your account.", { n: result.quantity })
+                : result.quantity === 1
+                  ? tr("1 license added to your pool — assign it from the Licenses page.")
+                  : tr("{{n}} licenses added to your pool — assign them from the Licenses page.", { n: result.quantity })}
             </p>
             <div className="flex gap-3 w-full">
               <Link to={backTo} className="flex-1">
