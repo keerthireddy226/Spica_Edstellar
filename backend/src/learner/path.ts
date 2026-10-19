@@ -51,16 +51,19 @@ async function skillTypes(skill: SkillTag): Promise<{ id: string; name: string; 
 }
 
 async function latestPlacement(userId: string) {
-  return (await pool.query(`SELECT cefr_level, skill_levels, taken_at FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId]))
-    .rows[0] as { cefr_level: string | null; skill_levels: Record<string, string | null> | null; taken_at: Date } | undefined;
+  return (await pool.query(`SELECT cefr_level, skill_levels FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId]))
+    .rows[0] as { cefr_level: string | null; skill_levels: Record<string, unknown> | null } | undefined;
 }
 
 // Each type's path level for this skill. A type without one starts at the
-// level-test level for the skill; a newer level test re-seeds levels that
-// came from the previous one.
+// level-test level for the skill; levels that came from the level test
+// follow the latest one.
 export async function pathLevels(userId: string, skill: SkillTag, typeIds: string[]): Promise<Map<string, Level>> {
   const placement = await latestPlacement(userId);
-  const seed: Level = isLevel(placement?.skill_levels?.[skill]) ? (placement!.skill_levels![skill] as Level) : isLevel(placement?.cefr_level) ? (placement!.cefr_level as Level) : "A1";
+  // Older level tests stored each skill as { level, cappedByGap }, newer ones as "B1".
+  const raw = placement?.skill_levels?.[skill] as unknown;
+  const skillLevel = typeof raw === "object" && raw !== null ? (raw as { level?: unknown }).level : raw;
+  const seed: Level = isLevel(skillLevel) ? skillLevel : isLevel(placement?.cefr_level) ? (placement!.cefr_level as Level) : "A1";
   const rows = (
     await pool.query(`SELECT item_type_id, level, source, updated_at FROM learner_type_levels WHERE user_id = $1 AND skill = $2`, [userId, skill])
   ).rows as { item_type_id: string; level: Level; source: string; updated_at: Date }[];
@@ -68,7 +71,8 @@ export async function pathLevels(userId: string, skill: SkillTag, typeIds: strin
   const toSeed: string[] = [];
   for (const id of typeIds) {
     const row = rows.find((r) => r.item_type_id === id);
-    const stale = row && row.source === "placement" && placement && new Date(placement.taken_at) > new Date(row.updated_at);
+    // A level that came from the level test follows the latest test.
+    const stale = row && row.source === "placement" && row.level !== seed;
     if (!row || stale) toSeed.push(id);
     out.set(id, !row || stale ? seed : row.level);
   }
