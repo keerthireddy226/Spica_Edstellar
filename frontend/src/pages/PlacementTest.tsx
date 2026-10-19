@@ -536,23 +536,23 @@ export function PlacementTest() {
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold text-muted">{needsAudioFirst ? t("practiceTests.youHear") : tr("You read")}</span>
               {needsAudioFirst ? (
-                <div className="relative rounded-card bg-[#3d312b] text-white min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
-                  <Headphones size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />
+                <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
+                  <Headphones size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-navy/25 pointer-events-none" />
                   <button
                     onClick={handlePlay}
                     disabled={playing || recording}
-                    className="h-16 w-16 rounded-full bg-white text-navy-deep flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
+                    className="h-16 w-16 rounded-full bg-navy text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
                     aria-label={t("placementTest.play")}
                   >
                     <Volume2 size={26} />
                   </button>
-                  <span className="text-sm text-white/85">
+                  <span className="text-sm text-muted">
                     {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
                   </span>
                 </div>
               ) : (
-                <div className="relative rounded-card bg-[#3d312b] text-white min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
-                  <BookOpen size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/15 pointer-events-none" />
+                <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
+                  <BookOpen size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-navy/20 pointer-events-none" />
                   {getPassageAndQuestion(current) ? (
                     <>
                       <p className="relative text-sm leading-relaxed whitespace-pre-wrap">{getPassageAndQuestion(current)!.passage}</p>
