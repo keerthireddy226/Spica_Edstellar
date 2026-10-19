@@ -31,8 +31,8 @@ const findTrack = (key: string) => TRACKS.find((t) => trackKey(t) === key);
 
 // The text whose length the level range describes (not the question under it).
 function lengthText(c: Record<string, unknown>): string {
-  for (const k of ["text", "passage", "prompt", "situation", "sentence"]) if (typeof c[k] === "string") return c[k] as string;
-  return "";
+  for (const k of ["text", "passage", "prompt", "situation", "sentence", "dialogue", "story", "question"]) if (typeof c[k] === "string") return c[k] as string;
+  return Array.isArray(c.groups) ? c.groups.join(" ") : "";
 }
 
 // Rules the schema can't express; returns the problem or null.
@@ -43,6 +43,17 @@ function extraRule(track: Track, level: Level, it: Item): string | null {
   const all = JSON.stringify(it.content);
   if ((track.type === "reading" || track.type === "typing") && /[^\x20-\x7E]/.test(all)) return "non-ASCII character (use plain quotes, no accents or dashes)";
   if (track.type === "reading" && /\d/.test(all)) return "digits in a read-aloud text";
+  // Heard tracks are spoken by a voice: no digits or symbols in what is heard.
+  const heard = ["repeats", "dictation", "conversations", "passage_comprehension", "short_answer", "story_retelling", "open_questions", "response_selection", "sentence_builds"].includes(track.type) || track.tag === "listening";
+  if (heard) {
+    const spoken = Object.entries(it.content)
+      .filter(([k]) => k !== "options")
+      .flatMap(([, v]) => (Array.isArray(v) ? v : [v]))
+      .join(" ");
+    if (/[\d&%$#@/()[\]]/.test(spoken)) return "digits or symbols in spoken text";
+    if (/[^\x20-\x7E]/.test(spoken)) return "non-ASCII character (use plain quotes, no accents or dashes)";
+  }
+  if (track.type === "conversations" && !/^A: .*\bB: /.test(String(it.content.dialogue))) return "dialogue must be 'A: ... B: ...'";
   if (track.type === "reading_selective") {
     const answers = (it.answerSet?.acceptable_answers ?? []) as string[];
     if (answers.some((a) => words(a) > 4)) return "an answer is longer than 4 words";

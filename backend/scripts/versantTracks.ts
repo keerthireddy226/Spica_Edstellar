@@ -82,7 +82,10 @@ const selective = (tag: string): Track => ({
   tag,
   label: `Reading (Selective) (${tag})`,
   task: "The learner reads a short notice, message or statement, then answers one question about it in a few words. The answer must be stated in or follow directly from the text, and be short (1 to 4 words).",
-  words: tag === "reading" ? W("4-7", "6-10", "9-13", "10-14", "10-15", "10-15") : W("5-8", "8-12", "12-18", "12-18", "13-18", "14-20"),
+  words:
+    tag === "reading" ? W("4-7", "6-10", "9-13", "10-14", "10-15", "10-15")
+    : tag === "listening" ? W("4-7", "6-10", "8-12", "9-13", "10-14", "10-14")
+    : W("5-8", "8-12", "12-18", "12-18", "13-18", "14-20"),
   schema: obj({ text: S, question: S, acceptable_answers: { ...SA, description: "every short correct answer a learner might give, lower case, most natural first" }, topic: TOPIC }),
   toItem: (q) => {
     const answers = strList(q.acceptable_answers).map((a) => a.toLowerCase());
@@ -102,6 +105,125 @@ const situations = (tag: string): Track => ({
   words: tag === "reading" ? W("8-12", "11-15", "13-17", "13-18", "15-20", "17-22") : W("10-14", "12-17", "16-22", "14-19", "16-21", "18-24"),
   ...prompt1("situation", "the situation, ending with a question to the learner"),
   checkFor: "The situation is clear, realistic and the learner knows who they speak to and why.",
+});
+
+// --- Listening tracks (the learner hears the text; recorded voices come later,
+// until then the app reads it with the browser voice) ---------------------------
+
+const heard = "Everything in the main text is spoken aloud, so it must sound natural when heard once: no digits, symbols, abbreviations, brand names or parentheses (write numbers as words).";
+
+const exactText = (): Pick<Track, "schema" | "toItem" | "mainText"> => ({
+  schema: obj({ text: S, topic: TOPIC }),
+  toItem: (q) => (str(q.text) ? { content: { text: str(q.text) }, answerSet: { exact: str(q.text) }, topic: str(q.topic) } : "missing text"),
+  mainText: (c) => str(c.text),
+});
+
+const answersFor = (fields: string[]): Pick<Track, "schema" | "toItem" | "mainText"> => ({
+  schema: obj({
+    ...Object.fromEntries(fields.map((f) => [f, S])),
+    acceptable_answers: { ...SA, description: "every short correct answer a learner might say, lower case, most natural first" },
+    topic: TOPIC,
+  }),
+  toItem: (q) => {
+    const answers = strList(q.acceptable_answers).map((a) => a.toLowerCase());
+    if (fields.some((f) => !str(q[f]))) return `missing ${fields.join(" or ")}`;
+    if (!answers.length) return "no answers";
+    return { content: Object.fromEntries(fields.map((f) => [f, str(q[f])])), answerSet: { acceptable_answers: answers }, topic: str(q.topic) };
+  },
+  mainText: (c) => fields.map((f) => str(c[f])).join(" Q: "),
+});
+
+const conversation = (tag: string): Track => ({
+  type: "conversations",
+  tag,
+  label: `Conversations (${tag})`,
+  task: "The learner hears a short exchange between two speakers, written 'A: ... B: ...' (two or three turns), then one question about it, and answers in a few words. The answer must be stated in or follow directly from the exchange.",
+  words: tag === "listening" ? W("8-11", "9-13", "11-16", "13-17", "13-18", "14-19") : W("8-12", "10-16", "14-22", "14-20", "14-20", "16-21"),
+  ...answersFor(["dialogue", "question"]),
+  checkFor: "Exactly one correct answer, found in the exchange; acceptable answers cover the natural short ways to say it.",
+});
+
+const passageQuestion = (tag: string): Track => ({
+  type: "passage_comprehension",
+  tag,
+  label: `Passage Comprehension (${tag})`,
+  task: "The learner hears a short story or account, then one question about it, and answers in a few words. The answer must be stated in or follow directly from the story.",
+  words: tag === "listening" ? W("9-14", "9-15", "10-16", "10-16", "10-15", "10-14") : W("8-12", "10-16", "18-30", "17-25", "24-33", "24-34"),
+  ...answersFor(["story", "question"]),
+  checkFor: "Exactly one correct answer, found in the story; acceptable answers cover the natural short ways to say it.",
+});
+
+const repeat = (tag: string): Track => ({
+  type: "repeats",
+  tag,
+  label: `Repeats (${tag})`,
+  task: "The learner hears one sentence and repeats it word for word.",
+  words: tag === "listening" ? W("3-6", "6-9", "7-10", "9-12", "10-13", "10-13") : W("4-7", "6-8", "6-9", "7-9", "7-10", "7-9"),
+  ...exactText(),
+  checkFor: "One natural sentence, easy to hear and repeat as written.",
+});
+
+const dictate = (tag: string): Track => ({
+  type: "dictation",
+  tag,
+  label: `Dictation (${tag})`,
+  task: "The learner hears one sentence and types it exactly, with correct spelling and punctuation. Use ordinary punctuation only.",
+  words: W("4-7", "5-9", "6-10", "7-10", "8-11", "8-11"),
+  ...exactText(),
+  checkFor: "One natural sentence whose spelling is unambiguous when heard (no names with unusual spellings, no homophone traps).",
+});
+
+const builds = (tag: string): Track => ({
+  type: "sentence_builds",
+  tag,
+  label: `Sentence Builds (${tag})`,
+  task: tag === "listening"
+    ? "The learner hears three or four word groups in a jumbled order and says them as one correct sentence. Give the groups in a jumbled (not the correct) order."
+    : "The learner hears three word groups in a jumbled order and says them as one correct sentence. Give exactly three groups in a jumbled (not the correct) order.",
+  words: tag === "listening" ? W("4-6", "5-8", "6-10", "7-11", "8-12", "8-13") : W("4-6", "5-8", "6-9", "6-10", "7-11", "7-11"),
+  schema: obj({
+    groups: { ...SA, description: tag === "listening" ? "3 or 4 word groups, jumbled" : "exactly 3 word groups, jumbled" },
+    correct: { type: "string", description: "the correct sentence, with capital letter and full stop" },
+    alternates: { ...SA, description: "other fully correct orders of the same groups, if any (often none)" },
+    topic: TOPIC,
+  }),
+  toItem: (q) => {
+    const groups = strList(q.groups);
+    const correct = str(q.correct);
+    const n = tag === "listening" ? [3, 4] : [3];
+    if (!n.includes(groups.length)) return `need ${n.join(" or ")} groups`;
+    const norm = (x: string) => x.toLowerCase().replace(/[^a-z' ]+/g, " ").split(/\s+/).filter(Boolean);
+    const sorted = (a: string[]) => [...a].sort().join(" ");
+    if (sorted(norm(groups.join(" "))) !== sorted(norm(correct))) return "groups don't use exactly the words of the sentence";
+    if (norm(groups.join(" ")).join(" ") === norm(correct).join(" ")) return "groups are in the correct order; jumble them";
+    return { content: { groups }, answerSet: { correct, alternates: strList(q.alternates) }, topic: str(q.topic) };
+  },
+  mainText: (c) => strList(c.groups).join(" "),
+  checkFor: "The groups make exactly one natural sentence (list any other correct order as an alternate).",
+});
+
+const shortAnswer = (tag: string): Track => ({
+  type: "short_answer",
+  tag,
+  label: `Short Answer (${tag})`,
+  task: tag === "listening"
+    ? "The learner hears one simple general question about everyday knowledge (things, places, people, time, common sense) and answers in one to three words. It must have one clear answer that any adult knows."
+    : "The learner hears one or two sentences of information followed by a question about it, and answers in a few words. The answer must be stated in the information.",
+  words: tag === "listening" ? W("5-10", "6-11", "7-12", "6-11", "9-15", "9-15") : W("8-12", "10-14", "12-17", "14-19", "14-20", "15-22"),
+  ...answersFor(["question"]),
+  checkFor: tag === "listening" ? "One clear answer any adult knows; acceptable answers cover the natural ways to say it." : "Exactly one correct answer, found in the information; acceptable answers cover the natural ways to say it.",
+});
+
+const retell = (tag: string): Track => ({
+  type: "story_retelling",
+  tag,
+  label: `Story Retelling (${tag})`,
+  task: "The learner hears a short story with a clear beginning, middle and end (a character, a problem, what happened) and retells it in their own words.",
+  words: tag === "listening" ? W("10-16", "16-24", "24-34", "22-30", "34-44", "40-52") : W("17-25", "22-32", "28-38", "28-40", "36-48", "32-44"),
+  schema: obj({ story: S, topic: TOPIC }),
+  toItem: (q) => (str(q.story) ? { content: { story: str(q.story) }, answerSet: null, topic: str(q.topic) } : "missing story"),
+  mainText: (c) => str(c.story),
+  checkFor: "A clear, memorable sequence of events.",
 });
 
 export const TRACKS: Track[] = [
@@ -191,6 +313,48 @@ export const TRACKS: Track[] = [
   selective("speaking"),
   situations("reading"),
   situations("speaking"),
+  selective("listening"),
+  conversation("listening"),
+  conversation("speaking"),
+  passageQuestion("listening"),
+  passageQuestion("speaking"),
+  repeat("listening"),
+  repeat("speaking"),
+  dictate("listening"),
+  dictate("writing"),
+  builds("listening"),
+  builds("speaking"),
+  shortAnswer("listening"),
+  shortAnswer("speaking"),
+  retell("listening"),
+  retell("speaking"),
+  {
+    type: "response_selection",
+    tag: null,
+    label: "Response Selection",
+    task: "The learner hears one sentence (a question or remark) and picks the best reply from three written options. Exactly one reply fits; the other two are clearly off-topic or illogical.",
+    words: W("3-6", "4-8", "6-10", "5-9", "6-10", "6-11"),
+    schema: obj({ text: S, options: { ...SA, description: "exactly 3 replies" }, correct_index: { type: "integer", description: "0-based index of the right reply" }, topic: TOPIC }),
+    toItem: (q) => {
+      const options = strList(q.options);
+      const i = q.correct_index;
+      if (!str(q.text)) return "missing text";
+      if (options.length !== 3 || new Set(options).size !== 3) return "need 3 different options";
+      if (typeof i !== "number" || !Number.isInteger(i) || i < 0 || i > 2) return "bad correct_index";
+      return { content: { text: str(q.text), options }, answerSet: { correctIndex: i }, topic: str(q.topic) };
+    },
+    mainText: (c) => str(c.text),
+    checkFor: "Exactly one reply fits and it is the one marked correct.",
+  },
+  {
+    type: "open_questions",
+    tag: null,
+    label: "Open Questions",
+    task: "The learner hears an open question about their life, experience or views and answers in their own words for about thirty seconds. Nothing personal or sensitive.",
+    words: W("4-9", "5-11", "6-14", "7-14", "9-15", "13-22"),
+    ...prompt1("prompt", "the question, ending with ?"),
+    checkFor: "An open question anyone can answer from their own life or views.",
+  },
 ];
 
 // --- Duplicate check (plain word overlap, no AI) -------------------------------
