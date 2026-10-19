@@ -934,13 +934,17 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         </div>
         <p className="text-sm text-muted -mt-2">{t("practiceTests.overview.subtitle")}</p>
         {isMock && (
-          <div className="w-full flex items-start gap-2.5 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
-            <Timer size={18} className="text-navy-deep shrink-0 mt-0.5" />
-            <span>
-              {tr(
-                "Mock exam: each question has its own time limit, and the clock keeps running if you leave the page. When time runs out, your answer so far is sent. You can't go back to a question.",
-              )}
+          <div className="w-full flex flex-col gap-2 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
+            <span className="flex items-center gap-2 font-semibold">
+              <Timer size={18} className="text-navy-deep shrink-0" /> {tr("How a mock exam runs")}
             </span>
+            <ul className="list-disc pl-5 flex flex-col gap-1">
+              <li>{tr("The test moves forward with the timer. There is no Skip and no Back, and spoken answers have no Next button.")}</li>
+              <li>{tr("Each question has its own timer at the top right. When it reaches 0:00, your answer so far is handed in and the next question opens by itself.")}</li>
+              <li>{tr("Spoken answers: press the microphone, speak, then press it again to stop. Stopping hands your answer in straight away.")}</li>
+              <li>{tr("Typed or chosen answers: press Next when you're done, or the test moves on at 0:00.")}</li>
+              <li>{tr("The clock keeps running if you leave the page. A question left unanswered counts as wrong.")}</li>
+            </ul>
           </div>
         )}
         <div className="w-full flex flex-col gap-2 text-left">
@@ -980,6 +984,11 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         <div>
           <h1 className="font-display font-bold text-xl text-ink">{currentPart.label}</h1>
           <p className="text-sm text-muted mt-2 leading-relaxed">{current.instructionText}</p>
+          {isMock && (
+            <p className="text-sm text-navy-deep mt-2 flex items-start gap-1.5 justify-center">
+              <Timer size={15} className="shrink-0 mt-0.5" /> {tr("Timed: each question moves on by itself when its timer reaches 0:00.")}
+            </p>
+          )}
         </div>
         <Button onClick={() => setShowSectionIntro(false)} className="w-full">
           {t("practiceTests.overview.startSection", { label: currentPart.label })}
@@ -1030,6 +1039,19 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
             {t("placementTest.progress", { current: index + 1, total: items.length })}
           </span>
         </div>
+
+        {/* Mock: every question says how it moves on, since there are no
+            Skip/Next buttons for spoken answers. */}
+        {isMock && (
+          <div className="flex items-start gap-2 text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-2.5" role="note">
+            <Timer size={16} className="text-navy-deep shrink-0 mt-0.5" />
+            <span>
+              {current.inputMethod === "mic"
+                ? tr("Timed question, no Skip or Next: answer before the timer reaches 0:00. Your answer is handed in when you stop recording, or when the time runs out, and the next question opens by itself.")
+                : tr("Timed question, no Skip: press Next when your answer is ready. When the timer reaches 0:00, your answer so far is handed in and the next question opens by itself.")}
+            </span>
+          </div>
+        )}
 
         {/* Height follows the actual content, between a floor (so a short
             mic item doesn't look like a tiny stub) and a ceiling (so the
@@ -1232,7 +1254,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                 {isMock && current.inputMethod === "mic" ? (
                   // Spoken answers in a mock: stopping the recording hands it in.
                   <p className="flex-1 text-center text-sm text-muted">
-                    {submitting ? t("placementTest.submitting") : tr("Your answer is handed in when you stop recording; the test then moves on by itself.")}
+                    {submitting ? t("placementTest.submitting") : tr("Moves on by itself: stop recording to hand in your answer.")}
                   </p>
                 ) : (
                   <Button

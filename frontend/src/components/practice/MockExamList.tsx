@@ -13,7 +13,7 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 // What makes a mock different from practice, shown once above the list.
 const RULES: [LucideIcon, () => string][] = [
   [Timer, () => tr("Timed like the real exam")],
-  [Lock, () => tr("No pausing, no going back")],
+  [Lock, () => tr("Moves on with the timer: no Skip, no going back")],
   [EyeOff, () => tr("Questions you haven't seen")],
   [FileText, () => tr("Full report and level at the end")],
 ];
