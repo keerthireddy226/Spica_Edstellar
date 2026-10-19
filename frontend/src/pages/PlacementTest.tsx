@@ -536,7 +536,7 @@ export function PlacementTest() {
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold text-muted">{needsAudioFirst ? t("practiceTests.youHear") : tr("You read")}</span>
               {needsAudioFirst ? (
-                <div className="relative rounded-card bg-[#3f3f3f] text-white min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
+                <div className="relative rounded-card bg-[#3d312b] text-white min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
                   <Headphones size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />
                   <button
                     onClick={handlePlay}
@@ -551,7 +551,7 @@ export function PlacementTest() {
                   </span>
                 </div>
               ) : (
-                <div className="relative rounded-card bg-[#3f3f3f] text-white min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
+                <div className="relative rounded-card bg-[#3d312b] text-white min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
                   <BookOpen size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/15 pointer-events-none" />
                   {getPassageAndQuestion(current) ? (
                     <>
@@ -570,8 +570,14 @@ export function PlacementTest() {
               <span className="text-xs font-semibold text-muted">{current.inputMethod === "mic" ? t("practiceTests.youSay") : tr("Your answer")}</span>
               <div
                 className={`relative rounded-card min-h-[220px] p-5 flex flex-col items-center justify-center gap-2 overflow-hidden ${
-                  current.inputMethod === "mic" ? "bg-[#1f3a68] text-white [&_.text-muted]:!text-white/85" : "bg-paper border border-rule"
+                  current.inputMethod === "mic" ? "text-white [&_.text-muted]:!text-white/85" : "bg-paper border border-rule"
                 }`}
+                // The app's clay colour, deepened so the clay microphone button stands out on it.
+                style={
+                  current.inputMethod === "mic"
+                    ? { background: "linear-gradient(135deg, color-mix(in srgb, var(--color-navy) 72%, black), color-mix(in srgb, var(--color-navy) 48%, black))" }
+                    : undefined
+                }
               >
                 {current.inputMethod === "mic" && <MessageSquare size={56} strokeWidth={1.5} className="absolute right-3 bottom-3 text-white/70 pointer-events-none" />}
                 <div className="relative w-full">
