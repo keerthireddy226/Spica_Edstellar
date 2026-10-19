@@ -71,7 +71,6 @@ export const saveMyGoals = (g: {
 export interface GroupBoard {
   enabled: boolean;
   group?: string;
-  hidden?: boolean;
   size?: number;
   active?: number;
   points?: { points: number; sets: number; correct: number; tests: number; activeDays: number };
@@ -86,15 +85,12 @@ export interface GroupBoard {
   topHalf?: boolean;
   climbed?: number | null;
   pointsToTopHalf?: number;
-  top?: { name: string | null; points: number; rank: number; me: boolean }[];
+  // Peers by Learner ID (Spica's ID); the learner's own row is "me".
+  top?: { learnerId: string | null; points: number; rank: number; me: boolean }[];
 }
 
 export function getGroupBoard(): Promise<GroupBoard> {
   return api("/me/leaderboard");
-}
-
-export function setBoardNameHidden(hidden: boolean): Promise<{ hidden: boolean }> {
-  return api("/me/leaderboard-visibility", { method: "PATCH", body: JSON.stringify({ hidden }) });
 }
 
 // A batch's board for its admin or managers.
@@ -102,7 +98,7 @@ export interface BatchBoard {
   enabled: boolean;
   group: string | null;
   weekStart: string;
-  rows: { id: string; name: string; hidden: boolean; rank: number; points: number; sets: number; correct: number; tests: number; activeDays: number; level: string | null; lastActive: string | null }[];
+  rows: { id: string; name: string; learnerId: string | null; rank: number; points: number; sets: number; correct: number; tests: number; activeDays: number; level: string | null; lastActive: string | null }[];
 }
 
 export function getBatchBoard(scope: "org-admin" | "manager", batchId: string): Promise<BatchBoard> {

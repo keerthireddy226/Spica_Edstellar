@@ -1,6 +1,7 @@
 // Group leaderboards: a batch's learners ranked on this week's progress
 // points (effort and results, reset every Monday), not on their level, so
-// anyone can lead a week. Learners see their percentile and a top 5; the
+// anyone can lead a week. Learners see their position and a top 5 by
+// Learner ID (their own row says "You"); the
 // bottom half sees how to move up rather than their rank. Admins and
 // managers see the whole batch.
 import { pool } from "../db.js";
@@ -83,24 +84,25 @@ export function topPercent(rank: number, size: number): number {
   return Math.min(100, Math.max(5, Math.ceil(((rank / size) * 100) / 5) * 5));
 }
 
-const displayName = (u: { first_name: string | null; last_name: string | null; leaderboard_hidden: boolean }) =>
-  u.leaderboard_hidden ? null : [u.first_name, u.last_name ? `${u.last_name[0]}.` : null].filter(Boolean).join(" ") || null;
+// Peers see each other by Learner ID (Spica's own ID, not an employee ID or
+// name), never by name.
+const peerLabel = (u: { participant_id: string | null }) => u.participant_id ?? null;
 
 async function members(batchId: string) {
   return (
     await pool.query(
-      `SELECT id, email, first_name, last_name, leaderboard_hidden FROM users
+      `SELECT id, email, first_name, last_name, participant_id FROM users
        WHERE batch_id = $1 AND role = 'learner' AND deleted_at IS NULL`,
       [batchId],
     )
-  ).rows as { id: string; email: string; first_name: string | null; last_name: string | null; leaderboard_hidden: boolean }[];
+  ).rows as { id: string; email: string; first_name: string | null; last_name: string | null; participant_id: string | null }[];
 }
 
 // The learner's view of their group this week.
 export async function learnerBoard(userId: string) {
   const me = (
     await pool.query(
-      `SELECT u.batch_id, u.leaderboard_hidden, b.name, b.leaderboard_enabled FROM users u LEFT JOIN batches b ON b.id = u.batch_id WHERE u.id = $1`,
+      `SELECT u.batch_id, b.name, b.leaderboard_enabled FROM users u LEFT JOIN batches b ON b.id = u.batch_id WHERE u.id = $1`,
       [userId],
     )
   ).rows[0];
@@ -111,7 +113,7 @@ export async function learnerBoard(userId: string) {
   const week = await weeklyPoints(people.map((p) => p.id), from, new Date(now.getTime() + DAY_MS));
   const active = [...week.values()].filter((p) => p.points > 0).length;
   const mine = week.get(userId) ?? { points: 0, sets: 0, correct: 0, tests: 0, activeDays: 0 };
-  const base = { enabled: true as const, group: me.name as string, hidden: !!me.leaderboard_hidden, size: people.length, active, points: mine, weekStart: from.toISOString().slice(0, 10) };
+  const base = { enabled: true as const, group: me.name as string, size: people.length, active, points: mine, weekStart: from.toISOString().slice(0, 10) };
   if (active < MIN_ACTIVE) return { ...base, quiet: true as const, needed: MIN_ACTIVE };
 
   const r = ranks(new Map([...week.entries()].map(([id, p]) => [id, p.points])));
@@ -122,7 +124,7 @@ export async function learnerBoard(userId: string) {
   const halfLine = sorted[Math.max(0, Math.ceil(people.length / 2) - 1)][1].points;
   const top = sorted.slice(0, 5).map(([id, p]) => {
     const person = people.find((x) => x.id === id)!;
-    return { name: displayName(person), points: p.points, rank: r.get(id)!, me: id === userId };
+    return { learnerId: peerLabel(person), points: p.points, rank: r.get(id)!, me: id === userId };
   });
   // The learner's own level (only theirs; peers never see each other's level).
   const myLevel = overallFromSkills(await pathSummary(userId));
@@ -156,7 +158,7 @@ export async function adminBoard(batchId: string) {
     people.map(async (p) => ({
       id: p.id,
       name: [p.first_name, p.last_name].filter(Boolean).join(" ") || p.email,
-      hidden: p.leaderboard_hidden,
+      learnerId: p.participant_id,
       rank: r.get(p.id)!,
       ...week.get(p.id)!,
       level: overallFromSkills(await pathSummary(p.id)),

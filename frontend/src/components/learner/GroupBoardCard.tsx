@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
-import { getGroupBoard, setBoardNameHidden, type GroupBoard } from "@/api/me";
+import { getGroupBoard, type GroupBoard } from "@/api/me";
 import { tr } from "@/i18n/tr";
 
 // About this many points a set (10 for the set, a few right answers).
@@ -18,12 +18,6 @@ export function GroupBoardCard() {
   }, []);
   if (!b?.enabled) return null;
 
-  const toggleHidden = async () => {
-    const next = !b.hidden;
-    setB({ ...b, hidden: next });
-    await setBoardNameHidden(next).catch(() => setB({ ...b }));
-  };
-
   // The top 5, plus the learner's own row when they're below it.
   const rows = [...(b.top ?? [])];
   const meShown = rows.some((r) => r.me);
@@ -35,10 +29,6 @@ export function GroupBoardCard() {
           <Users size={17} className="text-accent" /> {tr("Your group this week")}
           <span className="text-xs font-normal text-muted">· {b.group}</span>
         </h2>
-        <label className="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer">
-          <input type="checkbox" checked={!!b.hidden} onChange={toggleHidden} />
-          {tr("Hide my name")}
-        </label>
       </div>
 
       {b.quiet ? (
@@ -66,14 +56,14 @@ export function GroupBoardCard() {
           <thead>
             <tr className="text-left text-xs text-muted border-b border-rule">
               <th className="py-2 pr-3 pl-2 w-20 font-semibold">{tr("Position")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("Learner")}</th>
+              <th className="py-2 pr-3 font-semibold">{tr("Learner ID")}</th>
               <th className="py-2 pr-3 w-24 font-semibold">{tr("Level")}</th>
               <th className="py-2 pr-2 w-24 text-right font-semibold">{tr("Points")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <BoardRow key={i} rank={row.rank} name={row.me ? tr("You") : (row.name ?? tr("A learner"))} points={row.points} me={row.me} level={row.me ? b.myLevel : null} />
+              <BoardRow key={i} rank={row.rank} name={row.me ? tr("You") : (row.learnerId ?? tr("A learner"))} points={row.points} me={row.me} level={row.me ? b.myLevel : null} />
             ))}
             {!meShown && b.rank ? (
               <>
@@ -101,7 +91,7 @@ function BoardRow({ rank, name, points, me, level }: { rank: number; name: strin
   return (
     <tr className={`border-b border-rule last:border-0 ${me ? "bg-accent/10 font-semibold" : ""}`}>
       <td className="py-2 pr-3 pl-2 font-display font-bold text-ink">{rank}</td>
-      <td className="py-2 pr-3 text-ink">{name}</td>
+      <td className={`py-2 pr-3 text-ink ${me ? "" : "font-mono text-xs"}`}>{name}</td>
       <td className="py-2 pr-3 text-ink">{me && level ? level : <span className="text-muted">—</span>}</td>
       <td className="py-2 pr-2 text-right text-ink">{points}</td>
     </tr>

@@ -247,18 +247,6 @@ meRouter.get("/leaderboard", requireAuth, async (req: AuthedRequest, res, next) 
   }
 });
 
-// Show or hide the learner's name on their group's board.
-meRouter.patch("/leaderboard-visibility", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
-  try {
-    const body = z.object({ hidden: z.boolean() }).parse(req.body);
-    await pool.query(`UPDATE users SET leaderboard_hidden = $2 WHERE id = $1`, [req.user!.id, body.hidden]);
-    res.json({ hidden: body.hidden });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Everything for a learner's Progress page in one call.
 meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => {
   if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });

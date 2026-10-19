@@ -45,7 +45,7 @@ export function BatchLeaderboardSection({ batchId, scope }: { batchId: string; s
       }
     >
       <p className="text-xs text-muted mb-2">
-        {tr("Points since {{date}}: 10 a set, 2 a right answer, 25 a test, 5 a day practised. Learners see their percentile and the top 5, never others' levels or scores.", {
+        {tr("Points since {{date}}: 10 a set, 2 a right answer, 25 a test, 5 a day practised. Learners see their position and the top 5 by Learner ID, never names, levels or scores of others.", {
           date: formatShortDate(board.weekStart),
         })}
       </p>
@@ -55,6 +55,7 @@ export function BatchLeaderboardSection({ batchId, scope }: { batchId: string; s
             <tr className="text-left text-xs text-muted">
               <th className="py-1 pr-2">#</th>
               <th className="py-1 pr-2">{tr("Learner")}</th>
+              <th className="py-1 pr-2">{tr("Learner ID")}</th>
               <th className="py-1 pr-2 text-right">{tr("Points")}</th>
               <th className="py-1 pr-2 text-right">{tr("Sets")}</th>
               <th className="py-1 pr-2 text-right">{tr("Tests")}</th>
@@ -66,10 +67,8 @@ export function BatchLeaderboardSection({ batchId, scope }: { batchId: string; s
             {board.rows.map((r) => (
               <tr key={r.id} className="border-t border-rule">
                 <td className="py-1.5 pr-2 font-semibold">{r.points > 0 ? r.rank : "–"}</td>
-                <td className="py-1.5 pr-2">
-                  {r.name}
-                  {r.hidden && <span className="ml-1 text-[10px] text-muted">({tr("name hidden from peers")})</span>}
-                </td>
+                <td className="py-1.5 pr-2">{r.name}</td>
+                <td className="py-1.5 pr-2 font-mono text-xs text-muted">{r.learnerId ?? "—"}</td>
                 <td className="py-1.5 pr-2 text-right font-semibold">{r.points}</td>
                 <td className="py-1.5 pr-2 text-right">{r.sets}</td>
                 <td className="py-1.5 pr-2 text-right">{r.tests}</td>
