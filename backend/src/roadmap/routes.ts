@@ -3,11 +3,39 @@ import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { overallFromSkills, pathSummary } from "../learner/path.js";
 import { journey } from "../learner/journey.js";
+import { buildIcs, emailTestDates, planEvents } from "../learner/calendar.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 
 export const roadmapRouter = Router();
 
 // "My journey": progress to the goal, levels to reach, this week's tasks and checkpoints.
+// The test plan's dates as a calendar file ("Add to calendar").
+roadmapRouter.get("/calendar.ics", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.type("text/calendar; charset=utf-8");
+    res.set("Content-Disposition", 'attachment; filename="spica-test-plan.ics"');
+    res.send(buildIcs(await planEvents(req.user!.id)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// "Email me my test dates": at most once a minute.
+roadmapRouter.post("/calendar/email", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const recent = await pool.query(
+      `SELECT 1 FROM participant_profiles WHERE user_id = $1 AND test_dates_emailed_at > now() - interval '1 minute'`,
+      [req.user!.id],
+    );
+    if (recent.rowCount) return res.status(429).json({ error: "too_soon" });
+    const sent = await emailTestDates(req.user!.id);
+    if (!sent) return res.status(400).json({ error: "no_dates" });
+    res.json({ sent });
+  } catch (err) {
+    next(err);
+  }
+});
+
 roadmapRouter.get("/journey", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     res.json(await journey(req.user!.id));

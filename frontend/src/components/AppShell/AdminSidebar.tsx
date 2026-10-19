@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -30,6 +30,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.SUPER_CONTENT, icon: FileStack, label: tr("Question bank") },
   { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: tr("Placement reviews") },
   { to: ROUTES.SUPER_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
+  { to: ROUTES.SUPER_CERTIFICATES, icon: Award, label: tr("Certificates") },
   { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: tr("System") },
   { to: ROUTES.ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
@@ -49,6 +50,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_CONTENT, icon: FileStack, label: tr("Question bank"), permission: "contentReview" },
   { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: tr("Placement reviews"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity"), permission: "scoreReview" },
+  { to: ROUTES.ADMIN_CONSOLE_CERTIFICATES, icon: Award, label: tr("Certificates") },
   { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: tr("Analytics"), permission: "viewReports" },
   { to: ROUTES.ADMIN_CONSOLE_PROFILE, icon: User, label: tr("Profile") },
@@ -61,6 +63,7 @@ const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_CERTIFICATES, icon: Award, label: tr("Certificates"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_RECRUITMENT, icon: UserSearch, label: tr("Recruitment"), product: "recruitment" },
   { to: ROUTES.ORG_ADMIN_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: tr("Audit log") },

@@ -50,6 +50,7 @@ export const ROUTES = {
   SUPER_PLANS: "/superadmin/plans",
   SUPER_CONTENT: "/superadmin/content",
   SUPER_INTEGRITY: "/superadmin/integrity",
+  SUPER_CERTIFICATES: "/superadmin/certificates",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -68,6 +69,7 @@ export const ROUTES = {
   ADMIN_CONSOLE_PLANS: "/admin/plans",
   ADMIN_CONSOLE_CONTENT: "/admin/content",
   ADMIN_CONSOLE_INTEGRITY: "/admin/integrity",
+  ADMIN_CONSOLE_CERTIFICATES: "/admin/certificates",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
@@ -80,6 +82,7 @@ export const ROUTES = {
   ORG_ADMIN_PLAN: "/orgadmin/plan",
   ORG_ADMIN_AUDIT: "/orgadmin/audit",
   ORG_ADMIN_SETTINGS: "/orgadmin/settings",
+  ORG_ADMIN_CERTIFICATES: "/orgadmin/certificates",
   ORG_ADMIN_DEVELOPERS: "/orgadmin/developers",
   ORG_ADMIN_PROFILE: "/orgadmin/profile",
   ORG_ADMIN_INTEGRITY: "/orgadmin/integrity",

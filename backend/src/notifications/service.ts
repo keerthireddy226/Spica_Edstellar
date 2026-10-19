@@ -41,7 +41,9 @@ export type NotificationKind =
   | "integrity_digest"
   | "assessment_completed"
   | "credits_low"
-  | "credit_request";
+  | "credit_request"
+  | "certificate_request"
+  | "certificate_decided";
 
 const NUDGE_KINDS: NotificationKind[] = ["manager_reminder", "auto_reminder", "daily_reminder", "streak_alert"];
 

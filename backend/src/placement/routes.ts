@@ -23,6 +23,8 @@ import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { saveRoadmap } from "../roadmap/save.js";
 import { isPhoneUserAgent } from "../lib/device.js";
+import { emailTestDates } from "../learner/calendar.js";
+import { notificationEmailsEnabled } from "../notifications/service.js";
 import { z } from "zod";
 
 export const placementRouter = Router();
@@ -501,6 +503,8 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
     // Candidates get no learning plan; their result goes to the recruiter.
     const candidate = req.user!.role === "candidate";
     const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, cefrLevel, roadmapSkillPercents);
+    // The new plan's test dates go to the learner's calendar by email.
+    if (!candidate && notificationEmailsEnabled()) emailTestDates(req.user!.id).catch((err) => console.error("placement /complete: test dates email failed:", err));
     if (candidate) {
       await recordCandidateResult(req.user!.id, req.params.sessionId as string).catch((err) => console.error("placement /complete: candidate result failed:", err));
     } else {

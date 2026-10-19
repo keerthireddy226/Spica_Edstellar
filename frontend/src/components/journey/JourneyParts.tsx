@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
+  CalendarPlus,
   Check,
   CheckCircle2,
   Circle,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/Button";
 import type { Journey, JourneyTask } from "@/api/roadmap";
+import { CALENDAR_FILE_URL, emailTestDates } from "@/api/certificates";
 import type { SkillTag } from "@/api/testSession";
 import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import { formatShortDate } from "@/api/licenses";
@@ -333,7 +335,37 @@ export function Checkpoints({ j }: { j: Journey }) {
       {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
         <p className="text-xs text-warning">{tr("No mock exam is left in this month's allowance before your exam. See the Mock Exams page for when new ones arrive.")}</p>
       )}
+      {j.checkpoints.some((c) => !c.done && (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam")) && <CalendarActions />}
     </section>
+  );
+}
+
+// The test dates into the learner's own calendar: by email (Google links and
+// an .ics file), or the file straight away.
+function CalendarActions() {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  async function send() {
+    setState("sending");
+    try {
+      await emailTestDates();
+      setState("sent");
+    } catch {
+      setState("error");
+    }
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-rule pt-3 text-xs">
+      <span className="font-semibold text-ink flex items-center gap-1.5">
+        <CalendarPlus size={14} className="text-accent" /> {tr("Add to your calendar")}
+      </span>
+      <button onClick={send} disabled={state === "sending" || state === "sent"} className="font-semibold text-navy-deep hover:underline cursor-pointer disabled:cursor-default disabled:no-underline">
+        {state === "sending" ? tr("Sending…") : state === "sent" ? tr("Sent to your email ✓") : tr("Email me my test dates")}
+      </button>
+      <a href={CALENDAR_FILE_URL} className="font-semibold text-navy-deep hover:underline">
+        {tr("Download for Apple Calendar or Outlook")}
+      </a>
+      {state === "error" && <span className="text-error">{tr("Couldn't send it. Try again in a minute.")}</span>}
+    </div>
   );
 }
 

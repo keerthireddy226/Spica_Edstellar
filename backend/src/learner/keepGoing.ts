@@ -13,18 +13,10 @@ export type KeepGoingReason = "access_expired" | "access_grace" | "access_ending
 
 const DAY_MS = 86_400_000;
 
-export async function keepGoingStatus(userId: string) {
-  const kind = await learnerKind(userId);
-  const access = await learnerAccess(userId);
-  const quota = await quotaUsage(userId).catch(() => null);
-  const profile = (await pool.query(`SELECT goal_level, exam_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0] ?? {};
-  const current = overallFromSkills(await pathSummary(userId));
-  const goal: string | null = profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : null;
-  const goalReached = !!goal && !!current && LEVELS.indexOf(current as never) >= LEVELS.indexOf(goal as never);
-  const examDays = profile.exam_date ? daysUntilDate(profile.exam_date) : null;
-
-  // Practice sets of the tests on offer, and how many are completed.
-  const sets = (
+// Practice test sets on offer, and how many the learner completed (every
+// question answered).
+export async function practiceSetProgress(userId: string): Promise<{ total: number; done: number }> {
+  return (
     await pool.query(
       `SELECT count(*)::int AS total,
          count(*) FILTER (WHERE EXISTS (
@@ -38,6 +30,19 @@ export async function keepGoingStatus(userId: string) {
       [userId],
     )
   ).rows[0];
+}
+
+export async function keepGoingStatus(userId: string) {
+  const kind = await learnerKind(userId);
+  const access = await learnerAccess(userId);
+  const quota = await quotaUsage(userId).catch(() => null);
+  const profile = (await pool.query(`SELECT goal_level, exam_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0] ?? {};
+  const current = overallFromSkills(await pathSummary(userId));
+  const goal: string | null = profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : null;
+  const goalReached = !!goal && !!current && LEVELS.indexOf(current as never) >= LEVELS.indexOf(goal as never);
+  const examDays = profile.exam_date ? daysUntilDate(profile.exam_date) : null;
+
+  const sets = await practiceSetProgress(userId);
 
   const daysLeft = access.accessEndsAt ? Math.ceil((new Date(access.accessEndsAt).getTime() - Date.now()) / DAY_MS) : null;
   const reasons: KeepGoingReason[] = [];
