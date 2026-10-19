@@ -22,6 +22,7 @@ import {
   Lock,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
+import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -1412,6 +1413,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         {!isMockSection && (
         <>
 
+        {!isMockSection && <SkillLevelsPanel />}
+
         <div className="flex flex-col gap-1 -mb-2">
           <div className="flex items-center gap-2">
             <BookOpenCheck size={18} className="text-accent shrink-0" />
@@ -1461,6 +1464,32 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>
                   )}
                 </div>
+                {exam.last && (
+                  <div className="-mt-1 rounded-input bg-paper-warm/70 border border-rule px-3 py-2 flex items-center gap-3">
+                    {exam.last.level || exam.last.percent !== null ? (
+                      <>
+                        <div className="flex flex-col items-center">
+                          <span className="font-display font-bold text-lg text-ink leading-none">{exam.last.level ?? "—"}</span>
+                          <span className="text-[10px] text-muted uppercase tracking-wide mt-0.5">{tr("Level")}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="font-display font-bold text-lg text-ink leading-none">{exam.last.percent !== null ? `${Math.round(exam.last.percent)}%` : "—"}</span>
+                          <span className="text-[10px] text-muted uppercase tracking-wide mt-0.5">{tr("Score")}</span>
+                        </div>
+                      </>
+                    ) : null}
+                    <div className="flex-1 min-w-0 text-[11px] text-muted leading-snug">
+                      {exam.last.level || exam.last.percent !== null ? tr("Last taken {{date}}", { date: new Date(exam.last.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) }) : tr("Taken {{date}}, nothing answered to score", { date: new Date(exam.last.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) })}
+                      {exam.last.attempts > 1 ? ` · ${tr("{{n}} attempts", { n: exam.last.attempts })}` : ""}
+                    </div>
+                    <button
+                      onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", exam.last!.sessionId))}
+                      className="text-xs font-semibold text-navy-deep hover:underline cursor-pointer shrink-0"
+                    >
+                      {tr("Report")}
+                    </button>
+                  </div>
+                )}
                 {exam.inProgress && exam.progress && !exam.locked && (
                   <div className="flex flex-col gap-1.5 -mt-1">
                     <div className="flex items-center justify-between text-xs">
@@ -1575,6 +1604,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       />
 
       {programCard}
+
+      <SkillLevelsPanel />
 
       {quota && (
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted -mt-2">

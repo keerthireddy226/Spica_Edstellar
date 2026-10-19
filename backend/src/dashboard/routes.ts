@@ -222,8 +222,8 @@ dashboardRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
 // The one thing to do next, and wrong answers waiting for a retry per skill.
 dashboardRouter.get("/next-step", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const [step, retry] = await Promise.all([nextStep(req.user!.id), retryCounts(req.user!.id)]);
-    res.json({ nextStep: step, retry });
+    const [step, retry, levels] = await Promise.all([nextStep(req.user!.id), retryCounts(req.user!.id), currentLevels(req.user!.id)]);
+    res.json({ nextStep: step, retry, ...levels });
   } catch (err) {
     next(err);
   }

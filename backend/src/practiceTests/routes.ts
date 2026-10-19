@@ -336,6 +336,13 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
          (SELECT count(*)::int FROM sessions s JOIN attempts a ON a.session_id = s.id
           WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
             AND s.composition->>'examId' = e.id::text) AS progress_seen,
+         -- The latest finished attempt: its level, score and when.
+         (SELECT jsonb_build_object('sessionId', s.id, 'level', s.result->>'cefrLevel', 'percent', (s.result->>'overallPercent')::numeric, 'completedAt', s.completed_at)
+          FROM sessions s WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL
+            AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
+          ORDER BY s.completed_at DESC LIMIT 1) AS last_result,
+         (SELECT count(*)::int FROM sessions s WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL
+            AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true') AS attempts,
          -- Taken to the end (skips included).
          EXISTS (
            SELECT 1 FROM sessions s
@@ -362,6 +369,7 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
           inProgress: r.in_progress,
           finished: r.finished,
           progress: r.in_progress ? { answered: r.progress_answered, seen: r.progress_seen, total: r.item_count } : null,
+          last: r.last_result ? { ...r.last_result, attempts: r.attempts } : null,
           // Only Set 1 is open at first; each set unlocks once the one before
           // is completed (every question answered).
           locked: result.rows.slice(0, i).some((prev) => !prev.completed),

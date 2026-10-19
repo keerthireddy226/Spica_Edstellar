@@ -93,7 +93,7 @@ export type NextStep =
       retake: boolean;
     };
 
-export function getNextStep(): Promise<{ nextStep: NextStep | null; retry: Record<SkillTag, number> }> {
+export function getNextStep(): Promise<{ nextStep: NextStep | null; retry: Record<SkillTag, number>; pathLevels?: Record<SkillTag, string>; currentLevel?: string | null }> {
   return api("/dashboard/next-step");
 }
 

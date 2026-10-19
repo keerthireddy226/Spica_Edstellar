@@ -42,6 +42,8 @@ export interface ExamSummary {
   lockedBy?: string | null;
   // The open session's progress: answered, passed (answered or skipped), of all.
   progress?: { answered: number; seen: number; total: number } | null;
+  // The latest finished attempt: level, score (0-100) and date, and how many attempts.
+  last?: { sessionId: string; level: string | null; percent: number | null; completedAt: string; attempts: number } | null;
   // "form": a test built by Edstellar staff from the question bank.
   source?: "set" | "form";
   durationMinutes?: number;
