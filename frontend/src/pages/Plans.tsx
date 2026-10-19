@@ -42,7 +42,11 @@ export function Plans() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const license = useMyLicense();
-  const [months, setMonths] = useState<number>(3);
+  // ?months=1 or 3 pre-selects the length (from the "keep going" card).
+  const [months, setMonths] = useState<number>(() => {
+    const m = Number(new URLSearchParams(window.location.search).get("months"));
+    return m === 1 || m === 3 || m === 6 || m === 12 ? m : 3;
+  });
   const [quotes, setQuotes] = useState<Record<number, Quote>>({});
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [paying, setPaying] = useState(false);

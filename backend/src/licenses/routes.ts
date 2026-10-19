@@ -23,7 +23,8 @@ import {
   POOL_VALIDITY_MONTHS,
 } from "./service.js";
 import { assertFeature, getTenantPlan, orgUnitPriceCents } from "../plans/service.js";
-import { RequestError, cancelRequest, createRequest, decideRequest, listRequests, pendingRequestCount } from "./requests.js";
+import { RequestError, cancelRequest, createLearnerRequest, createRequest, decideRequest, listRequests, pendingRequestCount } from "./requests.js";
+import { keepGoingStatus, progressLine } from "../learner/keepGoing.js";
 
 export const licensesRouter = Router();
 
@@ -58,6 +59,35 @@ licensesRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => 
     });
   } catch (err) {
     next(err);
+  }
+});
+
+// What the learner needs to keep going (more time, more tests) and how to get it.
+licensesRouter.get("/me/keep-going", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
+  try {
+    res.json(await keepGoingStatus(req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A learner in an organization asks its admins for more time.
+licensesRouter.post("/me/request", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "learner" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
+  try {
+    if ((await learnerKind(req.user!.id)) !== "org") return res.status(403).json({ error: "not_in_organization" });
+    const body = z.object({ months: z.union([z.literal(1), z.literal(3)]), reason: z.string().trim().max(500).optional() }).parse(req.body);
+    const id = await createLearnerRequest({
+      tenantId: req.user!.tenantId,
+      learnerId: req.user!.id,
+      months: body.months,
+      reason: body.reason ?? "",
+      progress: await progressLine(req.user!.id),
+    });
+    res.status(201).json({ id });
+  } catch (err) {
+    handleRequestError(err, res, next);
   }
 });
 

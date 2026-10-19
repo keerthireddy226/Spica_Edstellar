@@ -113,6 +113,28 @@ export function getMyLicense(): Promise<MyLicense> {
   return api("/licenses/me");
 }
 
+export type KeepGoingReason = "access_expired" | "access_grace" | "access_ending" | "quota_mocks" | "quota_practice" | "tests_done" | "exam_near";
+
+// What a learner needs to keep going (more time or tests) and how to get it.
+export interface KeepGoing {
+  kind: "org" | "individual" | "other";
+  reasons: KeepGoingReason[];
+  access: { status: AccessStatus; accessEndsAt: string | null; graceEndsAt: string | null; daysLeft: number | null };
+  goal: { current: string | null; goal: string | null; reached: boolean; examDays: number | null };
+  quota: { practiceLeft: number | null; mocksLeft: number | null; resetsOn: string } | null;
+  sets: { total: number; done: number };
+  // An organization learner's latest request for more time.
+  request: { id: string; months: number; status: "pending" | "approved" | "rejected" | "cancelled"; createdAt: string; decidedAt: string | null; note: string | null } | null;
+}
+
+export function getKeepGoing(): Promise<KeepGoing> {
+  return api("/licenses/me/keep-going");
+}
+
+export function requestMoreTime(months: 1 | 3, reason: string): Promise<{ id: string }> {
+  return api("/licenses/me/request", { method: "POST", body: JSON.stringify({ months, reason }) });
+}
+
 export function getOrgLicenseOverview(): Promise<OrgLicenseOverview> {
   return api("/licenses/org/overview");
 }
@@ -184,7 +206,7 @@ export function formatShortDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-export type LicenseRequestKind = "increase_allotment" | "decrease_allotment" | "unassign_learner";
+export type LicenseRequestKind = "increase_allotment" | "decrease_allotment" | "unassign_learner" | "learner_extension";
 
 export interface LicenseRequest {
   id: string;
@@ -237,6 +259,8 @@ export function describeLicenseRequest(r: Pick<LicenseRequest, "kind" | "quantit
   const target = r.batchName ?? tr("the Manager's own pool");
   if (r.kind === "increase_allotment") return tr("{{n}} more for {{target}}", { n: n, target: target });
   if (r.kind === "decrease_allotment") return tr("{{n}} fewer for {{target}}", { n: n, target: target });
+  if (r.kind === "learner_extension")
+    return r.quantity === 1 ? tr("1 more month of access for {{name}}", { name: r.learnerName ?? tr("a learner") }) : tr("{{n}} more months of access for {{name}}", { n: r.quantity, name: r.learnerName ?? tr("a learner") });
   return tr("Return {{quantity}} unused month{{v}} from {{v2}}", { quantity: r.quantity, v: r.quantity === 1 ? "" : "s", v2: r.learnerName ?? "a learner" });
 }
 

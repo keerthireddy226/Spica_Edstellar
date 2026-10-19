@@ -31,6 +31,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { useAuth } from "@/hooks/useAuth";
 import { LearnerHero, LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { GoalCountdownCard, NextStepCard } from "@/components/learner/GoalCards";
+import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 import {
   getDashboard,
   type DashboardData,
@@ -419,6 +420,8 @@ function LearnerDashboard() {
           { label: t("dashboardHome.statsStreak"), value: t("dashboardHome.statsStreakValue", { count: stats.streakDays }), icon: Flame },
         ]}
       />
+
+      <KeepGoingCard />
 
       {data.goal && <GoalCountdownCard goal={data.goal} level={data.currentLevel ?? data.englishLevel?.cefr ?? null} />}
 

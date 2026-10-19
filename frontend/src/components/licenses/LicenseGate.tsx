@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Lock, AlertTriangle, Sparkles } from "lucide-react";
 import { getMyLicense, formatShortDate, type MyLicense } from "@/api/licenses";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 
 import { tr } from "@/i18n/tr";
+import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 
 // Fresh on every mount: free-tier usage changes as the learner practises,
@@ -61,6 +62,8 @@ export function LicenseGate({ feature, children }: { feature: GatedFeature; chil
   if (license.required && !isLive(license)) {
     const expired = license.status === "expired";
     return (
+      <div className="flex flex-col gap-4">
+      {expired && <KeepGoingCard />}
       <LockCard
         icon={<Lock size={26} strokeWidth={1.8} />}
         title={expired ? tr("Your access has ended") : tr("Your access isn't active yet")}
@@ -74,6 +77,7 @@ export function LicenseGate({ feature, children }: { feature: GatedFeature; chil
             {tr("View your progress")}</Link>
         }
       />
+      </div>
     );
   }
 
@@ -98,7 +102,10 @@ export function LicenseGate({ feature, children }: { feature: GatedFeature; chil
 export function LicenseBanner() {
   const { t } = useTranslation();
   const license = useMyLicense();
+  const { pathname } = useLocation();
   if (!license) return null;
+  // These pages show the fuller "keep going" card instead.
+  if (([ROUTES.DASHBOARD, ROUTES.PRACTICE_TESTS, ROUTES.MOCK_EXAMS] as string[]).includes(pathname) && license.status !== "none") return null;
 
   if (license.individual && !isLive(license) && license.freeTier) {
     return (

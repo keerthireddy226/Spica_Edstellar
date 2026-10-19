@@ -14,6 +14,8 @@ import { tr } from "@/i18n/tr";
 const ERRORS: Record<string, string> = {
   not_pending: tr("This request was already handled."),
   nothing_to_unassign: tr("That learner has no unused months left to return."),
+  no_licenses_left: tr("No licenses left to give. Buy more licenses, then approve."),
+  insufficient_unreserved: tr("Not enough unreserved licenses for this change."),
 };
 
 function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void }) {
@@ -48,13 +50,15 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink">{describeLicenseRequest(r)}</p>
           <p className="text-xs text-muted">
-            {r.requestedBy ?? tr("A Manager")} · {formatShortDate(r.createdAt)}
-            {r.batchName && r.kind !== "unassign_learner" ? tr(" · {{batchName}} allotment {{v}}, {{batchUsed}} assigned", { batchName: r.batchName, v: r.batchAllotment ?? 0, batchUsed: r.batchUsed }) : ""}
+            {r.kind === "learner_extension" ? tr("Learner request") : (r.requestedBy ?? tr("A Manager"))} · {formatShortDate(r.createdAt)}
+            {r.batchName && r.kind !== "unassign_learner" && r.kind !== "learner_extension" ? tr(" · {{batchName}} allotment {{v}}, {{batchUsed}} assigned", { batchName: r.batchName, v: r.batchAllotment ?? 0, batchUsed: r.batchUsed }) : ""}
           </p>
         </div>
         <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill capitalize ${REQUEST_STATUS_CLASS[r.status]}`}>{r.status}</span>
       </div>
-      <p className="text-sm text-ink bg-paper-warm rounded-input px-3 py-2">“{r.reason}”</p>
+      <p className="text-sm text-ink bg-paper-warm rounded-input px-3 py-2">“{r.reason.split("\n")[0]}”</p>
+      {/* A learner's request carries their progress on a second line. */}
+      {r.reason.includes("\n") && <p className="text-xs text-muted">{r.reason.split("\n").slice(1).join(" ")}</p>}
       {r.status !== "pending" && (r.decisionNote || r.decidedBy) && (
         <p className="text-xs text-muted">
           {r.decidedBy ? `${r.decidedBy}: ` : ""}
@@ -68,6 +72,9 @@ function RequestRow({ r, onDecided }: { r: LicenseRequest; onDecided: () => void
           <Button variant="secondary" onClick={() => setDeciding("reject")} className="!px-3 !py-1.5 !text-xs flex items-center gap-1.5">
             <X size={14} /> {tr("Decline")}</Button>
           {after !== null && <span className="text-xs text-muted">{tr("Approving sets the allotment of {{batch}} to {{after}}.", { batch: r.batchName ?? tr("this batch"), after })}</span>}
+          {r.kind === "learner_extension" && (
+            <span className="text-xs text-muted">{tr("Approving gives {{name}} {{n}} more month(s) from your licenses.", { name: r.learnerName ?? tr("this learner"), n: r.quantity })}</span>
+          )}
         </div>
       )}
       {deciding && (

@@ -1,12 +1,19 @@
 import { pool } from "../db.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
-import { LicenseError, reclaimMonths, setBatchBudget, setManagerAllotment } from "./service.js";
+import { LicenseError, assignMonths, reclaimMonths, setBatchBudget, setManagerAllotment } from "./service.js";
 
-export type RequestKind = "increase_allotment" | "decrease_allotment" | "unassign_learner";
+export type RequestKind = "increase_allotment" | "decrease_allotment" | "unassign_learner" | "learner_extension";
 
 export class RequestError extends Error {
   constructor(
-    public code: "request_not_found" | "not_pending" | "invalid_batch" | "invalid_learner" | "nothing_to_unassign" | "insufficient_unreserved",
+    public code:
+      | "request_not_found"
+      | "not_pending"
+      | "invalid_batch"
+      | "invalid_learner"
+      | "nothing_to_unassign"
+      | "insufficient_unreserved"
+      | "no_licenses_left",
   ) {
     super(code);
   }
@@ -16,6 +23,7 @@ function describe(kind: RequestKind, quantity: number, batchName: string | null,
   const n = `${quantity} license${quantity === 1 ? "" : "s"}`;
   if (kind === "increase_allotment") return `${n} more for ${batchName ?? "their own pool"}`;
   if (kind === "decrease_allotment") return `${n} fewer for ${batchName ?? "their own pool"}`;
+  if (kind === "learner_extension") return `${quantity} more month${quantity === 1 ? "" : "s"} of access for ${learner ?? "a learner"}`;
   return `return ${quantity} unused month${quantity === 1 ? "" : "s"} from ${learner ?? "a learner"}`;
 }
 
@@ -69,6 +77,63 @@ export async function createRequest(args: {
     });
   }
   return id;
+}
+
+// A learner asks their organization for more time. One open request at a
+// time: asking again returns the one already waiting. Org admins and the
+// learner's batch managers are told, with the learner's progress attached.
+export async function createLearnerRequest(args: { tenantId: string; learnerId: string; months: number; reason: string; progress: string }): Promise<string> {
+  const open = (
+    await pool.query(`SELECT id FROM license_requests WHERE learner_id = $1 AND kind = 'learner_extension' AND status = 'pending' LIMIT 1`, [args.learnerId])
+  ).rows[0];
+  if (open) return open.id;
+  const learner = (
+    await pool.query(
+      `SELECT batch_id, coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS label FROM users WHERE id = $1 AND role = 'learner' AND tenant_id = $2`,
+      [args.learnerId, args.tenantId],
+    )
+  ).rows[0];
+  if (!learner) throw new RequestError("invalid_learner");
+  const reason = args.reason.trim() || "More time to reach my goal.";
+  const id = (
+    await pool.query(
+      `INSERT INTO license_requests (tenant_id, batch_id, learner_id, requested_by, kind, quantity, reason)
+       VALUES ($1, $2, $3, $3, 'learner_extension', $4, $5) RETURNING id`,
+      // The learner's note, then their progress on its own line for the admin.
+      [args.tenantId, learner.batch_id, args.learnerId, args.months, `${reason}\n${args.progress}`],
+    )
+  ).rows[0].id;
+  const managers = learner.batch_id
+    ? (await pool.query(`SELECT user_id FROM batch_managers WHERE batch_id = $1`, [learner.batch_id])).rows.map((r) => r.user_id as string)
+    : [];
+  const admins = await orgAdminIds(args.tenantId);
+  for (const userId of [...new Set([...admins, ...managers])]) {
+    const isAdmin = admins.includes(userId);
+    await notify({
+      userId,
+      kind: "license_request",
+      title: `${learner.label} asks for ${describe("learner_extension", args.months, null, null).replace(" for a learner", "")}`,
+      body: `${args.progress} Reason: ${reason}${isAdmin ? "" : " (Your Org Admin decides.)"}`,
+      link: isAdmin ? "/orgadmin/licenses?tab=requests" : "/manager/dashboard",
+      email: true,
+      sentBy: args.learnerId,
+      batchId: learner.batch_id,
+      meta: { requestId: id },
+    });
+  }
+  return id;
+}
+
+// The learner's latest request for more time, for their "keep going" card.
+export async function latestLearnerRequest(learnerId: string) {
+  const r = (
+    await pool.query(
+      `SELECT id, quantity, status, created_at, decided_at, decision_note FROM license_requests
+       WHERE learner_id = $1 AND requested_by = $1 AND kind = 'learner_extension' ORDER BY created_at DESC LIMIT 1`,
+      [learnerId],
+    )
+  ).rows[0];
+  return r ? { id: r.id, months: r.quantity, status: r.status as string, createdAt: r.created_at, decidedAt: r.decided_at, note: r.decision_note } : null;
 }
 
 export async function listRequests(filter: { tenantId: string; requestedBy?: string }) {
@@ -137,7 +202,15 @@ async function applyDecision(args: {
   let applied: number | null = null;
   let note = args.note ?? null;
   if (args.approve) {
-    if (r.kind === "unassign_learner") {
+    if (r.kind === "learner_extension") {
+      try {
+        await assignMonths({ tenantId: args.tenantId, userId: r.learner_id, months: r.quantity, actorId: args.actorId, actorRole: "org_admin" });
+        applied = r.quantity;
+      } catch (err) {
+        if (err instanceof LicenseError) throw new RequestError("no_licenses_left");
+        throw err;
+      }
+    } else if (r.kind === "unassign_learner") {
       try {
         applied = await reclaimMonths({
           tenantId: args.tenantId,
@@ -206,8 +279,16 @@ async function applyDecision(args: {
       userId: r.requested_by,
       kind: "license_request_decided",
       title: `Request ${args.approve ? "approved" : "declined"}: ${describe(r.kind, r.quantity, batch?.name ?? null, learner?.n ?? null)}`,
-      body: note ?? (args.approve ? "The change has been applied." : "Your Org Admin declined this request."),
-      link: "/manager/dashboard",
+      body:
+        note ??
+        (r.kind === "learner_extension"
+          ? args.approve
+            ? "Your access has been extended. Keep going!"
+            : "Your admin declined this request."
+          : args.approve
+            ? "The change has been applied."
+            : "Your Org Admin declined this request."),
+      link: r.kind === "learner_extension" ? "/dashboard" : "/manager/dashboard",
       email: true,
       sentBy: args.actorId,
       batchId: r.batch_id,

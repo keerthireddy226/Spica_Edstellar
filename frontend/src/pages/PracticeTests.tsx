@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
+import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -1620,6 +1621,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   if (isMockSection) {
     return (
       <div className="w-full flex flex-col gap-6">
+        <KeepGoingCard />
         <MockExamList
           families={families}
           quota={quota}
@@ -1664,6 +1666,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
         ]}
       />
+
+      <KeepGoingCard />
 
       {programCard}
 
