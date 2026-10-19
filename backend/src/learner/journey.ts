@@ -66,6 +66,8 @@ export interface Journey {
     level?: string;
     // A mock placed on the day new mocks arrive.
     onReset?: boolean;
+    // Past tests: attempts that day.
+    attempts?: number;
   }[];
   nextStep: NextStep | null;
   // Where the test plan comes from: the organization's program, or the plan's allowance.
@@ -196,20 +198,24 @@ export async function journey(userId: string): Promise<Journey> {
   }
 
   // --- Checkpoints: recent tests (with their level), today, the plan, exam day ---
-  const past = (
+  // The last two test days (several attempts on one day are one point).
+  const pastRows = (
     await pool.query(
       `SELECT delivery_mode, completed_at, result->>'cefrLevel' AS level FROM sessions
        WHERE user_id = $1 AND session_type = 'mocktest' AND completed_at IS NOT NULL AND coalesce(composition->>'abandoned', 'false') <> 'true'
-       ORDER BY completed_at DESC LIMIT 3`,
+       ORDER BY completed_at DESC LIMIT 20`,
       [userId],
     )
-  ).rows.reverse();
-  const checkpoints: Journey["checkpoints"] = past.map((t) => ({
-    date: dateOnly(new Date(t.completed_at)),
-    kind: t.delivery_mode === "mock" ? ("mock" as const) : ("practice_test" as const),
-    done: true,
-    level: t.level ?? undefined,
-  }));
+  ).rows;
+  const pastGroups: Journey["checkpoints"] = [];
+  for (const t of pastRows) {
+    const date = dateOnly(new Date(t.completed_at));
+    const kind = t.delivery_mode === "mock" ? ("mock" as const) : ("practice_test" as const);
+    const same = pastGroups.find((g) => g.date === date && g.kind === kind);
+    if (same) same.attempts = (same.attempts ?? 1) + 1;
+    else if (pastGroups.length < 2) pastGroups.push({ date, kind, done: true, level: t.level ?? undefined, attempts: 1 });
+  }
+  const checkpoints: Journey["checkpoints"] = pastGroups.reverse();
   checkpoints.push({ date: dateOnly(new Date()), kind: "today", done: true });
   for (const t of week.filter((x) => x.kind === "level_check" && !x.done)) checkpoints.push({ date: dateOnly(new Date()), kind: "level_check", done: false, skill: t.skill });
   for (const slot of slots) checkpoints.push({ date: dateOnly(slot.date), kind: slot.kind, done: false, onReset: slot.onReset });

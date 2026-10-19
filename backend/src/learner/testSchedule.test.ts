@@ -56,3 +56,11 @@ describe("scheduleTests practice allowance", () => {
     expect(s[0].date >= d("2026-11-01")).toBe(true);
   });
 });
+
+describe("scheduleTests spacing", () => {
+  it("at least 5 days between tests; a mock replaces a practice test close to it", () => {
+    const s = scheduleTests({ today: d("2026-10-19"), examDate: null, lastPractice: d("2026-10-16"), lastMock: d("2026-10-19"), mocksPerMonth: 2, mocksLeft: 0, resetsOn: d("2026-11-14") });
+    for (let i = 1; i < s.length; i++) expect(s[i].date.getTime() - s[i - 1].date.getTime()).toBeGreaterThanOrEqual(5 * 86_400_000);
+    expect(s.some((x) => x.kind === "mock" && x.date.toISOString().startsWith("2026-11-14"))).toBe(true);
+  });
+});

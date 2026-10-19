@@ -70,7 +70,7 @@ export interface Journey {
   skills: { skill: SkillTag; level: string; startLevel: string | null; progressPercent: number; partWay: number }[];
   steps: { level: string; skills: { skill: SkillTag; state: "done" | "now" | "later"; partWay: number }[] }[];
   week: JourneyTask[];
-  checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag; level?: string; onReset?: boolean }[];
+  checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag; level?: string; onReset?: boolean; attempts?: number }[];
   nextStep: NextStep | null;
   planSource?: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -225,10 +226,22 @@ export function ThisWeek({ j }: { j: Journey }) {
 
 // The test plan on a timeline: recent tests (done, with their level), today,
 // then practice tests and mocks spaced by the monthly allowance, up to the exam.
+// How many upcoming tests show before "Show full plan".
+const UPCOMING_SHOWN = 4;
+
 export function Checkpoints({ j }: { j: Journey }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [full, setFull] = useState(false);
   if (j.checkpoints.length < 2) return null;
+  // Past tests and today always; then the next few, and exam day.
+  let upcoming = 0;
+  const shown = j.checkpoints.filter((c) => {
+    if (c.done || c.kind === "today" || c.kind === "exam" || full) return true;
+    upcoming++;
+    return upcoming <= UPCOMING_SHOWN;
+  });
+  const hidden = j.checkpoints.length - shown.length;
   type C = Journey["checkpoints"][number];
   const label = (c: C) =>
     c.kind === "today"
@@ -260,7 +273,7 @@ export function Checkpoints({ j }: { j: Journey }) {
       </div>
       <div className="overflow-x-auto pb-1">
         <ol className="flex items-start min-w-max">
-          {j.checkpoints.map((c, i) => {
+          {shown.map((c, i) => {
             const I = Icon(c);
             const link = !c.done ? href(c) : null;
             const mock = c.kind === "mock";
@@ -286,13 +299,22 @@ export function Checkpoints({ j }: { j: Journey }) {
                 </button>
                 <span className={`text-xs font-semibold mt-1.5 text-center ${mock ? "text-accent" : "text-ink"}`}>{label(c)}</span>
                 <span className="text-[11px] text-muted">{formatShortDate(c.date)}</span>
-                {c.done && c.level && <span className="text-[11px] font-semibold text-success">{c.level}</span>}
+                {c.done && (c.level || (c.attempts ?? 1) > 1) && (
+                  <span className="text-[11px] font-semibold text-success">
+                    {[c.level, (c.attempts ?? 1) > 1 ? tr("{{n}} attempts", { n: c.attempts }) : null].filter(Boolean).join(" · ")}
+                  </span>
+                )}
                 {c.onReset && <span className="text-[10px] text-muted text-center leading-tight">{tr("new mocks that day")}</span>}
               </li>
             );
           })}
         </ol>
       </div>
+      {(hidden > 0 || full) && (
+        <button onClick={() => setFull((v) => !v)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
+          {full ? tr("Show less") : tr("Show full plan ({{n}} more)", { n: hidden })}
+        </button>
+      )}
       {j.planSource && (
         <p className="text-xs text-muted">
           {j.planSource.kind === "program"

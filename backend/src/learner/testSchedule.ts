@@ -3,6 +3,7 @@
 
 const DAY_MS = 86_400_000;
 const WEEK_MS = 7 * DAY_MS;
+const MIN_GAP_DAYS = 5;
 
 export interface ScheduleInput {
   today: Date;
@@ -108,5 +109,18 @@ export function scheduleTests(input: ScheduleInput): Slot[] {
     // Only when the allowance has a mock left on that date.
     if (lastSlot.kind !== "mock" && lastSlot.mockAllowed && lastSlot.date.getTime() >= finalWindow) lastSlot.kind = "mock";
   }
-  return slots.sort((a, b) => a.date.getTime() - b.date.getTime());
+  // At least 5 days between tests (and after the last one taken): when a
+  // mock lands close to a practice test, the practice test gives way.
+  const sorted = slots.sort((a, b) => a.date.getTime() - b.date.getTime());
+  const kept: Slot[] = [];
+  for (const slot of sorted) {
+    const prev = kept[kept.length - 1];
+    const prevDate = prev?.date ?? last ?? null;
+    if (prevDate && slot.date.getTime() - prevDate.getTime() < MIN_GAP_DAYS * DAY_MS) {
+      if (prev && slot.kind === "mock" && prev.kind === "practice_test") kept[kept.length - 1] = slot;
+      continue;
+    }
+    kept.push(slot);
+  }
+  return kept;
 }
