@@ -12,6 +12,7 @@ import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { applyTestLevels } from "../learner/path.js";
+import { isPhoneUserAgent } from "../lib/device.js";
 import { rebuildRoadmap } from "../roadmap/save.js";
 import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
@@ -411,6 +412,8 @@ const startSessionSchema = z
 // instead of starting a new one.
 practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    // Practice tests and mocks run like the real exam: on a computer.
+    if (isPhoneUserAgent(req.headers["user-agent"])) return res.status(403).json({ error: "computer_required" });
     const body = startSessionSchema.parse(req.body);
     const candidate = req.user!.role === "candidate";
     const mode: DeliveryMode = candidate ? "mock" : body.mode;
@@ -632,6 +635,7 @@ practiceTestsRouter.post("/session/:sessionId/view", requireAuth, async (req: Au
 
 practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    if (isPhoneUserAgent(req.headers["user-agent"])) return res.status(403).json({ error: "computer_required" });
     let body = submitAttemptSchema.parse(req.body);
 
     const session = await openSessionOf(req);

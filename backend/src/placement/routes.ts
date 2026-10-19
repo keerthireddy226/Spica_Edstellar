@@ -22,6 +22,7 @@ import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { saveRoadmap } from "../roadmap/save.js";
+import { isPhoneUserAgent } from "../lib/device.js";
 import { z } from "zod";
 
 export const placementRouter = Router();
@@ -250,6 +251,8 @@ async function buildHistoryResponse(userId: string, sessionId: string, compositi
 // Reuses an already-in-progress session — a refresh/double-click shouldn't mint a different, half-done test.
 placementRouter.post("/session", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    // The level test runs like the real exam: on a computer.
+    if (isPhoneUserAgent(req.headers["user-agent"])) return res.status(403).json({ error: "computer_required" });
     const existing = await pool.query(
       `SELECT id, composition FROM sessions
        WHERE user_id = $1 AND session_type = 'placement' AND completed_at IS NULL
@@ -335,6 +338,7 @@ placementRouter.get("/session/:sessionId", requireAuth, async (req: AuthedReques
 
 placementRouter.post("/session/:sessionId/attempts", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
+    if (isPhoneUserAgent(req.headers["user-agent"])) return res.status(403).json({ error: "computer_required" });
     const body = submitAttemptSchema.parse(req.body);
 
     const sessionResult = await pool.query(`SELECT id, composition, completed_at FROM sessions WHERE id = $1 AND user_id = $2`, [

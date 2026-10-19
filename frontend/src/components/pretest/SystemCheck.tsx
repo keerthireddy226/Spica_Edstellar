@@ -236,13 +236,13 @@ function LevelMeter({ level }: { level: number }) {
   );
 }
 
-function browserIssues(needs: DeviceNeeds): { blocking: string[]; warnings: string[] } {
+function browserIssues(needs: DeviceNeeds, phoneOk: boolean): { blocking: string[]; warnings: string[] } {
   const blocking: string[] = [];
   const warnings: string[] = [];
   const canRecord = window.isSecureContext && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== "undefined";
   if (needs.mic && !canRecord) blocking.push(tr("This browser can't record from a microphone here. Use the latest Chrome, Edge, Firefox or Safari."));
   if (needs.speaker && typeof AudioContext === "undefined") blocking.push(tr("This browser can't play the test audio. Use the latest Chrome, Edge, Firefox or Safari."));
-  if (window.innerWidth < 768) warnings.push(tr("Your screen is small. Use a computer or laptop for the test if you can."));
+  if (!phoneOk && window.innerWidth < 768) warnings.push(tr("Your screen is small. Use a computer or laptop for the test if you can."));
   return { blocking, warnings };
 }
 
@@ -252,12 +252,15 @@ export function SystemCheck({
   needs,
   onPassed,
   onBack,
+  phoneOk = false,
 }: {
   needs: DeviceNeeds;
   onPassed: (r: DeviceCheckResult) => void;
   onBack?: () => void;
+  // Practice Modules work on a phone: no "use a computer" warning.
+  phoneOk?: boolean;
 }) {
-  const [issues] = useState(() => browserIssues(needs));
+  const [issues] = useState(() => browserIssues(needs, phoneOk));
   const [conn, setConn] = useState<{ status: RowStatus; result?: ConnectionResult }>({ status: "running" });
   const [speaker, setSpeaker] = useState<"idle" | "playing" | "asked" | "pass" | "fail">("idle");
   const mic = useMicCheck();

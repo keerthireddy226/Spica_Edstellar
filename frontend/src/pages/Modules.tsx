@@ -92,6 +92,7 @@ import { Confetti } from "@/components/Confetti";
 import { MyPath } from "@/components/practice/MyPath";
 import { markChecked, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
+import { useSmallScreen } from "@/lib/device";
 import type { PracticeFeedback } from "@/api/practiceTests";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
@@ -952,6 +953,9 @@ function ModulesPage() {
   const [context, setContext] = useState<PracticeContext | null>(null);
   // Countdown beeps off for every question (remembered).
   const [muted, setMuted] = useState(loadMuted);
+  // Phone layout for the question card: the page scrolls (no inner scroll),
+  // the buttons stay at the bottom, and the header is shorter.
+  const small = useSmallScreen();
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(Boolean(sessionId) && !summary && !requireReverify, "practice", sessionId, () => setRequireReverify(true));
@@ -1667,15 +1671,20 @@ function ModulesPage() {
           without either a dead gap or clipped content. Only content past
           the ceiling scrolls internally. */}
       <div
-        className="relative w-full bg-surface border border-rule rounded-card shadow-sm overflow-hidden flex flex-col"
-        style={{ minHeight: "420px", maxHeight: "min(780px, calc(100vh - 180px))" }}
+        className={`relative w-full bg-surface border border-rule rounded-card shadow-sm flex flex-col ${small ? "" : "overflow-hidden"}`}
+        style={small ? undefined : { minHeight: "420px", maxHeight: "min(780px, calc(100vh - 180px))" }}
+        // On a phone the keyboard covers the lower half: keep the answer box in view.
+        onFocusCapture={(e) => {
+          const el = e.target;
+          if (small && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+        }}
       >
         {/* A light skill-tinted wash across the whole card (not just an
             icon badge) — distinct from Practice Tests' navy/cream
             "You hear / You say" panels, giving Modules its own, friendlier
             identity instead of reusing the same visual language. */}
-        <span className={`absolute inset-0 pointer-events-none ${SKILL_WASH_CLASSES[primarySkill]}`} />
-        <div className="relative flex-1 p-8 pt-6 flex flex-col justify-start gap-5 overflow-y-auto">
+        <span className={`absolute inset-0 rounded-card pointer-events-none ${SKILL_WASH_CLASSES[primarySkill]}`} />
+        <div className={`relative flex-1 flex flex-col justify-start ${small ? "p-4 gap-4" : "p-8 pt-6 gap-5 overflow-y-auto"}`}>
           {/* While feedback shows, the question stays visible and its answer locked. */}
           <div className={feedback ? "pointer-events-none flex flex-col gap-5" : "contents"} aria-disabled={!!feedback}>
           <div className="flex flex-col gap-3">
@@ -1695,7 +1704,7 @@ function ModulesPage() {
                       {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : t("placementTest.progress", { current: index + 1, total: items.length })}
                     </span>
                   </span>
-                  {context?.tests?.length ? <span className="text-[11px] text-muted">{tr("Versant: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
+                  {context?.tests?.length && !small ? <span className="text-[11px] text-muted">{tr("Versant: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
               </div>
               {remainingSeconds !== null ? (
@@ -1724,7 +1733,7 @@ function ModulesPage() {
                 </span>
               ) : null}
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className={small ? "hidden" : "flex items-center gap-1.5"}>
               {(meta?.skills ?? current.skills).map((skill) => (
                 <span
                   key={skill}
@@ -1747,15 +1756,25 @@ function ModulesPage() {
               as a proper heading every time, not just once in the one-time
               type intro, so it's never just the vague "Answer the
               question." with no context. */}
-          <div className="flex items-start gap-3 bg-paper-warm/70 border border-rule rounded-card px-4 py-3">
-            <span className="h-8 w-8 rounded-full bg-navy/15 text-navy-deep flex items-center justify-center shrink-0">
-              <Lightbulb size={16} />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("How this works")}</span>
-              <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
+          {small && index > 0 ? (
+            // On a phone, after the first question: one tap to see it again.
+            <details className="bg-paper-warm/70 border border-rule rounded-card px-3 py-2">
+              <summary className="text-xs font-semibold text-muted cursor-pointer flex items-center gap-1.5">
+                <Lightbulb size={14} /> {tr("How this works")}
+              </summary>
+              <p className="text-sm text-ink leading-relaxed mt-1.5">{current.instructionText}</p>
+            </details>
+          ) : (
+            <div className="flex items-start gap-3 bg-paper-warm/70 border border-rule rounded-card px-4 py-3">
+              <span className="h-8 w-8 rounded-full bg-navy/15 text-navy-deep flex items-center justify-center shrink-0">
+                <Lightbulb size={16} />
+              </span>
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("How this works")}</span>
+                <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
+              </div>
             </div>
-          </div>
+          )}
 
       {current.inputMethod === "two-phase" ? (
         <TwoPhaseTask
@@ -1863,7 +1882,10 @@ function ModulesPage() {
           {error && <p className="text-sm text-error text-center">{error}</p>}
         </div>
 
-        <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
+        <div
+          className={`shrink-0 border-t border-rule flex items-center gap-3 ${small ? "sticky bottom-0 z-10 bg-surface rounded-b-card px-4 py-3" : "px-8 py-4"}`}
+          style={small ? { paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" } : undefined}
+        >
           {feedback ? (
             <Button onClick={() => finishOrAdvance()} className="flex-1">
               {index + 1 < items.length ? tr("Next question") : t("placementTest.finish")}

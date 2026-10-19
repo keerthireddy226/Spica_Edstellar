@@ -26,7 +26,10 @@ export function MockExamList({
   history,
   openMock,
   onStart,
+  phone = false,
 }: {
+  // On a phone mocks can't start: rows say so instead of Start/Resume.
+  phone?: boolean;
   families: CatalogueFamily[];
   quota: QuotaUsage | null;
   history: HistoryEntry[];
@@ -84,9 +87,13 @@ export function MockExamList({
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-warning/10 border border-warning/30 rounded-card px-5 py-4">
           <Timer size={20} className="text-warning shrink-0" />
           <span className="flex-1 text-sm text-ink">{tr("You have a mock exam in progress: {{name}}. Its clock keeps running.", { name: testTypeName(inProgress, t) })}</span>
-          <Button onClick={() => onStart(inProgress.id)} className="shrink-0">
-            {tr("Resume mock exam")}
-          </Button>
+          {phone ? (
+            <span className="text-xs text-muted shrink-0">{tr("Resume on a computer")}</span>
+          ) : (
+            <Button onClick={() => onStart(inProgress.id)} className="shrink-0">
+              {tr("Resume mock exam")}
+            </Button>
+          )}
         </div>
       )}
 
@@ -101,11 +108,13 @@ export function MockExamList({
                 last={mocks.find((h) => h.testTypeId === tt.id) ?? null}
                 taken={mocks.filter((h) => h.testTypeId === tt.id).length}
                 blockedBy={
-                  openMock?.testTypeId && openMock.testTypeId !== tt.id
-                    ? tr("Finish your other mock first")
-                    : left === 0 && openMock?.testTypeId !== tt.id
-                      ? tr("No mocks left this month")
-                      : null
+                  phone
+                    ? tr("Computer only")
+                    : openMock?.testTypeId && openMock.testTypeId !== tt.id
+                      ? tr("Finish your other mock first")
+                      : left === 0 && openMock?.testTypeId !== tt.id
+                        ? tr("No mocks left this month")
+                        : null
                 }
                 resume={openMock?.testTypeId === tt.id}
                 onStart={() => onStart(tt.id)}

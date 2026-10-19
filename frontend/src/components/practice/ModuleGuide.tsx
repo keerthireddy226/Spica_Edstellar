@@ -77,6 +77,7 @@ export function ModuleGuide({
         )}
         <SystemCheck
           needs={{ mic: needsMic, speaker: needsSpeaker }}
+          phoneOk
           onBack={onBack}
           // Back from a break: once the devices pass, straight back to the question.
           onPassed={() => (resumeAt ? onStart() : setStage("guide"))}

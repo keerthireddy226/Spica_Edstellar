@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
+import { isPhone } from "@/lib/device";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Volume2, CheckCircle2, Clock, X, ArrowRightCircle } from "lucide-react";
@@ -43,7 +45,21 @@ import { CEFR_MEANING } from "@/lib/cefrMeaning";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
 const TOTAL_QUESTIONS = 29;
 
+// The level test runs on a computer; a phone (a direct link) sees why.
 export function PlacementTest() {
+  if (isPhone()) {
+    return (
+      <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-2xl">
+          <PhoneBlockNotice what="level" />
+        </div>
+      </div>
+    );
+  }
+  return <PlacementTestRun />;
+}
+
+function PlacementTestRun() {
   const isCandidate = useAuth().user?.role === "candidate";
   const { t } = useTranslation();
   const navigate = useNavigate();

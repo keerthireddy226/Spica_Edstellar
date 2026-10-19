@@ -20,10 +20,13 @@ import {
   Target,
   FileText,
   Lock,
+  Laptop,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
+import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
+import { isPhone } from "@/lib/device";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -121,6 +124,8 @@ interface CachedAnswer {
 // sharing this page: "practice" lists practice sets, "mock" the mock exams.
 export function PracticeTests({ section = "practice" }: { section?: "practice" | "mock" }) {
   const isMockSection = section === "mock";
+  // Practice tests and mocks run on a computer; a phone sees why and where to practise instead.
+  const [phone] = useState(isPhone);
   const license = useMyLicense();
   const { t } = useTranslation();
   const isCandidate = useAuth().user?.role === "candidate";
@@ -360,11 +365,13 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     } catch (err) {
       const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
       setError(
-        code === "mock_in_progress"
-          ? tr("You have another mock exam in progress. Finish it first.")
-          : code === "quota_reached"
-            ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
-            : t("practiceTests.loadError"),
+        code === "computer_required"
+          ? tr("Open this test on a computer. On your phone you can keep practising in Practice Modules.")
+          : code === "mock_in_progress"
+            ? tr("You have another mock exam in progress. Finish it first.")
+            : code === "quota_reached"
+              ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
+              : t("practiceTests.loadError"),
       );
       loadProducts();
     } finally {
@@ -768,6 +775,15 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
 
   if (!resumeChecked) return null;
   if (quickChecking) return <p className="text-sm text-muted text-center mt-10">{tr("Getting back to your test…")}</p>;
+
+  // A test opened on a phone (a link, or a session in the URL): explain, don't run it.
+  if (phone && (pendingStart || (sessionId && !summary))) {
+    return (
+      <div className="max-w-2xl mx-auto w-full">
+        <PhoneBlockNotice what={isMockSection || pendingStart?.mode === "mock" ? "mock" : "tests"} />
+      </div>
+    );
+  }
 
   if (requireReverify) {
     return <FaceCheck mode="verify" purpose="practice_test" onComplete={() => setRequireReverify(false)} />;
@@ -1402,6 +1418,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
               : undefined
           }
         />
+        {phone && <PhoneBlockNotice what={isMockSection ? "mock" : "tests"} />}
 
         <button
           onClick={() => setShowDemo(true)}
@@ -1429,6 +1446,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           ) : mocksLeft === 0 && openMock?.testTypeId !== selectedProduct ? (
             <span className="text-sm text-white/80 sm:max-w-64">
               {tr("You've used this month's mock exams. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
+            </span>
+          ) : phone ? (
+            <span className="text-sm text-white/80 flex items-center gap-1.5">
+              <Laptop size={15} /> {tr("Computer only")}
             </span>
           ) : (
             <Button
@@ -1567,11 +1588,15 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                   }}
                   // At the monthly limit, only an unfinished set can be resumed;
                   // a locked set opens once the one before is finished.
-                  disabled={(practiceLeft === 0 && !exam.inProgress) || !!exam.locked}
-                  variant={exam.locked ? "secondary" : undefined}
+                  disabled={phone || (practiceLeft === 0 && !exam.inProgress) || !!exam.locked}
+                  variant={exam.locked || phone ? "secondary" : undefined}
                   className="w-full"
                 >
-                  {exam.locked ? (
+                  {phone ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Laptop size={15} /> {tr("Computer only")}
+                    </span>
+                  ) : exam.locked ? (
                     <span className="flex items-center justify-center gap-1.5">
                       <Lock size={15} /> {tr("Complete Set {{n}} to unlock", { n: i })}
                     </span>
@@ -1621,8 +1646,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   if (isMockSection) {
     return (
       <div className="w-full flex flex-col gap-6">
+        {phone && <PhoneBlockNotice what="mock" />}
         <KeepGoingCard />
         <MockExamList
+          phone={phone}
           families={families}
           quota={quota}
           history={history}
@@ -1666,6 +1693,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
         ]}
       />
+
+      {phone && <PhoneBlockNotice what="tests" />}
 
       <KeepGoingCard />
 

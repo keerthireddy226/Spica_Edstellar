@@ -13,6 +13,8 @@ import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
+import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
+import { isPhone } from "@/lib/device";
 
 export function Placement() {
   const { t } = useTranslation();
@@ -93,6 +95,28 @@ export function Placement() {
   ];
 
   if (checkingPlacement || resumeQuestionsShown === null || faceEnrolled === null) return null;
+
+  // On a phone the level test can't start: say so, and offer the reminder
+  // email so it's easy to open on a computer.
+  if (isPhone()) {
+    return (
+      <div className="app-surface min-h-screen overflow-y-auto flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-2xl flex flex-col gap-4">
+          <PhoneBlockNotice what="level" />
+          <Button variant="secondary" onClick={handleScheduleLater}>
+            {submitting ? t("placement.scheduling") : scheduleSent ? t("placement.scheduleSent") : t("placement.scheduleLater")}
+          </Button>
+          {error && <p className="text-sm text-error">{error}</p>}
+          <div className="flex items-center justify-between px-1">
+            <button type="button" onClick={() => logout()} className="text-sm font-medium text-muted hover:text-ink">
+              {t("onboarding.logout")}
+            </button>
+            <LanguageSwitcher />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!faceEnrolled) {
     if (!faceConsented) {
