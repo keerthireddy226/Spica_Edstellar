@@ -13,8 +13,17 @@ function play(item: TestItem, segments: string[]): Promise<void> {
 
   return new Promise((resolve) => {
     const audio = new Audio(item.audioUrl!);
+    // A failed recording can report twice (load error and play() rejecting):
+    // the browser voice reads the text once.
+    let fellBack = false;
+    const fallBack = () => {
+      if (fellBack) return;
+      fellBack = true;
+      audio.pause();
+      speak(segments).then(resolve);
+    };
     audio.onended = () => resolve();
-    audio.onerror = () => speak(segments).then(resolve);
-    audio.play().catch(() => speak(segments).then(resolve));
+    audio.onerror = fallBack;
+    audio.play().catch(fallBack);
   });
 }

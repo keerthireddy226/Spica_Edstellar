@@ -72,6 +72,11 @@ async function localFiles(): Promise<Map<string, { size: number; mtimeMs: number
 // What the bucket holds, as last seen: local path -> size and mtime when uploaded.
 let synced = new Map<string, { size: number; mtimeMs: number }>();
 let running = false;
+// Files missing at the last scan: removed from the bucket only if still
+// missing at the next one.
+let missingBefore = new Set<string>();
+// Deletions wait until the start-up download has finished.
+let restoring = false;
 
 async function upload(c: Config, key: string) {
   const r = await fetch(objectUrl(c, key), {
@@ -95,6 +100,10 @@ async function scan(c: Config) {
   if (running) return;
   running = true;
   try {
+    // Only files known before this scan can count as deleted: one downloaded
+    // while the scan walks the folders isn't in its snapshot, and used to be
+    // removed from the bucket by mistake.
+    const knownBefore = new Set(synced.keys());
     const now = await localFiles();
     for (const [key, f] of now) {
       const before = synced.get(key);
@@ -106,7 +115,17 @@ async function scan(c: Config) {
         console.error("[file-mirror]", (err as Error).message);
       }
     }
-    const gone = [...synced.keys()].filter((k) => !now.has(k));
+    const missing = new Set<string>();
+    if (!restoring) {
+      for (const k of knownBefore) {
+        if (now.has(k) || !synced.has(k)) continue;
+        // Really gone from disk, not a folder that couldn't be read.
+        const st = await stat(k).catch((err: NodeJS.ErrnoException) => (err.code === "ENOENT" ? null : "unknown"));
+        if (st === null) missing.add(k);
+      }
+    }
+    const gone = [...missing].filter((k) => missingBefore.has(k));
+    missingBefore = new Set([...missing].filter((k) => !gone.includes(k)));
     for (let i = 0; i < gone.length; i += 100) {
       const batch = gone.slice(i, i + 100);
       try {
@@ -153,11 +172,15 @@ export async function startFileMirror(): Promise<void> {
   // Download in the background (a few at a time) so the server starts at
   // once; a file asked for before its turn is fetched on demand.
   let downloaded = 0;
+  restoring = true;
   void Promise.all(
     Array.from({ length: 6 }, async () => {
       for (let o = queue.shift(); o; o = queue.shift()) if (await ensureLocal(o.key)) downloaded++;
     }),
-  ).then(() => console.log(`[file-mirror] ${downloaded} files downloaded in ${Math.round((Date.now() - started) / 1000)}s`));
+  ).then(() => {
+    restoring = false;
+    console.log(`[file-mirror] ${downloaded} files downloaded in ${Math.round((Date.now() - started) / 1000)}s`);
+  });
 }
 
 // The bucket's files, and the mirror once started.
