@@ -11,6 +11,8 @@
 //   npx tsx --env-file=.env scripts/loadVersantPractice.ts --existing <track>      list current questions to avoid
 //   npx tsx --env-file=.env scripts/loadVersantPractice.ts <file.json> [...]       dry run: report problems
 //   npx tsx --env-file=.env scripts/loadVersantPractice.ts --apply <file.json> [...]
+// The question files live in seeds/content/versant-practice/. Loading is safe to
+// repeat: a level that already has TARGET_SETS sets gets nothing new.
 import "dotenv/config";
 import { readFileSync } from "node:fs";
 import { pool } from "../src/db.js";

@@ -1,0 +1,2817 @@
+{
+ "track": "reading_selective/reading",
+ "levels": {
+  "A1": [
+   {
+    "text": "Bus 12 goes to the station.",
+    "question": "Where does bus 12 go?",
+    "acceptable_answers": [
+     "the station",
+     "to the station",
+     "station"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Ali drives a blue car.",
+    "question": "What colour is Ali's car?",
+    "acceptable_answers": [
+     "blue",
+     "it is blue",
+     "it's blue"
+    ],
+    "topic": "cars"
+   },
+   {
+    "text": "Lunch today: chicken and rice.",
+    "question": "What is lunch today?",
+    "acceptable_answers": [
+     "chicken and rice",
+     "rice and chicken",
+     "chicken with rice"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "Tickets cost five dollars each.",
+    "question": "How much is one ticket?",
+    "acceptable_answers": [
+     "five dollars",
+     "5 dollars",
+     "$5",
+     "five",
+     "5"
+    ],
+    "topic": "money"
+   },
+   {
+    "text": "My cat is called Max.",
+    "question": "What is the cat's name?",
+    "acceptable_answers": [
+     "max",
+     "it is max",
+     "it's max"
+    ],
+    "topic": "pets"
+   },
+   {
+    "text": "The party is on Saturday.",
+    "question": "What day is the party?",
+    "acceptable_answers": [
+     "saturday",
+     "on saturday"
+    ],
+    "topic": "friends"
+   },
+   {
+    "text": "Please put rubbish in the green bin.",
+    "question": "What colour is the rubbish bin?",
+    "acceptable_answers": [
+     "green",
+     "it is green",
+     "it's green"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Ana is at home with a cold.",
+    "question": "Why is Ana at home?",
+    "acceptable_answers": [
+     "she has a cold",
+     "a cold",
+     "because of a cold",
+     "she is ill",
+     "she is sick",
+     "she's ill",
+     "she's sick",
+     "cold"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "The doctor is here on Tuesdays.",
+    "question": "Which day is the doctor here?",
+    "acceptable_answers": [
+     "tuesday",
+     "tuesdays",
+     "on tuesday",
+     "on tuesdays"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "Room 5 is on the first floor.",
+    "question": "Which floor is room 5 on?",
+    "acceptable_answers": [
+     "the first floor",
+     "first floor",
+     "first",
+     "the first",
+     "1st",
+     "1st floor",
+     "floor 1",
+     "floor one"
+    ],
+    "topic": "buildings"
+   },
+   {
+    "text": "Take one tablet every morning.",
+    "question": "When do you take a tablet?",
+    "acceptable_answers": [
+     "every morning",
+     "in the morning",
+     "each morning",
+     "morning",
+     "mornings"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "Airport trains: platform two.",
+    "question": "Which platform is for the airport?",
+    "acceptable_answers": [
+     "platform two",
+     "platform 2",
+     "two",
+     "2"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Tom's birthday is in May.",
+    "question": "When is Tom's birthday?",
+    "acceptable_answers": [
+     "in may",
+     "may"
+    ],
+    "topic": "family"
+   },
+   {
+    "text": "The swimming class starts at four.",
+    "question": "What time does the class start?",
+    "acceptable_answers": [
+     "four",
+     "4",
+     "at four",
+     "at 4",
+     "four o'clock",
+     "4 o'clock",
+     "4pm",
+     "4 pm",
+     "four pm"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Eggs are on the top shelf.",
+    "question": "Where are the eggs?",
+    "acceptable_answers": [
+     "on the top shelf",
+     "the top shelf",
+     "top shelf"
+    ],
+    "topic": "home"
+   },
+   {
+    "text": "Our new teacher is from Spain.",
+    "question": "Where is the new teacher from?",
+    "acceptable_answers": [
+     "spain",
+     "from spain"
+    ],
+    "topic": "school"
+   },
+   {
+    "text": "Rain today, sun tomorrow.",
+    "question": "What is the weather tomorrow?",
+    "acceptable_answers": [
+     "sun",
+     "sunny",
+     "sunshine",
+     "it will be sunny",
+     "it's sunny"
+    ],
+    "topic": "weather"
+   },
+   {
+    "text": "Apples: three for one dollar.",
+    "question": "How many apples do you get for one dollar?",
+    "acceptable_answers": [
+     "three",
+     "3",
+     "three apples",
+     "3 apples"
+    ],
+    "topic": "shopping"
+   },
+   {
+    "text": "Toilets are next to the cafe.",
+    "question": "Where are the toilets?",
+    "acceptable_answers": [
+     "next to the cafe",
+     "by the cafe",
+     "near the cafe",
+     "beside the cafe"
+    ],
+    "topic": "buildings"
+   },
+   {
+    "text": "Sara walks to work every day.",
+    "question": "How does Sara go to work?",
+    "acceptable_answers": [
+     "she walks",
+     "on foot",
+     "walking",
+     "walks",
+     "by foot",
+     "she walks there"
+    ],
+    "topic": "work"
+   },
+   {
+    "text": "Dinner is at seven tonight.",
+    "question": "What time is dinner?",
+    "acceptable_answers": [
+     "seven",
+     "7",
+     "at seven",
+     "at 7",
+     "seven o'clock",
+     "7 o'clock",
+     "7pm",
+     "7 pm",
+     "seven pm"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "The museum is free for children.",
+    "question": "Who can visit for free?",
+    "acceptable_answers": [
+     "children",
+     "kids",
+     "child",
+     "a child"
+    ],
+    "topic": "culture"
+   },
+   {
+    "text": "Rent a bike here: two dollars an hour.",
+    "question": "How much is a bike for one hour?",
+    "acceptable_answers": [
+     "two dollars",
+     "2 dollars",
+     "$2",
+     "two",
+     "2"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Mr Lee's office is room 14.",
+    "question": "What room is Mr Lee's office?",
+    "acceptable_answers": [
+     "room 14",
+     "room fourteen",
+     "14",
+     "fourteen"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "The shop sells shoes and bags.",
+    "question": "What does the shop sell?",
+    "acceptable_answers": [
+     "shoes and bags",
+     "bags and shoes"
+    ],
+    "topic": "shopping"
+   },
+   {
+    "text": "Kim has two brothers.",
+    "question": "How many brothers does Kim have?",
+    "acceptable_answers": [
+     "two",
+     "2",
+     "two brothers",
+     "2 brothers"
+    ],
+    "topic": "family"
+   },
+   {
+    "text": "Football practice is in the park.",
+    "question": "Where is football practice?",
+    "acceptable_answers": [
+     "in the park",
+     "the park",
+     "at the park",
+     "park"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Leo's bus was late this morning.",
+    "question": "What was late this morning?",
+    "acceptable_answers": [
+     "leo's bus",
+     "the bus",
+     "his bus",
+     "bus",
+     "leos bus"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "The hotel has a pool.",
+    "question": "What does the hotel have?",
+    "acceptable_answers": [
+     "a pool",
+     "pool",
+     "a swimming pool",
+     "swimming pool"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Wash your hands before eating.",
+    "question": "When should you wash your hands?",
+    "acceptable_answers": [
+     "before eating",
+     "before you eat",
+     "before meals",
+     "before a meal",
+     "before food"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "The film starts at half past eight.",
+    "question": "When does the film start?",
+    "acceptable_answers": [
+     "half past eight",
+     "at half past eight",
+     "8:30",
+     "8.30",
+     "8 30",
+     "830",
+     "eight thirty",
+     "at 8:30",
+     "at eight thirty"
+    ],
+    "topic": "free time"
+   },
+   {
+    "text": "Coffee is free on Fridays.",
+    "question": "When is coffee free?",
+    "acceptable_answers": [
+     "on fridays",
+     "fridays",
+     "friday",
+     "on friday"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "Anna likes tea, not coffee.",
+    "question": "What drink does Anna like?",
+    "acceptable_answers": [
+     "tea"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "The baby sleeps after lunch.",
+    "question": "When does the baby sleep?",
+    "acceptable_answers": [
+     "after lunch",
+     "after lunchtime"
+    ],
+    "topic": "family"
+   },
+   {
+    "text": "Turn left for the beach.",
+    "question": "Which way is the beach?",
+    "acceptable_answers": [
+     "left",
+     "to the left",
+     "turn left",
+     "on the left"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Our flat has three bedrooms.",
+    "question": "How many bedrooms are there?",
+    "acceptable_answers": [
+     "three",
+     "3",
+     "three bedrooms",
+     "3 bedrooms"
+    ],
+    "topic": "housing"
+   },
+   {
+    "text": "The kitchen is closed for cleaning.",
+    "question": "Why is the kitchen closed?",
+    "acceptable_answers": [
+     "for cleaning",
+     "cleaning",
+     "because of cleaning",
+     "it is being cleaned"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Maria plays the piano every evening.",
+    "question": "What does Maria play?",
+    "acceptable_answers": [
+     "the piano",
+     "piano"
+    ],
+    "topic": "hobbies"
+   },
+   {
+    "text": "Ice skating this Sunday morning.",
+    "question": "When is ice skating?",
+    "acceptable_answers": [
+     "sunday morning",
+     "this sunday morning",
+     "on sunday morning",
+     "sunday",
+     "on sunday",
+     "this sunday"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "The red jacket is on sale.",
+    "question": "Which jacket is on sale?",
+    "acceptable_answers": [
+     "the red jacket",
+     "the red one",
+     "red jacket",
+     "red",
+     "the red"
+    ],
+    "topic": "shopping"
+   }
+  ],
+  "A2": [
+   {
+    "text": "Missed the bus. I'll be twenty minutes late.",
+    "question": "How late will the writer be?",
+    "acceptable_answers": [
+     "twenty minutes",
+     "20 minutes",
+     "twenty minutes late",
+     "20 minutes late",
+     "20 mins",
+     "twenty",
+     "20"
+    ],
+    "topic": "messages"
+   },
+   {
+    "text": "Tomorrow will be cold and windy, with snow at night.",
+    "question": "When will it snow?",
+    "acceptable_answers": [
+     "at night",
+     "tomorrow night",
+     "night",
+     "in the night",
+     "during the night"
+    ],
+    "topic": "weather"
+   },
+   {
+    "text": "The dentist moved your appointment to Thursday at nine.",
+    "question": "What day is the appointment now?",
+    "acceptable_answers": [
+     "thursday",
+     "on thursday"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "Our new office opened last week near the river.",
+    "question": "Where is the new office?",
+    "acceptable_answers": [
+     "near the river",
+     "by the river",
+     "close to the river",
+     "next to the river"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Paul cooked fish for dinner because his wife worked late.",
+    "question": "What did Paul cook for dinner?",
+    "acceptable_answers": [
+     "fish"
+    ],
+    "topic": "family"
+   },
+   {
+    "text": "Bring a packed lunch on the school trip on Monday.",
+    "question": "What should children bring on the trip?",
+    "acceptable_answers": [
+     "a packed lunch",
+     "packed lunch",
+     "lunch",
+     "a lunch"
+    ],
+    "topic": "school"
+   },
+   {
+    "text": "The bakery will close early on Friday, at three o'clock.",
+    "question": "What time will the bakery close on Friday?",
+    "acceptable_answers": [
+     "three o'clock",
+     "3 o'clock",
+     "three",
+     "3",
+     "at three",
+     "at 3",
+     "3pm",
+     "3 pm",
+     "three pm",
+     "at three o'clock"
+    ],
+    "topic": "shopping"
+   },
+   {
+    "text": "Lost: a small black dog near the park. Call Jo.",
+    "question": "What colour is the dog?",
+    "acceptable_answers": [
+     "black",
+     "it is black",
+     "it's black"
+    ],
+    "topic": "neighbourhood"
+   },
+   {
+    "text": "Last summer we stayed in a hotel by the sea.",
+    "question": "When did they stay by the sea?",
+    "acceptable_answers": [
+     "last summer",
+     "in the summer",
+     "summer"
+    ],
+    "topic": "holidays"
+   },
+   {
+    "text": "Nora is ill today, but she will be back at school tomorrow.",
+    "question": "When will Nora be back at school?",
+    "acceptable_answers": [
+     "tomorrow"
+    ],
+    "topic": "school"
+   },
+   {
+    "text": "Please pay your gym fees by the end of June.",
+    "question": "When must you pay the gym fees?",
+    "acceptable_answers": [
+     "the end of june",
+     "end of june",
+     "by june",
+     "june",
+     "in june",
+     "by end of june"
+    ],
+    "topic": "fitness"
+   },
+   {
+    "text": "Hi Sam, the meeting is now in Room 8.",
+    "question": "Which room is the meeting in?",
+    "acceptable_answers": [
+     "room 8",
+     "room eight",
+     "8",
+     "eight",
+     "in room 8",
+     "in room eight"
+    ],
+    "topic": "meetings"
+   },
+   {
+    "text": "I bought new running shoes because my old ones broke.",
+    "question": "Why did the writer buy new shoes?",
+    "acceptable_answers": [
+     "the old ones broke",
+     "old ones broke",
+     "the old shoes broke",
+     "old shoes broke",
+     "they broke",
+     "because they broke",
+     "her old ones broke",
+     "his old ones broke"
+    ],
+    "topic": "shopping"
+   },
+   {
+    "text": "The farmers' market is every Saturday from eight until noon.",
+    "question": "When does the market finish?",
+    "acceptable_answers": [
+     "noon",
+     "at noon",
+     "midday",
+     "at midday",
+     "12",
+     "12pm",
+     "12 pm",
+     "twelve",
+     "at twelve",
+     "twelve o'clock",
+     "12 o'clock"
+    ],
+    "topic": "shopping"
+   },
+   {
+    "text": "Our flight to Rome was delayed by two hours.",
+    "question": "How long was the delay?",
+    "acceptable_answers": [
+     "two hours",
+     "2 hours",
+     "by two hours",
+     "two",
+     "2"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Water the plants twice a week, on Monday and Thursday.",
+    "question": "How often should you water the plants?",
+    "acceptable_answers": [
+     "twice a week",
+     "two times a week",
+     "2 times a week",
+     "twice weekly",
+     "twice"
+    ],
+    "topic": "home"
+   },
+   {
+    "text": "Jenny started a new job at the hospital last month.",
+    "question": "Where does Jenny work now?",
+    "acceptable_answers": [
+     "at the hospital",
+     "the hospital",
+     "hospital",
+     "in the hospital",
+     "at a hospital",
+     "a hospital"
+    ],
+    "topic": "jobs"
+   },
+   {
+    "text": "Tickets for the concert are cheaper if you buy online.",
+    "question": "How can you get cheaper tickets?",
+    "acceptable_answers": [
+     "buy online",
+     "online",
+     "buy them online",
+     "by buying online",
+     "buying online",
+     "on the internet"
+    ],
+    "topic": "music"
+   },
+   {
+    "text": "The heating will be off on Tuesday for repairs.",
+    "question": "Why will the heating be off?",
+    "acceptable_answers": [
+     "for repairs",
+     "repairs",
+     "because of repairs",
+     "for repair",
+     "to be repaired"
+    ],
+    "topic": "housing"
+   },
+   {
+    "text": "We will meet outside the cinema at seven.",
+    "question": "Where will they meet?",
+    "acceptable_answers": [
+     "outside the cinema",
+     "the cinema",
+     "at the cinema",
+     "by the cinema"
+    ],
+    "topic": "friends"
+   },
+   {
+    "text": "Your parcel arrived this morning. It is at reception.",
+    "question": "Where is the parcel?",
+    "acceptable_answers": [
+     "at reception",
+     "reception",
+     "in reception",
+     "at the reception",
+     "the reception"
+    ],
+    "topic": "post"
+   },
+   {
+    "text": "The art class costs ten dollars, and paint is included.",
+    "question": "How much does the art class cost?",
+    "acceptable_answers": [
+     "ten dollars",
+     "10 dollars",
+     "$10",
+     "ten",
+     "10"
+    ],
+    "topic": "hobbies"
+   },
+   {
+    "text": "Mia: I left my keys on the kitchen table.",
+    "question": "Where are Mia's keys?",
+    "acceptable_answers": [
+     "on the kitchen table",
+     "the kitchen table",
+     "kitchen table",
+     "on the table",
+     "the table"
+    ],
+    "topic": "home"
+   },
+   {
+    "text": "Our town will get a new swimming pool next spring.",
+    "question": "What will the town get next spring?",
+    "acceptable_answers": [
+     "a new swimming pool",
+     "a swimming pool",
+     "new swimming pool",
+     "swimming pool",
+     "a new pool",
+     "a pool"
+    ],
+    "topic": "local news"
+   },
+   {
+    "text": "Lucy fell off her bike and hurt her arm.",
+    "question": "What did Lucy hurt?",
+    "acceptable_answers": [
+     "her arm",
+     "arm",
+     "the arm",
+     "his arm"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "Children under twelve must swim with an adult.",
+    "question": "Who must swim with an adult?",
+    "acceptable_answers": [
+     "children under twelve",
+     "children under 12",
+     "kids under twelve",
+     "kids under 12",
+     "under twelves",
+     "under 12s",
+     "children"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "The supermarket is looking for weekend staff. Apply inside.",
+    "question": "When does the supermarket need staff?",
+    "acceptable_answers": [
+     "at the weekend",
+     "at weekends",
+     "on weekends",
+     "on the weekend",
+     "weekends",
+     "weekend",
+     "the weekend"
+    ],
+    "topic": "jobs"
+   },
+   {
+    "text": "Please keep your bag under your desk during the exam.",
+    "question": "Where should you keep your bag?",
+    "acceptable_answers": [
+     "under your desk",
+     "under the desk",
+     "under my desk"
+    ],
+    "topic": "study"
+   },
+   {
+    "text": "Ben's English test is next Wednesday morning at the college.",
+    "question": "Where is Ben's test?",
+    "acceptable_answers": [
+     "at the college",
+     "the college",
+     "college",
+     "in the college"
+    ],
+    "topic": "study"
+   },
+   {
+    "text": "The beach road is closed. Please use the hill road.",
+    "question": "Which road should you use?",
+    "acceptable_answers": [
+     "the hill road",
+     "hill road",
+     "the hill one"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Sunny and warm this weekend, about twenty-five degrees.",
+    "question": "How warm will it be?",
+    "acceptable_answers": [
+     "about twenty-five degrees",
+     "twenty-five degrees",
+     "twenty five degrees",
+     "25 degrees",
+     "about 25 degrees",
+     "around 25 degrees",
+     "twenty-five",
+     "twenty five",
+     "25"
+    ],
+    "topic": "weather"
+   },
+   {
+    "text": "We had a picnic in the garden because it was hot.",
+    "question": "Where did they have a picnic?",
+    "acceptable_answers": [
+     "in the garden",
+     "the garden",
+     "garden"
+    ],
+    "topic": "free time"
+   },
+   {
+    "text": "The doctor said Tom should drink more water every day.",
+    "question": "What should Tom drink more of?",
+    "acceptable_answers": [
+     "water"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "The bus to the city centre now leaves every fifteen minutes.",
+    "question": "How often does the bus leave?",
+    "acceptable_answers": [
+     "every fifteen minutes",
+     "every 15 minutes",
+     "every 15 mins",
+     "every quarter hour",
+     "fifteen minutes",
+     "15 minutes"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Hotel breakfast is served in the dining room until ten.",
+    "question": "Where is breakfast served?",
+    "acceptable_answers": [
+     "in the dining room",
+     "the dining room",
+     "dining room"
+    ],
+    "topic": "hotels"
+   },
+   {
+    "text": "Grandma is coming to visit us by train on Sunday.",
+    "question": "How is Grandma travelling?",
+    "acceptable_answers": [
+     "by train",
+     "train",
+     "on the train",
+     "on a train"
+    ],
+    "topic": "family"
+   },
+   {
+    "text": "Please leave your wet umbrella at the door.",
+    "question": "Where should you leave your umbrella?",
+    "acceptable_answers": [
+     "at the door",
+     "by the door",
+     "near the door",
+     "the door",
+     "door"
+    ],
+    "topic": "notices"
+   },
+   {
+    "text": "The phone shop repairs broken screens in one hour.",
+    "question": "How long does a screen repair take?",
+    "acceptable_answers": [
+     "one hour",
+     "an hour",
+     "1 hour",
+     "in one hour",
+     "in an hour",
+     "in 1 hour"
+    ],
+    "topic": "technology"
+   },
+   {
+    "text": "Leah plays tennis with her sister every Wednesday evening.",
+    "question": "Who does Leah play tennis with?",
+    "acceptable_answers": [
+     "her sister",
+     "with her sister",
+     "sister",
+     "leah's sister"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Our team won the match three goals to one yesterday.",
+    "question": "How many goals did the team score?",
+    "acceptable_answers": [
+     "three",
+     "3",
+     "three goals",
+     "3 goals"
+    ],
+    "topic": "sport"
+   }
+  ],
+  "B1": [
+   {
+    "text": "Due to heavy snow, all morning trains to the north have been cancelled.",
+    "question": "Why have the trains been cancelled?",
+    "acceptable_answers": [
+     "heavy snow",
+     "snow",
+     "because of heavy snow",
+     "due to heavy snow",
+     "because of snow",
+     "due to snow"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Staff who want to join the training course should sign up by Wednesday.",
+    "question": "By when should staff sign up?",
+    "acceptable_answers": [
+     "wednesday",
+     "by wednesday",
+     "on wednesday",
+     "before wednesday"
+    ],
+    "topic": "training"
+   },
+   {
+    "text": "The new bike lane will link the university with the train station.",
+    "question": "What will the bike lane link the university with?",
+    "acceptable_answers": [
+     "the train station",
+     "train station",
+     "the station",
+     "station"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "If you lose your room key, the replacement fee is fifteen dollars.",
+    "question": "How much is a replacement key?",
+    "acceptable_answers": [
+     "fifteen dollars",
+     "15 dollars",
+     "$15",
+     "fifteen",
+     "15"
+    ],
+    "topic": "hotels"
+   },
+   {
+    "text": "Exam results will be posted online on Friday, not sent by email.",
+    "question": "Where will exam results be posted?",
+    "acceptable_answers": [
+     "online",
+     "on the internet",
+     "on the website",
+     "the website"
+    ],
+    "topic": "study"
+   },
+   {
+    "text": "Passengers travelling with large bags should use the lift beside platform four.",
+    "question": "Where is the lift?",
+    "acceptable_answers": [
+     "beside platform four",
+     "beside platform 4",
+     "next to platform four",
+     "next to platform 4",
+     "by platform four",
+     "by platform 4",
+     "near platform four",
+     "near platform 4"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Our sales went up last quarter after we lowered delivery prices.",
+    "question": "What did the company lower?",
+    "acceptable_answers": [
+     "delivery prices",
+     "the delivery prices",
+     "its delivery prices",
+     "delivery costs",
+     "delivery charges"
+    ],
+    "topic": "business"
+   },
+   {
+    "text": "Anyone working late should lock the side door when they leave.",
+    "question": "What should late workers lock?",
+    "acceptable_answers": [
+     "the side door",
+     "side door",
+     "the door"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Nurses who work night shifts can now park free in the staff garage.",
+    "question": "Who can now park free in the garage?",
+    "acceptable_answers": [
+     "night shift nurses",
+     "night-shift nurses",
+     "nurses on night shifts",
+     "nurses on nights",
+     "night nurses"
+    ],
+    "topic": "healthcare"
+   },
+   {
+    "text": "Our guide told us to set off early to avoid the afternoon heat.",
+    "question": "Why did they set off early?",
+    "acceptable_answers": [
+     "to avoid the heat",
+     "the afternoon heat",
+     "avoid the heat",
+     "because of the heat",
+     "the heat"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "Students can borrow laptops from the help desk for up to three days.",
+    "question": "How long can students borrow a laptop?",
+    "acceptable_answers": [
+     "up to three days",
+     "up to 3 days",
+     "three days",
+     "3 days",
+     "three",
+     "3"
+    ],
+    "topic": "study"
+   },
+   {
+    "text": "The cafe gives free coffee to anyone who brings their own cup.",
+    "question": "What must you bring to get free coffee?",
+    "acceptable_answers": [
+     "your own cup",
+     "own cup",
+     "a cup",
+     "your cup",
+     "their own cup",
+     "my own cup"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Doctors recommend at least thirty minutes of walking every day to stay healthy.",
+    "question": "How long should you walk every day?",
+    "acceptable_answers": [
+     "at least thirty minutes",
+     "at least 30 minutes",
+     "thirty minutes",
+     "30 minutes",
+     "30 mins",
+     "half an hour"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "The hotel shuttle picks guests up from the airport every hour.",
+    "question": "How often does the shuttle run?",
+    "acceptable_answers": [
+     "every hour",
+     "hourly",
+     "once an hour",
+     "each hour"
+    ],
+    "topic": "hotels"
+   },
+   {
+    "text": "Our manager is away this week, so contact Priya with any questions.",
+    "question": "Who should you contact this week?",
+    "acceptable_answers": [
+     "priya"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Because of the storm, the outdoor concert has been put off until next weekend.",
+    "question": "When will the concert take place now?",
+    "acceptable_answers": [
+     "next weekend",
+     "the following weekend"
+    ],
+    "topic": "events"
+   },
+   {
+    "text": "Customers who pay by card will get their receipt by email.",
+    "question": "How will card customers get their receipts?",
+    "acceptable_answers": [
+     "by email",
+     "email",
+     "by e-mail",
+     "in an email",
+     "through email"
+    ],
+    "topic": "customer service"
+   },
+   {
+    "text": "The recycling centre will start accepting old phones from next month.",
+    "question": "What will the centre start accepting?",
+    "acceptable_answers": [
+     "old phones",
+     "phones",
+     "old mobile phones",
+     "mobile phones",
+     "old phone"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Volunteers are needed to help clean up the beach on Saturday morning.",
+    "question": "What will volunteers clean up?",
+    "acceptable_answers": [
+     "the beach",
+     "beach"
+    ],
+    "topic": "community"
+   },
+   {
+    "text": "The road will stay closed until the workers finish repairing the bridge.",
+    "question": "What are the workers repairing?",
+    "acceptable_answers": [
+     "the bridge",
+     "bridge"
+    ],
+    "topic": "local news"
+   },
+   {
+    "text": "Fewer people are taking the bus since ticket prices went up in March.",
+    "question": "When did ticket prices go up?",
+    "acceptable_answers": [
+     "in march",
+     "march"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Anyone who wants a parking space at work should apply to Human Resources.",
+    "question": "Who should you apply to for a parking space?",
+    "acceptable_answers": [
+     "human resources",
+     "hr",
+     "the hr department",
+     "hr department",
+     "the human resources department",
+     "to human resources",
+     "to hr"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Our hiking group meets at the north gate of the park at eight.",
+    "question": "Where does the hiking group meet?",
+    "acceptable_answers": [
+     "at the north gate",
+     "the north gate",
+     "north gate"
+    ],
+    "topic": "hobbies"
+   },
+   {
+    "text": "The language school offers evening classes for people who work during the day.",
+    "question": "When are the classes held?",
+    "acceptable_answers": [
+     "in the evening",
+     "in the evenings",
+     "evenings",
+     "evening",
+     "on evenings"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "A new supermarket is opening where the old cinema used to be.",
+    "question": "What used to be there?",
+    "acceptable_answers": [
+     "the old cinema",
+     "old cinema",
+     "a cinema",
+     "the cinema",
+     "an old cinema",
+     "cinema"
+    ],
+    "topic": "neighbourhood"
+   },
+   {
+    "text": "Please fill in the feedback form before you check out of the hotel.",
+    "question": "What should guests fill in?",
+    "acceptable_answers": [
+     "the feedback form",
+     "feedback form",
+     "a feedback form",
+     "the form",
+     "a form"
+    ],
+    "topic": "hotels"
+   },
+   {
+    "text": "The weather service says the rain will clear by lunchtime tomorrow.",
+    "question": "When will the rain clear?",
+    "acceptable_answers": [
+     "by lunchtime tomorrow",
+     "lunchtime tomorrow",
+     "tomorrow lunchtime",
+     "by tomorrow lunchtime",
+     "tomorrow at lunchtime",
+     "by lunchtime",
+     "lunchtime",
+     "around lunchtime"
+    ],
+    "topic": "weather"
+   },
+   {
+    "text": "Sorry, I can't make dinner tonight because I have to finish a report.",
+    "question": "Why can't the writer come to dinner?",
+    "acceptable_answers": [
+     "to finish a report",
+     "finish a report",
+     "finishing a report",
+     "a report",
+     "because of a report",
+     "work"
+    ],
+    "topic": "messages"
+   },
+   {
+    "text": "The gym has replaced its old running machines with ten new ones.",
+    "question": "How many new machines are there?",
+    "acceptable_answers": [
+     "ten",
+     "10",
+     "ten new ones",
+     "10 new ones",
+     "ten machines",
+     "10 machines"
+    ],
+    "topic": "fitness"
+   },
+   {
+    "text": "Library members can now download e-books for free using the library app.",
+    "question": "What do members use to download e-books?",
+    "acceptable_answers": [
+     "the library app",
+     "library app",
+     "the app",
+     "an app",
+     "the library's app"
+    ],
+    "topic": "technology"
+   },
+   {
+    "text": "The flight to Lisbon will board at gate twelve instead of gate nine.",
+    "question": "Which gate will the flight board at?",
+    "acceptable_answers": [
+     "gate twelve",
+     "gate 12",
+     "twelve",
+     "12",
+     "at gate 12",
+     "at gate twelve"
+    ],
+    "topic": "travel"
+   },
+   {
+    "text": "We are looking for a part-time driver with at least two years' experience.",
+    "question": "How much experience is needed?",
+    "acceptable_answers": [
+     "at least two years",
+     "at least 2 years",
+     "two years",
+     "2 years",
+     "two years' experience",
+     "two years experience",
+     "2 years experience"
+    ],
+    "topic": "jobs"
+   },
+   {
+    "text": "During the heatwave, the council has opened cool rooms in local libraries.",
+    "question": "Where are the cool rooms?",
+    "acceptable_answers": [
+     "in local libraries",
+     "local libraries",
+     "libraries",
+     "in libraries",
+     "in the libraries",
+     "the libraries"
+    ],
+    "topic": "public services"
+   },
+   {
+    "text": "If the printer runs out of paper, extra boxes are in the storeroom.",
+    "question": "Where is the extra paper?",
+    "acceptable_answers": [
+     "in the storeroom",
+     "the storeroom",
+     "storeroom",
+     "in the store room",
+     "the store room"
+    ],
+    "topic": "office"
+   },
+   {
+    "text": "Mark has decided to take up the guitar after watching his friend play.",
+    "question": "What has Mark decided to take up?",
+    "acceptable_answers": [
+     "the guitar",
+     "guitar",
+     "playing the guitar",
+     "playing guitar"
+    ],
+    "topic": "music"
+   },
+   {
+    "text": "The football club is raising money to buy new kits for the youth team.",
+    "question": "What is the money for?",
+    "acceptable_answers": [
+     "new kits",
+     "to buy new kits",
+     "buying new kits",
+     "kits",
+     "new kit",
+     "a new kit"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Tourists can get a free city map at the information centre near the bridge.",
+    "question": "Where can tourists get a free map?",
+    "acceptable_answers": [
+     "at the information centre",
+     "the information centre",
+     "information centre",
+     "at the information center",
+     "the information center",
+     "information center"
+    ],
+    "topic": "tourism"
+   },
+   {
+    "text": "Our internet will be slower than usual while engineers upgrade the network tonight.",
+    "question": "Who will upgrade the network?",
+    "acceptable_answers": [
+     "engineers",
+     "the engineers"
+    ],
+    "topic": "technology"
+   },
+   {
+    "text": "The price of fresh vegetables has gone up because of the dry summer.",
+    "question": "Why have vegetable prices gone up?",
+    "acceptable_answers": [
+     "the dry summer",
+     "dry summer",
+     "a dry summer",
+     "dry weather",
+     "because of dry weather"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "You can cancel your booking free of charge up to two days before arrival.",
+    "question": "Until when can you cancel for free?",
+    "acceptable_answers": [
+     "two days before arrival",
+     "2 days before arrival",
+     "two days before",
+     "2 days before"
+    ],
+    "topic": "bookings"
+   }
+  ],
+  "B2": [
+   {
+    "text": "Unless enough volunteers register by Monday, the coastal clean-up will be called off.",
+    "question": "What will happen if too few volunteers register?",
+    "acceptable_answers": [
+     "it will be cancelled",
+     "called off",
+     "cancelled",
+     "canceled",
+     "it gets called off",
+     "it's called off"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Applications will only be considered if they are accompanied by two references.",
+    "question": "What must accompany applications?",
+    "acceptable_answers": [
+     "two references",
+     "2 references",
+     "references"
+    ],
+    "topic": "job applications"
+   },
+   {
+    "text": "The bridge, which was damaged in the floods, is expected to reopen in April.",
+    "question": "When is the bridge expected to reopen?",
+    "acceptable_answers": [
+     "in april",
+     "april"
+    ],
+    "topic": "infrastructure"
+   },
+   {
+    "text": "Had the software been tested properly, the launch would not have been delayed.",
+    "question": "What was delayed?",
+    "acceptable_answers": [
+     "the launch",
+     "launch",
+     "the software launch"
+    ],
+    "topic": "technology"
+   },
+   {
+    "text": "Energy use in the building fell by a third once motion-sensor lighting was installed.",
+    "question": "By how much did energy use fall?",
+    "acceptable_answers": [
+     "a third",
+     "by a third",
+     "one third",
+     "one-third",
+     "by one third",
+     "33 percent"
+    ],
+    "topic": "energy"
+   },
+   {
+    "text": "Patients are advised not to eat for six hours prior to the procedure.",
+    "question": "For how long should patients not eat?",
+    "acceptable_answers": [
+     "six hours",
+     "6 hours",
+     "for six hours",
+     "for 6 hours"
+    ],
+    "topic": "health"
+   },
+   {
+    "text": "The research grant will be renewed provided that the team publishes its findings.",
+    "question": "What must the team do for the grant to be renewed?",
+    "acceptable_answers": [
+     "publish its findings",
+     "publish their findings",
+     "publish the findings",
+     "publish findings",
+     "publish"
+    ],
+    "topic": "research"
+   },
+   {
+    "text": "Productivity rose noticeably after the company introduced a four-day working week.",
+    "question": "What did the company introduce?",
+    "acceptable_answers": [
+     "a four-day working week",
+     "four-day working week",
+     "a four-day week",
+     "four-day week",
+     "a four day week",
+     "four day week",
+     "a 4-day week",
+     "a 4 day week"
+    ],
+    "topic": "workplace"
+   },
+   {
+    "text": "Most respondents said they would pay more for products with recyclable packaging.",
+    "question": "What would most respondents pay more for?",
+    "acceptable_answers": [
+     "recyclable packaging",
+     "products with recyclable packaging",
+     "recyclable products"
+    ],
+    "topic": "consumers"
+   },
+   {
+    "text": "Tenants must give two months' notice before leaving the property early.",
+    "question": "How much notice must tenants give?",
+    "acceptable_answers": [
+     "two months",
+     "2 months",
+     "two months' notice",
+     "two months notice",
+     "2 months notice"
+    ],
+    "topic": "housing"
+   },
+   {
+    "text": "The festival attracted twice as many visitors as last year, despite the poor weather.",
+    "question": "How did visitor numbers compare with last year?",
+    "acceptable_answers": [
+     "twice as many",
+     "double",
+     "doubled",
+     "they doubled",
+     "two times as many",
+     "twice as high"
+    ],
+    "topic": "events"
+   },
+   {
+    "text": "Staff who work overtime will be compensated with extra leave rather than pay.",
+    "question": "How will overtime be compensated?",
+    "acceptable_answers": [
+     "with extra leave",
+     "extra leave",
+     "more leave",
+     "additional leave",
+     "extra time off",
+     "time off"
+    ],
+    "topic": "employment"
+   },
+   {
+    "text": "The museum's collection has been digitised so that it can be viewed online.",
+    "question": "How can the collection now be viewed?",
+    "acceptable_answers": [
+     "online",
+     "on the internet",
+     "digitally"
+    ],
+    "topic": "culture"
+   },
+   {
+    "text": "Interest rates are expected to remain unchanged until the end of the year.",
+    "question": "Until when are rates expected to stay the same?",
+    "acceptable_answers": [
+     "end of the year",
+     "year end",
+     "year-end",
+     "the end of year",
+     "the year's end"
+    ],
+    "topic": "finance"
+   },
+   {
+    "text": "Flights may be rerouted if the volcanic ash cloud continues to spread.",
+    "question": "What could cause flights to be rerouted?",
+    "acceptable_answers": [
+     "the ash cloud",
+     "the volcanic ash cloud",
+     "volcanic ash cloud",
+     "ash cloud",
+     "volcanic ash",
+     "the ash",
+     "ash"
+    ],
+    "topic": "aviation"
+   },
+   {
+    "text": "Customers whose orders were delayed will receive a voucher worth ten percent.",
+    "question": "What will customers with delayed orders receive?",
+    "acceptable_answers": [
+     "a voucher",
+     "voucher",
+     "a ten percent voucher",
+     "a 10 percent voucher",
+     "a 10% voucher",
+     "a discount voucher"
+    ],
+    "topic": "customer service"
+   },
+   {
+    "text": "Not until the survey results arrive will the board decide on the new layout.",
+    "question": "What is the board waiting for?",
+    "acceptable_answers": [
+     "the survey results",
+     "survey results",
+     "the results",
+     "results of the survey",
+     "the survey"
+    ],
+    "topic": "business"
+   },
+   {
+    "text": "The new hire scheme allows residents to rent electric scooters by the minute.",
+    "question": "How are the scooters rented?",
+    "acceptable_answers": [
+     "by the minute",
+     "per minute"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Planning permission was refused on the grounds that the tower would block sunlight.",
+    "question": "Why was planning permission refused?",
+    "acceptable_answers": [
+     "it would block sunlight",
+     "blocking sunlight",
+     "block sunlight",
+     "it blocked sunlight",
+     "sunlight"
+    ],
+    "topic": "planning"
+   },
+   {
+    "text": "Students who miss over three seminars will be barred from the final exam.",
+    "question": "Which exam will they be barred from?",
+    "acceptable_answers": [
+     "the final exam",
+     "final exam",
+     "the final",
+     "final"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "Demand for second-hand clothing has grown steadily as shoppers become more cost-conscious.",
+    "question": "What has demand grown for?",
+    "acceptable_answers": [
+     "second-hand clothing",
+     "second hand clothing",
+     "second-hand clothes",
+     "second hand clothes",
+     "used clothing",
+     "used clothes"
+    ],
+    "topic": "retail"
+   },
+   {
+    "text": "The hospital's new wing, funded largely by donations, will house a children's unit.",
+    "question": "How was the new wing mainly funded?",
+    "acceptable_answers": [
+     "by donations",
+     "donations",
+     "through donations",
+     "with donations",
+     "largely by donations"
+    ],
+    "topic": "healthcare"
+   },
+   {
+    "text": "Should the trial prove successful, the free shuttle service will become permanent.",
+    "question": "What will become permanent if the trial succeeds?",
+    "acceptable_answers": [
+     "the free shuttle service",
+     "free shuttle service",
+     "the shuttle service",
+     "shuttle service",
+     "the free shuttle",
+     "the shuttle"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "Rising sea temperatures have been linked to the decline in local fish stocks.",
+    "question": "What has been linked to the decline?",
+    "acceptable_answers": [
+     "rising sea temperatures",
+     "sea temperatures",
+     "rising temperatures",
+     "higher sea temperatures",
+     "warmer seas",
+     "warmer sea temperatures"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Employees are entitled to a fully paid sabbatical after ten years of service.",
+    "question": "After how long can employees take a sabbatical?",
+    "acceptable_answers": [
+     "ten years",
+     "10 years",
+     "after ten years",
+     "after 10 years",
+     "ten years of service",
+     "10 years of service"
+    ],
+    "topic": "employment"
+   },
+   {
+    "text": "The bakery's success is largely put down to word of mouth rather than advertising.",
+    "question": "What is the bakery's success mainly due to?",
+    "acceptable_answers": [
+     "word of mouth",
+     "word-of-mouth"
+    ],
+    "topic": "small business"
+   },
+   {
+    "text": "Visitors are reminded that drones may not be flown within the national park.",
+    "question": "What may not be flown in the park?",
+    "acceptable_answers": [
+     "drones",
+     "a drone",
+     "drone"
+    ],
+    "topic": "nature"
+   },
+   {
+    "text": "The training budget was cut, so courses will be delivered online instead.",
+    "question": "How will courses be delivered?",
+    "acceptable_answers": [
+     "online",
+     "on the internet",
+     "virtually"
+    ],
+    "topic": "training"
+   },
+   {
+    "text": "Sales of electric cars overtook petrol models in the region for the first time.",
+    "question": "What did electric car sales overtake?",
+    "acceptable_answers": [
+     "petrol models",
+     "petrol cars",
+     "petrol vehicles",
+     "gas cars",
+     "petrol"
+    ],
+    "topic": "motoring"
+   },
+   {
+    "text": "The orchestra's tour has been extended by three dates owing to high demand.",
+    "question": "Why was the tour extended?",
+    "acceptable_answers": [
+     "high demand",
+     "owing to high demand",
+     "due to high demand",
+     "because of high demand",
+     "demand"
+    ],
+    "topic": "music"
+   },
+   {
+    "text": "Any data stored on the old server will be permanently deleted on 1 March.",
+    "question": "What will happen to the data on the old server?",
+    "acceptable_answers": [
+     "it will be deleted",
+     "deleted",
+     "permanently deleted",
+     "it'll be deleted",
+     "it gets deleted"
+    ],
+    "topic": "IT"
+   },
+   {
+    "text": "A study found that teenagers who sleep less tend to have lower grades.",
+    "question": "What do teenagers who sleep less tend to have?",
+    "acceptable_answers": [
+     "lower grades",
+     "worse grades",
+     "poorer grades",
+     "low grades"
+    ],
+    "topic": "research"
+   },
+   {
+    "text": "The landlord has agreed to cover half the cost of the new boiler.",
+    "question": "How much of the boiler cost will the landlord pay?",
+    "acceptable_answers": [
+     "half",
+     "half the cost",
+     "half of it",
+     "half of the cost",
+     "50 percent",
+     "fifty percent"
+    ],
+    "topic": "housing"
+   },
+   {
+    "text": "Fees for the spring term must be settled in full before enrolment is confirmed.",
+    "question": "When must fees be settled?",
+    "acceptable_answers": [
+     "before enrolment is confirmed",
+     "before enrollment is confirmed",
+     "before enrolment",
+     "before enrollment",
+     "before confirming enrolment"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "Free parking will be withdrawn once the new multi-storey car park is completed.",
+    "question": "What will be withdrawn?",
+    "acceptable_answers": [
+     "free parking",
+     "the free parking"
+    ],
+    "topic": "parking"
+   },
+   {
+    "text": "The marathon route was altered to avoid roadworks on the main avenue.",
+    "question": "Why was the route altered?",
+    "acceptable_answers": [
+     "to avoid roadworks",
+     "avoid roadworks",
+     "roadworks",
+     "because of roadworks",
+     "to avoid road works",
+     "road works"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Despite rising costs, the theatre has managed to keep ticket prices unchanged.",
+    "question": "What has the theatre kept unchanged?",
+    "acceptable_answers": [
+     "ticket prices",
+     "its ticket prices",
+     "the ticket prices",
+     "prices"
+    ],
+    "topic": "theatre"
+   },
+   {
+    "text": "Hikers are warned that the upper trail becomes impassable after heavy rain.",
+    "question": "When does the upper trail become impassable?",
+    "acceptable_answers": [
+     "after heavy rain",
+     "after rain",
+     "when it rains heavily",
+     "heavy rain"
+    ],
+    "topic": "outdoors"
+   },
+   {
+    "text": "The new app enables patients to book appointments without phoning the clinic.",
+    "question": "What can patients book with the app?",
+    "acceptable_answers": [
+     "appointments",
+     "an appointment",
+     "appointment"
+    ],
+    "topic": "healthcare"
+   },
+   {
+    "text": "Shipping costs have doubled, which is why the online store raised its prices.",
+    "question": "Why did the store raise its prices?",
+    "acceptable_answers": [
+     "shipping costs doubled",
+     "higher shipping costs",
+     "shipping costs",
+     "because shipping costs doubled",
+     "doubled shipping costs",
+     "rising shipping costs"
+    ],
+    "topic": "retail"
+   }
+  ],
+  "C1": [
+   {
+    "text": "The pilot scheme, though popular with users, proved too costly to sustain.",
+    "question": "Why was the scheme not sustained?",
+    "acceptable_answers": [
+     "it was too costly",
+     "too costly",
+     "too expensive",
+     "it was too expensive",
+     "it cost too much",
+     "the cost",
+     "cost"
+    ],
+    "topic": "public services"
+   },
+   {
+    "text": "Contrary to expectations, the merger has so far yielded few of the promised savings.",
+    "question": "How many of the promised savings has the merger yielded?",
+    "acceptable_answers": [
+     "few",
+     "very few",
+     "not many",
+     "few of them"
+    ],
+    "topic": "business"
+   },
+   {
+    "text": "The author's second novel, though less ambitious than her debut, was far better received.",
+    "question": "Which novel was better received?",
+    "acceptable_answers": [
+     "the second novel",
+     "her second novel",
+     "second novel",
+     "the second one",
+     "the second",
+     "second"
+    ],
+    "topic": "literature"
+   },
+   {
+    "text": "Admission to the archive is granted only to researchers who can demonstrate a legitimate need.",
+    "question": "What must researchers demonstrate?",
+    "acceptable_answers": [
+     "a legitimate need",
+     "legitimate need",
+     "a genuine need",
+     "a real need"
+    ],
+    "topic": "research"
+   },
+   {
+    "text": "The council's recycling targets, ambitious on paper, have been undermined by chronic underfunding.",
+    "question": "What has undermined the recycling targets?",
+    "acceptable_answers": [
+     "chronic underfunding",
+     "underfunding",
+     "lack of funding",
+     "a lack of funding",
+     "insufficient funding"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Far from deterring visitors, the entry fee appears to have increased the gallery's appeal.",
+    "question": "What effect has the fee had on the gallery's appeal?",
+    "acceptable_answers": [
+     "increased it",
+     "it increased it",
+     "it has increased it",
+     "it increased",
+     "raised it",
+     "made it more appealing"
+    ],
+    "topic": "arts"
+   },
+   {
+    "text": "The surgeon stressed that the procedure, although routine, carries a small risk of infection.",
+    "question": "What small risk does the procedure carry?",
+    "acceptable_answers": [
+     "infection",
+     "a risk of infection",
+     "risk of infection",
+     "an infection"
+    ],
+    "topic": "medicine"
+   },
+   {
+    "text": "Remote workers reported greater autonomy but often struggled to switch off in the evenings.",
+    "question": "What did remote workers often struggle to do?",
+    "acceptable_answers": [
+     "switch off",
+     "to switch off",
+     "switching off",
+     "switch off at night"
+    ],
+    "topic": "work"
+   },
+   {
+    "text": "The festival's organisers have pledged to offset every tonne of carbon generated by the event.",
+    "question": "What have the organisers pledged to offset?",
+    "acceptable_answers": [
+     "carbon",
+     "the carbon",
+     "every tonne of carbon",
+     "carbon emissions",
+     "the event's carbon",
+     "all the carbon"
+    ],
+    "topic": "events"
+   },
+   {
+    "text": "The startup's rapid expansion was financed almost entirely through borrowing rather than revenue.",
+    "question": "How was the expansion mainly financed?",
+    "acceptable_answers": [
+     "through borrowing",
+     "by borrowing",
+     "borrowing",
+     "loans",
+     "debt",
+     "with borrowed money"
+    ],
+    "topic": "finance"
+   },
+   {
+    "text": "The study's conclusions should be treated with caution, given its unusually small sample.",
+    "question": "Why should the conclusions be treated with caution?",
+    "acceptable_answers": [
+     "the small sample",
+     "a small sample",
+     "its small sample",
+     "small sample",
+     "the sample is small",
+     "small sample size"
+    ],
+    "topic": "science"
+   },
+   {
+    "text": "Once a sleepy fishing village, the town has reinvented itself as an artists' hub.",
+    "question": "What was the town once?",
+    "acceptable_answers": [
+     "a sleepy fishing village",
+     "sleepy fishing village",
+     "a fishing village",
+     "fishing village",
+     "a sleepy village"
+    ],
+    "topic": "tourism"
+   },
+   {
+    "text": "The coach's decision to rest key players was vindicated by the team's comfortable victory.",
+    "question": "What did the coach decide to do?",
+    "acceptable_answers": [
+     "rest key players",
+     "to rest key players",
+     "rest the key players",
+     "rest his key players",
+     "rest players"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "Tenants have voiced frustration that repairs are routinely postponed with no explanation given.",
+    "question": "What are tenants frustrated about?",
+    "acceptable_answers": [
+     "postponed repairs",
+     "repairs being postponed",
+     "delayed repairs",
+     "repair delays",
+     "repairs are postponed",
+     "postponed repairs"
+    ],
+    "topic": "housing"
+   },
+   {
+    "text": "The new curriculum places greater emphasis on critical thinking than on memorising facts.",
+    "question": "What does the new curriculum emphasise more?",
+    "acceptable_answers": [
+     "critical thinking",
+     "thinking critically"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "Although the trial was halted temporarily, no serious side effects were ultimately confirmed.",
+    "question": "Were any serious side effects confirmed?",
+    "acceptable_answers": [
+     "no",
+     "none",
+     "no they weren't",
+     "no none were",
+     "not any"
+    ],
+    "topic": "medicine"
+   },
+   {
+    "text": "The bank attributes the surge in fraud to increasingly sophisticated phone scams.",
+    "question": "What does the bank blame for the surge?",
+    "acceptable_answers": [
+     "phone scams",
+     "sophisticated phone scams",
+     "telephone scams",
+     "scams",
+     "phone fraud"
+    ],
+    "topic": "banking"
+   },
+   {
+    "text": "Initial reviews praised the play's staging but were lukewarm about its rather laboured script.",
+    "question": "What were reviewers lukewarm about?",
+    "acceptable_answers": [
+     "the script",
+     "its script",
+     "script",
+     "the play's script",
+     "the laboured script"
+    ],
+    "topic": "theatre"
+   },
+   {
+    "text": "The firm insists the price rise reflects raw material costs, not profiteering.",
+    "question": "What does the firm say the price rise reflects?",
+    "acceptable_answers": [
+     "raw material costs",
+     "material costs",
+     "costs of raw materials",
+     "raw materials"
+    ],
+    "topic": "business"
+   },
+   {
+    "text": "Excavations beneath the square have unearthed the foundations of a medieval market hall.",
+    "question": "What have the excavations unearthed?",
+    "acceptable_answers": [
+     "the foundations",
+     "foundations",
+     "the hall's foundations",
+     "market hall foundations",
+     "medieval foundations",
+     "a medieval market hall"
+    ],
+    "topic": "history"
+   },
+   {
+    "text": "Inflation has eased somewhat, though food prices remain stubbornly high.",
+    "question": "What remains stubbornly high?",
+    "acceptable_answers": [
+     "food prices",
+     "the price of food",
+     "prices of food"
+    ],
+    "topic": "economy"
+   },
+   {
+    "text": "The library's decision to waive late fees led to a marked rise in returned books.",
+    "question": "What did the library decide to waive?",
+    "acceptable_answers": [
+     "late fees",
+     "the late fees",
+     "late fines",
+     "fines",
+     "overdue fees",
+     "overdue fines"
+    ],
+    "topic": "public services"
+   },
+   {
+    "text": "Commuters were urged to stagger their journeys while the line undergoes essential repairs.",
+    "question": "What were commuters urged to do?",
+    "acceptable_answers": [
+     "stagger their journeys",
+     "stagger journeys",
+     "stagger their travel",
+     "stagger their trips",
+     "travel at different times"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "The orchestra's new conductor has a reputation for demanding exacting standards in rehearsal.",
+    "question": "What is the conductor known for demanding?",
+    "acceptable_answers": [
+     "exacting standards",
+     "high standards",
+     "exacting standards in rehearsal"
+    ],
+    "topic": "music"
+   },
+   {
+    "text": "Satellite data show the glacier retreating faster this decade than ever recorded.",
+    "question": "What do the data show about the glacier?",
+    "acceptable_answers": [
+     "it is retreating faster",
+     "it's retreating faster",
+     "retreating faster",
+     "faster retreat",
+     "it is shrinking faster"
+    ],
+    "topic": "climate"
+   },
+   {
+    "text": "The airline has scrapped its loyalty scheme, citing dwindling uptake among frequent flyers.",
+    "question": "Why was the loyalty scheme scrapped?",
+    "acceptable_answers": [
+     "dwindling uptake",
+     "low uptake",
+     "falling uptake",
+     "declining uptake",
+     "lack of uptake",
+     "too few users"
+    ],
+    "topic": "aviation"
+   },
+   {
+    "text": "The proposed high-rise was scaled back after residents objected to its sheer bulk.",
+    "question": "What did residents object to?",
+    "acceptable_answers": [
+     "its sheer bulk",
+     "its bulk",
+     "the sheer bulk",
+     "the bulk",
+     "bulk",
+     "its size",
+     "the size"
+    ],
+    "topic": "planning"
+   },
+   {
+    "text": "The tribunal found that the dismissal, while procedurally sound, was substantively unfair.",
+    "question": "In what way was the dismissal unfair?",
+    "acceptable_answers": [
+     "substantively",
+     "substantively unfair",
+     "in substance"
+    ],
+    "topic": "employment"
+   },
+   {
+    "text": "Visitor numbers recovered swiftly, largely thanks to an influx of overseas students.",
+    "question": "What largely explains the recovery?",
+    "acceptable_answers": [
+     "overseas students",
+     "influx of overseas students",
+     "foreign students",
+     "international students"
+    ],
+    "topic": "tourism"
+   },
+   {
+    "text": "Freelancers frequently cite unpredictable income as the main drawback of self-employment.",
+    "question": "What do freelancers cite as the main drawback?",
+    "acceptable_answers": [
+     "unpredictable income",
+     "irregular income",
+     "uncertain income",
+     "unstable income",
+     "income uncertainty"
+    ],
+    "topic": "careers"
+   },
+   {
+    "text": "The chef's tasting menu, though undeniably inventive, struck some diners as overly fussy.",
+    "question": "How did some diners find the tasting menu?",
+    "acceptable_answers": [
+     "overly fussy",
+     "too fussy",
+     "fussy"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "Supply shortages have forced the manufacturer to postpone the launch indefinitely.",
+    "question": "For how long has the launch been postponed?",
+    "acceptable_answers": [
+     "indefinitely",
+     "with no end date",
+     "no set date",
+     "for an unknown time"
+    ],
+    "topic": "manufacturing"
+   },
+   {
+    "text": "Hard as it is to believe, the bridge was built without a single modern machine.",
+    "question": "What was the bridge built without?",
+    "acceptable_answers": [
+     "modern machines",
+     "a single modern machine",
+     "any modern machine",
+     "any modern machines",
+     "modern machinery",
+     "machines"
+    ],
+    "topic": "engineering"
+   },
+   {
+    "text": "The scholarship covers tuition in full but makes no provision for living expenses.",
+    "question": "What does the scholarship not cover?",
+    "acceptable_answers": [
+     "living expenses",
+     "living costs",
+     "the living expenses",
+     "cost of living"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "Critics have dismissed the sequel as derivative, lacking the originality of its predecessor.",
+    "question": "What do critics say the sequel lacks?",
+    "acceptable_answers": [
+     "originality",
+     "the originality",
+     "its predecessor's originality",
+     "originality of the first"
+    ],
+    "topic": "film"
+   },
+   {
+    "text": "The resort has curbed water usage by recycling grey water for its gardens.",
+    "question": "What does the resort recycle grey water for?",
+    "acceptable_answers": [
+     "its gardens",
+     "the gardens",
+     "gardens",
+     "watering gardens",
+     "the garden",
+     "garden"
+    ],
+    "topic": "sustainability"
+   },
+   {
+    "text": "The midfielder's contract extension ended weeks of speculation about a move abroad.",
+    "question": "What had there been speculation about?",
+    "acceptable_answers": [
+     "a move abroad",
+     "moving abroad",
+     "a move overseas",
+     "a transfer abroad",
+     "him moving abroad"
+    ],
+    "topic": "football"
+   },
+   {
+    "text": "The museum reluctantly returned the statue after its provenance was called into question.",
+    "question": "Why did the museum return the statue?",
+    "acceptable_answers": [
+     "its provenance was questioned",
+     "doubts about its provenance",
+     "questionable provenance",
+     "doubtful provenance",
+     "provenance concerns",
+     "its provenance"
+    ],
+    "topic": "heritage"
+   },
+   {
+    "text": "Demand for the course so outstripped supply that a second intake was hastily arranged.",
+    "question": "What was hastily arranged?",
+    "acceptable_answers": [
+     "a second intake",
+     "second intake",
+     "another intake"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "The tech firm's apology was seen as belated and conspicuously short on detail.",
+    "question": "What was the apology short on?",
+    "acceptable_answers": [
+     "detail",
+     "details",
+     "specifics"
+    ],
+    "topic": "technology"
+   }
+  ],
+  "C2": [
+   {
+    "text": "The novel's ostensible simplicity belies an intricately layered meditation on memory.",
+    "question": "What is the novel really a meditation on?",
+    "acceptable_answers": [
+     "memory"
+    ],
+    "topic": "literature"
+   },
+   {
+    "text": "Far from being an aberration, the spike in returns was symptomatic of chronic sizing errors.",
+    "question": "What was the spike in returns symptomatic of?",
+    "acceptable_answers": [
+     "chronic sizing errors",
+     "sizing errors",
+     "sizing problems",
+     "errors in sizing"
+    ],
+    "topic": "retail"
+   },
+   {
+    "text": "The architect's penchant for austere concrete forms has polarised critics and residents alike.",
+    "question": "What is the architect fond of?",
+    "acceptable_answers": [
+     "austere concrete forms",
+     "concrete forms",
+     "austere concrete",
+     "concrete"
+    ],
+    "topic": "architecture"
+   },
+   {
+    "text": "The reprieve granted to the old observatory is, in all likelihood, merely temporary.",
+    "question": "What is the reprieve likely to be?",
+    "acceptable_answers": [
+     "temporary",
+     "merely temporary",
+     "only temporary",
+     "short-lived",
+     "short lived"
+    ],
+    "topic": "heritage"
+   },
+   {
+    "text": "Ironically, the campaign to curb tourism generated so much publicity that visitor numbers soared.",
+    "question": "What happened to visitor numbers?",
+    "acceptable_answers": [
+     "they soared",
+     "soared",
+     "they rose",
+     "they increased",
+     "they went up",
+     "went up sharply"
+    ],
+    "topic": "tourism"
+   },
+   {
+    "text": "The garden's apparent wildness is, in fact, the product of meticulous planning.",
+    "question": "What is the garden's wildness actually the product of?",
+    "acceptable_answers": [
+     "meticulous planning",
+     "careful planning",
+     "planning"
+    ],
+    "topic": "gardening"
+   },
+   {
+    "text": "The researchers concede that their model, though elegant, rests on an untested premise.",
+    "question": "What does the model rest on?",
+    "acceptable_answers": [
+     "an untested premise",
+     "untested premise",
+     "an untested assumption",
+     "an untested idea"
+    ],
+    "topic": "science"
+   },
+   {
+    "text": "Hailed as a panacea, the new irrigation system has instead exacerbated soil salinity.",
+    "question": "What has the system exacerbated?",
+    "acceptable_answers": [
+     "soil salinity",
+     "salinity",
+     "the soil's salinity",
+     "salt in the soil"
+    ],
+    "topic": "agriculture"
+   },
+   {
+    "text": "Her reticence during negotiations was misread as indifference rather than calculated restraint.",
+    "question": "What was her reticence misread as?",
+    "acceptable_answers": [
+     "indifference"
+    ],
+    "topic": "business"
+   },
+   {
+    "text": "The gallery's acquisition policy, ostensibly impartial, tacitly favours established names over newcomers.",
+    "question": "Whom does the policy tacitly favour?",
+    "acceptable_answers": [
+     "established names",
+     "established artists",
+     "well-known artists",
+     "well known artists",
+     "famous names"
+    ],
+    "topic": "arts"
+   },
+   {
+    "text": "So entrenched is the habit of commuting by car that even free buses barely dented it.",
+    "question": "What barely dented the habit?",
+    "acceptable_answers": [
+     "free buses",
+     "even free buses",
+     "the free buses"
+    ],
+    "topic": "transport"
+   },
+   {
+    "text": "The orchestra's austerity measures, however prudent fiscally, have eroded morale among its musicians.",
+    "question": "What have the measures eroded?",
+    "acceptable_answers": [
+     "morale",
+     "the musicians' morale",
+     "musicians' morale",
+     "morale among musicians"
+    ],
+    "topic": "music"
+   },
+   {
+    "text": "What the report omits is arguably more revealing than anything it actually states.",
+    "question": "What is arguably more revealing?",
+    "acceptable_answers": [
+     "what it omits",
+     "what the report omits",
+     "its omissions",
+     "the omissions",
+     "what is omitted",
+     "what it leaves out"
+    ],
+    "topic": "media"
+   },
+   {
+    "text": "The translation, scrupulously faithful to the original, nonetheless loses much of its wit.",
+    "question": "What does the translation lose?",
+    "acceptable_answers": [
+     "much of its wit",
+     "its wit",
+     "the wit",
+     "wit"
+    ],
+    "topic": "language"
+   },
+   {
+    "text": "The startup's valuation hinged less on revenue than on the founders' persuasive narrative.",
+    "question": "What did the valuation mainly hinge on?",
+    "acceptable_answers": [
+     "the founders' persuasive narrative",
+     "the founders' narrative",
+     "a persuasive narrative",
+     "persuasive narrative",
+     "the narrative",
+     "their narrative",
+     "the founders' story"
+    ],
+    "topic": "finance"
+   },
+   {
+    "text": "Billed as a cost-cutting exercise, the merger of the two departments was chiefly about control.",
+    "question": "What was the merger chiefly about?",
+    "acceptable_answers": [
+     "control"
+    ],
+    "topic": "management"
+   },
+   {
+    "text": "Attendance at the lectures waned once recordings were made freely available online.",
+    "question": "What caused attendance to wane?",
+    "acceptable_answers": [
+     "free online recordings",
+     "online recordings",
+     "recordings online",
+     "the recordings",
+     "free recordings",
+     "recordings being available"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "The hotel's understated elegance is a deliberate rebuke to the ostentation of its neighbours.",
+    "question": "What is the hotel's elegance a rebuke to?",
+    "acceptable_answers": [
+     "its neighbours' ostentation",
+     "the neighbours' ostentation",
+     "ostentation",
+     "the ostentation",
+     "its showy neighbours",
+     "its neighbours"
+    ],
+    "topic": "hospitality"
+   },
+   {
+    "text": "Paradoxically, the more choice consumers were offered, the less satisfied they reported feeling.",
+    "question": "What happened as consumers got more choice?",
+    "acceptable_answers": [
+     "they felt less satisfied",
+     "they were less satisfied",
+     "less satisfied",
+     "less satisfaction",
+     "satisfaction fell"
+    ],
+    "topic": "psychology"
+   },
+   {
+    "text": "The coach's sudden departure, framed as amicable, was in truth precipitated by a dressing-room revolt.",
+    "question": "What really precipitated the coach's departure?",
+    "acceptable_answers": [
+     "a dressing-room revolt",
+     "a dressing room revolt",
+     "dressing-room revolt",
+     "dressing room revolt",
+     "a players' revolt",
+     "a revolt",
+     "the revolt"
+    ],
+    "topic": "sport"
+   },
+   {
+    "text": "The vineyard's fortunes turned on a single unseasonal frost that wiped out the harvest.",
+    "question": "What wiped out the harvest?",
+    "acceptable_answers": [
+     "a single unseasonal frost",
+     "an unseasonal frost",
+     "unseasonal frost",
+     "a frost",
+     "the frost",
+     "frost"
+    ],
+    "topic": "agriculture"
+   },
+   {
+    "text": "Scant evidence supports the widely held notion that brain-training games boost intelligence.",
+    "question": "How much evidence supports the notion?",
+    "acceptable_answers": [
+     "scant",
+     "scant evidence",
+     "very little",
+     "little",
+     "hardly any",
+     "not much"
+    ],
+    "topic": "science"
+   },
+   {
+    "text": "The memoir's candour is disarming, though its chronology is at times maddeningly opaque.",
+    "question": "What is at times opaque?",
+    "acceptable_answers": [
+     "its chronology",
+     "the chronology",
+     "chronology",
+     "the memoir's chronology",
+     "the timeline"
+    ],
+    "topic": "literature"
+   },
+   {
+    "text": "Such was the clamour for tickets that the booking site buckled within minutes.",
+    "question": "What buckled within minutes?",
+    "acceptable_answers": [
+     "the booking site",
+     "booking site",
+     "the booking website",
+     "the website",
+     "the site"
+    ],
+    "topic": "events"
+   },
+   {
+    "text": "The city's much-vaunted cycle network remains, for the most part, fragmented and disjointed.",
+    "question": "How is the cycle network described?",
+    "acceptable_answers": [
+     "fragmented and disjointed",
+     "disjointed and fragmented",
+     "fragmented",
+     "disjointed"
+    ],
+    "topic": "urban planning"
+   },
+   {
+    "text": "That the drug works is not in dispute; how it works remains elusive.",
+    "question": "What remains elusive about the drug?",
+    "acceptable_answers": [
+     "how it works",
+     "the way it works",
+     "its mechanism",
+     "how it acts"
+    ],
+    "topic": "medicine"
+   },
+   {
+    "text": "The chef's reputation rests not on innovation but on an almost obsessive consistency.",
+    "question": "What does the chef's reputation rest on?",
+    "acceptable_answers": [
+     "consistency",
+     "obsessive consistency",
+     "an obsessive consistency",
+     "almost obsessive consistency"
+    ],
+    "topic": "food"
+   },
+   {
+    "text": "Previously dismissed as a fad, remote learning has proved remarkably durable in rural areas.",
+    "question": "Where has remote learning proved durable?",
+    "acceptable_answers": [
+     "in rural areas",
+     "rural areas",
+     "the countryside",
+     "in the countryside"
+    ],
+    "topic": "education"
+   },
+   {
+    "text": "The audit exposed a culture in which inconvenient data were quietly shelved rather than confronted.",
+    "question": "What happened to inconvenient data?",
+    "acceptable_answers": [
+     "it was quietly shelved",
+     "they were quietly shelved",
+     "quietly shelved",
+     "it was shelved",
+     "they were shelved",
+     "shelved"
+    ],
+    "topic": "governance"
+   },
+   {
+    "text": "The documentary's even-handedness, admirable in principle, occasionally shades into evasiveness.",
+    "question": "What does its even-handedness occasionally shade into?",
+    "acceptable_answers": [
+     "evasiveness",
+     "evasion",
+     "being evasive"
+    ],
+    "topic": "media"
+   },
+   {
+    "text": "Notwithstanding its modest budget, the film's production values rival those of far costlier works.",
+    "question": "What is modest about the film?",
+    "acceptable_answers": [
+     "its budget",
+     "the budget",
+     "the film's budget",
+     "budget"
+    ],
+    "topic": "film"
+   },
+   {
+    "text": "The township's water shortages stem not from scarcity but from decades of neglected infrastructure.",
+    "question": "What do the water shortages stem from?",
+    "acceptable_answers": [
+     "neglected infrastructure",
+     "decades of neglected infrastructure",
+     "decades of neglect",
+     "poor infrastructure",
+     "infrastructure neglect"
+    ],
+    "topic": "infrastructure"
+   },
+   {
+    "text": "The negotiator's apparent concession was in reality a carefully baited trap.",
+    "question": "What was the concession in reality?",
+    "acceptable_answers": [
+     "a trap",
+     "a carefully baited trap",
+     "a baited trap",
+     "trap"
+    ],
+    "topic": "negotiation"
+   },
+   {
+    "text": "The species, once presumed extinct, was rediscovered thriving in a remote ravine.",
+    "question": "Where was the species rediscovered?",
+    "acceptable_answers": [
+     "in a remote ravine",
+     "a remote ravine",
+     "remote ravine",
+     "in a ravine",
+     "a ravine"
+    ],
+    "topic": "wildlife"
+   },
+   {
+    "text": "Few anticipated that the modest pop-up shop would eclipse its parent store in sales.",
+    "question": "What did the pop-up shop eclipse?",
+    "acceptable_answers": [
+     "its parent store",
+     "the parent store",
+     "parent store",
+     "the main store"
+    ],
+    "topic": "retail"
+   },
+   {
+    "text": "The council's rhetoric on air quality is conspicuously at odds with its spending priorities.",
+    "question": "What is the rhetoric at odds with?",
+    "acceptable_answers": [
+     "its spending priorities",
+     "spending priorities",
+     "the spending priorities",
+     "its spending",
+     "spending"
+    ],
+    "topic": "environment"
+   },
+   {
+    "text": "Her prose, spare to the point of austerity, rewards a patient reader.",
+    "question": "What kind of reader does her prose reward?",
+    "acceptable_answers": [
+     "a patient reader",
+     "patient readers",
+     "patient",
+     "a patient one"
+    ],
+    "topic": "literature"
+   },
+   {
+    "text": "The archive's digitisation, long deferred, was finally expedited by an anonymous benefactor.",
+    "question": "Who expedited the digitisation?",
+    "acceptable_answers": [
+     "an anonymous benefactor",
+     "anonymous benefactor",
+     "a benefactor",
+     "an anonymous donor",
+     "a donor"
+    ],
+    "topic": "heritage"
+   },
+   {
+    "text": "Lauded for its transparency, the charity nonetheless declines to publish its executive salaries.",
+    "question": "What does the charity decline to publish?",
+    "acceptable_answers": [
+     "its executive salaries",
+     "executive salaries",
+     "the executive salaries",
+     "executive pay",
+     "salaries"
+    ],
+    "topic": "charity"
+   },
+   {
+    "text": "The team's dominance owes less to talent than to an unrelenting conditioning regime.",
+    "question": "What is the team's dominance chiefly due to?",
+    "acceptable_answers": [
+     "an unrelenting conditioning regime",
+     "its conditioning regime",
+     "the conditioning regime",
+     "a conditioning regime",
+     "conditioning",
+     "their conditioning",
+     "fitness training"
+    ],
+    "topic": "sport"
+   }
+  ]
+ }
+}
