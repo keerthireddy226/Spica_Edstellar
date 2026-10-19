@@ -33,8 +33,8 @@ export interface PracticeSummary {
   streakDays?: number;
   newBadges?: { id: string; title: string; icon: string }[];
   unitProgress?: { unitName: string; done: number; total: number; levelComplete: boolean } | null;
-  // After two strong (or weak) sets in a row: try the next level up (or down).
-  levelSuggestion?: { direction: "up" | "down"; unitId: string; unitName: string } | null;
+  // "My path" moved: a level passed (up) or two weak sets in a row (down).
+  pathChange?: { itemTypeId: string; typeName: string; skill: string; from: string; to: string; direction: "up" | "down" } | null;
 }
 
 // A sub-module's sets: how many, finished and started.
@@ -79,7 +79,7 @@ export function getTypeProgress(skill: string): Promise<{ types: TypeProgress[] 
   return api(`/practice/types?skill=${encodeURIComponent(skill)}`);
 }
 
-export function getUnits(itemTypeId: string, skill: string): Promise<{ units: PracticeUnit[] }> {
+export function getUnits(itemTypeId: string, skill: string): Promise<{ units: PracticeUnit[]; pathLevel?: string | null }> {
   return api(`/practice/units?itemTypeId=${encodeURIComponent(itemTypeId)}&skill=${encodeURIComponent(skill)}`);
 }
 
@@ -171,4 +171,28 @@ export interface ModuleReport extends Omit<ModuleHistoryEntry, "skill" | "itemTy
 
 export function getModuleReport(sessionId: string): Promise<ModuleReport> {
   return api(`/practice/session/${sessionId}/report`);
+}
+
+// "My path" for one skill: each question type's level and progress there.
+export interface PathType {
+  itemTypeId: string;
+  typeName: string;
+  level: string;
+  unitId: string;
+  unitName: string;
+  setsTotal: number;
+  setsDone: number;
+  accuracy: number | null;
+  setsToLevelUp: number;
+}
+
+export interface SkillPath {
+  skill: SkillTag;
+  level: string;
+  types: PathType[];
+  next: { setId: string; setName: string; itemTypeId: string; typeName: string; unitId: string; unitName: string; level: string; retake: boolean } | null;
+}
+
+export function getSkillPath(skill: SkillTag): Promise<SkillPath> {
+  return api(`/practice/path?skill=${skill}`);
 }

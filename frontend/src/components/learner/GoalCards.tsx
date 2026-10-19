@@ -119,12 +119,9 @@ function stepView(step: NextStep, skillName: (s: SkillTag) => string, modulesOn:
       return {
         icon: Sparkles,
         title: tr("{{type}} · {{level}} · {{set}}", { type: step.typeName, level: step.unitName.split(" ")[0], set: step.setName }),
-        why:
-          step.why === "weak_type"
-            ? tr("{{skill}} is your weakest skill, and you get {{pct}}% right in {{type}}. This set targets it.", { skill: skillName(step.skill), pct: step.accuracy ?? 0, type: step.typeName })
-            : step.why === "untried_type"
-              ? tr("{{skill}} is your weakest skill. You haven't tried {{type}} yet.", { skill: skillName(step.skill), type: step.typeName })
-              : tr("{{skill}} is your weakest skill. Keep going with {{type}}.", { skill: skillName(step.skill), type: step.typeName }),
+        why: step.retake
+          ? tr("{{skill}} is your weakest skill. You've done every {{level}} set of {{type}}; retake your weakest to pass the level.", { skill: skillName(step.skill), level: step.level, type: step.typeName })
+          : tr("{{skill}} is your weakest skill. Next on your {{level}} path: {{type}}.", { skill: skillName(step.skill), level: step.level, type: step.typeName }),
         cta: tr("Start this set"),
         href: `${ROUTES.MODULES}?skill=${step.skill}&set=${step.setId}`,
       };

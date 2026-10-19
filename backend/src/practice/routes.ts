@@ -13,7 +13,8 @@ import type { SkillTag } from "../placement/roadmapBuilder.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
-import { levelSuggestion, retryCounts, retryItems, RETRY_SET_SIZE } from "../learner/insights.js";
+import { retryCounts, retryItems, RETRY_SET_SIZE } from "../learner/insights.js";
+import { skillPath, updatePathAfterSet, pathLevels } from "../learner/path.js";
 
 export const practiceRouter = Router();
 
@@ -210,7 +211,12 @@ practiceRouter.get("/units", requireAuth, async (req: AuthedRequest, res, next) 
        ORDER BY u.order_index`,
       [itemTypeId, req.user!.id, skill],
     );
+    const pathLevel = ["listening", "speaking", "reading", "writing"].includes(skill)
+      ? (await pathLevels(req.user!.id, skill as SkillTag, [itemTypeId])).get(itemTypeId)
+      : undefined;
     res.json({
+      // This learner's "My path" level in this type, to mark "You are here".
+      pathLevel: pathLevel ?? null,
       // A unit can end up with 0 matching sets for this skill (e.g. an
       // uneven split) — filtered out rather than shown as an empty card.
       units: result.rows
@@ -635,6 +641,17 @@ practiceRouter.get("/session/:sessionId/report", requireAuth, async (req: Authed
   }
 });
 
+// "My path" for one skill: each question type's level and progress there,
+// and the set to do next.
+practiceRouter.get("/path", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const skill = z.enum(["listening", "speaking", "reading", "writing"]).parse(req.query.skill);
+    res.json(await skillPath(req.user!.id, skill));
+  } catch (err) {
+    next(err);
+  }
+});
+
 // How many wrong answers wait for a retry, per skill.
 practiceRouter.get("/retry", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -684,8 +701,8 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
       streakDays: stats.streakDays,
       newBadges,
       unitProgress: composition.setId ? await unitProgress(req.user!.id, composition.setId, composition.skill) : null,
-      levelSuggestion:
-        composition.setId && ctx.context.itemTypeId ? await levelSuggestion(req.user!.id, ctx.context.itemTypeId, composition.skill) : null,
+      // "My path" moved up (level passed) or down (two weak sets) by this set.
+      pathChange: composition.setId && !composition.retry ? await updatePathAfterSet(req.user!.id, composition.setId, composition.skill) : null,
       gradedCount: graded.length,
       correctCount,
       pendingCount,

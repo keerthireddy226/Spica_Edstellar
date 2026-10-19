@@ -86,8 +86,8 @@ export type NextStep =
       unitName: string;
       setId: string;
       setName: string;
-      why: "weak_type" | "untried_type" | "keep_going";
-      accuracy: number | null;
+      level: string;
+      retake: boolean;
     };
 
 export function getNextStep(): Promise<{ nextStep: NextStep | null; retry: Record<SkillTag, number> }> {

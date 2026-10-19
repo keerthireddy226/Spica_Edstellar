@@ -87,6 +87,7 @@ import { QuestionReview } from "@/components/report/FeedbackReportView";
 import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 import { Confetti } from "@/components/Confetti";
+import { MyPath } from "@/components/practice/MyPath";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -311,10 +312,44 @@ function SkillPicker({
 }
 
 // One card per question type in the picked skill; navigation layer only, reuses existing content.
-function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; starting: boolean; onBack: () => void; onSelect: (typeId: string) => void }) {
+// "My path" (the system picks the level and the next set) or "Browse all"
+// (pick any type and level); the choice is remembered on this device.
+const TAB_KEY = "spica.modulesTab";
+function loadTab(): "path" | "browse" {
+  try {
+    return localStorage.getItem(TAB_KEY) === "browse" ? "browse" : "path";
+  } catch {
+    return "path";
+  }
+}
+
+function TypePicker({
+  skill,
+  starting,
+  onBack,
+  onSelect,
+  onStartSet,
+  onOpenUnit,
+}: {
+  skill: SkillTag;
+  starting: boolean;
+  onBack: () => void;
+  onSelect: (typeId: string) => void;
+  onStartSet: (itemTypeId: string, setId: string) => void;
+  onOpenUnit: (itemTypeId: string, unitId: string, unitName: string) => void;
+}) {
   const { t } = useTranslation();
   const Icon = SKILL_ICONS[skill];
   const types = SKILL_TYPES[skill];
+  const [tab, setTab] = useState(loadTab);
+  const pickTab = (next: "path" | "browse") => {
+    setTab(next);
+    try {
+      localStorage.setItem(TAB_KEY, next);
+    } catch {
+      // Not remembered; the tab still switches.
+    }
+  };
   // Sets done and started per sub-module, so the learner sees what they've tried.
   const [progress, setProgress] = useState<Record<string, TypeProgress>>({});
   useEffect(() => {
@@ -330,11 +365,33 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
         backLabel={t("modules.backToSkills")}
         eyebrow={tr("{{length}} question types", { length: types.length })}
         title={`${t(`skills.${skill}`)} Practice`}
-        subtitle={t("modules.pickTypeSubtitle")}
+        subtitle={tab === "path" ? tr("Your level and your next set, picked from your results.") : t("modules.pickTypeSubtitle")}
         icon={Icon}
         compact
       />
 
+      <div className="flex gap-2" role="tablist">
+        {(
+          [
+            ["path", tr("My path")],
+            ["browse", tr("Browse all")],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={tab === k}
+            onClick={() => pickTab(k)}
+            className={`text-sm px-4 py-1.5 rounded-pill border cursor-pointer ${tab === k ? "bg-navy text-white border-navy" : "border-rule text-muted hover:text-ink"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "path" ? (
+        <MyPath skill={skill} starting={starting} onStartSet={onStartSet} onOpenUnit={onOpenUnit} />
+      ) : (
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {types.map((typeId, i) => {
           const meta = ITEM_TYPE_META[typeId];
@@ -374,6 +431,7 @@ function TypePicker({ skill, starting, onBack, onSelect }: { skill: SkillTag; st
           );
         })}
       </div>
+      )}
     </div>
   );
 }
@@ -496,11 +554,14 @@ function TypeProgressLine({ p }: { p: TypeProgress | undefined }) {
 // Shown only if the picked type has units — types without any skip straight to the old count-based start.
 function UnitPicker({
   units,
+  pathLevel,
   loading,
   onBack,
   onSelect,
 }: {
   units: PracticeUnit[];
+  // The learner's "My path" level in this type: marks "You are here".
+  pathLevel: string | null;
   loading: boolean;
   onBack: () => void;
   onSelect: (unit: PracticeUnit) => void;
@@ -533,6 +594,10 @@ function UnitPicker({
           {units.map((unit) => {
             const percent = unit.setCount > 0 ? Math.round((unit.completedCount / unit.setCount) * 100) : 0;
             const done = unit.setCount > 0 && unit.completedCount === unit.setCount;
+            const LV = ["A1", "A2", "B1", "B2", "C1", "C2"];
+            const at = LV.indexOf(unit.name.slice(0, 2));
+            const here = pathLevel ? LV.indexOf(pathLevel) : -1;
+            const mark = here < 0 || at < 0 ? null : at === here ? "here" : at < here ? "review" : "next";
             return (
               <button
                 key={unit.id}
@@ -547,10 +612,16 @@ function UnitPicker({
                   </span>
                 </ProgressRing>
                 <div className="flex-1 min-w-0">
-                  <div className="font-display font-bold text-base text-ink">{unit.name}</div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-display font-bold text-base text-ink">{unit.name}</span>
+                    {mark === "here" && <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-pill bg-navy text-white">{tr("You are here")}</span>}
+                    {mark === "review" && <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill bg-success/15 text-success">{tr("Review")}</span>}
+                    {mark === "next" && <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill bg-rule text-muted">{tr("Next")}</span>}
+                  </div>
                   <div className="text-xs text-muted mt-0.5">
                     {done ? t("modules.unitComplete") : t("modules.setsProgress", { done: unit.completedCount, total: unit.setCount })}
                   </div>
+                  {mark === "next" && pathLevel && <div className="text-[11px] text-muted mt-0.5">{tr("Recommended after {{level}}", { level: pathLevel })}</div>}
                 </div>
                 <ChevronRight size={20} className="text-muted shrink-0 transition-transform group-hover:translate-x-1" />
               </button>
@@ -652,6 +723,7 @@ function ModulesPage() {
   // straight to the old count-based pendingStart automatically.
   const [pickerType, setPickerType] = useState<{ skill: SkillTag; itemTypeId: string } | null>(null);
   const [units, setUnits] = useState<PracticeUnit[]>([]);
+  const [pathLevel, setPathLevel] = useState<string | null>(null);
   const [loadingUnits, setLoadingUnits] = useState(false);
   // A unit picked — shows SetPicker next.
   const [pickerUnit, setPickerUnit] = useState<{ skill: SkillTag; itemTypeId: string; unitId: string; unitName: string } | null>(
@@ -735,6 +807,7 @@ function ModulesPage() {
           updateBrowseParams(null);
         } else {
           setUnits(res.units);
+          setPathLevel(res.pathLevel ?? null);
         }
       })
       .catch(() => {
@@ -1250,6 +1323,7 @@ function ModulesPage() {
       return (
         <UnitPicker
           units={units}
+          pathLevel={pathLevel}
           loading={loadingUnits}
           onBack={() => {
             setPickerType(null);
@@ -1274,6 +1348,15 @@ function ModulesPage() {
           onSelect={(typeId) => {
             setPickerType({ skill: pickerSkill, itemTypeId: typeId });
             updateBrowseParams({ pSkill: pickerSkill, pType: typeId });
+          }}
+          onStartSet={(itemTypeId, setId) => {
+            setPendingStart({ skill: pickerSkill, itemTypeId, setId });
+            updateBrowseParams(null);
+          }}
+          onOpenUnit={(itemTypeId, unitId, unitName) => {
+            setPickerType({ skill: pickerSkill, itemTypeId });
+            setPickerUnit({ skill: pickerSkill, itemTypeId, unitId, unitName });
+            updateBrowseParams({ pSkill: pickerSkill, pType: itemTypeId, pUnit: unitId, pUnitName: unitName });
           }}
         />
       );
@@ -1333,19 +1416,10 @@ function ModulesPage() {
     const levelDone = !!progress?.levelComplete;
     // Celebrate a decent set (and every finished level); a weak one gets encouragement instead.
     const celebrate = pending < total && (pct >= 50 || levelDone);
-    const suggestion = summary.levelSuggestion;
-    const openUnit = (unitId: string, unitName: string) => {
-      resetToPicker();
-      if (c?.skill && c.itemTypeId) {
-        setPickerSkill(c.skill);
-        setPickerType({ skill: c.skill, itemTypeId: c.itemTypeId });
-        setPickerUnit({ skill: c.skill, itemTypeId: c.itemTypeId, unitId, unitName });
-        updateBrowseParams({ pSkill: c.skill, pType: c.itemTypeId, pUnit: unitId, pUnitName: unitName });
-      }
-    };
+    const change = summary.pathChange;
     return (
       <div className="max-w-3xl mx-auto w-full flex flex-col gap-5">
-        {celebrate && <Confetti key={sessionId ?? "done"} pieces={levelDone ? 160 : 90} />}
+        {(celebrate || change?.direction === "up") && <Confetti key={sessionId ?? "done"} pieces={levelDone || change?.direction === "up" ? 160 : 90} />}
         <div className="bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
           <p className="text-xs uppercase tracking-wide text-muted">
             {[c?.skill ? t(`skills.${c.skill}`) : null, c?.retry ? tr("Mistakes to retry") : c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
@@ -1384,16 +1458,33 @@ function ModulesPage() {
               </p>
             </div>
           )}
-          {suggestion && (
-            <div className="rounded-card bg-navy/5 border border-navy/20 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+          {change && (
+            <div
+              className={`rounded-card px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3 ${change.direction === "up" ? "bg-success/10 border border-success/30" : "bg-navy/5 border border-navy/20"}`}
+            >
               <p className="text-sm text-ink flex-1">
-                {suggestion.direction === "up"
-                  ? tr("Two strong sets in a row. You're ready to try {{level}}.", { level: suggestion.unitName })
-                  : tr("These sets are hard right now. Build up at {{level}} first, then come back.", { level: suggestion.unitName })}
+                {change.direction === "up" ? (
+                  <>
+                    <span className="font-semibold">{tr("Level up: {{from}} → {{to}}", { from: change.from, to: change.to })}</span>{" "}
+                    {tr("You passed {{from}} in {{type}}. Your path now continues at {{to}}.", { from: change.from, type: change.typeName, to: change.to })}
+                  </>
+                ) : (
+                  tr("Two hard sets in a row. Your {{type}} path moves to {{to}} to build up, then back to {{from}}.", { type: change.typeName, to: change.to, from: change.from })
+                )}
               </p>
-              <Button variant="secondary" onClick={() => openUnit(suggestion.unitId, suggestion.unitName)} className="shrink-0">
-                {suggestion.direction === "up" ? tr("Try {{level}}", { level: suggestion.unitName.split(" ")[0] }) : tr("Practise {{level}}", { level: suggestion.unitName.split(" ")[0] })}
-              </Button>
+              {c?.skill && (
+                <Button
+                  variant={change.direction === "up" ? "primary" : "secondary"}
+                  onClick={() => {
+                    resetToPicker();
+                    setPickerSkill(c.skill!);
+                    updateBrowseParams({ pSkill: c.skill! });
+                  }}
+                  className="shrink-0"
+                >
+                  {tr("Continue my path")}
+                </Button>
+              )}
             </div>
           )}
           {summary.failedCount > 0 && <p className="text-sm text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>}

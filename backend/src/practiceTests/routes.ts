@@ -11,6 +11,7 @@ import { passThresholdForLevel } from "../placement/cefr.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
+import { raisePathFromMock } from "../learner/path.js";
 import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
@@ -721,6 +722,10 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
         JSON.stringify({ cefrLevel: level?.cefrLevel ?? null, skillLevels: level?.skillLevels ?? null, overallPercent: overall, scoreBand: bandForLevel(scale, level?.cefrLevel) }),
       ]);
       await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
+      // A full mock's level per skill lifts the learner's Practice Modules path.
+      if (deliveryMode === "mock" && !composition.shortForm) {
+        await raisePathFromMock(req.user!.id, (level?.skillLevels as Record<string, string | null> | undefined) ?? null).catch((err) => console.error("raisePathFromMock failed:", err));
+      }
     }
     res.json({
       testCode: sessionExists.rows[0].test_code,
