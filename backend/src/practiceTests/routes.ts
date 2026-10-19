@@ -682,7 +682,12 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
        WHERE a.session_id = $1`,
       [req.params.sessionId],
     );
-    const rows = summaryResult.rows;
+    // A question left blank (skipped, or never reached) counts as wrong in
+    // every figure: the percentage, the skill levels and the sections. It used
+    // to be left out, so 2 right answers out of 42 questions showed as 100%.
+    const isBlank = (r: { response_text: string | null; response_uri: string | null }) => !r.response_text && !r.response_uri;
+    const skippedCount = summaryResult.rows.filter((r) => r.status === "pending" && isBlank(r)).length;
+    const rows = summaryResult.rows.map((r) => (r.status === "pending" && isBlank(r) ? { ...r, status: "scored", content_score: 0 } : r));
     const graded = rows.filter((r) => r.status === "scored");
     const rowCorrect = (r: (typeof rows)[number]) =>
       isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
@@ -691,9 +696,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     // real answer that's still waiting on AI grading, vs. a question left
     // blank (Skip, or never reached) — the latter will never grade itself,
     // so lumping it into "still being reviewed" is misleading.
-    const pendingRows = rows.filter((r) => r.status === "pending");
-    const skippedCount = pendingRows.filter((r) => !r.response_text && !r.response_uri).length;
-    const pendingCount = pendingRows.length - skippedCount;
+    const pendingCount = rows.filter((r) => r.status === "pending").length;
     const failedCount = rows.filter((r) => r.status === "failed").length;
 
     const partLabels = [...new Set(rows.map((r) => r.part_label))];

@@ -385,8 +385,8 @@
       "overall": "Overall score",
       "sectionResults": "Section results",
       "testType": "Test",
-      "skippedNote": "{{count}} question was left blank or skipped, and won't count toward your level.",
-      "skippedNote_other": "{{count}} questions were left blank or skipped, and won't count toward your level."
+      "skippedNote": "{{count}} question was left blank or skipped, and counts as wrong.",
+      "skippedNote_other": "{{count}} questions were left blank or skipped, and count as wrong."
     },
     "overview": {
       "title": "Before you begin",
