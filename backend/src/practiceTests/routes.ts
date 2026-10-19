@@ -283,18 +283,22 @@ practiceTestsRouter.get("/program", requireAuth, async (req: AuthedRequest, res,
 });
 
 // This product's 5 exam sets, each with its item count and this learner's completion.
-// Whether a practice set is still locked: an earlier set of its test type
-// (by code) isn't finished yet.
+// Whether a practice set is still locked: the set before it (by code) isn't
+// completed yet, i.e. finished with every question answered.
 async function practiceSetLocked(userId: string, examId: string): Promise<boolean> {
   const r = await pool.query(
     `SELECT e.id,
        EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice'
-               AND s.completed_at IS NOT NULL AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true') AS finished
+               AND s.completed_at IS NOT NULL AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true') AS finished,
+       EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice'
+               AND s.completed_at IS NOT NULL AND s.composition->>'examId' = e.id::text
+               AND (SELECT count(*) FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+                   >= jsonb_array_length(coalesce(s.composition->'itemIds', '[]'::jsonb))) AS completed
      FROM exams e WHERE e.is_active AND e.test_type_id = (SELECT test_type_id FROM exams WHERE id = $2) ORDER BY e.code`,
     [userId, examId],
   );
   const at = r.rows.findIndex((x) => x.id === examId);
-  return at > 0 && !r.rows[at - 1].finished && !r.rows[at].finished;
+  return at > 0 && !r.rows[at - 1].completed && !r.rows[at].finished;
 }
 
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -315,9 +319,8 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
              AND s.composition->>'examId' = e.id::text
              -- Every item answered with a real response, not skipped blank —
              -- completed_at alone only means "reached the end of the list".
-             AND NOT EXISTS (
-               SELECT 1 FROM attempts a WHERE a.session_id = s.id AND a.response_text IS NULL AND a.response_uri IS NULL
-             )
+             AND (SELECT count(*) FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+                 >= jsonb_array_length(coalesce(s.composition->'itemIds', '[]'::jsonb))
          ) AS completed,
          -- An open practice session to resume (doesn't count against the monthly limit again).
          EXISTS (
@@ -340,7 +343,7 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
     const forms = await practiceForms(testType.id, req.user!.id);
     res.json({
       exams: [
-        // Sets open one at a time: each unlocks when the one before is finished.
+        // Sets open one at a time: each unlocks when the one before is completed.
         ...result.rows.map((r, i) => ({
           id: r.id,
           code: r.code,
@@ -350,7 +353,8 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
           completed: r.completed,
           inProgress: r.in_progress,
           finished: r.finished,
-          locked: i > 0 && !result.rows[i - 1].finished && !r.finished && !r.in_progress,
+          // Unlocked once the set before is completed: every question answered.
+          locked: i > 0 && !result.rows[i - 1].completed && !r.finished && !r.in_progress,
           lockedBy: i > 0 ? result.rows[i - 1].name : null,
           source: "set",
         })),

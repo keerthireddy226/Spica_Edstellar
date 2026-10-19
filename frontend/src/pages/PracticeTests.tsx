@@ -1415,7 +1415,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         <div className="flex items-center gap-2 -mb-2">
           <BookOpenCheck size={18} className="text-accent" />
           <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
-          <span className="text-sm text-muted">{tr("Pause any time, go back, and see the right answer after each question.")}</span>
+          <span className="text-sm text-muted">
+            {tr("Pause any time, go back, and see the right answer after each question.")} {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
+          </span>
         </div>
         {practiceLeft === 0 && (
           <p className="text-sm text-muted -mt-2">
@@ -1456,6 +1458,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>
                   )}
                 </div>
+                {exam.finished && !exam.completed && exams?.[i + 1]?.locked && (
+                  <p className="text-xs text-warning -mt-1">{tr("Finished with questions skipped. Retake it and answer every question to unlock Set {{n}}.", { n: i + 2 })}</p>
+                )}
                 <Button
                   onClick={() => {
                     // Every Start or Retake gets its own check.
@@ -1470,7 +1475,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                 >
                   {exam.locked ? (
                     <span className="flex items-center justify-center gap-1.5">
-                      <Lock size={15} /> {tr("Finish Set {{n}} to unlock", { n: i })}
+                      <Lock size={15} /> {tr("Complete Set {{n}} to unlock", { n: i })}
                     </span>
                   ) : exam.inProgress ? (
                     tr("Resume")
