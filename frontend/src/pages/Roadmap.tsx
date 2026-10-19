@@ -210,11 +210,12 @@ export function Roadmap() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-5">
           <ThisWeek j={journeyData} />
-          <GroupBoardCard />
         </div>
       </div>
 
       <Checkpoints j={journeyData} />
+
+      <GroupBoardCard />
 
       <SkillProgress j={journeyData} />
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Trophy, TrendingUp, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { getGroupBoard, setBoardNameHidden, type GroupBoard } from "@/api/me";
 import { tr } from "@/i18n/tr";
 
@@ -24,13 +24,21 @@ export function GroupBoardCard() {
     await setBoardNameHidden(next).catch(() => setB({ ...b }));
   };
 
+  // The top 5, plus the learner's own row when they're below it.
+  const rows = [...(b.top ?? [])];
+  const meShown = rows.some((r) => r.me);
+
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display font-bold text-base text-ink flex items-center gap-2">
           <Users size={17} className="text-accent" /> {tr("Your group this week")}
+          <span className="text-xs font-normal text-muted">· {b.group}</span>
         </h2>
-        <span className="text-xs text-muted">{b.group}</span>
+        <label className="flex items-center gap-1.5 text-[11px] text-muted cursor-pointer">
+          <input type="checkbox" checked={!!b.hidden} onChange={toggleHidden} />
+          {tr("Hide my name")}
+        </label>
       </div>
 
       {b.quiet ? (
@@ -42,65 +50,46 @@ export function GroupBoardCard() {
           })}
         </p>
       ) : (
-        <>
-          <div className="flex items-center gap-3">
-            <span className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${b.topHalf ? "bg-warning/15 text-warning" : "bg-navy/10 text-navy-deep"}`}>
-              {b.topHalf ? <Trophy size={22} /> : <TrendingUp size={22} />}
-            </span>
-            <div className="min-w-0">
-              <p className="font-semibold text-ink">
-                {b.topHalf
-                  ? tr("You're in the top {{p}}% of your group 🔥", { p: b.topPercent })
-                  : b.climbed && b.climbed > 0
-                    ? tr("You climbed {{n}} places since last week", { n: b.climbed })
-                    : tr("{{n}} more points puts you in the top half", { n: b.pointsToTopHalf })}
-              </p>
-              <p className="text-xs text-muted">
-                {tr("{{points}} points this week", { points: b.points?.points ?? 0 })}
-                {!b.topHalf && b.pointsToTopHalf
-                  ? ` · ${
-                      b.climbed && b.climbed > 0
-                        ? tr("{{n}} more to reach the top half (about {{s}} sets)", { n: b.pointsToTopHalf, s: Math.max(1, Math.ceil(b.pointsToTopHalf / POINTS_PER_SET)) })
-                        : tr("about {{n}} more sets", { n: Math.max(1, Math.ceil(b.pointsToTopHalf / POINTS_PER_SET)) })
-                    }`
-                  : ""}
-                {b.topHalf ? ` · ${tr("#{{rank}} of {{size}}", { rank: b.rank, size: b.size })}` : ""}
-              </p>
-            </div>
-          </div>
-          <ol className="flex flex-col gap-1">
-            {(b.top ?? []).map((row, i) => (
+        <table className="w-full text-sm">
+          <caption className="text-left text-xs text-muted pb-2">
+            {b.topHalf
+              ? tr("You're in the top {{p}}% of your group 🔥", { p: b.topPercent })
+              : b.climbed && b.climbed > 0
+                ? tr("You climbed {{n}} places since last week. {{m}} more points puts you in the top half.", { n: b.climbed, m: b.pointsToTopHalf })
+                : tr("{{n}} more points puts you in the top half (about {{s}} sets).", {
+                    n: b.pointsToTopHalf,
+                    s: Math.max(1, Math.ceil((b.pointsToTopHalf ?? 0) / POINTS_PER_SET)),
+                  })}
+          </caption>
+          <thead>
+            <tr className="text-left text-xs text-muted border-b border-rule">
+              <th className="py-2 pr-3 w-12 font-semibold">{tr("Rank")}</th>
+              <th className="py-2 pr-3 font-semibold">{tr("Learner")}</th>
+              <th className="py-2 pr-3 w-24 font-semibold">{tr("Level")}</th>
+              <th className="py-2 pr-2 w-24 text-right font-semibold">{tr("Points")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
               <BoardRow key={i} rank={row.rank} name={row.me ? tr("You") : (row.name ?? tr("A learner"))} points={row.points} me={row.me} level={row.me ? b.myLevel : null} />
             ))}
-            {/* Outside the top 5: the learner's own place, below a gap. */}
-            {!(b.top ?? []).some((r) => r.me) && b.rank && (
-              <>
-                <li className="text-center text-xs text-muted leading-none" aria-hidden="true">⋮</li>
-                <BoardRow rank={b.rank} name={tr("You")} points={b.points?.points ?? 0} me level={b.myLevel} />
-              </>
-            )}
-          </ol>
-        </>
+            {!meShown && b.rank ? <BoardRow rank={b.rank} name={tr("You")} points={b.points?.points ?? 0} me level={b.myLevel} /> : null}
+          </tbody>
+        </table>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted">
-        <span>{tr("Points: 10 a set, 2 a right answer, 25 a test, 5 a day you practise. A new week starts every Monday.")}</span>
-        <label className="flex items-center gap-1.5 cursor-pointer">
-          <input type="checkbox" checked={!!b.hidden} onChange={toggleHidden} />
-          {tr("Hide my name")}
-        </label>
-      </div>
+      <p className="text-[11px] text-muted">{tr("Points: 10 a set, 2 a right answer, 25 a test, 5 a day you practise. A new week starts every Monday.")}</p>
     </section>
   );
 }
 
 function BoardRow({ rank, name, points, me, level }: { rank: number; name: string; points: number; me: boolean; level?: string | null }) {
   return (
-    <li className={`flex items-center gap-3 rounded-input px-3 py-1.5 text-sm ${me ? "bg-accent/10 border border-accent/30" : "bg-paper-warm/50"}`}>
-      <span className="w-6 text-center font-display font-bold text-ink">{rank}</span>
-      <span className={`flex-1 truncate ${me ? "font-semibold text-ink" : "text-ink"}`}>{name}</span>
-      {me && level && <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-navy/10 text-navy-deep">{tr("Level {{level}}", { level })}</span>}
-      <span className="text-xs text-muted w-14 text-right">{tr("{{n}} pts", { n: points })}</span>
-    </li>
+    <tr className={`border-b border-rule last:border-0 ${me ? "bg-accent/10 font-semibold" : ""}`}>
+      <td className="py-2 pr-3 pl-2 font-display font-bold text-ink">{rank}</td>
+      <td className="py-2 pr-3 text-ink">{name}</td>
+      <td className="py-2 pr-3 text-ink">{me && level ? level : <span className="text-muted">—</span>}</td>
+      <td className="py-2 pr-2 text-right text-ink">{points}</td>
+    </tr>
   );
 }
