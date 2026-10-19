@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import type { CefrLevel, SkillTag } from "@/api/testSession";
+import type { NextStep, PaceStatus } from "@/api/dashboard";
 
 export interface RoadmapMilestone {
   level: CefrLevel;
@@ -41,4 +42,38 @@ export interface RoadmapData {
 
 export function getRoadmap(): Promise<RoadmapData> {
   return api("/roadmap");
+}
+
+// "My journey": progress to the goal, the levels still to reach, this week's
+// tasks and the checkpoints up to the exam.
+export interface JourneyTask {
+  id: string;
+  kind: "sets" | "practice_test" | "retry" | "level_check" | "mock";
+  done: boolean;
+  count?: number;
+  target?: number;
+  skill?: SkillTag;
+  date?: string;
+  href: string;
+}
+
+export interface Journey {
+  current: string | null;
+  goal: string | null;
+  startLevel: string | null;
+  goalReached: boolean;
+  examDate: string | null;
+  daysLeft: number | null;
+  pace: PaceStatus;
+  minutesPerDay: number | null;
+  progressPercent: number;
+  skills: { skill: SkillTag; level: string; startLevel: string | null; progressPercent: number; partWay: number }[];
+  steps: { level: string; skills: { skill: SkillTag; state: "done" | "now" | "later"; partWay: number }[] }[];
+  week: JourneyTask[];
+  checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag }[];
+  nextStep: NextStep | null;
+}
+
+export function getJourney(): Promise<Journey> {
+  return api("/roadmap/journey");
 }

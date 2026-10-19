@@ -30,7 +30,9 @@ import { Mascot } from "@/components/Mascot";
 import { ProgressRing } from "@/components/ProgressRing";
 import { useAuth } from "@/hooks/useAuth";
 import { LearnerHero, LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
-import { GoalCountdownCard, NextStepCard } from "@/components/learner/GoalCards";
+import { NextStepCard } from "@/components/learner/GoalCards";
+import { JourneySummary } from "@/components/journey/JourneyParts";
+import { getJourney, type Journey } from "@/api/roadmap";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 import {
   getDashboard,
@@ -336,6 +338,13 @@ function LearnerDashboard() {
   const navigate = useNavigate();
   const modulesOn = useModulesEnabled();
   const [data, setData] = useState<DashboardData | null>(null);
+  // The plan in short (full page: My journey).
+  const [journey, setJourney] = useState<Journey | null>(null);
+  useEffect(() => {
+    getJourney()
+      .then(setJourney)
+      .catch(() => setJourney(null));
+  }, []);
   const [notReady, setNotReady] = useState<{ scheduledFor: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -402,7 +411,7 @@ function LearnerDashboard() {
           <>
             <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)}>
               <span className="flex items-center gap-1.5">
-                <Map size={18} strokeWidth={1.8} /> {t("dashboardHome.viewRoadmap")}
+                <Map size={18} strokeWidth={1.8} /> {tr("My journey")}
               </span>
             </Button>
             <Button onClick={() => navigate(modulesOn ? `${ROUTES.MODULES}?skill=${startSkill}` : ROUTES.PRACTICE_TESTS)}>
@@ -423,7 +432,7 @@ function LearnerDashboard() {
 
       <KeepGoingCard />
 
-      {data.goal && <GoalCountdownCard goal={data.goal} level={data.currentLevel ?? data.englishLevel?.cefr ?? null} />}
+      {journey && <JourneySummary j={journey} />}
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 

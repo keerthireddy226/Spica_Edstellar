@@ -105,7 +105,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
         <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
           <Link to={ROUTES.ROADMAP} onClick={go} className={navClasses(location.pathname === ROUTES.ROADMAP)}>
             <Map size={22} strokeWidth={1.8} />
-            {t("nav.roadmap")}
+            {tr("My journey")}
           </Link>
 
           <NavEntry

@@ -2,9 +2,19 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { overallFromSkills, pathSummary } from "../learner/path.js";
+import { journey } from "../learner/journey.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 
 export const roadmapRouter = Router();
+
+// "My journey": progress to the goal, levels to reach, this week's tasks and checkpoints.
+roadmapRouter.get("/journey", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json(await journey(req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+});
 
 roadmapRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   try {

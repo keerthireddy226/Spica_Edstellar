@@ -1,92 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { CalendarClock, ArrowRight, RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ROUTES } from "@/constants/routes";
-import { getNextStep, type GoalStatus, type PaceStatus } from "@/api/dashboard";
+import { getNextStep } from "@/api/dashboard";
 import { stepView } from "@/lib/nextStepView";
 import type { SkillTag } from "@/api/testSession";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { tr } from "@/i18n/tr";
-
-const PACE: Record<PaceStatus, { label: () => string; cls: string }> = {
-  new: { label: () => tr("Just started"), cls: "bg-navy/10 text-navy-deep" },
-  on_track: { label: () => tr("On track"), cls: "bg-success/15 text-success" },
-  slightly_behind: { label: () => tr("Slightly behind"), cls: "bg-warning/15 text-warning" },
-  behind: { label: () => tr("Behind plan"), cls: "bg-error/10 text-error" },
-};
-
-// Days to the exam (or a prompt to set the date), the goal level, and whether
-// this week's practice keeps pace with the daily plan.
-export function GoalCountdownCard({ goal, level }: { goal: GoalStatus; level: string | null }) {
-  const navigate = useNavigate();
-  const pace = PACE[goal.pace];
-  const weekTarget = (goal.minutesPerDay ?? 0) * 7;
-  const weekPct = weekTarget ? Math.min(100, Math.round((goal.minutesLast7Days / weekTarget) * 100)) : 0;
-  const urgent = goal.daysLeft !== null && goal.daysLeft <= 14;
-  const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-  const reached = !!level && !!goal.goalLevel && LEVELS.indexOf(level) >= LEVELS.indexOf(goal.goalLevel);
-  return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col sm:flex-row gap-5">
-      <div
-        className={`sm:w-40 shrink-0 rounded-2xl flex flex-col items-center justify-center text-center px-4 py-4 ${urgent ? "bg-error/10 text-error" : "bg-navy/10 text-navy-deep"}`}
-      >
-        {goal.daysLeft !== null ? (
-          <>
-            <span className="font-display font-bold text-4xl leading-none">{goal.daysLeft}</span>
-            <span className="text-xs font-semibold mt-1">{goal.daysLeft === 1 ? tr("day to your exam") : tr("days to your exam")}</span>
-          </>
-        ) : (
-          <>
-            <CalendarClock size={28} />
-            <span className="text-xs font-semibold mt-2">{tr("No exam date yet")}</span>
-          </>
-        )}
-      </div>
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-display font-bold text-lg text-ink">
-            {goal.goalLevel
-              ? goal.examDate
-                ? tr("Goal: {{goal}} by {{date}}", { goal: goal.goalLevel, date: new Date(goal.examDate).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) })
-                : tr("Goal: {{goal}}", { goal: goal.goalLevel })
-              : tr("Set your goal")}
-          </p>
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${pace.cls}`}>{pace.label()}</span>
-        </div>
-        <p className="text-sm text-muted">
-          {reached
-            ? tr("You've reached {{goal}}. Keep practising so it holds on exam day.", { goal: goal.goalLevel }) + " "
-            : level && goal.goalLevel
-              ? tr("You're at {{level}} now.", { level }) + " "
-              : ""}
-          {goal.daysLeft === null
-            ? tr("Add your exam date so your plan counts down to it.")
-            : goal.pace === "behind" || goal.pace === "slightly_behind"
-              ? tr("Practise a little every day to catch up before the exam.")
-              : tr("Keep your daily practice going to arrive ready.")}
-        </p>
-        {goal.minutesPerDay ? (
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-xs text-muted">
-              <span>{tr("This week: {{done}} of {{target}} minutes", { done: goal.minutesLast7Days, target: weekTarget })}</span>
-              <span>{tr("{{n}} min a day", { n: goal.minutesPerDay })}</span>
-            </div>
-            <div className="h-2 rounded-pill bg-rule overflow-hidden">
-              <div className="h-full rounded-pill bg-success" style={{ width: `${weekPct}%` }} />
-            </div>
-          </div>
-        ) : null}
-      </div>
-      {(goal.daysLeft === null || !goal.goalLevel) && (
-        <Button variant="secondary" onClick={() => navigate(ROUTES.PROFILE)} className="self-start sm:self-center shrink-0">
-          {goal.goalLevel ? tr("Add exam date") : tr("Set goal")}
-        </Button>
-      )}
-    </div>
-  );
-}
 
 // "Your next step": one recommendation from the learner's own results, plus
 // the wrong answers waiting for a retry in each skill.
