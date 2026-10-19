@@ -9,7 +9,8 @@ import { dateOnly } from "../lib/dateOnly.js";
 import { goalStatus, nextStep, retryCounts, type GoalStatus, type NextStep } from "./insights.js";
 import { LEVELS, PASS_SETS, overallFromSkills, skillPath, type Level, type SkillPath } from "./path.js";
 import { quotaUsage } from "../programs/quotas.js";
-import { scheduleTests } from "./testSchedule.js";
+import { scheduleTests, type Slot } from "./testSchedule.js";
+import { learnerProgram } from "../programs/service.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -67,6 +68,8 @@ export interface Journey {
     onReset?: boolean;
   }[];
   nextStep: NextStep | null;
+  // Where the test plan comes from: the organization's program, or the plan's allowance.
+  planSource: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
 }
 
 export async function journey(userId: string): Promise<Journey> {
@@ -161,15 +164,22 @@ export async function journey(userId: string): Promise<Journey> {
   const lastMock = lastOf("mock");
   const examDate = goal.examDate;
   const quota = await quotaUsage(userId).catch(() => null);
-  const slots = scheduleTests({
-    today: new Date(),
-    examDate: examDate ? new Date(examDate) : null,
-    lastPractice: lastPractice ? new Date(lastPractice) : null,
-    lastMock: lastMock ? new Date(lastMock) : null,
-    mocksPerMonth: quota ? quota.mocksPerMonth : 2,
-    mocksLeft: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null,
-    resetsOn: quota ? new Date(quota.resetsOn) : null,
-  });
+  // An organization's program sets the dates itself; otherwise the plan's
+  // monthly allowance spaces the tests.
+  const program = await learnerProgram(userId).catch(() => null);
+  const slots: Slot[] = program?.upcoming.length
+    ? program.upcoming.map((x) => ({ date: new Date(x.dueOn), kind: x.kind === "mock" ? ("mock" as const) : ("practice_test" as const) }))
+    : scheduleTests({
+        today: new Date(),
+        examDate: examDate ? new Date(examDate) : null,
+        lastPractice: lastPractice ? new Date(lastPractice) : null,
+        lastMock: lastMock ? new Date(lastMock) : null,
+        mocksPerMonth: quota ? quota.mocksPerMonth : 2,
+        mocksLeft: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null,
+        practicePerMonth: quota ? quota.practicePerMonth : null,
+        practiceLeft: quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null,
+        resetsOn: quota ? new Date(quota.resetsOn) : null,
+      });
   // This week's mock (when one falls in the next 7 days), or one just done.
   const mockDoneThisWeek = !!lastMock && Date.now() - new Date(lastMock).getTime() < 7 * DAY_MS;
   const nextMock = slots.find((x) => x.kind === "mock");
@@ -204,6 +214,9 @@ export async function journey(userId: string): Promise<Journey> {
   for (const t of week.filter((x) => x.kind === "level_check" && !x.done)) checkpoints.push({ date: dateOnly(new Date()), kind: "level_check", done: false, skill: t.skill });
   for (const slot of slots) checkpoints.push({ date: dateOnly(slot.date), kind: slot.kind, done: false, onReset: slot.onReset });
   if (examDate) checkpoints.push({ date: examDate, kind: "exam", done: false });
+  // In date order; on the same day, done tests, then today, then what's next.
+  const order = (c: (typeof checkpoints)[number]) => (c.done && c.kind !== "today" ? 0 : c.kind === "today" ? 1 : 2);
+  checkpoints.sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b));
 
   return {
     current,
@@ -220,5 +233,8 @@ export async function journey(userId: string): Promise<Journey> {
     week,
     checkpoints,
     nextStep: await nextStep(userId),
+    planSource: program?.upcoming.length
+      ? { kind: "program", name: program.program.name }
+      : { kind: "allowance", practicePerMonth: quota?.practicePerMonth ?? null, mocksPerMonth: quota?.mocksPerMonth ?? null },
   };
 }

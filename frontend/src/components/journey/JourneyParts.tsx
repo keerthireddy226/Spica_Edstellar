@@ -293,6 +293,20 @@ export function Checkpoints({ j }: { j: Journey }) {
           })}
         </ol>
       </div>
+      {j.planSource && (
+        <p className="text-xs text-muted">
+          {j.planSource.kind === "program"
+            ? tr("Dates set by your organization's program: {{name}}.", { name: j.planSource.name })
+            : tr("Spaced by your plan: {{practice}} and {{mocks}}.", {
+                practice:
+                  j.planSource.practicePerMonth === null
+                    ? tr("practice tests with no monthly limit")
+                    : tr("{{n}} practice tests a month", { n: j.planSource.practicePerMonth }),
+                mocks:
+                  j.planSource.mocksPerMonth === null ? tr("mock exams with no monthly limit") : tr("{{n}} mock exam(s) a month", { n: j.planSource.mocksPerMonth }),
+              })}
+        </p>
+      )}
       {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, with a final mock the week before.")}</p>}
       {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
         <p className="text-xs text-warning">{tr("No mock exam is left in this month's allowance before your exam. See the Mock Exams page for when new ones arrive.")}</p>

@@ -72,6 +72,7 @@ export interface Journey {
   week: JourneyTask[];
   checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag; level?: string; onReset?: boolean }[];
   nextStep: NextStep | null;
+  planSource?: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
 }
 
 export function getJourney(): Promise<Journey> {
