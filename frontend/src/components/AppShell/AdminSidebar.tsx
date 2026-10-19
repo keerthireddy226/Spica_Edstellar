@@ -125,7 +125,8 @@ function navClasses(isActive: boolean) {
 // Roadmap/Modules/Practice Tests/Tutor apply to an admin role, and reusing
 // the learner Sidebar would also pull in its hasPlacement-lock logic, which
 // doesn't make sense for an account with no placement of its own.
-export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+// onNavigate: a sidebar link was clicked; the page opens at its main view.
+export function AdminSidebar({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate?: () => void }) {
   const location = useLocation();
   const { user } = useAuth();
   const perms = (user?.permissions ?? {}) as Partial<StaffPermissions>;
@@ -163,7 +164,15 @@ export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => 
 
         <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
           {navItems.map(({ to, icon: Icon, label }) => (
-            <Link key={to} to={to} onClick={onClose} className={navClasses(location.pathname === to)}>
+            <Link
+              key={to}
+              to={to}
+              onClick={() => {
+                onClose();
+                onNavigate?.();
+              }}
+              className={navClasses(location.pathname === to)}
+            >
               <Icon size={22} strokeWidth={1.8} />
               <span className="flex-1">{label}</span>
               {to === integrityPath && pendingReviews > 0 && (

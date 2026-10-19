@@ -58,7 +58,12 @@ function NavEntry({
   );
 }
 
-export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+// onNavigate: a sidebar link was clicked; the page opens at its main view.
+export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate?: () => void }) {
+  const go = () => {
+    onClose();
+    onNavigate?.();
+  };
   const { t } = useTranslation();
   const location = useLocation();
   const myLicense = useMyLicense();
@@ -98,7 +103,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
-          <Link to={ROUTES.ROADMAP} onClick={onClose} className={navClasses(location.pathname === ROUTES.ROADMAP)}>
+          <Link to={ROUTES.ROADMAP} onClick={go} className={navClasses(location.pathname === ROUTES.ROADMAP)}>
             <Map size={22} strokeWidth={1.8} />
             {t("nav.roadmap")}
           </Link>
@@ -109,7 +114,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={t("nav.overview")}
             isActive={location.pathname === ROUTES.DASHBOARD}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           <NavEntry
             to={ROUTES.PROGRESS}
@@ -117,7 +122,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={t("nav.progress")}
             isActive={location.pathname === ROUTES.PROGRESS}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           {!modulesOn ? null : locked ? (
             <span className={lockedClasses}>
@@ -145,7 +150,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
                       label={t(`skills.${skill}`)}
                       isActive={onModulesPage && searchParams.get("skill") === skill}
                       locked={false}
-                      onClick={onClose}
+                      onClick={go}
                     />
                   ))}
                 </div>
@@ -158,7 +163,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={t("nav.practiceTests")}
             isActive={location.pathname.startsWith(ROUTES.PRACTICE_TESTS) && !location.pathname.startsWith("/practice-tests/report/")}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           <NavEntry
             to={ROUTES.MOCK_EXAMS}
@@ -166,7 +171,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={tr("Mock Exams")}
             isActive={location.pathname.startsWith(ROUTES.MOCK_EXAMS)}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           <NavEntry
             to={ROUTES.MY_REPORTS}
@@ -174,7 +179,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={tr("My reports")}
             isActive={location.pathname.startsWith(ROUTES.MY_REPORTS) || location.pathname.startsWith("/practice-tests/report/")}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           <NavEntry
             to={ROUTES.TUTOR}
@@ -182,7 +187,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={t("nav.tutor")}
             isActive={location.pathname === ROUTES.TUTOR}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
           {myLicense?.individual && myLicense.status !== "active" && myLicense.status !== "grace" && (
             <NavEntry
@@ -191,7 +196,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
               label={t("plans.title")}
               isActive={location.pathname === ROUTES.PLANS}
               locked={locked}
-              onClick={onClose}
+              onClick={go}
             />
           )}
           <NavEntry
@@ -200,7 +205,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             label={t("nav.profile")}
             isActive={location.pathname === ROUTES.PROFILE}
             locked={locked}
-            onClick={onClose}
+            onClick={go}
           />
         </nav>
       </aside>

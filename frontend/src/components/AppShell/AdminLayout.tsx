@@ -15,6 +15,8 @@ import { Header } from "@/components/AppShell/Header";
 export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
   const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Bumped by every sidebar click: the page opens afresh at its main view.
+  const [navKey, setNavKey] = useState(0);
 
   if (!user) {
     return <Navigate to={LOGIN_ROUTE_BY_ROLE[allowedRoles[0]]} replace />;
@@ -25,13 +27,13 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
 
   return (
     <div className="flex h-screen bg-paper overflow-hidden">
-      <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => setNavKey((k) => k + 1)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <ViewAsBanner />
         <Header onMenuClick={() => setDrawerOpen(true)} />
         <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-          <Outlet />
+          <Outlet key={navKey} />
         </main>
       </div>
     </div>
