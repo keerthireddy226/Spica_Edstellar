@@ -565,7 +565,7 @@ recruitmentRouter.post("/credits/request", requireAuth, async (req: AuthedReques
         userId: id,
         kind: "credit_request",
         title: `${t.name} asked for assessment credits`,
-        body: `${b.quantity} credits at ${(price / 100).toFixed(2)} USD each.${b.note ? ` ${b.note}` : ""}`,
+        body: [`${b.quantity} credits at ${(price / 100).toFixed(2)} USD each.`, b.note || null].filter(Boolean).join(" "),
         link: "/admin/organizations",
         email: true,
         sentBy: req.user!.id,

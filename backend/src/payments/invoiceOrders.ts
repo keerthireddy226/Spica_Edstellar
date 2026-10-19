@@ -41,7 +41,7 @@ export async function requestInvoiceOrder(buyer: Buyer, quantity: number, poNumb
       userId: staff,
       kind: "invoice_requested",
       title: `${t.name} asked to pay by invoice`,
-      body: `${quantity} licenses, ${quoteNumber}${poNumber ? `, PO ${poNumber}` : ""}. Mark it paid when the payment arrives.`,
+      body: `${poNumber ? `${quantity} licenses, ${quoteNumber}, PO ${poNumber}.` : `${quantity} licenses, ${quoteNumber}.`} Mark it paid when the payment arrives.`,
       link: "/admin/organizations",
       email: true,
     });

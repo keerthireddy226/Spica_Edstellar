@@ -83,9 +83,9 @@ export async function runLicenseAlerts(): Promise<number> {
       const quiet = ending.filter((r) => r.status === "not_started" || r.status === "inactive");
       const name = (r: (typeof rows)[number]) => [r.firstName, r.lastName].filter(Boolean).join(" ") || r.email;
       const lines = [
-        ending.length ? `${ending.length} learner${ending.length === 1 ? "'s" : "s'"} access ends within 7 days.` : "",
-        active.length ? `Still practising — worth extending: ${active.slice(0, 8).map(name).join(", ")}${active.length > 8 ? "…" : ""}.` : "",
-        quiet.length ? `Not practising lately: ${quiet.slice(0, 8).map(name).join(", ")}${quiet.length > 8 ? "…" : ""}.` : "",
+        ending.length ? (ending.length === 1 ? "1 learner's access ends within 7 days." : `${ending.length} learners' access ends within 7 days.`) : "",
+        active.length ? `Still practising — worth extending: ${active.slice(0, 8).map(name).join(", ") + (active.length > 8 ? "…" : "")}.` : "",
+        quiet.length ? `Not practising lately: ${quiet.slice(0, 8).map(name).join(", ") + (quiet.length > 8 ? "…" : "")}.` : "",
         lapsed.length ? `${lapsed.length} in their 3-day grace period now.` : "",
       ].filter(Boolean);
       for (const adminId of await orgAdminIds(org.id)) {
@@ -93,7 +93,7 @@ export async function runLicenseAlerts(): Promise<number> {
           await notify({
             userId: adminId,
             kind: "org_license_digest",
-            title: `${ending.length + lapsed.length} learner license${ending.length + lapsed.length === 1 ? "" : "s"} need attention`,
+            title: ending.length + lapsed.length === 1 ? "1 learner license needs attention" : `${ending.length + lapsed.length} learner licenses need attention`,
             body: lines.join(" "),
             link: "/orgadmin/licenses",
             dedupeKey: `orgdigest:${org.id}:${dayKey()}`,
@@ -124,7 +124,7 @@ export async function runLicenseAlerts(): Promise<number> {
           await notify({
             userId: adminId,
             kind: "pool_expiring",
-            title: `${lot.unused} unassigned license${lot.unused === 1 ? "" : "s"} expire ${shortDate(lot.pool_expires_at)} (${days} day${days === 1 ? "" : "s"})`,
+            title: lot.unused === 1 ? `1 unassigned license expires on ${shortDate(lot.pool_expires_at)}` : `${lot.unused} unassigned licenses expire on ${shortDate(lot.pool_expires_at)}`,
             body: "Unassigned licenses expire 12 months after purchase and can't be used after that. Assign them to learners before then.",
             link: "/orgadmin/licenses",
             dedupeKey: `poolexp:${lot.id}:${bucket}`,
@@ -143,8 +143,11 @@ export async function runLicenseAlerts(): Promise<number> {
           await notify({
             userId: adminId,
             kind: "pool_low",
-            title: `Only ${summary.available} license${summary.available === 1 ? "" : "s"} left`,
-            body: `${needSoon} learner(s) have no license or will need an extension soon. Buy licenses so nobody loses access.`,
+            title: summary.available === 1 ? "Only 1 license left" : `Only ${summary.available} licenses left`,
+            body:
+              needSoon === 1
+                ? "1 learner has no license or will need an extension soon. Buy licenses so nobody loses access."
+                : `${needSoon} learners have no license or will need an extension soon. Buy licenses so nobody loses access.`,
             link: "/orgadmin/licenses",
             dedupeKey: `poolrunlow:${org.id}:${week}`,
             email: true,
@@ -161,7 +164,10 @@ export async function runLicenseAlerts(): Promise<number> {
             userId: adminId,
             kind: "pool_low",
             title: "Your license pool is empty",
-            body: `${summary.unlicensedLearners + summary.expiredLearners} learner(s) have no active access and there are no licenses left to assign.`,
+            body:
+              summary.unlicensedLearners + summary.expiredLearners === 1
+                ? "1 learner has no active access and there are no licenses left to assign."
+                : `${summary.unlicensedLearners + summary.expiredLearners} learners have no active access and there are no licenses left to assign.`,
             link: "/orgadmin/licenses",
             dedupeKey: `poollow:${org.id}:${week}`,
             email: true,
@@ -201,7 +207,8 @@ export async function runAutoReminders(): Promise<number> {
         if (!step) continue;
         key = `auto:${r.id}:inactive:${r.lastActiveAt.toString().slice(0, 10)}:${step}`;
         title = `It's been ${idle} days since your last practice`;
-        body = `${r.targetCefr ? `Your batch goal is ${r.targetCefr}. ` : ""}A 15-minute session today keeps you on track.`;
+        // Separate sentences, each translated on its own.
+        body = [r.targetCefr ? `Your batch goal is ${r.targetCefr}.` : null, "A 15-minute session today keeps you on track."].filter(Boolean).join(" ");
       }
       if (!key) continue;
       if (await notify({ userId: r.id, kind: "auto_reminder", title, body, link: "/dashboard", dedupeKey: key, email: true, batchId: b.id })) sent++;
@@ -219,7 +226,11 @@ export async function runEscalations(): Promise<number> {
     const stuck = (await learnerEngagement({ tenantId: org.id })).filter((r) => r.needsAttention);
     if (stuck.length === 0) continue;
     const names = stuck.slice(0, 10).map((r) => [r.firstName, r.lastName].filter(Boolean).join(" ") || r.email);
-    const body = `Reminded twice or more and still ${stuck.length === 1 ? "hasn't" : "haven't"} started or come back: ${names.join(", ")}${stuck.length > 10 ? "…" : ""}.`;
+    const list = names.join(", ") + (stuck.length > 10 ? "…" : "");
+    const body =
+      stuck.length === 1
+        ? `Reminded twice or more and still hasn't started or come back: ${list}.`
+        : `Reminded twice or more and still haven't started or come back: ${list}.`;
     const recipients = new Set(await orgAdminIds(org.id));
     for (const batchId of new Set(stuck.map((r) => r.batchId).filter(Boolean) as string[])) {
       for (const m of await batchManagerIds(batchId)) recipients.add(m);
@@ -230,7 +241,7 @@ export async function runEscalations(): Promise<number> {
         await notify({
           userId,
           kind: "escalation",
-          title: `${stuck.length} learner${stuck.length === 1 ? " needs" : "s need"} a personal follow-up`,
+          title: stuck.length === 1 ? "1 learner needs a personal follow-up" : `${stuck.length} learners need a personal follow-up`,
           body,
           link: role === "manager" ? "/manager/learners" : "/orgadmin/learners",
           dedupeKey: `escalation:${userId}:${dayKey()}`,
@@ -386,16 +397,19 @@ export async function runManagerAlerts(): Promise<number> {
       const quiet = learners.filter((l) => l.status === "inactive");
       const notStarted = learners.filter((l) => l.status === "not_started");
       const lines = [
-        ending.length ? `Access ends within 7 days: ${ending.slice(0, 8).map(name).join(", ")}${ending.length > 8 ? "…" : ""}.` : "",
+        ending.length ? `Access ends within 7 days: ${ending.slice(0, 8).map(name).join(", ") + (ending.length > 8 ? "…" : "")}.` : "",
         grace.length ? `In their 3-day grace period: ${grace.slice(0, 8).map(name).join(", ")}.` : "",
-        quiet.length ? `Stopped practising: ${quiet.slice(0, 8).map(name).join(", ")}${quiet.length > 8 ? "…" : ""}.` : "",
+        quiet.length ? `Stopped practising: ${quiet.slice(0, 8).map(name).join(", ") + (quiet.length > 8 ? "…" : "")}.` : "",
         notStarted.length ? `Haven't started yet: ${notStarted.length}.` : "",
       ].filter(Boolean);
       if (lines.length) {
         const r = await notify({
           userId: m.id,
           kind: "manager_digest",
-          title: `${ending.length + grace.length + quiet.length + notStarted.length} learner${ending.length + grace.length + quiet.length + notStarted.length === 1 ? "" : "s"} in your batches need a look`,
+          title:
+            ending.length + grace.length + quiet.length + notStarted.length === 1
+              ? "1 learner in your batches needs a look"
+              : `${ending.length + grace.length + quiet.length + notStarted.length} learners in your batches need a look`,
           body: lines.join(" "),
           link: "/manager/learners",
           dedupeKey: `mgrdigest:${m.id}:${today}`,
@@ -415,10 +429,12 @@ export async function runManagerAlerts(): Promise<number> {
           const r = await notify({
             userId: m.id,
             kind: "manager_pool",
-            title: state === "empty" ? "Your license pool is empty" : `Only ${pool_.remaining} license${pool_.remaining === 1 ? "" : "s"} left in your pool`,
+            title: state === "empty" ? "Your license pool is empty" : pool_.remaining === 1 ? "Only 1 license left in your pool" : `Only ${pool_.remaining} licenses left in your pool`,
             body:
               state === "empty"
-                ? `${unlicensed} learner(s) in your batches have no active access. Request more licenses from your Org Admin.`
+                ? unlicensed === 1
+                  ? "1 learner in your batches has no active access. Request more licenses from your Org Admin."
+                  : `${unlicensed} learners in your batches have no active access. Request more licenses from your Org Admin.`
                 : "Request more from your Org Admin before you run out.",
             link: "/manager/dashboard",
             dedupeKey: `mgrpool:${m.id}:${state}:${week}`,

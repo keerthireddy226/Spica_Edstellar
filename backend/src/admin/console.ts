@@ -129,8 +129,8 @@ staffConsoleRouter.get("/portfolio", requireAuth, async (req: AuthedRequest, res
       }
     }
     const overdue = outstanding.rows.reduce((n, r) => n + r.overdue, 0);
-    if (overdue) attention.push({ kind: "overdue", orgId: null, title: `${overdue} invoice${overdue === 1 ? "" : "s"} overdue`, detail: "See Billing." });
-    if (reviews.rows[0].n) attention.push({ kind: "review", orgId: null, title: `${reviews.rows[0].n} placement${reviews.rows[0].n === 1 ? "" : "s"} waiting for review`, detail: "Flagged identity checks." });
+    if (overdue) attention.push({ kind: "overdue", orgId: null, title: overdue === 1 ? "1 invoice overdue" : `${overdue} invoices overdue`, detail: "See Billing." });
+    if (reviews.rows[0].n) attention.push({ kind: "review", orgId: null, title: reviews.rows[0].n === 1 ? "1 placement waiting for review" : `${reviews.rows[0].n} placements waiting for review`, detail: "Flagged identity checks." });
 
     const renewals = active
       .filter((o) => o.contract_end && new Date(o.contract_end).getTime() > now - day && new Date(o.contract_end).getTime() - now < 60 * day)
@@ -168,9 +168,9 @@ staffConsoleRouter.get("/portfolio", requireAuth, async (req: AuthedRequest, res
         `SELECT count(*) FILTER (WHERE status = 'failed')::int AS failed, count(*) FILTER (WHERE status = 'queued' AND run_at <= now())::int AS ready FROM job_queue`,
       );
       system = { failedJobs: jobs.rows[0].failed, readyJobs: jobs.rows[0].ready };
-      if (jobs.rows[0].failed) attention.push({ kind: "jobs", orgId: null, title: `${jobs.rows[0].failed} background job${jobs.rows[0].failed === 1 ? "" : "s"} failed`, detail: "See System." });
+      if (jobs.rows[0].failed) attention.push({ kind: "jobs", orgId: null, title: jobs.rows[0].failed === 1 ? "1 background job failed" : `${jobs.rows[0].failed} background jobs failed`, detail: "See System." });
       const neverIn = a.rows.filter((r) => !r.deleted_at && !r.last_login_at).length;
-      if (neverIn) attention.push({ kind: "admin_invite", orgId: null, title: `${neverIn} Admin${neverIn === 1 ? " hasn't" : "s haven't"} signed in yet`, detail: "See Admins." });
+      if (neverIn) attention.push({ kind: "admin_invite", orgId: null, title: neverIn === 1 ? "1 Admin hasn't signed in yet" : `${neverIn} Admins haven't signed in yet`, detail: "See Admins." });
     }
 
     const l = learners.rows[0];

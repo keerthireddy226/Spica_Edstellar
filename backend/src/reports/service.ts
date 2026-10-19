@@ -99,7 +99,14 @@ export async function buildReport(userId: string, frequency: Exclude<ReportFrequ
     lines.push("", "Needs attention:");
     for (const l of atRisk) lines.push(`  • ${name(l)}${l.batchName ? ` (${l.batchName})` : ""} — ${l.status.replace("_", " ")}`);
   }
-  const summary = `${act.active} of ${learners.length} learners practised ${period}; ${act.sessions} sessions, ${minutes} minutes.${atRisk.length ? ` ${atRisk.length} need attention.` : ""}`;
+  const summary = [
+    frequency === "weekly"
+      ? `${act.active} of ${learners.length} learners practised this week; ${act.sessions} sessions, ${minutes} minutes.`
+      : `${act.active} of ${learners.length} learners practised this month; ${act.sessions} sessions, ${minutes} minutes.`,
+    atRisk.length ? (atRisk.length === 1 ? "1 needs attention." : `${atRisk.length} need attention.`) : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
   return { text: lines.join("\n"), summary, role: u.role as string };
 }
 

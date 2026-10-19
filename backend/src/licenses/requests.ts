@@ -19,12 +19,15 @@ export class RequestError extends Error {
   }
 }
 
+// Whole phrases for one and for several, so they translate.
 function describe(kind: RequestKind, quantity: number, batchName: string | null, learner: string | null): string {
-  const n = `${quantity} license${quantity === 1 ? "" : "s"}`;
-  if (kind === "increase_allotment") return `${n} more for ${batchName ?? "their own pool"}`;
-  if (kind === "decrease_allotment") return `${n} fewer for ${batchName ?? "their own pool"}`;
-  if (kind === "learner_extension") return `${quantity} more month${quantity === 1 ? "" : "s"} of access for ${learner ?? "a learner"}`;
-  return `return ${quantity} unused month${quantity === 1 ? "" : "s"} from ${learner ?? "a learner"}`;
+  const target = batchName ?? "their own pool";
+  const who = learner ?? "a learner";
+  const one = quantity === 1;
+  if (kind === "increase_allotment") return one ? `1 license more for ${target}` : `${quantity} licenses more for ${target}`;
+  if (kind === "decrease_allotment") return one ? `1 license fewer for ${target}` : `${quantity} licenses fewer for ${target}`;
+  if (kind === "learner_extension") return one ? `1 more month of access for ${who}` : `${quantity} more months of access for ${who}`;
+  return one ? `Return 1 unused month from ${who}` : `Return ${quantity} unused months from ${who}`;
 }
 
 export async function createRequest(args: {
@@ -279,7 +282,9 @@ async function applyDecision(args: {
     await notify({
       userId: r.requested_by,
       kind: "license_request_decided",
-      title: `Request ${args.approve ? "approved" : "declined"}: ${describe(r.kind, r.quantity, batch?.name ?? null, learner?.n ?? null)}`,
+      title: args.approve
+        ? `Request approved: ${describe(r.kind, r.quantity, batch?.name ?? null, learner?.n ?? null)}`
+        : `Request declined: ${describe(r.kind, r.quantity, batch?.name ?? null, learner?.n ?? null)}`,
       body:
         note ??
         (r.kind === "learner_extension"

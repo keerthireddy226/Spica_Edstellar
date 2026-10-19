@@ -24,7 +24,12 @@ import vi from "./locales/vi.json" with { type: "json" };
 // copied here by scripts/sync-server-translations.mjs.
 const DICTS: Record<string, Record<string, string>> = { es, fr, de, it, nl, pl, da, nb, sv, fi, hi, te, ja, zh, vi };
 
-type Pattern = { key: string; re: RegExp; names: string[] };
+type Pattern = { key: string; re: RegExp; names: string[]; breaks: number };
+
+// Sentence ends and line breaks in a text.
+function breaks(s: string): number {
+  return (s.match(/[.!?…]\s+(?=\S)/g)?.length ?? 0) + (s.match(/\n/g)?.length ?? 0);
+}
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const PATTERNS: Pattern[] = (SERVER_TEXTS as string[])
   .filter((k) => /\{\{\w+\}\}/.test(k))
@@ -41,7 +46,7 @@ const PATTERNS: Pattern[] = (SERVER_TEXTS as string[])
         return escape(part);
       })
       .join("");
-    return { key, re: new RegExp(`^${body}$`), names, fixed: key.replace(/\{\{\w+\}\}/g, "").length };
+    return { key, re: new RegExp(`^${body}$`), names, fixed: key.replace(/\{\{\w+\}\}/g, "").length, breaks: breaks(key) };
   })
   .sort((a, b) => b.fixed - a.fixed);
 
@@ -54,7 +59,10 @@ export function translateServerText(lang: string | null | undefined, text: strin
   if (!dict || !text) return text;
   if (dict[text]) return dict[text];
   if (depth > 2) return text;
+  const textBreaks = breaks(text);
   for (const p of PATTERNS) {
+    // A pattern can't swallow more sentences than it has itself.
+    if (textBreaks > p.breaks) continue;
     const m = text.match(p.re);
     if (!m) continue;
     const vars: Record<string, string> = {};
@@ -63,7 +71,17 @@ export function translateServerText(lang: string | null | undefined, text: strin
     });
     return fill(dict[p.key] ?? p.key, vars);
   }
-  return text;
+  return depth === 0 ? bySentence(text, (part) => translateServerText(lang, part, 1)) : text;
+}
+
+// Text built from several sentences or lines ("3 learners practised. 1 needs
+// attention."): each line, then each sentence, is translated on its own.
+export function bySentence(text: string, translate: (part: string) => string): string {
+  const lines = text.split(/(\n+)/);
+  if (lines.length > 1) return lines.map((x, i) => (i % 2 ? x : x && translate(x) === x ? bySentence(x, translate) : translate(x))).join("");
+  const parts = text.split(/(?<=[.!?…])(\s+)(?=\S)/);
+  if (parts.length < 2) return text;
+  return parts.map((x, i) => (i % 2 ? x : translate(x))).join("");
 }
 
 // The language to write to this email address in: the person's own choice,

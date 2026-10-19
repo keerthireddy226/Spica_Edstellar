@@ -1333,7 +1333,12 @@ orgAdminRouter.post("/managers/:id/handover", requireAuth, async (req: AuthedReq
       userId: body.toManagerId,
       kind: "license_request_decided",
       title: `You're now managing ${from.name}'s batches`,
-      body: `${moved.rowCount ?? 0} batch(es) moved to you${poolMoved ? `, with ${poolMoved} licenses added to your pool` : ""}.`,
+      body: [
+        moved.rowCount === 1 ? "1 batch moved to you." : `${moved.rowCount ?? 0} batches moved to you.`,
+        poolMoved ? (poolMoved === 1 ? "1 license was added to your pool." : `${poolMoved} licenses were added to your pool.`) : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
       link: "/manager/dashboard",
       email: true,
     });

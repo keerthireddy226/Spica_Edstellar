@@ -60,15 +60,22 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
   const certificates = await issueForBatch(args.batchId, args.actorId);
   const s = await summary(args.batchId);
   const recipients = [...new Set([...(await orgAdminIds(args.tenantId)), ...(await batchManagerIds(args.batchId))])];
-  const goal = s.target_cefr ? ` ${s.reached_goal} of ${s.learners} reached ${s.target_cefr}.` : "";
+  // Separate sentences, each translated on its own.
+  const goal = s.target_cefr ? `${s.reached_goal} of ${s.learners} reached ${s.target_cefr}.` : null;
   for (const userId of recipients) {
     await notify({
       userId,
       kind: "batch_completed",
       title: `${s.name} is complete`,
-      body: `${args.automatic ? "The batch reached its end date. " : ""}${s.practised} of ${s.learners} learners practised.${goal}${
-        released ? ` ${released} unused fixed license${released === 1 ? "" : "s"} went back to the pool.` : ""
-      }${certificates ? ` ${certificates} completion certificate${certificates === 1 ? "" : "s"} issued.` : ""}`,
+      body: [
+        args.automatic ? "The batch reached its end date." : null,
+        `${s.practised} of ${s.learners} learners practised.`,
+        goal,
+        released ? (released === 1 ? "1 unused fixed license went back to the pool." : `${released} unused fixed licenses went back to the pool.`) : null,
+        certificates ? (certificates === 1 ? "1 completion certificate issued." : `${certificates} completion certificates issued.`) : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
       link: "/orgadmin/batches",
       dedupeKey: `batchdone:${args.batchId}:${new Date().toISOString().slice(0, 10)}`,
       email: true,
