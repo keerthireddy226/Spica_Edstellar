@@ -1412,11 +1412,14 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         {!isMockSection && (
         <>
 
-        <div className="flex items-center gap-2 -mb-2">
-          <BookOpenCheck size={18} className="text-accent" />
-          <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
-          <span className="text-sm text-muted">
-            {tr("Pause any time, go back, and see the right answer after each question.")} {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
+        <div className="flex flex-col gap-1 -mb-2">
+          <div className="flex items-center gap-2">
+            <BookOpenCheck size={18} className="text-accent shrink-0" />
+            <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
+            <span className="text-sm text-muted">{tr("Pause any time, go back, and see the right answer after each question.")}</span>
+          </div>
+          <span className="text-sm text-muted flex items-center gap-1.5 ml-[26px]">
+            <Lock size={13} className="shrink-0" /> {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
           </span>
         </div>
         {practiceLeft === 0 && (
@@ -1458,6 +1461,19 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success shrink-0">{t("practiceTests.completed")}</span>
                   )}
                 </div>
+                {exam.inProgress && exam.progress && !exam.locked && (
+                  <div className="flex flex-col gap-1.5 -mt-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-ink">
+                        {tr("Question {{n}} of {{total}}", { n: Math.min(exam.progress.seen + 1, exam.progress.total), total: exam.progress.total })}
+                      </span>
+                      <span className="text-muted">{tr("{{n}} answered", { n: exam.progress.answered })}</span>
+                    </div>
+                    <div className="h-2 rounded-pill bg-rule overflow-hidden">
+                      <div className="h-full rounded-pill bg-navy transition-all" style={{ width: `${Math.round((exam.progress.seen / Math.max(1, exam.progress.total)) * 100)}%` }} />
+                    </div>
+                  </div>
+                )}
                 {exam.finished && !exam.completed && exams?.[i + 1]?.locked && (
                   <p className="text-xs text-warning -mt-1">{tr("Finished with questions skipped. Retake it and answer every question to unlock Set {{n}}.", { n: i + 2 })}</p>
                 )}
@@ -1478,7 +1494,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                       <Lock size={15} /> {tr("Complete Set {{n}} to unlock", { n: i })}
                     </span>
                   ) : exam.inProgress ? (
-                    tr("Resume")
+                    exam.progress && exam.progress.seen > 0 ? tr("Resume from question {{n}}", { n: Math.min(exam.progress.seen + 1, exam.progress.total) }) : tr("Resume")
                   ) : exam.completed || exam.finished ? (
                     t("practiceTests.retake")
                   ) : (

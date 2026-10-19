@@ -283,7 +283,7 @@ practiceTestsRouter.get("/program", requireAuth, async (req: AuthedRequest, res,
 });
 
 // This product's 5 exam sets, each with its item count and this learner's completion.
-// Whether a practice set is still locked: the set before it (by code) isn't
+// Whether a practice set is still locked: a set before it (by code) isn't
 // completed yet, i.e. finished with every question answered.
 async function practiceSetLocked(userId: string, examId: string): Promise<boolean> {
   const r = await pool.query(
@@ -298,7 +298,7 @@ async function practiceSetLocked(userId: string, examId: string): Promise<boolea
     [userId, examId],
   );
   const at = r.rows.findIndex((x) => x.id === examId);
-  return at > 0 && !r.rows[at - 1].completed && !r.rows[at].finished;
+  return r.rows.slice(0, Math.max(0, at)).some((prev) => !prev.completed);
 }
 
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -328,7 +328,15 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
            WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
              AND s.composition->>'examId' = e.id::text
          ) AS in_progress,
-         -- Taken to the end (skips included): unlocks the next set.
+         -- How far the open session got: questions answered of all.
+         (SELECT count(*)::int FROM sessions s JOIN attempts a ON a.session_id = s.id
+          WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
+            AND s.composition->>'examId' = e.id::text AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS progress_answered,
+         -- Questions passed (answered or skipped), to know where it resumes.
+         (SELECT count(*)::int FROM sessions s JOIN attempts a ON a.session_id = s.id
+          WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
+            AND s.composition->>'examId' = e.id::text) AS progress_seen,
+         -- Taken to the end (skips included).
          EXISTS (
            SELECT 1 FROM sessions s
            WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL
@@ -353,8 +361,10 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
           completed: r.completed,
           inProgress: r.in_progress,
           finished: r.finished,
-          // Unlocked once the set before is completed: every question answered.
-          locked: i > 0 && !result.rows[i - 1].completed && !r.finished && !r.in_progress,
+          progress: r.in_progress ? { answered: r.progress_answered, seen: r.progress_seen, total: r.item_count } : null,
+          // Only Set 1 is open at first; each set unlocks once the one before
+          // is completed (every question answered).
+          locked: result.rows.slice(0, i).some((prev) => !prev.completed),
           lockedBy: i > 0 ? result.rows[i - 1].name : null,
           source: "set",
         })),
@@ -407,6 +417,11 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       : null;
     if (body.formId && !builtForm) return res.status(404).json({ error: "unknown_form" });
     const testTypeId: string = builtForm ? builtForm.test_type_id : body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!;
+    // Practice sets open in order: the set before this one must be completed
+    // (this applies to resuming too).
+    if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
+      return res.status(403).json({ error: "set_locked" });
+    }
     if (!testTypeId || !(await liveTestType(testTypeId))) return res.status(404).json({ error: "unknown_product" });
     const { allowedTestProducts } = candidate ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts && !allowedTestProducts.includes(testTypeId)) return res.status(403).json({ error: "product_not_enabled" });
@@ -451,11 +466,6 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         items,
         timing,
       });
-    }
-
-    // Practice sets open in order: the set before this one must be finished.
-    if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
-      return res.status(403).json({ error: "set_locked" });
     }
 
     // Monthly limits apply to each new practice test or mock (candidates

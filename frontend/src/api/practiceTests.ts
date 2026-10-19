@@ -40,6 +40,8 @@ export interface ExamSummary {
   // Sets open in order: locked until the set before (lockedBy) is finished.
   locked?: boolean;
   lockedBy?: string | null;
+  // The open session's progress: answered, passed (answered or skipped), of all.
+  progress?: { answered: number; seen: number; total: number } | null;
   // "form": a test built by Edstellar staff from the question bank.
   source?: "set" | "form";
   durationMinutes?: number;
