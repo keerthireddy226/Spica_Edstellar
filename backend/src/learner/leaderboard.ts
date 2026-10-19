@@ -124,10 +124,13 @@ export async function learnerBoard(userId: string) {
     const person = people.find((x) => x.id === id)!;
     return { name: displayName(person), points: p.points, rank: r.get(id)!, me: id === userId };
   });
+  // The learner's own level (only theirs; peers never see each other's level).
+  const myLevel = overallFromSkills(await pathSummary(userId));
   return {
     ...base,
     quiet: false as const,
     rank,
+    myLevel,
     topPercent: topPercent(rank, people.length),
     topHalf: rank <= Math.ceil(people.length / 2),
     // Places climbed since last week's final standing (negative: dropped).

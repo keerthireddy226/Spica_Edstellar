@@ -70,15 +70,15 @@ export function GroupBoardCard() {
           </div>
           <ol className="flex flex-col gap-1">
             {(b.top ?? []).map((row, i) => (
-              <li
-                key={i}
-                className={`flex items-center gap-3 rounded-input px-3 py-1.5 text-sm ${row.me ? "bg-accent/10 border border-accent/30" : "bg-paper-warm/50"}`}
-              >
-                <span className="w-6 text-center font-display font-bold text-ink">{row.rank}</span>
-                <span className="flex-1 text-ink truncate">{row.me ? tr("You") : (row.name ?? tr("A learner"))}</span>
-                <span className="text-xs text-muted">{tr("{{n}} pts", { n: row.points })}</span>
-              </li>
+              <BoardRow key={i} rank={row.rank} name={row.me ? tr("You") : (row.name ?? tr("A learner"))} points={row.points} me={row.me} level={row.me ? b.myLevel : null} />
             ))}
+            {/* Outside the top 5: the learner's own place, below a gap. */}
+            {!(b.top ?? []).some((r) => r.me) && b.rank && (
+              <>
+                <li className="text-center text-xs text-muted leading-none" aria-hidden="true">⋮</li>
+                <BoardRow rank={b.rank} name={tr("You")} points={b.points?.points ?? 0} me level={b.myLevel} />
+              </>
+            )}
           </ol>
         </>
       )}
@@ -91,5 +91,16 @@ export function GroupBoardCard() {
         </label>
       </div>
     </section>
+  );
+}
+
+function BoardRow({ rank, name, points, me, level }: { rank: number; name: string; points: number; me: boolean; level?: string | null }) {
+  return (
+    <li className={`flex items-center gap-3 rounded-input px-3 py-1.5 text-sm ${me ? "bg-accent/10 border border-accent/30" : "bg-paper-warm/50"}`}>
+      <span className="w-6 text-center font-display font-bold text-ink">{rank}</span>
+      <span className={`flex-1 truncate ${me ? "font-semibold text-ink" : "text-ink"}`}>{name}</span>
+      {me && level && <span className="text-[11px] font-bold px-2 py-0.5 rounded-pill bg-navy/10 text-navy-deep">{tr("Level {{level}}", { level })}</span>}
+      <span className="text-xs text-muted w-14 text-right">{tr("{{n}} pts", { n: points })}</span>
+    </li>
   );
 }

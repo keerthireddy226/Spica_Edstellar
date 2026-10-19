@@ -80,6 +80,8 @@ export interface GroupBoard {
   quiet?: boolean;
   needed?: number;
   rank?: number;
+  // The learner's own level (peers' levels are never shown).
+  myLevel?: string | null;
   topPercent?: number;
   topHalf?: boolean;
   climbed?: number | null;
