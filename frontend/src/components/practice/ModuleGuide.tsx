@@ -80,6 +80,7 @@ export function ModuleGuide({
     ...(needsMic ? ([[Mic, tr("Press the microphone, speak your answer, then press it again to stop. Speak clearly in a quiet place.")]] as [LucideIcon, string][]) : []),
     [Clock, tr("Each question has a countdown. It beeps in the last 5 seconds; press the speaker icon next to it to mute the beeps.")],
     [Volume2, tr("You can skip a question or go back to one. A skipped question gets no marks.")],
+    [CheckCircle2, tr("After each answer you see if it's right and the correct answer. A spoken answer can take a few seconds to score; you can go on meanwhile.")],
   ];
 
   return (

@@ -227,7 +227,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [testCode, setTestCode] = useState<string | null>(null);
-  // Practice: go back, feedback after each answer. Mock: exam conditions.
+  // Practice: go back, results in the report at the end. Mock: exam conditions.
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("practice");
   const isMock = deliveryMode === "mock";
   // A mock mixes questions from every set, so it has no set Test ID.
@@ -641,7 +641,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     setSubmitting(true);
     setError(null);
     try {
-      const res = await submitExamAttempt(sessionId, {
+      await submitExamAttempt(sessionId, {
         itemId: current.id,
         responseText: (recorded ? recorded.transcript : answerText).trim() || undefined,
         audioBase64: recorded?.audioBase64 ?? pendingAudio?.base64,
@@ -650,11 +650,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
-      // Practice: show how the answer did before moving on.
-      if (res.feedback) {
-        setFeedback(res.feedback);
-        return;
-      }
+      // Straight on: right and wrong answers are in the report at the end
+      // (feedback after each question is in Practice Modules, not tests).
       await finishOrAdvance();
     } catch (err) {
       if (isAlreadyCompletedError(err)) {
@@ -1419,7 +1416,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           <div className="flex items-center gap-2">
             <BookOpenCheck size={18} className="text-accent shrink-0" />
             <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
-            <span className="text-sm text-muted">{tr("Pause any time, go back, and see the right answer after each question.")}</span>
+            <span className="text-sm text-muted">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</span>
           </div>
           <span className="text-sm text-muted flex items-center gap-1.5 ml-[26px]">
             <Lock size={13} className="shrink-0" /> {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
@@ -1591,7 +1588,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       <LearnerHero
         eyebrow={tr("Practice at your own pace")}
         title={t("nav.practiceTests")}
-        subtitle={tr("Full practice tests in the style of the major English exams: pause, go back and see the right answer after each question.")}
+        subtitle={tr("Full practice tests in the style of the major English exams: pause, go back, and get a report with every right answer at the end.")}
         icon={ClipboardCheck}
         stats={[
           { label: tr("Exam types"), value: live.length, icon: Layers },

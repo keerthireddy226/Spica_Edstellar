@@ -1,4 +1,4 @@
-import { mockLimits } from "../practiceTests/modes.js";
+import { mockLimits, practiceFeedback } from "../practiceTests/modes.js";
 import { reviewQuestions } from "../reports/feedbackReport.js";
 import { z } from "zod";
 import { Router } from "express";
@@ -498,14 +498,20 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
     if (session.completed_at) return res.status(409).json({ error: "session_already_completed" });
 
     const check = (await pool.query(`SELECT composition FROM sessions WHERE id = $1`, [session.id])).rows[0].composition?.check === true;
-    // A Level check judges the answer itself and grades recordings in the background.
-    const graded = await gradeAndSaveAttempt(session.id, body, { deferSpeaking: check });
+    // A recorded answer is saved at once and graded in the background, so
+    // moving on never waits for the AI grader.
+    const graded = await gradeAndSaveAttempt(session.id, body, { deferSpeaking: true });
     if (!graded) return res.status(404).json({ error: "item_not_found" });
+    // A Level check judges the answer itself and shows nothing until the end.
     if (check) await recordCheckAnswer(session.id, body.itemId, body.responseText);
 
     const { attemptId, grade, wasCorrect } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
-    res.status(201).json({ attemptId, status: grade.status, correct });
+    // Feedback right after the answer: right or wrong, the right answer and
+    // why (a recorded answer's once its background grading is done; see /feedback).
+    const answered = !!(body.responseText || body.audioBase64);
+    const feedback = answered && !check ? await practiceFeedback(session.id, body.itemId) : null;
+    res.status(201).json({ attemptId, status: grade.status, correct, feedback });
   } catch (err) {
     next(err);
   }
@@ -591,6 +597,19 @@ async function recordCheckAnswer(sessionId: string, itemId: string, responseText
     [sessionId, itemId, JSON.stringify([answer])],
   );
 }
+
+// Feedback on one answered question, for a recorded answer still being graded.
+practiceRouter.get("/session/:sessionId/feedback/:itemId", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const session = (await pool.query(`SELECT id FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'practice'`, [req.params.sessionId, req.user!.id])).rows[0];
+    if (!session) return res.status(404).json({ error: "session_not_found" });
+    const feedback = await practiceFeedback(session.id, String(req.params.itemId));
+    if (!feedback) return res.status(404).json({ error: "not_answered" });
+    res.json({ feedback });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // After each answer in a Level check: the next question, or the result.
 practiceRouter.post("/session/:sessionId/check-next", requireAuth, async (req: AuthedRequest, res, next) => {

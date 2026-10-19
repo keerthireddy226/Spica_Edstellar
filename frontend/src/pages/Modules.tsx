@@ -59,6 +59,7 @@ import {
   submitPracticeAttempt,
   completePracticeSession,
   nextCheckQuestion,
+  getModuleFeedback,
   type PracticeSummary,
   type PracticeContext,
   type TypeProgress,
@@ -89,6 +90,8 @@ import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 import { Confetti } from "@/components/Confetti";
 import { MyPath } from "@/components/practice/MyPath";
+import { AnswerFeedback } from "@/components/AnswerFeedback";
+import type { PracticeFeedback } from "@/api/practiceTests";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -942,6 +945,8 @@ function ModulesPage() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
+  // Feedback on the answer just given: right or wrong and the right answer.
+  const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
   // The set being taken: skill, sub-module, level and set name.
   const [context, setContext] = useState<PracticeContext | null>(null);
   // Countdown beeps off for every question (remembered).
@@ -1015,6 +1020,7 @@ function ModulesPage() {
         ),
       );
       setSummary(null);
+      setFeedback(null);
       // The device check and guide on every start and resume.
       setShowTypeIntro(true);
     } catch {
@@ -1084,6 +1090,28 @@ function ModulesPage() {
   }, [searchParams]);
 
   const current = items[index];
+
+  // A spoken answer is scored in the background: check back for its feedback.
+  useEffect(() => {
+    if (feedback?.status !== "pending" || !sessionId || !current) return;
+    const itemId = current.id;
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries++;
+      getModuleFeedback(sessionId, itemId)
+        .then((r) => {
+          if (r.feedback.status !== "pending") {
+            setFeedback(r.feedback);
+            clearInterval(timer);
+          }
+        })
+        .catch(() => {});
+      if (tries >= 15) clearInterval(timer);
+    }, 3000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedback?.status, sessionId, current?.id]);
+
   const needsAudioFirst = current ? AUDIO_FIRST_TYPES.has(current.itemTypeId) : false;
   const visibleText = current && !needsAudioFirst ? getVisibleText(current) : "";
   const meta = current ? ITEM_TYPE_META[current.itemTypeId] : undefined;
@@ -1115,7 +1143,7 @@ function ModulesPage() {
   // is pressed (saving and checking a spoken answer takes a few seconds), and
   // never runs behind the guide, the results or the pickers. The next question
   // starts its own full countdown.
-  const questionOnScreen = !!sessionId && !summary && !showTypeIntro && !submitting;
+  const questionOnScreen = !!sessionId && !summary && !showTypeIntro && !submitting && !feedback;
   useEffect(() => {
     if (!questionSeconds || !questionOnScreen) {
       if (!questionSeconds || summary || !sessionId) setRemainingSeconds(null);
@@ -1196,6 +1224,7 @@ function ModulesPage() {
   }
 
   async function finishOrAdvance() {
+    setFeedback(null);
     // A Level check picks each next question from the answers so far.
     if (context?.check && sessionId && index + 1 >= items.length) {
       const step = await nextCheckQuestion(sessionId);
@@ -1221,7 +1250,7 @@ function ModulesPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await submitPracticeAttempt(sessionId, {
+      const res = await submitPracticeAttempt(sessionId, {
         itemId: current.id,
         responseText: answerText.trim() || undefined,
         audioBase64: pendingAudio?.base64,
@@ -1230,8 +1259,12 @@ function ModulesPage() {
         activeMs: Date.now() - questionShownAtRef.current,
       });
       cacheCurrentAnswer();
-      // Straight to the next question: right and wrong answers are shown
-      // together at the end (results), not after each one.
+      // How the answer did, before moving on (a spoken answer may still be
+      // being scored: the learner can go on meanwhile).
+      if (res.feedback) {
+        setFeedback(res.feedback);
+        return;
+      }
       await finishOrAdvance();
     } catch {
       setError(t("placementTest.submitError"));
@@ -1261,11 +1294,13 @@ function ModulesPage() {
 
   function handleBack() {
     if (index === 0) return;
+    setFeedback(null);
     cacheCurrentAnswer();
     setIndex(index - 1);
   }
 
   function resetToPicker() {
+    setFeedback(null);
     setSessionId(null);
     setItems([]);
     setSummary(null);
@@ -1596,6 +1631,8 @@ function ModulesPage() {
             identity instead of reusing the same visual language. */}
         <span className={`absolute inset-0 pointer-events-none ${SKILL_WASH_CLASSES[primarySkill]}`} />
         <div className="relative flex-1 p-8 pt-6 flex flex-col justify-start gap-5 overflow-y-auto">
+          {/* While feedback shows, the question stays visible and its answer locked. */}
+          <div className={feedback ? "pointer-events-none flex flex-col gap-5" : "contents"} aria-disabled={!!feedback}>
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -1762,11 +1799,26 @@ function ModulesPage() {
         </>
       )}
 
-          {remainingSeconds === 0 && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
+          {remainingSeconds === 0 && !feedback && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
+          </div>
+          {feedback && (
+            <>
+              <AnswerFeedback item={current} feedback={feedback} />
+              {feedback.status === "pending" && (
+                <p className="text-xs text-muted text-center -mt-2">{tr("You can go on: it will also be in your results at the end of the set.")}</p>
+              )}
+            </>
+          )}
           {error && <p className="text-sm text-error text-center">{error}</p>}
         </div>
 
         <div className="shrink-0 border-t border-rule px-8 py-4 flex items-center gap-3">
+          {feedback ? (
+            <Button onClick={() => finishOrAdvance()} className="flex-1">
+              {index + 1 < items.length ? tr("Next question") : t("placementTest.finish")}
+            </Button>
+          ) : (
+          <>
           <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording || !!context?.check} className="!px-3.5">
             <ArrowLeft size={20} />
           </Button>
@@ -1780,8 +1832,10 @@ function ModulesPage() {
           {/* Needs an answer, except once the question's time has run out: then
               it moves on like Skip (the question counts as skipped). */}
           <Button onClick={canSubmit ? handleSubmit : handleSkip} disabled={submitting || recording || (!canSubmit && remainingSeconds !== 0)} className="flex-1">
-            {submitting ? t("placementTest.submitting") : index + 1 < items.length || context?.check ? t("placementTest.next") : t("placementTest.finish")}
+            {submitting ? t("placementTest.submitting") : context?.check || items.length > index + 1 ? t("placementTest.next") : t("placementTest.finish")}
           </Button>
+          </>
+          )}
         </div>
       </div>
     </div>

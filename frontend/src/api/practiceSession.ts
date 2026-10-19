@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { PracticeFeedback } from "@/api/practiceTests";
 import type { SkillTag, TestItem } from "@/api/testSession";
 import type { ReportQuestion } from "@/api/practiceTests";
 
@@ -129,7 +130,7 @@ export function nextCheckQuestion(sessionId: string): Promise<{ done: false; ite
 export function submitPracticeAttempt(
   sessionId: string,
   payload: { itemId: string; responseText?: string; audioBase64?: string; audioMimeType?: string; durationMs?: number; activeMs?: number },
-): Promise<{ attemptId: string; status: string; correct: boolean | null }> {
+): Promise<{ attemptId: string; status: string; correct: boolean | null; feedback?: PracticeFeedback | null }> {
   return api(`/practice/session/${sessionId}/attempts`, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -206,4 +207,9 @@ export interface SkillPath {
 
 export function getSkillPath(skill: SkillTag): Promise<SkillPath> {
   return api(`/practice/path?skill=${skill}`);
+}
+
+// Feedback on one answered question (a recorded answer is scored in the background).
+export function getModuleFeedback(sessionId: string, itemId: string): Promise<{ feedback: PracticeFeedback }> {
+  return api(`/practice/session/${sessionId}/feedback/${itemId}`);
 }
