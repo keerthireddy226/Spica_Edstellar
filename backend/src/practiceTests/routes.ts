@@ -11,7 +11,8 @@ import { passThresholdForLevel } from "../placement/cefr.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
-import { raisePathFromMock } from "../learner/path.js";
+import { applyTestLevels } from "../learner/path.js";
+import { rebuildRoadmap } from "../roadmap/save.js";
 import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
@@ -217,7 +218,10 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
       if (!r || r.status === "failed" || outdated) return res.json({ status: "pending", report: null, about: await reportAbout(s.id) });
     }
-    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id) });
+    // The skill levels against the learner's path, saved when the test finished.
+    const pathCompare = (await pool.query(`SELECT result->'pathCompare' AS pc FROM sessions WHERE id = $1`, [s.id])).rows[0]?.pc ?? null;
+    const report = r.report?.overall ? { ...r.report, overall: { ...r.report.overall, pathCompare } } : r.report;
+    res.json({ status: r.status, report, about: await reportAbout(s.id) });
   } catch (err) {
     next(err);
   }
@@ -279,6 +283,20 @@ practiceTestsRouter.get("/program", requireAuth, async (req: AuthedRequest, res,
 });
 
 // This product's 5 exam sets, each with its item count and this learner's completion.
+// Whether a practice set is still locked: an earlier set of its test type
+// (by code) isn't finished yet.
+async function practiceSetLocked(userId: string, examId: string): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT e.id,
+       EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice'
+               AND s.completed_at IS NOT NULL AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true') AS finished
+     FROM exams e WHERE e.is_active AND e.test_type_id = (SELECT test_type_id FROM exams WHERE id = $2) ORDER BY e.code`,
+    [userId, examId],
+  );
+  const at = r.rows.findIndex((x) => x.id === examId);
+  return at > 0 && !r.rows[at - 1].finished && !r.rows[at].finished;
+}
+
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const testType = await liveTestType(req.params.product as string);
@@ -306,7 +324,13 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
            SELECT 1 FROM sessions s
            WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NULL
              AND s.composition->>'examId' = e.id::text
-         ) AS in_progress
+         ) AS in_progress,
+         -- Taken to the end (skips included): unlocks the next set.
+         EXISTS (
+           SELECT 1 FROM sessions s
+           WHERE s.user_id = $2 AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL
+             AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
+         ) AS finished
        FROM exams e
        WHERE e.is_active AND e.test_type_id = $1
        ORDER BY e.code`,
@@ -316,7 +340,20 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
     const forms = await practiceForms(testType.id, req.user!.id);
     res.json({
       exams: [
-        ...result.rows.map((r) => ({ id: r.id, code: r.code, testId: r.test_id, name: r.name, itemCount: r.item_count, completed: r.completed, inProgress: r.in_progress, source: "set" })),
+        // Sets open one at a time: each unlocks when the one before is finished.
+        ...result.rows.map((r, i) => ({
+          id: r.id,
+          code: r.code,
+          testId: r.test_id,
+          name: r.name,
+          itemCount: r.item_count,
+          completed: r.completed,
+          inProgress: r.in_progress,
+          finished: r.finished,
+          locked: i > 0 && !result.rows[i - 1].finished && !r.finished && !r.in_progress,
+          lockedBy: i > 0 ? result.rows[i - 1].name : null,
+          source: "set",
+        })),
         ...forms.map((f) => ({
           id: f.id,
           code: f.code,
@@ -410,6 +447,11 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         items,
         timing,
       });
+    }
+
+    // Practice sets open in order: the set before this one must be finished.
+    if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
+      return res.status(403).json({ error: "set_locked" });
     }
 
     // Monthly limits apply to each new practice test or mock (candidates
@@ -722,12 +764,22 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
         JSON.stringify({ cefrLevel: level?.cefrLevel ?? null, skillLevels: level?.skillLevels ?? null, overallPercent: overall, scoreBand: bandForLevel(scale, level?.cefrLevel) }),
       ]);
       await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
-      // A full mock's level per skill lifts the learner's Practice Modules path.
-      if (deliveryMode === "mock" && !composition.shortForm) {
-        await raisePathFromMock(req.user!.id, (level?.skillLevels as Record<string, string | null> | undefined) ?? null).catch((err) => console.error("raisePathFromMock failed:", err));
+      // Each skill's level against the learner's Practice Modules path: a
+      // higher one lifts the path (and the plan); a lower one is shown with a
+      // nudge to take a level check, never lowering the path by itself.
+      if (req.user!.role === "learner") {
+        const pathCompare = await applyTestLevels(req.user!.id, (level?.skillLevels as Record<string, unknown> | undefined) ?? null).catch((err) => {
+          console.error("applyTestLevels failed:", err);
+          return {};
+        });
+        await pool.query(`UPDATE sessions SET result = result || $2::jsonb WHERE id = $1`, [req.params.sessionId, JSON.stringify({ pathCompare })]);
+        if (Object.values(pathCompare).some((x) => x?.action === "raised")) await rebuildRoadmap(req.user!.id).catch(() => false);
       }
     }
+    const pathCompare = (await pool.query(`SELECT result->'pathCompare' AS pc FROM sessions WHERE id = $1`, [req.params.sessionId])).rows[0]?.pc ?? null;
     res.json({
+      // Each skill's level here against the learner's Practice Modules path.
+      pathCompare,
       testCode: sessionExists.rows[0].test_code,
       gradedCount: graded.length,
       correctCount,

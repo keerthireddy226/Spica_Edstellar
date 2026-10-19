@@ -155,31 +155,66 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
 // Surfaces an unfinished practice session so the learner doesn't have to remember which skill they left off on.
 // The learner's English level from their level test, what it means, and the
 // distance to their goal: always visible, so "which level am I?" has an answer.
-function EnglishLevelCard({ level }: { level: NonNullable<DashboardData["englishLevel"]> }) {
+function EnglishLevelCard({
+  level,
+  currentLevel,
+  pathLevels,
+}: {
+  level: NonNullable<DashboardData["englishLevel"]>;
+  currentLevel: string | null;
+  pathLevels?: Record<SkillTag, string>;
+}) {
   const navigate = useNavigate();
-  const cefr = level.cefr!;
+  const { t } = useTranslation();
+  // The level now (Practice Modules path, which starts at the level test).
+  const cefr = currentLevel ?? level.cefr!;
   const toGo = level.goal ? levelsToGo(cefr, level.goal) : null;
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-      <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center shrink-0">
-        <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
-        <span className="text-[9px] uppercase tracking-wide mt-1">CEFR</span>
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center shrink-0">
+          <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
+          <span className="text-[9px] uppercase tracking-wide mt-1">CEFR</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-lg text-ink">{tr("Your English level: {{level}}", { level: cefr })}</p>
+          <p className="text-sm text-muted">{CEFR_MEANING[cefr]?.() ?? ""}</p>
+          <p className="text-xs text-muted mt-1">
+            {level.testedAt
+              ? tr("Level test on {{date}}: {{level}}. Updated by your practice since.", {
+                  date: new Date(level.testedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }),
+                  level: level.cefr,
+                })
+              : ""}{" "}
+            {level.goal
+              ? toGo
+                ? tr("Your goal is {{goal}}: {{n}} level(s) to go.", { goal: level.goal, n: toGo })
+                : tr("You've reached your goal of {{goal}}.", { goal: level.goal })
+              : ""}
+          </p>
+        </div>
+        <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)} className="shrink-0">
+          {tr("Your plan to the next level")}
+        </Button>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-display font-bold text-lg text-ink">{tr("Your English level: {{level}}", { level: cefr })}</p>
-        <p className="text-sm text-muted">{CEFR_MEANING[cefr]?.() ?? ""}</p>
-        <p className="text-xs text-muted mt-1">
-          {level.testedAt ? tr("From your level test on {{date}}.", { date: new Date(level.testedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) }) : ""}{" "}
-          {level.goal
-            ? toGo
-              ? tr("Your goal is {{goal}}: {{n}} level(s) to go.", { goal: level.goal, n: toGo })
-              : tr("You've reached your goal of {{goal}}.", { goal: level.goal })
-            : ""}
-        </p>
-      </div>
-      <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)} className="shrink-0">
-        {tr("Your plan to the next level")}
-      </Button>
+      {pathLevels && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {(["listening", "speaking", "reading", "writing"] as SkillTag[]).map((skill) => {
+            const Icon = SKILL_ICONS[skill];
+            return (
+              <button
+                key={skill}
+                onClick={() => navigate(`${ROUTES.MODULES}?skill=${skill}`)}
+                className="flex items-center gap-2.5 rounded-input border border-rule bg-paper-warm/60 px-3 py-2 text-left hover:border-navy cursor-pointer"
+              >
+                <Icon size={16} className={SKILL_RING_COLOR[skill]} />
+                <span className="text-xs text-muted flex-1">{t(`skills.${skill}`)}</span>
+                <span className="font-display font-bold text-ink">{pathLevels[skill]}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -385,13 +420,13 @@ function LearnerDashboard() {
         ]}
       />
 
-      {data.goal && <GoalCountdownCard goal={data.goal} level={data.englishLevel?.cefr ?? null} />}
+      {data.goal && <GoalCountdownCard goal={data.goal} level={data.currentLevel ?? data.englishLevel?.cefr ?? null} />}
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 
       <NextStepCard />
 
-      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} />}
+      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} />}
 
       <MotivationalBar />
 

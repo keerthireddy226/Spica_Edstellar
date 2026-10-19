@@ -7,7 +7,7 @@ import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { quotaUsage } from "../programs/quotas.js";
 import type { SkillTag } from "../gamification/stats.js";
-import { skillPath } from "./path.js";
+import { LEVELS, pathSummary, skillPath } from "./path.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -138,17 +138,19 @@ async function recentTypeAccuracy(userId: string): Promise<TypeAccuracy[]> {
   return [...by.values()];
 }
 
-// The weakest skill: lowest recent practice accuracy where there's enough
-// evidence, otherwise the lowest skill from the latest level test.
+// The weakest skill: the lowest path level; among equals, the lowest recent
+// practice accuracy (or level-test score where there's too little practice).
 async function weakestSkill(userId: string, types: TypeAccuracy[]): Promise<SkillTag> {
   const placement = (await pool.query(`SELECT skill_percents FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId])).rows[0];
-  const score = (skill: SkillTag) => {
+  const levels = await pathSummary(userId);
+  const accuracy = (skill: SkillTag) => {
     const t = types.filter((x) => x.skill === skill);
     const graded = t.reduce((n, x) => n + x.graded, 0);
     if (graded >= MIN_GRADED * 2) return t.reduce((n, x) => n + x.correct, 0) / graded;
     return (Number(placement?.skill_percents?.[skill] ?? 50) || 0) / 100;
   };
-  return SKILLS.reduce((weakest, s) => (score(s) < score(weakest) ? s : weakest));
+  const rank = (s: SkillTag) => LEVELS.indexOf(levels[s]);
+  return SKILLS.reduce((weakest, s) => (rank(s) < rank(weakest) || (rank(s) === rank(weakest) && accuracy(s) < accuracy(weakest)) ? s : weakest));
 }
 
 export type NextStep =

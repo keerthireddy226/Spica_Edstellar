@@ -15,6 +15,7 @@ import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { retryCounts, retryItems, RETRY_SET_SIZE } from "../learner/insights.js";
 import { skillPath, updatePathAfterSet, pathLevels, type Level } from "../learner/path.js";
+import { rebuildRoadmap } from "../roadmap/save.js";
 import { applyCheckResult, checkStartLevel, decide, pickCheckItem, quickJudge, settleCheck, MAX_CHECK_QUESTIONS, type CheckAnswer } from "../learner/levelCheck.js";
 
 export const practiceRouter = Router();
@@ -620,6 +621,7 @@ practiceRouter.post("/session/:sessionId/check-next", requireAuth, async (req: A
       const result = { level: decision.result, from: c.checkStart };
       await pool.query(`UPDATE sessions SET composition = composition || $2::jsonb WHERE id = $1`, [row.id, JSON.stringify({ checkResult: result })]);
       await applyCheckResult(req.user!.id, c.skill, decision.result);
+      if (decision.result !== c.checkStart) await rebuildRoadmap(req.user!.id).catch(() => false);
       return res.json({ done: true, result });
     }
     await pool.query(`UPDATE sessions SET composition = jsonb_set(composition, '{itemIds}', (composition->'itemIds') || $2::jsonb) WHERE id = $1`, [
@@ -783,6 +785,9 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
     const failedCount = summaryResult.rows.filter((r) => r.status === "failed").length;
 
     const { newBadges, stats } = await checkAndAwardBadges(req.user!.id);
+    const pathChange = composition.setId && !composition.retry ? await updatePathAfterSet(req.user!.id, composition.setId, composition.skill) : null;
+    // A level passed or dropped: the plan follows the new level.
+    if (pathChange) await rebuildRoadmap(req.user!.id).catch(() => false);
     const ctx = await setContext(req.user!.id, composition.setId ?? null, composition.skill ?? null, composition.itemTypeId ?? null);
     res.json({
       // For the "set done" moment: streak, new badges, how far through this
@@ -791,7 +796,7 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
       newBadges,
       unitProgress: composition.setId ? await unitProgress(req.user!.id, composition.setId, composition.skill) : null,
       // "My path" moved up (level passed) or down (two weak sets) by this set.
-      pathChange: composition.setId && !composition.retry ? await updatePathAfterSet(req.user!.id, composition.setId, composition.skill) : null,
+      pathChange,
       gradedCount: graded.length,
       correctCount,
       pendingCount,

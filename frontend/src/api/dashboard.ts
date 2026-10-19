@@ -59,6 +59,9 @@ export interface DashboardData {
   badges: Badge[];
   inProgressPractice: InProgressPractice | null;
   goal?: GoalStatus;
+  // Each skill's level now (Practice Modules path) and the overall from them.
+  pathLevels?: Record<SkillTag, string>;
+  currentLevel?: string | null;
 }
 
 export type PaceStatus = "new" | "on_track" | "slightly_behind" | "behind";

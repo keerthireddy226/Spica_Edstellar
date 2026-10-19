@@ -35,6 +35,11 @@ export interface ExamSummary {
   completed: boolean;
   // An unfinished practice session of this set to resume.
   inProgress: boolean;
+  // Taken to the end at least once (skips included).
+  finished?: boolean;
+  // Sets open in order: locked until the set before (lockedBy) is finished.
+  locked?: boolean;
+  lockedBy?: string | null;
   // "form": a test built by Edstellar staff from the question bank.
   source?: "set" | "form";
   durationMinutes?: number;
@@ -74,7 +79,11 @@ export interface ExamCompleteResult {
   cefrLevel?: string | null;
   skillLevels?: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>> | null;
   skillPercents?: Partial<Record<"listening" | "speaking" | "reading" | "writing", number>> | null;
+  // Each skill's level here against the learner's Practice Modules path.
+  pathCompare?: PathCompare | null;
 }
+
+export type PathCompare = Partial<Record<"listening" | "speaking" | "reading" | "writing", { test: string; path: string; action: "raised" | "below" | "same" }>>;
 
 // Every family and test type, for settings screens (no per-learner "allowed").
 export function getCatalogue(): Promise<{ families: CatalogueFamily[] }> {
@@ -285,7 +294,7 @@ export interface FeedbackReport {
   explanationsMissing?: boolean;
   deliveryMode: DeliveryMode;
   testTypeId: string | null;
-  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; scoreBand: ScoreBand | null };
+  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; scoreBand: ScoreBand | null; pathCompare?: PathCompare | null };
   target: { level: string; date: string; programName: string } | null;
   analysis: string;
   nextSteps: { title: string; why: string; skill: string; link: { testTypeId: string } | null }[];

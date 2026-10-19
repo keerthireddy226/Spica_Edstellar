@@ -19,7 +19,9 @@ import {
   BookOpenCheck,
   Target,
   FileText,
+  Lock,
 } from "lucide-react";
+import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -835,7 +837,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
             })}
           </p>
         )}
-        {summary.skillLevels && Object.keys(summary.skillLevels).length > 0 && (
+        {summary.pathCompare && Object.keys(summary.pathCompare).length > 0 ? (
+          <SkillLevelCompare compare={summary.pathCompare} percents={summary.skillPercents} />
+        ) : summary.skillLevels && Object.keys(summary.skillLevels).length > 0 && (
           <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
             {(["listening", "speaking", "reading", "writing"] as const)
               .filter((skill) => summary.skillLevels?.[skill])
@@ -1432,10 +1436,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                 <div className="flex items-start gap-4">
                   <span
                     className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 font-display font-bold text-lg ${
-                      exam.completed ? "bg-success text-white" : `${colour} text-white`
+                      exam.completed ? "bg-success text-white" : exam.locked ? "bg-rule text-muted" : `${colour} text-white`
                     }`}
                   >
-                    {exam.completed ? <CheckCircle2 size={22} /> : i + 1}
+                    {exam.completed ? <CheckCircle2 size={22} /> : exam.locked ? <Lock size={20} /> : i + 1}
                   </span>
                   <div className="flex flex-col gap-1 flex-1 min-w-0">
                     <span className="font-display font-bold text-base text-ink">{exam.name || `Set ${i + 1}`}</span>
@@ -1458,11 +1462,23 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                     setPreTestDoneFor(null);
                     setPendingStart(exam.source === "form" ? { key: exam.id, mode: "practice", formId: exam.id } : { key: exam.id, mode: "practice", examId: exam.id });
                   }}
-                  // At the monthly limit, only an unfinished set can be resumed.
-                  disabled={practiceLeft === 0 && !exam.inProgress}
+                  // At the monthly limit, only an unfinished set can be resumed;
+                  // a locked set opens once the one before is finished.
+                  disabled={(practiceLeft === 0 && !exam.inProgress) || !!exam.locked}
+                  variant={exam.locked ? "secondary" : undefined}
                   className="w-full"
                 >
-                  {exam.inProgress ? tr("Resume") : exam.completed ? t("practiceTests.retake") : t("practiceTests.startExam")}
+                  {exam.locked ? (
+                    <span className="flex items-center justify-center gap-1.5">
+                      <Lock size={15} /> {tr("Finish Set {{n}} to unlock", { n: i })}
+                    </span>
+                  ) : exam.inProgress ? (
+                    tr("Resume")
+                  ) : exam.completed || exam.finished ? (
+                    t("practiceTests.retake")
+                  ) : (
+                    t("practiceTests.startExam")
+                  )}
                 </Button>
               </div>
             ))}

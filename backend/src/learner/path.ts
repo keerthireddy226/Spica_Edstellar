@@ -297,17 +297,34 @@ export async function updatePathAfterSet(userId: string, setId: string, skill: S
   return null;
 }
 
-// A full mock exam's level per skill lifts any path below it (never lowers).
-export async function raisePathFromMock(userId: string, skillLevels: Record<string, string | null> | null) {
-  if (!skillLevels) return;
+export interface SkillCompare {
+  // The level this test showed, and the path level before it.
+  test: Level;
+  path: Level;
+  // raised: the path moved up to the test level; below: the test came out
+  // lower (the path stays; a level check can confirm); same: no difference.
+  action: "raised" | "below" | "same";
+}
+
+// A finished practice test or mock: a skill level above the learner's path
+// lifts every question type of the skill that is below it; a lower one never
+// lowers the path, it is only reported so the learner can take a level check.
+export async function applyTestLevels(userId: string, skillLevels: Record<string, unknown> | null): Promise<Partial<Record<SkillTag, SkillCompare>>> {
+  const out: Partial<Record<SkillTag, SkillCompare>> = {};
+  if (!skillLevels) return out;
   for (const [skill, level] of Object.entries(skillLevels)) {
     if (!isLevel(level) || !["listening", "speaking", "reading", "writing"].includes(skill)) continue;
+    const path = (await skillPath(userId, skill as SkillTag)).level;
+    const action = rank(level) > rank(path) ? "raised" : rank(level) < rank(path) ? "below" : "same";
+    out[skill as SkillTag] = { test: level, path, action };
+    if (action !== "raised") continue;
     const types = await skillTypes(skill as SkillTag);
     const levels = await pathLevels(userId, skill as SkillTag, types.map((t) => t.id));
     for (const t of types) {
-      if (rank(levels.get(t.id)!) < rank(level) && t.units.some((u) => u.level === level)) await setLevel(userId, t.id, skill, level, "mock");
+      if (rank(levels.get(t.id)!) < rank(level) && t.units.some((u) => u.level === level)) await setLevel(userId, t.id, skill, level, "test");
     }
   }
+  return out;
 }
 
 // Each skill's path level, for Overview and the Roadmap.
@@ -315,4 +332,15 @@ export async function pathSummary(userId: string): Promise<Record<SkillTag, Leve
   const out = {} as Record<SkillTag, Level>;
   for (const skill of ["listening", "speaking", "reading", "writing"] as SkillTag[]) out[skill] = (await skillPath(userId, skill)).level;
   return out;
+}
+
+// One overall level from the four skill paths: the lower middle one, so a
+// single strong skill doesn't overstate it.
+export function overallFromSkills(levels: Partial<Record<SkillTag, Level>>): Level | null {
+  const ranks = Object.values(levels)
+    .filter(isLevel)
+    .map(rank)
+    .sort((a, b) => a - b);
+  if (!ranks.length) return null;
+  return LEVELS[ranks[Math.floor((ranks.length - 1) / 2)]];
 }

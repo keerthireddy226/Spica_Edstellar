@@ -187,9 +187,12 @@ function StatsRow({
 function SkillBreakdown({
   skillPercents,
   skillLevels,
+  pathLevels,
 }: {
   skillPercents: Record<SkillTag, number | null>;
   skillLevels: Record<SkillTag, { level: CefrLevel; cappedByGap: boolean } | null> | null;
+  // Each skill's level now (Practice Modules path).
+  pathLevels?: Record<SkillTag, string>;
 }) {
   const { t } = useTranslation();
   const entries = Object.entries(skillPercents) as [SkillTag, number | null][];
@@ -215,12 +218,13 @@ function SkillBreakdown({
                 <Icon size={20} strokeWidth={2} className={pct === null ? "text-muted" : color} />
               </ProgressRing>
               <div className="text-xs font-semibold text-ink mt-2">{t(`skills.${skill}`)}</div>
+              {pathLevels?.[skill] && <div className="font-display font-bold text-lg text-ink leading-tight">{pathLevels[skill]}</div>}
               <div className="text-[10px] text-muted">
                 {pct === null ? (
                   <span className="italic">{t("roadmap.notTested")}</span>
                 ) : (
                   <>
-                    {entry?.level ?? percentToCefr(pct)}
+                    {pathLevels?.[skill] ? tr("Level test: {{level}}", { level: entry?.level ?? percentToCefr(pct) }) : (entry?.level ?? percentToCefr(pct))}
                     {skill === strongest ? ` · ${t("roadmap.strongest")}` : ""}
                   </>
                 )}
@@ -541,7 +545,9 @@ export function Roadmap() {
   }
 
   const { placement, roadmap, goalLevel, accessWindow, firstName, recommendedPractice } = data;
-  const goalMet = meetsGoal(placement.cefrLevel, goalLevel);
+  // The level now: from the Practice Modules path (which starts at the level test).
+  const nowLevel = (data.currentLevel ?? placement.cefrLevel) as typeof placement.cefrLevel;
+  const goalMet = meetsGoal(nowLevel, goalLevel);
   const daysAccessLeft = accessWindow ? Math.max(0, accessWindow.durationDays + daysUntil(accessWindow.startDate)) : null;
   const examDays = data.examDate ? daysUntil(data.examDate) : null;
   const daysToExam = examDays !== null && examDays >= 0 ? examDays : null;
@@ -565,7 +571,7 @@ export function Roadmap() {
 
       <Hero
         firstName={firstName ?? ""}
-        currentLevel={placement.cefrLevel}
+        currentLevel={nowLevel}
         goalLevel={goalLevel}
         daysAccessLeft={daysAccessLeft}
         daysToExam={daysToExam}
@@ -580,7 +586,7 @@ export function Roadmap() {
       <MotivationalBar />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-        <SkillBreakdown skillPercents={placement.skillPercents} skillLevels={placement.skillLevels} />
+        <SkillBreakdown skillPercents={placement.skillPercents} skillLevels={placement.skillLevels} pathLevels={data.pathLevels} />
 
         <LearnerCard title={t("roadmap.timelineTitle")} icon={Compass} color="#c9965c">
           <RoadmapTimeline milestones={roadmap.milestones} daysSinceStart={daysSinceStart} />

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
+import { overallFromSkills, pathSummary } from "../learner/path.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 
 export const roadmapRouter = Router();
@@ -45,6 +46,7 @@ roadmapRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     );
 
     const userResult = await pool.query(`SELECT first_name FROM users WHERE id = $1`, [req.user!.id]);
+    const pathLevels = await pathSummary(req.user!.id);
 
     // Same "which milestone is active" logic the timeline UI uses — the
     // first milestone whose target day hasn't passed yet (or the last one,
@@ -99,6 +101,9 @@ roadmapRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
         reviewStatus: placement.status ?? "certified",
       },
       goalLevel: profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : placement.cefr_level,
+      // Each skill's level now (Practice Modules path), and the overall from them.
+      pathLevels,
+      currentLevel: overallFromSkills(pathLevels),
       // The plan counts down to the exam when there is one.
       examDate: profile.exam_date ? dateOnly(profile.exam_date) : null,
       accessWindow:

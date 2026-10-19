@@ -2,6 +2,7 @@ import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { CEFR_LEVELS, cefrRank, type CefrLevel } from "../placement/cefr.js";
 import { buildRoadmap, type AccessDuration, type SkillTag } from "../placement/roadmapBuilder.js";
+import { overallFromSkills, pathSummary } from "../learner/path.js";
 
 // Builds and stores a learner's roadmap from their level, goal and dates.
 // `dayOffsetBase` shifts milestone days so they stay counted from the start of
@@ -42,16 +43,19 @@ export async function saveRoadmap(userId: string, cefrLevel: CefrLevel, skillPer
   return { goalLevel };
 }
 
-// After the learner changes their goal, exam date or daily time: a new plan
-// from their latest level test. Nothing happens before the first level test.
+// A new plan from the learner's current level (their Practice Modules path
+// levels, which start from the level test) after they change their goal,
+// exam date or daily time, or their level moves. Nothing happens before the
+// first level test.
 export async function rebuildRoadmap(userId: string): Promise<boolean> {
   const placement = (
     await pool.query(`SELECT cefr_level, skill_percents FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId])
   ).rows[0];
   if (!placement?.cefr_level) return false;
+  const current = overallFromSkills(await pathSummary(userId)) ?? placement.cefr_level;
   const start = (await pool.query(`SELECT access_window_start_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0]
     ?.access_window_start_date;
   const daysSinceStart = start ? Math.max(0, Math.round((Date.now() - new Date(start).getTime()) / 86_400_000)) : 0;
-  await saveRoadmap(userId, placement.cefr_level, placement.skill_percents, daysSinceStart);
+  await saveRoadmap(userId, current, placement.skill_percents, daysSinceStart);
   return true;
 }

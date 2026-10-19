@@ -137,7 +137,7 @@ export interface FeedbackReport {
   explanationsMissing: boolean;
   deliveryMode: string;
   testTypeId: string | null;
-  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Json | null; scoreBand: Json | null };
+  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Json | null; scoreBand: Json | null; pathCompare?: Json | null };
   target: { level: string; date: string; programName: string } | null;
   analysis: string;
   nextSteps: NextStep[];
@@ -510,7 +510,7 @@ Address the learner as "you". Be honest and encouraging, specific, and simple (B
       },
       deliveryMode: s.delivery_mode ?? "practice",
       testTypeId,
-      overall: { cefrLevel: s.result?.cefrLevel ?? null, percent: s.result?.overallPercent ?? null, skillLevels: s.result?.skillLevels ?? null, scoreBand: s.result?.scoreBand ?? null },
+      overall: { cefrLevel: s.result?.cefrLevel ?? null, percent: s.result?.overallPercent ?? null, skillLevels: s.result?.skillLevels ?? null, scoreBand: s.result?.scoreBand ?? null, pathCompare: s.result?.pathCompare ?? null },
       target,
       analysis: summaryData.analysis ?? "",
       nextSteps,

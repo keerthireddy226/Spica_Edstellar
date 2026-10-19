@@ -5,6 +5,12 @@ import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { getLearnerStats, computeStreakDays, ALL_SKILLS, type SkillTag } from "../gamification/stats.js";
 import { goalStatus, nextStep, retryCounts } from "../learner/insights.js";
+import { overallFromSkills, pathSummary } from "../learner/path.js";
+
+async function currentLevels(userId: string) {
+  const pathLevels = await pathSummary(userId);
+  return { pathLevels, currentLevel: overallFromSkills(pathLevels) };
+}
 
 export const dashboardRouter = Router();
 // Ceiling on items of one skill per day — avoids a long, repetitive same-skill grind.
@@ -205,6 +211,8 @@ dashboardRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
       inProgressPractice,
       // Days to the exam and whether practice keeps pace with the plan.
       goal: await goalStatus(req.user!.id),
+      // Each skill's level now (Practice Modules path), and the overall from them.
+      ...(await currentLevels(req.user!.id)),
     });
   } catch (err) {
     next(err);

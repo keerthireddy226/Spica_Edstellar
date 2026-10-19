@@ -24,6 +24,9 @@ export interface RoadmapData {
   goalLevel: CefrLevel;
   accessWindow: { startDate: string; durationDays: number } | null;
   examDate?: string | null;
+  // Each skill's level now (Practice Modules path) and the overall from them.
+  pathLevels?: Record<SkillTag, string>;
+  currentLevel?: string | null;
   roadmap: {
     pace: "maintenance" | "light" | "steady" | "intensive";
     minutesPerDay: number;

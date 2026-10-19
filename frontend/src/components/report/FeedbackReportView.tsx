@@ -6,6 +6,7 @@ import { ROUTES } from "@/constants/routes";
 import { speak } from "@/hooks/useVoiceRecorder";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
+import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 
 const ERROR_TYPE: Record<string, () => string> = {
   spelling: () => tr("Spelling"),
@@ -337,7 +338,7 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
               <span className="text-[11px] text-muted uppercase tracking-wide">{tr("Estimated score")}</span>
             </div>
           )}
-          {report.overall.skillLevels && (
+          {report.overall.skillLevels && !report.overall.pathCompare && (
             <div className="flex flex-wrap gap-2 items-center">
               {Object.entries(report.overall.skillLevels).map(([s, l]) => (
                 <span key={s} className="text-sm bg-paper-warm rounded-input px-3 py-2">
@@ -347,6 +348,7 @@ function Report({ report, upgradeLink }: { report: FeedbackReport; upgradeLink: 
             </div>
           )}
         </div>
+        {report.overall.pathCompare && Object.keys(report.overall.pathCompare).length > 0 && <SkillLevelCompare compare={report.overall.pathCompare} />}
         {report.target && (
           <p className="text-sm text-muted flex items-center gap-1.5">
             <Target size={15} /> {tr("Your target: {{level}} by {{date}} ({{program}})", { level: report.target.level, date: report.target.date, program: report.target.programName })}
