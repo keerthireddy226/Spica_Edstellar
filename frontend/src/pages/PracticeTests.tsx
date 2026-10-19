@@ -558,6 +558,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     if (transcript) setAnswerText(transcript);
     if (blob) {
       const base64 = await blobToBase64(blob);
+      // Mock exams, like the real exam: stopping the recording hands the
+      // answer in and moves to the next question (no Skip or Next buttons).
+      if (isMock) return handleSubmit({ audioBase64: base64, audioMimeType: mimeType, durationMs, transcript: transcript ?? "" });
       setPendingAudio({ base64, mimeType });
       setAudioBlobUrl(URL.createObjectURL(blob));
       setRecordingDurationMs(durationMs);
@@ -631,7 +634,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     }
   }
 
-  // recorded: a recording stopped by the mock's time-up, not yet in state.
+  // recorded: a mock recording just stopped (by the learner or the time-up), not yet in state.
   async function handleSubmit(recorded?: { audioBase64: string; audioMimeType: string; durationMs: number; transcript: string }) {
     if (!current || !sessionId) return;
     setSubmitting(true);
@@ -1215,24 +1218,37 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
                     <ArrowLeft size={20} />
                   </Button>
                 )}
-                <button
-                  onClick={handleSkip}
-                  disabled={submitting || recording}
-                  className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-1"
-                >
-                  {t("placementTest.skip")}
-                </button>
-                <Button
-                  onClick={() => (canSubmit ? handleSubmit() : handleSkip())}
-                  disabled={submitting || recording || (!canSubmit && !timeUpEmpty)}
-                  className="flex-1"
-                >
-                  {submitting
-                    ? t("placementTest.submitting")
-                    : index + 1 < items.length
-                      ? t("practiceTests.saveAndNext")
-                      : t("placementTest.finish")}
-                </Button>
+                {/* Mock exams have no Skip: a question left unanswered when its
+                    time runs out counts as unanswered, as in the real exam. */}
+                {!isMock && (
+                  <button
+                    onClick={handleSkip}
+                    disabled={submitting || recording}
+                    className="text-sm font-medium text-muted hover:text-ink transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed px-1"
+                  >
+                    {t("placementTest.skip")}
+                  </button>
+                )}
+                {isMock && current.inputMethod === "mic" ? (
+                  // Spoken answers in a mock: stopping the recording hands it in.
+                  <p className="flex-1 text-center text-sm text-muted">
+                    {submitting ? t("placementTest.submitting") : tr("Your answer is handed in when you stop recording; the test then moves on by itself.")}
+                  </p>
+                ) : (
+                  <Button
+                    onClick={() => (canSubmit ? handleSubmit() : handleSkip())}
+                    disabled={submitting || recording || (!canSubmit && !timeUpEmpty)}
+                    className="flex-1"
+                  >
+                    {submitting
+                      ? t("placementTest.submitting")
+                      : index + 1 < items.length
+                        ? isMock
+                          ? t("placementTest.next")
+                          : t("practiceTests.saveAndNext")
+                        : t("placementTest.finish")}
+                  </Button>
+                )}
               </>
             )}
           </div>
