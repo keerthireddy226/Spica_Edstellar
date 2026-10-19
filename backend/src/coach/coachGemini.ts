@@ -27,10 +27,28 @@ const SYSTEM_INSTRUCTION =
   "Always end your reply with a simple follow-up question that keeps the conversation going. " +
   "Stay in character as a conversation partner at all times — never mention that you are an AI, a model, or a program.";
 
+// Appended only when there is something to say — tells the model how to use
+// the learner facts without turning the chat into a progress report.
+export function buildSystemInstruction(learnerContext?: string): string {
+  const facts = learnerContext?.trim();
+  if (!facts) return SYSTEM_INSTRUCTION;
+  return (
+    SYSTEM_INSTRUCTION +
+    "\n\nWhat you know about this learner (facts from their practice history):\n" +
+    facts +
+    "\n\nHow to use this: pitch your vocabulary and sentence length at their current level, stretching a little toward their goal. " +
+    "When it fits naturally, steer the conversation toward their weak areas, their reason for learning and their exam date, " +
+    "and when they ask what to practise, suggest specific Practice Modules question types by name (for example the weakest types above). " +
+    "Use their first name occasionally if you have it. " +
+    "Only refer to results that appear above — never invent scores, levels, tests or dates. " +
+    "Don't quote percentages or other raw numbers unless the learner asks for them; describe them in words instead."
+  );
+}
+
 // Only the most recent turns are sent — bounds prompt size without capping conversation length.
 const MAX_HISTORY_TURNS = 20;
 
-export async function getCoachReply(history: CoachTurn[]): Promise<string | null> {
+export async function getCoachReply(history: CoachTurn[], learnerContext?: string): Promise<string | null> {
   const ai = getClient();
   if (!ai) return null;
 
@@ -42,7 +60,7 @@ export async function getCoachReply(history: CoachTurn[]): Promise<string | null
         role: turn.speaker === "learner" ? "user" : "model",
         parts: [{ text: turn.transcript }],
       })),
-      config: { systemInstruction: SYSTEM_INSTRUCTION },
+      config: { systemInstruction: buildSystemInstruction(learnerContext) },
     });
     const text = response.text?.trim();
     return text || null;

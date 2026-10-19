@@ -5,6 +5,7 @@ import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { getCoachReply, COACH_OPENING_LINE, type CoachTurn } from "./coachGemini.js";
+import { learnerContext } from "./learnerContext.js";
 
 export const coachRouter = Router();
 
@@ -74,6 +75,12 @@ coachRouter.post("/session/:sessionId/end", requireAuth, async (req: AuthedReque
 });
 
 coachRouter.post("/session/:sessionId/messages", requireAuth, coachMessageLimiter, async (req: AuthedRequest, res, next) => {
+  // Started outside the transaction (cached per learner); a failure only
+  // costs personalization, never the reply.
+  const contextPromise = learnerContext(req.user!.id).catch((err) => {
+    console.error("coach learnerContext failed:", err);
+    return "";
+  });
   const client = await pool.connect();
   try {
     const body = sendMessageSchema.parse(req.body);
@@ -110,7 +117,7 @@ coachRouter.post("/session/:sessionId/messages", requireAuth, coachMessageLimite
     // silent dead end mid-conversation), just an honest one instead of a
     // fabricated coach line.
     const reply =
-      (await getCoachReply(history)) ?? "Sorry, I'm having trouble replying right now — please try again in a moment.";
+      (await getCoachReply(history, await contextPromise)) ?? "Sorry, I'm having trouble replying right now — please try again in a moment.";
 
     await client.query(`INSERT INTO coach_turns (session_id, turn_index, speaker, transcript) VALUES ($1, $2, 'agent', $3)`, [
       req.params.sessionId,
