@@ -142,3 +142,33 @@ export function testsLine(tests: { id: string; name: string }[] | undefined): st
   if (!tests?.length) return "";
   return tests.map((t) => SHORT_TEST_NAME[t.id] ?? t.name).join(" · ");
 }
+
+// One finished Practice Modules session in My reports.
+export interface ModuleHistoryEntry {
+  sessionId: string;
+  completedAt: string;
+  skill: SkillTag | null;
+  itemTypeId: string | null;
+  typeName: string | null;
+  unitName: string | null;
+  setName: string | null;
+  retry: boolean;
+  right: number;
+  wrong: number;
+  skipped: number;
+  pending: number;
+  total: number;
+}
+
+export function getModuleHistory(): Promise<{ sessions: ModuleHistoryEntry[] }> {
+  return api("/practice/history");
+}
+
+export interface ModuleReport extends Omit<ModuleHistoryEntry, "skill" | "itemTypeId" | "typeName" | "unitName" | "setName" | "retry"> {
+  context: PracticeContext;
+  questions: ReportQuestion[];
+}
+
+export function getModuleReport(sessionId: string): Promise<ModuleReport> {
+  return api(`/practice/session/${sessionId}/report`);
+}

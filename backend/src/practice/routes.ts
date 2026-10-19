@@ -554,6 +554,87 @@ async function unitProgress(userId: string, setId: string, skill: string) {
   return x ? { unitName: x.name as string, done: x.done as number, total: x.total as number, levelComplete: x.done >= x.total } : null;
 }
 
+// Outcome counts of one finished session (no answer row counts as skipped).
+async function sessionCounts(sessionId: string, itemIds: string[]) {
+  const qs = await reviewQuestions(sessionId, itemIds);
+  const total = itemIds.length || qs.length;
+  return {
+    questions: qs,
+    right: qs.filter((q) => q.outcome === "right").length,
+    wrong: qs.filter((q) => q.outcome === "wrong").length,
+    pending: qs.filter((q) => q.outcome === "pending").length,
+    skipped: total - qs.filter((q) => q.answered).length,
+    total,
+  };
+}
+
+// Every finished Practice Modules session, newest first, for My reports.
+practiceRouter.get("/history", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT se.id, se.completed_at, se.composition, it.name AS type_name, u.item_type_id, u.name AS unit_name, st.name AS set_name
+       FROM sessions se
+       LEFT JOIN sets st ON st.id::text = se.composition->>'setId'
+       LEFT JOIN units u ON u.id = st.unit_id
+       LEFT JOIN item_types it ON it.id = coalesce(u.item_type_id, se.composition->>'itemTypeId')
+       WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
+         AND jsonb_array_length(coalesce(se.composition->'itemIds', '[]'::jsonb)) > 0
+       ORDER BY se.completed_at DESC LIMIT 300`,
+      [req.user!.id],
+    );
+    const sessions = [];
+    // A few at a time: each one reads its answers.
+    for (let i = 0; i < r.rows.length; i += 10) {
+      sessions.push(
+        ...(await Promise.all(
+          r.rows.slice(i, i + 10).map(async (x) => {
+            const c = x.composition ?? {};
+            const { questions: _q, ...counts } = await sessionCounts(x.id, c.itemIds ?? []);
+            return {
+              sessionId: x.id,
+              completedAt: x.completed_at,
+              skill: c.skill ?? null,
+              itemTypeId: x.item_type_id ?? c.itemTypeId ?? null,
+              typeName: x.type_name ?? null,
+              unitName: x.unit_name ?? null,
+              setName: x.set_name ?? null,
+              retry: c.retry === true,
+              ...counts,
+            };
+          }),
+        )),
+      );
+    }
+    res.json({ sessions });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// One finished session's report: where it sits and every question with the
+// learner's answer and the right one.
+practiceRouter.get("/session/:sessionId/report", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const row = (
+      await pool.query(`SELECT id, composition, completed_at FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'practice'`, [
+        req.params.sessionId,
+        req.user!.id,
+      ])
+    ).rows[0];
+    if (!row) return res.status(404).json({ error: "session_not_found" });
+    if (!row.completed_at) return res.status(409).json({ error: "session_not_finished" });
+    const c = row.composition ?? {};
+    res.json({
+      sessionId: row.id,
+      completedAt: row.completed_at,
+      context: await contextOf(req.user!.id, c),
+      ...(await sessionCounts(row.id, c.itemIds ?? [])),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // How many wrong answers wait for a retry, per skill.
 practiceRouter.get("/retry", requireAuth, async (req: AuthedRequest, res, next) => {
   try {

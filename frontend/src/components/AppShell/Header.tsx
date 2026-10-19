@@ -153,7 +153,9 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const title =
     admissions && (location.pathname === ROUTES.ORG_ADMIN_RECRUITMENT || location.pathname === ROUTES.RECRUITER_JOBS)
       ? tr("Admissions")
-      : (CONSOLE_TITLE_BY_ROUTE[location.pathname] ?? t(titleKey));
+      : location.pathname.startsWith("/my-reports/")
+        ? tr("My reports")
+        : (CONSOLE_TITLE_BY_ROUTE[location.pathname] ?? t(titleKey));
   const brandColor = useBrandColor();
 
   return (

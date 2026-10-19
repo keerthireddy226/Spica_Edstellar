@@ -172,7 +172,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
             to={ROUTES.MY_REPORTS}
             icon={FileText}
             label={tr("My reports")}
-            isActive={location.pathname === ROUTES.MY_REPORTS || location.pathname.startsWith("/practice-tests/report/")}
+            isActive={location.pathname.startsWith(ROUTES.MY_REPORTS) || location.pathname.startsWith("/practice-tests/report/")}
             locked={locked}
             onClick={onClose}
           />
