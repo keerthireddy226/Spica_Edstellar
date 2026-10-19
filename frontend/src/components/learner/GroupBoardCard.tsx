@@ -52,6 +52,8 @@ export function GroupBoardCard() {
       ) : (
         <table className="w-full text-sm">
           <caption className="text-left text-xs text-muted pb-2">
+            <span className="font-semibold text-ink">{tr("Your position: {{rank}} of {{size}}", { rank: b.rank, size: b.size })}</span>
+            {" · "}
             {b.topHalf
               ? tr("You're in the top {{p}}% of your group 🔥", { p: b.topPercent })
               : b.climbed && b.climbed > 0
@@ -63,7 +65,7 @@ export function GroupBoardCard() {
           </caption>
           <thead>
             <tr className="text-left text-xs text-muted border-b border-rule">
-              <th className="py-2 pr-3 w-12 font-semibold">{tr("Rank")}</th>
+              <th className="py-2 pr-3 pl-2 w-20 font-semibold">{tr("Position")}</th>
               <th className="py-2 pr-3 font-semibold">{tr("Learner")}</th>
               <th className="py-2 pr-3 w-24 font-semibold">{tr("Level")}</th>
               <th className="py-2 pr-2 w-24 text-right font-semibold">{tr("Points")}</th>
@@ -73,7 +75,19 @@ export function GroupBoardCard() {
             {rows.map((row, i) => (
               <BoardRow key={i} rank={row.rank} name={row.me ? tr("You") : (row.name ?? tr("A learner"))} points={row.points} me={row.me} level={row.me ? b.myLevel : null} />
             ))}
-            {!meShown && b.rank ? <BoardRow rank={b.rank} name={tr("You")} points={b.points?.points ?? 0} me level={b.myLevel} /> : null}
+            {!meShown && b.rank ? (
+              <>
+                {/* Positions between the top 5 and yours. */}
+                {b.rank > rows.length + 1 && (
+                  <tr aria-hidden="true">
+                    <td colSpan={4} className="py-1 text-center text-muted">
+                      ⋯
+                    </td>
+                  </tr>
+                )}
+                <BoardRow rank={b.rank} name={tr("You")} points={b.points?.points ?? 0} me level={b.myLevel} />
+              </>
+            ) : null}
           </tbody>
         </table>
       )}
