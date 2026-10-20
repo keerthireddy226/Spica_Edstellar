@@ -1,9 +1,9 @@
 // Records the Versant listening questions with the Google Neural2 voices, in
 // both the female (en-US-Neural2-F) and male (en-US-Neural2-D) version.
 //
-// - Conversations: speaker A in the learner's voice, speaker B in the other
-//   voice, a pause between turns, then the question after a longer pause.
-//   Nothing like "Speaker A" is read out.
+// - Conversations: in the learner's chosen voice only (as set in their
+//   settings): "Speaker A" / "Speaker B" before each turn, a pause between
+//   turns and a longer pause before the question.
 // - Passage Comprehension: the passage, a pause, then the question.
 // - Sentence Builds: each word group with a pause between them.
 // - Every other type (Repeats, Dictation, Short Answer, Response Selection,
@@ -55,14 +55,11 @@ export function dialogueTurns(dialogue: string): { speaker: string; text: string
 
 // One recording as a list of (voice, SSML) pieces, played one after another.
 function pieces(type: string, content: Record<string, unknown>, voice: VoiceGender): { voice: VoiceGender; ssml: string }[] {
-  const other: VoiceGender = voice === "female" ? "male" : "female";
   const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
   if (type === "conversations") {
-    const turns = dialogueTurns(s(content.dialogue));
-    return [
-      ...turns.map((t) => ({ voice: t.speaker === "B" ? other : voice, ssml: ssml(`${escapeXml(t.text)}${pause(500)}`) })),
-      { voice, ssml: ssml(`${pause(700)}${escapeXml(s(content.question))}`) },
-    ];
+    // "Speaker A", "Speaker B" before each turn, so one voice can still be told apart.
+    const turns = dialogueTurns(s(content.dialogue)).map((t) => `Speaker ${t.speaker}.${pause(300)}${escapeXml(t.text)}`);
+    return [{ voice, ssml: ssml(`${turns.join(pause(700))}${pause(1200)}${escapeXml(s(content.question))}`) }];
   }
   if (type === "passage_comprehension") {
     return [{ voice, ssml: ssml(`${escapeXml(s(content.story))}${pause(1200)}${escapeXml(s(content.question))}`) }];
@@ -80,11 +77,12 @@ async function record(item: { id: string; item_type_id: string; content: Record<
   const parts: Buffer[] = [];
   let durationMs = 0;
   for (const p of pieces(item.item_type_id, item.content, voice)) {
-    let speech = await synthesizeSpeech(p.ssml, p.voice, "en-US", { ssml: true });
+    const opts = { ssml: true };
+    let speech = await synthesizeSpeech(p.ssml, p.voice, "en-US", opts);
     // Google limits requests per minute: wait and try again (2, 4, 8, 16, 32 s).
     for (let attempt = 1; !speech && attempt <= 5; attempt++) {
       await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
-      speech = await synthesizeSpeech(p.ssml, p.voice, "en-US", { ssml: true });
+      speech = await synthesizeSpeech(p.ssml, p.voice, "en-US", opts);
     }
     if (!speech) throw new Error(`synthesis failed for ${item.id} (${voice})`);
     parts.push(speech.audioBuffer);
