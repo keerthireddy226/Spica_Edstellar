@@ -57,9 +57,13 @@ export function dialogueTurns(dialogue: string): { speaker: string; text: string
 function pieces(type: string, content: Record<string, unknown>, voice: VoiceGender): { voice: VoiceGender; ssml: string }[] {
   const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");
   if (type === "conversations") {
-    // "Speaker A", "Speaker B" before each turn, so one voice can still be told apart.
-    const turns = dialogueTurns(s(content.dialogue)).map((t) => `Speaker ${t.speaker}.${pause(300)}${escapeXml(t.text)}`);
-    return [{ voice, ssml: ssml(`${turns.join(pause(700))}${pause(1200)}${escapeXml(s(content.question))}`) }];
+    // "Speaker A", "Speaker B" before each turn (the letter said in full), so
+    // one voice can still be told apart. A short silence first, so a device
+    // waking up doesn't clip "Speaker A".
+    const turns = dialogueTurns(s(content.dialogue)).map(
+      (t) => `Speaker <say-as interpret-as="characters">${t.speaker}</say-as>.${pause(500)}${escapeXml(t.text)}`,
+    );
+    return [{ voice, ssml: ssml(`${pause(400)}${turns.join(pause(800))}${pause(1200)}${escapeXml(s(content.question))}${pause(300)}`) }];
   }
   if (type === "passage_comprehension") {
     return [{ voice, ssml: ssml(`${escapeXml(s(content.story))}${pause(1200)}${escapeXml(s(content.question))}`) }];
