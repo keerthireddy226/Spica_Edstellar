@@ -29,7 +29,7 @@ import { deviceNeedsFor } from "@/lib/systemCheck";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { reportHeldCheck } from "@/lib/systemCheck";
 import { FaceCheck } from "@/components/FaceCheck";
-import { playSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio } from "@/lib/playSpokenAudio";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import {
   AUDIO_FIRST_TYPES,
@@ -189,9 +189,10 @@ function PlacementTestRun() {
   async function handlePlay() {
     if (!current) return;
     setPlaying(true);
-    await playSpokenAudio(current, getSpokenSegments(current));
+    const result = await playSpokenAudio(current, getSpokenSegments(current));
     setPlaying(false);
     setHasPlayed(true);
+    if (result === "missing") setError(NO_RECORDING_TEXT());
   }
 
   async function handleToggleRecord() {

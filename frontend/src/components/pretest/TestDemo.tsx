@@ -21,7 +21,7 @@ import {
   Wifi,
 } from "lucide-react";
 import { Button } from "@/components/Button";
-import { speak } from "@/hooks/useVoiceRecorder";
+import { playClip } from "@/lib/playSpokenAudio";
 import { demoSeen, markDemoSeen, setDemoHidden, type DeviceNeeds } from "@/lib/systemCheck";
 import { tr } from "@/i18n/tr";
 
@@ -299,7 +299,7 @@ function TourStep({ speaking, total }: { speaking: boolean; total?: number }) {
                 disabled={spot !== "play" || plays >= 2}
                 onClick={() => {
                   setPlays((p) => p + 1);
-                  speak([tr("The meeting starts at ten o'clock.")]);
+                  void playClip("/voice-preview/demo.mp3");
                 }}
                 className={`flex-1 flex items-center justify-center gap-2 rounded-input border border-rule bg-paper-warm py-4 text-sm font-semibold text-ink disabled:cursor-default ${mark("play")}`}
               >

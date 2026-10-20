@@ -1,9 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle, MinusCircle, Volume2, Target, Sparkles, Loader2, Lightbulb } from "lucide-react";
+import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbulb } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
-import { speak } from "@/hooks/useVoiceRecorder";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
@@ -126,9 +125,6 @@ function Words({ q }: { q: ReportQuestion }) {
       ) : (
         <p className="text-xs text-success">{tr("Every word matched.")}</p>
       )}
-      <button onClick={() => speak([q.words!.target])} className="self-start flex items-center gap-1.5 text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
-        <Volume2 size={14} /> {tr("Hear the sentence")}
-      </button>
       <p className="text-[11px] text-muted">{tr("Only different or missing words count here, never your accent.")}</p>
     </div>
   );

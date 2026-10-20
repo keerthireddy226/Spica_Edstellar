@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Volume2, Check } from "lucide-react";
-import { speak } from "@/hooks/useVoiceRecorder";
+import { playClip } from "@/lib/playSpokenAudio";
 import { getOnboardingProfile, updateVoicePreference, type PreferredVoice } from "@/api/onboarding";
 
 const VOICES: PreferredVoice[] = ["female", "male"];
@@ -36,11 +36,8 @@ export function VoiceSection({ hideTitle }: { hideTitle?: boolean } = {}) {
 
   async function handlePreview(voice: PreferredVoice) {
     setPreviewing(voice);
-    // A real per-voice sample needs a backend round-trip (Google TTS) —
-    // for a quick preview here, the browser's own male/female-leaning
-    // system voices are close enough to convey the choice without a
-    // network call.
-    await speak([t("profile.voice.previewLine")]);
+    // The same recorded voice the questions use (Google Neural2 F or D).
+    await playClip(`/voice-preview/${voice}.mp3`);
     setPreviewing(null);
   }
 

@@ -61,7 +61,7 @@ import {
 } from "@/api/practiceTests";
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
-import { playSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
@@ -555,9 +555,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   async function handlePlay() {
     if (!current || playCount >= MAX_PLAYS) return;
     setPlaying(true);
-    await playSpokenAudio(current, getSpokenSegments(current));
+    const result = await playSpokenAudio(current, getSpokenSegments(current));
     setPlaying(false);
     setHasPlayed(true);
+    if (result === "missing") setError(NO_RECORDING_TEXT());
     const next = (playCountsRef.current[index] ?? 0) + 1;
     playCountsRef.current[index] = next;
     setPlayCount(next);

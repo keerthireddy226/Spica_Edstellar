@@ -69,7 +69,7 @@ import {
 } from "@/api/practiceSession";
 import type { TestItem, SkillTag } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
-import { playSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { TestConsent } from "@/components/pretest/TestConsent";
@@ -1217,9 +1217,10 @@ function ModulesPage() {
   async function handlePlay() {
     if (!current) return;
     setPlaying(true);
-    await playSpokenAudio(current, getSpokenSegments(current));
+    const result = await playSpokenAudio(current, getSpokenSegments(current));
     setPlaying(false);
     setHasPlayed(true);
+    if (result === "missing") setError(NO_RECORDING_TEXT());
   }
 
   async function handleToggleRecord() {
