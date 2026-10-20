@@ -61,7 +61,7 @@ import {
 } from "@/api/practiceTests";
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
-import { NO_RECORDING_TEXT, playSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
@@ -252,6 +252,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const [partBoundaries, setPartBoundaries] = useState<PartBoundary[]>([]);
   const [items, setItems] = useState<TestItem[]>([]);
   const [index, setIndex] = useState(0);
+  // Leaving the page stops any recording still playing.
+  useEffect(() => () => stopSpokenAudio(), []);
   const [answers, setAnswers] = useState<Record<number, CachedAnswer>>({});
   const answersRef = useRef(answers);
   useEffect(() => {
@@ -445,6 +447,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       clearTimeout(twoPhaseTimeoutRef.current);
       twoPhaseTimeoutRef.current = null;
     }
+    // A recording still playing from the last question stops (Skip, Back, Next).
+    stopSpokenAudio();
+    setPlaying(false);
     questionShownAtRef.current = Date.now();
     const cached = answersRef.current[index];
     setAnswerText(cached?.responseText ?? "");
@@ -556,6 +561,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     if (!current || playCount >= MAX_PLAYS) return;
     setPlaying(true);
     const result = await playSpokenAudio(current, getSpokenSegments(current));
+    // Stopped by Skip or Back: the new question's state is already set.
+    if (result === "stopped") return;
     setPlaying(false);
     setHasPlayed(true);
     if (result === "missing") setError(NO_RECORDING_TEXT());
@@ -687,6 +694,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   }
 
   async function handleSkip() {
+    stopSpokenAudio();
+    setPlaying(false);
     if (!current || !sessionId) return;
     setSubmitting(true);
     setError(null);
@@ -728,6 +737,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   timeUpRef.current = () => void handleTimeUp();
 
   function handleBack() {
+    stopSpokenAudio();
+    setPlaying(false);
     if (index === 0 || isMock) return;
     cacheCurrentAnswer();
     setIndex(index - 1);

@@ -29,7 +29,7 @@ import { deviceNeedsFor } from "@/lib/systemCheck";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { reportHeldCheck } from "@/lib/systemCheck";
 import { FaceCheck } from "@/components/FaceCheck";
-import { NO_RECORDING_TEXT, playSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import {
   AUDIO_FIRST_TYPES,
@@ -155,8 +155,14 @@ function PlacementTestRun() {
   const visibleText = useMemo(() => (current && !needsAudioFirst ? getVisibleText(current) : ""), [current, needsAudioFirst]);
   const meta = current ? ITEM_TYPE_META[current.itemTypeId] : undefined;
 
-  // Reset the answer inputs whenever a new question arrives.
+  // Leaving the page stops any recording still playing.
+  useEffect(() => () => stopSpokenAudio(), []);
+
+  // Reset the answer inputs whenever a new question arrives (a recording
+  // still playing from the last one stops).
   useEffect(() => {
+    stopSpokenAudio();
+    setPlaying(false);
     setAnswerText("");
     setPendingAudio(null);
     setAudioBlobUrl(null);
@@ -190,6 +196,7 @@ function PlacementTestRun() {
     if (!current) return;
     setPlaying(true);
     const result = await playSpokenAudio(current, getSpokenSegments(current));
+    if (result === "stopped") return;
     setPlaying(false);
     setHasPlayed(true);
     if (result === "missing") setError(NO_RECORDING_TEXT());
@@ -260,6 +267,8 @@ function PlacementTestRun() {
   }
 
   async function handleSkip() {
+    stopSpokenAudio();
+    setPlaying(false);
     if (!current || !sessionId) return;
     setSubmitting(true);
     setError(null);
