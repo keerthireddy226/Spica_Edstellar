@@ -5,6 +5,7 @@ import { money } from "@/api/staff";
 import { PageHeader, Panel, StatCard, paletteColor } from "@/components/staff/StaffKit";
 import { TestLimitsPanel } from "@/components/staff/TestLimitsPanel";
 
+import { ProductsPanel } from "@/components/staff/ProductsPanel";
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
 interface Catalog {
@@ -69,6 +70,8 @@ export function PlansCatalog() {
       </div>
 
       <TestLimitsPanel />
+
+      <ProductsPanel />
 
       <Panel title={tr("Volume pricing")}>
         <div className="grid sm:grid-cols-3 gap-3">

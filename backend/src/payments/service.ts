@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { accessCache } from "../licenses/accessCache.js";
 import { POOL_VALIDITY_MONTHS, assignMonths } from "../licenses/service.js";
 import { PAYMENT_CONFIG, chooseProvider, type ProviderName } from "./providers.js";
 import { getTenantPlan, orgUnitPriceCents, purchaseUpgradesTo, setTier, type TenantPlan } from "../plans/service.js";
@@ -6,7 +7,8 @@ import { TIER_LABELS, type PlanTier } from "../plans/config.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { listCreditNotes } from "./invoiceOrders.js";
 
-export type OrderKind = "org_licenses" | "individual_plan";
+// product: one of the products (Full access, preparation, assessment, level test), see products.ts.
+export type OrderKind = "org_licenses" | "individual_plan" | "product";
 export const INDIVIDUAL_PLAN_MONTHS = [1, 3, 6] as const;
 
 export class PaymentError extends Error {
@@ -17,6 +19,8 @@ export class PaymentError extends Error {
 
 export interface Quote {
   currency: "INR" | "USD";
+  // Full access months: credit for the unused part of a preparation purchase.
+  credit?: number;
   provider: ProviderName;
   quantity: number;
   unitAmount: number;
@@ -129,11 +133,20 @@ export function quote(buyer: Buyer, quantity: number, opts: { byInvoice?: boolea
   };
 }
 
+// Takes an upgrade credit off a quote (never below zero) and works out tax again.
+export function withCredit(q: Quote, credit: number): Quote {
+  const c = Math.min(credit, q.subtotal);
+  if (c <= 0) return q;
+  const subtotal = q.subtotal - c;
+  const taxAmount = Math.round((subtotal * q.taxRate) / 100);
+  return { ...q, credit: c, subtotal, taxAmount, total: subtotal + taxAmount };
+}
+
 export async function createOrder(buyer: Buyer, q: Quote): Promise<string> {
   const result = await pool.query(
-    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-    [buyer.tenantId, buyer.userId, buyer.kind, q.quantity, q.currency, q.unitAmount, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo)],
+    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, credit_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+    [buyer.tenantId, buyer.userId, buyer.kind, q.quantity, q.currency, q.unitAmount, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo), q.credit ?? 0],
   );
   return result.rows[0].id;
 }
@@ -165,20 +178,35 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
       await client.query(`SELECT 'INV-' || to_char(now(), 'YYYY') || '-' || lpad(nextval('invoice_number_seq')::text, 5, '0') AS n`)
     ).rows[0].n;
 
-    const purchase = await client.query(
-      `INSERT INTO license_purchases (tenant_id, quantity, unit_price_cents, currency, source, reference, note, created_by, pool_expires_at)
-       VALUES ($1, $2, $3, $4, 'purchase', $5, $6, $7, now() + make_interval(months => $8)) RETURNING id`,
-      [order.tenant_id, order.quantity, order.unit_amount, order.currency, invoiceNumber, order.provider === "invoice" ? "Paid by invoice" : "Online checkout", order.buyer_id, POOL_VALIDITY_MONTHS],
-    );
-    await client.query(
-      `INSERT INTO license_events (tenant_id, kind, quantity, actor_id, note) VALUES ($1, 'purchase', $2, $3, $4)`,
-      [order.tenant_id, order.quantity, order.buyer_id, `${invoiceNumber} — ${order.provider === "invoice" ? `paid by invoice${order.po_number ? `, PO ${order.po_number}` : ""}` : "online checkout"}`],
-    );
+    // A product becomes the learner's own (an entitlement); months and licences go to the licence pool.
+    let purchase: { rows: { id: string }[] } = { rows: [{ id: null as unknown as string }] };
+    let product: Record<string, any> | null = null;
+    if (order.kind === "product") {
+      product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
+      const ent = await client.query(
+        `INSERT INTO entitlements (user_id, product_id, test_type_id, level, attempts_total, ends_at, source, tenant_id, order_id)
+         VALUES ($1, $2, $3, $4, $5, now() + make_interval(days => $6), 'purchase', $7, $8) RETURNING id`,
+        [order.buyer_id, product!.id, product!.test_type_id, order.level, product!.attempts, product!.duration_days, order.tenant_id, order.id],
+      );
+      await client.query(`UPDATE payment_orders SET entitlement_id = $2 WHERE id = $1`, [order.id, ent.rows[0].id]);
+    } else {
+      purchase = await client.query(
+        `INSERT INTO license_purchases (tenant_id, quantity, unit_price_cents, currency, source, reference, note, created_by, pool_expires_at)
+         VALUES ($1, $2, $3, $4, 'purchase', $5, $6, $7, now() + make_interval(months => $8)) RETURNING id`,
+        [order.tenant_id, order.quantity, order.unit_amount, order.currency, invoiceNumber, order.provider === "invoice" ? "Paid by invoice" : "Online checkout", order.buyer_id, POOL_VALIDITY_MONTHS],
+      );
+      await client.query(
+        `INSERT INTO license_events (tenant_id, kind, quantity, actor_id, note) VALUES ($1, 'purchase', $2, $3, $4)`,
+        [order.tenant_id, order.quantity, order.buyer_id, `${invoiceNumber} — ${order.provider === "invoice" ? `paid by invoice${order.po_number ? `, PO ${order.po_number}` : ""}` : "online checkout"}`],
+      );
+    }
 
     const description =
-      order.kind === "individual_plan"
-        ? `Spica learner access — ${order.quantity} month${order.quantity === 1 ? "" : "s"}`
-        : `Spica learner licenses (1 license = 1 learner-month)`;
+      order.kind === "product"
+        ? `${product!.name}${order.level ? ` (${order.level})` : ""}${Number(order.credit_amount) > 0 ? " — less credit for unused preparation" : ""}`
+        : order.kind === "individual_plan"
+          ? `Spica learner access — ${order.quantity} month${order.quantity === 1 ? "" : "s"}`
+          : `Spica learner licenses (1 license = 1 learner-month)`;
     const invoice = await client.query(
       `INSERT INTO invoices (invoice_number, order_id, tenant_id, seller, bill_to, description, quantity, currency, unit_amount,
          subtotal, tax_label, tax_rate, tax_amount, total, provider, provider_payment_id)
@@ -206,10 +234,12 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
 
     await client.query(
       `UPDATE payment_orders SET status = 'paid', paid_at = now(), provider_payment_id = $2, license_purchase_id = $3 WHERE id = $1`,
-      [order.id, providerPaymentId, purchase.rows[0].id],
+      [order.id, providerPaymentId, purchase.rows[0].id ?? null],
     );
     if (order.kind === "individual_plan") {
       await client.query(`UPDATE tenants SET type = 'individual_paid' WHERE id = $1 AND type = 'individual_free'`, [order.tenant_id]);
+    } else if (order.kind === "product") {
+      // Nothing more: the entitlement is the purchase.
     } else {
       // A purchase is a commitment: a big enough one moves a Starter
       // organization to Business, and any purchase converts a pilot.
@@ -250,6 +280,7 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
       });
     }
   }
+  if (order.kind === "product" && order.buyer_id) accessCache.delete(order.buyer_id);
   if (order.kind === "individual_plan" && order.buyer_id) {
     await assignMonths({ tenantId: order.tenant_id, userId: order.buyer_id, months: order.quantity, actorId: order.buyer_id, actorRole: "system" });
   }

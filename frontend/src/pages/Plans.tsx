@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ProductShop } from "@/components/plans/ProductShop";
+import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
 import { Check, X as XIcon, FileText } from "lucide-react";
 import { Button } from "@/components/Button";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
@@ -42,6 +44,7 @@ export function Plans() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const license = useMyLicense();
+  const access = useMyAccess();
   // ?months=1 or 3 pre-selects the length (from the "keep going" card).
   const [months, setMonths] = useState<number>(() => {
     const m = Number(new URLSearchParams(window.location.search).get("months"));
@@ -95,6 +98,14 @@ export function Plans() {
           {active ? t("plans.activeUntil", { date: formatShortDate(license!.accessEndsAt) }) : t("plans.onFree")}
         </p>
       </div>
+
+      {/* What else the learner owns: preparation for one test, real tests, level tests. */}
+      {access && access.owned.some((o) => o.kind !== "full") && (
+        <div className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3">
+          <p className="font-display font-bold text-ink">{tr("Your plan")}</p>
+          <OwnedList access={access} />
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-5">
         <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
@@ -164,8 +175,14 @@ export function Plans() {
             <div className="text-sm flex flex-col gap-1 bg-paper-warm rounded-input px-3.5 py-2.5">
               <div className="flex justify-between">
                 <span className="text-muted">{t("plans.months", { count: months })}</span>
-                <span className="text-ink">{formatAmount(q.subtotal, q.currency)}</span>
+                <span className="text-ink">{formatAmount(q.subtotal + (q.credit ?? 0), q.currency)}</span>
               </div>
+              {(q.credit ?? 0) > 0 && (
+                <div className="flex justify-between text-success">
+                  <span>{tr("Credit for your unused preparation")}</span>
+                  <span>−{formatAmount(q.credit!, q.currency)}</span>
+                </div>
+              )}
               {q.taxAmount > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted">{q.taxLabel}</span>
@@ -191,6 +208,8 @@ export function Plans() {
           </Button>
         </div>
       </div>
+
+      <ProductShop />
 
       {invoices.length > 0 && (
         <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">

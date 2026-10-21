@@ -3,6 +3,8 @@ import { api } from "@/lib/api";
 export interface Quote {
   kind: "org_licenses" | "individual_plan";
   currency: "INR" | "USD";
+  // Full access months: credit for the unused part of a preparation purchase.
+  credit?: number;
   provider: "stripe" | "razorpay" | "test";
   quantity: number;
   unitAmount: number;
@@ -114,7 +116,7 @@ export function createPaymentOrder(quantity: number): Promise<CreatedOrder> {
 export function confirmPaymentOrder(
   orderId: string,
   body: Record<string, string> = {},
-): Promise<{ status: "paid"; invoiceId: string; kind: Quote["kind"]; quantity: number }> {
+): Promise<{ status: "paid"; invoiceId: string; kind: Quote["kind"] | "product"; quantity: number; product: { name: string; kind: string; level: string | null } | null }> {
   return api(`/payments/orders/${orderId}/confirm`, { method: "POST", body: JSON.stringify(body) });
 }
 
@@ -186,4 +188,54 @@ export async function startCheckout(order: CreatedOrder, navigate: (to: string) 
     modal: { ondismiss: () => cancelPaymentOrder(order.orderId).catch(() => {}) },
   });
   rzp.open();
+}
+
+// ---- Products: preparation + assessment, an assessment, a level test ----
+
+export type ShopCurrency = "INR" | "USD" | "EUR" | "GBP" | "AED" | "SGD";
+
+export interface PricedProduct {
+  id: string;
+  kind: "full" | "prep" | "assessment" | "level";
+  testTypeId: string | null;
+  testTypeName: string | null;
+  name: string;
+  description: string;
+  durationDays: number;
+  attempts: number;
+  credits: number | null;
+  amount: number;
+  currency: ShopCurrency;
+}
+
+export function getPriceList(currency?: ShopCurrency): Promise<{ currency: ShopCurrency; currencies: ShopCurrency[]; canBuy: boolean; testMode: boolean; products: PricedProduct[] }> {
+  return api(`/payments/products${currency ? `?currency=${currency}` : ""}`);
+}
+
+export interface ProductQuote {
+  productId: string;
+  productName: string;
+  kind: string;
+  level: string | null;
+  currency: ShopCurrency;
+  provider: "stripe" | "razorpay" | "test";
+  price: number;
+  credit: number;
+  subtotal: number;
+  taxLabel: string | null;
+  taxRate: number;
+  taxAmount: number;
+  total: number;
+  durationDays: number;
+  attempts: number;
+}
+
+export function getProductQuote(productId: string, currency: ShopCurrency, level?: string): Promise<ProductQuote> {
+  const p = new URLSearchParams({ productId, currency });
+  if (level) p.set("level", level);
+  return api(`/payments/product-quote?${p}`);
+}
+
+export function createProductOrder(productId: string, currency: ShopCurrency, level?: string): Promise<CreatedOrder> {
+  return api("/payments/product-orders", { method: "POST", body: JSON.stringify({ productId, currency, level }) });
 }

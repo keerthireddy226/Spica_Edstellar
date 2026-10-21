@@ -20,7 +20,7 @@ export function CheckoutReturn() {
   const [state, setState] = useState<"confirm-test" | "working" | "paid" | "failed" | "cancelled">(
     cancelled ? "cancelled" : isTest ? "confirm-test" : "working",
   );
-  const [result, setResult] = useState<{ invoiceId: string; kind: string; quantity: number } | null>(null);
+  const [result, setResult] = useState<{ invoiceId: string; kind: string; quantity: number; product?: { name: string; kind: string; level: string | null } | null } | null>(null);
   const ran = useRef(false);
 
   async function confirm() {
@@ -87,7 +87,11 @@ export function CheckoutReturn() {
             <CheckCircle2 size={44} className="text-success" />
             <h1 className="font-display font-bold text-xl text-ink">{tr("Payment successful")}</h1>
             <p className="text-sm text-muted">
-              {result.kind === "individual_plan"
+              {result.kind === "product" && result.product
+                ? result.product.kind === "prep"
+                  ? tr("{{name}} is yours. Its practice tests and mock tests are open now; your real test is in My tests.", { name: result.product.name })
+                  : tr("{{name}} is yours. Find it in My tests.", { name: `${result.product.name}${result.product.level ? ` (${result.product.level})` : ""}` })
+                : result.kind === "individual_plan"
                 ? result.quantity === 1
                   ? tr("1 month of full access added to your account.")
                   : tr("{{n}} months of full access added to your account.", { n: result.quantity })
@@ -96,8 +100,8 @@ export function CheckoutReturn() {
                   : tr("{{n}} licenses added to your pool — assign them from the Licenses page.", { n: result.quantity })}
             </p>
             <div className="flex gap-3 w-full">
-              <Link to={backTo} className="flex-1">
-                <Button className="w-full">{backLabel}</Button>
+              <Link to={result.kind === "product" ? ROUTES.MY_TESTS : backTo} className="flex-1">
+                <Button className="w-full">{result.kind === "product" ? tr("Go to My tests") : backLabel}</Button>
               </Link>
               <Link to={`/invoice/${result.invoiceId}`} target="_blank">
                 <Button variant="secondary">{tr("View invoice")}</Button>

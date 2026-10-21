@@ -86,6 +86,39 @@ accessRouter.patch("/products/:id", requireAuth, async (req: AuthedRequest, res,
   }
 });
 
+// Each product's price in every currency (staff).
+accessRouter.get("/prices", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireStaff(req, res)) return;
+  try {
+    const r = await pool.query(`SELECT product_id, currency, amount FROM product_prices ORDER BY product_id, currency`);
+    res.json({ prices: r.rows.map((x) => ({ productId: x.product_id, currency: x.currency, amount: x.amount })) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Sets a product's prices: { INR: 499900, USD: 5900, ... } in minor units.
+accessRouter.put("/products/:id/prices", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireStaff(req, res)) return;
+  try {
+    const body = z.record(z.enum(["INR", "USD", "EUR", "GBP", "AED", "SGD"]), z.number().int().min(0).max(100_000_000)).parse(req.body);
+    const id = String(req.params.id);
+    const p = (await pool.query(`SELECT id FROM products WHERE id = $1`, [id])).rows[0];
+    if (!p) return res.status(404).json({ error: "product_not_found" });
+    for (const [currency, amount] of Object.entries(body)) {
+      await pool.query(
+        `INSERT INTO product_prices (product_id, currency, amount) VALUES ($1, $2, $3) ON CONFLICT (product_id, currency) DO UPDATE SET amount = EXCLUDED.amount`,
+        [id, currency, amount],
+      );
+      // The INR price is also the product's list price.
+      if (currency === "INR") await pool.query(`UPDATE products SET price_paise = $2, updated_at = now() WHERE id = $1`, [id, amount]);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Give a learner a product by hand (support, pilots, testing before payments).
 accessRouter.post("/grants", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireStaff(req, res)) return;

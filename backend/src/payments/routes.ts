@@ -21,8 +21,10 @@ import {
   listInvoices,
   quote,
   resolveBuyer,
+  withCredit,
 } from "./service.js";
 import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
+import { CURRENCIES, createProductOrder, currencyFor, priceList, productQuote, upgradeCredit, type Currency } from "./products.js";
 
 export const paymentsRouter = Router();
 
@@ -39,12 +41,94 @@ paymentsRouter.get("/quote", requireAuth, async (req: AuthedRequest, res, next) 
     const buyer = await resolveBuyer(req.user!);
     if (!buyer) return res.status(403).json({ error: "forbidden" });
     const quantity = z.coerce.number().int().parse(req.query.quantity);
+    const base = quote(buyer, quantity);
+    // Full access months for an individual: unused preparation counts towards them.
+    const q = buyer.kind === "individual_plan" ? withCredit(base, await upgradeCredit(buyer.userId, base.currency)) : base;
     res.json({
-      ...quote(buyer, quantity),
+      ...q,
       kind: buyer.kind,
       planMonths: buyer.kind === "individual_plan" ? INDIVIDUAL_PLAN_MONTHS : null,
       testMode: testModeEnabled(),
     });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+// ---- Products (Full access, preparation + assessment, assessment, level test) ----
+
+// The price list in the buyer's currency (or the one they chose).
+paymentsRouter.get("/products", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    const asked = typeof req.query.currency === "string" ? req.query.currency : null;
+    const currency = (CURRENCIES as readonly string[]).includes(asked ?? "") ? (asked as Currency) : currencyFor(buyer?.billingCountry);
+    res.json({ currency, currencies: CURRENCIES, canBuy: buyer?.kind === "individual_plan", testMode: testModeEnabled(), products: await priceList(currency) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const productOrderSchema = z.object({
+  productId: z.string().min(1).max(60),
+  currency: z.string().length(3).optional(),
+  level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
+});
+
+paymentsRouter.get("/product-quote", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
+    const q = productOrderSchema.parse(req.query);
+    res.json(await productQuote(buyer, q.productId, q));
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+// An individual buys a product; the browser then pays as for any order.
+paymentsRouter.post("/product-orders", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
+    const body = productOrderSchema.parse(req.body);
+    const q = await productQuote(buyer, body.productId, body);
+    const orderId = await createProductOrder(buyer, q);
+    const returnPath = "/checkout/return";
+    const name = `${q.productName}${q.level ? ` (${q.level})` : ""}`;
+    if (q.provider === "stripe") {
+      const session = await stripeCreateCheckout({
+        orderId,
+        currency: q.currency,
+        productName: name,
+        unitAmount: q.subtotal,
+        quantity: 1,
+        taxLabel: q.taxLabel,
+        taxAmount: q.taxAmount,
+        customerEmail: buyer.email,
+        returnPath,
+      });
+      await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, session.sessionId]);
+      return res.status(201).json({ orderId, provider: "stripe", redirectUrl: session.url });
+    }
+    if (q.provider === "razorpay") {
+      const rzpOrderId = await razorpayCreateOrder({ orderId, amount: q.total, currency: q.currency });
+      await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, rzpOrderId]);
+      return res.status(201).json({
+        orderId,
+        provider: "razorpay",
+        razorpay: {
+          key: PAYMENT_CONFIG.razorpayKeyId,
+          orderId: rzpOrderId,
+          amount: q.total,
+          currency: q.currency,
+          name: PAYMENT_CONFIG.seller.name,
+          description: name,
+          prefill: { email: buyer.email ?? undefined, name: buyer.billTo.name ?? undefined },
+        },
+      });
+    }
+    return res.status(201).json({ orderId, provider: "test" });
   } catch (err) {
     handle(err, res, next);
   }
@@ -57,7 +141,8 @@ paymentsRouter.post("/orders", requireAuth, async (req: AuthedRequest, res, next
     const buyer = await resolveBuyer(req.user!);
     if (!buyer) return res.status(403).json({ error: "forbidden" });
     const body = z.object({ quantity: z.coerce.number().int() }).parse(req.body);
-    const q = quote(buyer, body.quantity);
+    const base = quote(buyer, body.quantity);
+    const q = buyer.kind === "individual_plan" ? withCredit(base, await upgradeCredit(buyer.userId, base.currency)) : base;
     const orderId = await createOrder(buyer, q);
     const returnPath = "/checkout/return";
     const productName = buyer.kind === "individual_plan" ? "Spica learner access (1 month)" : "Spica learner license (1 learner-month)";
@@ -67,8 +152,9 @@ paymentsRouter.post("/orders", requireAuth, async (req: AuthedRequest, res, next
         orderId,
         currency: q.currency,
         productName,
-        unitAmount: q.unitAmount,
-        quantity: q.quantity,
+        // With a credit, one line for the whole (smaller) amount.
+        unitAmount: q.credit ? q.subtotal : q.unitAmount,
+        quantity: q.credit ? 1 : q.quantity,
         taxLabel: q.taxLabel,
         taxAmount: q.taxAmount,
         customerEmail: buyer.email,
@@ -100,13 +186,20 @@ paymentsRouter.post("/orders", requireAuth, async (req: AuthedRequest, res, next
   }
 });
 
+// What a product order bought, for the page after checkout.
+async function productOf(order: Record<string, any>): Promise<{ name: string; kind: string; level: string | null } | null> {
+  if (order.kind !== "product") return null;
+  const p = (await pool.query(`SELECT name, kind FROM products WHERE id = $1`, [order.product_id])).rows[0];
+  return p ? { name: p.name, kind: p.kind, level: order.level ?? null } : null;
+}
+
 paymentsRouter.post("/orders/:id/confirm", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const order = await getOrderForUser(String(req.params.id), req.user!);
     if (!order) return res.status(404).json({ error: "order_not_found" });
     if (order.status === "paid") {
       const r = await fulfillOrder(order.id, order.provider_payment_id);
-      return res.json({ status: "paid", invoiceId: r.invoiceId, kind: order.kind, quantity: order.quantity });
+      return res.json({ status: "paid", invoiceId: r.invoiceId, kind: order.kind, quantity: order.quantity, product: await productOf(order) });
     }
 
     let paymentId: string | null = null;
@@ -129,7 +222,7 @@ paymentsRouter.post("/orders/:id/confirm", requireAuth, async (req: AuthedReques
     }
 
     const r = await fulfillOrder(order.id, paymentId);
-    res.json({ status: "paid", invoiceId: r.invoiceId, kind: order.kind, quantity: order.quantity });
+    res.json({ status: "paid", invoiceId: r.invoiceId, kind: order.kind, quantity: order.quantity, product: await productOf(order) });
   } catch (err) {
     handle(err, res, next);
   }
