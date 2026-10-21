@@ -18,6 +18,7 @@ import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
 import { runProgramsDaily } from "../programs/service.js";
 import { applyDueDowngrades } from "../plans/service.js";
+import { sendRecertifyReminders } from "../assessment/service.js";
 import { runProgramAlerts } from "../programs/monitoring.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
@@ -84,6 +85,11 @@ export function registerJobs() {
   });
   // Missed items, finished programs and plans for new batch members (dates
   // are whole days, so running hourly changes nothing twice).
+  // Final assessment certificates ending within a month: a reminder, once each.
+  every(24 * 60, "certificates.recertify", async () => {
+    const n = await sendRecertifyReminders();
+    if (n) console.log(`certificates: ${n} ending soon`);
+  });
   // Organizations that chose a lower plan move to it on its day.
   every(60, "plans.downgrades", async () => {
     const n = await applyDueDowngrades();

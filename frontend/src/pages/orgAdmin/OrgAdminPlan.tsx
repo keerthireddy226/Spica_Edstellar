@@ -130,7 +130,8 @@ function ChangePlanCard({ plan }: { plan: PlanSummary }) {
 
 export function OrgAdminPlan() {
   const plan = usePlan();
-  const [showBuy, setShowBuy] = useState(false);
+  // "upgrade": buying enough licenses to move to Business now.
+  const [showBuy, setShowBuy] = useState<boolean | "upgrade">(false);
   const products = useBranding()?.products;
 
   // Recruitment only: credits are the whole plan.
@@ -268,7 +269,7 @@ export function OrgAdminPlan() {
             <p className="text-sm text-ink">
               <Sparkles size={15} className="inline text-navy mr-1.5 -mt-0.5" />
               {tr("Buy {{businessQualifyingQuantity}} or more licenses at once and your organization moves to Business automatically.", { businessQualifyingQuantity: plan.businessQualifyingQuantity })}</p>
-            <Button onClick={() => setShowBuy(true)}>{tr("Buy licenses")}</Button>
+            <Button onClick={() => setShowBuy("upgrade")}>{tr("Upgrade to Business now")}</Button>
           </div>
         )}
       </div>
@@ -359,6 +360,7 @@ export function OrgAdminPlan() {
 
       {showBuy && (
         <BuyLicensesModal
+          upgradeTo={showBuy === "upgrade" ? plan.businessQualifyingQuantity : undefined}
           onClose={() => {
             setShowBuy(false);
             refreshPlan();

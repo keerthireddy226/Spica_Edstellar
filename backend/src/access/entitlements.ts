@@ -5,6 +5,9 @@
 import { pool } from "../db.js";
 import { learnerAccess, type LearnerAccess } from "../licenses/service.js";
 
+// Preparation can be switched to another test in its first SWITCH_DAYS (see assessment/service.ts).
+const SWITCH_DAYS = 7;
+
 export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack" | "final";
 
 export interface EntitlementRow {
@@ -18,6 +21,7 @@ export interface EntitlementRow {
   attempts_used: number;
   starts_at: Date | string;
   ends_at: Date | string;
+  switched_at?: Date | string | null;
 }
 
 export interface Owned {
@@ -30,6 +34,8 @@ export interface Owned {
   attemptsLeft: number;
   startsAt: string;
   endsAt: string;
+  // Preparation not yet started or switched: it can move to another test until then.
+  canSwitchUntil: string | null;
 }
 
 export interface Access {
@@ -61,6 +67,10 @@ export function resolveAccess(licence: Pick<LearnerAccess, "status" | "accessEnd
     attemptsLeft: Math.max(0, r.attempts_total - r.attempts_used),
     startsAt: iso(r.starts_at),
     endsAt: iso(r.ends_at),
+    canSwitchUntil:
+      r.kind === "prep" && r.attempts_used === 0 && !r.switched_at && new Date(r.starts_at).getTime() + SWITCH_DAYS * 86_400_000 > now.getTime()
+        ? new Date(new Date(r.starts_at).getTime() + SWITCH_DAYS * 86_400_000).toISOString()
+        : null,
   }));
   return {
     full: live ? { endsAt: licence!.status === "grace" ? licence!.graceEndsAt : licence!.accessEndsAt } : owned.some((o) => o.kind === "full") ? { endsAt: owned.filter((o) => o.kind === "full").map((o) => o.endsAt).sort().pop() ?? null } : null,
@@ -74,7 +84,7 @@ export function resolveAccess(licence: Pick<LearnerAccess, "status" | "accessEnd
 export async function ownedRows(userId: string): Promise<EntitlementRow[]> {
   return (
     await pool.query(
-      `SELECT e.id, e.product_id, p.kind, p.name, e.test_type_id, e.level, e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
+      `SELECT e.id, e.product_id, p.kind, p.name, e.test_type_id, e.level, e.attempts_total, e.attempts_used, e.starts_at, e.ends_at, e.switched_at
        FROM entitlements e JOIN products p ON p.id = e.product_id
        WHERE e.user_id = $1 AND e.revoked_at IS NULL AND e.ends_at > now()
        ORDER BY e.ends_at`,

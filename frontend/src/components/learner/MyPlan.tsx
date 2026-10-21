@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award, BookOpen, ClipboardCheck } from "lucide-react";
 import { getMyAccess, type MyAccess, type Owned } from "@/api/access";
+import { switchPrepTest } from "@/api/assessment";
+import { getPriceList } from "@/api/payments";
 import { formatShortDate } from "@/api/licenses";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -27,6 +29,52 @@ function opens(o: Owned): string {
   return tr("Every test, mock test and Practice Module.");
 }
 
+// Preparation not started yet can move to another test, once, in its first 7 days.
+function SwitchTest({ o }: { o: Owned }) {
+  const [open, setOpen] = useState(false);
+  const [tests, setTests] = useState<{ id: string; name: string }[]>([]);
+  const [pick, setPick] = useState("");
+  const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  useEffect(() => {
+    if (!open || tests.length) return;
+    getPriceList()
+      .then((r) => {
+        const t = r.products.filter((p) => p.kind === "prep" && p.testTypeId && p.testTypeId !== o.testTypeId).map((p) => ({ id: p.testTypeId!, name: p.testTypeName ?? p.name }));
+        setTests(t);
+        setPick(t[0]?.id ?? "");
+      })
+      .catch(() => {});
+  }, [open, tests.length, o.testTypeId]);
+  if (!o.canSwitchUntil) return null;
+  if (state === "done") return <span className="text-xs text-success">{tr("Switched. Reload to see your new test.")}</span>;
+  return open ? (
+    <span className="flex flex-wrap items-center gap-2 text-xs">
+      <select value={pick} onChange={(e) => setPick(e.target.value)} className="rounded-input border border-rule bg-surface px-2 py-1 text-xs">
+        {tests.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      <button
+        disabled={!pick || state === "busy"}
+        onClick={async () => {
+          setState("busy");
+          setState((await switchPrepTest(o.id, pick).then(() => true).catch(() => false)) ? "done" : "error");
+        }}
+        className="font-semibold text-navy-deep hover:underline cursor-pointer disabled:opacity-50"
+      >
+        {tr("Switch")}
+      </button>
+      {state === "error" && <span className="text-error">{tr("Couldn't switch. Try again.")}</span>}
+    </span>
+  ) : (
+    <button onClick={() => setOpen(true)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
+      {tr("Switch to another test (free, once, until {{date}})", { date: formatShortDate(o.canSwitchUntil) })}
+    </button>
+  );
+}
+
 export function OwnedList({ access }: { access: MyAccess }) {
   const items = access.owned.filter((o) => o.kind !== "full");
   if (!items.length) return null;
@@ -44,6 +92,7 @@ export function OwnedList({ access }: { access: MyAccess }) {
                 {tr("Until {{date}}", { date: formatShortDate(o.endsAt) })}
                 {o.kind !== "full" && o.kind !== "pack" && ` · ${o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
               </span>
+              <SwitchTest o={o} />
             </div>
           </div>
         );

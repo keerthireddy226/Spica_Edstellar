@@ -236,6 +236,25 @@ async function finalChoices(tenantId: string | null): Promise<{ id: string; name
     .map((x) => ({ id: x.id as string, name: x.name as string }));
 }
 
+// Preparation for one test can be switched to another test once, free, in its first SWITCH_DAYS.
+export const SWITCH_DAYS = 7;
+export async function switchPrepTest(userId: string, entitlementId: string, testTypeId: string): Promise<void> {
+  const e = (
+    await pool.query(
+      `SELECT e.id, e.test_type_id FROM entitlements e JOIN products p ON p.id = e.product_id
+       WHERE e.id = $1 AND e.user_id = $2 AND p.kind = 'prep' AND e.revoked_at IS NULL AND e.ends_at > now()
+         AND e.starts_at > now() - make_interval(days => $3) AND e.attempts_used = 0 AND e.switched_at IS NULL`,
+      [entitlementId, userId, SWITCH_DAYS],
+    )
+  ).rows[0];
+  if (!e) throw new AttemptError("switch_not_allowed");
+  if (e.test_type_id === testTypeId) throw new AttemptError("same_test");
+  const p = (await pool.query(`SELECT id FROM products WHERE kind = 'prep' AND active AND test_type_id = $1 ORDER BY sort_order LIMIT 1`, [testTypeId])).rows[0];
+  if (!p) throw new AttemptError("unknown_test_type");
+  await pool.query(`UPDATE entitlements SET product_id = $2, test_type_id = $3, switched_from = test_type_id, switched_at = now() WHERE id = $1`, [entitlementId, p.id, testTypeId]);
+  accessCache.delete(userId);
+}
+
 // The learner chooses their final assessment's test (once, before starting it).
 export async function chooseFinalTest(userId: string, entitlementId: string, testTypeId: string): Promise<void> {
   const [e] = await ownedAttempts(userId, entitlementId);
@@ -316,6 +335,32 @@ export async function readiness(userId: string) {
       ? { code: cert.code as string, level: cert.cefr_level as string, score: cert.spica_score as number | null, validUntil: cert.valid_until ? new Date(cert.valid_until).toISOString().slice(0, 10) : null }
       : null,
   };
+}
+
+// Daily: a final assessment certificate ending in RECERTIFY_DAYS: a reminder
+// to keep it valid longer or take a new final assessment (once per certificate).
+export const RECERTIFY_DAYS = 30;
+export async function sendRecertifyReminders(): Promise<number> {
+  const due = (
+    await pool.query(
+      `SELECT c.id, c.user_id, c.code, to_char(c.valid_until, 'YYYY-MM-DD') AS until FROM certificates c JOIN users u ON u.id = c.user_id
+       WHERE c.kind = 'result' AND c.revoked_at IS NULL AND u.role = 'learner' AND u.deleted_at IS NULL
+         AND c.valid_until BETWEEN current_date AND current_date + $1::int`,
+      [RECERTIFY_DAYS],
+    )
+  ).rows;
+  for (const c of due) {
+    await notify({
+      userId: c.user_id,
+      kind: "result_certificate",
+      title: "Your certificate ends soon",
+      body: `Your certificate ${c.code} is valid until ${c.until}. Keep it valid 12 more months, or take a new final assessment to show your level now.`,
+      link: "/my-tests",
+      email: true,
+      dedupeKey: `recertify:${c.id}`,
+    }).catch((err) => console.error("recertify reminder failed:", err));
+  }
+  return due.length;
 }
 
 // Uses up one attempt, in the transaction that creates the session.

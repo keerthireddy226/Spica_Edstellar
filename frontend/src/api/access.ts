@@ -14,6 +14,8 @@ export interface Owned {
   attemptsLeft: number;
   startsAt: string;
   endsAt: string;
+  // Preparation can still be switched to another test until this time.
+  canSwitchUntil: string | null;
 }
 
 export interface MyAccess {

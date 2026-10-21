@@ -66,6 +66,11 @@ export function getReadiness(): Promise<Readiness> {
   return api("/assessment/readiness");
 }
 
+// Preparation moves to another test (once, free, in its first 7 days).
+export function switchPrepTest(id: string, testTypeId: string): Promise<{ ok: true }> {
+  return api(`/assessment/${id}/switch`, { method: "POST", body: JSON.stringify({ testTypeId }) });
+}
+
 export function chooseFinalTest(id: string, testTypeId: string): Promise<{ ok: true }> {
   return api(`/assessment/${id}/choose`, { method: "POST", body: JSON.stringify({ testTypeId }) });
 }

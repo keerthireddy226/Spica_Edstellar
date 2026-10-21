@@ -9,10 +9,11 @@ import { planErrorMessage } from "@/api/plans";
 import { tr } from "@/i18n/tr";
 // Org Admin self-serve purchase. The calculator mirrors how orgs think about
 // it ("20 learners for 3 months") and turns it into a license count.
-export function BuyLicensesModal({ onClose }: { onClose: () => void }) {
+// `upgradeTo`: a purchase big enough to move the organization to Business.
+export function BuyLicensesModal({ onClose, upgradeTo }: { onClose: () => void; upgradeTo?: number }) {
   const navigate = useNavigate();
-  const [learners, setLearners] = useState("10");
-  const [months, setMonths] = useState("3");
+  const [learners, setLearners] = useState(upgradeTo ? String(upgradeTo) : "10");
+  const [months, setMonths] = useState(upgradeTo ? "1" : "3");
   const [quantity, setQuantity] = useState(30);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [paying, setPaying] = useState(false);

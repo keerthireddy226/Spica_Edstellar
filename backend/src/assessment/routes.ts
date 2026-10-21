@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { z } from "zod";
-import { AttemptError, chooseFinalTest, myTests, readiness } from "./service.js";
+import { AttemptError, chooseFinalTest, myTests, readiness, switchPrepTest } from "./service.js";
 import { AppealError, fileAppeal } from "../quality/service.js";
 
 // My tests: the learner's real assessment attempts. Starting one goes through
@@ -33,6 +33,18 @@ assessmentRouter.post("/:id/choose", requireAuth, async (req: AuthedRequest, res
     res.json({ ok: true });
   } catch (err) {
     if (err instanceof AttemptError) return res.status(err.code === "attempt_not_found" ? 404 : 400).json({ error: err.code });
+    next(err);
+  }
+});
+
+// Switches preparation to another test (once, in the first 7 days).
+assessmentRouter.post("/:id/switch", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ testTypeId: z.string().min(1).max(60) }).parse(req.body);
+    await switchPrepTest(req.user!.id, String(req.params.id), body.testTypeId);
+    res.json({ ok: true });
+  } catch (err) {
+    if (err instanceof AttemptError) return res.status(400).json({ error: err.code });
     next(err);
   }
 });
