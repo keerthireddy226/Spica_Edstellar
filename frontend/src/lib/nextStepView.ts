@@ -1,4 +1,4 @@
-import { ClipboardList, RotateCcw, Sparkles, Timer } from "lucide-react";
+import { Award, ClipboardList, RotateCcw, Sparkles, Timer } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import type { NextStep } from "@/api/dashboard";
 import type { SkillTag } from "@/api/testSession";
@@ -7,6 +7,16 @@ import { tr } from "@/i18n/tr";
 // How a recommended next step reads: icon, title, why, button and where it goes.
 export function stepView(step: NextStep, skillName: (s: SkillTag) => string, modulesOn: boolean): { icon: typeof Timer; title: string; why: string; cta: string; href: string } | null {
   switch (step.kind) {
+    case "final":
+      return {
+        icon: Award,
+        title: step.chooseTest ? tr("Choose the test for your final assessment") : tr("Take your final assessment"),
+        why: step.chooseTest
+          ? tr("Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.")
+          : tr("It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate."),
+        cta: step.chooseTest ? tr("Choose your test") : tr("Go to Assessment"),
+        href: ROUTES.MY_TESTS,
+      };
     case "mock":
       return {
         icon: Timer,

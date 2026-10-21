@@ -11,6 +11,7 @@ import { LEVELS, PASS_SETS, overallFromSkills, skillPath, type Level, type Skill
 import { quotaUsage } from "../programs/quotas.js";
 import { scheduleTests, type Slot } from "./testSchedule.js";
 import { learnerProgram } from "../programs/service.js";
+import { myTests } from "../assessment/service.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -34,7 +35,7 @@ function partWay(path: SkillPath): number {
 
 export interface JourneyTask {
   id: string;
-  kind: "sets" | "practice_test" | "retry" | "level_check" | "mock";
+  kind: "sets" | "practice_test" | "retry" | "level_check" | "mock" | "final" | "final_choose";
   done: boolean;
   // For the screen to word: counts, skill, date.
   count?: number;
@@ -60,8 +61,13 @@ export interface Journey {
   // Past tests come first (done, with their level), then today and the plan.
   checkpoints: {
     date: string;
-    kind: "practice_test" | "level_check" | "mock" | "exam" | "today";
+    kind: "practice_test" | "level_check" | "mock" | "exam" | "today" | "final" | "certificate";
     done: boolean;
+    // The final assessment: open now, or still to get (no plan includes one yet).
+    open?: boolean;
+    toGet?: boolean;
+    // A certificate: its code (for the link).
+    code?: string;
     skill?: SkillTag;
     level?: string;
     // A mock placed on the day new mocks arrive.
@@ -74,8 +80,35 @@ export interface Journey {
   planSource: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
 }
 
+// The final assessment's place in the plan: a certificate already earned, an
+// attempt still to take (open or when it opens), or none in the plan.
+async function finalAssessmentState(userId: string) {
+  const tests = await myTests(userId).catch(() => []);
+  const pending = tests.find((t) => t.kind !== "level" && t.attemptsLeft > 0 && t.unlock.state !== "expired");
+  const taken = tests.some((t) => t.kind !== "level" && t.attempts.length > 0);
+  const c = (
+    await pool.query(
+      `SELECT code, cefr_level, spica_score, issued_at FROM certificates WHERE user_id = $1 AND kind = 'result' AND revoked_at IS NULL
+         AND (valid_until IS NULL OR valid_until >= current_date) ORDER BY issued_at DESC LIMIT 1`,
+      [userId],
+    )
+  ).rows[0];
+  return {
+    certificate: c ? { code: c.code as string, issuedAt: c.issued_at as Date, label: [c.cefr_level, c.spica_score].filter((x) => x !== null && x !== undefined).join(" · ") } : null,
+    pending: pending
+      ? {
+          open: pending.unlock.state === "open" && !pending.chooseTest,
+          chooseTest: pending.chooseTest,
+          opensOn: "opensOn" in pending.unlock ? dateOnly(new Date(pending.unlock.opensOn)) : null,
+        }
+      : null,
+    taken,
+  };
+}
+
 export async function journey(userId: string): Promise<Journey> {
   const goal = await goalStatus(userId);
+  const fa = await finalAssessmentState(userId);
   const placement = (await pool.query(`SELECT cefr_level, skill_levels FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId])).rows[0];
   const paths = await Promise.all(SKILLS.map((s) => skillPath(userId, s)));
   const levels = Object.fromEntries(paths.map((p) => [p.skill, p.level])) as Record<SkillTag, Level>;
@@ -220,8 +253,31 @@ export async function journey(userId: string): Promise<Journey> {
   for (const t of week.filter((x) => x.kind === "level_check" && !x.done)) checkpoints.push({ date: dateOnly(new Date()), kind: "level_check", done: false, skill: t.skill });
   for (const slot of slots) checkpoints.push({ date: dateOnly(slot.date), kind: slot.kind, done: false, onReset: slot.onReset });
   if (examDate) checkpoints.push({ date: examDate, kind: "exam", done: false });
-  // In date order; on the same day, done tests, then today, then what's next.
-  const order = (c: (typeof checkpoints)[number]) => (c.done && c.kind !== "today" ? 0 : c.kind === "today" ? 1 : 2);
+
+  // --- The end of the plan: the final assessment, then the certificate ---
+  const todayDate = dateOnly(new Date());
+  if (fa.certificate) {
+    checkpoints.push({ date: dateOnly(new Date(fa.certificate.issuedAt)), kind: "certificate", done: true, level: fa.certificate.label, code: fa.certificate.code });
+  } else if (fa.pending) {
+    // Open now; otherwise after the next planned mock, or on the day it opens anyway.
+    const nextMockDate = slots.find((x) => x.kind === "mock")?.date;
+    const opens = fa.pending.opensOn ?? null;
+    const date = fa.pending.open ? todayDate : [nextMockDate ? dateOnly(nextMockDate) : null, opens].filter((x): x is string => !!x).sort()[0] ?? todayDate;
+    checkpoints.push({ date, kind: "final", done: false, open: fa.pending.open });
+    checkpoints.push({ date, kind: "certificate", done: false });
+  } else if (!fa.taken) {
+    // Not in the learner's plan yet: shown at the end, to get one.
+    const last = [examDate, ...slots.map((x) => dateOnly(x.date))].filter((x): x is string => !!x).sort().pop() ?? todayDate;
+    checkpoints.push({ date: last, kind: "final", done: false, toGet: true });
+    checkpoints.push({ date: last, kind: "certificate", done: false, toGet: true });
+  }
+  if (fa.pending?.open || fa.pending?.chooseTest) {
+    week.push({ id: "final", kind: fa.pending.chooseTest ? "final_choose" : "final", done: false, href: "/assessment" });
+  }
+  // In date order; on the same day, done tests, then today, then what's next, the
+  // exam, the final assessment and its certificate last.
+  const order = (c: (typeof checkpoints)[number]) =>
+    c.done && c.kind !== "today" && c.kind !== "certificate" ? 0 : c.kind === "today" ? 1 : c.kind === "final" ? 4 : c.kind === "certificate" ? 5 : c.kind === "exam" ? 3 : 2;
   checkpoints.sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b));
 
   return {

@@ -48,7 +48,7 @@ export function getRoadmap(): Promise<RoadmapData> {
 // tasks and the checkpoints up to the exam.
 export interface JourneyTask {
   id: string;
-  kind: "sets" | "practice_test" | "retry" | "level_check" | "mock";
+  kind: "sets" | "practice_test" | "retry" | "level_check" | "mock" | "final" | "final_choose";
   done: boolean;
   count?: number;
   target?: number;
@@ -70,7 +70,20 @@ export interface Journey {
   skills: { skill: SkillTag; level: string; startLevel: string | null; progressPercent: number; partWay: number }[];
   steps: { level: string; skills: { skill: SkillTag; state: "done" | "now" | "later"; partWay: number }[] }[];
   week: JourneyTask[];
-  checkpoints: { date: string; kind: "practice_test" | "level_check" | "mock" | "exam" | "today"; done: boolean; skill?: SkillTag; level?: string; onReset?: boolean; attempts?: number }[];
+  checkpoints: {
+    date: string;
+    kind: "practice_test" | "level_check" | "mock" | "exam" | "today" | "final" | "certificate";
+    done: boolean;
+    skill?: SkillTag;
+    level?: string;
+    onReset?: boolean;
+    attempts?: number;
+    // The final assessment: open now, or not in the learner's plan yet.
+    open?: boolean;
+    toGet?: boolean;
+    // A certificate's code.
+    code?: string;
+  }[];
   nextStep: NextStep | null;
   planSource?: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
 }

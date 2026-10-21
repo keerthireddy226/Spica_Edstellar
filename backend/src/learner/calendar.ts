@@ -11,7 +11,7 @@ import { journey } from "./journey.js";
 
 export interface PlanEvent {
   date: string;
-  kind: "practice_test" | "mock" | "exam";
+  kind: "practice_test" | "mock" | "exam" | "final";
   uid: string;
 }
 
@@ -19,12 +19,14 @@ const TITLES: Record<PlanEvent["kind"], string> = {
   practice_test: "Spica: practice test",
   mock: "Spica: mock test",
   exam: "Your exam day",
+  final: "Spica: final assessment",
 };
 
 const LINKS: Record<PlanEvent["kind"], string> = {
   practice_test: "/practice-tests",
   mock: "/mock-exams",
   exam: "/roadmap",
+  final: "/assessment",
 };
 
 export async function planEvents(userId: string): Promise<PlanEvent[]> {
@@ -32,7 +34,10 @@ export async function planEvents(userId: string): Promise<PlanEvent[]> {
   const j = await journey(userId);
   const count: Record<string, number> = {};
   return j.checkpoints
-    .filter((c): c is typeof c & { kind: PlanEvent["kind"] } => (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam") && !c.done && c.date >= today)
+    .filter(
+      (c): c is typeof c & { kind: PlanEvent["kind"] } =>
+        (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam" || (c.kind === "final" && !c.toGet)) && !c.done && c.date >= today,
+    )
     .map((c) => {
       count[c.kind] = (count[c.kind] ?? 0) + 1;
       return { date: c.date, kind: c.kind, uid: `${userId}-${c.kind}-${count[c.kind]}@spica` };
@@ -99,7 +104,7 @@ const pretty = (d: string, lang: string) => {
 };
 
 // Each line is a whole sentence, translated on its own into the learner's language.
-const KIND_NAMES: Record<PlanEvent["kind"], string> = { practice_test: "Practice test", mock: "Mock test", exam: "Your exam day" };
+const KIND_NAMES: Record<PlanEvent["kind"], string> = { practice_test: "Practice test", mock: "Mock test", exam: "Your exam day", final: "Final assessment" };
 
 // Sends the plan's dates; returns how many were sent (0: nothing planned).
 export async function emailTestDates(userId: string): Promise<number> {

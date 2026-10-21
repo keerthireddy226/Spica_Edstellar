@@ -205,6 +205,10 @@ function taskText(task: JourneyTask, skillName: (s: SkillTag) => string): { icon
       return { icon: Layers, title: tr("Practise {{n}} sets a day · {{done}} today", { n: task.target ?? 1, done: task.count ?? 0 }) };
     case "practice_test":
       return { icon: ClipboardList, title: tr("Take a practice test this week") };
+    case "final":
+      return { icon: Award, title: tr("Take your final assessment: it's open") };
+    case "final_choose":
+      return { icon: Award, title: tr("Choose the test for your final assessment") };
     case "retry":
       return { icon: RotateCcw, title: tr("Retry {{n}} {{skill}} mistakes", { n: Math.min(5, task.count ?? 5), skill: task.skill ? skillName(task.skill).toLowerCase() : "" }) };
     case "level_check":
@@ -278,7 +282,11 @@ export function Checkpoints({ j }: { j: Journey }) {
   const hidden = j.checkpoints.length - shown.length;
   type C = Journey["checkpoints"][number];
   const label = (c: C) =>
-    c.kind === "today"
+    c.kind === "final"
+      ? tr("Final assessment")
+      : c.kind === "certificate"
+        ? tr("Certificate")
+        : c.kind === "today"
       ? tr("Today")
       : c.kind === "practice_test"
         ? tr("Practice test")
@@ -288,8 +296,8 @@ export function Checkpoints({ j }: { j: Journey }) {
             ? tr("Mock test")
             : tr("Exam day");
   const href = (c: C) =>
-    c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
-  const Icon = (c: C) => (c.kind === "exam" ? Flag : c.kind === "mock" ? Timer : c.kind === "level_check" ? Gauge : c.kind === "practice_test" ? ClipboardList : null);
+    c.kind === "final" ? (c.toGet ? ROUTES.SPICA_PLANS : ROUTES.MY_TESTS) : c.kind === "certificate" ? (c.code ? `/certificate/${c.code}` : null) : c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
+  const Icon = (c: C) => (c.kind === "final" || c.kind === "certificate" ? Award : c.kind === "exam" ? Flag : c.kind === "mock" ? Timer : c.kind === "level_check" ? Gauge : c.kind === "practice_test" ? ClipboardList : null);
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -303,13 +311,16 @@ export function Checkpoints({ j }: { j: Journey }) {
           <span className="flex items-center gap-1 text-accent">
             <Timer size={12} /> {tr("Mock test")}
           </span>
+          <span className="flex items-center gap-1 text-navy-deep">
+            <Award size={12} /> {tr("Final assessment")}
+          </span>
         </span>
       </div>
       <div className="overflow-x-auto pb-1">
         <ol className="flex items-start min-w-max">
           {shown.map((c, i) => {
             const I = Icon(c);
-            const link = !c.done ? href(c) : null;
+            const link = !c.done || c.kind === "certificate" ? href(c) : null;
             const mock = c.kind === "mock";
             return (
               <li key={`${c.kind}-${c.date}-${i}`} className="flex flex-col items-center w-28 relative">
@@ -318,7 +329,13 @@ export function Checkpoints({ j }: { j: Journey }) {
                   disabled={!link}
                   onClick={() => link && navigate(link)}
                   className={`relative z-10 h-8 w-8 rounded-full flex items-center justify-center ${link ? "cursor-pointer hover:scale-110 transition-transform" : "cursor-default"} ${
-                    c.kind === "exam"
+                    c.kind === "certificate" && c.done
+                      ? "bg-success text-white ring-4 ring-success/15"
+                      : c.kind === "final" || c.kind === "certificate"
+                        ? c.toGet
+                          ? "bg-surface text-muted border-2 border-dashed border-rule-strong"
+                          : "bg-navy/10 text-navy-deep border-2 border-navy"
+                        : c.kind === "exam"
                       ? "bg-accent text-white"
                       : c.kind === "today"
                         ? "bg-navy text-white ring-4 ring-navy/15"
@@ -339,6 +356,12 @@ export function Checkpoints({ j }: { j: Journey }) {
                   </span>
                 )}
                 {c.onReset && <span className="text-[10px] text-muted text-center leading-tight">{tr("new mocks that day")}</span>}
+                {c.kind === "final" && !c.done && (
+                  <span className="text-[10px] text-muted text-center leading-tight">
+                    {c.toGet ? tr("in every paid plan") : c.open ? tr("open now") : tr("opens after a mock test")}
+                  </span>
+                )}
+                {c.kind === "certificate" && !c.done && <span className="text-[10px] text-muted text-center leading-tight">{tr("after your final assessment")}</span>}
               </li>
             );
           })}
@@ -367,7 +390,7 @@ export function Checkpoints({ j }: { j: Journey }) {
       {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
         <p className="text-xs text-warning">{tr("No mock test is left in this month's allowance before your exam. See the Mock Tests page for when new ones arrive.")}</p>
       )}
-      {j.checkpoints.some((c) => !c.done && (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam")) && <CalendarActions />}
+      {j.checkpoints.some((c) => !c.done && (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam" || (c.kind === "final" && !c.toGet))) && <CalendarActions />}
     </section>
   );
 }

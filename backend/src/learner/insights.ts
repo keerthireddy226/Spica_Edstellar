@@ -1,6 +1,7 @@
 // What the app knows about a learner's practice, turned into guidance: are
 // they on pace for their goal date, which questions to retry, and the one
 // thing to do next. Rules over their own data, no AI call.
+import { readiness } from "../assessment/service.js";
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
@@ -154,6 +155,8 @@ async function weakestSkill(userId: string, types: TypeAccuracy[]): Promise<Skil
 }
 
 export type NextStep =
+  // The final assessment: its test to choose, or open and the mock tests reach the goal.
+  | { kind: "final"; chooseTest: boolean }
   | { kind: "mock"; daysLeft: number }
   | { kind: "practice_test"; daysSince: number | null }
   // types: the question types of the 5 questions the retry set will hold.
@@ -176,6 +179,12 @@ export type NextStep =
 // exam, a regular practice test, old mistakes, then the weakest question type.
 export async function nextStep(userId: string): Promise<NextStep | null> {
   const goal = await goalStatus(userId);
+  // Ready for the final assessment (it's open and the mocks reach the goal), or its test to choose.
+  const r = await readiness(userId).catch(() => null);
+  if (r?.final && !r.certificate) {
+    if (r.final.chooseTest) return { kind: "final", chooseTest: true };
+    if (r.final.unlock.state === "open" && (r.ready || (goal.daysLeft !== null && goal.daysLeft <= 7))) return { kind: "final", chooseTest: false };
+  }
   const tests = (
     await pool.query(
       `SELECT delivery_mode, max(completed_at) AS last FROM sessions
