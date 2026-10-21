@@ -12,6 +12,7 @@ import { notify } from "../notifications/service.js";
 import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
 import { scoreReport } from "../reports/scoreReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
+import { qualitySettings } from "../quality/settings.js";
 import { randomBytes } from "node:crypto";
 
 const DAY = 86_400_000;
@@ -38,14 +39,14 @@ export type Unlock =
 // once, except within LEVEL_RETAKE_DAYS of a level test at that level that wasn't passed.
 export function unlockOf(
   e: { kind: AttemptKind; attemptsLeft: number; endsAt: string | Date },
-  done: { mocks: number; samples: number; lastLevelFail?: Date | string | null },
+  done: { mocks: number; samples: number; lastLevelFail?: Date | string | null; retakeDays?: number },
   now = new Date(),
 ): Unlock {
   const ends = new Date(e.endsAt).getTime();
   if (ends <= now.getTime()) return { state: "expired" };
   if (e.attemptsLeft <= 0) return { state: "used" };
   if (e.kind === "level") {
-    const opens = done.lastLevelFail ? new Date(done.lastLevelFail).getTime() + LEVEL_RETAKE_DAYS * DAY : 0;
+    const opens = done.lastLevelFail ? new Date(done.lastLevelFail).getTime() + (done.retakeDays ?? LEVEL_RETAKE_DAYS) * DAY : 0;
     return now.getTime() >= opens ? { state: "open" } : { state: "retake_wait", opensOn: new Date(opens).toISOString() };
   }
   if (e.kind === "assessment") return done.samples > 0 ? { state: "open" } : { state: "sample_needed" };
@@ -86,7 +87,7 @@ async function ownedAttempts(userId: string, entitlementId?: string): Promise<Ow
 }
 
 // Mock tests of the test since the purchase began, and samples taken for it.
-async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null }> {
+async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null; retakeDays?: number }> {
   if (e.kind === "level") {
     // The latest level test at this level that wasn't passed.
     const f = await pool.query(
@@ -94,7 +95,7 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
          AND composition->>'levelTest' = $2 AND result->'levelTest'->>'passed' = 'false'`,
       [userId, e.level],
     );
-    return { mocks: 0, samples: 0, lastLevelFail: f.rows[0]?.at ?? null };
+    return { mocks: 0, samples: 0, lastLevelFail: f.rows[0]?.at ?? null, retakeDays: (await qualitySettings()).levelRetakeDays };
   }
   const r = (
     await pool.query(
@@ -112,11 +113,13 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
 // What My tests shows: each owned attempt, whether it can start, and the attempts taken.
 export async function myTests(userId: string) {
   const owned = await ownedAttempts(userId);
+  const { appealDays } = await qualitySettings();
   const sessions = owned.length
     ? (
         await pool.query(
           `SELECT s.id, s.entitlement_id, s.started_at, s.completed_at, s.result, s.composition->>'abandoned' AS abandoned,
              si.status AS integrity, c.code AS certificate_code, c.revoked_at AS certificate_revoked, c.spica_score, c.cefr_level AS certificate_level, c.valid_until,
+             (SELECT row_to_json(x) FROM (SELECT status, decision_note AS note FROM result_appeals ra WHERE ra.session_id = s.id) x) AS appeal,
              EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
                      WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending') AS grading
            FROM sessions s LEFT JOIN session_integrity si ON si.session_id = s.id LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result'
@@ -156,6 +159,9 @@ export async function myTests(userId: string) {
             validUntil: s.valid_until && !s.certificate_revoked ? new Date(s.valid_until).toISOString().slice(0, 10) : null,
             // A level test's result: passed or not, overall and each skill's share right.
             levelResult: s.result?.levelTest ?? null,
+            appeal: (s.appeal as { status: string; note: string | null } | null) ?? null,
+            // Appeals are open this many days after the test.
+            canAppeal: !!s.completed_at && !s.appeal && Date.now() - new Date(s.completed_at).getTime() < appealDays * 86_400_000,
           })),
       };
     }),

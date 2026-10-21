@@ -40,6 +40,7 @@ export interface MyLearning {
     examDate: string | null;
     dailyMinutes: number | null;
     examReason: string | null;
+    firstLanguage: string | null;
   };
   progress: {
     level: string | null;
@@ -65,6 +66,7 @@ export const saveMyGoals = (g: {
   examDate?: string | null;
   dailyMinutes?: number;
   examReason?: string;
+  firstLanguage?: string;
 }) => api<{ ok: true }>("/me/goals", { method: "PATCH", body: JSON.stringify(g) });
 
 // The learner's group this week (when their organization turned it on).

@@ -166,6 +166,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
     examDate: g.examDate ? g.examDate.slice(0, 10) : "",
     dailyMinutes: g.dailyMinutes ? String(g.dailyMinutes) : "",
     examReason: g.examReason ?? "",
+    firstLanguage: g.firstLanguage ?? "",
   });
   const [saving, setSaving] = useState(false);
   const days = g.examDate ? Math.ceil((new Date(g.examDate).getTime() - Date.now()) / 86400000) : null;
@@ -194,6 +195,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               [tr("Exam date"), g.examDate ? `${shortDate(g.examDate)}${days != null && days >= 0 ? tr(" · in {{days}} days", { days: days }) : ""}` : tr("Not booked")],
               [tr("Daily practice"), g.dailyMinutes ? tr("{{n}} minutes", { n: g.dailyMinutes }) : "—"],
               [tr("Why"), REASONS.find(([k]) => k === g.examReason)?.[1] ?? "—"],
+              [tr("First language"), g.firstLanguage || "—"],
             ] as const
           ).map(([l, v]) => (
             <div key={l}>
@@ -224,6 +226,12 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
             <input {...f("scoreTarget")} placeholder={tr("Target score, e.g. 65")} className={input} />
             <input type="date" {...f("examDate")} className={input} />
             <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
+            <input {...f("firstLanguage")} list="first-languages" placeholder={tr("First language (helps us check scoring is fair)")} className={input} />
+            <datalist id="first-languages">
+              {["Hindi", "Telugu", "Tamil", "Kannada", "Malayalam", "Marathi", "Bengali", "Gujarati", "Punjabi", "Urdu", "Arabic", "Chinese", "Japanese", "Spanish", "French", "German", "Portuguese", "Vietnamese", "Tagalog", "Other"].map((l) => (
+                <option key={l} value={l} />
+              ))}
+            </datalist>
             <select {...f("examReason")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Why are you preparing?")}</option>
               {REASONS.filter(([k]) => !HIDDEN_EXAM_REASONS.includes(k) || k === g.examReason).map(([k, l]) => (
@@ -246,6 +254,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                     examDate: d.examDate || null,
                     dailyMinutes: d.dailyMinutes ? Number(d.dailyMinutes) : undefined,
                     examReason: d.examReason || undefined,
+                    firstLanguage: d.firstLanguage,
                   });
                   setEditing(false);
                   onSaved();

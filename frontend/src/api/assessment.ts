@@ -35,6 +35,8 @@ export interface OwnedTest {
     level: string | null;
     validUntil: string | null;
     levelResult: { level: string; passed: boolean; overallPercent: number | null; skillPercents: Record<string, number | null> } | null;
+    appeal: { status: "open" | "upheld" | "changed" | "new_attempt"; note: string | null } | null;
+    canAppeal: boolean;
   }[];
 }
 

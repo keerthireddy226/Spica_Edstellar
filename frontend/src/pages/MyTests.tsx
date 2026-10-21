@@ -6,6 +6,7 @@ import { LearnerHero } from "@/components/learner/LearnerHero";
 import { Button } from "@/components/Button";
 import { PracticeTests } from "@/pages/PracticeTests";
 import { getMyTests, type AttemptStatus, type OwnedTest } from "@/api/assessment";
+import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
@@ -23,6 +24,59 @@ const STATUS: Record<AttemptStatus, { label: () => string; cls: string }> = {
   not_passed: { label: () => tr("Not passed"), cls: "text-error" },
   void: { label: () => tr("Not valid"), cls: "text-error" },
 };
+
+// Appeal a real test's result (once, within two weeks), and where the appeal is.
+function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appeal: OwnedTest["attempts"][number]["appeal"]; canAppeal: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  if (appeal) {
+    const label = { open: tr("Appeal sent: we'll reply by email."), upheld: tr("Appeal answered: the result stands."), changed: tr("Appeal answered: your result was re-marked."), new_attempt: tr("Appeal answered: you can take the test again.") }[appeal.status];
+    return (
+      <span className="basis-full text-xs text-muted">
+        {label}
+        {appeal.note ? ` ${appeal.note}` : ""}
+      </span>
+    );
+  }
+  if (!canAppeal || state === "sent") return state === "sent" ? <span className="basis-full text-xs text-success">{tr("Appeal sent: we'll reply by email.")}</span> : null;
+  return open ? (
+    <div className="basis-full flex flex-col gap-2">
+      <textarea
+        rows={3}
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder={tr("What went wrong? For example a question that didn't load, or audio you couldn't hear.")}
+        className="rounded-input border border-rule bg-surface px-3 py-2 text-sm"
+      />
+      <div className="flex items-center gap-2">
+        <Button
+          disabled={reason.trim().length < 10 || state === "sending"}
+          onClick={async () => {
+            setState("sending");
+            try {
+              await fileAppeal(sessionId, reason.trim());
+              setState("sent");
+            } catch {
+              setState("error");
+            }
+          }}
+          className="!py-1.5 !text-sm"
+        >
+          {tr("Send appeal")}
+        </Button>
+        <button onClick={() => setOpen(false)} className="text-sm text-muted hover:underline cursor-pointer">
+          {tr("Cancel")}
+        </button>
+        {state === "error" && <span className="text-xs text-error">{tr("The appeal couldn't be sent.")}</span>}
+      </div>
+    </div>
+  ) : (
+    <button onClick={() => setOpen(true)} className="basis-full text-left text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
+      {tr("Appeal this result")}
+    </button>
+  );
+}
 
 const takeLink = (t: OwnedTest, mode: "certified" | "sample", sessionId?: string) =>
   `${ROUTES.MY_TESTS_TAKE}?entitlement=${t.id}&mode=${mode}${sessionId ? `&session=${sessionId}` : ""}`;
@@ -134,6 +188,7 @@ function TestCard({ t }: { t: OwnedTest }) {
               {a.status === "not_passed" && (
                 <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill.")}</span>
               )}
+              <AppealLine sessionId={a.sessionId} appeal={a.appeal} canAppeal={a.canAppeal && a.status !== "in_progress"} />
             </div>
           ))}
         </div>

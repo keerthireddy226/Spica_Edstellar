@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -30,6 +30,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.SUPER_CONTENT, icon: FileStack, label: tr("Question bank") },
   { to: ROUTES.ADMIN_REVIEW, icon: ScanFace, label: tr("Placement reviews") },
   { to: ROUTES.SUPER_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
+  { to: ROUTES.SUPER_QUALITY, icon: Scale, label: tr("Assessment quality") },
   { to: ROUTES.SUPER_CERTIFICATES, icon: Award, label: tr("Certificates") },
   { to: ROUTES.SUPER_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.SUPER_SYSTEM, icon: ServerCog, label: tr("System") },
@@ -50,6 +51,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_CONTENT, icon: FileStack, label: tr("Question bank"), permission: "contentReview" },
   { to: ROUTES.ADMIN_CONSOLE_REVIEWS, icon: ScanFace, label: tr("Placement reviews"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity"), permission: "scoreReview" },
+  { to: ROUTES.ADMIN_CONSOLE_QUALITY, icon: Scale, label: tr("Assessment quality"), permission: "scoreReview" },
   { to: ROUTES.ADMIN_CONSOLE_CERTIFICATES, icon: Award, label: tr("Certificates") },
   { to: ROUTES.ADMIN_CONSOLE_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ADMIN_CONSOLE_ANALYTICS, icon: BarChart3, label: tr("Analytics"), permission: "viewReports" },

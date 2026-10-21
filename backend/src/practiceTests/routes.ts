@@ -49,6 +49,7 @@ import { enqueue } from "../queue/queue.js";
 import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.js";
 import { learnerQuota } from "../programs/quotas.js";
 import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
+import { qualitySettings } from "../quality/settings.js";
 
 export const practiceTestsRouter = Router();
 
@@ -123,8 +124,8 @@ async function selectFormItems(ids: string[], examId: string) {
 }
 
 // A level test's questions, part by part (the blueprint's order), shaped like a set's rows.
-async function levelTestRows(level: string, userId: string) {
-  const ids = await levelTestItemIds(level, userId);
+async function levelTestRows(level: string, userId: string, exposureCap: number) {
+  const ids = await levelTestItemIds(level, userId, exposureCap);
   const order = new Map(LEVEL_TEST_BLUEPRINT.map((p, i) => [p.itemTypeId, i + 1]));
   const r = await pool.query(
     `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
@@ -569,7 +570,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     let form: Awaited<ReturnType<typeof selectFormItems>> | null = null;
     // A built test (assessment builder): its questions, time limits and duration.
     let built: { id: string; code: string; durationMinutes: number; shortForm: boolean; timers: Record<string, number> } | null = null;
-    const levelRows = ownedLevel ? await levelTestRows(ownedLevel, req.user!.id) : null;
+    // A real test keeps questions used in many real tests out while others remain.
+    const exposureCap = mode === "certified" ? (await qualitySettings()).exposureCap : Infinity;
+    const levelRows = ownedLevel ? await levelTestRows(ownedLevel, req.user!.id, exposureCap) : null;
     // Published mock forms are used before the per-learner draw.
     const mockForm = timed && !candidate && !levelRows ? await pickMockForm(testTypeId, req.user!.id) : null;
     const formToUse: { id: string; code: string; duration_minutes: number; short_form: boolean } | null =
@@ -587,7 +590,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       const template = await mockTemplateExam(testTypeId);
       if (!template) return res.status(404).json({ error: "no_exam_items_available" });
       examId = template.id;
-      form = await selectFormItems(await mockFormItemIds(testTypeId, req.user!.id, template.id), template.id);
+      form = await selectFormItems(await mockFormItemIds(testTypeId, req.user!.id, template.id, exposureCap), template.id);
     } else if (candidate) {
       // Proctored organizations give each candidate their own mix of questions.
       const { policy } = await learnerPolicy(req.user!.id);
@@ -647,6 +650,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         owned ? body.entitlementId : null,
       ],
     );
+      // How often each question has been in a real test (the question pool's exposure).
+      if (mode === "certified") await client.query(`UPDATE items SET certified_exposures = certified_exposures + 1 WHERE id = ANY($1::uuid[])`, [itemIds]);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK").catch(() => {});
@@ -895,7 +900,10 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
             ? {
                 levelTest: {
                   level: composition.levelTest,
-                  passed: levelTestPassed(overall, (level?.skillPercents ?? {}) as Record<string, number>),
+                  passed: levelTestPassed(overall, (level?.skillPercents ?? {}) as Record<string, number>, {
+                    overall: (await qualitySettings()).levelPassOverall,
+                    skill: (await qualitySettings()).levelSkillMin,
+                  }),
                   overallPercent: overall,
                   skillPercents: level?.skillPercents ?? {},
                 },

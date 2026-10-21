@@ -44,6 +44,7 @@ import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages
 import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
 import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
 import { OrgAdminTests } from "@/pages/orgAdmin/OrgAdminTests";
+import { AssessmentQuality } from "@/pages/staff/AssessmentQuality";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -254,6 +255,7 @@ function App() {
           <Route path={ROUTES.SUPER_SYSTEM} element={<SystemPage />} />
           <Route path={ROUTES.SUPER_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.SUPER_PLANS} element={<PlansCatalog />} />
+          <Route path={ROUTES.SUPER_QUALITY} element={<AssessmentQuality />} />
           <Route path={ROUTES.SUPER_CONTENT} element={<QuestionBank />} />
           <Route path={ROUTES.ADMIN_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_ORG_ADMINS} element={<OrgAdminsList />} />
@@ -283,6 +285,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_QUALITY} element={<AssessmentQuality />} />
           <Route path={ROUTES.ADMIN_CONSOLE_CONTENT} element={<QuestionBank />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} element={<AdminOrganizations />} />
           <Route path={ROUTES.ADMIN_CONSOLE_MANAGERS} element={<ManagersList />} />

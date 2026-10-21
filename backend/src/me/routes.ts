@@ -141,7 +141,7 @@ meRouter.get("/learning", requireAuth, async (req: AuthedRequest, res, next) => 
               FROM batch_managers bm JOIN users m ON m.id = bm.user_id WHERE bm.batch_id = b.id AND m.deleted_at IS NULL) AS managers,
            (SELECT json_build_object('name', concat_ws(' ', oa.first_name, oa.last_name), 'email', oa.email)
               FROM users oa WHERE oa.tenant_id = t.id AND oa.role = 'org_admin' AND oa.deleted_at IS NULL LIMIT 1) AS org_admin,
-           pp.exam_preference, pp.goal_level, pp.score_target, pp.exam_date, pp.daily_minutes_preference, pp.exam_reason, pp.target_prep_days
+           pp.exam_preference, pp.goal_level, pp.score_target, pp.exam_date, pp.daily_minutes_preference, pp.exam_reason, pp.target_prep_days, pp.first_language
          FROM users u JOIN tenants t ON t.id = u.tenant_id
          LEFT JOIN batches b ON b.id = u.batch_id
          LEFT JOIN participant_profiles pp ON pp.user_id = u.id
@@ -182,6 +182,7 @@ meRouter.get("/learning", requireAuth, async (req: AuthedRequest, res, next) => 
         examDate: x.exam_date,
         dailyMinutes: x.daily_minutes_preference,
         examReason: x.exam_reason,
+        firstLanguage: x.first_language ?? null,
       },
       progress: {
         level: pl?.cefr_level ?? null,
@@ -214,6 +215,8 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
         examDate: z.string().optional().or(z.literal("").transform(() => null)).nullable(),
         dailyMinutes: z.coerce.number().int().min(5).max(240).optional(),
         examReason: z.enum(["university", "job", "immigration", "promotion", "personal"]).optional(),
+        // For the speaking fairness study (scores by first language).
+        firstLanguage: z.string().trim().max(60).optional(),
       })
       .parse(req.body);
     await pool.query(
@@ -229,6 +232,10 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
          updated_at = now()`,
       [req.user!.id, b.examPreference ?? null, b.goalLevel ?? null, b.scoreTarget ?? null, b.examDate ?? null, b.dailyMinutes ?? null, b.examReason ?? null, b.examDate !== undefined],
     );
+    if (b.firstLanguage !== undefined) {
+      const lang = b.firstLanguage ? b.firstLanguage.charAt(0).toUpperCase() + b.firstLanguage.slice(1) : null;
+      await pool.query(`UPDATE participant_profiles SET first_language = $2 WHERE user_id = $1`, [req.user!.id, lang]);
+    }
     // A new goal, exam date or daily time gets a new study plan.
     if (b.goalLevel !== undefined || b.examDate !== undefined || b.dailyMinutes !== undefined) await rebuildRoadmap(req.user!.id);
     res.json({ ok: true });
