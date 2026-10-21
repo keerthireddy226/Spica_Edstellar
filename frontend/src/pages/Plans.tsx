@@ -126,6 +126,7 @@ export function Plans() {
               <Feature ok={false}>{t("plans.features.mockTests")}</Feature>
             )}
             <Feature ok={false}>{t("plans.features.tutor")}</Feature>
+            <Feature ok={false}>{tr("No certificate included")}</Feature>
           </ul>
           {!active && license?.freeTier && (
             <p className="text-xs text-muted mt-auto">
@@ -154,6 +155,7 @@ export function Plans() {
             )}
             <Feature ok>{t("plans.features.tutor")}</Feature>
             <Feature ok>{t("plans.features.progress")}</Feature>
+            <Feature ok>{tr("Certificate provided")}</Feature>
           </ul>
 
           <div className="grid grid-cols-3 gap-2">

@@ -23,12 +23,22 @@ const CURRENCY_NAME: Record<ShopCurrency, string> = { INR: "₹ INR", USD: "$ US
 const GROUPS: { kind: PricedProduct["kind"]; title: () => string; note: () => string; icon: typeof BookOpen }[] = [
   {
     kind: "prep",
-    title: () => tr("Preparation + real test"),
+    title: () => tr("Preparation + real test + certificate"),
     note: () => tr("A month of practice tests, mock tests and Practice Modules for one test, then one real test with a certificate."),
     icon: BookOpen,
   },
-  { kind: "assessment", title: () => tr("Real test only"), note: () => tr("One strictly proctored real test with a score report and a certificate. A free sample comes first."), icon: Award },
-  { kind: "level", title: () => tr("Level test"), note: () => tr("One test at the level you choose. Pass it (70% overall, at least 50% in each skill) for that level's certificate."), icon: ClipboardCheck },
+  {
+    kind: "assessment",
+    title: () => tr("Real test + certificate"),
+    note: () => tr("One strictly proctored real test with a score report and a certificate. A free sample comes first."),
+    icon: Award,
+  },
+  {
+    kind: "level",
+    title: () => tr("Level test + certificate"),
+    note: () => tr("One test at the level you choose. Pass it (70% overall, at least 50% in each skill) for that level's certificate."),
+    icon: ClipboardCheck,
+  },
   {
     kind: "pack",
     title: () => tr("Practice pack"),
@@ -167,7 +177,7 @@ export function ProductShop() {
               <span className="h-10 w-10 rounded-xl bg-navy/15 text-navy-deep flex items-center justify-center shrink-0">
                 <Icon size={20} />
               </span>
-              <div>
+              <div className="flex-1 min-w-0">
                 <h3 className="font-display font-bold text-ink">{g.title()}</h3>
                 <p className="text-sm text-muted">{g.note()}</p>
               </div>

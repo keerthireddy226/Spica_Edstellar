@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} hat Credits angefordert",
  "{{n}} credits for staff tests.": "{{n}} Credits für Mitarbeitertests.",
  "1 credit": "1 Credit",
- "1 credit a month": "1 Credit pro Monat"
+ "1 credit a month": "1 Credit pro Monat",
+ "No certificate included": "Kein Zertifikat enthalten",
+ "Preparation + real test + certificate": "Vorbereitung + echter Test + Zertifikat",
+ "Real test + certificate": "Echter Test + Zertifikat",
+ "Level test + certificate": "Niveautest + Zertifikat",
+ "Certificate provided": "Zertifikat inklusive"
 }

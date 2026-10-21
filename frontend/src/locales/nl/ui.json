@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} heeft credits aangevraagd",
  "{{n}} credits for staff tests.": "{{n}} credits voor toetsen van medewerkers.",
  "1 credit": "1 credit",
- "1 credit a month": "1 credit per maand"
+ "1 credit a month": "1 credit per maand",
+ "No certificate included": "Geen certificaat inbegrepen",
+ "Preparation + real test + certificate": "Voorbereiding + echte toets + certificaat",
+ "Real test + certificate": "Echte toets + certificaat",
+ "Level test + certificate": "Niveautest + certificaat",
+ "Certificate provided": "Certificaat inbegrepen"
 }

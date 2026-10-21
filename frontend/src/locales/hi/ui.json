@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} ने क्रेडिट माँगे",
  "{{n}} credits for staff tests.": "स्टाफ़ के टेस्ट के लिए {{n}} क्रेडिट।",
  "1 credit": "1 क्रेडिट",
- "1 credit a month": "हर महीने 1 क्रेडिट"
+ "1 credit a month": "हर महीने 1 क्रेडिट",
+ "No certificate included": "सर्टिफ़िकेट शामिल नहीं",
+ "Preparation + real test + certificate": "तैयारी + असली टेस्ट + सर्टिफ़िकेट",
+ "Real test + certificate": "असली टेस्ट + सर्टिफ़िकेट",
+ "Level test + certificate": "स्तर टेस्ट + सर्टिफ़िकेट",
+ "Certificate provided": "सर्टिफ़िकेट शामिल"
 }

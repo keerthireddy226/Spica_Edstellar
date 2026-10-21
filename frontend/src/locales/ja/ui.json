@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}}がクレジットをリクエストしました",
  "{{n}} credits for staff tests.": "スタッフのテスト用に{{n}}クレジット。",
  "1 credit": "1 クレジット",
- "1 credit a month": "月 1 クレジット"
+ "1 credit a month": "月 1 クレジット",
+ "No certificate included": "修了証なし",
+ "Preparation + real test + certificate": "準備 + 本番テスト + 修了証",
+ "Real test + certificate": "本番テスト + 修了証",
+ "Level test + certificate": "レベルテスト + 修了証",
+ "Certificate provided": "修了証付き"
 }

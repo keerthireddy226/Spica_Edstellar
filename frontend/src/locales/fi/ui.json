@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} pyysi krediittejä",
  "{{n}} credits for staff tests.": "{{n}} krediittiä henkilöstön kokeisiin.",
  "1 credit": "1 krediitti",
- "1 credit a month": "1 krediitti kuukaudessa"
+ "1 credit a month": "1 krediitti kuukaudessa",
+ "No certificate included": "Ei sisällä todistusta",
+ "Preparation + real test + certificate": "Valmistautuminen + oikea koe + todistus",
+ "Real test + certificate": "Oikea koe + todistus",
+ "Level test + certificate": "Tasotesti + todistus",
+ "Certificate provided": "Sisältää todistuksen"
 }

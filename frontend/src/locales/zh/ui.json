@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} 申请了点数",
  "{{n}} credits for staff tests.": "{{n}} 点数用于员工测试。",
  "1 credit": "1 个点数",
- "1 credit a month": "每月 1 个点数"
+ "1 credit a month": "每月 1 个点数",
+ "No certificate included": "不含证书",
+ "Preparation + real test + certificate": "备考 + 正式测试 + 证书",
+ "Real test + certificate": "正式测试 + 证书",
+ "Level test + certificate": "水平测试 + 证书",
+ "Certificate provided": "含证书"
 }

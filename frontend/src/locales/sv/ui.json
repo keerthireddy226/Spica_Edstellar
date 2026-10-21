@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} har bett om krediter",
  "{{n}} credits for staff tests.": "{{n}} krediter för personaltest.",
  "1 credit": "1 kredit",
- "1 credit a month": "1 kredit i månaden"
+ "1 credit a month": "1 kredit i månaden",
+ "No certificate included": "Certifikat ingår inte",
+ "Preparation + real test + certificate": "Förberedelse + riktigt test + certifikat",
+ "Real test + certificate": "Riktigt test + certifikat",
+ "Level test + certificate": "Nivåtest + certifikat",
+ "Certificate provided": "Certifikat ingår"
 }

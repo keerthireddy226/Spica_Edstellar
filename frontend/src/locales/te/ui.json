@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} క్రెడిట్‌లు అడిగింది",
  "{{n}} credits for staff tests.": "సిబ్బంది టెస్ట్‌ల కోసం {{n}} క్రెడిట్‌లు.",
  "1 credit": "1 క్రెడిట్",
- "1 credit a month": "నెలకు 1 క్రెడిట్"
+ "1 credit a month": "నెలకు 1 క్రెడిట్",
+ "No certificate included": "సర్టిఫికెట్ చేర్చబడలేదు",
+ "Preparation + real test + certificate": "సన్నద్ధత + అసలు టెస్ట్ + సర్టిఫికెట్",
+ "Real test + certificate": "అసలు టెస్ట్ + సర్టిఫికెట్",
+ "Level test + certificate": "స్థాయి టెస్ట్ + సర్టిఫికెట్",
+ "Certificate provided": "సర్టిఫికెట్ చేర్చబడింది"
 }

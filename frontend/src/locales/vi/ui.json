@@ -4579,5 +4579,10 @@
  "{{org}} asked for credits": "{{org}} đã yêu cầu thêm lượt",
  "{{n}} credits for staff tests.": "{{n}} lượt cho bài thi của nhân viên.",
  "1 credit": "1 lượt",
- "1 credit a month": "1 lượt mỗi tháng"
+ "1 credit a month": "1 lượt mỗi tháng",
+ "No certificate included": "Không kèm chứng chỉ",
+ "Preparation + real test + certificate": "Ôn luyện + bài thi thật + chứng chỉ",
+ "Real test + certificate": "Bài thi thật + chứng chỉ",
+ "Level test + certificate": "Bài kiểm tra trình độ + chứng chỉ",
+ "Certificate provided": "Có kèm chứng chỉ"
 }
