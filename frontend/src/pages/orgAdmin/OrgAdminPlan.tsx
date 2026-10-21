@@ -5,7 +5,7 @@ import { Check, Clock, Gem, Minus, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
 import { BuyLicensesModal } from "@/components/licenses/BuyLicensesModal";
 import { refreshPlan, usePlan } from "@/components/plans/usePlan";
-import { formatUsdCents, sendEnterpriseInquiry, TIER_LABELS, type PlanTier } from "@/api/plans";
+import { cancelDowngrade, formatUsdCents, scheduleDowngrade, sendEnterpriseInquiry, TIER_LABELS, type PlanSummary, type PlanTier } from "@/api/plans";
 import { formatShortDate } from "@/api/licenses";
 
 import { tr } from "@/i18n/tr";
@@ -59,6 +59,71 @@ function EnterpriseInquiry() {
       <Button onClick={send} disabled={state === "sending" || !message.trim()} className="flex items-center justify-center gap-2">
         <Send size={14} /> {state === "sending" ? tr("Sending…") : tr("Send")}
       </Button>
+    </div>
+  );
+}
+
+const TIER_ORDER: PlanTier[] = ["starter", "business", "enterprise"];
+
+// Moving to a lower plan happens at the end of the period (the contract's
+// end, or the end of the month), so nothing is lost mid-way. Moving up is a
+// purchase (Business) or a conversation (Enterprise).
+function ChangePlanCard({ plan }: { plan: PlanSummary }) {
+  const [pending, setPending] = useState(plan.pendingTier ?? null);
+  const [busy, setBusy] = useState(false);
+  const lower = TIER_ORDER.slice(0, TIER_ORDER.indexOf(plan.tier));
+  const [tier, setTier] = useState<PlanTier | "">(lower[lower.length - 1] ?? "");
+  if (!lower.length && !pending) return null;
+  const starterLimits = plan.limits.filter((l) => l.used > ({ managers: 3, batches: 5 } as Record<string, number>)[l.key]);
+  return (
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
+      <h2 className="font-display font-semibold text-lg text-ink">{tr("Change plan")}</h2>
+      {pending ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-input bg-paper-warm px-4 py-3 text-sm">
+          <span className="flex-1 text-ink">{tr("Your organization moves to {{tier}} on {{date}}. Until then, nothing changes.", { tier: TIER_LABELS[pending.tier], date: formatShortDate(pending.on) })}</span>
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              await cancelDowngrade().catch(() => {});
+              setPending(null);
+              setBusy(false);
+            }}
+          >
+            {tr("Keep {{tier}}", { tier: plan.tierLabel })}
+          </Button>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted">{tr("A lower plan starts at the end of your period: your contract's end, or the first day of next month. Learners keep their access and progress.")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={tier} onChange={(e) => setTier(e.target.value as PlanTier)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm cursor-pointer">
+              {lower.map((t) => (
+                <option key={t} value={t}>
+                  {TIER_LABELS[t]}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="secondary"
+              disabled={!tier || busy}
+              onClick={async () => {
+                if (!tier) return;
+                setBusy(true);
+                const r = await scheduleDowngrade(tier).catch(() => null);
+                if (r) setPending({ tier, label: TIER_LABELS[tier], on: r.on });
+                setBusy(false);
+              }}
+            >
+              {tr("Move at the end of the period")}
+            </Button>
+          </div>
+          {tier === "starter" && starterLimits.length > 0 && (
+            <p className="text-xs text-warning">{tr("Starter allows 3 Managers and 5 batches. You have more now: existing ones stay, but you can't add more.")}</p>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -289,6 +354,8 @@ export function OrgAdminPlan() {
           </tbody>
         </table>
       </div>
+
+      <ChangePlanCard plan={plan} />
 
       {showBuy && (
         <BuyLicensesModal

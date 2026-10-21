@@ -122,6 +122,48 @@ export async function setTier(args: {
   return true;
 }
 
+// ---- Moving to a lower plan at the end of the period ----
+
+const TIER_RANK: Record<PlanTier, number> = { starter: 0, business: 1, enterprise: 2 };
+
+// Pure: when a downgrade asked for on `today` takes effect: the contract's end
+// when it's still ahead, otherwise the first day of next month.
+export function downgradeDate(contractEnd: string | null, today: string): string {
+  if (contractEnd && contractEnd > today) return contractEnd;
+  const d = new Date(`${today}T00:00:00Z`);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+}
+
+export class DowngradeError extends Error {
+  constructor(public code: "not_lower" | "not_found") {
+    super(code);
+  }
+}
+
+// An Org Admin moves the organization to a lower plan from the end of its period.
+export async function scheduleDowngrade(tenantId: string, tier: PlanTier, actorId: string): Promise<string> {
+  const t = (await pool.query(`SELECT plan_tier, to_char(contract_end, 'YYYY-MM-DD') AS contract_end FROM tenants WHERE id = $1 AND type = 'cohort'`, [tenantId])).rows[0];
+  if (!t) throw new DowngradeError("not_found");
+  if (TIER_RANK[tier] >= TIER_RANK[t.plan_tier as PlanTier]) throw new DowngradeError("not_lower");
+  const on = downgradeDate(t.contract_end, new Date().toISOString().slice(0, 10));
+  await pool.query(`UPDATE tenants SET pending_tier = $2, pending_tier_on = $3, pending_tier_by = $4 WHERE id = $1`, [tenantId, tier, on, actorId]);
+  return on;
+}
+
+export async function cancelDowngrade(tenantId: string): Promise<void> {
+  await pool.query(`UPDATE tenants SET pending_tier = NULL, pending_tier_on = NULL, pending_tier_by = NULL WHERE id = $1`, [tenantId]);
+}
+
+// Daily: scheduled downgrades whose day has come.
+export async function applyDueDowngrades(): Promise<number> {
+  const due = (await pool.query(`SELECT id, pending_tier, pending_tier_by FROM tenants WHERE pending_tier IS NOT NULL AND pending_tier_on <= current_date`)).rows;
+  for (const t of due) {
+    await setTier({ tenantId: t.id, tier: t.pending_tier, actorId: t.pending_tier_by, note: "Scheduled move to a lower plan" });
+    await cancelDowngrade(t.id);
+  }
+  return due.length;
+}
+
 export async function setCustomPrice(args: { tenantId: string; customPriceCents: number | null; actorId: string; note?: string | null }) {
   const r = await pool.query(`UPDATE tenants SET custom_price_cents = $2 WHERE id = $1 AND type = 'cohort' RETURNING id`, [
     args.tenantId,
@@ -223,6 +265,7 @@ export async function planSummary(tenantId: string) {
   const c = (
     await pool.query(
       `SELECT to_char(t.contract_start, 'YYYY-MM-DD') AS start, to_char(t.contract_end, 'YYYY-MM-DD') AS "end",
+         t.pending_tier, to_char(t.pending_tier_on, 'YYYY-MM-DD') AS pending_on,
          coalesce(nullif(concat_ws(' ', am.first_name, am.last_name), ''), am.email) AS am_name, am.email AS am_email
        FROM tenants t LEFT JOIN users am ON am.id = t.account_manager_id WHERE t.id = $1`,
       [tenantId],
@@ -242,6 +285,8 @@ export async function planSummary(tenantId: string) {
     businessQualifyingQuantity: BUSINESS_QUALIFYING_QUANTITY,
     pilotEndsAt: plan.pilotEndsAt,
     contract: c?.end || c?.start ? { start: c.start, end: c.end } : null,
+    // A move to a lower plan, and the day it happens.
+    pendingTier: c?.pending_tier ? { tier: c.pending_tier as PlanTier, label: TIER_LABELS[c.pending_tier as PlanTier], on: c.pending_on as string } : null,
     accountManager: c?.am_email ? { name: c.am_name, email: c.am_email } : null,
     limits: (Object.keys(limits) as PlanLimit[]).map((key) => ({ key, max: limits[key], used: used[key] })),
     features: (Object.keys(FEATURES) as PlanFeature[]).map((key) => ({

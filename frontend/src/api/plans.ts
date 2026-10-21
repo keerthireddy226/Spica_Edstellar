@@ -41,6 +41,8 @@ export interface PlanSummary {
   businessQualifyingQuantity: number;
   pilotEndsAt: string | null;
   contract?: { start: string | null; end: string | null } | null;
+  // A move to a lower plan at the end of the period.
+  pendingTier?: { tier: PlanTier; label: string; on: string } | null;
   accountManager?: { name: string; email: string } | null;
   limits: { key: PlanLimitKey; max: number | null; used: number }[];
   features: PlanFeature[];
@@ -69,6 +71,14 @@ export interface PlanEvent {
 
 export function getMyPlan() {
   return api<PlanSummary & { catalog: CatalogTier[] }>("/plans/me");
+}
+
+export function scheduleDowngrade(tier: PlanTier) {
+  return api<{ on: string }>("/plans/me/downgrade", { method: "POST", body: JSON.stringify({ tier }) });
+}
+
+export function cancelDowngrade() {
+  return api<{ ok: true }>("/plans/me/downgrade", { method: "DELETE" });
 }
 
 export function sendEnterpriseInquiry(message: string) {

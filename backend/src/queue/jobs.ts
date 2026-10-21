@@ -17,6 +17,7 @@ import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
 import { runProgramsDaily } from "../programs/service.js";
+import { applyDueDowngrades } from "../plans/service.js";
 import { runProgramAlerts } from "../programs/monitoring.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
@@ -83,6 +84,11 @@ export function registerJobs() {
   });
   // Missed items, finished programs and plans for new batch members (dates
   // are whole days, so running hourly changes nothing twice).
+  // Organizations that chose a lower plan move to it on its day.
+  every(60, "plans.downgrades", async () => {
+    const n = await applyDueDowngrades();
+    if (n) console.log(`plans: ${n} scheduled downgrades applied`);
+  });
   every(60, "programs.daily", async () => {
     const r = await runProgramsDaily();
     if (r.missed || r.completed || r.planned || r.finalAssessments) console.log("programs:", r);

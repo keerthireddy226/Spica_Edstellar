@@ -13,6 +13,9 @@ import {
   listPlanEvents,
   planCatalog,
   planSummary,
+  scheduleDowngrade,
+  cancelDowngrade,
+  DowngradeError,
   setCustomPrice,
   setTier,
   startPilot,
@@ -54,6 +57,28 @@ plansRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
     if (!summary) return res.status(404).json({ error: "organization_not_found" });
     const category = (await pool.query(`SELECT category FROM tenants WHERE id = $1`, [req.user.tenantId])).rows[0]?.category ?? null;
     res.json({ ...summary, catalog: planCatalog(category) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// An Org Admin moves to a lower plan from the end of the period, or cancels that.
+plansRouter.post("/me/downgrade", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user?.role !== "org_admin" || !req.user.tenantId) return res.status(403).json({ error: "forbidden" });
+  try {
+    const b = z.object({ tier: z.enum(PLAN_TIERS) }).parse(req.body);
+    res.json({ on: await scheduleDowngrade(req.user.tenantId, b.tier, req.user.id) });
+  } catch (err) {
+    if (err instanceof DowngradeError) return res.status(err.code === "not_found" ? 404 : 400).json({ error: err.code });
+    next(err);
+  }
+});
+
+plansRouter.delete("/me/downgrade", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user?.role !== "org_admin" || !req.user.tenantId) return res.status(403).json({ error: "forbidden" });
+  try {
+    await cancelDowngrade(req.user.tenantId);
+    res.json({ ok: true });
   } catch (err) {
     next(err);
   }

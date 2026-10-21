@@ -146,6 +146,11 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
           <Item ok={false}>{tr("No certificate included")}</Item>
         </Card>
       </div>
+      {canBuy && (
+        <p className="text-sm text-muted">
+          {tr("Nothing renews by itself: when a plan ends you choose again, and you keep your progress, reports and certificates. Moving up to Full access counts the unused part of a preparation you paid for.")}
+        </p>
+      )}
       {!canBuy && <p className="text-sm text-muted">{tr("Your organization gives you your access. Ask your organization if you need another test.")}</p>}
     </div>
   );
