@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "Gi et dårlig skrevet avsnitt og be kandidaten forbedre det.",
  "Spots and fixes errors, improves clarity and tone.": "Oppdager og retter feil, forbedrer klarhet og tone.",
  "Your certificate ends soon": "Sertifikatet ditt utløper snart",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Sertifikatet ditt {{code}} er gyldig til {{date}}. Hold det gyldig i 12 måneder til, eller ta en ny avsluttende test for å vise nivået ditt nå."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Sertifikatet ditt {{code}} er gyldig til {{date}}. Hold det gyldig i 12 måneder til, eller ta en ny avsluttende test for å vise nivået ditt nå.",
+ "{{name}} is certified {{level}}": "{{name}} er sertifisert på {{level}}",
+ "{{test}}: level {{level}}.": "{{test}}: nivå {{level}}.",
+ "Your certificate is on hold": "Sertifikatet ditt er satt på vent",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En kontrollør sjekker tilsynsregistreringen fra testen din, så sertifikat {{code}} er satt på vent. Vi sender deg en e-post når det er gjort."
 }

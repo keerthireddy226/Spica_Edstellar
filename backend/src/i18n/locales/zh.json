@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "给一段写得不好的文字，请对方改进。",
  "Spots and fixes errors, improves clarity and tone.": "能发现并改正错误，提升清晰度和语气。",
  "Your certificate ends soon": "你的证书即将到期",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "你的证书 {{code}} 有效期至 {{date}}。可再续期 12 个月，或参加新的结业测评来展示你当前的水平。"
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "你的证书 {{code}} 有效期至 {{date}}。可再续期 12 个月，或参加新的结业测评来展示你当前的水平。",
+ "{{name}} is certified {{level}}": "{{name}} 已获 {{level}} 认证",
+ "{{test}}: level {{level}}.": "{{test}}：等级 {{level}}。",
+ "Your certificate is on hold": "你的证书暂缓发放",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "审核人员正在检查你这次测试的监考记录，因此证书 {{code}} 暂缓发放。完成后我们会发邮件通知你。"
 }

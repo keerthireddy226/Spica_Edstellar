@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "Dai un paragrafo scritto male e chiedi al candidato di migliorarlo.",
  "Spots and fixes errors, improves clarity and tone.": "Individua e corregge gli errori, migliora chiarezza e tono.",
  "Your certificate ends soon": "Il tuo certificato sta per scadere",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Il tuo certificato {{code}} è valido fino al {{date}}. Mantienilo valido per altri 12 mesi o fai una nuova valutazione finale per mostrare il tuo livello attuale."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Il tuo certificato {{code}} è valido fino al {{date}}. Mantienilo valido per altri 12 mesi o fai una nuova valutazione finale per mostrare il tuo livello attuale.",
+ "{{name}} is certified {{level}}": "{{name}} ha la certificazione {{level}}",
+ "{{test}}: level {{level}}.": "{{test}}: livello {{level}}.",
+ "Your certificate is on hold": "Il tuo certificato è in sospeso",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisore sta controllando i dati di sorveglianza del tuo test, quindi il certificato {{code}} è in sospeso. Ti invieremo un'email quando avrà finito."
 }

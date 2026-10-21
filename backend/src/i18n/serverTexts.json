@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.",
  "Spots and fixes errors, improves clarity and tone.",
  "Your certificate ends soon",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.",
+ "{{name}} is certified {{level}}",
+ "{{test}}: level {{level}}.",
+ "Your certificate is on hold",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done."
 ]

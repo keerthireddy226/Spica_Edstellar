@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "Anna huonosti kirjoitettu kappale ja pyydä hakijaa parantamaan sitä.",
  "Spots and fixes errors, improves clarity and tone.": "Huomaa ja korjaa virheet, parantaa selkeyttä ja sävyä.",
  "Your certificate ends soon": "Todistuksesi vanhenee pian",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Todistuksesi {{code}} on voimassa {{date}} asti. Pidä se voimassa 12 kuukautta lisää tai tee uusi loppukoe osoittaaksesi nykyisen tasosi."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Todistuksesi {{code}} on voimassa {{date}} asti. Pidä se voimassa 12 kuukautta lisää tai tee uusi loppukoe osoittaaksesi nykyisen tasosi.",
+ "{{name}} is certified {{level}}": "{{name}} on sertifioitu tasolle {{level}}",
+ "{{test}}: level {{level}}.": "{{test}}: taso {{level}}.",
+ "Your certificate is on hold": "Todistuksesi on pidossa",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis."
 }

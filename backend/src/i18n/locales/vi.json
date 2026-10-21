@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "Đưa một đoạn văn viết kém và yêu cầu ứng viên sửa cho tốt hơn.",
  "Spots and fixes errors, improves clarity and tone.": "Phát hiện và sửa lỗi, cải thiện độ rõ ràng và giọng điệu.",
  "Your certificate ends soon": "Chứng chỉ của bạn sắp hết hạn",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Chứng chỉ {{code}} của bạn có hiệu lực đến {{date}}. Hãy gia hạn thêm 12 tháng, hoặc làm bài đánh giá cuối khóa mới để thể hiện trình độ hiện tại."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Chứng chỉ {{code}} của bạn có hiệu lực đến {{date}}. Hãy gia hạn thêm 12 tháng, hoặc làm bài đánh giá cuối khóa mới để thể hiện trình độ hiện tại.",
+ "{{name}} is certified {{level}}": "{{name}} đã được chứng nhận trình độ {{level}}",
+ "{{test}}: level {{level}}.": "{{test}}: trình độ {{level}}.",
+ "Your certificate is on hold": "Chứng chỉ của bạn đang bị tạm giữ",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Người xem xét đang kiểm tra hồ sơ giám sát thi của bài thi của bạn, nên chứng chỉ {{code}} đang bị tạm giữ. Chúng tôi sẽ gửi email cho bạn khi hoàn tất."
 }

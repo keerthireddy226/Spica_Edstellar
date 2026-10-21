@@ -368,5 +368,9 @@
  "Give a badly written paragraph and ask them to improve it.": "下手に書かれた段落を渡し、改善してもらいます。",
  "Spots and fixes errors, improves clarity and tone.": "誤りを見つけて直し、わかりやすさとトーンを改善できる。",
  "Your certificate ends soon": "修了証の有効期限が近づいています",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "修了証 {{code}} の有効期限は {{date}} です。さらに 12 か月有効にするか、新しい最終アセスメントを受けて現在のレベルを示しましょう。"
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "修了証 {{code}} の有効期限は {{date}} です。さらに 12 か月有効にするか、新しい最終アセスメントを受けて現在のレベルを示しましょう。",
+ "{{name}} is certified {{level}}": "{{name}} さんが{{level}}に認定されました",
+ "{{test}}: level {{level}}.": "{{test}}：レベル {{level}}。",
+ "Your certificate is on hold": "修了証は保留中です",
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。"
 }
