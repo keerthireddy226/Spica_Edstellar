@@ -4889,5 +4889,6 @@
  "Take your final assessment": "最終アセスメントを受ける",
  "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "プランには修了証付きの最終アセスメントが含まれています。練習の目標になるよう、そのテストを選んでください。",
  "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "受験可能になり、模擬テストの結果から準備ができていることがわかります。厳格な試験監督付きのテスト1回で修了証を取得できます。",
- "Spica: final assessment": "Spica：最終アセスメント"
+ "Spica: final assessment": "Spica：最終アセスメント",
+ "take a mock test first": "先に模擬テストを受けてください"
 }

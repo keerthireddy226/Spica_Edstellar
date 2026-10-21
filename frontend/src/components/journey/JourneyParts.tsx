@@ -358,7 +358,7 @@ export function Checkpoints({ j }: { j: Journey }) {
                 {c.onReset && <span className="text-[10px] text-muted text-center leading-tight">{tr("new mocks that day")}</span>}
                 {c.kind === "final" && !c.done && (
                   <span className="text-[10px] text-muted text-center leading-tight">
-                    {c.toGet ? tr("in every paid plan") : c.open ? tr("open now") : tr("opens after a mock test")}
+                    {c.toGet ? tr("in every paid plan") : c.open ? tr("open now") : c.needsMock ? tr("take a mock test first") : tr("opens after a mock test")}
                   </span>
                 )}
                 {c.kind === "certificate" && !c.done && <span className="text-[10px] text-muted text-center leading-tight">{tr("after your final assessment")}</span>}

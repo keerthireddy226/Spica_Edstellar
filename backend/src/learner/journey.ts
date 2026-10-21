@@ -11,7 +11,7 @@ import { LEVELS, PASS_SETS, overallFromSkills, skillPath, type Level, type Skill
 import { quotaUsage } from "../programs/quotas.js";
 import { scheduleTests, type Slot } from "./testSchedule.js";
 import { learnerProgram } from "../programs/service.js";
-import { myTests } from "../assessment/service.js";
+import { myTests, readiness } from "../assessment/service.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -63,8 +63,10 @@ export interface Journey {
     date: string;
     kind: "practice_test" | "level_check" | "mock" | "exam" | "today" | "final" | "certificate";
     done: boolean;
-    // The final assessment: open now, or still to get (no plan includes one yet).
+    // The final assessment: open now, or still to get (no plan includes one yet);
+    // needsMock: it opens after a mock test and none is planned before it.
     open?: boolean;
+    needsMock?: boolean;
     toGet?: boolean;
     // A certificate: its code (for the link).
     code?: string;
@@ -215,6 +217,29 @@ export async function journey(userId: string): Promise<Journey> {
         practiceLeft: quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null,
         resetsOn: quota ? new Date(quota.resetsOn) : null,
       });
+
+  // --- The plan ends with the final assessment: no practice or mock test after it ---
+  // Its day: today when it's open and the mock tests reach the goal; otherwise
+  // the end of the plan (the exam day, the program's final assessment day, or
+  // the day it opens anyway), or after the last planned test when none of those
+  // is set. Once certified, nothing more is planned.
+  const todayDate = dateOnly(new Date());
+  const ready = await readiness(userId).catch(() => null);
+  const lastSlot = slots.length ? dateOnly(slots[slots.length - 1].date) : null;
+  let finalDate: string | null = null;
+  if (!fa.certificate && fa.pending) {
+    if (fa.pending.open && ready?.ready) finalDate = todayDate;
+    else {
+      const programDay = program?.program.finalAssessment ? (program.program.finalAssessmentOn ?? null) : null;
+      const ends = [examDate, programDay, fa.pending.open ? null : fa.pending.opensOn].filter((x): x is string => !!x && x >= todayDate).sort();
+      finalDate = ends[0] ?? lastSlot ?? todayDate;
+    }
+  } else if (!fa.certificate && !fa.taken) {
+    finalDate = examDate && examDate >= todayDate ? examDate : (lastSlot ?? todayDate);
+  }
+  const planEnd = fa.certificate && !fa.pending ? todayDate : finalDate;
+  if (planEnd) slots.splice(0, slots.length, ...slots.filter((s) => dateOnly(s.date) <= planEnd));
+
   // This week's mock (when one falls in the next 7 days), or one just done.
   const mockDoneThisWeek = !!lastMock && Date.now() - new Date(lastMock).getTime() < 7 * DAY_MS;
   const nextMock = slots.find((x) => x.kind === "mock");
@@ -255,21 +280,17 @@ export async function journey(userId: string): Promise<Journey> {
   if (examDate) checkpoints.push({ date: examDate, kind: "exam", done: false });
 
   // --- The end of the plan: the final assessment, then the certificate ---
-  const todayDate = dateOnly(new Date());
   if (fa.certificate) {
     checkpoints.push({ date: dateOnly(new Date(fa.certificate.issuedAt)), kind: "certificate", done: true, level: fa.certificate.label, code: fa.certificate.code });
-  } else if (fa.pending) {
-    // Open now; otherwise after the next planned mock, or on the day it opens anyway.
-    const nextMockDate = slots.find((x) => x.kind === "mock")?.date;
-    const opens = fa.pending.opensOn ?? null;
-    const date = fa.pending.open ? todayDate : [nextMockDate ? dateOnly(nextMockDate) : null, opens].filter((x): x is string => !!x).sort()[0] ?? todayDate;
-    checkpoints.push({ date, kind: "final", done: false, open: fa.pending.open });
-    checkpoints.push({ date, kind: "certificate", done: false });
-  } else if (!fa.taken) {
+  }
+  if (finalDate && fa.pending) {
+    const mockBefore = slots.some((s) => s.kind === "mock" && dateOnly(s.date) <= finalDate!);
+    checkpoints.push({ date: finalDate, kind: "final", done: false, open: fa.pending.open, needsMock: !fa.pending.open && !mockBefore && fa.pending.opensOn !== null && fa.pending.opensOn > finalDate });
+    checkpoints.push({ date: finalDate, kind: "certificate", done: false });
+  } else if (finalDate) {
     // Not in the learner's plan yet: shown at the end, to get one.
-    const last = [examDate, ...slots.map((x) => dateOnly(x.date))].filter((x): x is string => !!x).sort().pop() ?? todayDate;
-    checkpoints.push({ date: last, kind: "final", done: false, toGet: true });
-    checkpoints.push({ date: last, kind: "certificate", done: false, toGet: true });
+    checkpoints.push({ date: finalDate, kind: "final", done: false, toGet: true });
+    checkpoints.push({ date: finalDate, kind: "certificate", done: false, toGet: true });
   }
   if (fa.pending?.open || fa.pending?.chooseTest) {
     week.push({ id: "final", kind: fa.pending.chooseTest ? "final_choose" : "final", done: false, href: "/assessment" });

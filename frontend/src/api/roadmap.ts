@@ -80,6 +80,7 @@ export interface Journey {
     attempts?: number;
     // The final assessment: open now, or not in the learner's plan yet.
     open?: boolean;
+    needsMock?: boolean;
     toGet?: boolean;
     // A certificate's code.
     code?: string;
