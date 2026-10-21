@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "आपके बैच के 1 शिक्षार्थी के पास सक्रिय पहुँच नहीं है। अपने संगठन एडमिन से और लाइसेंस माँगें।",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "आपके बैच के {{n}} शिक्षार्थियों के पास सक्रिय पहुँच नहीं है। अपने संगठन एडमिन से और लाइसेंस माँगें।",
  "Reason: {{reason}} (Your Org Admin decides.)": "कारण: {{reason}} (आपके संगठन एडमिन फ़ैसला करेंगे।)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica स्कोर {{score}}, स्तर {{level}}।"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica स्कोर {{score}}, स्तर {{level}}।",
+ "{{test}}: passed.": "{{test}}: पास।",
+ "You can prepare for a test": "आप किसी टेस्ट की तैयारी कर सकते हैं",
+ "You have a real test to take": "आपको एक असली टेस्ट देना है",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} ने आपको {{product}} दिया है: {{n}} दिन अभ्यास, फिर एक असली टेस्ट।",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} ने आपको {{product}} दिया है। इसे {{n}} दिन के अंदर दें।",
+ "You have a practice pack": "आपके पास एक अभ्यास पैक है",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} ने आपको {{product}} दिया है: {{n}} दिन के लिए अभ्यास मॉड्यूल।",
+ "{{name}} appealed a real test result": "{{name}} ने असली टेस्ट के नतीजे के ख़िलाफ़ अपील की",
+ "Your appeal: the result stands": "आपकी अपील: नतीजा वही रहेगा",
+ "Your appeal: your result was re-marked": "आपकी अपील: आपके नतीजे की दोबारा जाँच की गई",
+ "Your appeal: you can take the test again": "आपकी अपील: आप टेस्ट दोबारा दे सकते हैं",
+ "{{org}} asked for credits": "{{org}} ने क्रेडिट माँगे",
+ "{{n}} credits for staff tests.": "स्टाफ़ के टेस्ट के लिए {{n}} क्रेडिट।"
 }

@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "あなたのグループに有効なアクセスがない学習者が1人います。組織管理者にライセンスの追加を依頼してください。",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "あなたのグループに有効なアクセスがない学習者が{{n}}人います。組織管理者にライセンスの追加を依頼してください。",
  "Reason: {{reason}} (Your Org Admin decides.)": "理由：{{reason}}（組織管理者が判断します。）",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spicaスコア {{score}}、レベル {{level}}。"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spicaスコア {{score}}、レベル {{level}}。",
+ "{{test}}: passed.": "{{test}}：合格。",
+ "You can prepare for a test": "テストの準備ができます",
+ "You have a real test to take": "受験する本番テストがあります",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}}から{{product}}が付与されました：{{n}}日間練習したあと、本番テストを1回受けられます。",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}}から{{product}}が付与されました。{{n}}日以内に受験してください。",
+ "You have a practice pack": "練習パックがあります",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}}から{{product}}が付与されました：{{n}}日間の練習モジュール。",
+ "{{name}} appealed a real test result": "{{name}}さんが本番テストの結果に異議を申し立てました",
+ "Your appeal: the result stands": "異議申し立て：結果は変わりません",
+ "Your appeal: your result was re-marked": "異議申し立て：結果が再採点されました",
+ "Your appeal: you can take the test again": "異議申し立て：テストを再受験できます",
+ "{{org}} asked for credits": "{{org}}がクレジットをリクエストしました",
+ "{{n}} credits for staff tests.": "スタッフのテスト用に{{n}}クレジット。"
 }

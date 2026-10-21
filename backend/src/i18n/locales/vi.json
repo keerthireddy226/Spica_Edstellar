@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 học viên trong các lớp của bạn không có quyền truy cập đang hoạt động. Hãy đề nghị quản trị viên tổ chức cấp thêm giấy phép.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} học viên trong các lớp của bạn không có quyền truy cập đang hoạt động. Hãy đề nghị quản trị viên tổ chức cấp thêm giấy phép.",
  "Reason: {{reason}} (Your Org Admin decides.)": "Lý do: {{reason}} (Quản trị viên tổ chức của bạn sẽ quyết định.)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Điểm Spica {{score}}, trình độ {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Điểm Spica {{score}}, trình độ {{level}}.",
+ "{{test}}: passed.": "{{test}}: đạt.",
+ "You can prepare for a test": "Bạn có thể ôn luyện cho một bài thi",
+ "You have a real test to take": "Bạn có một bài thi thật cần làm",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} đã cấp cho bạn {{product}}: luyện tập trong {{n}} ngày, sau đó là một bài thi thật.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} đã cấp cho bạn {{product}}. Hãy làm bài trong vòng {{n}} ngày.",
+ "You have a practice pack": "Bạn có một gói luyện tập",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} đã cấp cho bạn {{product}}: Học phần luyện tập trong {{n}} ngày.",
+ "{{name}} appealed a real test result": "{{name}} đã khiếu nại kết quả bài thi thật",
+ "Your appeal: the result stands": "Khiếu nại của bạn: giữ nguyên kết quả",
+ "Your appeal: your result was re-marked": "Khiếu nại của bạn: kết quả đã được chấm lại",
+ "Your appeal: you can take the test again": "Khiếu nại của bạn: bạn có thể làm lại bài thi",
+ "{{org}} asked for credits": "{{org}} đã yêu cầu thêm lượt",
+ "{{n}} credits for staff tests.": "{{n}} lượt cho bài thi của nhân viên."
 }

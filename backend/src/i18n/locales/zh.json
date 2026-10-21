@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "你的班级中有 1 名学员没有有效的访问权限。请向组织管理员申请更多许可证。",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "你的班级中有 {{n}} 名学员没有有效的访问权限。请向组织管理员申请更多许可证。",
  "Reason: {{reason}} (Your Org Admin decides.)": "原因：{{reason}}（由组织管理员决定。）",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spica 分数 {{score}}，等级 {{level}}。"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spica 分数 {{score}}，等级 {{level}}。",
+ "{{test}}: passed.": "{{test}}：已通过。",
+ "You can prepare for a test": "你可以为一项测试备考了",
+ "You have a real test to take": "你有一次正式测试待参加",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} 为你提供了 {{product}}：练习 {{n}} 天，然后参加一次正式测试。",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} 为你提供了 {{product}}。请在 {{n}} 天内参加。",
+ "You have a practice pack": "你有一个练习包",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} 为你提供了 {{product}}：{{n}} 天的练习模块。",
+ "{{name}} appealed a real test result": "{{name}} 对正式测试结果提出了申诉",
+ "Your appeal: the result stands": "你的申诉：维持原结果",
+ "Your appeal: your result was re-marked": "你的申诉：你的结果已重新评分",
+ "Your appeal: you can take the test again": "你的申诉：你可以重新参加测试",
+ "{{org}} asked for credits": "{{org}} 申请了点数",
+ "{{n}} credits for staff tests.": "{{n}} 点数用于员工测试。"
 }

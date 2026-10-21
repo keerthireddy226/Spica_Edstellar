@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "మీ బ్యాచ్‌లలో 1 అభ్యాసకుడికి సక్రియ యాక్సెస్ లేదు. మీ సంస్థ అడ్మిన్‌ను మరిన్ని లైసెన్స్‌లు అడగండి.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "మీ బ్యాచ్‌లలో {{n}} మంది అభ్యాసకులకు సక్రియ యాక్సెస్ లేదు. మీ సంస్థ అడ్మిన్‌ను మరిన్ని లైసెన్స్‌లు అడగండి.",
  "Reason: {{reason}} (Your Org Admin decides.)": "కారణం: {{reason}} (మీ సంస్థ అడ్మిన్ నిర్ణయిస్తారు.)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica స్కోర్ {{score}}, స్థాయి {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica స్కోర్ {{score}}, స్థాయి {{level}}.",
+ "{{test}}: passed.": "{{test}}: పాస్ అయ్యారు.",
+ "You can prepare for a test": "మీరు ఒక టెస్ట్ కోసం సిద్ధం కావచ్చు",
+ "You have a real test to take": "మీరు రాయాల్సిన అసలు టెస్ట్ ఉంది",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} మీకు {{product}} ఇచ్చింది: {{n}} రోజుల సాధన, ఆ తర్వాత ఒక అసలు టెస్ట్.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} మీకు {{product}} ఇచ్చింది. {{n}} రోజుల్లోపు దాన్ని రాయండి.",
+ "You have a practice pack": "మీకు ప్రాక్టీస్ ప్యాక్ ఉంది",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} మీకు {{product}} ఇచ్చింది: {{n}} రోజుల పాటు సాధన మాడ్యూల్స్.",
+ "{{name}} appealed a real test result": "{{name}} అసలు టెస్ట్ ఫలితంపై అప్పీల్ చేశారు",
+ "Your appeal: the result stands": "మీ అప్పీల్: ఫలితం మారదు",
+ "Your appeal: your result was re-marked": "మీ అప్పీల్: మీ ఫలితాన్ని మళ్లీ మూల్యాంకనం చేశాం",
+ "Your appeal: you can take the test again": "మీ అప్పీల్: మీరు టెస్ట్‌ను మళ్లీ రాయవచ్చు",
+ "{{org}} asked for credits": "{{org}} క్రెడిట్‌లు అడిగింది",
+ "{{n}} credits for staff tests.": "సిబ్బంది టెస్ట్‌ల కోసం {{n}} క్రెడిట్‌లు."
 }

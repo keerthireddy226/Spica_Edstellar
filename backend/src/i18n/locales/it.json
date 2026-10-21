@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 studente dei tuoi gruppi non ha un accesso attivo. Chiedi altre licenze al tuo admin dell'organizzazione.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} studenti dei tuoi gruppi non hanno un accesso attivo. Chiedi altre licenze al tuo admin dell'organizzazione.",
  "Reason: {{reason}} (Your Org Admin decides.)": "Motivo: {{reason}} (Decide il tuo admin dell'organizzazione.)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: punteggio Spica {{score}}, livello {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: punteggio Spica {{score}}, livello {{level}}.",
+ "{{test}}: passed.": "{{test}}: superato.",
+ "You can prepare for a test": "Puoi prepararti per un test",
+ "You have a real test to take": "Hai un test ufficiale da sostenere",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} ti ha assegnato {{product}}: esercizio per {{n}} giorni, poi un test ufficiale.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} ti ha assegnato {{product}}. Sostienilo entro {{n}} giorni.",
+ "You have a practice pack": "Hai un pacchetto di esercizio",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} ti ha assegnato {{product}}: Moduli di esercizio per {{n}} giorni.",
+ "{{name}} appealed a real test result": "{{name}} ha presentato ricorso contro il risultato di un test ufficiale",
+ "Your appeal: the result stands": "Il tuo ricorso: il risultato resta valido",
+ "Your appeal: your result was re-marked": "Il tuo ricorso: il tuo risultato è stato rivalutato",
+ "Your appeal: you can take the test again": "Il tuo ricorso: puoi rifare il test",
+ "{{org}} asked for credits": "{{org}} ha richiesto crediti",
+ "{{n}} credits for staff tests.": "{{n}} crediti per i test del personale."
 }

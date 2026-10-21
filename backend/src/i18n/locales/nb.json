@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 elev i gruppene dine har ikke aktiv tilgang. Be organisasjonsadministratoren om flere lisenser.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} elever i gruppene dine har ikke aktiv tilgang. Be organisasjonsadministratoren om flere lisenser.",
  "Reason: {{reason}} (Your Org Admin decides.)": "Begrunnelse: {{reason}} (Organisasjonsadministratoren din avgjør.)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-poengsum {{score}}, nivå {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-poengsum {{score}}, nivå {{level}}.",
+ "{{test}}: passed.": "{{test}}: bestått.",
+ "You can prepare for a test": "Du kan forberede deg til en test",
+ "You have a real test to take": "Du har en ekte test å ta",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} har gitt deg {{product}}: øving i {{n}} dager, deretter én ekte test.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} har gitt deg {{product}}. Ta den innen {{n}} dager.",
+ "You have a practice pack": "Du har en øvingspakke",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} har gitt deg {{product}}: Øvingsmoduler i {{n}} dager.",
+ "{{name}} appealed a real test result": "{{name}} har klaget på et resultat fra en ekte test",
+ "Your appeal: the result stands": "Klagen din: resultatet står",
+ "Your appeal: your result was re-marked": "Klagen din: resultatet ditt er vurdert på nytt",
+ "Your appeal: you can take the test again": "Klagen din: du kan ta testen på nytt",
+ "{{org}} asked for credits": "{{org}} har bedt om kreditter",
+ "{{n}} credits for staff tests.": "{{n}} kreditter for ansattes tester."
 }

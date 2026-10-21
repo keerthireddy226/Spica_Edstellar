@@ -292,5 +292,18 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 opiskelijalla ryhmissäsi ei ole voimassa olevaa käyttöoikeutta. Pyydä lisää lisenssejä organisaation ylläpitäjältä.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} opiskelijalla ryhmissäsi ei ole voimassa olevaa käyttöoikeutta. Pyydä lisää lisenssejä organisaation ylläpitäjältä.",
  "Reason: {{reason}} (Your Org Admin decides.)": "Syy: {{reason}} (Organisaation ylläpitäjä päättää.)",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-pisteet {{score}}, taso {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-pisteet {{score}}, taso {{level}}.",
+ "{{test}}: passed.": "{{test}}: läpäisty.",
+ "You can prepare for a test": "Voit valmistautua kokeeseen",
+ "You have a real test to take": "Sinulla on oikea koe tehtävänä",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.": "{{org}} antoi sinulle tuotteen {{product}}: harjoittelua {{n}} päivää, sitten yksi oikea koe.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days.": "{{org}} antoi sinulle tuotteen {{product}}. Tee se {{n}} päivän kuluessa.",
+ "You have a practice pack": "Sinulla on harjoituspaketti",
+ "{{org}} gave you {{product}}: Practice Modules for {{n}} days.": "{{org}} antoi sinulle tuotteen {{product}}: Harjoitusmoduulit {{n}} päiväksi.",
+ "{{name}} appealed a real test result": "{{name}} valitti oikean kokeen tuloksesta",
+ "Your appeal: the result stands": "Valituksesi: tulos pysyy",
+ "Your appeal: your result was re-marked": "Valituksesi: tuloksesi arvioitiin uudelleen",
+ "Your appeal: you can take the test again": "Valituksesi: voit tehdä kokeen uudelleen",
+ "{{org}} asked for credits": "{{org}} pyysi krediittejä",
+ "{{n}} credits for staff tests.": "{{n}} krediittiä henkilöstön kokeisiin."
 }
