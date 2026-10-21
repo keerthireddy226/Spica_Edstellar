@@ -29,6 +29,7 @@ import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
 import { OwnedFinished, OwnedIntro } from "@/components/assessment/OwnedScreens";
 import { isPhone } from "@/lib/device";
 import { ROUTES } from "@/constants/routes";
+import { usePrepPrices } from "@/components/plans/usePrepPrices";
 import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { MockExamList } from "@/components/practice/MockExamList";
@@ -145,6 +146,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const isCandidate = useAuth().user?.role === "candidate";
   const allowedProducts = useBranding()?.allowedTestProducts ?? null;
   const navigate = useNavigate();
+  const prepPrices = usePrepPrices();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1792,8 +1794,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               return (
                 <button
                   key={tt.id}
-                  onClick={() => enabled && openProduct(tt.id)}
-                  disabled={!enabled}
+                  onClick={() => (enabled ? openProduct(tt.id) : notInPlan && prepPrices?.canBuy ? navigate(ROUTES.SPICA_PLANS) : undefined)}
+                  disabled={!enabled && !(notInPlan && prepPrices?.canBuy)}
                   className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
                     enabled
                       ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
@@ -1803,6 +1805,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   {!enabled && (
                     <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2 py-1 rounded-pill">
                       {comingSoon ? tr("Coming soon") : notInPlan ? tr("Not in your plan") : t("practiceTests.notEnabled")}
+                    </span>
+                  )}
+                  {/* Not bought: what it gives, the price, one step to get it. */}
+                  {notInPlan && prepPrices?.canBuy && prepPrices.prep[tt.id] && (
+                    <span className="absolute top-11 right-3 z-10 text-xs font-semibold text-white bg-navy px-3 py-1.5 rounded-pill">
+                      {tr("Prepare for it from {{price}}", { price: prepPrices.prep[tt.id] })}
                     </span>
                   )}
                   {/* Oversized, very faint echo of the card's own icon: a

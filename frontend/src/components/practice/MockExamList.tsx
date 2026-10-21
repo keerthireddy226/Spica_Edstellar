@@ -7,6 +7,9 @@ import { formatShortDate } from "@/api/licenses";
 import type { CatalogueFamily, CatalogueTestType, HistoryEntry, QuotaUsage } from "@/api/practiceTests";
 import { familyHeading, testTypeColour, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+import { usePrepPrices } from "@/components/plans/usePrepPrices";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -155,6 +158,7 @@ function MockRow({
   onStart: () => void;
 }) {
   const { t } = useTranslation();
+  const prepPrices = usePrepPrices();
   const Icon = testTypeIcon(tt.id);
   const live = tt.status === "live" && tt.allowed && tt.inPlan !== false;
   return (
@@ -195,7 +199,12 @@ function MockRow({
         )}
       </div>
       <div className="md:w-48 shrink-0 flex md:justify-end">
-        {!live ? (
+        {!live && tt.status === "live" && tt.inPlan === false && tt.allowed && prepPrices?.canBuy && prepPrices.prep[tt.id] ? (
+          // Not bought: the price and one step to get it.
+          <Link to={ROUTES.SPICA_PLANS} className="text-xs font-semibold text-navy-deep hover:underline text-right">
+            {tr("Not in your plan")} · {tr("Prepare for it from {{price}}", { price: prepPrices.prep[tt.id] })}
+          </Link>
+        ) : !live ? (
           <span className="text-xs font-semibold uppercase tracking-wide text-muted">
             {tt.status !== "live" ? tr("Coming soon") : tt.inPlan === false && tt.allowed ? tr("Not in your plan") : t("practiceTests.notEnabled")}
           </span>
