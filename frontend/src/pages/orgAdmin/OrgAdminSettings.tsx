@@ -241,6 +241,16 @@ export function OrgAdminSettings() {
       </Section>
 
       <Section
+        title={tr("Course certificates")}
+        description={tr("A learner qualifies when they finish every practice test and a mock test, or when their access ends after at least one test. You approve each certificate on the Certificates page, unless you turn this on.")}
+      >
+        <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
+          <input type="checkbox" checked={draft.certificatesAuto} onChange={(e) => set("certificatesAuto", e.target.checked)} className="h-4 w-4 accent-navy" />
+          {tr("Issue course certificates automatically")}
+        </label>
+      </Section>
+
+      <Section
         title={tr("Identity checks")}
         description={tr("Face verification confirms the right person is practising and taking tests. Turn it off only if your organization verifies identity another way.")}
       >

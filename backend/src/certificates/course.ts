@@ -173,7 +173,8 @@ async function staffReviewers(): Promise<{ id: string; link: string }[]> {
   }));
 }
 
-export async function requestCertificate(userId: string): Promise<string> {
+// quiet: made by Spica itself and issued at once, so reviewers aren't asked.
+export async function requestCertificate(userId: string, opts: { quiet?: boolean } = {}): Promise<string> {
   const status = await certificateStatus(userId);
   if (!status.eligible) throw new CourseCertificateError("not_eligible");
   if (status.request?.status === "pending") throw new CourseCertificateError("already_pending");
@@ -187,7 +188,7 @@ export async function requestCertificate(userId: string): Promise<string> {
       [userId, u.tenant_id, status.reviewer, JSON.stringify(snapshot), versant?.id ?? null],
     )
   ).rows[0].id;
-  const to = status.reviewer === "org" ? (await orgAdminIds(u.tenant_id)).map((id) => ({ id, link: "/orgadmin/certificates" })) : await staffReviewers();
+  const to = opts.quiet ? [] : status.reviewer === "org" ? (await orgAdminIds(u.tenant_id)).map((id) => ({ id, link: "/orgadmin/certificates" })) : await staffReviewers();
   const who = u.participant_id ? `${u.name} (${u.participant_id})` : u.name;
   for (const admin of to) {
     await notify({
@@ -248,7 +249,8 @@ export async function listRequests(scope: { reviewer: "org"; tenantId: string } 
 export async function decideRequest(
   requestId: string,
   scope: { reviewer: "org"; tenantId: string } | { reviewer: "staff" },
-  decidedBy: string,
+  // null: issued automatically.
+  decidedBy: string | null,
   decision: { issue: true; includeVersant: boolean } | { issue: false; note: string },
 ) {
   const req = (
@@ -309,4 +311,41 @@ export async function decideRequest(
     sentBy: decidedBy,
   });
   return { issued: true as const, code: cert.code };
+}
+
+// Periodic: learners who became eligible get their course certificate without
+// asking. Individuals' are issued at once; an organization's are issued at
+// once when it turned that on, otherwise a request waits for its Org Admins.
+// A learner who was declined in the last 30 days isn't asked again yet.
+export async function runAutoCertificates(): Promise<{ requested: number; issued: number }> {
+  const candidates = (
+    await pool.query(
+      `SELECT u.id, t.type, t.certificates_auto FROM users u JOIN tenants t ON t.id = u.tenant_id
+       WHERE u.role = 'learner' AND u.deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL)
+         AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = u.id AND c.revoked_at IS NULL AND c.course_name IS NOT NULL)
+         AND NOT EXISTS (SELECT 1 FROM certificate_requests r WHERE r.user_id = u.id
+                         AND (r.status = 'pending' OR (r.status = 'declined' AND r.decided_at > now() - interval '30 days')))
+       ORDER BY u.id LIMIT 200`,
+    )
+  ).rows;
+  let requested = 0;
+  let issued = 0;
+  for (const c of candidates) {
+    try {
+      const status = await certificateStatus(c.id);
+      if (!status.eligible) continue;
+      const auto = status.reviewer === "staff" || c.certificates_auto;
+      const id = await requestCertificate(c.id, { quiet: auto });
+      requested++;
+      if (auto) {
+        const tenantId = (await pool.query(`SELECT tenant_id FROM users WHERE id = $1`, [c.id])).rows[0]?.tenant_id;
+        await decideRequest(id, status.reviewer === "org" ? { reviewer: "org", tenantId } : { reviewer: "staff" }, null, { issue: true, includeVersant: false });
+        issued++;
+      }
+    } catch (err) {
+      console.error("auto certificate failed:", err);
+    }
+  }
+  return { requested, issued };
 }

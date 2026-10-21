@@ -190,7 +190,7 @@ function CertificateState({ s, who, busy, onApply }: { s: CertificateStatus; who
     <div className="flex flex-col gap-2 rounded-card border border-rule p-4">
       <p className="text-sm text-ink font-semibold">{tr("Certificate of completion")}</p>
       <p className="text-sm text-muted">
-        {tr("You can ask for it when you've finished every practice test and taken a mock test, or when your access ends.")}
+        {tr("It comes by itself once you've finished every practice test and taken a mock test, or when your access ends.")}
       </p>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-xs text-muted">

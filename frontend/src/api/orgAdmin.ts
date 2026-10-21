@@ -381,6 +381,8 @@ export interface OrgSettings {
   modulesEnabled: boolean;
   // Managers may open each learner's full score report from the Batch report.
   managersSeeReports: boolean;
+  // Course certificates issued as soon as a learner is eligible (else approved by an Org Admin).
+  certificatesAuto: boolean;
   allowedTestProducts: string[] | null;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;

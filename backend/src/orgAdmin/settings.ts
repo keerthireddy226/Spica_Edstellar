@@ -32,6 +32,8 @@ export interface OrgSettings {
   modulesEnabled: boolean;
   // Managers may open each learner's full score report (else levels and scores only).
   managersSeeReports: boolean;
+  // Course certificates are issued as soon as a learner is eligible (else an Org Admin approves each).
+  certificatesAuto: boolean;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;
   sessionIdleMinutes: number | null;
@@ -59,6 +61,7 @@ export const settingsSchema = z.object({
   faceCheckRequired: z.boolean().optional(),
   modulesEnabled: z.boolean().optional(),
   managersSeeReports: z.boolean().optional(),
+  certificatesAuto: z.boolean().optional(),
   // null = every product; otherwise at least one.
   // Test type ids from the exam catalogue; checked against it when saved.
   allowedTestProducts: z.array(z.string().min(1).max(40)).min(1).nullable().optional(),
@@ -73,7 +76,7 @@ export const settingsSchema = z.object({
 export async function getOrgSettings(tenantId: string): Promise<OrgSettings | null> {
   const r = await pool.query(
     `SELECT logo_path, brand_color, default_language, timezone, reminder_default_enabled,
-       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products, learner_modules, managers_see_reports,
+       to_char(reminder_default_time, 'HH24:MI') AS reminder_default_time, face_check_required, allowed_test_products, learner_modules, managers_see_reports, certificates_auto,
        mfa_required, ip_allowlist, session_idle_minutes, password_min_length, invite_expiry_hours
      FROM tenants WHERE id = $1`,
     [tenantId],
@@ -90,6 +93,7 @@ export async function getOrgSettings(tenantId: string): Promise<OrgSettings | nu
     faceCheckRequired: t.face_check_required,
     modulesEnabled: t.learner_modules,
     managersSeeReports: t.managers_see_reports,
+    certificatesAuto: t.certificates_auto,
     allowedTestProducts: t.allowed_test_products,
     mfaRequired: t.mfa_required,
     ipAllowlist: t.ip_allowlist,
@@ -116,6 +120,7 @@ export async function updateOrgSettings(tenantId: string, body: z.infer<typeof s
     ["allowedTestProducts", "allowed_test_products"],
     ["modulesEnabled", "learner_modules"],
     ["managersSeeReports", "managers_see_reports"],
+    ["certificatesAuto", "certificates_auto"],
     ["mfaRequired", "mfa_required"],
     ["ipAllowlist", "ip_allowlist"],
     ["sessionIdleMinutes", "session_idle_minutes"],
