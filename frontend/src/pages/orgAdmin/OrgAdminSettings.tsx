@@ -231,6 +231,16 @@ export function OrgAdminSettings() {
       </Section>
 
       <Section
+        title={tr("Batch reports")}
+        description={tr("Managers see each learner's levels and scores in the Batch report. You choose whether they can also open each learner's full score report.")}
+      >
+        <label className="flex items-center gap-2 text-sm text-ink cursor-pointer">
+          <input type="checkbox" checked={draft.managersSeeReports} onChange={(e) => set("managersSeeReports", e.target.checked)} className="h-4 w-4 accent-navy" />
+          {tr("Managers can open learners' full score reports")}
+        </label>
+      </Section>
+
+      <Section
         title={tr("Identity checks")}
         description={tr("Face verification confirms the right person is practising and taking tests. Turn it off only if your organization verifies identity another way.")}
       >

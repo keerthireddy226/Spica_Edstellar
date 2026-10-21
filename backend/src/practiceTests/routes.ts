@@ -799,7 +799,14 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       // Kept for programs (the learner's latest level) and reports.
       await pool.query(`UPDATE sessions SET result = $2 WHERE id = $1`, [
         req.params.sessionId,
-        JSON.stringify({ cefrLevel: level?.cefrLevel ?? null, skillLevels: level?.skillLevels ?? null, overallPercent: overall, scoreBand: bandForLevel(scale, level?.cefrLevel) }),
+        JSON.stringify({
+          cefrLevel: level?.cefrLevel ?? null,
+          skillLevels: level?.skillLevels ?? null,
+          // Each skill's share right, for its Spica score in batch reports.
+          skillPercents: level?.skillPercents ?? null,
+          overallPercent: overall,
+          scoreBand: bandForLevel(scale, level?.cefrLevel),
+        }),
       ]);
       await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
       // Each skill's level against the learner's Practice Modules path: a

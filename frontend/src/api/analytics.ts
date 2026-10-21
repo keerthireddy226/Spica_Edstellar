@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import type { LearnerEngagement } from "@/api/notifications";
+import type { ReportAbout, ScoreReport as ScoreReportData } from "@/api/practiceTests";
 
 export interface Bucket {
   key: string;
@@ -91,4 +92,80 @@ export async function downloadCsv(path: string, fallbackName: string): Promise<v
   a.download = name;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ---- Batch report ----
+
+export type ReportSkill = "speaking" | "listening" | "reading" | "writing";
+export type BatchReportPeriod = "since_start" | "last_30" | "quarter" | "custom";
+export type GoalStatus = "reached" | "on_track" | "at_risk" | "too_early";
+
+export interface LevelSnapshot {
+  level: string | null;
+  score: number | null;
+  skills: Partial<Record<ReportSkill, { level: string; score: number }>>;
+}
+
+export interface BatchReportLearner {
+  id: string;
+  name: string;
+  participantId: string | null;
+  start: LevelSnapshot | null;
+  current: LevelSnapshot | null;
+  levelSource: "mock" | "level_test" | null;
+  practiceTests: number;
+  mockTests: number;
+  minutes: number;
+  goal: GoalStatus | null;
+  projected: string | null;
+  lastActivity: string | null;
+  inactiveDays: number | null;
+  accessEndsAt: string | null;
+  missedMocks: number;
+  lastMissedMock: string | null;
+  reportSessionId: string | null;
+}
+
+export interface BatchReport {
+  batch: { id: string; name: string; batchCode: string | null; organization: string; testName: string | null; managers: string[]; beginsOn: string };
+  goal: { level: string; date: string | null; daysLeft: number | null; minScore: number | null; fromProgram: boolean } | null;
+  period: { key: BatchReportPeriod; from: string; to: string };
+  generatedAt: string;
+  summary: {
+    learners: number;
+    active: number;
+    activeDays: number;
+    practiceMinutes: number;
+    practiceTests: number;
+    mockTests: number;
+    certificates: number;
+    scoreNow: number | null;
+    scoreStart: number | null;
+  };
+  goalCounts: { reached: number; onTrack: number; atRisk: number; tooEarly: number } | null;
+  levels: { start: Record<ReportSkill, Record<string, number>>; now: Record<ReportSkill, Record<string, number>> };
+  scores: number[];
+  profile: Record<ReportSkill, { now: number | null; start: number | null }>;
+  learners: BatchReportLearner[];
+  attention: {
+    inactive: { id: string; name: string; days: number | null }[];
+    offPace: { id: string; name: string; score: number | null; needs: number | null; projected: string | null }[];
+    accessEnding: { id: string; name: string; endsAt: string }[];
+    missedMock: { id: string; name: string; count: number; last: string | null }[];
+    accessEndingDays: number;
+  };
+  canOpenReports: boolean;
+}
+
+export function getBatchReport(id: string, q: { period: BatchReportPeriod; from?: string; to?: string }): Promise<BatchReport> {
+  const p = new URLSearchParams({ period: q.period });
+  if (q.period === "custom" && q.from && q.to) {
+    p.set("from", q.from);
+    p.set("to", q.to);
+  }
+  return api(`/analytics/batches/${id}/report?${p}`);
+}
+
+export function getBatchLearnerReport(batchId: string, sessionId: string): Promise<{ score: ScoreReportData; about: ReportAbout | null; analysis: string }> {
+  return api(`/analytics/batches/${batchId}/reports/${sessionId}`);
 }

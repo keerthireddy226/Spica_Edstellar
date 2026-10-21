@@ -379,6 +379,8 @@ export interface OrgSettings {
   faceCheckRequired: boolean;
   // Modules (one skill at a time) for the organization's learners.
   modulesEnabled: boolean;
+  // Managers may open each learner's full score report from the Batch report.
+  managersSeeReports: boolean;
   allowedTestProducts: string[] | null;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;

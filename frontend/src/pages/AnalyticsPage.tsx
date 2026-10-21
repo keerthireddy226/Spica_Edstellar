@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Download, Printer } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Download, FileText, Printer } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { OverviewView } from "@/components/analytics/OverviewView";
@@ -147,6 +147,11 @@ export function AnalyticsPage() {
                   </option>
                 ))}
               </select>
+              {batchId && (
+                <Link to={`/batch-report/${batchId}`} className="ml-auto flex items-center gap-2 rounded-pill bg-navy text-white px-4 py-2 text-sm font-semibold hover:bg-navy-deep">
+                  <FileText size={15} /> {tr("Batch report")}
+                </Link>
+              )}
             </div>
           )}
           {batch && (

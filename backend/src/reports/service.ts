@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { APP_URL } from "../auth/mailer.js";
 import { learnerEngagement } from "../notifications/engagement.js";
 import { notify } from "../notifications/service.js";
 import { poolSummary } from "../licenses/service.js";
@@ -98,6 +99,19 @@ export async function buildReport(userId: string, frequency: Exclude<ReportFrequ
   if (atRisk.length) {
     lines.push("", "Needs attention:");
     for (const l of atRisk) lines.push(`  • ${name(l)}${l.batchName ? ` (${l.batchName})` : ""} — ${l.status.replace("_", " ")}`);
+  }
+  // Monthly: each batch's full Batch report, which downloads as a PDF.
+  if (frequency === "monthly") {
+    const batches = (
+      await pool.query(`SELECT id, name FROM batches WHERE tenant_id = $1 AND ($2::uuid[] IS NULL OR id = ANY($2::uuid[])) AND archived_at IS NULL ORDER BY name`, [
+        u.tenant_id,
+        batchIds ?? null,
+      ])
+    ).rows;
+    if (batches.length) {
+      lines.push("", "Batch reports (open one to download it as a PDF):");
+      for (const b of batches) lines.push(`  • ${b.name}: ${APP_URL}/batch-report/${b.id}`);
+    }
   }
   const summary = [
     frequency === "weekly"
