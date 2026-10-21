@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} cursisten wachten nog op hun eindtoets. Elk heeft {{credits}} credits nodig.",
  "Real test withdrawn before it was started": "Echte toets ingetrokken voordat hij was gestart",
  "Level test withdrawn before it was started": "Niveautest ingetrokken voordat hij was gestart",
- "Test expired without being started": "Toets verlopen zonder te zijn gestart"
+ "Test expired without being started": "Toets verlopen zonder te zijn gestart",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Je eindtoetsen: echte toetsen die je voorbereiding afsluiten. Maak elke toets zodra die opengaat en vind daarna hier je scorerapport en certificaat.",
+ "No final assessment yet": "Nog geen eindtoets",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Je eindtoets is een echte toets: onder streng toezicht, met een Spica-score, een scorerapport en een certificaat dat een jaar geldig is.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Met Voorbereiding + echte toets + certificaat gaat die open na je eerste proeftoets, of in de laatste 7 dagen van je voorbereiding.",
+ "With Real test + certificate, it opens after a free sample.": "Met Echte toets + certificaat gaat die open na een gratis voorbeeldtoets.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Een niveautest bewijst één niveau (A1 tot C2) met het certificaat van dat niveau.",
+ "Get a final assessment": "Eindtoets regelen",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Je organisatie geeft je je toetsen. Zodra dat gebeurt, staat je eindtoets hier."
 }

@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} शिक्षार्थी अभी भी अपने अंतिम आकलन का इंतज़ार कर रहे हैं। हर एक को {{credits}} क्रेडिट चाहिए।",
  "Real test withdrawn before it was started": "असली टेस्ट शुरू होने से पहले वापस लिया गया",
  "Level test withdrawn before it was started": "स्तर टेस्ट शुरू होने से पहले वापस लिया गया",
- "Test expired without being started": "टेस्ट शुरू हुए बिना समाप्त हो गया"
+ "Test expired without being started": "टेस्ट शुरू हुए बिना समाप्त हो गया",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "आपके अंतिम आकलन: असली टेस्ट जो आपकी तैयारी पूरी करते हैं। हर एक को खुलने पर दें, फिर अपनी स्कोर रिपोर्ट और सर्टिफ़िकेट यहाँ देखें।",
+ "No final assessment yet": "अभी तक कोई अंतिम आकलन नहीं",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "आपका अंतिम आकलन एक असली टेस्ट है: सख़्त प्रॉक्टरिंग वाला, Spica स्कोर, स्कोर रिपोर्ट और एक साल के लिए मान्य सर्टिफ़िकेट के साथ।",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "तैयारी + असली टेस्ट + सर्टिफ़िकेट प्लान में, यह आपके पहले मॉक टेस्ट के बाद, या आपकी तैयारी के आख़िरी 7 दिनों में खुलता है।",
+ "With Real test + certificate, it opens after a free sample.": "असली टेस्ट + सर्टिफ़िकेट प्लान में, यह मुफ़्त नमूना टेस्ट के बाद खुलता है।",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "स्तर टेस्ट एक स्तर (A1 से C2) को उस स्तर के सर्टिफ़िकेट के साथ प्रमाणित करता है।",
+ "Get a final assessment": "अंतिम आकलन लें",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "आपका संगठन आपको आपके टेस्ट देता है। जब वह देगा, आपका अंतिम आकलन यहाँ दिखेगा।"
 }

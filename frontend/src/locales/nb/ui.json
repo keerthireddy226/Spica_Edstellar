@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} elever venter fortsatt på den avsluttende testen sin. Hver trenger {{credits}} kreditter.",
  "Real test withdrawn before it was started": "Ekte test trukket tilbake før den ble startet",
  "Level test withdrawn before it was started": "Nivåtest trukket tilbake før den ble startet",
- "Test expired without being started": "Testen utløp uten å bli startet"
+ "Test expired without being started": "Testen utløp uten å bli startet",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Dine avsluttende tester: ekte tester som avslutter forberedelsen din. Ta hver av dem når den åpner, og finn deretter resultatrapporten og sertifikatet ditt her.",
+ "No final assessment yet": "Ingen avsluttende test ennå",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Den avsluttende testen din er en ekte test: med strengt tilsyn, en Spica-poengsum, en resultatrapport og et sertifikat som gjelder i ett år.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Med Forberedelse + ekte test + sertifikat åpner den etter den første prøveeksamenen din, eller i de siste 7 dagene av forberedelsen.",
+ "With Real test + certificate, it opens after a free sample.": "Med Ekte test + sertifikat åpner den etter en gratis eksempeltest.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "En nivåtest dokumenterer ett nivå (A1 til C2) med sertifikatet for det nivået.",
+ "Get a final assessment": "Få en avsluttende test",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Organisasjonen din gir deg testene dine. Når den gjør det, vises den avsluttende testen din her."
 }

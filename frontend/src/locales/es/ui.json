@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} estudiantes siguen esperando su evaluación final. Cada uno necesita {{credits}} créditos.",
  "Real test withdrawn before it was started": "Examen real retirado antes de empezar",
  "Level test withdrawn before it was started": "Prueba de nivel retirada antes de empezar",
- "Test expired without being started": "El examen caducó sin haberse empezado"
+ "Test expired without being started": "El examen caducó sin haberse empezado",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Tus evaluaciones finales: exámenes reales que cierran tu preparación. Haz cada una cuando se abra y luego encuentra aquí tu informe de puntuación y tu certificado.",
+ "No final assessment yet": "Aún no hay evaluación final",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Tu evaluación final es un examen real: con supervisión estricta, una puntuación Spica, un informe de puntuación y un certificado válido durante un año.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Con Preparación + examen real + certificado, se abre después de tu primer examen de práctica o en los últimos 7 días de tu preparación.",
+ "With Real test + certificate, it opens after a free sample.": "Con Examen real + certificado, se abre después de una muestra gratuita.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Una prueba de nivel acredita un nivel (de A1 a C2) con el certificado de ese nivel.",
+ "Get a final assessment": "Conseguir una evaluación final",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Tu organización te asigna tus exámenes. Cuando lo haga, tu evaluación final aparecerá aquí."
 }

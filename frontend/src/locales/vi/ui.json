@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} học viên vẫn đang chờ bài đánh giá cuối khóa. Mỗi người cần {{credits}} lượt.",
  "Real test withdrawn before it was started": "Bài thi thật đã bị thu hồi trước khi bắt đầu",
  "Level test withdrawn before it was started": "Bài kiểm tra trình độ đã bị thu hồi trước khi bắt đầu",
- "Test expired without being started": "Bài thi đã hết hạn mà chưa được bắt đầu"
+ "Test expired without being started": "Bài thi đã hết hạn mà chưa được bắt đầu",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Các bài đánh giá cuối khóa của bạn: những bài thi thật kết thúc quá trình ôn luyện. Làm từng bài khi bài đó mở, rồi xem phiếu điểm và chứng chỉ của bạn tại đây.",
+ "No final assessment yet": "Chưa có bài đánh giá cuối khóa",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Bài đánh giá cuối khóa của bạn là một bài thi thật: được giám sát nghiêm ngặt, có điểm Spica, phiếu điểm và chứng chỉ có giá trị một năm.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Với gói Ôn luyện + bài thi thật + chứng chỉ, bài này mở sau bài thi thử đầu tiên của bạn, hoặc trong 7 ngày cuối của quá trình ôn luyện.",
+ "With Real test + certificate, it opens after a free sample.": "Với gói Bài thi thật + chứng chỉ, bài này mở sau một bài thi mẫu miễn phí.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Bài kiểm tra trình độ chứng nhận một trình độ (A1 đến C2) bằng chứng chỉ của trình độ đó.",
+ "Get a final assessment": "Nhận bài đánh giá cuối khóa",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Tổ chức của bạn cấp bài thi cho bạn. Khi đó, bài đánh giá cuối khóa của bạn sẽ hiện ở đây."
 }

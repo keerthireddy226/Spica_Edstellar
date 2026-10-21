@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}} : {{n}} apprenants attendent encore leur évaluation finale. Chacun a besoin de {{credits}} crédits.",
  "Real test withdrawn before it was started": "Vrai test retiré avant d'avoir commencé",
  "Level test withdrawn before it was started": "Test de niveau retiré avant d'avoir commencé",
- "Test expired without being started": "Test expiré sans avoir été commencé"
+ "Test expired without being started": "Test expiré sans avoir été commencé",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Vos évaluations finales : de vrais tests qui concluent votre préparation. Passez chacune dès qu'elle s'ouvre, puis retrouvez ici votre relevé de score et votre certificat.",
+ "No final assessment yet": "Aucune évaluation finale pour l'instant",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Votre évaluation finale est un vrai test : sous surveillance stricte, avec un score Spica, un relevé de score et un certificat valable un an.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Avec Préparation + vrai test + certificat, elle s'ouvre après votre premier examen blanc, ou dans les 7 derniers jours de votre préparation.",
+ "With Real test + certificate, it opens after a free sample.": "Avec Vrai test + certificat, elle s'ouvre après un échantillon gratuit.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Un test de niveau atteste un niveau (de A1 à C2) avec le certificat de ce niveau.",
+ "Get a final assessment": "Obtenir une évaluation finale",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Votre organisation vous attribue vos tests. Dès qu'elle le fera, votre évaluation finale apparaîtra ici."
 }

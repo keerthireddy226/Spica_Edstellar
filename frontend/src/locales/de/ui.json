@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} Lernende warten noch auf ihren Abschlusstest. Jeder braucht {{credits}} Credits.",
  "Real test withdrawn before it was started": "Echter Test vor dem Start zurückgezogen",
  "Level test withdrawn before it was started": "Niveautest vor dem Start zurückgezogen",
- "Test expired without being started": "Test abgelaufen, ohne gestartet zu werden"
+ "Test expired without being started": "Test abgelaufen, ohne gestartet zu werden",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Deine Abschlusstests: echte Tests, die deine Vorbereitung abschließen. Leg jeden ab, sobald er freigeschaltet ist, und finde dann hier deinen Ergebnisbericht und dein Zertifikat.",
+ "No final assessment yet": "Noch kein Abschlusstest",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Dein Abschlusstest ist ein echter Test: streng beaufsichtigt, mit Spica-Score, Ergebnisbericht und einem Zertifikat, das ein Jahr gültig ist.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "Mit Vorbereitung + echter Test + Zertifikat wird er nach deinem ersten Probetest oder in den letzten 7 Tagen deiner Vorbereitung freigeschaltet.",
+ "With Real test + certificate, it opens after a free sample.": "Mit Echter Test + Zertifikat wird er nach einer kostenlosen Probe freigeschaltet.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Ein Niveautest weist ein Niveau (A1 bis C2) mit dem Zertifikat für dieses Niveau nach.",
+ "Get a final assessment": "Abschlusstest holen",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Deine Organisation gibt dir deine Tests. Sobald sie das tut, erscheint dein Abschlusstest hier."
 }

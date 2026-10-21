@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: kursanci wciąż czekający na test końcowy: {{n}}. Każdy potrzebuje {{credits}} kredytów.",
  "Real test withdrawn before it was started": "Prawdziwy test wycofany przed rozpoczęciem",
  "Level test withdrawn before it was started": "Test poziomujący wycofany przed rozpoczęciem",
- "Test expired without being started": "Test wygasł, zanim został rozpoczęty"
+ "Test expired without being started": "Test wygasł, zanim został rozpoczęty",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "Twoje testy końcowe: prawdziwe testy, które kończą Twoje przygotowanie. Podejdź do każdego, gdy się otworzy, a potem znajdziesz tu raport wyników i certyfikat.",
+ "No final assessment yet": "Nie masz jeszcze testu końcowego",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "Twój test końcowy to prawdziwy test: pod ścisłym nadzorem, z wynikiem Spica, raportem wyników i certyfikatem ważnym przez rok.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "W pakiecie Przygotowanie + prawdziwy test + certyfikat otwiera się po Twoim pierwszym teście próbnym lub w ostatnich 7 dniach przygotowania.",
+ "With Real test + certificate, it opens after a free sample.": "W pakiecie Prawdziwy test + certyfikat otwiera się po bezpłatnym teście przykładowym.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "Test poziomujący potwierdza jeden poziom (od A1 do C2) certyfikatem tego poziomu.",
+ "Get a final assessment": "Zdobądź test końcowy",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Twoja organizacja przydziela Ci testy. Gdy to zrobi, Twój test końcowy pojawi się tutaj."
 }

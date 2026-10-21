@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}：仍有 {{n}} 名学员在等待结业测评。每人需要 {{credits}} 点数。",
  "Real test withdrawn before it was started": "正式测试在开始前已撤回",
  "Level test withdrawn before it was started": "水平测试在开始前已撤回",
- "Test expired without being started": "测试未开始即已到期"
+ "Test expired without being started": "测试未开始即已到期",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "你的结业测评：为备考收尾的正式测试。每一场开放后即可参加，之后在这里查看你的成绩单和证书。",
+ "No final assessment yet": "还没有结业测评",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "你的结业测评是一次正式测试：严格监考，提供 Spica 分数、成绩单和有效期一年的证书。",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "选择备考 + 正式测试 + 证书时，它会在你完成第一次模拟测试后，或在备考的最后 7 天内开放。",
+ "With Real test + certificate, it opens after a free sample.": "选择正式测试 + 证书时，它会在免费体验测试后开放。",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "水平测试证明一个等级（A1 到 C2），并颁发该等级的证书。",
+ "Get a final assessment": "获取结业测评",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "你的测试由所属组织分配。分配后，你的结业测评会显示在这里。"
 }

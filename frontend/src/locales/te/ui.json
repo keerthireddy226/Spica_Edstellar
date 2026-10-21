@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} మంది అభ్యాసకులు ఇంకా తమ తుది అసెస్‌మెంట్ కోసం ఎదురుచూస్తున్నారు. ఒక్కొక్కరికి {{credits}} క్రెడిట్‌లు అవసరం.",
  "Real test withdrawn before it was started": "ప్రారంభించకముందే అసలు టెస్ట్ ఉపసంహరించబడింది",
  "Level test withdrawn before it was started": "ప్రారంభించకముందే స్థాయి టెస్ట్ ఉపసంహరించబడింది",
- "Test expired without being started": "టెస్ట్ ప్రారంభించకుండానే గడువు ముగిసింది"
+ "Test expired without being started": "టెస్ట్ ప్రారంభించకుండానే గడువు ముగిసింది",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "మీ తుది అసెస్‌మెంట్‌లు: మీ సన్నద్ధతను ముగించే అసలు టెస్ట్‌లు. ప్రతిదాన్ని అది తెరుచుకున్నప్పుడు రాయండి, తర్వాత మీ స్కోర్ నివేదిక మరియు సర్టిఫికెట్‌ను ఇక్కడ చూడండి.",
+ "No final assessment yet": "ఇంకా తుది అసెస్‌మెంట్ లేదు",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "మీ తుది అసెస్‌మెంట్ ఒక అసలు టెస్ట్: కఠినమైన ప్రాక్టరింగ్‌తో, Spica స్కోర్, స్కోర్ నివేదిక మరియు ఒక సంవత్సరం చెల్లుబాటయ్యే సర్టిఫికెట్‌తో.",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "సన్నద్ధత + అసలు టెస్ట్ + సర్టిఫికెట్ ప్లాన్‌లో, ఇది మీ మొదటి మాక్ టెస్ట్ తర్వాత, లేదా మీ సన్నద్ధత చివరి 7 రోజుల్లో తెరుచుకుంటుంది.",
+ "With Real test + certificate, it opens after a free sample.": "అసలు టెస్ట్ + సర్టిఫికెట్ ప్లాన్‌లో, ఇది ఉచిత నమూనా టెస్ట్ తర్వాత తెరుచుకుంటుంది.",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "స్థాయి టెస్ట్ ఒక స్థాయిని (A1 నుండి C2) ఆ స్థాయి సర్టిఫికెట్‌తో నిరూపిస్తుంది.",
+ "Get a final assessment": "తుది అసెస్‌మెంట్ పొందండి",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "మీ సంస్థ మీకు టెస్ట్‌లు ఇస్తుంది. అది ఇచ్చినప్పుడు, మీ తుది అసెస్‌మెంట్ ఇక్కడ కనిపిస్తుంది."
 }

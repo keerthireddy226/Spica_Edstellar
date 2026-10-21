@@ -4655,5 +4655,13 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}：{{n}}人の学習者がまだ最終アセスメントを待っています。1人あたり{{credits}}クレジットが必要です。",
  "Real test withdrawn before it was started": "開始前に取り消された本番テスト",
  "Level test withdrawn before it was started": "開始前に取り消されたレベルテスト",
- "Test expired without being started": "開始されないまま期限切れになったテスト"
+ "Test expired without being started": "開始されないまま期限切れになったテスト",
+ "Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.": "最終アセスメント：準備の締めくくりとなる本番テストです。受けられるようになったら受験し、スコアレポートと修了証はここで確認できます。",
+ "No final assessment yet": "最終アセスメントはまだありません",
+ "Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.": "最終アセスメントは本番テストです。厳格な試験監督付きで、Spicaスコア、スコアレポート、1年間有効な修了証が付きます。",
+ "With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.": "準備 + 本番テスト + 修了証 では、最初の模擬テストの後、または準備期間の最後の7日間に受けられるようになります。",
+ "With Real test + certificate, it opens after a free sample.": "本番テスト + 修了証 では、無料サンプルの後に受けられるようになります。",
+ "A level test proves one level (A1 to C2) with that level's certificate.": "レベルテストは1つのレベル（A1〜C2）を証明し、そのレベルの修了証が発行されます。",
+ "Get a final assessment": "最終アセスメントを申し込む",
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "テストは組織から割り当てられます。割り当てられると、最終アセスメントがここに表示されます。"
 }
