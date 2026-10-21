@@ -21,7 +21,7 @@ import {
   managerUpdateLearnerDetails,
   type ManagerBatchDetail,
 } from "@/api/manager";
-import { managerCertificates, managerIssueCertificate, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
+import { managerCertificates, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
 
 import { tr } from "@/i18n/tr";
 function fmt(d: string) {
@@ -249,10 +249,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                             ×
                           </button>
                         </span>
-                      ) : (
-                        <button onClick={() => managerIssueCertificate(l.id).then(load)} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-                          {tr("Issue certificate")}</button>
-                      )}
+                      ) : null}
                     </span>
                   </div>
                 );

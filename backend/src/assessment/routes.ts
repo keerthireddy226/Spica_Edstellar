@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { z } from "zod";
-import { AttemptError, chooseFinalTest, myTests } from "./service.js";
+import { AttemptError, chooseFinalTest, myTests, readiness } from "./service.js";
 import { AppealError, fileAppeal } from "../quality/service.js";
 
 // My tests: the learner's real assessment attempts. Starting one goes through
@@ -11,6 +11,15 @@ export const assessmentRouter = Router();
 assessmentRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     res.json({ tests: await myTests(req.user!.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// My journey's final step: predicted level from mock tests, the goal, the final assessment.
+assessmentRouter.get("/readiness", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json(await readiness(req.user!.id));
   } catch (err) {
     next(err);
   }

@@ -18,6 +18,7 @@ const STATUS: Record<GivenStatus, { label: () => string; cls: string }> = {
   in_progress: { label: () => tr("In progress"), cls: "text-navy-deep" },
   taken: { label: () => tr("Taken, being scored"), cls: "text-warning" },
   certified: { label: () => tr("Certified"), cls: "text-success" },
+  passed: { label: () => tr("Passed"), cls: "text-success" },
   not_passed: { label: () => tr("Not passed"), cls: "text-warning" },
   expired: { label: () => tr("Expired"), cls: "text-muted" },
   expired_refunded: { label: () => tr("Expired, credits returned"), cls: "text-muted" },
@@ -94,7 +95,7 @@ export function OrgAdminTests() {
   if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
   const groups = [
     { kind: "assessment" as const, label: tr("Real test (with a certificate)") },
-    { kind: "level" as const, label: tr("Level test + certificate") },
+    { kind: "level" as const, label: tr("Level test (no certificate)") },
     { kind: "prep" as const, label: tr("Prepare for one test, then a real test") },
     { kind: "pack" as const, label: tr("Practice pack (Practice Modules only)") },
   ];
@@ -161,7 +162,7 @@ export function OrgAdminTests() {
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-muted">{tr("Pass it (70% overall, at least 50% in each skill) for that level's certificate. Unused tests give their credit back.")}</span>
+              <span className="text-xs text-muted">{tr("Checks one level: a pass is 70% overall and at least 50% in each skill. No certificate; certificates come from the final assessment. Unused tests give their credit back.")}</span>
             </label>
           )}
           {product?.kind === "pack" && (

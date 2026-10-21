@@ -62,7 +62,7 @@ export function MockExamList({
               note={quota?.mocksPerMonth != null ? tr("of {{n}}", { n: quota.mocksPerMonth }) : tr("no limit")}
             />
             <Fact value={`${mocks.length}`} label={tr("Mocks taken")} />
-            <Fact value={best ?? "—"} label={tr("Best level")} />
+            <Fact value={best ?? "—"} label={tr("Best predicted level")} />
           </div>
         </div>
         {quota && quota.mocksPerMonth !== null && (
@@ -182,7 +182,7 @@ function MockRow({
           <>
             <CheckCircle2 size={16} className="text-success shrink-0" />
             <span className="text-ink">
-              {tr("Last: {{level}}", { level: last.cefrLevel ?? "—" })}
+              {tr("Last: predicted {{level}}", { level: last.cefrLevel ?? "—" })}
               <span className="block text-xs text-muted">
                 {formatShortDate(last.completedAt)} · {tr("{{n}} taken", { n: taken })}
               </span>

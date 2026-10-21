@@ -10,7 +10,7 @@ import { tr } from "@/i18n/tr";
 // any Versant result they uploaded (with the score report), then Issue or
 // Decline with a reason.
 export function CertificateRequests({ viewer }: { viewer: "org" | "staff" }) {
-  const [tab, setTab] = useState<"pending" | "all">("pending");
+  const [tab, setTab] = useState<"pending" | "all">("all");
   const [rows, setRows] = useState<CertificateRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -26,10 +26,8 @@ export function CertificateRequests({ viewer }: { viewer: "org" | "staff" }) {
         <h1 className="font-display font-bold text-2xl text-ink flex items-center gap-2">
           <Award size={22} className="text-accent" /> {tr("Certificate requests")}
         </h1>
-        <p className="text-sm text-muted mt-1">
-          {viewer === "org"
-            ? tr("Your learners ask for a certificate of completion when they finish the course or their access ends. Check what they did, then issue it with your organization's logo, or decline with a reason.")
-            : tr("Individual learners (not in an organization) ask the Spica team for their certificate of completion. Check what they did, then issue it or decline with a reason.")}
+        <p className="text-sm text-ink mt-2 bg-paper-warm rounded-input px-4 py-3 max-w-3xl">
+          {tr("Certificates now come only from the final assessment: a real, strictly proctored test. Certificates of completion are no longer issued, and requests that were waiting were closed. Certificates already issued stay valid.")}
         </p>
       </div>
       <div className="flex gap-1 p-1 rounded-pill bg-paper self-start">

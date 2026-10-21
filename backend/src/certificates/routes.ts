@@ -5,7 +5,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import path from "node:path";
 import QRCode from "qrcode";
-import { issueCertificate, listForLearner, listForTenant, revokeCertificate, verifyCertificate } from "./service.js";
+import { COMPLETION_CERTIFICATES, issueCertificate, listForLearner, listForTenant, revokeCertificate, verifyCertificate } from "./service.js";
 import { CourseCertificateError, certificateStatus, decideRequest, listRequests, proofFor, requestCertificate, saveVersantResult } from "./course.js";
 import { LOGO_DIR } from "../orgAdmin/settings.js";
 import { APP_URL } from "../auth/mailer.js";
@@ -72,7 +72,7 @@ certificatesRouter.get("/verify/:code/logo", verifyLimiter, async (req, res, nex
 
 function courseError(err: unknown, res: import("express").Response, next: import("express").NextFunction) {
   if (err instanceof CourseCertificateError) {
-    const status = err.code === "request_not_found" ? 404 : err.code === "already_pending" || err.code === "not_pending" ? 409 : 400;
+    const status = err.code === "request_not_found" ? 404 : err.code === "already_pending" || err.code === "not_pending" ? 409 : err.code === "stopped" ? 410 : 400;
     return res.status(status).json({ error: err.code });
   }
   next(err);
@@ -194,6 +194,8 @@ certificatesRouter.get("/org", requireAuth, async (req: AuthedRequest, res, next
 certificatesRouter.post("/org/issue", requireAuth, async (req: AuthedRequest, res, next) => {
   const tenantId = orgAdmin(req);
   if (!tenantId) return res.status(403).json({ error: "forbidden" });
+  // Certificates come only from the final assessment now.
+  if (!COMPLETION_CERTIFICATES) return res.status(410).json({ error: "stopped" });
   try {
     const body = z.object({ learnerId: z.string().uuid(), batchId: z.string().uuid().nullable().optional() }).parse(req.body);
     const ok = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2 AND role = 'learner'`, [body.learnerId, tenantId]);
@@ -263,6 +265,7 @@ certificatesRouter.post("/manager/issue", requireAuth, async (req: AuthedRequest
   try {
     const batches = await managerBatches(req);
     if (!batches) return res.status(403).json({ error: "forbidden" });
+    if (!COMPLETION_CERTIFICATES) return res.status(410).json({ error: "stopped" });
     const body = z.object({ learnerId: z.string().uuid() }).parse(req.body);
     const l = (await pool.query(`SELECT batch_id FROM users WHERE id = $1 AND role = 'learner' AND batch_id = ANY($2::uuid[])`, [body.learnerId, batches])).rows[0];
     if (!l) return res.status(404).json({ error: "learner_not_found" });

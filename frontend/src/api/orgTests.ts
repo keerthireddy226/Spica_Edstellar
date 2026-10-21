@@ -12,7 +12,7 @@ export interface GivableProduct {
   attempts: number;
 }
 
-export type GivenStatus = "waiting" | "in_progress" | "taken" | "certified" | "not_passed" | "expired" | "expired_refunded" | "withdrawn";
+export type GivenStatus = "waiting" | "in_progress" | "taken" | "certified" | "passed" | "not_passed" | "expired" | "expired_refunded" | "withdrawn";
 
 export interface GivenTest {
   id: string;

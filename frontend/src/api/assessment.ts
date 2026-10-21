@@ -9,7 +9,7 @@ export type Unlock =
   | { state: "used" }
   | { state: "expired" };
 
-export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "not_passed" | "void";
+export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "passed" | "not_passed" | "void";
 
 export interface OwnedTest {
   id: string;
@@ -46,6 +46,21 @@ export interface OwnedTest {
 
 export function getMyTests(): Promise<{ tests: OwnedTest[] }> {
   return api("/assessment/me");
+}
+
+// My journey's last step: predicted level from mock tests, the goal and the final assessment.
+export interface Readiness {
+  goal: string | null;
+  goalScore: number | null;
+  mocks: number;
+  predicted: { score: number; level: string } | null;
+  ready: boolean;
+  final: { id: string; kind: OwnedTest["kind"]; testName: string | null; unlock: Unlock; chooseTest: boolean; endsAt: string } | null;
+  certificate: { code: string; level: string; score: number | null; validUntil: string | null } | null;
+}
+
+export function getReadiness(): Promise<Readiness> {
+  return api("/assessment/readiness");
 }
 
 export function chooseFinalTest(id: string, testTypeId: string): Promise<{ ok: true }> {

@@ -111,7 +111,7 @@ export async function giveTests(args: { tenantId: string; actorId: string; userI
             : program
               ? `${org} gave you the final assessment for ${program}: ${p.name}. Take it within ${days} days.`
               : p.kind === "level"
-                ? `${org} gave you a level ${level} test. Pass it for the level ${level} certificate. Take it within ${days} days.`
+                ? `${org} gave you a level ${level} test. Take it within ${days} days.`
                 : `${org} gave you ${p.name}. Take it within ${days} days.`,
       link: p.kind === "prep" ? "/practice-tests" : p.kind === "pack" ? "/modules" : "/my-tests",
       email: true,
@@ -134,7 +134,8 @@ export async function givenTests(tenantId: string) {
        (SELECT c.spica_score FROM certificates c JOIN sessions s ON s.id = c.session_id WHERE s.entitlement_id = e.id AND c.kind = 'result' AND c.revoked_at IS NULL LIMIT 1) AS score,
        (SELECT c.cefr_level FROM certificates c JOIN sessions s ON s.id = c.session_id WHERE s.entitlement_id = e.id AND c.kind = 'result' AND c.revoked_at IS NULL LIMIT 1) AS level,
        EXISTS (SELECT 1 FROM sessions s WHERE s.entitlement_id = e.id AND s.delivery_mode = 'certified' AND s.completed_at IS NULL) AS in_progress,
-       EXISTS (SELECT 1 FROM sessions s WHERE s.entitlement_id = e.id AND s.delivery_mode = 'certified' AND s.result->'levelTest'->>'passed' = 'false') AS not_passed
+       EXISTS (SELECT 1 FROM sessions s WHERE s.entitlement_id = e.id AND s.delivery_mode = 'certified' AND s.result->'levelTest'->>'passed' = 'false') AS not_passed,
+       EXISTS (SELECT 1 FROM sessions s WHERE s.entitlement_id = e.id AND s.delivery_mode = 'certified' AND s.result->'levelTest'->>'passed' = 'true') AS passed
      FROM entitlements e JOIN products p ON p.id = e.product_id JOIN users u ON u.id = e.user_id LEFT JOIN programs pr ON pr.id = e.program_id
      WHERE e.tenant_id = $1 AND e.source = 'credit' ORDER BY e.starts_at DESC LIMIT 500`,
     [tenantId],
@@ -162,13 +163,15 @@ export async function givenTests(tenantId: string) {
           ? ("in_progress" as const)
           : x.not_passed
             ? ("not_passed" as const)
-            : x.attempts_used > 0
-              ? ("taken" as const)
-              : new Date(x.ends_at).getTime() < now
-                ? x.credits_refunded
-                  ? ("expired_refunded" as const)
-                  : ("expired" as const)
-                : ("waiting" as const),
+            : x.passed
+              ? ("passed" as const)
+              : x.attempts_used > 0
+                ? ("taken" as const)
+                : new Date(x.ends_at).getTime() < now
+                  ? x.credits_refunded
+                    ? ("expired_refunded" as const)
+                    : ("expired" as const)
+                  : ("waiting" as const),
     certificate: x.certificate as string | null,
     score: x.score as number | null,
     level: x.level as string | null,

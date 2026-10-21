@@ -22,6 +22,7 @@ const STATUS: Record<AttemptStatus, { label: () => string; cls: string }> = {
   scoring: { label: () => tr("Being scored"), cls: "text-warning" },
   under_review: { label: () => tr("Under review"), cls: "text-warning" },
   certified: { label: () => tr("Certified"), cls: "text-success" },
+  passed: { label: () => tr("Passed"), cls: "text-success" },
   not_passed: { label: () => tr("Not passed"), cls: "text-error" },
   void: { label: () => tr("Not valid"), cls: "text-error" },
 };
@@ -234,6 +235,7 @@ function TestCard({ t, onChanged }: { t: OwnedTest; onChanged: () => void }) {
               {a.status === "scoring" && <span className="text-xs text-muted">{tr("Your certificate arrives once scoring and the proctoring checks are done.")}</span>}
               {a.status === "under_review" && <span className="text-xs text-muted">{tr("A reviewer is checking the proctoring record. We'll email you when it's done.")}</span>}
               {a.status === "void" && <span className="text-xs text-muted">{tr("The proctoring review found a problem, so this attempt doesn't count.")}</span>}
+              {a.status === "passed" && <span className="text-xs text-muted">{tr("You showed this level. Your certificate comes from your final assessment.")}</span>}
               {a.status === "not_passed" && (
                 <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill.")}</span>
               )}
@@ -284,7 +286,7 @@ export function MyTests() {
             <li>{tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")}</li>
             <li>{tr("Full access includes one: choose its test here, then it opens after a mock test of that test.")}</li>
             <li>{tr("With Real test + certificate, it opens after a free sample.")}</li>
-            <li>{tr("A level test proves one level (A1 to C2) with that level's certificate.")}</li>
+            <li>{tr("A level test checks one level (A1 to C2). It gives no certificate.")}</li>
           </ul>
           {canBuy ? (
             <Link to={ROUTES.SPICA_PLANS} className="text-sm font-semibold text-navy-deep hover:underline">

@@ -15,7 +15,7 @@ import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { notify } from "../notifications/service.js";
 import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
-import { scoreReport } from "../reports/scoreReport.js";
+import { BANDS, levelOfScore, scoreReport, spicaScore } from "../reports/scoreReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
 import { qualitySettings } from "../quality/settings.js";
 import { randomBytes } from "node:crypto";
@@ -63,7 +63,7 @@ export function unlockOf(
   return { state: "mock_needed", opensOn: new Date(opens).toISOString() };
 }
 
-export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "not_passed" | "void";
+export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "passed" | "not_passed" | "void";
 
 interface OwnedAttemptRow {
   id: string;
@@ -188,6 +188,8 @@ function attemptStatus(s: Record<string, any>): AttemptStatus {
   if (!s.completed_at) return "in_progress";
   if (s.integrity === "violation") return "void";
   if (s.result?.levelTest && s.result.levelTest.passed === false) return "not_passed";
+  // A level test is a check of where the learner is, with no certificate.
+  if (s.result?.levelTest && s.result.levelTest.passed === true) return s.integrity === "flagged" ? "under_review" : "passed";
   if (s.certificate_code && !s.certificate_revoked) return "certified";
   if (s.integrity === "flagged") return "under_review";
   return "scoring";
@@ -267,6 +269,51 @@ export async function includeFinalAssessment(userId: string, tenantId: string | 
   return "added";
 }
 
+// My journey's last step: how close the learner's mock tests put them to their
+// goal, and their final assessment. Readiness is advice only: the final
+// assessment opens by its own rule.
+export const READINESS_MOCKS = 2;
+export async function readiness(userId: string) {
+  const goalRow = (await pool.query(`SELECT goal_level FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0];
+  const goal: string | null = goalRow?.goal_level && goalRow.goal_level !== "unsure" ? goalRow.goal_level : null;
+  const mocks = (
+    await pool.query(
+      `SELECT result->>'cefrLevel' AS level, (result->>'overallPercent')::numeric AS percent, completed_at FROM sessions
+       WHERE user_id = $1 AND delivery_mode = 'mock' AND completed_at IS NOT NULL AND result->>'cefrLevel' IS NOT NULL
+         AND NOT coalesce((composition->>'abandoned')::boolean, false)
+       ORDER BY completed_at DESC LIMIT $2`,
+      [userId, READINESS_MOCKS],
+    )
+  ).rows;
+  const scores = mocks.map((m) => spicaScore(m.level, m.percent === null ? null : Number(m.percent))).filter((x): x is number => x !== null);
+  const predictedScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
+  const goalScore = goal ? (BANDS.find((b) => b.level === goal)?.min ?? null) : null;
+  const tests = await myTests(userId);
+  // The final assessment to point at: one still to take, else the latest.
+  const pending = tests.find((t) => t.kind !== "level" && t.attemptsLeft > 0 && t.unlock.state !== "expired");
+  const cert = (
+    await pool.query(
+      `SELECT code, cefr_level, spica_score, valid_until FROM certificates
+       WHERE user_id = $1 AND kind = 'result' AND revoked_at IS NULL AND (valid_until IS NULL OR valid_until >= current_date)
+       ORDER BY issued_at DESC LIMIT 1`,
+      [userId],
+    )
+  ).rows[0];
+  return {
+    goal,
+    goalScore,
+    mocks: scores.length,
+    predicted: predictedScore === null ? null : { score: predictedScore, level: levelOfScore(predictedScore) },
+    ready: predictedScore !== null && goalScore !== null && predictedScore >= goalScore,
+    final: pending
+      ? { id: pending.id, kind: pending.kind, testName: pending.testName, unlock: pending.unlock, chooseTest: pending.chooseTest, endsAt: pending.endsAt }
+      : null,
+    certificate: cert
+      ? { code: cert.code as string, level: cert.cefr_level as string, score: cert.spica_score as number | null, validUntil: cert.valid_until ? new Date(cert.valid_until).toISOString().slice(0, 10) : null }
+      : null,
+  };
+}
+
 // Uses up one attempt, in the transaction that creates the session.
 export async function useAttempt(client: PoolClient, userId: string, entitlementId: string): Promise<boolean> {
   const r = await client.query(
@@ -314,6 +361,8 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
     )
   ).rows[0];
   if (!s) return null;
+  // Only the final assessment gives a certificate: a level test is a check, with none.
+  if (s.composition?.levelTest) return null;
   // A candidate: their name and email are on the invitation.
   const cand = (
     await pool.query(
@@ -322,7 +371,7 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
     )
   ).rows[0];
   if (cand) s.name = [cand.first_name, cand.last_name].filter(Boolean).join(" ") || cand.email;
-  // A level test: the level's certificate, only when passed; each skill's share right.
+  // A level test (no certificate is issued for one, see above): the level, each skill's share right.
   const levelTest = s.composition?.levelTest as string | undefined;
   let level: string;
   let spica: number | null;
@@ -411,8 +460,8 @@ export async function issueDueResultCertificates(): Promise<number> {
          AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
          AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND si.status IN ('clear', 'cleared')
-         -- A level test that wasn't passed has no certificate.
-         AND coalesce(s.result->'levelTest'->>'passed', 'true') <> 'false'
+         -- Only the final assessment gives a certificate: level tests have none.
+         AND s.composition->>'levelTest' IS NULL
          AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id)
          AND NOT EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
                          WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending')

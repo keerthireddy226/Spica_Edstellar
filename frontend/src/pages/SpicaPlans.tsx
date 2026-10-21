@@ -135,10 +135,10 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
         <Card eyebrow={tr("Prove your level")} title={tr("Real test + certificate")} action={buy}>
           <Rows rows={by("assessment").map((p) => [p.testTypeName ?? p.name, price(p)])} />
         </Card>
-        <Card eyebrow={tr("One level, A1 to C2")} title={tr("Level test + certificate")} price={price(by("level")[0])} action={buy}>
+        <Card eyebrow={tr("One level, A1 to C2")} title={tr("Level test")} price={price(by("level")[0])} action={buy}>
           <Item ok>{tr("Questions at the level you choose, all four skills")}</Item>
           <Item ok>{tr("Pass at 70% overall and 50% in each skill")}</Item>
-          <Item ok>{tr("That level's certificate")}</Item>
+          <Item ok={false}>{tr("No certificate included")}</Item>
         </Card>
         <Card eyebrow={tr("Just practice")} title={tr("Practice pack")} price={<>{price(by("pack")[0])} <small className="text-sm font-medium text-muted">{tr("30 days")}</small></>} action={buy}>
           <Item ok>{tr("Practice Modules in every question type")}</Item>

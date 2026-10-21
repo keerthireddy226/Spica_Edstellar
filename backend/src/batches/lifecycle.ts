@@ -56,7 +56,8 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
     released = budget - used;
   }
 
-  // Everyone who practised gets a completion certificate.
+  // Everyone who practised gets a completion certificate (none since
+  // certificates come only from the final assessment).
   const certificates = await issueForBatch(args.batchId, args.actorId);
   const s = await summary(args.batchId);
   const recipients = [...new Set([...(await orgAdminIds(args.tenantId)), ...(await batchManagerIds(args.batchId))])];

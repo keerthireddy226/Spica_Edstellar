@@ -923,7 +923,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           {summary.cefrLevel && (
             <div className="flex-1 max-w-40 flex flex-col items-center gap-1 bg-navy/10 rounded-card py-3">
               <span className="text-4xl font-display font-bold text-navy-deep">{summary.cefrLevel}</span>
-              <span className="text-xs text-muted uppercase tracking-wide">{tr("CEFR level")}</span>
+              <span className="text-xs text-muted uppercase tracking-wide">{tr("Predicted level")}</span>
             </div>
           )}
           <div className="flex-1 max-w-40 flex flex-col items-center gap-1 bg-paper-warm rounded-card py-3">

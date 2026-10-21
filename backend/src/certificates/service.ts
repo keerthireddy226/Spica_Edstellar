@@ -76,9 +76,15 @@ function toCert(r: Record<string, any>): Certificate {
   };
 }
 
+// Certificates now come only from the final assessment (a real, proctored
+// test). Completion certificates are no longer issued; those already issued
+// stay valid and can still be checked.
+export const COMPLETION_CERTIFICATES = false;
+
 // One completion certificate per learner per batch (or one general one with no batch).
 // Names and the level reached are copied in, so it stays accurate later.
 export async function issueCertificate(args: { userId: string; batchId: string | null; issuedBy: string | null; course?: CourseDetails }): Promise<Certificate | null> {
+  if (!COMPLETION_CERTIFICATES) return null;
   const u = (
     await pool.query(
       `SELECT u.id, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name, u.participant_id, u.tenant_id,

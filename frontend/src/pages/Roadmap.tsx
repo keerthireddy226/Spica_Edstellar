@@ -10,7 +10,7 @@ import { getJourney, getRoadmap, type Journey, type RoadmapData } from "@/api/ro
 import { Checkpoints, JourneyHero, PathToGoal, SkillProgress, ThisWeek } from "@/components/journey/JourneyParts";
 import { NextStepCard } from "@/components/learner/GoalCards";
 import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
-import { CourseCertificateCard } from "@/components/learner/CourseCertificateCard";
+import { FinalAssessmentCard } from "@/components/learner/FinalAssessmentCard";
 import { ApiError } from "@/lib/api";
 import { WORD_BANK, IDIOM_BANK, WORD_CHALLENGES } from "@/data/dailyContent";
 
@@ -216,7 +216,7 @@ export function Roadmap() {
 
       <Checkpoints j={journeyData} />
 
-      <CourseCertificateCard />
+      <FinalAssessmentCard />
 
       <GroupBoardCard />
 

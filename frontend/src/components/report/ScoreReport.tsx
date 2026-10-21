@@ -204,9 +204,14 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
             <span className="font-display font-bold text-5xl sm:text-6xl text-ink leading-none tabular-nums">{score.overall.score}</span>
             <span className="text-xs text-muted">{tr("out of 90")}</span>
             <span className="font-display font-bold text-xl text-navy-deep">{tr("CEFR {{level}}", { level: score.overall.level })}</span>
+            {/* Practice and mock results predict; only the final assessment certifies. */}
+            {about && about.deliveryMode !== "certified" && <span className="text-[11px] font-semibold text-muted text-center">{tr("Predicted level, not a certificate")}</span>}
           </div>
           <div className="flex flex-col gap-3 min-w-0">
             {analysis && !org && <p className="text-sm text-ink leading-relaxed">{analysis}</p>}
+            {about && about.deliveryMode !== "certified" && !org && (
+              <p className="text-xs text-muted print:hidden">{tr("This is a practice result: it predicts the level your final assessment is likely to show. Only the final assessment gives a certificate.")}</p>
+            )}
             <div>
               <div className="relative grid h-8 rounded-lg overflow-hidden" style={{ gridTemplateColumns: BANDS.map((b) => `${b.max - b.min + 1}fr`).join(" ") }}>
                 {BANDS.map((b, i) => (

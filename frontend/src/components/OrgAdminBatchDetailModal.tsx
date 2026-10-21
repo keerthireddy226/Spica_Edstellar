@@ -8,7 +8,7 @@ import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Award, Layers, Pencil } from "lucide-react";
-import { issueCertificate, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
+import { orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
@@ -174,17 +174,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                         ×
                       </span>
                     </span>
-                  ) : (
-                    <span
-                      role="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        issueCertificate(l.id, batch.id).then(loadCerts);
-                      }}
-                      className="text-xs font-semibold text-navy hover:underline shrink-0 cursor-pointer"
-                    >
-                      {tr("Issue certificate")}</span>
-                  )}
+                  ) : null}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
                     {l.active ? tr("Active") : tr("Deactivated")}
                   </span>

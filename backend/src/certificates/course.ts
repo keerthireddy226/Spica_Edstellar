@@ -14,14 +14,14 @@ import { learnerAccess, learnerKind } from "../licenses/service.js";
 import { practiceSetProgress } from "../learner/keepGoing.js";
 import { LEVELS, overallFromSkills, pathSummary } from "../learner/path.js";
 import { dateOnly } from "../lib/dateOnly.js";
-import { issueCertificate } from "./service.js";
+import { COMPLETION_CERTIFICATES, issueCertificate } from "./service.js";
 
 export const COURSE_NAME = "Spica English 4 Skills Essentials";
 export const VERSANT_PROOF_DIR = path.resolve("private", "versant");
 const MAX_PROOF_BYTES = 3 * 1024 * 1024;
 
 export class CourseCertificateError extends Error {
-  constructor(public code: "not_eligible" | "already_pending" | "request_not_found" | "not_pending" | "bad_proof" | "proof_too_large") {
+  constructor(public code: "not_eligible" | "already_pending" | "request_not_found" | "not_pending" | "bad_proof" | "proof_too_large" | "stopped") {
     super(code);
   }
 }
@@ -146,6 +146,8 @@ export async function certificateStatus(userId: string) {
   ).rows[0];
   const versant = await latestVersantResult(userId);
   return {
+    // Course certificates stopped: only the final assessment gives a certificate.
+    stopped: !COMPLETION_CERTIFICATES,
     reviewer: kind === "org" ? ("org" as const) : ("staff" as const),
     eligible,
     practice: sets,
@@ -175,6 +177,7 @@ async function staffReviewers(): Promise<{ id: string; link: string }[]> {
 
 // quiet: made by Spica itself and issued at once, so reviewers aren't asked.
 export async function requestCertificate(userId: string, opts: { quiet?: boolean } = {}): Promise<string> {
+  if (!COMPLETION_CERTIFICATES) throw new CourseCertificateError("stopped");
   const status = await certificateStatus(userId);
   if (!status.eligible) throw new CourseCertificateError("not_eligible");
   if (status.request?.status === "pending") throw new CourseCertificateError("already_pending");
@@ -281,6 +284,7 @@ export async function decideRequest(
     return { issued: false as const };
   }
 
+  if (!COMPLETION_CERTIFICATES) throw new CourseCertificateError("stopped");
   // Fresh numbers at the moment of issue (the learner may have done more).
   const status = await certificateStatus(req.user_id);
   const versant = decision.includeVersant ? status.versant : null;
@@ -318,6 +322,7 @@ export async function decideRequest(
 // once when it turned that on, otherwise a request waits for its Org Admins.
 // A learner who was declined in the last 30 days isn't asked again yet.
 export async function runAutoCertificates(): Promise<{ requested: number; issued: number }> {
+  if (!COMPLETION_CERTIFICATES) return { requested: 0, issued: 0 };
   const candidates = (
     await pool.query(
       `SELECT u.id, t.type, t.certificates_auto FROM users u JOIN tenants t ON t.id = u.tenant_id
