@@ -24,6 +24,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
+import { FinalAssessmentCard } from "@/components/learner/FinalAssessmentCard";
 import { Button } from "@/components/Button";
 import { MotivationalBar } from "@/components/MotivationalBar";
 import { Mascot } from "@/components/Mascot";
@@ -264,10 +265,11 @@ function QuickLinks() {
     { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock tests"), icon: ClipboardCheck, color: "#c9965c" },
     { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: tr("Chat in English with your coach"), icon: MessageCircle, color: "#6e9660" },
     { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: tr("Your skills, streaks and badges"), icon: BarChart3, color: "#a8613f" },
+    { to: ROUTES.MY_TESTS, label: tr("Assessment"), hint: tr("Your final assessment and certificate"), icon: Award, color: "#8a5a3c" },
   ];
   const links = modulesOn ? all : all.filter((l) => l.to !== ROUTES.MODULES);
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       {links.map((l) => (
         <button
           key={l.to}
@@ -434,6 +436,8 @@ function LearnerDashboard() {
       <KeepGoingCard />
 
       {journey && <JourneySummary j={journey} />}
+
+      <FinalAssessmentCard />
 
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 

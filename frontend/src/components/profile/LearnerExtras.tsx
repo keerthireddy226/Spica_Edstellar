@@ -139,7 +139,7 @@ export function MyOrganization({ data }: { data: MyLearning }) {
 }
 
 const EXAMS: [string, string][] = [
-  ["versant", tr("Spica English certificate")],
+  ["versant", tr("Spica final assessment")],
   ["ielts", tr("IELTS")],
   ["toefl", tr("TOEFL")],
   ["pte", tr("PTE Academic")],

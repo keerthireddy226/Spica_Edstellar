@@ -4,6 +4,10 @@ import type { LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
 
 import { tr } from "@/i18n/tr";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+import { useReadiness } from "@/components/learner/useReadiness";
+
 import { trServer } from "@/i18n/serverText";
 interface ProgressData {
   totals: { sessions: number; questions: number; minutes: number; streak: number; xp: number; accuracy: number | null };
@@ -32,7 +36,52 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   star: Star,
 };
 const BADGE_COLORS = ["#b5653f", "#c9965c", "#6e9660", "#a8613f", "#8a8f4f", "#b97a62"];
-const TYPE: Record<string, string> = { practice: tr("Practice"), mocktest: tr("Mock test"), placement: tr("Level test"), coach: tr("Tutor"), diagnostic: tr("Diagnostic"), drill: tr("Drill") };
+const TYPE: Record<string, string> = {
+  practice: tr("Practice"),
+  mocktest: tr("Mock test"),
+  practice_test: tr("Practice test"),
+  final: tr("Final assessment"),
+  level_test: tr("Level test"),
+  sample: tr("Free sample"),
+  placement: tr("Level test"),
+  coach: tr("Tutor"),
+  diagnostic: tr("Diagnostic"),
+  drill: tr("Drill"),
+};
+
+// The certificate from the final assessment, or how to get one.
+function CertificateCard() {
+  const r = useReadiness();
+  if (!r) return null;
+  const c = r.certificate;
+  return (
+    <Card title={tr("Certificate")} icon={Award} color="#6e9660">
+      {c ? (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <p className="font-display font-bold text-2xl text-ink">
+              {c.level}
+              {c.score !== null && <span className="text-base font-semibold text-muted"> · {tr("Spica score {{score}}", { score: c.score })}</span>}
+            </p>
+            <p className="text-xs text-muted">{c.validUntil ? tr("Valid until {{date}}", { date: new Date(c.validUntil).toLocaleDateString() }) : tr("Valid for life")}</p>
+          </div>
+          <Link to={`/certificate/${c.code}`} className="text-sm font-semibold text-navy-deep hover:underline">
+            {tr("Open certificate")}
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5 text-sm">
+          <p className="text-ink">
+            {r.predicted ? tr("Not certified yet. Your mock tests predict {{level}} (Spica score {{score}}).", { level: r.predicted.level, score: r.predicted.score }) : tr("Not certified yet.")}
+          </p>
+          <Link to={ROUTES.MY_TESTS} className="self-start font-semibold text-navy-deep hover:underline">
+            {tr("Your final assessment gives your certificate")}
+          </Link>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function Card({ title, icon: Icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {
   return (
@@ -184,6 +233,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
         </Card>
 
         <div className="flex flex-col gap-6">
+          <CertificateCard />
           <Card title={tr("Level test history")} icon={Award} color="#b97a62">
             {d.placements.length === 0 ? (
               <p className="text-sm text-muted">{tr("Take the level test to see your level here.")}</p>

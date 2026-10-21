@@ -162,14 +162,18 @@ export async function issueForBatch(batchId: string, issuedBy: string | null): P
   return n;
 }
 
+// Whether a result certificate's test passed the face and ID checks.
+const IDENTITY_VERIFIED = `EXISTS (SELECT 1 FROM session_integrity si WHERE si.session_id = certificates.session_id AND si.status IN ('clear', 'cleared') AND NOT si.biometric_opt_out
+               AND coalesce((si.policy->>'idVerification')::boolean, false) AND coalesce((si.policy->>'faceMatch')::boolean, false)) AS identity_verified`;
+
 export async function listForLearner(userId: string): Promise<Certificate[]> {
-  const r = await pool.query(`SELECT * FROM certificates WHERE user_id = $1 AND revoked_at IS NULL ORDER BY issued_at DESC`, [userId]);
+  const r = await pool.query(`SELECT *, ${IDENTITY_VERIFIED} FROM certificates WHERE user_id = $1 AND revoked_at IS NULL ORDER BY issued_at DESC`, [userId]);
   return r.rows.map(toCert);
 }
 
 export async function listForTenant(tenantId: string, batchId?: string | null): Promise<(Certificate & { userId: string | null })[]> {
   const r = await pool.query(
-    `SELECT * FROM certificates WHERE tenant_id = $1 AND ($2::uuid IS NULL OR batch_id = $2) ORDER BY issued_at DESC LIMIT 500`,
+    `SELECT *, ${IDENTITY_VERIFIED} FROM certificates WHERE tenant_id = $1 AND ($2::uuid IS NULL OR batch_id = $2) ORDER BY issued_at DESC LIMIT 500`,
     [tenantId, batchId ?? null],
   );
   return r.rows.map((x) => ({ ...toCert(x), userId: x.user_id }));

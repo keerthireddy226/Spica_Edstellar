@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Award, ExternalLink } from "lucide-react";
 import { myCertificates, type CertificateSummary } from "@/api/reports";
+import { tr } from "@/i18n/tr";
 
-// The learner's completion certificates; hidden until they have one.
+// The learner's certificates: from their final assessments (and any earlier
+// course certificates); hidden until they have one.
 export function MyCertificates() {
   const { t, i18n } = useTranslation();
   const [certs, setCerts] = useState<CertificateSummary[]>([]);
@@ -21,10 +23,17 @@ export function MyCertificates() {
       {certs.map((c) => (
         <div key={c.id} className="flex items-center justify-between gap-3 border border-rule rounded-input px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink truncate">{c.batchName ?? c.organizationName ?? t("certificate.heading")}</p>
+            <p className="text-sm font-semibold text-ink truncate">
+              {c.kind === "result" ? (c.testName ?? tr("Final assessment")) : (c.batchName ?? c.organizationName ?? t("certificate.heading"))}
+              {c.kind === "result" && c.cefrLevel ? ` · ${c.cefrLevel}` : ""}
+              {c.kind === "result" && c.spicaScore != null ? ` · ${tr("Spica score {{score}}", { score: c.spicaScore })}` : ""}
+            </p>
             <p className="text-xs text-muted">
+              {c.kind === "result" ? tr("Final assessment") : tr("Course certificate")} ·{" "}
               {new Date(c.issuedAt).toLocaleDateString(i18n.language, { year: "numeric", month: "short", day: "numeric" })}
-              {c.cefrLevel ? ` · ${c.cefrLevel}` : ""} · <span className="font-mono">{c.code}</span>
+              {c.kind !== "result" && c.cefrLevel ? ` · ${c.cefrLevel}` : ""}
+              {c.kind === "result" ? ` · ${c.validUntil ? tr("valid until {{date}}", { date: new Date(c.validUntil).toLocaleDateString(i18n.language) }) : tr("Valid for life")}` : ""}
+              {c.identityVerified ? ` · ${tr("Identity verified")}` : ""} · <span className="font-mono">{c.code}</span>
             </p>
           </div>
           <a

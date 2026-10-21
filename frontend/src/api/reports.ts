@@ -25,6 +25,12 @@ export interface CertificateSummary {
   issuedAt: string;
   revokedAt: string | null;
   userId?: string | null;
+  // A final assessment's certificate ("result"), or an earlier course one ("completion").
+  kind?: "completion" | "result";
+  testName?: string | null;
+  spicaScore?: number | null;
+  validUntil?: string | null;
+  identityVerified?: boolean;
 }
 
 export function myCertificates() {

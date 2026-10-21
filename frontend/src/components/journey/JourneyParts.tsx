@@ -28,6 +28,7 @@ import type { SkillTag } from "@/api/testSession";
 import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import { formatShortDate } from "@/api/licenses";
 import { ROUTES } from "@/constants/routes";
+import { useReadiness } from "@/components/learner/useReadiness";
 import { tr } from "@/i18n/tr";
 
 const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, speaking: Mic, reading: BookOpen, writing: PenLine };
@@ -115,6 +116,7 @@ export function SkillProgress({ j }: { j: Journey }) {
 // come later.
 export function PathToGoal({ j }: { j: Journey }) {
   const { t } = useTranslation();
+  const cert = useReadiness()?.certificate ?? null;
   if (!j.steps.length) return null;
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
@@ -172,11 +174,24 @@ export function PathToGoal({ j }: { j: Journey }) {
         })}
         {/* The last step: practice ends with the final assessment, the one test that gives a certificate. */}
         <li className="relative">
-          <span className="absolute -left-6 top-0.5 h-5 w-5 rounded-full flex items-center justify-center bg-surface border-2 border-navy text-navy-deep">
-            <Award size={11} />
+          <span
+            className={`absolute -left-6 top-0.5 h-5 w-5 rounded-full flex items-center justify-center ${cert ? "bg-success text-white" : "bg-surface border-2 border-navy text-navy-deep"}`}
+          >
+            {cert ? <Check size={12} /> : <Award size={11} />}
           </span>
           <p className="text-sm font-semibold text-ink">{tr("Final assessment: certify your level")}</p>
-          <p className="text-xs text-muted mt-0.5">{tr("One strictly proctored real test gives your certificate, at the level you show.")}</p>
+          {cert ? (
+            <Link to={`/certificate/${cert.code}`} className="text-xs font-semibold text-success hover:underline mt-0.5 inline-block">
+              {cert.score !== null ? tr("Certified {{level}} · Spica score {{score}}", { level: cert.level, score: cert.score }) : tr("Certified {{level}}", { level: cert.level })}
+            </Link>
+          ) : (
+            <p className="text-xs text-muted mt-0.5">
+              {tr("One strictly proctored real test gives your certificate, at the level you show.")}{" "}
+              <Link to={ROUTES.MY_TESTS} className="font-semibold text-navy-deep hover:underline">
+                {tr("Go to Assessment")}
+              </Link>
+            </p>
+          )}
         </li>
       </ol>
       <p className="text-[11px] text-muted">{tr("A skill moves up a level when its question types pass 7 sets at 70% or more, or after a level check or a mock test.")}</p>

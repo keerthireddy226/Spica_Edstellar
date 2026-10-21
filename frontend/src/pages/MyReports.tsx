@@ -123,7 +123,7 @@ export function MyReports() {
                 className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-paper-warm/60 cursor-pointer"
               >
                 <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "practice" ? "bg-accent/15 text-accent" : "bg-navy/10 text-navy-deep"}`}>
-                  {h.deliveryMode === "certified" ? tr("Real test") : h.deliveryMode === "sample" ? tr("Sample test") : h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
+                  {h.deliveryMode === "certified" ? (h.levelTest ? tr("Level test") : tr("Final assessment")) : h.deliveryMode === "sample" ? tr("Sample test") : h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-ink truncate">{tt ? testTypeName(tt, t) : (h.examName ?? "")}</span>
@@ -132,9 +132,22 @@ export function MyReports() {
                     {h.examName && h.deliveryMode === "practice" ? ` · ${h.examName}` : ""}
                   </span>
                 </span>
-                <span className="text-sm text-ink shrink-0">
-                  {h.cefrLevel ?? "—"}
-                  {h.percent !== null ? <span className="text-muted"> · {h.percent}%</span> : null}
+                <span className="text-sm text-ink shrink-0 text-right">
+                  {h.certifiedLevel ?? h.cefrLevel ?? "—"}
+                  {h.spicaScore != null ? (
+                    <span className="text-muted"> · {tr("Spica score {{score}}", { score: h.spicaScore })}</span>
+                  ) : h.percent !== null ? (
+                    <span className="text-muted"> · {h.percent}%</span>
+                  ) : null}
+                  {h.certificateCode && (
+                    <a
+                      href={`/certificate/${h.certificateCode}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block text-xs font-semibold text-success hover:underline"
+                    >
+                      {tr("Certificate")}
+                    </a>
+                  )}
                 </span>
                 <ChevronRight size={18} className="text-muted shrink-0" />
               </button>

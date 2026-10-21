@@ -13,7 +13,7 @@
 import type { PoolClient } from "pg";
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
-import { notify } from "../notifications/service.js";
+import { batchManagerIds, notify, orgAdminIds } from "../notifications/service.js";
 import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
 import { BANDS, levelOfScore, scoreReport, spicaScore } from "../reports/scoreReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
@@ -483,6 +483,20 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
           email: true,
           dedupeKey: `result_certificate:${sessionId}`,
         }).catch((err) => console.error("certificate notification failed:", err));
+        // The learner's organization hears too: its Org Admins and the batch's Managers.
+        if (s.org_type === "cohort") {
+          const to = new Set([...(await orgAdminIds(s.tenant_id)), ...(s.batch_id ? await batchManagerIds(s.batch_id) : [])]);
+          for (const id of to) {
+            await notify({
+              userId: id,
+              kind: "result_certificate",
+              title: `${s.name} is certified ${level}`,
+              body: spica !== null ? `${testName ?? "Final assessment"}: Spica score ${spica}, level ${level}.` : `${testName}: level ${level}.`,
+              link: `/certificate/${code}`,
+              dedupeKey: `result_certificate_org:${sessionId}:${id}`,
+            }).catch((err) => console.error("certificate notification failed:", err));
+          }
+        }
       }
       return code as string;
     } catch (err) {
@@ -494,7 +508,17 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
 
 // A certificate stops counting while its attempt is flagged again or found to be a violation.
 export async function holdResultCertificate(sessionId: string): Promise<void> {
-  await pool.query(`UPDATE certificates SET revoked_at = now() WHERE session_id = $1 AND kind = 'result' AND revoked_at IS NULL`, [sessionId]);
+  const r = await pool.query(`UPDATE certificates SET revoked_at = now() WHERE session_id = $1 AND kind = 'result' AND revoked_at IS NULL RETURNING user_id, code`, [sessionId]);
+  for (const c of r.rows) {
+    await notify({
+      userId: c.user_id,
+      kind: "result_certificate",
+      title: "Your certificate is on hold",
+      body: `A reviewer is checking the proctoring record of your test, so certificate ${c.code} is on hold. We'll email you when it's done.`,
+      link: "/assessment",
+      email: true,
+    }).catch((err) => console.error("certificate hold notification failed:", err));
+  }
 }
 
 // Periodic: certified attempts that finished a while ago, with every answer

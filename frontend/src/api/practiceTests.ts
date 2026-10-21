@@ -404,6 +404,10 @@ export interface HistoryEntry {
   cefrLevel: string | null;
   percent: number | null;
   reportStatus: "pending" | "ready" | "failed" | null;
+  certificateCode?: string | null;
+  spicaScore?: number | null;
+  certifiedLevel?: string | null;
+  levelTest?: string | null;
 }
 
 export function getHistory(): Promise<{ sessions: HistoryEntry[] }> {

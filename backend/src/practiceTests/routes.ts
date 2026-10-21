@@ -282,8 +282,9 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
   try {
     const r = await pool.query(
       `SELECT s.id, s.test_code, s.delivery_mode, s.completed_at, s.result, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id,
-         coalesce(e.name, fo.name) AS exam_name, fr.status AS report_status
-       FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
+         coalesce(e.name, fo.name) AS exam_name, fr.status AS report_status,
+         c.code AS certificate_code, c.spica_score, c.cefr_level AS certified_level, s.composition->>'levelTest' AS level_test
+       FROM sessions s LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result' AND c.revoked_at IS NULL LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
        LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
          AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
@@ -304,6 +305,11 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
         cefrLevel: x.result?.cefrLevel ?? null,
         percent: x.result?.overallPercent ?? null,
         reportStatus: x.report_status ?? null,
+        // A final assessment's certificate and Spica score; a level test is marked as one.
+        certificateCode: x.certificate_code ?? null,
+        spicaScore: x.spica_score ?? null,
+        certifiedLevel: x.certified_level ?? null,
+        levelTest: x.level_test ?? null,
       })),
     });
   } catch (err) {

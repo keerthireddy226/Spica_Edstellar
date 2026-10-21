@@ -277,7 +277,7 @@ meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => 
         [id],
       ),
       pool.query(
-        `SELECT s.id, s.session_type, s.mode, s.started_at, s.completed_at,
+        `SELECT s.id, s.session_type, s.mode, s.delivery_mode, s.composition->>'levelTest' AS level_test, s.started_at, s.completed_at,
            (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS answered,
            (SELECT coalesce(sum(a.active_ms), 0) FROM attempts a WHERE a.session_id = s.id) AS active_ms
          FROM sessions s WHERE s.user_id = $1 AND s.completed_at IS NOT NULL ORDER BY s.completed_at DESC LIMIT 12`,
@@ -311,7 +311,19 @@ meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => 
       days: days.rows,
       recent: recent.rows.map((r) => ({
         id: r.id,
-        type: r.session_type,
+        // A test says which kind it was: final assessment, level test, free sample, mock or practice test.
+        type:
+          r.session_type !== "mocktest"
+            ? r.session_type
+            : r.delivery_mode === "certified"
+              ? r.level_test
+                ? "level_test"
+                : "final"
+              : r.delivery_mode === "sample"
+                ? "sample"
+                : r.delivery_mode === "practice"
+                  ? "practice_test"
+                  : "mocktest",
         mode: r.mode,
         completedAt: r.completed_at,
         // Time actually spent answering, same as the totals — wall-clock time

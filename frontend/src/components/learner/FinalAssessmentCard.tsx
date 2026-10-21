@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award, CheckCircle2, Lock, Target } from "lucide-react";
-import { getReadiness, type Readiness } from "@/api/assessment";
+import { useReadiness } from "@/components/learner/useReadiness";
 import { getPriceList } from "@/api/payments";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -13,12 +13,9 @@ const linkBtn = "inline-flex items-center gap-2 px-4 py-2 rounded-pill text-sm f
 // test that gives a certificate. Mock tests predict the level it will show;
 // readiness is advice, the final assessment opens by its own rule.
 export function FinalAssessmentCard() {
-  const [r, setR] = useState<Readiness | null>(null);
+  const r = useReadiness();
   const [canBuy, setCanBuy] = useState(true);
   useEffect(() => {
-    getReadiness()
-      .then(setR)
-      .catch(() => setR(null));
     getPriceList()
       .then((p) => setCanBuy(p.canBuy))
       .catch(() => {});
