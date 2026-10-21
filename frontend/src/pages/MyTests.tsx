@@ -6,6 +6,7 @@ import { LearnerHero } from "@/components/learner/LearnerHero";
 import { Button } from "@/components/Button";
 import { PracticeTests } from "@/pages/PracticeTests";
 import { getMyTests, type AttemptStatus, type OwnedTest } from "@/api/assessment";
+import { getPriceList } from "@/api/payments";
 import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -200,17 +201,22 @@ function TestCard({ t }: { t: OwnedTest }) {
 export function MyTests() {
   const [tests, setTests] = useState<OwnedTest[] | null>(null);
   const [error, setError] = useState(false);
+  // Whether the learner buys their own tests (individuals) or their organization gives them.
+  const [canBuy, setCanBuy] = useState(true);
   useEffect(() => {
     getMyTests()
       .then((r) => setTests(r.tests))
       .catch(() => setError(true));
+    getPriceList()
+      .then((r) => setCanBuy(r.canBuy))
+      .catch(() => {});
   }, []);
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
         eyebrow={tr("Your results")}
         title={tr("My tests")}
-        subtitle={tr("Your real tests: take each one when it opens, then find your score report and certificate here.")}
+        subtitle={tr("Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.")}
         icon={ClipboardCheck}
       />
       {error ? (
@@ -219,11 +225,22 @@ export function MyTests() {
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : tests.length === 0 ? (
         <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3 items-start">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("You don't have a real test yet")}</h2>
-          <p className="text-sm text-muted">{tr("A real test gives you a Spica score, a score report and a certificate valid for a year.")}</p>
-          <Link to={ROUTES.PLANS} className="text-sm font-semibold text-navy-deep hover:underline">
-            {tr("See plans")}
-          </Link>
+          <h2 className="font-display font-bold text-lg text-ink">{tr("No final assessment yet")}</h2>
+          <p className="text-sm text-muted">
+            {tr("Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.")}
+          </p>
+          <ul className="text-sm text-ink list-disc pl-5 flex flex-col gap-1">
+            <li>{tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")}</li>
+            <li>{tr("With Real test + certificate, it opens after a free sample.")}</li>
+            <li>{tr("A level test proves one level (A1 to C2) with that level's certificate.")}</li>
+          </ul>
+          {canBuy ? (
+            <Link to={ROUTES.SPICA_PLANS} className="text-sm font-semibold text-navy-deep hover:underline">
+              {tr("Get a final assessment")}
+            </Link>
+          ) : (
+            <p className="text-sm text-muted">{tr("Your organization gives you your tests. When it does, your final assessment shows here.")}</p>
+          )}
         </div>
       ) : (
         tests.map((t) => <TestCard key={t.id} t={t} />)
