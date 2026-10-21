@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "本番テスト + 修了証 では、無料サンプルの後に受けられるようになります。",
  "A level test proves one level (A1 to C2) with that level's certificate.": "レベルテストは1つのレベル（A1〜C2）を証明し、そのレベルの修了証が発行されます。",
  "Get a final assessment": "最終アセスメントを申し込む",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "テストは組織から割り当てられます。割り当てられると、最終アセスメントがここに表示されます。"
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "テストは組織から割り当てられます。割り当てられると、最終アセスメントがここに表示されます。",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "最終アセスメント：選んだテストの本番テストを1回、修了証付きで受けられます。フルアクセスに含まれます。",
+ "Final assessment": "最終アセスメント",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "最終アセスメントのテストを選んでください。そのテストの模擬試験を受けた後、またはアクセス期間の最後の7日間に受験可能になります。後から変更することはできません。",
+ "Choose this test": "このテストを選ぶ",
+ "Couldn't save your choice. Try again.": "選択を保存できませんでした。もう一度お試しください。",
+ "Final assessment · included with Full access": "最終アセスメント · フルアクセスに含まれます",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "フルアクセスには1回含まれます：ここでテストを選ぶと、そのテストの模擬試験の後に受験可能になります。",
+ "One final assessment on the test you choose": "選んだテストで最終アセスメントを1回",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "ライセンスを持つ学習者は全員、最終アセスメント（修了証付きの本番テスト）を1回受けられます。",
+ "Your plan includes a final assessment": "プランに最終アセスメントが含まれています",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "マイテストでテストを選んでください。そのテストの模擬試験を受けた後、またはアクセス期間の最後の7日間に受験可能になり、修了証が発行されます。",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "{{program}}の最終アセスメントのテストが設定されました。{{date}}までにマイテストで受験してください。"
 }

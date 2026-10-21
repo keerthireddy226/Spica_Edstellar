@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "అసలు టెస్ట్ + సర్టిఫికెట్ ప్లాన్‌లో, ఇది ఉచిత నమూనా టెస్ట్ తర్వాత తెరుచుకుంటుంది.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "స్థాయి టెస్ట్ ఒక స్థాయిని (A1 నుండి C2) ఆ స్థాయి సర్టిఫికెట్‌తో నిరూపిస్తుంది.",
  "Get a final assessment": "తుది అసెస్‌మెంట్ పొందండి",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "మీ సంస్థ మీకు టెస్ట్‌లు ఇస్తుంది. అది ఇచ్చినప్పుడు, మీ తుది అసెస్‌మెంట్ ఇక్కడ కనిపిస్తుంది."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "మీ సంస్థ మీకు టెస్ట్‌లు ఇస్తుంది. అది ఇచ్చినప్పుడు, మీ తుది అసెస్‌మెంట్ ఇక్కడ కనిపిస్తుంది.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "మీ తుది అసెస్‌మెంట్: మీరు ఎంచుకునే టెస్ట్‌లో ఒక అసలు టెస్ట్, సర్టిఫికెట్‌తో. పూర్తి యాక్సెస్‌లో చేర్చబడింది.",
+ "Final assessment": "తుది అసెస్‌మెంట్",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "మీ తుది అసెస్‌మెంట్ కోసం టెస్ట్‌ను ఎంచుకోండి. ఆ టెస్ట్ యొక్క ఒక మాక్ పరీక్ష తర్వాత, లేదా మీ యాక్సెస్ చివరి 7 రోజుల్లో ఇది తెరుచుకుంటుంది. దీన్ని తర్వాత మార్చలేరు.",
+ "Choose this test": "ఈ టెస్ట్‌ను ఎంచుకోండి",
+ "Couldn't save your choice. Try again.": "మీ ఎంపికను సేవ్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించండి.",
+ "Final assessment · included with Full access": "తుది అసెస్‌మెంట్ · పూర్తి యాక్సెస్‌లో చేర్చబడింది",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "పూర్తి యాక్సెస్‌లో ఒకటి చేర్చబడింది: దాని టెస్ట్‌ను ఇక్కడ ఎంచుకోండి, ఆ టెస్ట్ యొక్క మాక్ పరీక్ష తర్వాత ఇది తెరుచుకుంటుంది.",
+ "One final assessment on the test you choose": "మీరు ఎంచుకునే టెస్ట్‌లో ఒక తుది అసెస్‌మెంట్",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "లైసెన్స్ ఉన్న ప్రతి అభ్యాసకుడికి ఒక తుది అసెస్‌మెంట్ లభిస్తుంది, సర్టిఫికెట్‌తో కూడిన అసలు టెస్ట్.",
+ "Your plan includes a final assessment": "మీ ప్లాన్‌లో ఒక తుది అసెస్‌మెంట్ చేర్చబడింది",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "నా టెస్ట్‌లులో మీ టెస్ట్‌ను ఎంచుకోండి. ఆ టెస్ట్ యొక్క ఒక మాక్ పరీక్ష తర్వాత, లేదా మీ యాక్సెస్ చివరి 7 రోజుల్లో ఇది తెరుచుకుంటుంది, సర్టిఫికెట్‌తో ముగుస్తుంది.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "{{program}} కోసం మీ తుది అసెస్‌మెంట్ టెస్ట్ సెట్ చేయబడింది. {{date}} లోపు నా టెస్ట్‌లులో దాన్ని రాయండి."
 }

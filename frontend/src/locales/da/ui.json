@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Med Rigtig test + certifikat åbner den efter en gratis prøve.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "En niveautest dokumenterer ét niveau (A1 til C2) med certifikatet for det niveau.",
  "Get a final assessment": "Få en afsluttende test",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Din organisation giver dig dine test. Når den gør det, vises din afsluttende test her."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Din organisation giver dig dine test. Når den gør det, vises din afsluttende test her.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Din afsluttende test: én rigtig test i den test, du vælger, med et certifikat. Inkluderet i Fuld adgang.",
+ "Final assessment": "Afsluttende test",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Vælg testen til din afsluttende test. Den åbner efter en prøveeksamen i den test eller i de sidste 7 dage af din adgang. Du kan ikke ændre det senere.",
+ "Choose this test": "Vælg denne test",
+ "Couldn't save your choice. Try again.": "Kunne ikke gemme dit valg. Prøv igen.",
+ "Final assessment · included with Full access": "Afsluttende test · inkluderet i Fuld adgang",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Fuld adgang inkluderer én: vælg testen her, så åbner den efter en prøveeksamen i den test.",
+ "One final assessment on the test you choose": "Én afsluttende test i den test, du vælger",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Hver kursist med licens får én afsluttende test, en rigtig test med et certifikat.",
+ "Your plan includes a final assessment": "Din plan inkluderer en afsluttende test",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Vælg din test i Mine test. Den åbner efter en prøveeksamen i den test eller i de sidste 7 dage af din adgang og slutter med et certifikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Din afsluttende test for {{program}} er sat til dens test. Tag den i Mine test før {{date}}."
 }

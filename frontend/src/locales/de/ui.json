@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Mit Echter Test + Zertifikat wird er nach einer kostenlosen Probe freigeschaltet.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Ein Niveautest weist ein Niveau (A1 bis C2) mit dem Zertifikat für dieses Niveau nach.",
  "Get a final assessment": "Abschlusstest holen",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Deine Organisation gibt dir deine Tests. Sobald sie das tut, erscheint dein Abschlusstest hier."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Deine Organisation gibt dir deine Tests. Sobald sie das tut, erscheint dein Abschlusstest hier.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Dein Abschlusstest: ein echter Test im Test deiner Wahl, mit Zertifikat. In Vollzugang enthalten.",
+ "Final assessment": "Abschlusstest",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Wähle den Test für deinen Abschlusstest. Er wird nach einer Probeprüfung dieses Tests freigeschaltet oder in den letzten 7 Tagen deines Zugangs. Du kannst ihn später nicht ändern.",
+ "Choose this test": "Diesen Test wählen",
+ "Couldn't save your choice. Try again.": "Deine Auswahl konnte nicht gespeichert werden. Versuche es erneut.",
+ "Final assessment · included with Full access": "Abschlusstest · in Vollzugang enthalten",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Vollzugang enthält einen: Wähle hier seinen Test, dann wird er nach einer Probeprüfung dieses Tests freigeschaltet.",
+ "One final assessment on the test you choose": "Ein Abschlusstest im Test deiner Wahl",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Alle Lernenden mit Lizenz erhalten einen Abschlusstest, einen echten Test mit Zertifikat.",
+ "Your plan includes a final assessment": "Dein Plan enthält einen Abschlusstest",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Wähle deinen Test unter Meine Tests. Er wird nach einer Probeprüfung dieses Tests freigeschaltet oder in den letzten 7 Tagen deines Zugangs und endet mit einem Zertifikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Dein Abschlusstest für {{program}} ist auf seinen Test festgelegt. Mach ihn unter Meine Tests vor dem {{date}}."
 }

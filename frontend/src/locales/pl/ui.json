@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "W pakiecie Prawdziwy test + certyfikat otwiera się po bezpłatnym teście przykładowym.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Test poziomujący potwierdza jeden poziom (od A1 do C2) certyfikatem tego poziomu.",
  "Get a final assessment": "Zdobądź test końcowy",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Twoja organizacja przydziela Ci testy. Gdy to zrobi, Twój test końcowy pojawi się tutaj."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Twoja organizacja przydziela Ci testy. Gdy to zrobi, Twój test końcowy pojawi się tutaj.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Twój test końcowy: jeden prawdziwy test z wybranego przez ciebie testu, z certyfikatem. W ramach Pełnego dostępu.",
+ "Final assessment": "Test końcowy",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Wybierz test do testu końcowego. Udostępnimy go po egzaminie próbnym z tego testu lub w ostatnich 7 dniach twojego dostępu. Później nie będzie można tego zmienić.",
+ "Choose this test": "Wybierz ten test",
+ "Couldn't save your choice. Try again.": "Nie udało się zapisać wyboru. Spróbuj ponownie.",
+ "Final assessment · included with Full access": "Test końcowy · w ramach Pełnego dostępu",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Pełny dostęp obejmuje jeden: wybierz tu jego test, a udostępnimy go po egzaminie próbnym z tego testu.",
+ "One final assessment on the test you choose": "Jeden test końcowy z wybranego testu",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Każdy kursant z licencją dostaje jeden test końcowy, czyli prawdziwy test z certyfikatem.",
+ "Your plan includes a final assessment": "Twój plan obejmuje test końcowy",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Wybierz test w zakładce Moje testy. Udostępnimy go po egzaminie próbnym z tego testu lub w ostatnich 7 dniach twojego dostępu, a na koniec otrzymasz certyfikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Test do twojego testu końcowego z {{program}} jest ustawiony. Przystąp do niego w zakładce Moje testy przed {{date}}."
 }

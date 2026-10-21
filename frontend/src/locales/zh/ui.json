@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "选择正式测试 + 证书时，它会在免费体验测试后开放。",
  "A level test proves one level (A1 to C2) with that level's certificate.": "水平测试证明一个等级（A1 到 C2），并颁发该等级的证书。",
  "Get a final assessment": "获取结业测评",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "你的测试由所属组织分配。分配后，你的结业测评会显示在这里。"
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "你的测试由所属组织分配。分配后，你的结业测评会显示在这里。",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "你的结业测评：在你选择的测试中参加一次正式测试，并获得证书。包含在完整访问权限中。",
+ "Final assessment": "结业测评",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "为你的结业测评选择测试。完成该测试的一次模拟考试后，或在访问权限的最后 7 天内，即可开放。之后无法更改。",
+ "Choose this test": "选择此测试",
+ "Couldn't save your choice. Try again.": "无法保存你的选择。请重试。",
+ "Final assessment · included with Full access": "结业测评 · 包含在完整访问权限中",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "完整访问权限包含一次：在此选择其测试，完成该测试的模拟考试后即可开放。",
+ "One final assessment on the test you choose": "在你选择的测试中进行一次结业测评",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "每位已获许可证的学员可参加一次结业测评，即一次带证书的正式测试。",
+ "Your plan includes a final assessment": "你的方案包含一次结业测评",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "在“我的测试”中选择你的测试。完成该测试的一次模拟考试后，或在访问权限的最后 7 天内即可开放，结束后可获得证书。",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "你的 {{program}} 结业测评已设定测试。请在 {{date}} 前于“我的测试”中参加。"
 }

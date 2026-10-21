@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} elever venter fortsatt på den avsluttende testen sin. Hver trenger {{credits}} kreditter.",
  "Real test withdrawn before it was started": "Ekte test trukket tilbake før den ble startet",
  "Level test withdrawn before it was started": "Nivåtest trukket tilbake før den ble startet",
- "Test expired without being started": "Testen utløp uten å bli startet"
+ "Test expired without being started": "Testen utløp uten å bli startet",
+ "Your plan includes a final assessment": "Planen din inkluderer en avsluttende test",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Velg testen din i Mine tester. Den åpner etter en prøveeksamen i den testen, eller de siste 7 dagene av tilgangen din, og avsluttes med et sertifikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Den avsluttende testen din for {{program}} er satt til sin test. Ta den i Mine tester før {{date}}."
 }

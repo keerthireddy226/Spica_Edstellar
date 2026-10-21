@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Paketissa Oikea koe + todistus se avautuu maksuttoman näytteen jälkeen.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Tasotesti osoittaa yhden tason (A1–C2) ja antaa sen tason todistuksen.",
  "Get a final assessment": "Hanki loppukoe",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Organisaatiosi antaa sinulle kokeesi. Kun se tekee niin, loppukokeesi näkyy täällä."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Organisaatiosi antaa sinulle kokeesi. Kun se tekee niin, loppukokeesi näkyy täällä.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Loppukokeesi: yksi oikea koe valitsemastasi kokeesta, todistuksen kanssa. Sisältyy Täyteen käyttöoikeuteen.",
+ "Final assessment": "Loppukoe",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Valitse koe loppukoettasi varten. Se avautuu kyseisen kokeen mallikokeen jälkeen tai käyttöoikeutesi viimeisten 7 päivän aikana. Et voi muuttaa valintaa myöhemmin.",
+ "Choose this test": "Valitse tämä koe",
+ "Couldn't save your choice. Try again.": "Valintaasi ei voitu tallentaa. Yritä uudelleen.",
+ "Final assessment · included with Full access": "Loppukoe · sisältyy Täyteen käyttöoikeuteen",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Täysi käyttöoikeus sisältää yhden: valitse sen koe tästä, niin se avautuu kyseisen kokeen mallikokeen jälkeen.",
+ "One final assessment on the test you choose": "Yksi loppukoe valitsemastasi kokeesta",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Jokainen lisensoitu opiskelija saa yhden loppukokeen, oikean kokeen todistuksen kanssa.",
+ "Your plan includes a final assessment": "Tilaukseesi sisältyy loppukoe",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Valitse koe Omat kokeet -sivulla. Se avautuu kyseisen kokeen mallikokeen jälkeen tai käyttöoikeutesi viimeisten 7 päivän aikana, ja se päättyy todistukseen.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Loppukokeesi kohteelle {{program}} on asetettu sen kokeeseen. Suorita se Omat kokeet -sivulla ennen {{date}}."
 }

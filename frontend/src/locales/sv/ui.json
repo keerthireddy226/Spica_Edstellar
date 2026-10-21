@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Med Riktigt test + certifikat öppnas det efter ett gratis smakprov.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Ett nivåtest bevisar en nivå (A1 till C2) med certifikatet för den nivån.",
  "Get a final assessment": "Skaffa ett sluttest",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Din organisation ger dig dina test. När den gör det visas ditt sluttest här."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Din organisation ger dig dina test. När den gör det visas ditt sluttest här.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Ditt sluttest: ett riktigt test i det test du väljer, med certifikat. Ingår i Full åtkomst.",
+ "Final assessment": "Sluttest",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Välj test för ditt sluttest. Det öppnas efter ett provprov i det testet, eller under de sista 7 dagarna av din åtkomst. Du kan inte ändra det senare.",
+ "Choose this test": "Välj det här testet",
+ "Couldn't save your choice. Try again.": "Det gick inte att spara ditt val. Försök igen.",
+ "Final assessment · included with Full access": "Sluttest · ingår i Full åtkomst",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Full åtkomst innehåller ett: välj dess test här, så öppnas det efter ett provprov i det testet.",
+ "One final assessment on the test you choose": "Ett sluttest i det test du väljer",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Varje deltagare med licens får ett sluttest, ett riktigt test med certifikat.",
+ "Your plan includes a final assessment": "Din plan innehåller ett sluttest",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Välj ditt test under Mina test. Det öppnas efter ett provprov i det testet, eller under de sista 7 dagarna av din åtkomst, och avslutas med ett certifikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Testet för ditt sluttest i {{program}} är valt. Gör det under Mina test före {{date}}."
 }

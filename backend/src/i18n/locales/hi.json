@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} शिक्षार्थी अभी भी अपने अंतिम आकलन का इंतज़ार कर रहे हैं। हर एक को {{credits}} क्रेडिट चाहिए।",
  "Real test withdrawn before it was started": "असली टेस्ट शुरू होने से पहले वापस लिया गया",
  "Level test withdrawn before it was started": "स्तर टेस्ट शुरू होने से पहले वापस लिया गया",
- "Test expired without being started": "टेस्ट शुरू हुए बिना समाप्त हो गया"
+ "Test expired without being started": "टेस्ट शुरू हुए बिना समाप्त हो गया",
+ "Your plan includes a final assessment": "आपके प्लान में एक अंतिम आकलन शामिल है",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "मेरे टेस्ट में अपना टेस्ट चुनें। यह उस टेस्ट की एक मॉक परीक्षा के बाद, या आपकी पहुँच के आख़िरी 7 दिनों में खुलता है, और सर्टिफ़िकेट के साथ ख़त्म होता है।",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "{{program}} के लिए आपके अंतिम आकलन का टेस्ट तय हो गया है। इसे {{date}} से पहले मेरे टेस्ट में दें।"
 }

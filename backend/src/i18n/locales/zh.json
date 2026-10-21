@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}：仍有 {{n}} 名学员在等待结业测评。每人需要 {{credits}} 点数。",
  "Real test withdrawn before it was started": "正式测试在开始前已撤回",
  "Level test withdrawn before it was started": "水平测试在开始前已撤回",
- "Test expired without being started": "测试未开始即已到期"
+ "Test expired without being started": "测试未开始即已到期",
+ "Your plan includes a final assessment": "你的方案包含一次结业测评",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "在“我的测试”中选择你的测试。完成该测试的一次模拟考试后，或在访问权限的最后 7 天内即可开放，结束后可获得证书。",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "你的 {{program}} 结业测评已设定测试。请在 {{date}} 前于“我的测试”中参加。"
 }

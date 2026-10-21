@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: kursanci wciąż czekający na test końcowy: {{n}}. Każdy potrzebuje {{credits}} kredytów.",
  "Real test withdrawn before it was started": "Prawdziwy test wycofany przed rozpoczęciem",
  "Level test withdrawn before it was started": "Test poziomujący wycofany przed rozpoczęciem",
- "Test expired without being started": "Test wygasł, zanim został rozpoczęty"
+ "Test expired without being started": "Test wygasł, zanim został rozpoczęty",
+ "Your plan includes a final assessment": "Twój plan obejmuje test końcowy",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Wybierz test w zakładce Moje testy. Udostępnimy go po egzaminie próbnym z tego testu lub w ostatnich 7 dniach twojego dostępu, a na koniec otrzymasz certyfikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Test do twojego testu końcowego z {{program}} jest ustawiony. Przystąp do niego w zakładce Moje testy przed {{date}}."
 }

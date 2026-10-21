@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "असली टेस्ट + सर्टिफ़िकेट प्लान में, यह मुफ़्त नमूना टेस्ट के बाद खुलता है।",
  "A level test proves one level (A1 to C2) with that level's certificate.": "स्तर टेस्ट एक स्तर (A1 से C2) को उस स्तर के सर्टिफ़िकेट के साथ प्रमाणित करता है।",
  "Get a final assessment": "अंतिम आकलन लें",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "आपका संगठन आपको आपके टेस्ट देता है। जब वह देगा, आपका अंतिम आकलन यहाँ दिखेगा।"
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "आपका संगठन आपको आपके टेस्ट देता है। जब वह देगा, आपका अंतिम आकलन यहाँ दिखेगा।",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "आपका अंतिम आकलन: आपके चुने हुए टेस्ट का एक असली टेस्ट, सर्टिफ़िकेट के साथ। पूरी पहुँच में शामिल।",
+ "Final assessment": "अंतिम आकलन",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "अपने अंतिम आकलन के लिए टेस्ट चुनें। यह उस टेस्ट की एक मॉक परीक्षा के बाद, या आपकी पहुँच के आख़िरी 7 दिनों में खुलता है। आप इसे बाद में बदल नहीं सकते।",
+ "Choose this test": "यह टेस्ट चुनें",
+ "Couldn't save your choice. Try again.": "आपकी पसंद सेव नहीं हो सकी। फिर कोशिश करें।",
+ "Final assessment · included with Full access": "अंतिम आकलन · पूरी पहुँच में शामिल",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "पूरी पहुँच में एक शामिल है: इसका टेस्ट यहाँ चुनें, फिर यह उस टेस्ट की एक मॉक परीक्षा के बाद खुलता है।",
+ "One final assessment on the test you choose": "आपके चुने हुए टेस्ट पर एक अंतिम आकलन",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "लाइसेंस वाले हर शिक्षार्थी को एक अंतिम आकलन मिलता है, सर्टिफ़िकेट के साथ एक असली टेस्ट।",
+ "Your plan includes a final assessment": "आपके प्लान में एक अंतिम आकलन शामिल है",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "मेरे टेस्ट में अपना टेस्ट चुनें। यह उस टेस्ट की एक मॉक परीक्षा के बाद, या आपकी पहुँच के आख़िरी 7 दिनों में खुलता है, और सर्टिफ़िकेट के साथ ख़त्म होता है।",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "{{program}} के लिए आपके अंतिम आकलन का टेस्ट तय हो गया है। इसे {{date}} से पहले मेरे टेस्ट में दें।"
 }

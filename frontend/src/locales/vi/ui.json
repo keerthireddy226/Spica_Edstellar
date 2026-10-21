@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Với gói Bài thi thật + chứng chỉ, bài này mở sau một bài thi mẫu miễn phí.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Bài kiểm tra trình độ chứng nhận một trình độ (A1 đến C2) bằng chứng chỉ của trình độ đó.",
  "Get a final assessment": "Nhận bài đánh giá cuối khóa",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Tổ chức của bạn cấp bài thi cho bạn. Khi đó, bài đánh giá cuối khóa của bạn sẽ hiện ở đây."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Tổ chức của bạn cấp bài thi cho bạn. Khi đó, bài đánh giá cuối khóa của bạn sẽ hiện ở đây.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Bài đánh giá cuối khóa của bạn: một bài thi thật cho bài thi bạn chọn, kèm chứng chỉ. Có trong Truy cập đầy đủ.",
+ "Final assessment": "Bài đánh giá cuối khóa",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Chọn bài thi cho bài đánh giá cuối khóa của bạn. Bài này mở sau một bài thi thử của bài thi đó, hoặc trong 7 ngày cuối của quyền truy cập. Bạn không thể thay đổi sau này.",
+ "Choose this test": "Chọn bài thi này",
+ "Couldn't save your choice. Try again.": "Không thể lưu lựa chọn của bạn. Hãy thử lại.",
+ "Final assessment · included with Full access": "Bài đánh giá cuối khóa · có trong Truy cập đầy đủ",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Truy cập đầy đủ có một bài: chọn bài thi tại đây, bài này sẽ mở sau một bài thi thử của bài thi đó.",
+ "One final assessment on the test you choose": "Một bài đánh giá cuối khóa cho bài thi bạn chọn",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Mỗi học viên có giấy phép được một bài đánh giá cuối khóa, là một bài thi thật kèm chứng chỉ.",
+ "Your plan includes a final assessment": "Gói của bạn có một bài đánh giá cuối khóa",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Chọn bài thi trong Bài thi của tôi. Bài này mở sau một bài thi thử của bài thi đó, hoặc trong 7 ngày cuối của quyền truy cập, và kết thúc bằng một chứng chỉ.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Bài đánh giá cuối khóa cho {{program}} đã được đặt bài thi. Hãy làm trong Bài thi của tôi trước {{date}}."
 }

@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Med Ekte test + sertifikat åpner den etter en gratis eksempeltest.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "En nivåtest dokumenterer ett nivå (A1 til C2) med sertifikatet for det nivået.",
  "Get a final assessment": "Få en avsluttende test",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Organisasjonen din gir deg testene dine. Når den gjør det, vises den avsluttende testen din her."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Organisasjonen din gir deg testene dine. Når den gjør det, vises den avsluttende testen din her.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Den avsluttende testen din: én ekte test i testen du velger, med sertifikat. Inkludert i Full tilgang.",
+ "Final assessment": "Avsluttende test",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Velg testen for den avsluttende testen din. Den åpner etter en prøveeksamen i den testen, eller de siste 7 dagene av tilgangen din. Du kan ikke endre det senere.",
+ "Choose this test": "Velg denne testen",
+ "Couldn't save your choice. Try again.": "Kunne ikke lagre valget ditt. Prøv igjen.",
+ "Final assessment · included with Full access": "Avsluttende test · inkludert i Full tilgang",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Full tilgang inkluderer én: velg testen her, så åpner den etter en prøveeksamen i den testen.",
+ "One final assessment on the test you choose": "Én avsluttende test i testen du velger",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Hver elev med lisens får én avsluttende test, en ekte test med sertifikat.",
+ "Your plan includes a final assessment": "Planen din inkluderer en avsluttende test",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Velg testen din i Mine tester. Den åpner etter en prøveeksamen i den testen, eller de siste 7 dagene av tilgangen din, og avsluttes med et sertifikat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "Den avsluttende testen din for {{program}} er satt til sin test. Ta den i Mine tester før {{date}}."
 }

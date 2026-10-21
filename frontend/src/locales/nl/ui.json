@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Met Echte toets + certificaat gaat die open na een gratis voorbeeldtoets.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Een niveautest bewijst één niveau (A1 tot C2) met het certificaat van dat niveau.",
  "Get a final assessment": "Eindtoets regelen",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "Je organisatie geeft je je toetsen. Zodra dat gebeurt, staat je eindtoets hier."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "Je organisatie geeft je je toetsen. Zodra dat gebeurt, staat je eindtoets hier.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "Je eindtoets: één echte toets van de toets die je kiest, met een certificaat. Inbegrepen bij Volledige toegang.",
+ "Final assessment": "Eindtoets",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Kies de toets voor je eindtoets. Hij gaat open na een proefexamen van die toets, of in de laatste 7 dagen van je toegang. Je kunt dit later niet meer wijzigen.",
+ "Choose this test": "Deze toets kiezen",
+ "Couldn't save your choice. Try again.": "Kon je keuze niet opslaan. Probeer het opnieuw.",
+ "Final assessment · included with Full access": "Eindtoets · inbegrepen bij Volledige toegang",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Volledige toegang bevat er één: kies hier de toets, daarna gaat hij open na een proefexamen van die toets.",
+ "One final assessment on the test you choose": "Eén eindtoets van de toets die je kiest",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Elke cursist met licentie krijgt één eindtoets, een echte toets met certificaat.",
+ "Your plan includes a final assessment": "Je abonnement bevat een eindtoets",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Kies je toets in Mijn toetsen. Hij gaat open na een proefexamen van die toets, of in de laatste 7 dagen van je toegang, en eindigt met een certificaat.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "De toets voor je eindtoets van {{program}} is ingesteld. Maak hem in Mijn toetsen vóór {{date}}."
 }

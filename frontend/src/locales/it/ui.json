@@ -4663,5 +4663,17 @@
  "With Real test + certificate, it opens after a free sample.": "Con Test ufficiale + certificato, si apre dopo una prova gratuita.",
  "A level test proves one level (A1 to C2) with that level's certificate.": "Un test di livello attesta un livello (da A1 a C2) con il certificato di quel livello.",
  "Get a final assessment": "Ottieni una valutazione finale",
- "Your organization gives you your tests. When it does, your final assessment shows here.": "La tua organizzazione ti assegna i test. Quando lo farà, la tua valutazione finale apparirà qui."
+ "Your organization gives you your tests. When it does, your final assessment shows here.": "La tua organizzazione ti assegna i test. Quando lo farà, la tua valutazione finale apparirà qui.",
+ "Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.": "La tua valutazione finale: un test ufficiale sul test che scegli, con certificato. Inclusa in Accesso completo.",
+ "Final assessment": "Valutazione finale",
+ "Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.": "Scegli il test per la tua valutazione finale. Si apre dopo una simulazione d'esame di quel test o negli ultimi 7 giorni del tuo accesso. Non potrai cambiarlo in seguito.",
+ "Choose this test": "Scegli questo test",
+ "Couldn't save your choice. Try again.": "Impossibile salvare la tua scelta. Riprova.",
+ "Final assessment · included with Full access": "Valutazione finale · inclusa in Accesso completo",
+ "Full access includes one: choose its test here, then it opens after a mock test of that test.": "Accesso completo ne include una: scegli qui il suo test, poi si apre dopo una simulazione d'esame di quel test.",
+ "One final assessment on the test you choose": "Una valutazione finale sul test che scegli",
+ "Each licensed learner gets one final assessment, a real test with a certificate.": "Ogni studente con licenza riceve una valutazione finale, un test ufficiale con certificato.",
+ "Your plan includes a final assessment": "Il tuo piano include una valutazione finale",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Scegli il tuo test in I miei test. Si apre dopo una simulazione d'esame di quel test o negli ultimi 7 giorni del tuo accesso, e si conclude con un certificato.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "La tua valutazione finale per {{program}} ha il suo test. Svolgila in I miei test entro il {{date}}."
 }

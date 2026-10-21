@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} మంది అభ్యాసకులు ఇంకా తమ తుది అసెస్‌మెంట్ కోసం ఎదురుచూస్తున్నారు. ఒక్కొక్కరికి {{credits}} క్రెడిట్‌లు అవసరం.",
  "Real test withdrawn before it was started": "ప్రారంభించకముందే అసలు టెస్ట్ ఉపసంహరించబడింది",
  "Level test withdrawn before it was started": "ప్రారంభించకముందే స్థాయి టెస్ట్ ఉపసంహరించబడింది",
- "Test expired without being started": "టెస్ట్ ప్రారంభించకుండానే గడువు ముగిసింది"
+ "Test expired without being started": "టెస్ట్ ప్రారంభించకుండానే గడువు ముగిసింది",
+ "Your plan includes a final assessment": "మీ ప్లాన్‌లో ఒక తుది అసెస్‌మెంట్ చేర్చబడింది",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "నా టెస్ట్‌లులో మీ టెస్ట్‌ను ఎంచుకోండి. ఆ టెస్ట్ యొక్క ఒక మాక్ పరీక్ష తర్వాత, లేదా మీ యాక్సెస్ చివరి 7 రోజుల్లో ఇది తెరుచుకుంటుంది, సర్టిఫికెట్‌తో ముగుస్తుంది.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}.": "{{program}} కోసం మీ తుది అసెస్‌మెంట్ టెస్ట్ సెట్ చేయబడింది. {{date}} లోపు నా టెస్ట్‌లులో దాన్ని రాయండి."
 }
