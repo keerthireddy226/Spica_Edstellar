@@ -49,9 +49,6 @@ export function orgCertificates(batchId?: string) {
   return api<{ certificates: CertificateSummary[] }>(`/certificates/org${batchId ? `?batchId=${batchId}` : ""}`);
 }
 
-export function issueCertificate(learnerId: string, batchId: string | null) {
-  return api<CertificateSummary>("/certificates/org/issue", { method: "POST", body: JSON.stringify({ learnerId, batchId }) });
-}
 
 export function revokeCertificate(id: string) {
   return api<{ ok: true }>(`/certificates/org/${id}`, { method: "DELETE" });
@@ -61,9 +58,6 @@ export function managerCertificates(batchId?: string) {
   return api<{ certificates: CertificateSummary[] }>(`/certificates/manager${batchId ? `?batchId=${batchId}` : ""}`);
 }
 
-export function managerIssueCertificate(learnerId: string) {
-  return api<CertificateSummary>("/certificates/manager/issue", { method: "POST", body: JSON.stringify({ learnerId }) });
-}
 
 export function managerRevokeCertificate(id: string) {
   return api<{ ok: true }>(`/certificates/manager/${id}`, { method: "DELETE" });

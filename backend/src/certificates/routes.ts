@@ -95,6 +95,8 @@ const SKILL_RESULT = z.object({ level: LEVEL.optional(), score: z.number().int()
 
 certificatesRouter.post("/me/versant", requireAuth, async (req: AuthedRequest, res, next) => {
   if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
+  // An outside test result only went on course certificates, which have stopped.
+  if (!COMPLETION_CERTIFICATES) return res.status(410).json({ error: "stopped" });
   try {
     const body = z
       .object({

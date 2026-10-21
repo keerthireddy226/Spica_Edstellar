@@ -73,7 +73,6 @@ export async function completeBatch(args: { tenantId: string; batchId: string; a
         `${s.practised} of ${s.learners} learners practised.`,
         goal,
         released ? (released === 1 ? "1 unused fixed license went back to the pool." : `${released} unused fixed licenses went back to the pool.`) : null,
-        certificates ? (certificates === 1 ? "1 completion certificate issued." : `${certificates} completion certificates issued.`) : null,
       ]
         .filter(Boolean)
         .join(" "),

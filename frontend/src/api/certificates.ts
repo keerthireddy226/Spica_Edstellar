@@ -47,24 +47,9 @@ export interface CertificateRequest {
   versant: VersantResult | null;
 }
 
-export const getCertificateStatus = () => api<CertificateStatus>("/certificates/me/status");
-
-export const saveVersantResult = (body: {
-  takenOn: string;
-  overallLevel: Level;
-  overallScore?: number | null;
-  skills?: Partial<Record<SkillName, SkillResult>>;
-  proofBase64?: string | null;
-}) => api<VersantResult>("/certificates/me/versant", { method: "POST", body: JSON.stringify(body) });
-
-export const requestCertificate = () => api<{ id: string }>("/certificates/me/request", { method: "POST", body: "{}" });
-
 export const versantProofUrl = (id: string) => `/api/certificates/versant/${id}/proof`;
 
 export const getCertificateRequests = (status: "pending" | "all") => api<{ requests: CertificateRequest[] }>(`/certificates/requests?status=${status}`);
-
-export const decideCertificateRequest = (id: string, decision: { issue: true; includeVersant: boolean } | { issue: false; note: string }) =>
-  api<{ issued: boolean; code?: string }>(`/certificates/requests/${id}/decide`, { method: "POST", body: JSON.stringify(decision) });
 
 export const emailTestDates = () => api<{ sent: number }>("/roadmap/calendar/email", { method: "POST", body: "{}" });
 
