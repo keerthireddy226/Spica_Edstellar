@@ -123,7 +123,15 @@ export function OrgAdminTests() {
                     .filter((p) => p.kind === g.kind)
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        {`${p.testName ?? p.name} · ${p.kind === "assessment" ? tr("{{n}} credits", { n: p.credits }) : tr("{{n}} credits a month", { n: p.credits })}`}
+                        {`${p.testName ?? p.name} · ${
+                          p.kind === "assessment"
+                            ? p.credits === 1
+                              ? tr("1 credit")
+                              : tr("{{n}} credits", { n: p.credits })
+                            : p.credits === 1
+                              ? tr("1 credit a month")
+                              : tr("{{n}} credits a month", { n: p.credits })
+                        }`}
                       </option>
                     ))}
                 </optgroup>
