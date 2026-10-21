@@ -53,6 +53,19 @@ export function unitPriceCents(customCents: number | null, quantity: number): nu
   return price;
 }
 
+// What one invitation to a test costs: the test's assessment price in credits
+// (the products list), else 1 (the placement test).
+export async function inviteCost(testKind: string): Promise<number> {
+  const r = await pool.query(`SELECT credits FROM products WHERE id = $1`, [`assess_${testKind}`]);
+  return Math.max(1, Number(r.rows[0]?.credits ?? 1));
+}
+
+// The credits an invitation took, for its refund.
+async function chargedFor(assessmentId: string): Promise<number> {
+  const r = await pool.query(`SELECT coalesce(-sum(delta), 1)::int AS n FROM recruitment_credit_events WHERE assessment_id = $1 AND reason = 'invite'`, [assessmentId]);
+  return Math.max(1, r.rows[0].n);
+}
+
 export async function creditBalance(tenantId: string): Promise<number> {
   const r = await pool.query(`SELECT coalesce(sum(delta), 0)::int AS n FROM recruitment_credit_events WHERE tenant_id = $1`, [tenantId]);
   return r.rows[0].n;
@@ -101,8 +114,8 @@ export interface InviteInput {
   lastName?: string | null;
 }
 
-// Invites people to one job opening. Each invitation uses one credit; one
-// live invitation per email per job.
+// Invites people to one job opening. Each invitation costs the test's
+// credits; one live invitation per email per job.
 export async function inviteCandidates(args: { tenantId: string; jobId: string; actorId: string; people: InviteInput[] }) {
   const job = (await pool.query(`SELECT * FROM recruitment_jobs WHERE id = $1 AND tenant_id = $2`, [args.jobId, args.tenantId])).rows[0];
   if (!job) throw new RecruitmentError("job_not_found", 404);
@@ -126,7 +139,8 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
   const fresh = people.filter((p) => !already.has(p.email.trim().toLowerCase()));
 
   const balance = await creditBalance(args.tenantId);
-  if (fresh.length > balance) throw new RecruitmentError("not_enough_credits", 402, { needed: fresh.length, balance });
+  const cost = await inviteCost(job.test_kind);
+  if (fresh.length * cost > balance) throw new RecruitmentError("not_enough_credits", 402, { needed: fresh.length * cost, balance });
 
   // Practice-test products: each candidate gets one of the product's sets.
   let examIds: string[] = [];
@@ -149,10 +163,11 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
       [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt],
     );
     const id = r.rows[0].id;
-    await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, -1, 'invite', $2, $3)`, [
+    await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $4, 'invite', $2, $3)`, [
       args.tenantId,
       id,
       args.actorId,
+      -cost,
     ]);
     sendCandidateInviteEmail({ to: email, orgName: org.name, jobTitle: job.title, token, expiresAt, lang }).catch((err) =>
       console.error("failed to send candidate invite:", err),
@@ -221,7 +236,7 @@ export async function cancelInvite(tenantId: string, assessmentId: string, actor
   await pool.query(`UPDATE recruitment_assessments SET status = 'cancelled' WHERE id = $1`, [assessmentId]);
   if (!a.started_at && !a.credit_refunded) {
     await pool.query(`UPDATE recruitment_assessments SET credit_refunded = true WHERE id = $1`, [assessmentId]);
-    await addCredits({ tenantId, delta: 1, reason: "refund", assessmentId, actorId, note: "Invitation cancelled before it was started" });
+    await addCredits({ tenantId, delta: await chargedFor(assessmentId), reason: "refund", assessmentId, actorId, note: "Invitation cancelled before it was started" });
   }
   await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = (SELECT candidate_id FROM recruitment_assessments WHERE id = $1)`, [
     assessmentId,
@@ -356,7 +371,7 @@ export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) =
   for (const a of expired.rows) {
     if (!a.started_at && !a.credit_refunded) {
       await pool.query(`UPDATE recruitment_assessments SET credit_refunded = true WHERE id = $1`, [a.id]);
-      await addCredits({ tenantId: a.tenant_id, delta: 1, reason: "refund", assessmentId: a.id, note: "Invitation expired without being started" });
+      await addCredits({ tenantId: a.tenant_id, delta: await chargedFor(a.id), reason: "refund", assessmentId: a.id, note: "Invitation expired without being started" });
     }
   }
 

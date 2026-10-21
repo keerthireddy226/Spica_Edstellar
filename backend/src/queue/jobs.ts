@@ -1,5 +1,6 @@
 import { registerHandler } from "./queue.js";
 import { issueDueResultCertificates } from "../assessment/service.js";
+import { refundExpiredTests } from "../orgTests/service.js";
 import { deliverWebhook } from "../webhooks/service.js";
 import { buildExport, eraseLearner, runRetention } from "../governance/service.js";
 import { every } from "./schedule.js";
@@ -42,6 +43,10 @@ export function registerJobs() {
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
   // Real assessment attempts: certificates once scored and proctoring is clear.
+  every(60, "org-tests.refunds", async () => {
+    const n = await refundExpiredTests();
+    if (n > 0) console.log(`org tests: ${n} unused real tests refunded`);
+  });
   every(5, "assessment.certificates", async () => {
     const n = await issueDueResultCertificates();
     if (n > 0) console.log(`result certificates: ${n} issued`);

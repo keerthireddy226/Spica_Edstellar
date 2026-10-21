@@ -22,7 +22,7 @@ export function RecruitmentPlanCard() {
       <div className="flex-1 min-w-0">
         <p className="font-display font-bold text-ink">{tr("Recruitment")}</p>
         <p className="text-sm text-muted">
-          {tr("{{n}} assessment credits left. One credit = one candidate assessment, {{p}} each.", { n: o.credits, p: `$${(o.unitPriceCents / 100).toFixed(2)}` })}
+          {tr("{{n}} credits left, {{p}} each. A candidate's test takes 1 to 4 credits, depending on the test.", { n: o.credits, p: `$${(o.unitPriceCents / 100).toFixed(2)}` })}
         </p>
       </div>
       <Link to={`${ROUTES.ORG_ADMIN_RECRUITMENT}?tab=credits`} className="text-sm font-semibold text-navy-deep underline shrink-0">

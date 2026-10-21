@@ -43,6 +43,7 @@ import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
 import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
 import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
 import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
+import { OrgAdminTests } from "@/pages/orgAdmin/OrgAdminTests";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -304,6 +305,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_MANAGERS} element={<OrgAdminManagers />} />
           <Route path={ROUTES.ORG_ADMIN_LEARNERS} element={<OrgAdminLearners />} />
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
+          <Route path={ROUTES.ORG_ADMIN_TESTS} element={<OrgAdminTests />} />
           <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
           <Route path={ROUTES.ORG_ADMIN_AUDIT} element={<OrgAdminAudit />} />
           <Route path={ROUTES.ORG_ADMIN_INTEGRITY} element={<IntegrityReviews />} />

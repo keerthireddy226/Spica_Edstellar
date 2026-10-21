@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import { ROUTES } from "@/constants/routes";
 import { TEST_KIND_LABEL } from "@/components/recruitment/testKinds";
+import { getProducts } from "@/api/access";
 import {
   addRecruiter,
   cancelInvite,
@@ -385,6 +386,13 @@ function parsePeople(text: string): { email: string; firstName?: string; lastNam
 }
 
 function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; onInvited: () => void }) {
+  // Credits per invitation: the test's assessment price (the placement test: 1).
+  const [cost, setCost] = useState(1);
+  useEffect(() => {
+    getProducts()
+      .then((r) => setCost(Math.max(1, r.products.find((p) => p.id === `assess_${job.test_kind}`)?.credits ?? 1)))
+      .catch(() => setCost(1));
+  }, [job.test_kind]);
   const [email, setEmail] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -440,7 +448,14 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
         <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} rows={5} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm font-mono" />
       </label>
       <p className="text-xs text-muted">
-        {tr("{{n}} people ready. Each invitation uses one credit ({{c}} left). Unused invitations are refunded when they expire or are cancelled.", { n: people.length, c: credits })}
+        {cost === 1
+          ? tr("{{n}} people ready. Each invitation uses one credit ({{c}} left). Unused invitations are refunded when they expire or are cancelled.", { n: people.length, c: credits })
+          : tr("{{n}} people ready. Each invitation to this test uses {{k}} credits: {{t}} in all ({{c}} left). Unused invitations are refunded when they expire or are cancelled.", {
+              n: people.length,
+              k: cost,
+              t: people.length * cost,
+              c: credits,
+            })}
       </p>
       {note && <p className={`text-sm ${note.ok ? "text-success" : "text-error"}`}>{note.text}</p>}
       <div>
@@ -790,7 +805,7 @@ function CreditsPanel({ overview }: { overview: RecruitmentOverview }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Panel title={tr("Get more credits")}>
         <p className="text-sm text-muted">
-          {tr("One credit = one candidate assessment, currently {{p}}. Credits don't expire.", { p: money(overview.unitPriceCents) })}
+          {tr("One credit costs {{p}}. A test takes 1 to 4 credits: Placement 1, Speaking & Listening and Writing 2, 4 Skills Essentials 3, Professional English 4. Credits don't expire.", { p: money(overview.unitPriceCents) })}
         </p>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-sm text-ink">

@@ -46,6 +46,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.ORG_ADMIN_MANAGERS]: tr("Managers"),
   [ROUTES.ORG_ADMIN_LEARNERS]: tr("Learners"),
   [ROUTES.ORG_ADMIN_LICENSES]: tr("Licenses"),
+  [ROUTES.ORG_ADMIN_TESTS]: tr("Tests & credits"),
   [ROUTES.ORG_ADMIN_PLAN]: tr("Plan"),
   [ROUTES.ORG_ADMIN_AUDIT]: tr("Audit log"),
   [ROUTES.ORG_ADMIN_INTEGRITY]: tr("Test integrity"),

@@ -81,6 +81,7 @@ export const ROUTES = {
   ORG_ADMIN_MANAGERS: "/orgadmin/managers",
   ORG_ADMIN_LEARNERS: "/orgadmin/learners",
   ORG_ADMIN_LICENSES: "/orgadmin/licenses",
+  ORG_ADMIN_TESTS: "/orgadmin/tests",
   ORG_ADMIN_ANALYTICS: "/orgadmin/analytics",
   ORG_ADMIN_PLAN: "/orgadmin/plan",
   ORG_ADMIN_AUDIT: "/orgadmin/audit",

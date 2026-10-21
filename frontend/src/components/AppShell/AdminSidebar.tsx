@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -63,6 +63,7 @@ const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ORG_ADMIN_MANAGERS, icon: ShieldCheck, label: tr("Managers"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LEARNERS, icon: Users, label: tr("Learners"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_LICENSES, icon: KeyRound, label: tr("Licenses"), product: "skills" },
+  { to: ROUTES.ORG_ADMIN_TESTS, icon: Coins, label: tr("Tests & credits"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_CERTIFICATES, icon: Award, label: tr("Certificates"), product: "skills" },
   { to: ROUTES.ORG_ADMIN_RECRUITMENT, icon: UserSearch, label: tr("Recruitment"), product: "recruitment" },
   { to: ROUTES.ORG_ADMIN_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
