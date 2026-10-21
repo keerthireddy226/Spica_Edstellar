@@ -21,7 +21,7 @@ import {
   managerUpdateLearnerDetails,
   type ManagerBatchDetail,
 } from "@/api/manager";
-import { managerCertificates, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
+import { certificateByLearner, managerCertificates, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
 
 import { tr } from "@/i18n/tr";
 function fmt(d: string) {
@@ -55,7 +55,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
       })
       .catch(() => setMsg({ ok: false, text: tr("Could not load this batch.") }));
     managerCertificates(batchId)
-      .then((r) => setCerts(new Map(r.certificates.filter((c) => !c.revokedAt && c.userId).map((c) => [c.userId!, c]))))
+      .then((r) => setCerts(certificateByLearner(r.certificates)))
       .catch(() => {});
   }
   useEffect(load, [batchId]);
@@ -244,10 +244,14 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                       {cert ? (
                         <span className="flex items-center gap-1">
                           <a href={`/certificate/${cert.code}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
-                            <Award size={14} /> {tr("Certificate")}</a>
-                          <button onClick={() => managerRevokeCertificate(cert.id).then(load)} title={tr("Revoke")} className="text-muted hover:text-error px-1 cursor-pointer">
-                            ×
-                          </button>
+                            <Award size={14} />{" "}
+                            {cert.kind === "result" ? `${cert.cefrLevel ?? ""}${cert.spicaScore != null ? ` · ${cert.spicaScore}` : ""}` : tr("Course certificate")}
+                          </a>
+                          {cert.kind !== "result" && (
+                            <button onClick={() => managerRevokeCertificate(cert.id).then(load)} title={tr("Revoke")} className="text-muted hover:text-error px-1 cursor-pointer">
+                              ×
+                            </button>
+                          )}
                         </span>
                       ) : null}
                     </span>

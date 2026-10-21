@@ -33,6 +33,14 @@ export interface CertificateSummary {
   identityVerified?: boolean;
 }
 
+// Each learner's certificate to show: a final assessment's before a course
+// one, the newest of each.
+export function certificateByLearner(certs: CertificateSummary[]): Map<string, CertificateSummary> {
+  const rank = (c: CertificateSummary) => `${c.kind === "result" ? 1 : 0}${c.issuedAt}`;
+  const sorted = certs.filter((c) => !c.revokedAt && c.userId).sort((a, b) => rank(a).localeCompare(rank(b)));
+  return new Map(sorted.map((c) => [c.userId!, c]));
+}
+
 export function myCertificates() {
   return api<{ certificates: CertificateSummary[] }>("/certificates/mine");
 }

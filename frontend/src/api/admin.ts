@@ -447,6 +447,16 @@ export function onboardConsoleLearnersBulk(batchId: string, rows: BulkLearnerRow
 }
 
 export interface LearnerProfile {
+  // Final assessments and level tests, each attempt's result and certificate.
+  finalAssessments?: {
+    kind: "prep" | "assessment" | "level" | "final";
+    name: string;
+    endsAt: string;
+    attemptsLeft: number;
+    unlock: string;
+    chooseTest: boolean;
+    attempts: { startedAt: string; status: string; spicaScore: number | null; level: string | null; certificateCode: string | null; validUntil: string | null }[];
+  }[];
   // Org learners only: what their organization records about them.
   employment?: LearnerDetails & { demographicsSource: "self" | "organization" | null };
   batchHistory?: { fromBatch: string | null; toBatch: string | null; reason: string | null; movedBy: string | null; movedAt: string }[];

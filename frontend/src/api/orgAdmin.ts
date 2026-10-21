@@ -1,3 +1,4 @@
+import type { CertifiedSummary } from "@/components/CertifiedCell";
 import { api } from "@/lib/api";
 import type { ActivityKind, LearnerProfile, ManagerDetail, ManagerOnboardedLearner } from "@/api/admin";
 import type { LearnerAccess } from "@/api/licenses";
@@ -176,6 +177,8 @@ export function reactivateManager(id: string): Promise<{ id: string }> {
 
 export interface OrgLearner extends LearnerDetails {
   id: string;
+  // Their latest final assessment certificate.
+  certified?: CertifiedSummary | null;
   batchId?: string | null;
   participantId: string | null;
   license?: LearnerAccess;

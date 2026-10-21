@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { certifiedMap } from "../certificates/service.js";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { Router } from "express";
@@ -785,6 +786,7 @@ adminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next) 
        ORDER BY u.created_at DESC
        LIMIT 200`,
     );
+    const certified = await certifiedMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
@@ -793,6 +795,7 @@ adminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next) 
         firstName: r.first_name,
         lastName: r.last_name,
         plan: r.tenant_type,
+        certified: certified.get(r.id) ?? null,
         sessionCount: r.session_count,
         active: !r.deleted_at,
         createdAt: r.created_at,
@@ -1299,9 +1302,11 @@ adminRouter.get("/console/learners", requireAuth, async (req: AuthedRequest, res
       params,
     );
     const access = await learnerAccessMap(result.rows.map((r) => r.id));
+    const certifiedAll = await certifiedMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
         license: access.get(r.id),
+        certified: certifiedAll.get(r.id) ?? null,
         id: r.id,
         participantId: r.participant_id ?? null,
         email: r.email,

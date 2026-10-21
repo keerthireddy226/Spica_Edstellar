@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { myTests } from "../assessment/service.js";
 
 // Same completion rule used everywhere: a session counts only if every item got a real answer.
 const GENUINELY_COMPLETED = `
@@ -56,7 +57,18 @@ export async function buildLearnerProfile(learnerId: string, scope: { tenantId: 
   const r = roadmap.rows[0];
   const prog = progress.rows[0];
 
+  // Their final assessments (and level tests) with each attempt's result and certificate.
+  const tests = (await myTests(learnerId).catch(() => [])).map((t) => ({
+    kind: t.kind,
+    name: t.kind === "level" && t.level ? `Level ${t.level} test` : (t.testName ?? t.name),
+    endsAt: t.endsAt,
+    attemptsLeft: t.attemptsLeft,
+    unlock: t.unlock.state,
+    chooseTest: t.chooseTest,
+    attempts: t.attempts.map((a) => ({ startedAt: a.startedAt, status: a.status, spicaScore: a.spicaScore, level: a.level, certificateCode: a.certificateCode, validUntil: a.validUntil })),
+  }));
   return {
+    finalAssessments: tests,
     learner: {
       id: learner.id,
       participantId: learner.participant_id,

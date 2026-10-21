@@ -29,6 +29,7 @@ import {
 import type { OrgLearner } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { CertifiedCell } from "@/components/CertifiedCell";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
@@ -326,6 +327,7 @@ export function ManagerLearners() {
                 <th className="px-4 py-3">{tr("Learner")}</th>
                 <th className="px-4 py-3">{tr("Department")}</th>
                 <th className="px-4 py-3">{tr("Batch")}</th>
+                <th className="px-4 py-3">{tr("Certified")}</th>
                 <th className="px-4 py-3">{tr("Sessions completed")}</th>
                 <th className="px-4 py-3">{tr("License")}</th>
                 <th className="px-4 py-3">{tr("Status")}</th>
@@ -354,6 +356,7 @@ export function ManagerLearners() {
                     {(l.employeeId || l.jobTitle) && <p className="text-xs">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
                   </td>
                   <td className="px-4 py-3 text-muted">{l.batchName ?? "—"}</td>
+                  <td className="px-4 py-3"><CertifiedCell c={l.certified} /></td>
                   <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
                   <td className="px-4 py-3">{l.license && <LicenseStatusPill license={l.license} />}</td>
                   <td className="px-4 py-3">

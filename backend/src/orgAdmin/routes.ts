@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { certifiedMap } from "../certificates/service.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -394,6 +395,7 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
       [req.params.id],
     );
     const access = await learnerAccessMap(learners.rows.map((r) => r.id));
+    const certified = await certifiedMap(learners.rows.map((r) => r.id));
     res.json({
       batch: {
         id: b.id,
@@ -427,6 +429,8 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        // Their latest final assessment certificate.
+        certified: certified.get(r.id) ?? null,
         ...employeeJson(r),
       })),
     });
@@ -802,6 +806,7 @@ orgAdminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, nex
       [tenantId],
     );
     const access = await learnerAccessMap(result.rows.map((r) => r.id));
+    const certified = await certifiedMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
@@ -816,6 +821,7 @@ orgAdminRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, nex
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        certified: certified.get(r.id) ?? null,
         ...employeeJson(r),
       })),
     });

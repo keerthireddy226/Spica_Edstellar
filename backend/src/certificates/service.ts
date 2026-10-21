@@ -179,8 +179,10 @@ export async function listForTenant(tenantId: string, batchId?: string | null): 
   return r.rows.map((x) => ({ ...toCert(x), userId: x.user_id }));
 }
 
+// Only an earlier course certificate can be revoked by hand; a final
+// assessment's is held or cleared through the proctoring review.
 export async function revokeCertificate(tenantId: string, id: string): Promise<boolean> {
-  const r = await pool.query(`UPDATE certificates SET revoked_at = now() WHERE id = $1 AND tenant_id = $2 AND revoked_at IS NULL`, [id, tenantId]);
+  const r = await pool.query(`UPDATE certificates SET revoked_at = now() WHERE id = $1 AND tenant_id = $2 AND revoked_at IS NULL AND kind <> 'result'`, [id, tenantId]);
   return (r.rowCount ?? 0) > 0;
 }
 
@@ -194,4 +196,36 @@ export async function verifyCertificate(code: string): Promise<(Certificate & { 
     [code.trim().toUpperCase()],
   );
   return r.rows[0] ? { ...toCert(r.rows[0]), tenantId: r.rows[0].tenant_id } : null;
+}
+
+// Each learner's latest valid final assessment certificate, for lists and reports.
+export interface Certified {
+  code: string;
+  level: string | null;
+  score: number | null;
+  testName: string | null;
+  issuedAt: string;
+  validUntil: string | null;
+}
+export async function certifiedMap(userIds: string[]): Promise<Map<string, Certified>> {
+  if (!userIds.length) return new Map();
+  const r = await pool.query(
+    `SELECT DISTINCT ON (user_id) user_id, code, cefr_level, spica_score, test_name, issued_at, valid_until FROM certificates
+     WHERE user_id = ANY($1::uuid[]) AND kind = 'result' AND revoked_at IS NULL AND (valid_until IS NULL OR valid_until >= current_date)
+     ORDER BY user_id, issued_at DESC`,
+    [userIds],
+  );
+  return new Map(
+    r.rows.map((x) => [
+      x.user_id as string,
+      {
+        code: x.code,
+        level: x.cefr_level ?? null,
+        score: x.spica_score ?? null,
+        testName: x.test_name ?? null,
+        issuedAt: new Date(x.issued_at).toISOString(),
+        validUntil: x.valid_until ? dateOnly(x.valid_until) : null,
+      },
+    ]),
+  );
 }

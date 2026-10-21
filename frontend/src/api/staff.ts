@@ -1,3 +1,4 @@
+import type { CertifiedSummary } from "@/components/CertifiedCell";
 import { api } from "@/lib/api";
 import type { LearnerAccess } from "@/api/licenses";
 import type { PlanTier } from "@/api/plans";
@@ -158,6 +159,8 @@ export function getStaffAudit(f: StaffAuditFilters) {
 
 export interface IndividualLearner {
   id: string;
+  // Their latest final assessment certificate.
+  certified?: CertifiedSummary | null;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -203,6 +206,8 @@ export const resendIndividualInvite = (id: string) => api<{ id: string; email: s
 
 export interface OrgLearnerRow {
   id: string;
+  // Their latest final assessment certificate.
+  certified?: CertifiedSummary | null;
   participantId: string | null;
   email: string;
   firstName: string | null;

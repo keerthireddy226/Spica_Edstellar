@@ -8,7 +8,7 @@ import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Award, Layers, Pencil } from "lucide-react";
-import { orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
+import { certificateByLearner, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
@@ -35,7 +35,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
 
   function loadCerts() {
     orgCertificates(batchId)
-      .then((r) => setCerts(new Map(r.certificates.filter((c) => !c.revokedAt && c.userId).map((c) => [c.userId!, c]))))
+      .then((r) => setCerts(certificateByLearner(r.certificates)))
       .catch(() => {});
   }
 
@@ -164,15 +164,21 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                         title={tr("View certificate")}
                         className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline"
                       >
-                        <Award size={14} /> {tr("Certificate")}</a>
-                      <span
-                        role="button"
-                        title={tr("Revoke certificate")}
-                        onClick={() => revokeCertificate(certs.get(l.id)!.id).then(loadCerts)}
-                        className="text-muted hover:text-error cursor-pointer px-1"
-                      >
-                        ×
-                      </span>
+                        <Award size={14} />{" "}
+                        {certs.get(l.id)!.kind === "result"
+                          ? `${certs.get(l.id)!.cefrLevel ?? ""}${certs.get(l.id)!.spicaScore != null ? ` · ${certs.get(l.id)!.spicaScore}` : ""}`
+                          : tr("Course certificate")}
+                      </a>
+                      {certs.get(l.id)!.kind !== "result" && (
+                        <span
+                          role="button"
+                          title={tr("Revoke certificate")}
+                          onClick={() => revokeCertificate(certs.get(l.id)!.id).then(loadCerts)}
+                          className="text-muted hover:text-error cursor-pointer px-1"
+                        >
+                          ×
+                        </span>
+                      )}
                     </span>
                   ) : null}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>

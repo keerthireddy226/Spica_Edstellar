@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { certifiedMap } from "../certificates/service.js";
 import { PlanError, assertFeature, assertWithinLimit } from "../plans/service.js";
 import { BATCH_END_SQL, assertBatchActive, cloneBatch, completeBatch } from "../batches/lifecycle.js";
 import { buildLearnerProfile } from "../learners/profile.js";
@@ -123,6 +124,7 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
       [batchIds],
     );
     const access = await learnerAccessMap(result.rows.map((r) => r.id));
+    const certified = await certifiedMap(result.rows.map((r) => r.id));
     res.json({
       learners: result.rows.map((r) => ({
         id: r.id,
@@ -137,6 +139,8 @@ managerRouter.get("/learners", requireAuth, async (req: AuthedRequest, res, next
         hasLoggedIn: r.has_logged_in,
         createdAt: r.created_at,
         license: access.get(r.id),
+        // Their latest final assessment certificate.
+        certified: certified.get(r.id) ?? null,
         ...employeeJson(r),
       })),
     });

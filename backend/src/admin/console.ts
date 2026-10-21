@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { certifiedMap } from "../certificates/service.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -446,9 +447,11 @@ staffConsoleRouter.get("/individuals", requireAuth, async (req: AuthedRequest, r
        LIMIT 1000`,
     );
     const access = await learnerAccessMap(r.rows.map((x) => x.id));
+    const certified = await certifiedMap(r.rows.map((x) => x.id));
     res.json({
       learners: r.rows.map((x) => ({
         id: x.id,
+        certified: certified.get(x.id) ?? null,
         email: x.email,
         firstName: x.first_name,
         lastName: x.last_name,

@@ -27,6 +27,7 @@ import {
 import { Avatar, EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
+import { CertifiedCell } from "@/components/CertifiedCell";
 const MONTHS = [0, 1, 2, 3, 6, 12];
 const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
@@ -212,6 +213,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                 <th className="px-4 py-3">{tr("Learner")}</th>
                 <th className="px-4 py-3">{tr("Organization · batch")}</th>
                 <th className="px-4 py-3">{tr("Level")}</th>
+                <th className="px-4 py-3">{tr("Certified")}</th>
                 <th className="px-4 py-3">{tr("Sessions")}</th>
                 <th className="px-4 py-3">{tr("Last practised")}</th>
                 <th className="px-4 py-3">{tr("License")}</th>
@@ -247,6 +249,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                       </p>
                     </td>
                     <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-4 py-3"><CertifiedCell c={r.certified} /></td>
                     <td className="px-4 py-3 text-muted">{r.sessionCount}</td>
                     <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
                     <td className="px-4 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
@@ -347,6 +350,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                 <th className="px-4 py-3">{tr("Learner")}</th>
                 <th className="px-4 py-3">{tr("Plan")}</th>
                 <th className="px-4 py-3">{tr("Level")}</th>
+                <th className="px-4 py-3">{tr("Certified")}</th>
                 <th className="px-4 py-3">{tr("Sessions")}</th>
                 <th className="px-4 py-3">{tr("Last practised")}</th>
                 <th className="px-4 py-3">{tr("Joined")}</th>
@@ -379,6 +383,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                       {r.license && r.license.status !== "none" && <div className="mt-1"><LicenseStatusPill license={r.license} /></div>}
                     </td>
                     <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-4 py-3"><CertifiedCell c={r.certified} /></td>
                     <td className="px-4 py-3 text-muted">{r.sessions}</td>
                     <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
                     <td className="px-4 py-3 text-muted">

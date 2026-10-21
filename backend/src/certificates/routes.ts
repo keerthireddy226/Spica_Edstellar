@@ -265,7 +265,7 @@ certificatesRouter.get("/manager", requireAuth, async (req: AuthedRequest, res, 
     const batchId = typeof req.query.batchId === "string" ? req.query.batchId : null;
     if (batchId && !batches.includes(batchId)) return res.status(404).json({ error: "batch_not_found" });
     const r = await pool.query(
-      `SELECT id, code, user_id, learner_name, participant_id, organization_name, batch_name, cefr_level, issued_at, revoked_at
+      `SELECT id, code, user_id, learner_name, participant_id, organization_name, batch_name, cefr_level, issued_at, revoked_at, kind, test_name, spica_score, valid_until
        FROM certificates WHERE batch_id = ANY($1::uuid[]) ORDER BY issued_at DESC LIMIT 500`,
       [batchId ? [batchId] : batches],
     );
@@ -281,6 +281,10 @@ certificatesRouter.get("/manager", requireAuth, async (req: AuthedRequest, res, 
         cefrLevel: c.cefr_level,
         issuedAt: c.issued_at,
         revokedAt: c.revoked_at,
+        kind: c.kind,
+        testName: c.test_name,
+        spicaScore: c.spica_score,
+        validUntil: c.valid_until,
       })),
     });
   } catch (err) {
@@ -308,7 +312,7 @@ certificatesRouter.delete("/manager/:id", requireAuth, async (req: AuthedRequest
     const batches = await managerBatches(req);
     if (!batches) return res.status(403).json({ error: "forbidden" });
     const r = await pool.query(
-      `UPDATE certificates SET revoked_at = now() WHERE id = $1 AND batch_id = ANY($2::uuid[]) AND revoked_at IS NULL RETURNING id`,
+      `UPDATE certificates SET revoked_at = now() WHERE id = $1 AND batch_id = ANY($2::uuid[]) AND revoked_at IS NULL AND kind <> 'result' RETURNING id`,
       [String(req.params.id), batches],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: "certificate_not_found" });

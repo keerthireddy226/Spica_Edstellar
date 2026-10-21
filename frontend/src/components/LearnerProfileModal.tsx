@@ -51,6 +51,17 @@ const SESSION_TYPE_LABEL: Record<string, string> = {
 };
 
 // Every learner row anywhere in the Super Admin console — Individual
+// How an attempt at a final assessment stands.
+const ATTEMPT_STATUS: Record<string, () => string> = {
+  in_progress: () => tr("In progress"),
+  scoring: () => tr("Being scored"),
+  under_review: () => tr("Under review"),
+  certified: () => tr("Certified"),
+  passed: () => tr("Passed"),
+  not_passed: () => tr("Not passed"),
+  void: () => tr("Not valid"),
+};
+
 // Learners, a Manager's activity list, an Org Admin's/Admin's learner
 // tables — opens this same full detail view: onboarding answers, placement
 // result, roadmap, progress, and activity, not just a row of summary stats.
@@ -198,6 +209,45 @@ export function LearnerProfileModal({
               {onboarding.pastAttemptsStatus && onboarding.pastAttemptsStatus !== "first" && (
                 <Field label={tr("Previous score")} value={onboarding.prevScore ? `${onboarding.prevScore} (${onboarding.prevDate ?? tr("date unknown")})` : "—"} />
               )}
+            </div>
+          )}
+        </Section>
+
+        <Section title={tr("Final assessment")}>
+          {!profile.finalAssessments?.length ? (
+            <p className="text-sm text-muted">{tr("No final assessment yet.")}</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {profile.finalAssessments.map((f, i) => (
+                <div key={i} className="flex flex-col gap-1.5 text-sm">
+                  <p className="font-semibold text-ink">
+                    {f.chooseTest ? tr("Final assessment (test not chosen yet)") : f.name}
+                    <span className="font-normal text-muted">
+                      {" · "}
+                      {f.attemptsLeft > 0
+                        ? f.unlock === "open"
+                          ? tr("Open to take")
+                          : f.unlock === "expired"
+                            ? tr("Ended {{date}}", { date: dateTime(f.endsAt) })
+                            : tr("Not open yet")
+                        : tr("Taken")}
+                    </span>
+                  </p>
+                  {f.attempts.map((a, j) => (
+                    <p key={j} className="text-xs text-muted flex flex-wrap gap-x-2">
+                      <span>{dateTime(a.startedAt)}</span>
+                      <span className="font-semibold text-ink">{ATTEMPT_STATUS[a.status]?.() ?? a.status}</span>
+                      {a.spicaScore !== null && <span>{tr("Spica score {{score}} · {{level}}", { score: a.spicaScore, level: a.level ?? "—" })}</span>}
+                      {a.certificateCode && (
+                        <a href={`/certificate/${a.certificateCode}`} target="_blank" rel="noopener" className="font-semibold text-success hover:underline">
+                          {tr("Certificate")}
+                          {a.validUntil ? ` · ${tr("valid until {{date}}", { date: a.validUntil })}` : ""}
+                        </a>
+                      )}
+                    </p>
+                  ))}
+                </div>
+              ))}
             </div>
           )}
         </Section>
