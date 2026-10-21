@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "Du hast einen anderen zeitgebundenen Test offen. Schließe ihn zuerst ab.",
  "This test can't start now. Go back to My tests to see why.": "Dieser Test kann jetzt nicht starten. Unter Meine Tests siehst du, warum.",
  "How the test runs": "So läuft der Test ab",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-Score {{score}}, Niveau {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-Score {{score}}, Niveau {{level}}.",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 Lernende*r hat noch kein Niveau: weder ein Niveautest noch eine Probeprüfung wurde abgelegt."
 }

@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "Bạn đang có một bài thi tính giờ khác. Hãy hoàn thành bài đó trước.",
  "This test can't start now. Go back to My tests to see why.": "Bài thi này chưa thể bắt đầu. Hãy quay lại Bài thi của tôi để xem lý do.",
  "How the test runs": "Cách bài thi diễn ra",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Điểm Spica {{score}}, trình độ {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Điểm Spica {{score}}, trình độ {{level}}.",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 học viên chưa có trình độ: họ chưa làm bài kiểm tra trình độ hay bài thi thử nào."
 }

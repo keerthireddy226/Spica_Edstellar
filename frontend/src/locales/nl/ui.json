@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "Je hebt al een andere getimede toets bezig. Rond die eerst af.",
  "This test can't start now. Go back to My tests to see why.": "Deze toets kan nu niet starten. Ga terug naar Mijn toetsen om te zien waarom.",
  "How the test runs": "Zo verloopt de toets",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-score {{score}}, niveau {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-score {{score}}, niveau {{level}}.",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 cursist heeft nog geen niveau: deze heeft geen niveautest of proeftoets gedaan."
 }

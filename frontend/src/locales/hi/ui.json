@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "आपका एक और समयबद्ध टेस्ट चल रहा है। पहले उसे पूरा करें।",
  "This test can't start now. Go back to My tests to see why.": "यह टेस्ट अभी शुरू नहीं हो सकता। वजह जानने के लिए मेरे टेस्ट पर वापस जाएँ।",
  "How the test runs": "टेस्ट कैसे चलता है",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica स्कोर {{score}}, स्तर {{level}}।"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica स्कोर {{score}}, स्तर {{level}}।",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 शिक्षार्थी का अभी कोई स्तर नहीं है: उन्होंने कोई स्तर टेस्ट या मॉक टेस्ट नहीं दिया है।"
 }

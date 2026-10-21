@@ -412,7 +412,11 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
       <Card
         className="br-page br-flow"
         title={tr("Learners")}
-        aside={<span className="text-[13px] text-muted print:hidden">{data.canOpenReports ? tr("Click a name to open their score report") : tr("Sorted by Spica score")}</span>}
+        aside={
+          <span className="text-[13px] text-muted print:hidden">
+            {data.learners.some((l) => l.reportSessionId) ? tr("Click a name to open their score report") : tr("Sorted by Spica score")}
+          </span>
+        }
       >
         <div className="overflow-x-auto print:overflow-visible border border-rule rounded-xl">
           <table className="w-full min-w-[720px] print:min-w-0 text-[13.5px] border-collapse">
@@ -475,7 +479,11 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
           </table>
         </div>
         {withLevel < learners.length && (
-          <p className="text-[13px] text-muted">{tr("{{n}} learners have no level yet: they haven't taken a level test or mock test.", { n: learners.length - withLevel })}</p>
+          <p className="text-[13px] text-muted">
+            {learners.length - withLevel === 1
+              ? tr("1 learner has no level yet: they haven't taken a level test or mock test.")
+              : tr("{{n}} learners have no level yet: they haven't taken a level test or mock test.", { n: learners.length - withLevel })}
+          </p>
         )}
       </Card>
 

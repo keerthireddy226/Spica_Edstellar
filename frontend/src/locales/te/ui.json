@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "మీకు సమయ పరిమితి ఉన్న మరో టెస్ట్ జరుగుతోంది. ముందుగా దాన్ని పూర్తి చేయండి.",
  "This test can't start now. Go back to My tests to see why.": "ఈ టెస్ట్ ఇప్పుడు ప్రారంభం కాదు. ఎందుకో చూడటానికి నా టెస్ట్‌లుకు తిరిగి వెళ్లండి.",
  "How the test runs": "టెస్ట్ ఎలా జరుగుతుంది",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica స్కోర్ {{score}}, స్థాయి {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica స్కోర్ {{score}}, స్థాయి {{level}}.",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 అభ్యాసకుడికి ఇంకా స్థాయి లేదు: స్థాయి టెస్ట్ లేదా మాక్ పరీక్ష రాయలేదు."
 }

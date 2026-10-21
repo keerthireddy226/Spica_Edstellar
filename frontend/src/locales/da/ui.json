@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "Du har en anden tidsbegrænset test i gang. Gør den færdig først.",
  "This test can't start now. Go back to My tests to see why.": "Denne test kan ikke starte nu. Gå tilbage til Mine test for at se hvorfor.",
  "How the test runs": "Sådan foregår testen",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-score {{score}}, niveau {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-score {{score}}, niveau {{level}}.",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 kursist har intet niveau endnu: vedkommende har ikke taget en niveautest eller prøveeksamen."
 }

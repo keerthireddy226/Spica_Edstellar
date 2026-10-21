@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "你有另一项计时测试正在进行中，请先完成。",
  "This test can't start now. Go back to My tests to see why.": "此测试现在无法开始。返回“我的测试”查看原因。",
  "How the test runs": "测试流程",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spica 分数 {{score}}，等级 {{level}}。"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spica 分数 {{score}}，等级 {{level}}。",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 名学员暂无等级：尚未参加水平测试或模拟考试。"
 }

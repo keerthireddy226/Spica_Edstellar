@@ -3,6 +3,7 @@
 // attention. Levels and Spica scores come from each learner's latest mock test
 // (else their latest level test); the start is their first level test.
 import { pool } from "../db.js";
+import { dateOnly } from "../lib/dateOnly.js";
 import { learnerAccessMap } from "../licenses/service.js";
 import { levelSummary } from "../placement/levels.js";
 import { CEFR_LEVELS } from "../placement/cefr.js";
@@ -109,7 +110,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
     )
   ).rows[0];
   if (!b) return null;
-  const beginsOn = ymd(new Date(b.begins_on));
+  const beginsOn = dateOnly(b.begins_on);
   const { from, to } = periodRange(opts.period, beginsOn, new Date(), { from: opts.from, to: opts.to });
   const toEnd = new Date(`${to}T00:00:00Z`).getTime() + DAY;
 
@@ -123,7 +124,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
   // The goal: the batch's program, else the batch's target level by its end.
   const batchEnd = b.duration_months ? new Date(new Date(b.begins_on).getTime() + b.duration_months * 30.44 * DAY) : null;
   const goalLevel: string | null = program?.target_level ?? b.target_cefr ?? null;
-  const goalDate: string | null = program ? ymd(new Date(program.target_date)) : batchEnd ? ymd(batchEnd) : null;
+  const goalDate: string | null = program ? dateOnly(program.target_date) : batchEnd ? dateOnly(batchEnd) : null;
   const daysLeft = goalDate ? Math.max(0, Math.round((Date.parse(`${goalDate}T00:00:00Z`) - Date.now()) / DAY)) : null;
 
   const members = (
@@ -187,6 +188,10 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
   const leveled = mocks.rows.filter((m) => m.result?.cefrLevel);
   const latestMock = new Map<string, Record<string, any>>();
   for (const m of leveled) latestMock.set(m.user_id, m);
+  // Only a mock with answers has a score report to open.
+  const answeredMocks = new Set(
+    (await pool.query(`SELECT DISTINCT session_id FROM attempts WHERE session_id = ANY($1::uuid[])`, [[...latestMock.values()].map((m) => m.id)])).rows.map((r) => r.session_id as string),
+  );
 
   const now = Date.now();
   const learners = members.map((m) => {
@@ -246,9 +251,9 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       inactiveDays,
       accessEndsAt: a && (a.status === "active" || a.status === "grace") ? (a.status === "grace" ? a.graceEndsAt : a.accessEndsAt) : null,
       missedMocks: mi?.missed_mocks ?? 0,
-      lastMissedMock: mi?.last_missed_mock ? ymd(new Date(mi.last_missed_mock)) : null,
+      lastMissedMock: mi?.last_missed_mock ? dateOnly(mi.last_missed_mock) : null,
       // The latest mock's score report, when the viewer may open it.
-      reportSessionId: opts.canOpenReports && mock ? (mock.id as string) : null,
+      reportSessionId: opts.canOpenReports && mock && answeredMocks.has(mock.id) ? (mock.id as string) : null,
     };
   });
 

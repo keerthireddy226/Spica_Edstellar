@@ -4330,5 +4330,6 @@
  "You have another timed test in progress. Finish it first.": "別の時間制限付きテストを受験中です。先にそちらを終了してください。",
  "This test can't start now. Go back to My tests to see why.": "このテストは今は開始できません。理由はマイテストで確認してください。",
  "How the test runs": "テストの進め方",
- "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spicaスコア {{score}}、レベル {{level}}。"
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spicaスコア {{score}}、レベル {{level}}。",
+ "1 learner has no level yet: they haven't taken a level test or mock test.": "1 人の学習者にはまだレベルがありません：レベルテストも模擬テストも受けていません。"
 }
