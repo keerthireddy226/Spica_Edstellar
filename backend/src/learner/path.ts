@@ -1,7 +1,7 @@
 // "My path" in Practice Modules: the level a learner works at in each
 // question type and skill. It starts at their level-test level for that
 // skill, moves up once most of a level's sets are done well, moves down after
-// two weak sets in a row, and a full mock exam can raise it.
+// two weak sets in a row, and a full mock test can raise it.
 import { pool } from "../db.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";

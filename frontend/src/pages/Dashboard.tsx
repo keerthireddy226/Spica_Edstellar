@@ -261,7 +261,7 @@ function QuickLinks() {
   const modulesOn = useModulesEnabled();
   const all = [
     { to: ROUTES.MODULES, label: t("nav.modules"), hint: tr("Practise one skill at a time"), icon: Layers, color: "#b5653f" },
-    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock exams"), icon: ClipboardCheck, color: "#c9965c" },
+    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock tests"), icon: ClipboardCheck, color: "#c9965c" },
     { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: tr("Chat in English with your coach"), icon: MessageCircle, color: "#6e9660" },
     { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: tr("Your skills, streaks and badges"), icon: BarChart3, color: "#a8613f" },
   ];

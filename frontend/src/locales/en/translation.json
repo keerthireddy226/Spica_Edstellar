@@ -140,10 +140,10 @@
         "goalTitle": "What's your target level or score?",
         "goalSubtitle": "The goal you're aiming for in this exam",
         "scoreTargetLabel": "Specific score target (optional)",
-        "scoreTargetPlaceholder": "e.g. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "e.g. B2, or a score of 60+",
         "exam": {
-          "versant": "Versant",
-          "versantDesc": "Speaking, Writing, Placement, Professional",
+          "versant": "Spica English certificate",
+          "versantDesc": "4 Skills, Speaking & Listening, Writing, Professional",
           "ielts": "IELTS",
           "ieltsDesc": "Academic or General Training",
           "toefl": "TOEFL iBT",
@@ -362,7 +362,7 @@
     "toggleTheme": "Toggle theme"
   },
   "practiceTests": {
-    "subtitle": "Full-length, timed mock tests matching the real Versant exam products.",
+    "subtitle": "Full-length, timed mock tests, just like the real assessment.",
     "comingSoon": "Coming soon",
     "setsCount": "{{count}} set",
     "setsCount_other": "{{count}} sets",
@@ -395,15 +395,15 @@
       "startSection": "Start {{label}}"
     },
     "versantProduct": {
-      "speakingListening": "English Speaking and Listening Test",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "Speaking and listening — 17 minutes.",
-      "fourSkills": "English 4-Skills Essentials Test",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "Speaking, listening, reading, writing — 30 minutes.",
-      "writing": "English Writing Test",
+      "writing": "English Writing",
       "writingDesc": "Written English — 35 minutes.",
-      "professional": "Professional English Test",
+      "professional": "Professional English",
       "professionalDesc": "Speaking, listening, reading, writing — 60 minutes.",
-      "placement": "English Placement Test",
+      "placement": "English Placement",
       "placementDesc": "Speaking, listening, reading, writing — 50 minutes."
     },
     "notEnabled": "Not offered by your organization"

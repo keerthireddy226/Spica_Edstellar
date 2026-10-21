@@ -131,14 +131,15 @@
         "goalTitle": "Mihin tasoon tai tulokseen tähtäät?",
         "goalSubtitle": "Tavoitteesi kokeessa",
         "scoreTargetLabel": "Tarkka tulostavoite (valinnainen)",
-        "scoreTargetPlaceholder": "esim. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "esim. B2 tai pistemäärä 60+",
         "exam": {
-          "versantDesc": "Puhuminen, kirjoittaminen, tasotesti, ammatillinen",
+          "versantDesc": "4 taitoa, puhuminen ja kuuntelu, kirjoittaminen, työelämän englanti",
           "ieltsDesc": "Academic tai General Training",
           "toeflDesc": "Verkossa tehtävä koe",
           "pteDesc": "Pearsonin tietokonepohjainen koe",
           "other": "Muu / Yleinen",
-          "otherDesc": "Yleinen englannin parantaminen"
+          "otherDesc": "Yleinen englannin parantaminen",
+          "versant": "Spican englannin todistus"
         },
         "goal": {
           "A1": "A1 – Alkeet",
@@ -347,7 +348,7 @@
     "toggleTheme": "Vaihda teema"
   },
   "practiceTests": {
-    "subtitle": "Täysimittaiset, ajastetut harjoituskokeet, jotka vastaavat oikeita Versant-kokeita.",
+    "subtitle": "Täyspitkät, ajastetut harjoituskokeet, aivan kuten oikea koe.",
     "comingSoon": "Tulossa pian",
     "setsCount": "{{count}} sarja",
     "setsCount_other": "{{count}} sarjaa",
@@ -384,7 +385,12 @@
       "fourSkillsDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 30 minuuttia.",
       "writingDesc": "Kirjallinen englanti — 35 minuuttia.",
       "professionalDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 60 minuuttia.",
-      "placementDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 50 minuuttia."
+      "placementDesc": "Puhuminen, kuullun ymmärtäminen, lukeminen, kirjoittaminen — 50 minuuttia.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Organisaatiosi ei tarjoa tätä"
   },

@@ -10,9 +10,9 @@ export function stepView(step: NextStep, skillName: (s: SkillTag) => string, mod
     case "mock":
       return {
         icon: Timer,
-        title: tr("Take a mock exam"),
+        title: tr("Take a mock test"),
         why: tr("{{n}} days to your exam. A full timed mock now shows where you stand.", { n: step.daysLeft }),
-        cta: tr("Go to mock exams"),
+        cta: tr("Go to mock tests"),
         href: ROUTES.MOCK_EXAMS,
       };
     case "practice_test":

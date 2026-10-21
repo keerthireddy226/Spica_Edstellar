@@ -27,7 +27,7 @@ export interface LearnerFacts {
   skillAccuracy: Partial<Record<SkillTag, { correct: number; graded: number }>>;
   weakTypes: { name: string; accuracy: number; graded: number }[];
   lastTest: {
-    kind: "practice test" | "mock exam";
+    kind: "practice test" | "mock test";
     testName: string | null;
     date: string; // YYYY-MM-DD
     level: string | null;
@@ -36,7 +36,7 @@ export interface LearnerFacts {
 }
 
 const EXAM_LABELS: Record<string, string> = {
-  versant: "Versant",
+  versant: "Spica English certificate",
   ielts: "IELTS",
   toefl: "TOEFL",
   pte: "PTE",
@@ -185,7 +185,7 @@ async function loadLearnerFacts(userId: string): Promise<LearnerFacts> {
     weakTypes,
     lastTest: lt
       ? {
-          kind: lt.delivery_mode === "mock" ? "mock exam" : "practice test",
+          kind: lt.delivery_mode === "mock" ? "mock test" : "practice test",
           testName: lt.test_name ?? null,
           date: lt.day,
           level: lt.result?.cefrLevel ?? null,

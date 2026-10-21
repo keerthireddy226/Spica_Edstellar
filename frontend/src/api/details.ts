@@ -17,11 +17,11 @@ export type ExamFocus =
 
 export const EXAM_FOCUS_LABEL: Record<ExamFocus, string> = {
   general: tr("General English"),
-  versant_four_skills: tr("Versant 4 Skills Essential"),
-  versant_speaking_listening: tr("Versant Speaking & Listening"),
-  versant_writing: tr("Versant Writing"),
-  versant_professional: tr("Versant Professional English"),
-  versant_placement: tr("Versant English Placement Test"),
+  versant_four_skills: tr("English 4 Skills Essentials"),
+  versant_speaking_listening: tr("English Speaking & Listening"),
+  versant_writing: tr("English Writing"),
+  versant_professional: tr("Professional English"),
+  versant_placement: tr("English Placement"),
   ielts: tr("IELTS"),
   toefl: tr("TOEFL"),
   pte: tr("PTE Academic"),

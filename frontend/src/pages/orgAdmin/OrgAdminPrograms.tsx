@@ -172,7 +172,7 @@ function CreateProgramModal({
         <Field label={tr("Starts on")}>
           <input type="date" value={startsOn} onChange={(e) => setStartsOn(e.target.value)} className={inputClass} />
         </Field>
-        <Field label={tr("Target date")} hint={tr("The final mock exam is planned 3 days before it.")}>
+        <Field label={tr("Target date")} hint={tr("The final mock test is planned 3 days before it.")}>
           <input type="date" value={targetDate} min={startsOn} onChange={(e) => setTargetDate(e.target.value)} className={inputClass} />
         </Field>
         {testType && testType.skills.length > 1 && (
@@ -198,7 +198,7 @@ function CreateProgramModal({
         )}
       </div>
       <p className="text-sm text-muted mt-5">
-        {tr("Spica plans each member's practice tests and mock exams from their latest level and the time left, within your plan's monthly limits. Plans update after every mock exam.")}
+        {tr("Spica plans each member's practice tests and mock tests from their latest level and the time left, within your plan's monthly limits. Plans update after every mock test.")}
       </p>
       {error && <p className="text-sm text-error mt-3">{error}</p>}
       <div className="flex justify-end gap-3 mt-5">
@@ -223,14 +223,14 @@ const STATUS: Record<ProgramMember["status"], { label: () => string; cls: string
 const ALERT_LABEL: Record<ProgramAlert["kind"], () => string> = {
   at_risk: () => tr("At risk"),
   inactive: () => tr("Inactive for 14 days"),
-  missed_mock: () => tr("Missed a mock exam"),
+  missed_mock: () => tr("Missed a mock test"),
 };
 
 // A member's finished test report, as the learner sees it, with the test's integrity status.
 function MemberReportModal({ programId, sessionId, viewer, onClose }: { programId: string; sessionId: string; viewer: ProgramViewer; onClose: () => void }) {
   const [integrity, setIntegrity] = useState<{ status: string | null; risk: string | null } | null>(null);
   return (
-    <ModalShell title={tr("Mock exam report")} onClose={onClose}>
+    <ModalShell title={tr("Mock test report")} onClose={onClose}>
       {integrity?.status && (
         <p className="text-sm text-muted mb-3">
           {tr("Test integrity: {{status}}", { status: integrity.status })}
@@ -295,7 +295,7 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
               <p className="text-xs text-muted">{m.statusReason}</p>
               {m.next && (
                 <p className="text-xs text-muted">
-                  {tr("Next:")} {m.next.kind === "mock" ? tr("Mock exam") : tr("Practice test")} · {formatShortDate(m.next.dueOn)}
+                  {tr("Next:")} {m.next.kind === "mock" ? tr("Mock test") : tr("Practice test")} · {formatShortDate(m.next.dueOn)}
                 </p>
               )}
               {m.mocks.length > 0 ? (
@@ -318,7 +318,7 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-muted">{tr("No mock exams yet.")}</p>
+                <p className="text-xs text-muted">{tr("No mock tests yet.")}</p>
               )}
               {m.integrity?.status && (
                 <p className="text-xs text-muted">
@@ -494,7 +494,7 @@ function ProgramDetailModal({
             {data.members.length === 0 && <p className="text-sm text-muted py-4">{tr("This batch has no learners yet.")}</p>}
           </div>
           <p className="text-xs text-muted">
-            {tr("Projected: the level the trend across a learner's mock exams reaches by the target date (from 2 mocks). Latest level comes from the latest mock, or the placement test before the first.")}
+            {tr("Projected: the level the trend across a learner's mock tests reaches by the target date (from 2 mocks). Latest level comes from the latest mock, or the placement test before the first.")}
           </p>
         </div>
       )}
@@ -543,7 +543,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Programs")}</h1>
           <p className="text-sm text-muted mt-1">
-            {tr("Set an exam goal for a batch. Spica plans each member's practice tests and mock exams to reach it.")}
+            {tr("Set an exam goal for a batch. Spica plans each member's practice tests and mock tests to reach it.")}
           </p>
         </div>
         {viewer === "org-admin" && (
@@ -564,7 +564,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
           <Target size={28} className="text-navy-deep" />
           <p className="font-semibold text-ink">{tr("No programs yet")}</p>
           <p className="text-sm text-muted max-w-md">
-            {tr("A program sets a target level and date for a batch, for example Versant 4 Skills B2 by 15 December.")}
+            {tr("A program sets a target level and date for a batch, for example English 4 Skills Essentials B2 by 15 December.")}
           </p>
         </div>
       ) : (

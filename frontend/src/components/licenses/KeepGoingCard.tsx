@@ -16,7 +16,7 @@ function situation(k: KeepGoing): string[] {
   else if (r.has("access_grace")) out.push(tr("Your access ended on {{date}}; you can keep practising until {{grace}}.", { date: formatShortDate(k.access.accessEndsAt), grace: formatShortDate(k.access.graceEndsAt) }));
   else if (r.has("access_ending")) out.push(k.access.daysLeft === 1 ? tr("Your access ends tomorrow.") : tr("Your access ends in {{n}} days.", { n: k.access.daysLeft }));
   const used: string[] = [];
-  if (r.has("quota_mocks")) used.push(tr("this month's mock exams"));
+  if (r.has("quota_mocks")) used.push(tr("this month's mock tests"));
   if (r.has("quota_practice")) used.push(tr("this month's practice tests"));
   if (used.length) out.push(tr("You've used {{what}}; new ones on {{date}}.", { what: used.join(tr(" and ")), date: formatShortDate(k.quota?.resetsOn ?? null) }));
   if (r.has("tests_done")) out.push(tr("You've completed every practice test set."));

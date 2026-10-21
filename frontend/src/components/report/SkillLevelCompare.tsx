@@ -27,7 +27,7 @@ export function SkillLevelCompare({
   if (!skills.length) return null;
   const lower = skills.filter((s) => compare[s]!.action === "below");
   const name = (s: Skill) => t(`skills.${s}`).toLowerCase();
-  const testName = kind === "practice" ? tr("Your practice test") : kind === "mock" ? tr("Your mock exam") : tr("This test");
+  const testName = kind === "practice" ? tr("Your practice test") : kind === "mock" ? tr("Your mock test") : tr("This test");
   const check = (s: Skill) => navigate(`${ROUTES.MODULES}?skill=${s}&check=1`);
 
   return (

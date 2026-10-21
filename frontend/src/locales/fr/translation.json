@@ -140,10 +140,10 @@
         "goalTitle": "Quel est votre niveau ou score cible ?",
         "goalSubtitle": "L'objectif que vous visez pour cet examen",
         "scoreTargetLabel": "Score cible spécifique (facultatif)",
-        "scoreTargetPlaceholder": "ex. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "ex. B2, ou un score de 60+",
         "exam": {
-          "versant": "Versant",
-          "versantDesc": "Expression orale, écriture, positionnement, professionnel",
+          "versant": "Certificat d'anglais Spica",
+          "versantDesc": "4 compétences, expression et compréhension orales, écrit, professionnel",
           "ielts": "IELTS",
           "ieltsDesc": "Academic ou General Training",
           "toefl": "TOEFL iBT",
@@ -362,7 +362,7 @@
     "toggleTheme": "Changer de thème"
   },
   "practiceTests": {
-    "subtitle": "Tests blancs complets et chronométrés, identiques aux véritables épreuves Versant.",
+    "subtitle": "Des tests blancs complets et chronométrés, comme l'évaluation réelle.",
     "comingSoon": "Bientôt disponible",
     "setsCount": "{{count}} série",
     "setsCount_other": "{{count}} séries",
@@ -397,15 +397,15 @@
       "startSection": "Commencer : {{label}}"
     },
     "versantProduct": {
-      "speakingListening": "Test d'expression orale et de compréhension orale en anglais",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "Expression et compréhension orales — 17 minutes.",
-      "fourSkills": "Test des 4 compétences essentielles en anglais",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "Expression orale, compréhension orale, lecture, écriture — 30 minutes.",
-      "writing": "Test d'expression écrite en anglais",
+      "writing": "English Writing",
       "writingDesc": "Anglais écrit — 35 minutes.",
-      "professional": "Test d'anglais professionnel",
+      "professional": "Professional English",
       "professionalDesc": "Expression orale, compréhension orale, lecture, écriture — 60 minutes.",
-      "placement": "Test de positionnement en anglais",
+      "placement": "English Placement",
       "placementDesc": "Expression orale, compréhension orale, lecture, écriture — 50 minutes."
     },
     "notEnabled": "Non proposé par votre organisation"

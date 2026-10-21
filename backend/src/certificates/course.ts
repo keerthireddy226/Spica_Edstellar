@@ -1,5 +1,5 @@
 // Course certificates: a learner who finished the course (every practice test
-// set and a mock exam, or access ended after taking tests) asks for one; an
+// set and a mock test, or access ended after taking tests) asks for one; an
 // org learner's request goes to their org admins, an individual's to Spica
 // staff, who check it and issue. A real Versant result the learner uploaded
 // goes on the certificate only when the person issuing it ticks that they
@@ -16,7 +16,7 @@ import { LEVELS, overallFromSkills, pathSummary } from "../learner/path.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { issueCertificate } from "./service.js";
 
-export const COURSE_NAME = "Versant English 4 Skills preparation";
+export const COURSE_NAME = "Spica English 4 Skills Essentials";
 export const VERSANT_PROOF_DIR = path.resolve("private", "versant");
 const MAX_PROOF_BYTES = 3 * 1024 * 1024;
 
@@ -195,7 +195,7 @@ export async function requestCertificate(userId: string): Promise<string> {
       kind: "certificate_request",
       // Whole sentences, so they translate in the reader's language.
       title: `${who} asks for a course certificate`,
-      body: `Level ${status.level ?? "—"}. Goal ${status.goal ?? "—"}. Practice tests done: ${status.practice.done} of ${status.practice.total}. Mock exams: ${status.mocks}. Versant result: ${versant ? versant.overallLevel : "not uploaded"}.`,
+      body: `Level ${status.level ?? "—"}. Goal ${status.goal ?? "—"}. Practice tests done: ${status.practice.done} of ${status.practice.total}. Mock tests: ${status.mocks}. Official test result: ${versant ? versant.overallLevel : "not uploaded"}.`,
       link: admin.link,
       email: true,
       sentBy: userId,

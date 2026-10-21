@@ -131,14 +131,15 @@
         "goalTitle": "目標のレベルやスコアは？",
         "goalSubtitle": "この試験での目標",
         "scoreTargetLabel": "具体的な目標スコア（任意）",
-        "scoreTargetPlaceholder": "例：IELTS 7.0、Versant 69+、PTE 65",
+        "scoreTargetPlaceholder": "例：B2、またはスコア 60 以上",
         "exam": {
-          "versantDesc": "スピーキング、ライティング、プレイスメント、ビジネス",
+          "versantDesc": "4技能、スピーキングとリスニング、ライティング、プロフェッショナル",
           "ieltsDesc": "アカデミックまたはジェネラル・トレーニング",
           "toeflDesc": "インターネット版テスト",
           "pteDesc": "Pearson のコンピューター試験",
           "other": "その他 / 一般",
-          "otherDesc": "総合的な英語力の向上"
+          "otherDesc": "総合的な英語力の向上",
+          "versant": "Spica 英語認定"
         },
         "goal": {
           "A1": "A1 – 入門",
@@ -346,7 +347,7 @@
     "toggleTheme": "テーマを切り替え"
   },
   "practiceTests": {
-    "subtitle": "本番の Versant 試験と同じ構成の、時間制限付き模擬試験です。",
+    "subtitle": "本番の評価と同じ、時間制限付きのフルレングス模擬テスト。",
     "comingSoon": "近日公開",
     "setsCount": "{{count}}セット",
     "setsCount_other": "{{count}}セット",
@@ -383,7 +384,12 @@
       "fourSkillsDesc": "スピーキング、リスニング、リーディング、ライティング — 30分。",
       "writingDesc": "英語ライティング — 35分。",
       "professionalDesc": "スピーキング、リスニング、リーディング、ライティング — 60分。",
-      "placementDesc": "スピーキング、リスニング、リーディング、ライティング — 50分。"
+      "placementDesc": "スピーキング、リスニング、リーディング、ライティング — 50分。",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "所属組織では提供されていません"
   },

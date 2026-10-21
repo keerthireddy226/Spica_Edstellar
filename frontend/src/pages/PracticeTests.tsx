@@ -32,7 +32,7 @@ import { Button } from "@/components/Button";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { MockExamList } from "@/components/practice/MockExamList";
 import { AnswerInputControl } from "@/components/AnswerInputControl";
-import { familyHeading, familyNote, testTypeBadgeTime, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
+import { OWN_FAMILY, familyHeading, familyNote, testTypeBadgeTime, testTypeColour, testTypeDescription, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import {
   getProducts,
   getExamsForProduct,
@@ -98,7 +98,7 @@ import { tr } from "@/i18n/tr";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
-// A Start, Retake or mock exam waiting for its pre-test steps. key tells
+// A Start, Retake or mock test waiting for its pre-test steps. key tells
 // one start from another (a set id, or "mock:" and the test type).
 interface PendingStart {
   key: string;
@@ -109,7 +109,7 @@ interface PendingStart {
   testTypeId?: string;
 }
 
-// Mock exams: how long the time-up warning shows red.
+// Mock tests: how long the time-up warning shows red.
 const MOCK_WARNING_SECONDS = 10;
 
 interface CachedAnswer {
@@ -120,8 +120,8 @@ interface CachedAnswer {
   durationMs?: number;
 }
 
-// Practice tests and mock exams are separate sections of the learner app,
-// sharing this page: "practice" lists practice sets, "mock" the mock exams.
+// Practice tests and mock tests are separate sections of the learner app,
+// sharing this page: "practice" lists practice sets, "mock" the mock tests.
 export function PracticeTests({ section = "practice" }: { section?: "practice" | "mock" }) {
   const isMockSection = section === "mock";
   // Practice tests and mocks run on a computer; a phone sees why and where to practise instead.
@@ -140,7 +140,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       .then((res) => setFaceEnrolled(res.enrolled))
       .catch(() => setFaceEnrolled(true));
   }, []);
-  // Set when "Start"/"Retake"/"Start mock exam" is clicked — gates the
+  // Set when "Start"/"Retake"/"Start mock test" is clicked — gates the
   // actual session start behind a face check, same pattern as Modules/Placement.
   const [pendingStart, setPendingStart] = useState<PendingStart | null>(null);
   useEffect(() => {
@@ -158,7 +158,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   // The exam catalogue: families and their test types.
   const [catalogue, setCatalogue] = useState<CatalogueFamily[] | null>(null);
-  // The learner's mock exam in progress, if any (one at a time).
+  // The learner's mock test in progress, if any (one at a time).
   const [openMock, setOpenMock] = useState<{ sessionId: string; testTypeId: string | null } | null>(null);
   // This month's tests against the learner's limits, and their program.
   const [quota, setQuota] = useState<QuotaUsage | null>(null);
@@ -239,7 +239,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const isMock = deliveryMode === "mock";
   // A mock mixes questions from every set, so it has no set Test ID.
   const activeTestId = isMock ? null : activeTestIdOfSet;
-  // Mock exams: the server's clock minus this computer's, and when the whole
+  // Mock tests: the server's clock minus this computer's, and when the whole
   // exam ends (server time).
   const clockOffsetRef = useRef(0);
   const mockDeadlineRef = useRef<number | null>(null);
@@ -370,7 +370,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         code === "computer_required"
           ? tr("Open this test on a computer. On your phone you can keep practising in Practice Modules.")
           : code === "mock_in_progress"
-            ? tr("You have another mock exam in progress. Finish it first.")
+            ? tr("You have another mock test in progress. Finish it first.")
             : code === "quota_reached"
               ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
               : t("practiceTests.loadError"),
@@ -585,7 +585,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     if (transcript) setAnswerText(transcript);
     if (blob) {
       const base64 = await blobToBase64(blob);
-      // Mock exams, like the real exam: stopping the recording hands the
+      // Mock tests, like the real exam: stopping the recording hands the
       // answer in and moves to the next question (no Skip or Next buttons).
       if (isMock) return handleSubmit({ audioBase64: base64, audioMimeType: mimeType, durationMs, transcript: transcript ?? "" });
       setPendingAudio({ base64, mimeType });
@@ -863,10 +863,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
           <CheckCircle2 size={32} />
         </div>
-        <h1 className="font-display font-bold text-2xl text-ink">{summary.deliveryMode === "mock" ? tr("Mock exam report") : t("practiceTests.scoreReport.title")}</h1>
+        <h1 className="font-display font-bold text-2xl text-ink">{summary.deliveryMode === "mock" ? tr("Mock test report") : t("practiceTests.scoreReport.title")}</h1>
         {timeRanOut && (
           <p className="text-sm text-warning -mt-2">
-            {tr("This mock exam's time ran out while you were away, so it was finished with the answers you'd given. Questions you hadn't answered count as skipped.")}
+            {tr("This mock test's time ran out while you were away, so it was finished with the answers you'd given. Questions you hadn't answered count as skipped.")}
           </p>
         )}
         <div className="flex flex-wrap justify-center gap-2 -mt-2">
@@ -1008,7 +1008,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         {isMock && (
           <div className="w-full flex flex-col gap-2 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
             <span className="flex items-center gap-2 font-semibold">
-              <Timer size={18} className="text-navy-deep shrink-0" /> {tr("How a mock exam runs")}
+              <Timer size={18} className="text-navy-deep shrink-0" /> {tr("How a mock test runs")}
             </span>
             <ul className="list-disc pl-5 flex flex-col gap-1">
               <li>{tr("The test moves forward with the timer. There is no Skip and no Back, and spoken answers have no Next button.")}</li>
@@ -1109,7 +1109,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           )}
           <div className="flex items-center gap-2">
             <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
-              {isMock ? tr("Mock exam") : tr("Practice")}
+              {isMock ? tr("Mock test") : tr("Practice")}
             </span>
             <span className="text-sm font-semibold text-ink">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
           </div>
@@ -1327,13 +1327,13 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
               </Button>
             ) : (
               <>
-                {/* Mock exams are forward only. */}
+                {/* Mock tests are forward only. */}
                 {!isMock && (
                   <Button variant="secondary" onClick={handleBack} disabled={index === 0 || submitting || recording} className="!px-3.5">
                     <ArrowLeft size={20} />
                   </Button>
                 )}
-                {/* Mock exams have no Skip: a question left unanswered when its
+                {/* Mock tests have no Skip: a question left unanswered when its
                     time runs out counts as unanswered, as in the real exam. */}
                 {!isMock && (
                   <button
@@ -1398,14 +1398,16 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           onBack={backToProducts}
           backLabel={t("practiceTests.backToProducts")}
           eyebrow={t("nav.practiceTests")}
-          // The exam the test is modelled on, e.g. "Versant-style English 4-Skills Essentials Test".
+          // Spica's own test by name; another publisher's as e.g. "LanguageCert-style Writing".
           title={
-            selectedType
+            selectedType && selectedType.familyId !== OWN_FAMILY
               ? tr("{{family}}-style {{test}}", {
                   family: catalogue?.find((f) => f.id === selectedType.familyId)?.name ?? "",
                   test: testTypeName(selectedType, t),
                 })
-              : ""
+              : selectedType
+                ? testTypeName(selectedType, t)
+                : ""
           }
           subtitle={selectedType ? testTypeDescription(selectedType, t) : ""}
           icon={Icon}
@@ -1441,23 +1443,23 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
 
         {error && <p className="text-sm text-error">{error}</p>}
 
-        {/* Mock exam: one per test type, built from questions the learner hasn't seen. */}
+        {/* Mock test: one per test type, built from questions the learner hasn't seen. */}
         {isMockSection && (
         <div className="relative overflow-hidden bg-navy text-white rounded-card p-6 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
           <span className="h-12 w-12 rounded-2xl bg-lime text-navy flex items-center justify-center shrink-0">
             <Timer size={24} />
           </span>
           <div className="flex-1 flex flex-col gap-1">
-            <span className="font-display font-bold text-lg">{tr("Mock exam")}</span>
+            <span className="font-display font-bold text-lg">{tr("Mock test")}</span>
             <span className="text-sm text-white/80 leading-relaxed">
               {tr("Exam conditions: strict timing for each question, no going back, no answers until the end. Questions you haven't seen before. A full report with your estimated level at the end.")}
             </span>
           </div>
           {openMock && openMock.testTypeId && openMock.testTypeId !== selectedProduct ? (
-            <span className="text-sm text-white/80 sm:max-w-56">{tr("You have another mock exam in progress. Finish it first.")}</span>
+            <span className="text-sm text-white/80 sm:max-w-56">{tr("You have another mock test in progress. Finish it first.")}</span>
           ) : mocksLeft === 0 && openMock?.testTypeId !== selectedProduct ? (
             <span className="text-sm text-white/80 sm:max-w-64">
-              {tr("You've used this month's mock exams. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
+              {tr("You've used this month's mock tests. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
             </span>
           ) : phone ? (
             <span className="text-sm text-white/80 flex items-center gap-1.5">
@@ -1471,7 +1473,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
               }}
               className="shrink-0 !bg-lime !text-navy"
             >
-              {openMock?.testTypeId === selectedProduct ? tr("Resume mock exam") : tr("Start mock exam")}
+              {openMock?.testTypeId === selectedProduct ? tr("Resume mock test") : tr("Start mock test")}
             </Button>
           )}
         </div>
@@ -1479,8 +1481,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         {isMockSection && quota && (
           <p className="text-sm text-muted">
             {quota.mocksPerMonth === null
-              ? tr("Mock exams this month: {{used}} (no limit)", { used: quota.mocksUsed })
-              : tr("Mock exams this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
+              ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
+              : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
           </p>
         )}
 
@@ -1692,10 +1694,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
       <LearnerHero
         eyebrow={tr("Practice at your own pace")}
         title={t("nav.practiceTests")}
-        subtitle={tr("Full practice tests in the style of the major English exams: pause, go back, and get a report with every right answer at the end.")}
+        subtitle={tr("Full practice tests for each Spica test: pause, go back, and get a report with every right answer at the end.")}
         icon={ClipboardCheck}
         stats={[
-          { label: tr("Exam types"), value: live.length, icon: Layers },
+          { label: tr("Tests"), value: live.length, icon: Layers },
           { label: tr("Full sets to take"), value: live.reduce((n, tt) => n + tt.setCount, 0), icon: ListChecks },
           {
             label: tr("Length"),
@@ -1723,8 +1725,8 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           </span>
           <span>
             {quota.mocksPerMonth === null
-              ? tr("Mock exams this month: {{used}} (no limit)", { used: quota.mocksUsed })
-              : tr("Mock exams this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
+              ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
+              : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
           </span>
           {(quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (
             <span className="text-xs">{tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}</span>
@@ -1738,7 +1740,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         <section key={family.id} className="flex flex-col gap-3">
           <div>
             <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family)}</h2>
-            <p className="text-xs text-muted">{familyNote(family)}</p>
+            {familyNote(family) && <p className="text-xs text-muted">{familyNote(family)}</p>}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {family.testTypes.map((tt) => {
@@ -1821,7 +1823,7 @@ function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: 
         <span className="text-xs text-muted">
           {tr("{{done}} done, {{missed}} missed", { done: mine.done, missed: mine.missed })}
           {next
-            ? ` · ${next.kind === "mock" ? tr("Next: mock exam on {{date}}", { date: formatShortDate(next.dueOn) }) : tr("Next: practice test on {{date}}", { date: formatShortDate(next.dueOn) })}`
+            ? ` · ${next.kind === "mock" ? tr("Next: mock test on {{date}}", { date: formatShortDate(next.dueOn) }) : tr("Next: practice test on {{date}}", { date: formatShortDate(next.dueOn) })}`
             : ""}
         </span>
       </div>

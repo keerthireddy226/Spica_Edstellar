@@ -131,14 +131,15 @@
         "goalTitle": "Welches Niveau oder Ergebnis strebst du an?",
         "goalSubtitle": "Dein Ziel in dieser Prüfung",
         "scoreTargetLabel": "Konkretes Zielergebnis (optional)",
-        "scoreTargetPlaceholder": "z. B. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "z. B. B2 oder eine Punktzahl von 60+",
         "exam": {
-          "versantDesc": "Sprechen, Schreiben, Einstufung, Beruf",
+          "versantDesc": "4 Fertigkeiten, Sprechen und Hören, Schreiben, Beruf",
           "ieltsDesc": "Academic oder General Training",
           "toeflDesc": "Internetbasierter Test",
           "pteDesc": "Computerbasierter Test von Pearson",
           "other": "Sonstiges / Allgemein",
-          "otherDesc": "Allgemeine Verbesserung des Englischen"
+          "otherDesc": "Allgemeine Verbesserung des Englischen",
+          "versant": "Spica-Englischzertifikat"
         },
         "goal": {
           "A1": "A1 – Anfänger",
@@ -347,7 +348,7 @@
     "toggleTheme": "Design wechseln"
   },
   "practiceTests": {
-    "subtitle": "Vollständige, zeitgesteuerte Probetests, die den echten Versant-Prüfungen entsprechen.",
+    "subtitle": "Vollständige Probetests mit Zeitlimit, genau wie die echte Prüfung.",
     "comingSoon": "Demnächst",
     "setsCount": "{{count}} Satz",
     "setsCount_other": "{{count}} Sätze",
@@ -380,15 +381,15 @@
       "startSection": "{{label}} starten"
     },
     "versantProduct": {
-      "speakingListening": "English Speaking and Listening Test",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "Sprechen und Hören – 17 Minuten.",
-      "fourSkills": "English 4-Skills Essentials Test",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "Sprechen, Hören, Lesen, Schreiben – 30 Minuten.",
-      "writing": "English Writing Test",
+      "writing": "English Writing",
       "writingDesc": "Schriftliches Englisch – 35 Minuten.",
-      "professional": "Professional English Test",
+      "professional": "Professional English",
       "professionalDesc": "Sprechen, Hören, Lesen, Schreiben – 60 Minuten.",
-      "placement": "English Placement Test",
+      "placement": "English Placement",
       "placementDesc": "Sprechen, Hören, Lesen, Schreiben – 50 Minuten."
     },
     "notEnabled": "Von Ihrer Organisation nicht angeboten"

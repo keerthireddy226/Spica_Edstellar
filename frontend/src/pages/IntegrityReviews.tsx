@@ -272,7 +272,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
     <DetailModal
       title={d.session.name.trim() || d.session.email}
       subtitle={[
-        d.session.exam_name ?? (d.session.session_type === "placement" ? tr("Placement test") : tr("Mock exam")),
+        d.session.exam_name ?? (d.session.session_type === "placement" ? tr("Placement test") : tr("Mock test")),
         d.session.test_code ? tr("Attempt ID {{c}}", { c: d.session.test_code }) : null,
         d.session.org_name,
       ]
@@ -555,7 +555,7 @@ function LiveCard({ s, onChanged }: { s: LiveSessionRow; onChanged: () => void }
       <div className="min-w-0">
         <p className="text-sm font-semibold text-ink truncate">{s.name.trim() || s.email}</p>
         <p className="text-xs text-muted truncate">
-          {s.exam_name ?? (s.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {tr("{{n}} answers", { n: s.answers })}
+          {s.exam_name ?? (s.session_type === "placement" ? tr("Placement test") : tr("Mock test"))} · {tr("{{n}} answers", { n: s.answers })}
           {s.test_code ? ` · ${s.test_code}` : ""}
         </p>
         <p className={`text-xs mt-0.5 ${s.alerts ? "text-error" : "text-success"}`}>
@@ -775,7 +775,7 @@ export function IntegrityReviews() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-ink truncate">{r.name.trim() || r.email}</p>
                     <p className="text-xs text-muted truncate">
-                      {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock exam"))} · {dateTime(r.started_at)}
+                      {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock test"))} · {dateTime(r.started_at)}
                       {r.test_code ? ` · ${r.test_code}` : ""}
                       {r.org_name ? ` · ${r.org_name}` : ""}
                     </p>

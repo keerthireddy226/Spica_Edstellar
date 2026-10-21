@@ -11,7 +11,7 @@ export function newTestCode(prefix: string): string {
   return `${prefix}-${s.slice(0, 4)}-${s.slice(4)}`;
 }
 
-// Mock exams by product ("fourskills-2" → "FS"); the adaptive placement test is "AP".
+// Mock tests by product ("fourskills-2" → "FS"); the adaptive placement test is "AP".
 export function examPrefix(examCode: string): string {
   return PREFIX_BY_EXAM[examCode.replace(/-\d+$/, "")] ?? "MT";
 }

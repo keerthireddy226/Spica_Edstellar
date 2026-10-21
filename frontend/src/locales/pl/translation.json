@@ -131,14 +131,15 @@
         "goalTitle": "Jaki poziom lub wynik chcesz osiągnąć?",
         "goalSubtitle": "Twój cel na tym egzaminie",
         "scoreTargetLabel": "Konkretny wynik docelowy (opcjonalnie)",
-        "scoreTargetPlaceholder": "np. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "np. B2 lub wynik 60+",
         "exam": {
-          "versantDesc": "Mówienie, pisanie, test poziomujący, zawodowy",
+          "versantDesc": "4 umiejętności, mówienie i słuchanie, pisanie, angielski zawodowy",
           "ieltsDesc": "Academic lub General Training",
           "toeflDesc": "Test internetowy",
           "pteDesc": "Test komputerowy Pearson",
           "other": "Inny / Ogólny",
-          "otherDesc": "Ogólna poprawa angielskiego"
+          "otherDesc": "Ogólna poprawa angielskiego",
+          "versant": "Certyfikat języka angielskiego Spica"
         },
         "goal": {
           "A1": "A1 – Początkujący",
@@ -349,7 +350,7 @@
     "toggleTheme": "Zmień motyw"
   },
   "practiceTests": {
-    "subtitle": "Pełne testy próbne z limitem czasu, odpowiadające prawdziwym egzaminom Versant.",
+    "subtitle": "Pełne, mierzone czasem testy próbne, takie jak prawdziwa ocena.",
     "comingSoon": "Wkrótce",
     "setsCount": "{{count}} zestaw",
     "setsCount_one": "{{count}} zestaw",
@@ -398,7 +399,12 @@
       "fourSkillsDesc": "Mówienie, słuchanie, czytanie, pisanie — 30 minut.",
       "writingDesc": "Angielski pisany — 35 minut.",
       "professionalDesc": "Mówienie, słuchanie, czytanie, pisanie — 60 minut.",
-      "placementDesc": "Mówienie, słuchanie, czytanie, pisanie — 50 minut."
+      "placementDesc": "Mówienie, słuchanie, czytanie, pisanie — 50 minut.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Niedostępne w Twojej organizacji"
   },

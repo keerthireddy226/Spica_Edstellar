@@ -1,5 +1,5 @@
 // Programs: an organization's goal for one batch, and each member's plan of
-// practice tests and mock exams towards it (ASSESSMENT_ENGINE.md section 8).
+// practice tests and mock tests towards it (ASSESSMENT_ENGINE.md section 8).
 import { z } from "zod";
 import { pool } from "../db.js";
 import { CEFR_LEVELS } from "../placement/cefr.js";

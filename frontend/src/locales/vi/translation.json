@@ -131,14 +131,15 @@
         "goalTitle": "Bạn hướng tới trình độ hoặc điểm số nào?",
         "goalSubtitle": "Mục tiêu của bạn cho kỳ thi này",
         "scoreTargetLabel": "Điểm mục tiêu cụ thể (không bắt buộc)",
-        "scoreTargetPlaceholder": "VD: IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "ví dụ: B2, hoặc điểm 60+",
         "exam": {
-          "versantDesc": "Nói, viết, xếp lớp, chuyên nghiệp",
+          "versantDesc": "4 kỹ năng, nói và nghe, viết, chuyên nghiệp",
           "ieltsDesc": "Học thuật hoặc Tổng quát",
           "toeflDesc": "Bài thi qua Internet",
           "pteDesc": "Bài thi trên máy tính của Pearson",
           "other": "Khác / Tổng quát",
-          "otherDesc": "Nâng cao tiếng Anh tổng quát"
+          "otherDesc": "Nâng cao tiếng Anh tổng quát",
+          "versant": "Chứng chỉ tiếng Anh Spica"
         },
         "goal": {
           "A1": "A1 – Mới bắt đầu",
@@ -346,7 +347,7 @@
     "toggleTheme": "Đổi giao diện"
   },
   "practiceTests": {
-    "subtitle": "Bài thi thử đầy đủ, có giới hạn thời gian, giống bài thi Versant thật.",
+    "subtitle": "Bài thi thử đầy đủ, có tính giờ, giống như bài đánh giá thật.",
     "comingSoon": "Sắp ra mắt",
     "setsCount": "{{count}} bộ đề",
     "setsCount_other": "{{count}} bộ đề",
@@ -383,7 +384,12 @@
       "fourSkillsDesc": "Nói, nghe, đọc, viết — 30 phút.",
       "writingDesc": "Viết tiếng Anh — 35 phút.",
       "professionalDesc": "Nói, nghe, đọc, viết — 60 phút.",
-      "placementDesc": "Nói, nghe, đọc, viết — 50 phút."
+      "placementDesc": "Nói, nghe, đọc, viết — 50 phút.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Tổ chức của bạn không cung cấp"
   },

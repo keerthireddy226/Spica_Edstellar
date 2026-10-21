@@ -212,7 +212,7 @@ export async function runProgramAlerts(): Promise<number> {
     const body = [
       count("at_risk") ? `At risk of missing the target: ${raised.filter((x) => x.kind === "at_risk").map((x) => x.name).join(", ")}.` : "",
       count("inactive") ? `No activity for ${INACTIVE_DAYS} days: ${raised.filter((x) => x.kind === "inactive").map((x) => x.name).join(", ")}.` : "",
-      count("missed_mock") ? `Missed a planned mock exam: ${raised.filter((x) => x.kind === "missed_mock").map((x) => x.name).join(", ")}.` : "",
+      count("missed_mock") ? `Missed a planned mock test: ${raised.filter((x) => x.kind === "missed_mock").map((x) => x.name).join(", ")}.` : "",
     ]
       .filter(Boolean)
       .join(" ");

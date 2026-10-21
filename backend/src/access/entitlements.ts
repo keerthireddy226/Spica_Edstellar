@@ -90,7 +90,7 @@ export function ownsSomething(a: Access): boolean {
   return !!a.full || a.owned.length > 0;
 }
 
-// The test can be practised (its practice tests and mock exams).
+// The test can be practised (its practice tests and mock tests).
 export function canPrepare(a: Access, testTypeId: string | null | undefined): boolean {
   return !!a.full || (!!testTypeId && a.prepTests.includes(testTypeId));
 }

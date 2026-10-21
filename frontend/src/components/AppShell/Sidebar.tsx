@@ -168,7 +168,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
           <NavEntry
             to={ROUTES.MOCK_EXAMS}
             icon={Timer}
-            label={tr("Mock Exams")}
+            label={tr("Mock Tests")}
             isActive={location.pathname.startsWith(ROUTES.MOCK_EXAMS)}
             locked={locked}
             onClick={go}

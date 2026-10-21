@@ -9,7 +9,7 @@ export interface Branding {
   // What the organization bought: employee skills, recruitment, or both.
   products: ("skills" | "recruitment")[];
   // Modules for this organization's learners (off when an engagement covers
-  // only practice tests and mock exams).
+  // only practice tests and mock tests).
   modulesEnabled?: boolean;
   // "university": Campus (skills) and Admissions (recruitment).
   category?: "company" | "university" | "other" | null;

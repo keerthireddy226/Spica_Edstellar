@@ -140,10 +140,10 @@
         "goalTitle": "आपका लक्ष्य स्तर या स्कोर क्या है?",
         "goalSubtitle": "इस परीक्षा में आपका लक्ष्य",
         "scoreTargetLabel": "विशिष्ट स्कोर लक्ष्य (वैकल्पिक)",
-        "scoreTargetPlaceholder": "जैसे IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "जैसे B2, या 60+ स्कोर",
         "exam": {
-          "versant": "Versant",
-          "versantDesc": "बोलना, लेखन, प्लेसमेंट, प्रोफेशनल",
+          "versant": "Spica अंग्रेज़ी प्रमाणपत्र",
+          "versantDesc": "4 कौशल, बोलना और सुनना, लेखन, प्रोफ़ेशनल",
           "ielts": "IELTS",
           "ieltsDesc": "Academic या General Training",
           "toefl": "TOEFL iBT",
@@ -362,7 +362,7 @@
     "toggleTheme": "थीम बदलें"
   },
   "practiceTests": {
-    "subtitle": "पूर्ण-लंबाई, समयबद्ध मॉक टेस्ट जो वास्तविक Versant परीक्षा उत्पादों से मेल खाते हैं।",
+    "subtitle": "पूरी लंबाई के, समयबद्ध मॉक टेस्ट, बिल्कुल असली मूल्यांकन की तरह।",
     "comingSoon": "जल्द आ रहा है",
     "setsCount": "{{count}} सेट",
     "setsCount_other": "{{count}} सेट",
@@ -397,15 +397,15 @@
       "startSection": "{{label}} शुरू करें"
     },
     "versantProduct": {
-      "speakingListening": "अंग्रेज़ी बोलना और सुनना परीक्षण",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "बोलना और सुनना — 17 मिनट।",
-      "fourSkills": "अंग्रेज़ी 4-कौशल आवश्यक परीक्षण",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "बोलना, सुनना, पढ़ना, लिखना — 30 मिनट।",
-      "writing": "अंग्रेज़ी लेखन परीक्षण",
+      "writing": "English Writing",
       "writingDesc": "लिखित अंग्रेज़ी — 35 मिनट।",
-      "professional": "व्यावसायिक अंग्रेज़ी परीक्षण",
+      "professional": "Professional English",
       "professionalDesc": "बोलना, सुनना, पढ़ना, लिखना — 60 मिनट।",
-      "placement": "अंग्रेज़ी प्लेसमेंट परीक्षण",
+      "placement": "English Placement",
       "placementDesc": "बोलना, सुनना, पढ़ना, लिखना — 50 मिनट।"
     },
     "notEnabled": "आपका संगठन यह उपलब्ध नहीं कराता"

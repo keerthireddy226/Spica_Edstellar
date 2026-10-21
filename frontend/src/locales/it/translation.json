@@ -131,14 +131,15 @@
         "goalTitle": "Qual è il tuo livello o punteggio obiettivo?",
         "goalSubtitle": "L'obiettivo che vuoi raggiungere in questo esame",
         "scoreTargetLabel": "Punteggio obiettivo specifico (facoltativo)",
-        "scoreTargetPlaceholder": "es. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "es. B2, o un punteggio di 60+",
         "exam": {
-          "versantDesc": "Parlato, scrittura, piazzamento, professionale",
+          "versantDesc": "4 abilità, parlato e ascolto, scrittura, professionale",
           "ieltsDesc": "Academic o General Training",
           "toeflDesc": "Test online",
           "pteDesc": "Test al computer di Pearson",
           "other": "Altro / Generale",
-          "otherDesc": "Miglioramento generale dell'inglese"
+          "otherDesc": "Miglioramento generale dell'inglese",
+          "versant": "Certificato di inglese Spica"
         },
         "goal": {
           "A1": "A1 - Principiante",
@@ -347,7 +348,7 @@
     "toggleTheme": "Cambia tema"
   },
   "practiceTests": {
-    "subtitle": "Simulazioni complete e a tempo, come i veri esami Versant.",
+    "subtitle": "Simulazioni complete e a tempo, proprio come la valutazione reale.",
     "comingSoon": "In arrivo",
     "setsCount": "{{count}} set",
     "setsCount_other": "{{count}} set",
@@ -384,7 +385,12 @@
       "fourSkillsDesc": "Parlato, ascolto, lettura, scrittura — 30 minuti.",
       "writingDesc": "Inglese scritto — 35 minuti.",
       "professionalDesc": "Parlato, ascolto, lettura, scrittura — 60 minuti.",
-      "placementDesc": "Parlato, ascolto, lettura, scrittura — 50 minuti."
+      "placementDesc": "Parlato, ascolto, lettura, scrittura — 50 minuti.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Non offerto dalla tua organizzazione"
   },

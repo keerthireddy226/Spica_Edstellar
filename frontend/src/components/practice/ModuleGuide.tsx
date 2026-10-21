@@ -107,7 +107,7 @@ export function ModuleGuide({
         </p>
         <h1 className="font-display font-bold text-2xl text-ink mt-1">{typeName}</h1>
         {context?.tests?.length ? (
-          <p className="text-sm text-navy-deep mt-1">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(context.tests) })}</p>
+          <p className="text-sm text-navy-deep mt-1">{tr("Used in these tests: {{tests}}", { tests: testsLine(context.tests) })}</p>
         ) : null}
         <p className="text-sm text-ink mt-2 leading-relaxed">{instruction}</p>
       </div>

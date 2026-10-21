@@ -35,7 +35,7 @@ describe("formatLearnerContext", () => {
       streakDays: 1,
       skillAccuracy: { speaking: { correct: 6, graded: 10 }, reading: { correct: 9, graded: 10 } },
       weakTypes: [{ name: "Sentence Builds", accuracy: 25, graded: 8 }],
-      lastTest: { kind: "mock exam", testName: "English 4-Skills Essentials Test", date: "2026-10-10", level: "B1", percent: 52 },
+      lastTest: { kind: "mock test", testName: "English 4-Skills Essentials Test", date: "2026-10-10", level: "B1", percent: 52 },
     });
     expect(text.split("\n")).toEqual([
       "First name: Asha.",
@@ -46,7 +46,7 @@ describe("formatLearnerContext", () => {
       "Practice streak: 1 day.",
       "Accuracy by skill (last 30 days of practice): speaking 60%, reading 90%.",
       "Weakest question types recently: Sentence Builds (25% of 8).",
-      "Last mock exam (English 4-Skills Essentials Test) on 2026-10-10: estimated level B1, 52% overall.",
+      "Last mock test (English 4-Skills Essentials Test) on 2026-10-10: estimated level B1, 52% overall.",
     ]);
   });
 

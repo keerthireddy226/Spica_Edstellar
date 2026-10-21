@@ -162,7 +162,7 @@ export function PathToGoal({ j }: { j: Journey }) {
           );
         })}
       </ol>
-      <p className="text-[11px] text-muted">{tr("A skill moves up a level when its question types pass 7 sets at 70% or more, or after a level check or a mock exam.")}</p>
+      <p className="text-[11px] text-muted">{tr("A skill moves up a level when its question types pass 7 sets at 70% or more, or after a level check or a mock test.")}</p>
     </section>
   );
 }
@@ -181,10 +181,10 @@ function taskText(task: JourneyTask, skillName: (s: SkillTag) => string): { icon
       return {
         icon: Timer,
         title: task.done
-          ? tr("Mock exam this week")
+          ? tr("Mock test this week")
           : task.target != null
-            ? tr("Mock exam on {{date}} · {{left}} of {{n}} left this month", { date: formatShortDate(task.date ?? null), left: task.count ?? 0, n: task.target })
-            : tr("Mock exam on {{date}}", { date: formatShortDate(task.date ?? null) }),
+            ? tr("Mock test on {{date}} · {{left}} of {{n}} left this month", { date: formatShortDate(task.date ?? null), left: task.count ?? 0, n: task.target })
+            : tr("Mock test on {{date}}", { date: formatShortDate(task.date ?? null) }),
       };
   }
 }
@@ -253,7 +253,7 @@ export function Checkpoints({ j }: { j: Journey }) {
         : c.kind === "level_check"
           ? tr("Level check: {{skill}}", { skill: c.skill ? t(`skills.${c.skill}`) : "" })
           : c.kind === "mock"
-            ? tr("Mock exam")
+            ? tr("Mock test")
             : tr("Exam day");
   const href = (c: C) =>
     c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
@@ -269,7 +269,7 @@ export function Checkpoints({ j }: { j: Journey }) {
             <ClipboardList size={12} /> {tr("Practice test")}
           </span>
           <span className="flex items-center gap-1 text-accent">
-            <Timer size={12} /> {tr("Mock exam")}
+            <Timer size={12} /> {tr("Mock test")}
           </span>
         </span>
       </div>
@@ -327,13 +327,13 @@ export function Checkpoints({ j }: { j: Journey }) {
                     ? tr("practice tests with no monthly limit")
                     : tr("{{n}} practice tests a month", { n: j.planSource.practicePerMonth }),
                 mocks:
-                  j.planSource.mocksPerMonth === null ? tr("mock exams with no monthly limit") : tr("{{n}} mock exam(s) a month", { n: j.planSource.mocksPerMonth }),
+                  j.planSource.mocksPerMonth === null ? tr("mock tests with no monthly limit") : tr("{{n}} mock test(s) a month", { n: j.planSource.mocksPerMonth }),
               })}
         </p>
       )}
       {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, with a final mock the week before.")}</p>}
       {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
-        <p className="text-xs text-warning">{tr("No mock exam is left in this month's allowance before your exam. See the Mock Exams page for when new ones arrive.")}</p>
+        <p className="text-xs text-warning">{tr("No mock test is left in this month's allowance before your exam. See the Mock Tests page for when new ones arrive.")}</p>
       )}
       {j.checkpoints.some((c) => !c.done && (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam")) && <CalendarActions />}
     </section>

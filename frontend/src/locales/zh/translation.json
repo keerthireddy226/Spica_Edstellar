@@ -131,14 +131,15 @@
         "goalTitle": "你的目标等级或分数是多少？",
         "goalSubtitle": "你在这项考试中的目标",
         "scoreTargetLabel": "具体目标分数（可选）",
-        "scoreTargetPlaceholder": "例如：IELTS 7.0、Versant 69+、PTE 65",
+        "scoreTargetPlaceholder": "例如 B2，或 60 分以上",
         "exam": {
-          "versantDesc": "口语、写作、分级测试、职场",
+          "versantDesc": "四项技能、口语和听力、写作、职业英语",
           "ieltsDesc": "学术类或培训类",
           "toeflDesc": "网考",
           "pteDesc": "Pearson 机考",
           "other": "其他 / 通用",
-          "otherDesc": "整体提升英语水平"
+          "otherDesc": "整体提升英语水平",
+          "versant": "Spica 英语证书"
         },
         "goal": {
           "A1": "A1 – 入门",
@@ -346,7 +347,7 @@
     "toggleTheme": "切换主题"
   },
   "practiceTests": {
-    "subtitle": "与真实 Versant 考试一致的完整限时模拟考试。",
+    "subtitle": "完整、计时的模拟测试，与正式测评完全一致。",
     "comingSoon": "即将推出",
     "setsCount": "{{count}} 套",
     "setsCount_other": "{{count}} 套",
@@ -383,7 +384,12 @@
       "fourSkillsDesc": "口语、听力、阅读、写作——30 分钟。",
       "writingDesc": "英语写作——35 分钟。",
       "professionalDesc": "口语、听力、阅读、写作——60 分钟。",
-      "placementDesc": "口语、听力、阅读、写作——50 分钟。"
+      "placementDesc": "口语、听力、阅读、写作——50 分钟。",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "你的组织未提供此项"
   },

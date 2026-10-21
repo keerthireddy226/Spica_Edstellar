@@ -76,7 +76,7 @@ export function CertificateView() {
     cert.cefrLevel ? { label: course ? tr("Level reached in Spica") : tr("Level"), value: cert.cefrLevel, note: null } : null,
     cert.versantLevel
       ? {
-          label: tr("Versant test result"),
+          label: tr("Official test result"),
           value: cert.versantLevel,
           note: [cert.versantScore ? tr("score {{n}}", { n: cert.versantScore }) : null, cert.versantTakenOn ? formatDay(cert.versantTakenOn) : null].filter(Boolean).join(" · "),
         }

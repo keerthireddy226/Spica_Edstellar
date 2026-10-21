@@ -11,7 +11,7 @@ import { tr } from "@/i18n/tr";
 import { getModuleHistory, type ModuleHistoryEntry } from "@/api/practiceSession";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
 
-// Every practice test, mock exam and Practice Modules set the learner
+// Every practice test, mock test and Practice Modules set the learner
 // finished, each opening its report.
 export function MyReports() {
   const { t } = useTranslation();
@@ -45,13 +45,13 @@ export function MyReports() {
       <LearnerHero
         eyebrow={tr("Your results")}
         title={tr("My reports")}
-        subtitle={tr("Every practice test, mock exam and Practice Modules set you finished, with what you got wrong or skipped and the right answers.")}
+        subtitle={tr("Every practice test, mock test and Practice Modules set you finished, with what you got wrong or skipped and the right answers.")}
         icon={FileText}
         stats={
           rows
             ? [
                 { label: tr("Tests finished"), value: rows.length, icon: FileText },
-                { label: tr("Mock exams"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: FileText },
+                { label: tr("Mock tests"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: FileText },
                 { label: tr("Practice tests"), value: rows.filter((r) => r.deliveryMode === "practice").length, icon: FileText },
                 ...(modulesOn ? [{ label: tr("Module sets"), value: modules?.length ?? 0, icon: Layers }] : []),
               ]
@@ -62,7 +62,7 @@ export function MyReports() {
         {(
           [
             ["all", tr("All")],
-            ["mock", tr("Mock exams")],
+            ["mock", tr("Mock tests")],
             ["practice", tr("Practice tests")],
             ...(modulesOn ? ([["modules", tr("Practice Modules")]] as const) : []),
           ] as const
@@ -82,7 +82,7 @@ export function MyReports() {
         <p className="text-sm text-muted">
           {filter === "modules"
             ? tr("No finished sets yet. Your report for each Practice Modules set appears here.")
-            : tr("No finished tests yet. Your reports appear here after each practice test or mock exam.")}
+            : tr("No finished tests yet. Your reports appear here after each practice test or mock test.")}
         </p>
       ) : (
         <div className="bg-surface border border-rule rounded-card divide-y divide-rule">
@@ -123,7 +123,7 @@ export function MyReports() {
                 className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-paper-warm/60 cursor-pointer"
               >
                 <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "mock" ? "bg-navy/10 text-navy-deep" : "bg-accent/15 text-accent"}`}>
-                  {h.deliveryMode === "mock" ? tr("Mock exam") : tr("Practice")}
+                  {h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-ink truncate">{tt ? testTypeName(tt, t) : (h.examName ?? "")}</span>

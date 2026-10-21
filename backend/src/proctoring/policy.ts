@@ -10,7 +10,7 @@ export const PROCTORING_REGIONS = ["global", "eu", "us", "india"] as const;
 export type ProctoringMode = (typeof PROCTORING_MODES)[number];
 export type ProctoringRegion = (typeof PROCTORING_REGIONS)[number];
 
-// Session types the policy applies to: the placement test and full mock exams.
+// Session types the policy applies to: the placement test and full mock tests.
 export const PROCTORED_SESSION_TYPES = ["placement", "mocktest"];
 
 export const policySchema = z.object({
@@ -208,7 +208,7 @@ export async function learnerPolicy(userId: string): Promise<{ policy: Proctorin
 }
 
 // Practice sessions are for learning: no proctoring, only the face check an
-// organization may ask for before any test. Mock exams and candidates'
+// organization may ask for before any test. Mock tests and candidates'
 // assessments keep the full policy (ASSESSMENT_ENGINE.md section 5).
 export function practicePolicy(p: ProctoringPolicy): ProctoringPolicy {
   return { ...presetPolicy("off", p.region), retentionDays: p.retentionDays };

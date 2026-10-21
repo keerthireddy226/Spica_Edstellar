@@ -140,10 +140,10 @@
         "goalTitle": "¿Cuál es tu nivel o puntuación objetivo?",
         "goalSubtitle": "La meta que buscas alcanzar en este examen",
         "scoreTargetLabel": "Puntuación específica objetivo (opcional)",
-        "scoreTargetPlaceholder": "ej. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "p. ej., B2 o una puntuación de 60+",
         "exam": {
-          "versant": "Versant",
-          "versantDesc": "Expresión oral, escritura, nivelación, profesional",
+          "versant": "Certificado de inglés Spica",
+          "versantDesc": "4 destrezas, expresión oral y comprensión auditiva, escritura, profesional",
           "ielts": "IELTS",
           "ieltsDesc": "Académico o Entrenamiento General",
           "toefl": "TOEFL iBT",
@@ -362,7 +362,7 @@
     "toggleTheme": "Cambiar tema"
   },
   "practiceTests": {
-    "subtitle": "Exámenes de práctica completos y cronometrados que coinciden con los productos reales de Versant.",
+    "subtitle": "Simulacros completos y cronometrados, igual que la evaluación real.",
     "comingSoon": "Próximamente",
     "setsCount": "{{count}} set",
     "setsCount_other": "{{count}} sets",
@@ -397,15 +397,15 @@
       "startSection": "Empezar {{label}}"
     },
     "versantProduct": {
-      "speakingListening": "Examen de Habla y Escucha en Inglés",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "Habla y escucha — 17 minutos.",
-      "fourSkills": "Examen de las 4 Habilidades Esenciales en Inglés",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "Habla, escucha, lectura, escritura — 30 minutos.",
-      "writing": "Examen de Escritura en Inglés",
+      "writing": "English Writing",
       "writingDesc": "Inglés escrito — 35 minutos.",
-      "professional": "Examen de Inglés Profesional",
+      "professional": "Professional English",
       "professionalDesc": "Habla, escucha, lectura, escritura — 60 minutos.",
-      "placement": "Examen de Nivelación de Inglés",
+      "placement": "English Placement",
       "placementDesc": "Habla, escucha, lectura, escritura — 50 minutos."
     },
     "notEnabled": "Tu organización no lo ofrece"

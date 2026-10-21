@@ -1,4 +1,4 @@
-// The test plan on My journey: practice tests and mock exams spaced by the
+// The test plan on My journey: practice tests and mock tests spaced by the
 // learner's plan (how many of each a month), up to the exam (or 8 weeks).
 
 const DAY_MS = 86_400_000;

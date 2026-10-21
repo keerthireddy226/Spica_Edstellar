@@ -80,7 +80,7 @@ function RequestCard({ r, viewer, onDone }: { r: CertificateRequest; viewer: "or
 
   const facts = [
     tr("Practice tests {{done}} of {{total}}", { done: s.practice.done, total: s.practice.total }),
-    tr("{{n}} mock exam(s)", { n: s.mocks }),
+    tr("{{n}} mock test(s)", { n: s.mocks }),
     tr("Level {{level}}", { level: s.level ?? "—" }),
     s.goal ? tr("goal {{goal}}", { goal: s.goal }) : null,
     s.access.endsAt ? (s.access.ended ? tr("access ended {{date}}", { date: formatDay(s.access.endsAt) }) : tr("access until {{date}}", { date: formatDay(s.access.endsAt) })) : null,
@@ -114,7 +114,7 @@ function RequestCard({ r, viewer, onDone }: { r: CertificateRequest; viewer: "or
       {v ? (
         <div className="rounded-input bg-paper-warm/70 border border-rule p-3 flex flex-col gap-2">
           <p className="text-sm text-ink">
-            {tr("Versant result")}: <b>{v.overallLevel}</b>
+            {tr("Official test result")}: <b>{v.overallLevel}</b>
             {v.overallScore ? ` (${tr("score {{n}}", { n: v.overallScore })})` : ""} · {formatDay(v.takenOn)}
             {s.goal ? <span className="text-muted"> · {tr("goal {{goal}}", { goal: s.goal })}</span> : null}
           </p>
@@ -135,12 +135,12 @@ function RequestCard({ r, viewer, onDone }: { r: CertificateRequest; viewer: "or
           {r.status === "pending" && v.hasProof && (
             <label className="flex items-start gap-2 text-sm text-ink cursor-pointer">
               <input type="checkbox" checked={includeVersant} onChange={(e) => setIncludeVersant(e.target.checked)} className="mt-0.5 accent-navy" />
-              {tr("I checked the score report: put this Versant result on the certificate")}
+              {tr("I checked the score report: put this official result on the certificate")}
             </label>
           )}
         </div>
       ) : (
-        <p className="text-xs text-muted">{tr("No Versant result uploaded. The certificate shows the level reached in Spica.")}</p>
+        <p className="text-xs text-muted">{tr("No official test result uploaded. The certificate shows the level reached in Spica.")}</p>
       )}
 
       {r.status === "pending" ? (

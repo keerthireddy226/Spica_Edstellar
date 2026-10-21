@@ -22,7 +22,7 @@ export interface TestItem {
   maxWords?: number | null;
   attempted?: boolean;
   responseText?: string | null;
-  // Mock exams: this question's time limit, and the seconds left once it has
+  // Mock tests: this question's time limit, and the seconds left once it has
   // been shown (the server's clock).
   limitSeconds?: number | null;
   secondsLeft?: number | null;

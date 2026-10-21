@@ -4,7 +4,7 @@ import type { CatalogueFamily, CatalogueTestType } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 
 // How a catalogue test type is shown: name, one-line description, icon and
-// colour. Versant products keep their existing translated names.
+// colour. Spica's own tests keep their translated names.
 const VERSANT_IDS = new Set(["speakingListening", "fourSkills", "writing", "professional", "placement"]);
 
 const NAMES: Record<string, () => string> = {
@@ -94,13 +94,19 @@ export function testTypeColour(id: string): string {
   return COLOURS[id] ?? "bg-navy";
 }
 
-// "Versant-style practice": Spica prepares people for these exams and isn't
-// affiliated with their publishers.
-export function familyHeading(f: CatalogueFamily, mock = false): string {
-  return mock ? tr("{{name}}-style mock exams", { name: f.name }) : tr("{{name}}-style practice", { name: f.name });
+// Spica's own tests (the family keeps its old id 'versant').
+export const OWN_FAMILY = "versant";
+
+// Spica's own tests: "Practice tests". Another publisher's exam: "LanguageCert-style
+// practice", since Spica prepares people for it and isn't affiliated with them.
+export function familyHeading(f: Pick<CatalogueFamily, "id" | "name">, mock = false): string {
+  if (f.id === OWN_FAMILY) return mock ? tr("Mock tests") : tr("Practice tests");
+  return mock ? tr("{{name}}-style mock tests", { name: f.name }) : tr("{{name}}-style practice", { name: f.name });
 }
 
+// Empty for Spica's own tests.
 export function familyNote(f: CatalogueFamily): string {
+  if (f.id === OWN_FAMILY) return "";
   return tr("Practice in the style of {{name}} tests. Spica isn't affiliated with {{publisher}}; levels and scores are estimates.", {
     name: f.name,
     publisher: f.publisher,

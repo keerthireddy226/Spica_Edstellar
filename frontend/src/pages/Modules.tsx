@@ -428,7 +428,7 @@ function TypePicker({
               </div>
               {progress[typeId]?.tests.length ? (
                 <span className="text-[11px] text-muted">
-                  <span className="font-semibold text-ink">{tr("Versant tests:")}</span> {testsLine(progress[typeId].tests)}
+                  <span className="font-semibold text-ink">{tr("Used in:")}</span> {testsLine(progress[typeId].tests)}
                 </span>
               ) : null}
               <TypeProgressLine p={progress[typeId]} />
@@ -1531,7 +1531,7 @@ function ModulesPage() {
           <p className="text-xs uppercase tracking-wide text-muted">
             {[c?.skill ? t(`skills.${c.skill}`) : null, c?.check ? tr("Level check") : c?.retry ? tr("Mistakes to retry") : c?.typeName, c?.unitName, c?.setName].filter(Boolean).join(" · ")}
           </p>
-          {c?.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
+          {c?.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("Used in these tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
           <div className="flex items-center gap-4">
             <ProgressRing percent={pct} size={72} strokeWidth={6} colorClass={pct >= 80 ? "text-success" : pct >= 50 ? "text-navy" : "text-warning"}>
               <span className="font-display font-bold text-lg text-ink">{pct}%</span>
@@ -1719,7 +1719,7 @@ function ModulesPage() {
                       {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : t("placementTest.progress", { current: index + 1, total: items.length })}
                     </span>
                   </span>
-                  {context?.tests?.length && !small ? <span className="text-[11px] text-muted">{tr("Versant: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
+                  {context?.tests?.length && !small ? <span className="text-[11px] text-muted">{tr("Tests: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
               </div>
               {remainingSeconds !== null ? (

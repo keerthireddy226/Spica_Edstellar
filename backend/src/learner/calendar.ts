@@ -1,4 +1,4 @@
-// The test plan's dates (practice tests, mock exams, the exam day) as
+// The test plan's dates (practice tests, mock tests, the exam day) as
 // calendar events: an .ics file for Apple Calendar and Outlook, and one
 // "Add to Google Calendar" link per date, emailed when the plan is created
 // and whenever the learner asks. Each event keeps the same UID, so sending the
@@ -17,8 +17,8 @@ export interface PlanEvent {
 
 const TITLES: Record<PlanEvent["kind"], string> = {
   practice_test: "Spica: practice test",
-  mock: "Spica: mock exam",
-  exam: "Your Versant exam",
+  mock: "Spica: mock test",
+  exam: "Your exam day",
 };
 
 const LINKS: Record<PlanEvent["kind"], string> = {
@@ -99,7 +99,7 @@ const pretty = (d: string, lang: string) => {
 };
 
 // Each line is a whole sentence, translated on its own into the learner's language.
-const KIND_NAMES: Record<PlanEvent["kind"], string> = { practice_test: "Practice test", mock: "Mock exam", exam: "Your Versant exam" };
+const KIND_NAMES: Record<PlanEvent["kind"], string> = { practice_test: "Practice test", mock: "Mock test", exam: "Your exam day" };
 
 // Sends the plan's dates; returns how many were sent (0: nothing planned).
 export async function emailTestDates(userId: string): Promise<number> {

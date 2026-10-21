@@ -1,4 +1,4 @@
-// Practice mode and mock exam mode (ASSESSMENT_ENGINE.md section 5).
+// Practice mode and mock test mode (ASSESSMENT_ENGINE.md section 5).
 //
 // Practice: the learner picks a set, can go back and pause, and sees the
 // correct answer after each question. Mock: exam conditions. The form comes

@@ -46,7 +46,7 @@ const SOURCE_LABEL: Record<LibrarySource, () => string> = {
   unplaced: () => tr("Other, not in a set"),
 };
 const SOURCES = Object.keys(SOURCE_LABEL) as LibrarySource[];
-const FAMILY_LABEL: Record<string, string> = { versant: "Versant", languagecert: "LanguageCert" };
+const FAMILY_LABEL: Record<string, string> = { versant: "Spica", languagecert: "LanguageCert" };
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120];
 
 const minutes = (seconds: number) => Math.round((seconds / 60) * 10) / 10;
@@ -881,7 +881,7 @@ export function BuilderPanel() {
                 {tr("For")}
                 <select value={d.purpose} onChange={(e) => set({ purpose: e.target.value as Draft["purpose"] })} className={`${inputClass} cursor-pointer`}>
                   <option value="practice">{tr("Practice")}</option>
-                  <option value="mock">{tr("Mock exam")}</option>
+                  <option value="mock">{tr("Mock test")}</option>
                 </select>
               </label>
               <label className="flex flex-col gap-1 text-xs text-muted">

@@ -140,10 +140,10 @@
         "goalTitle": "మీ లక్ష్య స్థాయి లేదా స్కోరు ఏమిటి?",
         "goalSubtitle": "ఈ పరీక్షలో మీ లక్ష్యం",
         "scoreTargetLabel": "నిర్దిష్ట స్కోరు లక్ష్యం (ఐచ్ఛికం)",
-        "scoreTargetPlaceholder": "ఉదా. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "ఉదా. B2, లేదా 60+ స్కోరు",
         "exam": {
-          "versant": "Versant",
-          "versantDesc": "మాట్లాడటం, రాయడం, ప్లేస్‌మెంట్, ప్రొఫెషనల్",
+          "versant": "Spica ఇంగ్లీష్ సర్టిఫికెట్",
+          "versantDesc": "4 నైపుణ్యాలు, మాట్లాడటం మరియు వినడం, రాయడం, ప్రొఫెషనల్",
           "ielts": "IELTS",
           "ieltsDesc": "Academic లేదా General Training",
           "toefl": "TOEFL iBT",
@@ -362,7 +362,7 @@
     "toggleTheme": "థీమ్ మార్చండి"
   },
   "practiceTests": {
-    "subtitle": "నిజమైన Versant పరీక్షా ఉత్పత్తులకు సరిపోలే పూర్తి-నిడివి, సమయ-నిర్ధారిత మాక్ టెస్టులు.",
+    "subtitle": "పూర్తి నిడివి, సమయ పరిమితి ఉన్న మాక్ టెస్టులు, అసలు మూల్యాంకనంలాగే.",
     "comingSoon": "త్వరలో వస్తుంది",
     "setsCount": "{{count}} సెట్",
     "setsCount_other": "{{count}} సెట్‌లు",
@@ -397,15 +397,15 @@
       "startSection": "{{label}} ప్రారంభించండి"
     },
     "versantProduct": {
-      "speakingListening": "ఇంగ్లీష్ స్పీకింగ్ అండ్ లిజనింగ్ టెస్ట్",
+      "speakingListening": "English Speaking & Listening",
       "speakingListeningDesc": "మాట్లాడటం మరియు వినడం — 17 నిమిషాలు.",
-      "fourSkills": "ఇంగ్లీష్ 4-స్కిల్స్ ఎసెన్షియల్స్ టెస్ట్",
+      "fourSkills": "English 4 Skills Essentials",
       "fourSkillsDesc": "మాట్లాడటం, వినడం, చదవడం, రాయడం — 30 నిమిషాలు.",
-      "writing": "ఇంగ్లీష్ రైటింగ్ టెస్ట్",
+      "writing": "English Writing",
       "writingDesc": "రాత ఇంగ్లీష్ — 35 నిమిషాలు.",
-      "professional": "ప్రొఫెషనల్ ఇంగ్లీష్ టెస్ట్",
+      "professional": "Professional English",
       "professionalDesc": "మాట్లాడటం, వినడం, చదవడం, రాయడం — 60 నిమిషాలు.",
-      "placement": "ఇంగ్లీష్ ప్లేస్‌మెంట్ టెస్ట్",
+      "placement": "English Placement",
       "placementDesc": "మాట్లాడటం, వినడం, చదవడం, రాయడం — 50 నిమిషాలు."
     },
     "notEnabled": "మీ సంస్థ దీన్ని అందించడం లేదు"

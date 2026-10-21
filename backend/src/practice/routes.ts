@@ -312,7 +312,7 @@ practiceRouter.get("/availability", requireAuth, async (req: AuthedRequest, res,
 
 // Shared by the resume-below (filtered by skill/type/set) and /session/current (no filter).
 // Each question's countdown: the whole time for it (recordings played, reading,
-// preparation and answering), as in a mock exam.
+// preparation and answering), as in a mock test.
 async function withQuestionTimes<T extends { id: string }>(items: T[]): Promise<(T & { questionSeconds: number | null })[]> {
   const limits = await mockLimits(items.map((i) => i.id));
   return items.map((i) => ({ ...i, questionSeconds: limits[i.id] ?? null }));

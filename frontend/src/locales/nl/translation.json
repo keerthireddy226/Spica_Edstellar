@@ -131,14 +131,15 @@
         "goalTitle": "Welk niveau of welke score wil je halen?",
         "goalSubtitle": "Je doel voor dit examen",
         "scoreTargetLabel": "Specifieke doelscore (optioneel)",
-        "scoreTargetPlaceholder": "bijv. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "bijv. B2, of een score van 60+",
         "exam": {
-          "versantDesc": "Spreken, schrijven, niveaubepaling, professioneel",
+          "versantDesc": "4 vaardigheden, spreken en luisteren, schrijven, professioneel",
           "ieltsDesc": "Academic of General Training",
           "toeflDesc": "Online examen",
           "pteDesc": "Computerexamen van Pearson",
           "other": "Anders / Algemeen",
-          "otherDesc": "Algemene verbetering van je Engels"
+          "otherDesc": "Algemene verbetering van je Engels",
+          "versant": "Spica Engels-certificaat"
         },
         "goal": {
           "A1": "A1 - Beginner",
@@ -347,7 +348,7 @@
     "toggleTheme": "Thema wisselen"
   },
   "practiceTests": {
-    "subtitle": "Volledige, getimede proeftoetsen die overeenkomen met de echte Versant-examens.",
+    "subtitle": "Volledige proeftoetsen op tijd, net als de echte toets.",
     "comingSoon": "Binnenkort",
     "setsCount": "{{count}} set",
     "setsCount_other": "{{count}} sets",
@@ -384,7 +385,12 @@
       "fourSkillsDesc": "Spreken, luisteren, lezen, schrijven — 30 minuten.",
       "writingDesc": "Geschreven Engels — 35 minuten.",
       "professionalDesc": "Spreken, luisteren, lezen, schrijven — 60 minuten.",
-      "placementDesc": "Spreken, luisteren, lezen, schrijven — 50 minuten."
+      "placementDesc": "Spreken, luisteren, lezen, schrijven — 50 minuten.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Niet aangeboden door je organisatie"
   },

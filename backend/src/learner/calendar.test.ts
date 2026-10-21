@@ -22,6 +22,6 @@ describe("test plan calendar", () => {
     const url = new URL(googleLink(events[1]));
     expect(url.searchParams.get("action")).toBe("TEMPLATE");
     expect(url.searchParams.get("dates")).toBe("20261231/20270101");
-    expect(url.searchParams.get("text")).toBe("Spica: mock exam");
+    expect(url.searchParams.get("text")).toBe("Spica: mock test");
   });
 });

@@ -48,7 +48,7 @@ export function ModuleReportPage() {
         <p className="text-xs uppercase tracking-wide text-muted">
           {[tr("Practice Modules"), c.skill ? t(`skills.${c.skill}`) : null, c.retry ? tr("Mistakes to retry") : c.typeName, c.unitName, c.setName].filter(Boolean).join(" · ")}
         </p>
-        {c.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("A question type in these Versant tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
+        {c.tests?.length ? <p className="text-xs text-muted -mt-2">{tr("Used in these tests: {{tests}}", { tests: testsLine(c.tests) })}</p> : null}
         <div className="flex items-center gap-4">
           <ProgressRing percent={pct} size={72} strokeWidth={6} colorClass={pct >= 80 ? "text-success" : pct >= 50 ? "text-navy" : "text-warning"}>
             <span className="font-display font-bold text-lg text-ink">{pct}%</span>

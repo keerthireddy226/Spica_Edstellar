@@ -153,7 +153,7 @@ function mockTiming(c: MockComposition) {
   return { deadlineAt: c.deadlineAt ?? null, serverNow: new Date().toISOString() };
 }
 
-// The learner's open mock exam, if any: one at a time.
+// The learner's open mock test, if any: one at a time.
 // A mock whose time ran out while the learner was away, with nothing
 // answered, is set aside (abandoned): it isn't finished with every question
 // skipped, doesn't count towards the month's mocks or show in their reports,
@@ -269,7 +269,7 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
   }
 });
 
-// This month's practice tests and mock exams against the learner's limits.
+// This month's practice tests and mock tests against the learner's limits.
 practiceTestsRouter.get("/quota", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const quota = await quotaUsage(req.user!.id);

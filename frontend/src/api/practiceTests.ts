@@ -69,7 +69,7 @@ export interface ExamCompleteResult {
   // This attempt's Test ID, e.g. "FS-7K3M-9QX2".
   testCode?: string | null;
   deliveryMode?: DeliveryMode;
-  // Mock exams: the estimated score range, where the exam family publishes one.
+  // Mock tests: the estimated score range, where the exam family publishes one.
   scoreBand?: ScoreBand | null;
   skillScoreBands?: Partial<Record<"listening" | "speaking" | "reading" | "writing", ScoreBand | null>> | null;
   gradedCount: number;
@@ -94,7 +94,7 @@ export function getCatalogue(): Promise<{ families: CatalogueFamily[] }> {
   return api("/catalogue");
 }
 
-// openMock: the learner's mock exam in progress (one at a time).
+// openMock: the learner's mock test in progress (one at a time).
 export function getProducts(): Promise<{ families: CatalogueFamily[]; openMock: { sessionId: string; testTypeId: string | null } | null }> {
   return api("/practice-tests/products");
 }
@@ -113,7 +113,7 @@ export interface ExamSessionData {
   deliveryMode: DeliveryMode;
   partBoundaries: PartBoundary[];
   items: TestItem[];
-  // Mock exams: when the whole exam must be finished, and the server's time
+  // Mock tests: when the whole exam must be finished, and the server's time
   // (to correct for a wrong clock on the learner's computer).
   timing: { deadlineAt: string | null; serverNow: string } | null;
 }
@@ -128,7 +128,7 @@ export function startFormSession(formId: string): Promise<ExamSessionData> {
   return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ formId, mode: "practice" }) });
 }
 
-// A mock exam of a test type: exam conditions, questions the learner hasn't
+// A mock test of a test type: exam conditions, questions the learner hasn't
 // seen. Fails with 409 mock_in_progress while another mock is open.
 export function startMockSession(testTypeId: string): Promise<ExamSessionData> {
   return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ testTypeId, mode: "mock" }) });
@@ -138,7 +138,7 @@ export function getExamSession(sessionId: string): Promise<ExamSessionData & { c
   return api(`/practice-tests/session/${sessionId}`);
 }
 
-// Mock exams: starts a question's clock (the first time) and returns the seconds left.
+// Mock tests: starts a question's clock (the first time) and returns the seconds left.
 export function markItemShown(sessionId: string, itemId: string): Promise<{ secondsLeft: number | null; deadlineAt?: string | null; serverNow?: string }> {
   return api(`/practice-tests/session/${sessionId}/view`, { method: "POST", body: JSON.stringify({ itemId }) });
 }
@@ -305,7 +305,7 @@ export interface FeedbackReport {
   questions?: ReportQuestion[];
 }
 
-// What a report is about: practice test or mock exam, the test, set and date.
+// What a report is about: practice test or mock test, the test, set and date.
 export interface ReportAbout {
   deliveryMode: "practice" | "mock";
   testTypeName: string | null;

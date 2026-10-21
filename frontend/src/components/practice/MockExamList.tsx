@@ -5,20 +5,20 @@ import { Button } from "@/components/Button";
 import { HERO_GRADIENT } from "@/components/learner/LearnerHero";
 import { formatShortDate } from "@/api/licenses";
 import type { CatalogueFamily, CatalogueTestType, HistoryEntry, QuotaUsage } from "@/api/practiceTests";
-import { testTypeColour, testTypeIcon, testTypeName } from "@/lib/testTypes";
+import { familyHeading, testTypeColour, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 // What makes a mock different from practice, shown once above the list.
 const RULES: [LucideIcon, () => string][] = [
-  [Timer, () => tr("Timed like the real exam")],
+  [Timer, () => tr("Timed like the real test")],
   [Lock, () => tr("Moves on with the timer: no Skip, no going back")],
   [EyeOff, () => tr("Questions you haven't seen")],
   [FileText, () => tr("Full report and level at the end")],
 ];
 
-// The Mock Exams section: a dark exam-day banner with this month's mocks, the
+// The Mock Tests section: a dark exam-day banner with this month's mocks, the
 // rules, and one row per exam with its last result and a direct Start button.
 export function MockExamList({
   families,
@@ -50,9 +50,9 @@ export function MockExamList({
         <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex-1 flex flex-col gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">{tr("Exam day practice")}</span>
-            <h1 className="font-display font-bold text-3xl">{tr("Mock Exams")}</h1>
+            <h1 className="font-display font-bold text-3xl">{tr("Mock Tests")}</h1>
             <p className="text-sm text-white/80 max-w-xl leading-relaxed">
-              {tr("Sit a full exam under real conditions. You get your estimated level and a report with every answer you got wrong or skipped.")}
+              {tr("Sit a full test under real conditions. You get your estimated level and a report with every answer you got wrong or skipped.")}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 lg:w-[420px]">
@@ -86,12 +86,12 @@ export function MockExamList({
       {inProgress && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-warning/10 border border-warning/30 rounded-card px-5 py-4">
           <Timer size={20} className="text-warning shrink-0" />
-          <span className="flex-1 text-sm text-ink">{tr("You have a mock exam in progress: {{name}}. Its clock keeps running.", { name: testTypeName(inProgress, t) })}</span>
+          <span className="flex-1 text-sm text-ink">{tr("You have a mock test in progress: {{name}}. Its clock keeps running.", { name: testTypeName(inProgress, t) })}</span>
           {phone ? (
             <span className="text-xs text-muted shrink-0">{tr("Resume on a computer")}</span>
           ) : (
             <Button onClick={() => onStart(inProgress.id)} className="shrink-0">
-              {tr("Resume mock exam")}
+              {tr("Resume mock test")}
             </Button>
           )}
         </div>
@@ -99,7 +99,7 @@ export function MockExamList({
 
       {families.map((family) => (
         <section key={family.id} className="flex flex-col gap-3">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("{{name}}-style mock exams", { name: family.name })}</h2>
+          <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family, true)}</h2>
           <div className="flex flex-col gap-3">
             {family.testTypes.map((tt) => (
               <MockRow
@@ -201,7 +201,7 @@ function MockRow({
           <span className="text-xs text-muted">{blockedBy}</span>
         ) : (
           <Button onClick={onStart} className="flex items-center gap-1.5 w-full md:w-auto justify-center">
-            <PlayCircle size={16} /> {resume ? tr("Resume mock exam") : tr("Start mock exam")}
+            <PlayCircle size={16} /> {resume ? tr("Resume mock test") : tr("Start mock test")}
           </Button>
         )}
       </div>

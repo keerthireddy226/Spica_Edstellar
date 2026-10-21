@@ -208,7 +208,7 @@ function Speech({ q }: { q: ReportQuestion }) {
 
 // The learner's own answer, right or wrong: the typed text, or for a spoken
 // answer what we heard (unless the word-by-word block already shows it). Same
-// view in Practice Modules, practice tests and mock exams; no recording player.
+// view in Practice Modules, practice tests and mock tests; no recording player.
 function Given({ q }: { q: ReportQuestion }) {
   const g = q.given;
   if (!g) return null;
@@ -466,14 +466,14 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   );
 }
 
-// Which test the report is for: practice test or mock exam, the test, set, date and code.
+// Which test the report is for: practice test or mock test, the test, set, date and code.
 function AboutLine({ about }: { about: ReportAbout }) {
   const mock = about.deliveryMode === "mock";
   const test = about.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
       <span className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${mock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
-        {mock ? tr("Mock exam") : tr("Practice test")}
+        {mock ? tr("Mock test") : tr("Practice test")}
       </span>
       {test && <span className="font-display font-bold text-ink">{test}</span>}
       <span className="text-sm text-muted">

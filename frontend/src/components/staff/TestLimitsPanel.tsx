@@ -27,7 +27,7 @@ const fromBox = (s: string) => (s.trim() === "" ? null : Math.max(0, Math.round(
 
 const inputClass = "w-24 rounded-input border border-rule bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-navy focus:outline-none";
 
-// How many practice tests and mock exams each plan allows a learner per
+// How many practice tests and mock tests each plan allows a learner per
 // month. Super Admins change them; changes apply from the next test started.
 export function TestLimitsPanel() {
   const canEdit = useAuth().user?.role === "super_admin";
@@ -66,7 +66,7 @@ export function TestLimitsPanel() {
   return (
     <Panel title={tr("Monthly test limits")}>
       <p className="text-xs text-muted">
-        {tr("Practice tests and mock exams each learner can start per month of access (a license month, e.g. 16 Oct to 16 Nov; the calendar month for learners without a license). Empty means unlimited. Candidates take their one assessment and have no limits.")}
+        {tr("Practice tests and mock tests each learner can start per month of access (a license month, e.g. 16 Oct to 16 Nov; the calendar month for learners without a license). Empty means unlimited. Candidates take their one assessment and have no limits.")}
       </p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -74,7 +74,7 @@ export function TestLimitsPanel() {
             <tr className="text-left text-xs text-muted uppercase tracking-wide border-b border-rule">
               <th className="py-2 pr-3 font-semibold">{tr("Plan")}</th>
               <th className="py-2 pr-3 font-semibold">{tr("Practice tests")}</th>
-              <th className="py-2 pr-3 font-semibold">{tr("Mock exams")}</th>
+              <th className="py-2 pr-3 font-semibold">{tr("Mock tests")}</th>
               <th className="py-2 pr-3 font-semibold">{tr("Feedback report")}</th>
               {canEdit && <th className="py-2" />}
             </tr>

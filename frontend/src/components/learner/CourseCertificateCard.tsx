@@ -26,7 +26,7 @@ const SKILL_LABEL: Record<SkillName, () => string> = {
 };
 const MAX_PROOF_MB = 3;
 
-// My journey: the learner's real Versant result (goal → achieved) and their
+// My journey: the learner's official test result (goal → achieved) and their
 // course certificate: what's left before they can ask for one, the request
 // (to their org admin, or the Spica team for individuals) and the certificate.
 export function CourseCertificateCard() {
@@ -66,7 +66,7 @@ export function CourseCertificateCard() {
         <Award size={17} className="text-accent" /> {tr("Your result and certificate")}
       </h2>
 
-      {/* The real Versant result. */}
+      {/* The official test result. */}
       {v ? (
         <div className={`rounded-card border p-4 flex flex-col gap-2 ${s.versantGoalReached ? "border-success/40 bg-success/5" : "border-rule bg-paper-warm/60"}`}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -83,7 +83,7 @@ export function CourseCertificateCard() {
               )}
               <span className="text-muted">
                 {" · "}
-                {tr("Versant test, {{date}}", { date: formatDay(v.takenOn) })}
+                {tr("Official test, {{date}}", { date: formatDay(v.takenOn) })}
                 {v.overallScore ? ` · ${tr("score {{n}}", { n: v.overallScore })}` : ""}
               </span>
             </span>
@@ -113,11 +113,11 @@ export function CourseCertificateCard() {
       ) : (
         <div className="rounded-card border border-dashed border-rule p-4 flex flex-col sm:flex-row sm:items-center gap-3">
           <p className="flex-1 text-sm text-ink">
-            {tr("Took the real Versant test? Add your result to see how it compares with your goal")}
+            {tr("Took an official English test? Add your result to see how it compares with your goal")}
             {s.goal ? ` (${s.goal})` : ""}.
           </p>
           <Button variant="secondary" onClick={() => setAdding(true)} className="shrink-0">
-            {tr("Add my Versant result")}
+            {tr("Add my test result")}
           </Button>
         </div>
       )}
@@ -190,12 +190,12 @@ function CertificateState({ s, who, busy, onApply }: { s: CertificateStatus; who
     <div className="flex flex-col gap-2 rounded-card border border-rule p-4">
       <p className="text-sm text-ink font-semibold">{tr("Certificate of completion")}</p>
       <p className="text-sm text-muted">
-        {tr("You can ask for it when you've finished every practice test and taken a mock exam, or when your access ends.")}
+        {tr("You can ask for it when you've finished every practice test and taken a mock test, or when your access ends.")}
       </p>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-xs text-muted">
           <span>{tr("Practice tests: {{done}} of {{total}}", { done: s.practice.done, total: s.practice.total })}</span>
-          <span>{tr("Mock exams: {{n}}", { n: s.mocks })}</span>
+          <span>{tr("Mock tests: {{n}}", { n: s.mocks })}</span>
         </div>
         <div className="h-2 rounded-pill bg-rule overflow-hidden">
           <div className="h-full rounded-pill bg-navy" style={{ width: `${Math.round((s.practice.done / Math.max(1, s.practice.total)) * 100)}%` }} />
@@ -203,7 +203,7 @@ function CertificateState({ s, who, busy, onApply }: { s: CertificateStatus; who
         <p className="text-xs text-muted">
           {[
             practiceLeft ? tr("{{n}} practice tests left", { n: practiceLeft }) : null,
-            s.mocks === 0 ? tr("a mock exam") : null,
+            s.mocks === 0 ? tr("a mock test") : null,
             s.access.endsAt ? tr("or after your access ends on {{date}}", { date: formatDay(s.access.endsAt) }) : null,
           ]
             .filter(Boolean)
@@ -238,7 +238,7 @@ function VersantResultForm({ goal, onClose, onSaved }: { goal: Level | null; onC
 
   async function save() {
     if (!overall) return setError(tr("Choose your overall level."));
-    if (![score, ...Object.values(skills).map((x) => x?.score ?? "")].every(scoreOk)) return setError(tr("Versant scores are between 10 and 90."));
+    if (![score, ...Object.values(skills).map((x) => x?.score ?? "")].every(scoreOk)) return setError(tr("Scores are between 10 and 90."));
     setSaving(true);
     setError(null);
     const skillBody: Partial<Record<SkillName, SkillResult>> = {};
@@ -269,8 +269,8 @@ function VersantResultForm({ goal, onClose, onSaved }: { goal: Level | null; onC
       <div className="bg-surface rounded-card shadow-xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-display font-bold text-lg text-ink">{tr("Your Versant result")}</h3>
-            <p className="text-sm text-muted">{tr("From your official Versant score report.")}</p>
+            <h3 className="font-display font-bold text-lg text-ink">{tr("Your official test result")}</h3>
+            <p className="text-sm text-muted">{tr("From your official score report.")}</p>
           </div>
           <button onClick={onClose} className="text-muted hover:text-ink cursor-pointer" aria-label={tr("Close")}>
             <X size={20} />

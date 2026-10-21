@@ -1,4 +1,4 @@
-// A program member's plan: when to take a practice test and when a mock exam,
+// A program member's plan: when to take a practice test and when a mock test,
 // from the time left and the gap to the target (ASSESSMENT_ENGINE.md
 // section 8). Pure, so it's easy to test; programs/service.ts stores it.
 import { CEFR_LEVELS, type CefrLevel } from "../placement/cefr.js";
@@ -39,7 +39,7 @@ function monthKey(s: string, start?: string): string {
   return String((y2 - y1) * 12 + (m2 - m1) - (d2 < d1 ? 1 : 0));
 }
 
-// Days between practice tests and between mock exams: a bigger gap means
+// Days between practice tests and between mock tests: a bigger gap means
 // more often. The design's range is a mock every 2-4 weeks.
 export function intervals(gap: number | null): { practiceDays: number; mockDays: number } {
   const g = gap ?? 2;

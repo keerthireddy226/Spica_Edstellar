@@ -62,14 +62,14 @@ function GeneratePanel({ overview, onStarted }: { overview: ContentOverview; onS
   return (
     <Panel title={tr("Write new questions with AI")}>
       <p className="text-xs text-muted">
-        {tr("Pick the test, the question type, the level and how many. Questions that pass the automatic checks go into the bank for practice; mock exams use them after you approve them in Review. Only LanguageCert-style types can be written so far.")}
+        {tr("Pick the test, the question type, the level and how many. Questions that pass the automatic checks go into the bank for practice; mock tests use them after you approve them in Review. Only LanguageCert-style types can be written so far.")}
         {!overview.ttsEnabled && ` ${tr("Text-to-speech isn't set up, so listening questions get recordings later.")}`}
       </p>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-xs text-muted">
           {tr("Test")}
           <select value={testTypeId} onChange={(e) => setTestTypeId(e.target.value)} className={`${inputClass} cursor-pointer`}>
-            {(["LanguageCert", "Versant"] as const).map((fam) => {
+            {(["LanguageCert", "Spica"] as const).map((fam) => {
               const list = overview.testTypes.filter((t) => familyOf(t.id) === fam);
               return list.length ? (
                 <optgroup key={fam} label={fam}>
@@ -125,8 +125,8 @@ function GeneratePanel({ overview, onStarted }: { overview: ContentOverview; onS
 }
 
 // The exam family of a test type (LanguageCert test types start with "lc").
-function familyOf(testTypeId: string): "LanguageCert" | "Versant" {
-  return testTypeId.startsWith("lc") ? "LanguageCert" : "Versant";
+function familyOf(testTypeId: string): "LanguageCert" | "Spica" {
+  return testTypeId.startsWith("lc") ? "LanguageCert" : "Spica";
 }
 
 function JobsPanel({ jobs, names, testTypes }: { jobs: GenerationJob[]; names: Record<string, string>; testTypes: ContentOverview["testTypes"] }) {
@@ -385,7 +385,7 @@ function ReviewPanel({ overview, refresh }: { overview: ContentOverview; refresh
 type Tab = "create" | "library" | "generate" | "review";
 
 const TAB_NOTE: Record<Tab, () => string> = {
-  create: () => tr("Make a practice test or a mock exam for learners."),
+  create: () => tr("Make a practice test or a mock test for learners."),
   library: () => tr("Browse and search every question."),
   generate: () => tr("Ask the AI to write more questions."),
   review: () => tr("Check AI-written questions before learners get them."),

@@ -131,14 +131,15 @@
         "goalTitle": "Hvilket niveau eller resultat sigter du efter?",
         "goalSubtitle": "Dit mål for prøven",
         "scoreTargetLabel": "Specifikt resultatmål (valgfrit)",
-        "scoreTargetPlaceholder": "f.eks. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "f.eks. B2 eller en score på 60+",
         "exam": {
-          "versantDesc": "Tale, skrivning, niveautest, professionel",
+          "versantDesc": "4 færdigheder, tale og lytte, skrivning, erhverv",
           "ieltsDesc": "Academic eller General Training",
           "toeflDesc": "Internetbaseret test",
           "pteDesc": "Pearsons computerbaserede test",
           "other": "Andet / Generelt",
-          "otherDesc": "Generel forbedring af engelsk"
+          "otherDesc": "Generel forbedring af engelsk",
+          "versant": "Spica-engelskcertifikat"
         },
         "goal": {
           "A1": "A1 – Begynder",
@@ -347,7 +348,7 @@
     "toggleTheme": "Skift tema"
   },
   "practiceTests": {
-    "subtitle": "Fulde, tidsbegrænsede prøvetest, der svarer til de rigtige Versant-prøver.",
+    "subtitle": "Fulde prøvetests med tidsgrænse, ligesom den rigtige test.",
     "comingSoon": "Kommer snart",
     "setsCount": "{{count}} sæt",
     "setsCount_other": "{{count}} sæt",
@@ -384,7 +385,12 @@
       "fourSkillsDesc": "Tale, lytning, læsning, skrivning — 30 minutter.",
       "writingDesc": "Skriftligt engelsk — 35 minutter.",
       "professionalDesc": "Tale, lytning, læsning, skrivning — 60 minutter.",
-      "placementDesc": "Tale, lytning, læsning, skrivning — 50 minutter."
+      "placementDesc": "Tale, lytning, læsning, skrivning — 50 minutter.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Tilbydes ikke af din organisation"
   },

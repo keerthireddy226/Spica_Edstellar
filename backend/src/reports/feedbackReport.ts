@@ -81,7 +81,7 @@ export interface ReportQuestion {
   given?: { text: string | null; audioUri: string | null; noSpeech: boolean };
 }
 
-// What a report is about, shown at its top: practice test or mock exam, the
+// What a report is about, shown at its top: practice test or mock test, the
 // test and exam family, the set, its code and when it was taken.
 export interface ReportAbout {
   deliveryMode: "practice" | "mock";
@@ -95,7 +95,9 @@ export interface ReportAbout {
 export async function reportAbout(sessionId: string): Promise<ReportAbout | null> {
   const r = (
     await pool.query(
-      `SELECT s.delivery_mode, s.test_code, s.completed_at, tt.name AS test_type_name, f.name AS family_name, coalesce(e.name, fo.name) AS set_name
+      `SELECT s.delivery_mode, s.test_code, s.completed_at, tt.name AS test_type_name,
+              -- Spica's own tests (family 'versant') need no "-style" prefix.
+              CASE WHEN f.id = 'versant' THEN NULL ELSE f.name END AS family_name, coalesce(e.name, fo.name) AS set_name
        FROM sessions s
        LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
        LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
@@ -471,7 +473,7 @@ export async function buildReport(sessionId: string): Promise<void> {
     );
     const writingErrors = questions.flatMap((q) => q.writing?.errors ?? []).reduce<Record<string, number>>((acc, e) => ({ ...acc, [e.type]: (acc[e.type] ?? 0) + 1 }), {});
     const wordIssues = questions.reduce((n, q) => n + (q.words ? diffSummary(q.words.ops).substituted + diffSummary(q.words.ops).missing : 0), 0);
-    const summaryPrompt = `Write a short feedback summary for an English learner after a ${s.delivery_mode === "mock" ? "mock exam" : "practice test"}.
+    const summaryPrompt = `Write a short feedback summary for an English learner after a ${s.delivery_mode === "mock" ? "mock test" : "practice test"}.
 Results: ${JSON.stringify(s.result ?? {})}
 ${target ? `Target: ${target.level} by ${target.date} (${target.programName}).` : "No target level set."}
 By skill: ${JSON.stringify(bySkill)}

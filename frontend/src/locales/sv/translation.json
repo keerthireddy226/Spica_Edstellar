@@ -131,14 +131,15 @@
         "goalTitle": "Vilken nivå eller vilket resultat siktar du på?",
         "goalSubtitle": "Ditt mål för provet",
         "scoreTargetLabel": "Specifikt resultatmål (valfritt)",
-        "scoreTargetPlaceholder": "t.ex. IELTS 7.0, Versant 69+, PTE 65",
+        "scoreTargetPlaceholder": "t.ex. B2 eller ett resultat på 60+",
         "exam": {
-          "versantDesc": "Tala, skriva, nivåtest, yrkesinriktat",
+          "versantDesc": "4 färdigheter, tala och lyssna, skriva, yrkesengelska",
           "ieltsDesc": "Academic eller General Training",
           "toeflDesc": "Internetbaserat prov",
           "pteDesc": "Pearsons datorbaserade prov",
           "other": "Annat / Allmänt",
-          "otherDesc": "Allmän förbättring av engelskan"
+          "otherDesc": "Allmän förbättring av engelskan",
+          "versant": "Spicas engelskcertifikat"
         },
         "goal": {
           "A1": "A1 – Nybörjare",
@@ -347,7 +348,7 @@
     "toggleTheme": "Byt tema"
   },
   "practiceTests": {
-    "subtitle": "Fullständiga, tidsbegränsade övningsprov som motsvarar de riktiga Versant-proven.",
+    "subtitle": "Fullständiga provtester med tidsgräns, precis som det riktiga provet.",
     "comingSoon": "Kommer snart",
     "setsCount": "{{count}} set",
     "setsCount_other": "{{count}} set",
@@ -384,7 +385,12 @@
       "fourSkillsDesc": "Tala, hörförståelse, läsa, skriva — 30 minuter.",
       "writingDesc": "Skriftlig engelska — 35 minuter.",
       "professionalDesc": "Tala, hörförståelse, läsa, skriva — 60 minuter.",
-      "placementDesc": "Tala, hörförståelse, läsa, skriva — 50 minuter."
+      "placementDesc": "Tala, hörförståelse, läsa, skriva — 50 minuter.",
+      "speakingListening": "English Speaking & Listening",
+      "fourSkills": "English 4 Skills Essentials",
+      "writing": "English Writing",
+      "professional": "Professional English",
+      "placement": "English Placement"
     },
     "notEnabled": "Erbjuds inte av din organisation"
   },

@@ -1,4 +1,4 @@
-// Monthly limits on practice tests and mock exams (ASSESSMENT_ENGINE.md
+// Monthly limits on practice tests and mock tests (ASSESSMENT_ENGINE.md
 // section 8), read from plan_quotas. A month is the learner's current license
 // month, or the calendar month (UTC) without one (see quotaWindow).
 import { pool } from "../db.js";
@@ -83,7 +83,7 @@ export async function quotaWindow(userId: string): Promise<{ from: Date; to: Dat
   return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), to: nextMonthStart(now), licensed: false };
 }
 
-// Practice tests and mock exams started in the current window.
+// Practice tests and mock tests started in the current window.
 export async function monthUsage(userId: string, from: Date): Promise<{ practice: number; mock: number }> {
   const r = await pool.query(
     `SELECT count(*) FILTER (WHERE delivery_mode = 'practice')::int AS practice, count(*) FILTER (WHERE delivery_mode = 'mock')::int AS mock

@@ -328,7 +328,7 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </div>
             <div className="flex flex-col gap-1.5 col-span-2">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Training goal")}</label>
-              <textarea rows={2} {...f("trainingGoal")} placeholder={tr("e.g. Get 200 support agents from B1 to B2 for the Versant Professional test by March")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <textarea rows={2} {...f("trainingGoal")} placeholder={tr("e.g. Get 200 support agents from B1 to B2 for the Professional English test by March")} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
             </div>
           </div>
 

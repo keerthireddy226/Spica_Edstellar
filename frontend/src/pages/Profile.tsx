@@ -548,7 +548,9 @@ export function Profile() {
               )}
               {learning?.goals.examPreference && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
-                  {tr("Preparing for {{toUpperCase}}", { toUpperCase: learning.goals.examPreference.toUpperCase() })}
+                  {tr("Preparing for {{toUpperCase}}", {
+                    toUpperCase: t(`onboarding.wizard.examGoal.exam.${learning.goals.examPreference}`, { defaultValue: learning.goals.examPreference.toUpperCase() }),
+                  })}
                   {learning.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
                 </span>
               )}
