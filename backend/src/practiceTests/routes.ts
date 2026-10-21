@@ -1,4 +1,5 @@
 import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
+import { scoreReport } from "../reports/scoreReport.js";
 import { z } from "zod";
 import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { Router } from "express";
@@ -222,7 +223,12 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
     // The skill levels against the learner's path, saved when the test finished.
     const pathCompare = (await pool.query(`SELECT result->'pathCompare' AS pc FROM sessions WHERE id = $1`, [s.id])).rows[0]?.pc ?? null;
     const report = r.report?.overall ? { ...r.report, overall: { ...r.report.overall, pathCompare } } : r.report;
-    res.json({ status: r.status, report, about: await reportAbout(s.id) });
+    // The score report (Spica score, skills, profile), worked out from the answers.
+    const score = await scoreReport(s.id, r.report ?? null).catch((err) => {
+      console.error("score report failed:", err);
+      return null;
+    });
+    res.json({ status: r.status, report, about: await reportAbout(s.id), score });
   } catch (err) {
     next(err);
   }

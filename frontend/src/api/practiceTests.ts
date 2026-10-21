@@ -315,10 +315,59 @@ export interface ReportAbout {
   completedAt: string | null;
 }
 
+export type ScoreSkill = "speaking" | "listening" | "reading" | "writing";
+export interface ScoreTypeResult {
+  itemTypeId: string;
+  typeName: string;
+  right: number;
+  total: number;
+}
+
+// The score report: Spica score (10-90, aligned to CEFR) overall and per skill,
+// the skill profile and the speaking and writing breakdowns.
+export interface ScoreReport {
+  learner: { name: string; learnerId: string | null };
+  reportId: string | null;
+  completedAt: string | null;
+  overall: { score: number; level: string } | null;
+  goal: string | null;
+  skills: {
+    skill: ScoreSkill;
+    score: number;
+    level: string;
+    percent: number;
+    status: "below" | "meets" | "above" | null;
+    types: ScoreTypeResult[];
+    strengths: ScoreTypeResult[];
+    focus: ScoreTypeResult[];
+  }[];
+  profile: { key: string; value: number | null }[];
+  speaking: {
+    answers: number;
+    wordsPerMinute: number | null;
+    fillers: number | null;
+    fluency: number | null;
+    clarity: number | null;
+    grammar: number | null;
+    vocabulary: number | null;
+    example: { typeName: string; transcript: string; comment: string | null } | null;
+  } | null;
+  writing: {
+    answers: number;
+    grammar: number | null;
+    vocabulary: number | null;
+    spelling: number | null;
+    task: number | null;
+    errors: Record<string, number>;
+    example: { text: string; correction: string; reason: string } | null;
+  } | null;
+}
+
 export interface ReportResponse {
   status: "pending" | "ready" | "failed";
   report: FeedbackReport | null;
   about?: ReportAbout | null;
+  score?: ScoreReport | null;
 }
 
 export function getReport(sessionId: string): Promise<ReportResponse> {

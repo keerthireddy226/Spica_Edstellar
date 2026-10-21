@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbul
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
+import { ScoreReport } from "@/components/report/ScoreReport";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 
 const ERROR_TYPE: Record<string, () => string> = {
@@ -300,7 +301,7 @@ export function QuestionReview({
   );
 }
 
-function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgradeLink: boolean; kind?: "practice" | "mock" }) {
+function Report({ report, upgradeLink, kind, scored = false }: { report: FeedbackReport; upgradeLink: boolean; kind?: "practice" | "mock"; scored?: boolean }) {
   const { t } = useTranslation();
   const qs = report.questions ?? [];
   const counts = report.counts ?? {
@@ -313,7 +314,8 @@ function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgrade
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <div className="flex flex-wrap items-stretch gap-3">
+        {/* With the score report above, its level and score aren't repeated here. */}
+        {!scored && <div className="flex flex-wrap items-stretch gap-3">
           {report.overall.cefrLevel && (
             <div className="flex flex-col items-center bg-navy/10 rounded-card px-5 py-3">
               <span className="text-3xl font-display font-bold text-navy-deep">{report.overall.cefrLevel}</span>
@@ -343,7 +345,7 @@ function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgrade
               ))}
             </div>
           )}
-        </div>
+        </div>}
         {report.overall.pathCompare && Object.keys(report.overall.pathCompare).length > 0 && <SkillLevelCompare compare={report.overall.pathCompare} kind={kind} />}
         {report.target && (
           <p className="text-sm text-muted flex items-center gap-1.5">
@@ -367,7 +369,7 @@ function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgrade
             ))}
           </div>
         )}
-        <p className="text-sm text-ink leading-relaxed">{report.analysis}</p>
+        {!scored && <p className="text-sm text-ink leading-relaxed">{report.analysis}</p>}
       </Card>
 
       <div className="flex flex-col gap-2">
@@ -403,14 +405,14 @@ function Report({ report, upgradeLink, kind }: { report: FeedbackReport; upgrade
           )}
         </Card>
       ) : (
-        <QuestionReview
+        <div className="print:hidden"><QuestionReview
           questions={qs}
           note={
             report.explanationsMissing
               ? tr("Explanations for some answers are still being written. The right answers are shown now; open this report again later for the reasons.")
               : undefined
           }
-        />
+        /></div>
       )}
     </div>
   );
@@ -455,7 +457,8 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   return (
     <div className="flex flex-col gap-4">
       {about}
-      <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} />
+      {data.score?.overall && <ScoreReport score={data.score} about={data.about} analysis={data.report.analysis} />}
+      <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} scored={!!data.score?.overall} />
     </div>
   );
 }
