@@ -203,7 +203,16 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
                     {b.level}
                   </div>
                 ))}
-                <span className="absolute -top-1 -bottom-1 w-[3px] rounded bg-ink" style={{ left: `calc(${at(score.overall.score) * 100}% - 1px)` }} aria-hidden="true" />
+              </div>
+              {/* Where the score sits in its band: a pointer under the bar, not a line over the band's name. */}
+              <div className="relative h-5 mt-0.5" aria-hidden="true">
+                <span
+                  className="absolute -translate-x-1/2 flex flex-col items-center text-[11px] font-semibold text-ink leading-none"
+                  style={{ left: `${at(score.overall.score) * 100}%` }}
+                >
+                  <span className="text-navy-deep">▲</span>
+                  {score.overall.score}
+                </span>
               </div>
               <div className="relative h-4 text-[11px] text-muted font-mono mt-1" aria-hidden="true">
                 {[10, 20, 30, 40, 55, 70, 80, 90].map((n) => (
