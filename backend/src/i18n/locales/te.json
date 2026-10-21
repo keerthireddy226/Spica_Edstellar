@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "కారణాలతో ఒక మార్పును సిఫార్సు చేసే చిన్న ప్రతిపాదన (ఒక పేరా) రాయమని అడగండి.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "చక్కగా అమర్చిన వాదన, వైవిధ్యమైన పదజాలం, ఖచ్చితమైన వ్యాకరణం.",
  "Give a badly written paragraph and ask them to improve it.": "సరిగా రాయని ఒక పేరా ఇచ్చి, దాన్ని మెరుగుపరచమని వారిని అడగండి.",
- "Spots and fixes errors, improves clarity and tone.": "తప్పులను గుర్తించి సరిచేస్తారు, స్పష్టతను మరియు స్వరాన్ని మెరుగుపరుస్తారు."
+ "Spots and fixes errors, improves clarity and tone.": "తప్పులను గుర్తించి సరిచేస్తారు, స్పష్టతను మరియు స్వరాన్ని మెరుగుపరుస్తారు.",
+ "Your certificate ends soon": "మీ సర్టిఫికెట్ త్వరలో ముగుస్తుంది",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "మీ సర్టిఫికెట్ {{code}} {{date}} వరకు చెల్లుతుంది. దాన్ని మరో 12 నెలలు చెల్లుబాటులో ఉంచండి, లేదా మీ ప్రస్తుత స్థాయిని చూపడానికి కొత్త తుది అసెస్‌మెంట్ రాయండి."
 }

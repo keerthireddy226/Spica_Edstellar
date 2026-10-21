@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "Pyydä lyhyt ehdotus (yksi kappale), jossa suositellaan muutosta perusteluineen.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "Hyvin jäsennelty argumentaatio, monipuolinen sanasto ja tarkka kielioppi.",
  "Give a badly written paragraph and ask them to improve it.": "Anna huonosti kirjoitettu kappale ja pyydä hakijaa parantamaan sitä.",
- "Spots and fixes errors, improves clarity and tone.": "Huomaa ja korjaa virheet, parantaa selkeyttä ja sävyä."
+ "Spots and fixes errors, improves clarity and tone.": "Huomaa ja korjaa virheet, parantaa selkeyttä ja sävyä.",
+ "Your certificate ends soon": "Todistuksesi vanhenee pian",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Todistuksesi {{code}} on voimassa {{date}} asti. Pidä se voimassa 12 kuukautta lisää tai tee uusi loppukoe osoittaaksesi nykyisen tasosi."
 }

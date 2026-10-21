@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "请对方写一份简短的建议（一段），推荐一项改变并说明理由。",
  "Well-organised argument, varied vocabulary and accurate grammar.": "论证条理清晰，词汇丰富，语法准确。",
  "Give a badly written paragraph and ask them to improve it.": "给一段写得不好的文字，请对方改进。",
- "Spots and fixes errors, improves clarity and tone.": "能发现并改正错误，提升清晰度和语气。"
+ "Spots and fixes errors, improves clarity and tone.": "能发现并改正错误，提升清晰度和语气。",
+ "Your certificate ends soon": "你的证书即将到期",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "你的证书 {{code}} 有效期至 {{date}}。可再续期 12 个月，或参加新的结业测评来展示你当前的水平。"
 }

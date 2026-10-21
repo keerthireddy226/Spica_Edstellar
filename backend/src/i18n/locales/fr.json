@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "Demandez une courte proposition (un paragraphe) recommandant un changement, avec des raisons.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "Une argumentation bien organisée, un vocabulaire varié et une grammaire exacte.",
  "Give a badly written paragraph and ask them to improve it.": "Donnez un paragraphe mal écrit et demandez au candidat de l'améliorer.",
- "Spots and fixes errors, improves clarity and tone.": "Repère et corrige les erreurs, améliore la clarté et le ton."
+ "Spots and fixes errors, improves clarity and tone.": "Repère et corrige les erreurs, améliore la clarté et le ton.",
+ "Your certificate ends soon": "Votre certificat expire bientôt",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Votre certificat {{code}} est valable jusqu'au {{date}}. Prolongez-le de 12 mois ou passez une nouvelle évaluation finale pour montrer votre niveau actuel."
 }

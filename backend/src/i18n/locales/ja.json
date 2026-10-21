@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "理由を添えて変更を提案する短い提案書（1段落）を書いてもらいます。",
  "Well-organised argument, varied vocabulary and accurate grammar.": "よく整理された論理、多様な語彙、正確な文法。",
  "Give a badly written paragraph and ask them to improve it.": "下手に書かれた段落を渡し、改善してもらいます。",
- "Spots and fixes errors, improves clarity and tone.": "誤りを見つけて直し、わかりやすさとトーンを改善できる。"
+ "Spots and fixes errors, improves clarity and tone.": "誤りを見つけて直し、わかりやすさとトーンを改善できる。",
+ "Your certificate ends soon": "修了証の有効期限が近づいています",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "修了証 {{code}} の有効期限は {{date}} です。さらに 12 か月有効にするか、新しい最終アセスメントを受けて現在のレベルを示しましょう。"
 }

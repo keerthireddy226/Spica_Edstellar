@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "कारणों के साथ कोई बदलाव सुझाने वाला एक छोटा प्रस्ताव (एक पैराग्राफ़) लिखने को कहें।",
  "Well-organised argument, varied vocabulary and accurate grammar.": "अच्छी तरह व्यवस्थित तर्क, विविध शब्दावली और सटीक व्याकरण।",
  "Give a badly written paragraph and ask them to improve it.": "एक ख़राब लिखा पैराग्राफ़ दें और उनसे उसे बेहतर बनाने को कहें।",
- "Spots and fixes errors, improves clarity and tone.": "ग़लतियाँ पहचानकर ठीक करते हैं, स्पष्टता और लहजा सुधारते हैं।"
+ "Spots and fixes errors, improves clarity and tone.": "ग़लतियाँ पहचानकर ठीक करते हैं, स्पष्टता और लहजा सुधारते हैं।",
+ "Your certificate ends soon": "आपका सर्टिफ़िकेट जल्द समाप्त हो रहा है",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "आपका सर्टिफ़िकेट {{code}} {{date}} तक मान्य है। इसे 12 महीने और मान्य रखें, या अपना मौजूदा स्तर दिखाने के लिए नया अंतिम आकलन दें।"
 }

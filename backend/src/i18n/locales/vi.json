@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "Yêu cầu viết một đề xuất ngắn (một đoạn) khuyến nghị một thay đổi, kèm lý do.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "Lập luận có tổ chức tốt, từ vựng đa dạng và ngữ pháp chính xác.",
  "Give a badly written paragraph and ask them to improve it.": "Đưa một đoạn văn viết kém và yêu cầu ứng viên sửa cho tốt hơn.",
- "Spots and fixes errors, improves clarity and tone.": "Phát hiện và sửa lỗi, cải thiện độ rõ ràng và giọng điệu."
+ "Spots and fixes errors, improves clarity and tone.": "Phát hiện và sửa lỗi, cải thiện độ rõ ràng và giọng điệu.",
+ "Your certificate ends soon": "Chứng chỉ của bạn sắp hết hạn",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Chứng chỉ {{code}} của bạn có hiệu lực đến {{date}}. Hãy gia hạn thêm 12 tháng, hoặc làm bài đánh giá cuối khóa mới để thể hiện trình độ hiện tại."
 }

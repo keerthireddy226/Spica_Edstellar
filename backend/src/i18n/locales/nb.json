@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "Be om et kort forslag (ett avsnitt) som anbefaler en endring, med begrunnelser.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "Godt organisert argumentasjon, variert ordforråd og korrekt grammatikk.",
  "Give a badly written paragraph and ask them to improve it.": "Gi et dårlig skrevet avsnitt og be kandidaten forbedre det.",
- "Spots and fixes errors, improves clarity and tone.": "Oppdager og retter feil, forbedrer klarhet og tone."
+ "Spots and fixes errors, improves clarity and tone.": "Oppdager og retter feil, forbedrer klarhet og tone.",
+ "Your certificate ends soon": "Sertifikatet ditt utløper snart",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Sertifikatet ditt {{code}} er gyldig til {{date}}. Hold det gyldig i 12 måneder til, eller ta en ny avsluttende test for å vise nivået ditt nå."
 }

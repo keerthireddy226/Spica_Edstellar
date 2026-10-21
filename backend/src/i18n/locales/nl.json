@@ -366,5 +366,7 @@
  "Ask for a short proposal (one paragraph) recommending a change, with reasons.": "Vraag om een kort voorstel (één alinea) dat een verandering aanbeveelt, met redenen.",
  "Well-organised argument, varied vocabulary and accurate grammar.": "Goed opgebouwde argumentatie, gevarieerde woordenschat en correcte grammatica.",
  "Give a badly written paragraph and ask them to improve it.": "Geef een slecht geschreven alinea en vraag de kandidaat die te verbeteren.",
- "Spots and fixes errors, improves clarity and tone.": "Ziet en verbetert fouten, verbetert duidelijkheid en toon."
+ "Spots and fixes errors, improves clarity and tone.": "Ziet en verbetert fouten, verbetert duidelijkheid en toon.",
+ "Your certificate ends soon": "Je certificaat verloopt binnenkort",
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Je certificaat {{code}} is geldig tot {{date}}. Houd het nog 12 maanden geldig, of maak een nieuwe eindtoets om je huidige niveau te laten zien."
 }
