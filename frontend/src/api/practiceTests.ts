@@ -16,6 +16,8 @@ export interface CatalogueTestType {
   status: "live" | "coming_soon" | "retired";
   setCount: number;
   allowed: boolean;
+  // false: the learner's purchase doesn't include this test.
+  inPlan?: boolean;
 }
 
 export interface CatalogueFamily {
@@ -227,6 +229,8 @@ export interface Program {
   name: string;
   domain: string;
   testTypeId: string;
+  // Sent with the learner's program, also when the test is hidden from the catalogue.
+  testTypeName?: string | null;
   targetLevel: string;
   targetSkills: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
   batchId: string;

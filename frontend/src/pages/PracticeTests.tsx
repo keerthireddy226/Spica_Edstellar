@@ -1785,7 +1785,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               const Icon = testTypeIcon(tt.id);
               const comingSoon = tt.status !== "live";
               // Coming soon (only shown when the organization didn't restrict its tests).
-              const enabled = !comingSoon && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id));
+              const notInPlan = !comingSoon && tt.allowed && tt.inPlan === false;
+              const enabled = !comingSoon && tt.allowed && !notInPlan && (!allowedProducts || allowedProducts.includes(tt.id));
               return (
                 <button
                   key={tt.id}
@@ -1799,7 +1800,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                 >
                   {!enabled && (
                     <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2 py-1 rounded-pill">
-                      {comingSoon ? tr("Coming soon") : t("practiceTests.notEnabled")}
+                      {comingSoon ? tr("Coming soon") : notInPlan ? tr("Not in your plan") : t("practiceTests.notEnabled")}
                     </span>
                   )}
                   {/* Oversized, very faint echo of the card's own icon: a
@@ -1855,7 +1856,7 @@ function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: 
         <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Your program")}</span>
         <span className="font-display font-bold text-lg text-ink">{p.name}</span>
         <span className="text-sm text-muted">
-          {tt ? testTypeName(tt, t) : p.testTypeId} · {tr("Target {{level}} by {{date}}", { level: p.targetLevel, date: formatShortDate(p.targetDate) })}
+          {tt ? testTypeName(tt, t) : (p.testTypeName ?? tr("A test no longer offered"))} · {tr("Target {{level}} by {{date}}", { level: p.targetLevel, date: formatShortDate(p.targetDate) })}
           {mine.latestLevel ? ` · ${tr("Your latest level: {{level}}", { level: mine.latestLevel })}` : ""}
         </span>
         <span className="text-xs text-muted">

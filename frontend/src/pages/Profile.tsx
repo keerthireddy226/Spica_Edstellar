@@ -4,6 +4,7 @@ import { ProgressExtras } from "@/components/progress/ProgressExtras";
 import { DeleteMyAccount } from "@/components/DeleteMyAccount";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
 import {
   ShieldCheck,
   LogOut,
@@ -71,7 +72,9 @@ function SectionHeader({ icon, tint, title }: { icon: typeof GraduationCap; tint
 function AccessSection() {
   const { t } = useTranslation();
   const license = useMyLicense();
-  if (!license || (!license.required && !license.individual)) return null;
+  const access = useMyAccess();
+  const ownsMore = !!access && access.owned.some((o) => o.kind !== "full");
+  if (!license || (!license.required && !license.individual && !ownsMore)) return null;
   const onFreePlan = license.individual && license.status !== "active" && license.status !== "grace";
   const status =
     license.status === "active"
@@ -91,6 +94,13 @@ function AccessSection() {
       <p className={`text-sm font-semibold ${tone}`}>{status}</p>
       {license.queuedMonths > 0 && (
         <p className="text-xs text-muted">{t("profile.access.queued", { count: license.queuedMonths })}</p>
+      )}
+      {/* Preparation for one test, real tests and level tests the learner bought or was given. */}
+      {access && ownsMore && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Also yours")}</span>
+          <OwnedList access={access} />
+        </div>
       )}
       {license.status === "active" || license.status === "grace" ? (
         <div className="grid grid-cols-2 gap-2 mt-1">

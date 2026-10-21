@@ -156,7 +156,7 @@ function MockRow({
 }) {
   const { t } = useTranslation();
   const Icon = testTypeIcon(tt.id);
-  const live = tt.status === "live" && tt.allowed;
+  const live = tt.status === "live" && tt.allowed && tt.inPlan !== false;
   return (
     <div className={`relative overflow-hidden bg-surface border border-rule rounded-card p-5 flex flex-col md:flex-row md:items-center gap-4 shadow-sm ${live ? "" : "opacity-55"}`}>
       <span className={`absolute inset-y-0 left-0 w-1.5 ${testTypeColour(tt.id)}`} />
@@ -196,7 +196,9 @@ function MockRow({
       </div>
       <div className="md:w-48 shrink-0 flex md:justify-end">
         {!live ? (
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tt.status === "live" ? t("practiceTests.notEnabled") : tr("Coming soon")}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {tt.status !== "live" ? tr("Coming soon") : tt.inPlan === false && tt.allowed ? tr("Not in your plan") : t("practiceTests.notEnabled")}
+          </span>
         ) : blockedBy ? (
           <span className="text-xs text-muted">{blockedBy}</span>
         ) : (

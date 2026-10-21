@@ -1,6 +1,7 @@
 import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
 import { Router, type Response } from "express";
 import { z } from "zod";
+import { scoreReport } from "../reports/scoreReport.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { recordAudit } from "../audit/service.js";
 import { listQuotas, updateQuota } from "./quotas.js";
@@ -134,7 +135,9 @@ programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (re
       await enqueue("report.build", { sessionId: s.id }, { dedupeKey: `report.build:${s.id}:${Date.now() >> 16}`, maxAttempts: 5 });
       return res.json({ status: "pending", report: null, about: await reportAbout(s.id), integrity: { status: s.integrity_status, risk: s.risk_level } });
     }
-    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id), integrity: { status: s.integrity_status, risk: s.risk_level } });
+    // The Spica score report too, as the learner sees it.
+    const score = await scoreReport(s.id, r.report ?? null).catch(() => null);
+    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id), score, integrity: { status: s.integrity_status, risk: s.risk_level } });
   } catch (err) {
     next(err);
   }

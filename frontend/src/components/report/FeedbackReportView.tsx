@@ -419,7 +419,8 @@ function Report({ report, upgradeLink, kind, scored = false }: { report: Feedbac
 }
 
 // Loads a report and waits while it's being built.
-export function FeedbackReportView({ load, upgradeLink = false }: { load: () => Promise<ReportResponse>; upgradeLink?: boolean }) {
+// viewer "org": an Org Admin or Manager reading a learner's report.
+export function FeedbackReportView({ load, upgradeLink = false, viewer = "learner" }: { load: () => Promise<ReportResponse>; upgradeLink?: boolean; viewer?: "learner" | "org" }) {
   const [data, setData] = useState<ReportResponse | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -455,13 +456,13 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   }
   // A real assessment attempt has its score report only (its questions stay secret).
   if (!data.report && data.about?.deliveryMode === "certified") {
-    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" /> : <p className="text-sm text-muted">{tr("Your answers are still being scored. Check back soon.")}</p>;
+    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} /> : <p className="text-sm text-muted">{tr("Your answers are still being scored. Check back soon.")}</p>;
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
   return (
     <div className="flex flex-col gap-4">
       <div className={data.score?.overall ? "print:hidden" : ""}>{about}</div>
-      {data.score?.overall && <ScoreReport score={data.score} about={data.about} analysis={data.report.analysis} />}
+      {data.score?.overall && <ScoreReport score={data.score} about={data.about} analysis={data.report.analysis} viewer={viewer} />}
       {/* The PDF is the score report alone. */}
       <div className={data.score?.overall ? "print:hidden" : ""}>
         <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} scored={!!data.score?.overall} />

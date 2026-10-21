@@ -313,8 +313,10 @@ export async function learnerProgram(userId: string) {
   );
   const level = await latestLevel(userId, p.test_type_id);
   const all = items.rows.map((i) => ({ id: i.id as string, dueOn: dateStr(i.due_on), kind: i.kind as DeliveryMode, status: i.status as string }));
+  // The test's name, also when its family is hidden from the catalogue.
+  const testTypeName = (await pool.query(`SELECT name FROM test_types WHERE id = $1`, [p.test_type_id])).rows[0]?.name ?? null;
   return {
-    program: programJson(p),
+    program: { ...programJson(p), testTypeName },
     latestLevel: level.overall,
     done: all.filter((i) => i.status === "done").length,
     missed: all.filter((i) => i.status === "missed").length,

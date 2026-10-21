@@ -762,7 +762,7 @@ export function BatchLearnerReportPage() {
         {error ? (
           <p className="text-sm text-error">{tr("This report isn't available.")}</p>
         ) : data ? (
-          <ScoreReport score={data.score} about={data.about} analysis={data.analysis} />
+          <ScoreReport score={data.score} about={data.about} analysis={data.analysis} viewer="org" />
         ) : (
           <p className="text-sm text-muted">{tr("Loading…")}</p>
         )}

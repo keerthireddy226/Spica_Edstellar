@@ -6,6 +6,7 @@ import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { getMyAccess } from "@/api/access";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getOnboardingProfile,
@@ -209,6 +210,13 @@ function emptyForm(): FormState {
   };
 }
 
+// Where a learner goes after onboarding: the placement test, unless all they
+// own is a real test (bought on its own), which waits for them in My tests.
+async function afterOnboarding(): Promise<string> {
+  const a = await getMyAccess().catch(() => null);
+  return a && !a.full && a.prepTests.length === 0 && a.attempts.length > 0 ? ROUTES.MY_TESTS : ROUTES.PLACEMENT;
+}
+
 export function Onboarding() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -237,8 +245,9 @@ export function Onboarding() {
             .then(() => {
               if (!cancelled) navigate(ROUTES.ROADMAP, { replace: true });
             })
-            .catch(() => {
-              if (!cancelled) navigate(ROUTES.PLACEMENT, { replace: true });
+            .catch(async () => {
+              const next = await afterOnboarding();
+              if (!cancelled) navigate(next, { replace: true });
             });
         } else {
           // The organization may have filled some of this in when it added them.
@@ -363,7 +372,7 @@ export function Onboarding() {
       } catch {
         // Nothing to clear.
       }
-      navigate(ROUTES.PLACEMENT, { replace: true });
+      navigate(await afterOnboarding(), { replace: true });
     } catch {
       setError(t("onboarding.wizard.consent.error"));
     } finally {

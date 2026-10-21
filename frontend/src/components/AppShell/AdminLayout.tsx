@@ -26,13 +26,18 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
   }
 
   return (
-    <div className="flex h-screen bg-paper overflow-hidden">
-      <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => setNavKey((k) => k + 1)} />
+    // Printed (Print / PDF): the page alone, at full length.
+    <div className="flex h-screen bg-paper overflow-hidden print:block print:h-auto print:overflow-visible">
+      <div className="print:hidden">
+        <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => setNavKey((k) => k + 1)} />
+      </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <ViewAsBanner />
-        <Header onMenuClick={() => setDrawerOpen(true)} />
-        <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6">
+      <div className="flex-1 flex flex-col min-w-0 print:block">
+        <div className="print:hidden">
+          <ViewAsBanner />
+          <Header onMenuClick={() => setDrawerOpen(true)} />
+        </div>
+        <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
           <Outlet key={navKey} />
         </main>
       </div>

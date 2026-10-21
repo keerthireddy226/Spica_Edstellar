@@ -137,7 +137,10 @@ const typeLine = (t: ScoreTypeResult) => tr("{{type}}: {{right}} of {{total}} ri
 
 // The score report shown at the top of a practice test or mock report, and
 // printed (Download PDF) as the learner's score report.
-export function ScoreReport({ score, about, analysis }: { score: ScoreReportData; about: ReportAbout | null | undefined; analysis: string }) {
+// viewer "org": an Org Admin or Manager reading a learner's report, so it
+// speaks about the learner, not to them, and leaves out the learner's summary.
+export function ScoreReport({ score, about, analysis, viewer = "learner" }: { score: ScoreReportData; about: ReportAbout | null | undefined; analysis: string; viewer?: "learner" | "org" }) {
+  const org = viewer === "org";
   if (!score.overall) return null;
   const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
   const test = about?.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
@@ -203,7 +206,7 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
             <span className="font-display font-bold text-xl text-navy-deep">{tr("CEFR {{level}}", { level: score.overall.level })}</span>
           </div>
           <div className="flex flex-col gap-3 min-w-0">
-            {analysis && <p className="text-sm text-ink leading-relaxed">{analysis}</p>}
+            {analysis && !org && <p className="text-sm text-ink leading-relaxed">{analysis}</p>}
             <div>
               <div className="relative grid h-8 rounded-lg overflow-hidden" style={{ gridTemplateColumns: BANDS.map((b) => `${b.max - b.min + 1}fr`).join(" ") }}>
                 {BANDS.map((b, i) => (
@@ -235,7 +238,7 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
             </div>
             {score.goal && (
               <p className="text-sm text-muted">
-                {tr("Your goal: {{level}}.", { level: score.goal })}{" "}
+                {org ? tr("Goal: {{level}}.", { level: score.goal }) : tr("Your goal: {{level}}.", { level: score.goal })}{" "}
                 {score.skills.filter((s) => s.status === "below").length
                   ? tr("Still below it: {{skills}}.", { skills: score.skills.filter((s) => s.status === "below").map((s) => SKILL_NAME[s.skill]()).join(", ") })
                   : tr("Every skill has reached it.")}
@@ -246,17 +249,23 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
       </Section>
 
       {/* Four skills */}
-      <Section label={tr("Your skills")}>
+      <Section label={org ? tr("Skills") : tr("Your skills")}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="font-display font-bold text-lg text-ink">{score.skills.length === 4 ? tr("Your four skills") : tr("Your skills")}</h3>
-          <span className="text-xs text-muted">{score.goal ? tr("Bars show your Spica score; the line is your goal ({{level}}).", { level: score.goal }) : tr("Bars show your Spica score.")}</span>
+          <h3 className="font-display font-bold text-lg text-ink">{org ? (score.skills.length === 4 ? tr("The four skills") : tr("Skills")) : score.skills.length === 4 ? tr("Your four skills") : tr("Your skills")}</h3>
+          <span className="text-xs text-muted">{org
+            ? score.goal
+              ? tr("Bars show the Spica score; the line is the goal ({{level}}).", { level: score.goal })
+              : tr("Bars show the Spica score.")
+            : score.goal
+              ? tr("Bars show your Spica score; the line is your goal ({{level}}).", { level: score.goal })
+              : tr("Bars show your Spica score.")}</span>
         </div>
         <SkillBars score={score} />
       </Section>
 
       <div className="print-page flex flex-col gap-4 print:gap-2.5">
       {/* Skill profile */}
-      <ProfileChart score={score} />
+      <ProfileChart score={score} org={org} />
 
       {/* Skill by skill */}
       <div className="grid md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-2.5">
@@ -309,7 +318,9 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
 
       {best && worst && best.skill !== worst.skill && (
         <p className="text-sm text-muted">
-          {tr("Strongest skill: {{best}}. The skill that will lift your score most: {{worst}}.", { best: SKILL_NAME[best.skill](), worst: SKILL_NAME[worst.skill]() })}
+          {org
+            ? tr("Strongest skill: {{best}}. The skill that will lift the score most: {{worst}}.", { best: SKILL_NAME[best.skill](), worst: SKILL_NAME[worst.skill]() })
+            : tr("Strongest skill: {{best}}. The skill that will lift your score most: {{worst}}.", { best: SKILL_NAME[best.skill](), worst: SKILL_NAME[worst.skill]() })}
         </p>
       )}
       <p className="text-xs text-muted">
@@ -369,7 +380,7 @@ function SkillBars({ score }: { score: ScoreReportData }) {
 }
 
 // The eight-part profile (each out of 100) as a spider chart; parts without data are left out.
-function ProfileChart({ score }: { score: ScoreReportData }) {
+function ProfileChart({ score, org = false }: { score: ScoreReportData; org?: boolean }) {
   const parts = score.profile.filter((p): p is { key: string; value: number } => p.value !== null && !!PROFILE[p.key]);
   if (parts.length < 3) return null;
   const cx = 220;
@@ -384,10 +395,10 @@ function ProfileChart({ score }: { score: ScoreReportData }) {
   const sorted = [...parts].sort((a, b) => b.value - a.value);
   const name = (k: string) => `${PROFILE[k].label()} (${PROFILE[k].sub()})`;
   return (
-    <Section label={tr("Your skill profile")}>
+    <Section label={org ? tr("Skill profile") : tr("Your skill profile")}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display font-bold text-lg text-ink">{tr("Your skill profile")}</h3>
-        <span className="text-xs text-muted">{tr("Each part of your English out of 100. The further out, the stronger.")}</span>
+        <h3 className="font-display font-bold text-lg text-ink">{org ? tr("Skill profile") : tr("Your skill profile")}</h3>
+        <span className="text-xs text-muted">{org ? tr("Each part of the learner's English out of 100. The further out, the stronger.") : tr("Each part of your English out of 100. The further out, the stronger.")}</span>
       </div>
       <div className="grid md:grid-cols-[minmax(0,1fr)_220px] print:grid-cols-[minmax(0,1fr)_200px] gap-5 items-center">
         <svg viewBox="-50 0 540 410" className="w-full max-w-[520px] print:max-w-[340px] h-auto mx-auto" role="img" aria-label={parts.map((p) => `${name(p.key)} ${p.value}`).join(", ")}>

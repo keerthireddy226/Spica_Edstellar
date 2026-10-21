@@ -238,6 +238,7 @@ function MemberReportModal({ programId, sessionId, viewer, onClose }: { programI
         </p>
       )}
       <FeedbackReportView
+        viewer="org"
         load={() =>
           getMemberReport(programId, sessionId, viewer).then((r) => {
             setIntegrity(r.integrity ?? null);

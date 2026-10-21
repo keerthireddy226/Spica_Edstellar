@@ -196,11 +196,17 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
     const { allowedTestProducts } = await learnerOrgPolicy(req.user!.id);
     const families = await listCatalogue();
     const mock = req.user!.role === "candidate" ? null : await openMock(req.user!.id);
+    // A learner who bought one test prepares for that test only.
+    const narrowed = req.user!.role === "candidate" ? null : await narrowedAccess(req.user!.id);
     res.json({
       openMock: mock ? { sessionId: mock.id, testTypeId: (mock.composition.testTypeId as string | undefined) ?? null } : null,
       families: families.map((f) => ({
         ...f,
-        testTypes: f.testTypes.map((t) => ({ ...t, allowed: !allowedTestProducts || allowedTestProducts.includes(t.id) })),
+        testTypes: f.testTypes.map((t) => ({
+          ...t,
+          allowed: !allowedTestProducts || allowedTestProducts.includes(t.id),
+          inPlan: !narrowed || canPrepare(narrowed, t.id),
+        })),
       })),
     });
   } catch (err) {
