@@ -112,8 +112,19 @@ const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/
 const mainText = (c: Json) => s(c.text) || s(c.question) || s(c.sentence) || s(c.passage) || s(c.prompt);
 const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
 
-// A second model answers a multiple-choice question on its own; it must agree.
+// A second model answers the question on its own; it must agree: the same
+// option for multiple choice, an accepted answer for short answers and gaps.
 async function keyAgrees(type: string, d: Draft): Promise<boolean> {
+  if (type === "short_answer" || type === "sentence_completion") {
+    const accepted = ((d.answer_set as { acceptable_answers: string[] }).acceptable_answers ?? []).map(norm);
+    const prompt =
+      type === "short_answer"
+        ? `Answer this question in one or two words: ${d.content.question}`
+        : `Fill the gap with exactly one word: ${d.content.sentence}`;
+    const r = await generateJson<{ answer: string }>({ model: CHECK_MODEL, prompt, schema: { type: "object", properties: { answer: { type: "string" } }, required: ["answer"] }, temperature: 0 });
+    const got = norm(r.data.answer ?? "");
+    return accepted.some((a) => a === got || a === got.replace(/^(a|an|the) /, ""));
+  }
   if (!("correctIndex" in (d.answer_set ?? {}))) return true;
   const c = d.content;
   const options = (c.options as string[]).map((o, i) => `${i}. ${o}`).join("\n");
@@ -175,14 +186,28 @@ async function main() {
           await new Promise((ok) => setTimeout(ok, 60_000));
           continue;
         }
+        const why = { shape: 0, length: 0, repeat: 0, key: 0 };
         for (const x of r.data.items ?? []) {
           if (written >= missing) break;
           const d = shape.build(x);
-          if (!d) continue;
+          if (!d) {
+            why.shape++;
+            continue;
+          }
           const text = mainText(d.content);
           const n = words(text);
-          if (!text || n < lo || n > hi || seen.has(norm(text))) continue;
-          if (!(await keyAgrees(type, d).catch(() => false))) continue;
+          if (!text || n < lo || n > hi) {
+            why.length++;
+            continue;
+          }
+          if (seen.has(norm(text))) {
+            why.repeat++;
+            continue;
+          }
+          if (!(await keyAgrees(type, d).catch(() => false))) {
+            why.key++;
+            continue;
+          }
           seen.add(norm(text));
           const ins = await pool.query(
             `INSERT INTO items (item_type_id, content, answer_set, cefr_level, difficulty, topic, domain, status, pool, skill_tag, pipeline_version, prompt_version)
@@ -193,8 +218,9 @@ async function main() {
           made++;
           if (idsOut && LISTENING.has(type)) await appendFile(idsOut, `${ins.rows[0].id}\n`);
         }
+        console.log(`  round ${round + 1}: ${(r.data.items ?? []).length} back, ${written} kept so far; rejected ${JSON.stringify(why)}`);
       }
-      console.log(`  wrote ${written}${written < missing ? ` (still ${missing - written} short: run again)` : ""}`);
+      console.log(`  (length ${lo}–${hi} words) wrote ${written}${written < missing ? ` (still ${missing - written} short: run again)` : ""}`);
     }
   }
   console.log(apply ? `done: ${made} questions written` : "dry run: add --apply to write them");
