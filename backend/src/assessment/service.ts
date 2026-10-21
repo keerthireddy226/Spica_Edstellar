@@ -9,6 +9,7 @@ import type { PoolClient } from "pg";
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { notify } from "../notifications/service.js";
+import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
 import { scoreReport } from "../reports/scoreReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
 import { randomBytes } from "node:crypto";
@@ -231,11 +232,22 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
          tt.id AS test_type_id, tt.name AS test_name
        FROM sessions s JOIN users u ON u.id = s.user_id JOIN tenants t ON t.id = u.tenant_id LEFT JOIN batches b ON b.id = u.batch_id
        LEFT JOIN exams x ON x.id::text = s.composition->>'examId' LEFT JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', x.test_type_id)
-       WHERE s.id = $1 AND s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL`,
+       WHERE s.id = $1 AND s.completed_at IS NOT NULL
+         AND (s.delivery_mode = 'certified' OR (u.role = 'candidate' AND EXISTS (
+           SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
+           WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)))`,
       [sessionId],
     )
   ).rows[0];
   if (!s) return null;
+  // A candidate: their name and email are on the invitation.
+  const cand = (
+    await pool.query(
+      `SELECT ra.email, ra.first_name, ra.last_name, j.title FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id WHERE ra.session_id = $1`,
+      [sessionId],
+    )
+  ).rows[0];
+  if (cand) s.name = [cand.first_name, cand.last_name].filter(Boolean).join(" ") || cand.email;
   // A level test: the level's certificate, only when passed; each skill's share right.
   const levelTest = s.composition?.levelTest as string | undefined;
   let level: string;
@@ -283,7 +295,13 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
         ],
       );
       const { code, created } = r.rows[0];
-      if (created) {
+      if (created && cand) {
+        await sendNotificationEmail({
+          to: cand.email,
+          subject: `Your English certificate from ${s.org}`,
+          text: `Hello ${cand.first_name ?? ""},\n\nYour English test for ${cand.title} is scored. Your certificate (${testName ?? "Spica"}: level ${level}${spica !== null ? `, Spica score ${spica}` : ""}) is here:\n${APP_URL}/certificate/${code}\n\nAnyone can check it with this link or its QR code.`,
+        }).catch((err) => console.error("candidate certificate email failed:", err));
+      } else if (created) {
         await notify({
           userId: s.user_id,
           kind: "result_certificate",
@@ -313,7 +331,10 @@ export async function issueDueResultCertificates(): Promise<number> {
   const due = (
     await pool.query(
       `SELECT s.id FROM sessions s JOIN session_integrity si ON si.session_id = s.id
-       WHERE s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
+       WHERE (s.delivery_mode = 'certified' OR EXISTS (
+               SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
+               WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate))
+         AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
          AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND si.status IN ('clear', 'cleared')
          -- A level test that wasn't passed has no certificate.

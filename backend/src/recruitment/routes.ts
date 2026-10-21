@@ -376,7 +376,8 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
            e.name AS exam_name, e.test_id AS exam_test_id, ts.test_code, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
            concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
            concat_ws(' ', conf.first_name, conf.last_name) AS confirmed_by_name, t.category AS tenant_category,
-           (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status
+           (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status,
+           (SELECT code FROM certificates c WHERE c.session_id = a.session_id AND c.revoked_at IS NULL LIMIT 1) AS certificate_code
          FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
          LEFT JOIN session_integrity si ON si.session_id = a.session_id
          LEFT JOIN sessions ts ON ts.id = a.session_id

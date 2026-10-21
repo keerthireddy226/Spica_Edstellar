@@ -78,6 +78,11 @@ export function CandidateReportPrint() {
         </tbody>
       </table>
       <h2 className="text-lg font-bold mt-6">{tr("Result")}</h2>
+      {a.certificate_code && (
+        <p className="text-sm mt-1">
+          {tr("Certificate")}: <a href={`/certificate/${a.certificate_code}`} className="underline">{a.certificate_code}</a>
+        </p>
+      )}
       {!r ? (
         <p className="text-sm text-black/60">{tr("No result yet.")}</p>
       ) : r.pending || (!r.cefrLevel && (r.overallPercent === null || r.overallPercent === undefined)) ? (

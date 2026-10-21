@@ -159,6 +159,8 @@ export function cancelInvite(id: string): Promise<{ ok: boolean }> {
 }
 
 export interface AssessmentReport extends Omit<CandidateRow, "invited_by_name"> {
+  // The candidate's result certificate, when the job shares results with candidates.
+  certificate_code?: string | null;
   job_id: string;
   job_title: string;
   test_kind: TestKind;
