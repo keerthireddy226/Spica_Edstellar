@@ -26,17 +26,17 @@ CREATE TABLE products (
 );
 
 INSERT INTO products (id, kind, test_type_id, name, description, price_paise, credits, duration_days, attempts, sort_order) VALUES
-  ('full_access', 'full', NULL, 'Full access', 'Every test, practice test, mock exam and Practice Module.', 0, NULL, 30, 0, 10),
-  ('prep_fourSkills', 'prep', 'fourSkills', 'English 4-Skills Essentials Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 0, NULL, 30, 1, 20),
-  ('prep_speakingListening', 'prep', 'speakingListening', 'English Speaking and Listening Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 0, NULL, 30, 1, 21),
-  ('prep_writing', 'prep', 'writing', 'English Writing Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 0, NULL, 30, 1, 22),
-  ('prep_professional', 'prep', 'professional', 'Professional English Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 0, NULL, 30, 1, 23),
-  ('assess_fourSkills', 'assessment', 'fourSkills', 'English 4-Skills Essentials Test: assessment', 'One certified attempt, a score report and a certificate.', 0, 1, 30, 1, 30),
-  ('assess_speakingListening', 'assessment', 'speakingListening', 'English Speaking and Listening Test: assessment', 'One certified attempt, a score report and a certificate.', 0, 1, 30, 1, 31),
-  ('assess_writing', 'assessment', 'writing', 'English Writing Test: assessment', 'One certified attempt, a score report and a certificate.', 0, 1, 30, 1, 32),
-  ('assess_professional', 'assessment', 'professional', 'Professional English Test: assessment', 'One certified attempt, a score report and a certificate.', 0, 1, 30, 1, 33),
-  ('assess_placement', 'assessment', 'placement', 'English Placement Test: assessment', 'One attempt to find your level, with a score report.', 0, 1, 30, 1, 34),
-  ('level_test', 'level', NULL, 'Level certificate test (A1–C2)', 'One certified attempt at the level you choose. Pass it and get that level''s certificate.', 0, 1, 30, 1, 40);
+  ('full_access', 'full', NULL, 'Full access', 'Every test, practice test, mock exam and Practice Module.', 840000, NULL, 30, 0, 10),
+  ('prep_fourSkills', 'prep', 'fourSkills', 'English 4-Skills Essentials Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 499900, NULL, 30, 1, 20),
+  ('prep_speakingListening', 'prep', 'speakingListening', 'English Speaking and Listening Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 399900, NULL, 30, 1, 21),
+  ('prep_writing', 'prep', 'writing', 'English Writing Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 399900, NULL, 30, 1, 22),
+  ('prep_professional', 'prep', 'professional', 'Professional English Test: preparation + assessment', 'One month of practice for this test, then one certified attempt with a certificate.', 599900, NULL, 30, 1, 23),
+  ('assess_fourSkills', 'assessment', 'fourSkills', 'English 4-Skills Essentials Test: assessment', 'One certified attempt, a score report and a certificate.', 149900, 3, 30, 1, 30),
+  ('assess_speakingListening', 'assessment', 'speakingListening', 'English Speaking and Listening Test: assessment', 'One certified attempt, a score report and a certificate.', 99900, 2, 30, 1, 31),
+  ('assess_writing', 'assessment', 'writing', 'English Writing Test: assessment', 'One certified attempt, a score report and a certificate.', 99900, 2, 30, 1, 32),
+  ('assess_professional', 'assessment', 'professional', 'Professional English Test: assessment', 'One certified attempt, a score report and a certificate.', 199900, 4, 30, 1, 33),
+  ('assess_placement', 'assessment', 'placement', 'English Placement Test: assessment', 'One attempt to find your level, with a score report.', 49900, 1, 30, 1, 34),
+  ('level_test', 'level', NULL, 'Level certificate test (A1–C2)', 'One certified attempt at the level you choose. Pass it and get that level''s certificate.', 79900, 1, 30, 1, 40);
 
 -- 2. What each person owns besides a licence (a licence or the Plus plan is
 --    "Full access" already). One row per purchase, credit or grant.
