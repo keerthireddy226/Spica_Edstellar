@@ -134,7 +134,7 @@ export function CertificateView() {
         )}
         {cert.valid && cert.kind === "result" && (
           <a
-            href={linkedInAddUrl({ name: `${cert.testName ?? "Spica English"}: ${cert.cefrLevel ?? ""}${cert.spicaScore != null ? `, Spica score ${cert.spicaScore}` : ""}`, code: cert.code, issuedAt: cert.issuedAt, validUntil: cert.validUntil ?? null, verifyUrl: cert.verifyUrl })}
+            href={linkedInAddUrl({ name: `${cert.testName ?? "English"}: ${cert.cefrLevel ?? ""}${cert.spicaScore != null ? `, Spica score ${cert.spicaScore}` : ""}`, code: cert.code, issuedAt: cert.issuedAt, validUntil: cert.validUntil ?? null, verifyUrl: cert.verifyUrl })}
             target="_blank"
             rel="noopener"
             className="flex items-center gap-2 px-3.5 py-2 rounded-pill border border-rule-strong text-sm font-semibold text-ink hover:bg-paper-warm"

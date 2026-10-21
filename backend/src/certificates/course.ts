@@ -16,7 +16,7 @@ import { LEVELS, overallFromSkills, pathSummary } from "../learner/path.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { COMPLETION_CERTIFICATES, issueCertificate } from "./service.js";
 
-export const COURSE_NAME = "Spica English 4 Skills Essentials";
+export const COURSE_NAME = "English 4 Skills Essentials";
 export const VERSANT_PROOF_DIR = path.resolve("private", "versant");
 const MAX_PROOF_BYTES = 3 * 1024 * 1024;
 
