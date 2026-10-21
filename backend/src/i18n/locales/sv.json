@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "Ditt överklagande: ditt resultat har bedömts om",
  "Your appeal: you can take the test again": "Ditt överklagande: du kan göra testet igen",
  "{{org}} asked for credits": "{{org}} har bett om krediter",
- "{{n}} credits for staff tests.": "{{n}} krediter för personaltest."
+ "{{n}} credits for staff tests.": "{{n}} krediter för personaltest.",
+ "You have a level test to take": "Du har ett nivåtest att göra",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} har gett dig ett nivåtest på nivå {{level}}. Klara det för att få certifikatet för nivå {{level}}. Gör det inom {{n}} dagar.",
+ "Your final assessment is ready": "Ditt sluttest är klart",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} har gett dig sluttestet för {{program}}: {{product}}. Gör det inom {{n}} dagar.",
+ "Not enough credits for a final assessment": "Inte tillräckligt med krediter för ett sluttest",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} deltagare väntar fortfarande på sitt sluttest. Var och en behöver {{credits}} krediter.",
+ "Real test withdrawn before it was started": "Riktigt test återkallat innan det startades",
+ "Level test withdrawn before it was started": "Nivåtest återkallat innan det startades",
+ "Test expired without being started": "Testet gick ut utan att ha startats"
 }

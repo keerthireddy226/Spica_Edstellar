@@ -5,7 +5,7 @@
 import { pool } from "../db.js";
 import { learnerAccess, type LearnerAccess } from "../licenses/service.js";
 
-export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack";
+export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack" | "final";
 
 export interface EntitlementRow {
   id: string;

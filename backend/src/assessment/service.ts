@@ -5,6 +5,11 @@
 // When it opens: preparation buyers after their first mock test, or in the
 // last 7 days of their access; assessment-only buyers after the free sample
 // (a short version of the same test). The attempt is used up when it starts.
+//
+// Full access (Plus, an organization's licence, the full_access product)
+// includes one final assessment: the learner chooses the test, and it opens
+// like preparation's, after a mock test of that test or in the last 7 days of
+// their access. It stays valid FINAL_GRACE_DAYS after access ends.
 import type { PoolClient } from "pg";
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
@@ -25,8 +30,11 @@ export const SAMPLE_PER_PART = 2;
 export const VALID_MONTHS = 12;
 // Time after finishing for the slower checks (voice) before a certificate is issued.
 const SETTLE_MINUTES = 10;
+// The final assessment included with Full access stays valid this long after access ends.
+export const FINAL_GRACE_DAYS = 14;
+export const FINAL_PRODUCT = "final_assessment";
 
-export type AttemptKind = "prep" | "assessment" | "level";
+export type AttemptKind = "prep" | "assessment" | "level" | "final";
 export type Unlock =
   | { state: "open" }
   | { state: "mock_needed"; opensOn: string }
@@ -50,7 +58,7 @@ export function unlockOf(
     return now.getTime() >= opens ? { state: "open" } : { state: "retake_wait", opensOn: new Date(opens).toISOString() };
   }
   if (e.kind === "assessment") return done.samples > 0 ? { state: "open" } : { state: "sample_needed" };
-  const opens = ends - UNLOCK_DAYS_BEFORE_END * DAY;
+  const opens = ends - (UNLOCK_DAYS_BEFORE_END + (e.kind === "final" ? FINAL_GRACE_DAYS : 0)) * DAY;
   if (done.mocks > 0 || now.getTime() >= opens) return { state: "open" };
   return { state: "mock_needed", opensOn: new Date(opens).toISOString() };
 }
@@ -63,8 +71,11 @@ interface OwnedAttemptRow {
   kind: AttemptKind;
   name: string;
   test_type_id: string;
+  // A final assessment's test, empty until the learner chooses it.
+  chosen_test: string | null;
   test_name: string | null;
   level: string | null;
+  tenant_id: string | null;
   attempts_total: number;
   attempts_used: number;
   starts_at: Date;
@@ -74,11 +85,11 @@ interface OwnedAttemptRow {
 async function ownedAttempts(userId: string, entitlementId?: string): Promise<OwnedAttemptRow[]> {
   return (
     await pool.query(
-      `SELECT e.id, e.product_id, p.kind, p.name, coalesce(e.test_type_id, $3) AS test_type_id, tt.name AS test_name, e.level,
-         e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
+      `SELECT e.id, e.product_id, p.kind, p.name, coalesce(e.test_type_id, $3) AS test_type_id, e.test_type_id AS chosen_test, tt.name AS test_name, e.level,
+         e.tenant_id, e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
        FROM entitlements e JOIN products p ON p.id = e.product_id LEFT JOIN test_types tt ON tt.id = e.test_type_id
        WHERE e.user_id = $1 AND e.revoked_at IS NULL
-         AND ((p.kind IN ('prep', 'assessment') AND e.test_type_id IS NOT NULL) OR (p.kind = 'level' AND e.level IS NOT NULL))
+         AND ((p.kind IN ('prep', 'assessment') AND e.test_type_id IS NOT NULL) OR (p.kind = 'level' AND e.level IS NOT NULL) OR p.kind = 'final')
          AND e.attempts_total > 0 AND e.starts_at <= now() AND ($2::uuid IS NULL OR e.id = $2)
        ORDER BY e.ends_at DESC`,
       [userId, entitlementId ?? null, LEVEL_ENGINE_TEST],
@@ -86,7 +97,8 @@ async function ownedAttempts(userId: string, entitlementId?: string): Promise<Ow
   ).rows;
 }
 
-// Mock tests of the test since the purchase began, and samples taken for it.
+// Mock tests of the test since the purchase began (any test while a final
+// assessment's test isn't chosen), and samples taken for it.
 async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null; retakeDays?: number }> {
   if (e.kind === "level") {
     // The latest level test at this level that wasn't passed.
@@ -103,8 +115,8 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
        FROM sessions s LEFT JOIN exams x ON x.id::text = s.composition->>'examId'
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL AND s.completed_at >= $3
          AND s.delivery_mode IN ('mock', 'sample') AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
-         AND coalesce(s.composition->>'testTypeId', x.test_type_id) = $2`,
-      [userId, e.test_type_id, e.starts_at],
+         AND ($2::text IS NULL OR coalesce(s.composition->>'testTypeId', x.test_type_id) = $2)`,
+      [userId, e.kind === "final" ? e.chosen_test : e.test_type_id, e.starts_at],
     )
   ).rows[0];
   return { mocks: r.mocks, samples: r.samples };
@@ -114,6 +126,7 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
 export async function myTests(userId: string) {
   const owned = await ownedAttempts(userId);
   const { appealDays } = await qualitySettings();
+  const choices = owned.some((e) => e.kind === "final" && !e.chosen_test) ? await finalChoices(owned.find((e) => e.kind === "final")!.tenant_id) : [];
   const sessions = owned.length
     ? (
         await pool.query(
@@ -138,8 +151,11 @@ export async function myTests(userId: string) {
         productId: e.product_id,
         kind: e.kind,
         name: e.name,
-        testTypeId: e.test_type_id,
-        testName: e.kind === "level" ? `Level ${e.level} test` : e.test_name,
+        testTypeId: e.kind === "final" ? e.chosen_test : e.test_type_id,
+        testName: e.kind === "level" ? `Level ${e.level} test` : e.kind === "final" && !e.chosen_test ? null : e.test_name,
+        // A final assessment whose test the learner still chooses, and the tests to choose from.
+        chooseTest: e.kind === "final" && !e.chosen_test,
+        choices: e.kind === "final" && !e.chosen_test ? choices : [],
         level: e.level,
         attemptsLeft,
         endsAt: new Date(e.ends_at).toISOString(),
@@ -188,6 +204,7 @@ export async function checkStart(userId: string, entitlementId: string, mode: "c
   const [e] = await ownedAttempts(userId, entitlementId);
   if (!e) throw new AttemptError("attempt_not_found");
   if (new Date(e.ends_at).getTime() <= Date.now()) throw new AttemptError("attempt_expired");
+  if (e.kind === "final" && !e.chosen_test) throw new AttemptError("test_not_chosen");
   const level = e.kind === "level" ? e.level : null;
   if (mode === "sample") return { testTypeId: e.test_type_id, level };
   // The attempt already started (and used up): resuming it is fine.
@@ -197,6 +214,57 @@ export async function checkStart(userId: string, entitlementId: string, mode: "c
   const unlock = unlockOf({ kind: e.kind, attemptsLeft, endsAt: e.ends_at }, await doneFor(userId, e));
   if (unlock.state !== "open") throw new AttemptError(`attempt_${unlock.state}`, "opensOn" in unlock ? { opensOn: unlock.opensOn } : {});
   return { testTypeId: e.test_type_id, level };
+}
+
+// The tests a final assessment can be: each with a real test on sale, within
+// the organization's turned-on tests.
+async function finalChoices(tenantId: string | null): Promise<{ id: string; name: string }[]> {
+  const allowed = tenantId ? ((await pool.query(`SELECT allowed_test_products FROM tenants WHERE id = $1`, [tenantId])).rows[0]?.allowed_test_products as string[] | null) : null;
+  const r = await pool.query(
+    `SELECT DISTINCT ON (tt.id) tt.id, tt.name, p.sort_order FROM products p JOIN test_types tt ON tt.id = p.test_type_id
+     WHERE p.kind = 'assessment' AND p.active ORDER BY tt.id, p.sort_order`,
+  );
+  return r.rows
+    .filter((x) => !allowed || allowed.includes(x.id))
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((x) => ({ id: x.id as string, name: x.name as string }));
+}
+
+// The learner chooses their final assessment's test (once, before starting it).
+export async function chooseFinalTest(userId: string, entitlementId: string, testTypeId: string): Promise<void> {
+  const [e] = await ownedAttempts(userId, entitlementId);
+  if (!e || e.kind !== "final") throw new AttemptError("attempt_not_found");
+  if (e.chosen_test) throw new AttemptError("test_already_chosen");
+  if (!(await finalChoices(e.tenant_id)).some((c) => c.id === testTypeId)) throw new AttemptError("unknown_test_type");
+  await pool.query(`UPDATE entitlements SET test_type_id = $3 WHERE id = $1 AND user_id = $2 AND test_type_id IS NULL AND attempts_used = 0`, [entitlementId, userId, testTypeId]);
+  accessCache.delete(userId);
+}
+
+// Full access includes one final assessment. Called when Full access starts
+// or is extended: an unused one still valid lasts until FINAL_GRACE_DAYS after
+// the new end; otherwise (none yet, or the last one used or expired) a new one is added.
+export async function includeFinalAssessment(userId: string, tenantId: string | null, accessEndsAt: string | Date): Promise<"added" | "extended" | "none"> {
+  const u = (await pool.query(`SELECT role FROM users WHERE id = $1 AND deleted_at IS NULL`, [userId])).rows[0];
+  if (u?.role !== "learner") return "none";
+  const ends = new Date(new Date(accessEndsAt).getTime() + FINAL_GRACE_DAYS * DAY);
+  const extended = await pool.query(
+    `UPDATE entitlements SET ends_at = greatest(ends_at, $3) WHERE user_id = $1 AND product_id = $2 AND revoked_at IS NULL AND attempts_used = 0 AND ends_at > now() RETURNING id`,
+    [userId, FINAL_PRODUCT, ends],
+  );
+  accessCache.delete(userId);
+  if (extended.rowCount) return "extended";
+  await pool.query(
+    `INSERT INTO entitlements (user_id, product_id, attempts_total, ends_at, source, tenant_id) VALUES ($1, $2, 1, $3, 'included', $4)`,
+    [userId, FINAL_PRODUCT, ends, tenantId],
+  );
+  await notify({
+    userId,
+    kind: "test_given",
+    title: "Your plan includes a final assessment",
+    body: "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.",
+    link: "/my-tests",
+  }).catch((err) => console.error("final assessment notification failed:", err));
+  return "added";
 }
 
 // Uses up one attempt, in the transaction that creates the session.

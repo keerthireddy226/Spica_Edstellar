@@ -9,6 +9,8 @@ import type { DeliveryMode } from "../practiceTests/modes.js";
 import { notify } from "../notifications/service.js";
 import { giveTests } from "../orgTests/service.js";
 import { creditBalance } from "../recruitment/service.js";
+import { FINAL_PRODUCT } from "../assessment/service.js";
+import { accessCache } from "../licenses/accessCache.js";
 
 const cefr = z.enum(CEFR_LEVELS as [string, ...string[]]);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -247,6 +249,28 @@ export async function giveFinalAssessments(p: ProgramRow): Promise<number> {
   if (p.status !== "active" || !p.final_assessment || today() < finalAssessmentOn(p) || today() > p.target_date) return 0;
   const product = await finalAssessmentProduct(p.test_type_id);
   if (!product) return 0;
+  // A member whose licence already includes an unused final assessment takes
+  // that one, set to the program's test, with no credits spent.
+  const included = await pool.query(
+    `UPDATE entitlements e SET test_type_id = $4, program_id = $3 FROM users u
+     WHERE u.id = e.user_id AND u.batch_id = $1 AND u.tenant_id = $2 AND u.role = 'learner' AND u.deleted_at IS NULL
+       AND e.product_id = $5 AND e.revoked_at IS NULL AND e.attempts_used = 0 AND e.ends_at > now() AND e.program_id IS NULL
+       AND (e.test_type_id IS NULL OR e.test_type_id = $4)
+       AND NOT EXISTS (SELECT 1 FROM entitlements x WHERE x.user_id = u.id AND x.program_id = $3)
+     RETURNING e.user_id`,
+    [p.batch_id, p.tenant_id, p.id, p.test_type_id, FINAL_PRODUCT],
+  );
+  for (const r of included.rows) {
+    accessCache.delete(r.user_id);
+    await notify({
+      userId: r.user_id,
+      kind: "test_given",
+      title: "Your final assessment is ready",
+      body: `Your final assessment for ${p.name} is set to its test. Take it in My tests before ${p.target_date}.`,
+      link: "/my-tests",
+      email: true,
+    }).catch((err) => console.error("final assessment notification failed:", err));
+  }
   const waiting = (
     await pool.query(
       `SELECT u.id FROM users u WHERE u.batch_id = $1 AND u.tenant_id = $2 AND u.role = 'learner' AND u.deleted_at IS NULL
@@ -255,7 +279,7 @@ export async function giveFinalAssessments(p: ProgramRow): Promise<number> {
       [p.batch_id, p.tenant_id, p.id],
     )
   ).rows.map((r) => r.id as string);
-  if (!waiting.length) return 0;
+  if (!waiting.length) return included.rows.length;
   const affordable = Math.min(waiting.length, Math.floor((await creditBalance(p.tenant_id)) / product.credits));
   let given = 0;
   if (affordable > 0) {
@@ -288,7 +312,7 @@ export async function giveFinalAssessments(p: ProgramRow): Promise<number> {
   } else if (short === 0 && p.final_assessment_short_at) {
     await pool.query(`UPDATE programs SET final_assessment_short_at = NULL WHERE id = $1`, [p.id]);
   }
-  return given;
+  return given + included.rows.length;
 }
 
 // A finished practice test or mock ticks off the member's earliest open item

@@ -314,5 +314,8 @@
  "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.",
  "Real test withdrawn before it was started",
  "Level test withdrawn before it was started",
- "Test expired without being started"
+ "Test expired without being started",
+ "Your plan includes a final assessment",
+ "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.",
+ "Your final assessment for {{program}} is set to its test. Take it in My tests before {{date}}."
 ]

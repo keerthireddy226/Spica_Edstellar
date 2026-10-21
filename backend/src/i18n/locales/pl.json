@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "Twoje odwołanie: Twój wynik został ponownie oceniony",
  "Your appeal: you can take the test again": "Twoje odwołanie: możesz ponownie przystąpić do testu",
  "{{org}} asked for credits": "{{org}} prosi o kredyty",
- "{{n}} credits for staff tests.": "{{n}} kredytów na testy pracowników."
+ "{{n}} credits for staff tests.": "{{n}} kredytów na testy pracowników.",
+ "You have a level test to take": "Masz test poziomujący do rozwiązania",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} przydzielił(a) Ci test poziomujący {{level}}. Zalicz go, aby otrzymać certyfikat poziomu {{level}}. Rozwiąż go w ciągu {{n}} dni.",
+ "Your final assessment is ready": "Twój test końcowy jest gotowy",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} przydzielił(a) Ci test końcowy programu {{program}}: {{product}}. Rozwiąż go w ciągu {{n}} dni.",
+ "Not enough credits for a final assessment": "Za mało kredytów na test końcowy",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: kursanci wciąż czekający na test końcowy: {{n}}. Każdy potrzebuje {{credits}} kredytów.",
+ "Real test withdrawn before it was started": "Prawdziwy test wycofany przed rozpoczęciem",
+ "Level test withdrawn before it was started": "Test poziomujący wycofany przed rozpoczęciem",
+ "Test expired without being started": "Test wygasł, zanim został rozpoczęty"
 }

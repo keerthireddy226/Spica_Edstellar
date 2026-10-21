@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "你的申诉：你的结果已重新评分",
  "Your appeal: you can take the test again": "你的申诉：你可以重新参加测试",
  "{{org}} asked for credits": "{{org}} 申请了点数",
- "{{n}} credits for staff tests.": "{{n}} 点数用于员工测试。"
+ "{{n}} credits for staff tests.": "{{n}} 点数用于员工测试。",
+ "You have a level test to take": "你有一项水平测试待参加",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} 为你安排了 {{level}} 级水平测试。通过即可获得 {{level}} 级证书。请在 {{n}} 天内完成。",
+ "Your final assessment is ready": "你的结业测评已就绪",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} 为你安排了 {{program}} 的结业测评：{{product}}。请在 {{n}} 天内完成。",
+ "Not enough credits for a final assessment": "点数不足，无法安排结业测评",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}：仍有 {{n}} 名学员在等待结业测评。每人需要 {{credits}} 点数。",
+ "Real test withdrawn before it was started": "正式测试在开始前已撤回",
+ "Level test withdrawn before it was started": "水平测试在开始前已撤回",
+ "Test expired without being started": "测试未开始即已到期"
 }

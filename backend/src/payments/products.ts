@@ -70,7 +70,7 @@ export async function upgradeCredit(userId: string, currency: Currency): Promise
 }
 
 export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string } = {}): Promise<ProductQuote> {
-  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active`, [productId])).rows[0];
+  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind <> 'final'`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
   if ((p.kind === "level" || p.kind === "pack") && !["A1", "A2", "B1", "B2", "C1", "C2"].includes(opts.level ?? "")) throw new PaymentError("invalid_quantity");
   const currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
@@ -116,7 +116,8 @@ export async function createProductOrder(buyer: Buyer, q: ProductQuote): Promise
   return r.rows[0].id;
 }
 
-// Every active product with its price in one currency (USD where it has none).
+// Every active product on sale with its price in one currency (USD where it
+// has none). The final assessment comes with Full access and isn't sold alone.
 export async function priceList(currency: Currency) {
   const r = await pool.query(
     `SELECT p.id, p.kind, p.test_type_id, tt.name AS test_type_name, p.name, p.description, p.duration_days, p.attempts, p.credits, p.sort_order,
@@ -124,7 +125,7 @@ export async function priceList(currency: Currency) {
      FROM products p LEFT JOIN test_types tt ON tt.id = p.test_type_id
      LEFT JOIN product_prices pp ON pp.product_id = p.id AND pp.currency = $1
      LEFT JOIN product_prices usd ON usd.product_id = p.id AND usd.currency = 'USD'
-     WHERE p.active ORDER BY p.sort_order`,
+     WHERE p.active AND p.kind <> 'final' ORDER BY p.sort_order`,
     [currency],
   );
   return r.rows.map((x) => ({

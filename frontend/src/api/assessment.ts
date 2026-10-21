@@ -14,12 +14,16 @@ export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certif
 export interface OwnedTest {
   id: string;
   productId: string;
-  kind: "prep" | "assessment" | "level";
+  kind: "prep" | "assessment" | "level" | "final";
   // A level test's level.
   level: string | null;
   name: string;
-  testTypeId: string;
+  // Empty for a final assessment whose test isn't chosen yet.
+  testTypeId: string | null;
   testName: string | null;
+  // The final assessment included with Full access: the learner chooses its test from these.
+  chooseTest: boolean;
+  choices: { id: string; name: string }[];
   attemptsLeft: number;
   endsAt: string;
   unlock: Unlock;
@@ -42,4 +46,8 @@ export interface OwnedTest {
 
 export function getMyTests(): Promise<{ tests: OwnedTest[] }> {
   return api("/assessment/me");
+}
+
+export function chooseFinalTest(id: string, testTypeId: string): Promise<{ ok: true }> {
+  return api(`/assessment/${id}/choose`, { method: "POST", body: JSON.stringify({ testTypeId }) });
 }

@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "आपकी अपील: आपके नतीजे की दोबारा जाँच की गई",
  "Your appeal: you can take the test again": "आपकी अपील: आप टेस्ट दोबारा दे सकते हैं",
  "{{org}} asked for credits": "{{org}} ने क्रेडिट माँगे",
- "{{n}} credits for staff tests.": "स्टाफ़ के टेस्ट के लिए {{n}} क्रेडिट।"
+ "{{n}} credits for staff tests.": "स्टाफ़ के टेस्ट के लिए {{n}} क्रेडिट।",
+ "You have a level test to take": "आपको एक स्तर टेस्ट देना है",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} ने आपको स्तर {{level}} टेस्ट दिया है। स्तर {{level}} का सर्टिफ़िकेट पाने के लिए इसे पास करें। इसे {{n}} दिनों के अंदर दें।",
+ "Your final assessment is ready": "आपका अंतिम आकलन तैयार है",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} ने आपको {{program}} का अंतिम आकलन दिया है: {{product}}। इसे {{n}} दिनों के अंदर दें।",
+ "Not enough credits for a final assessment": "अंतिम आकलन के लिए पर्याप्त क्रेडिट नहीं हैं",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} शिक्षार्थी अभी भी अपने अंतिम आकलन का इंतज़ार कर रहे हैं। हर एक को {{credits}} क्रेडिट चाहिए।",
+ "Real test withdrawn before it was started": "असली टेस्ट शुरू होने से पहले वापस लिया गया",
+ "Level test withdrawn before it was started": "स्तर टेस्ट शुरू होने से पहले वापस लिया गया",
+ "Test expired without being started": "टेस्ट शुरू हुए बिना समाप्त हो गया"
 }

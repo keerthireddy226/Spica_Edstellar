@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "Khiếu nại của bạn: kết quả đã được chấm lại",
  "Your appeal: you can take the test again": "Khiếu nại của bạn: bạn có thể làm lại bài thi",
  "{{org}} asked for credits": "{{org}} đã yêu cầu thêm lượt",
- "{{n}} credits for staff tests.": "{{n}} lượt cho bài thi của nhân viên."
+ "{{n}} credits for staff tests.": "{{n}} lượt cho bài thi của nhân viên.",
+ "You have a level test to take": "Bạn có một bài kiểm tra trình độ cần làm",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} đã giao cho bạn bài kiểm tra trình độ {{level}}. Đạt bài này để nhận chứng chỉ trình độ {{level}}. Hãy làm trong vòng {{n}} ngày.",
+ "Your final assessment is ready": "Bài đánh giá cuối khóa của bạn đã sẵn sàng",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} đã giao cho bạn bài đánh giá cuối khóa của {{program}}: {{product}}. Hãy làm trong vòng {{n}} ngày.",
+ "Not enough credits for a final assessment": "Không đủ lượt cho bài đánh giá cuối khóa",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} học viên vẫn đang chờ bài đánh giá cuối khóa. Mỗi người cần {{credits}} lượt.",
+ "Real test withdrawn before it was started": "Bài thi thật đã bị thu hồi trước khi bắt đầu",
+ "Level test withdrawn before it was started": "Bài kiểm tra trình độ đã bị thu hồi trước khi bắt đầu",
+ "Test expired without being started": "Bài thi đã hết hạn mà chưa được bắt đầu"
 }

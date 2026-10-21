@@ -17,6 +17,11 @@ describe("unlockOf", () => {
     expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 3, samples: 0 }, now)).toEqual({ state: "sample_needed" });
     expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 1 }, now)).toEqual({ state: "open" });
   });
+  it("final assessment with Full access: opens after a mock test, or 7 days before access ends (14 days before it expires)", () => {
+    expect(unlockOf({ kind: "final", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 0 }, now)).toEqual({ state: "mock_needed", opensOn: "2026-10-30T10:00:00.000Z" });
+    expect(unlockOf({ kind: "final", attemptsLeft: 1, endsAt }, { mocks: 1, samples: 0 }, now)).toEqual({ state: "open" });
+    expect(unlockOf({ kind: "final", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 0 }, new Date("2026-10-31T00:00:00Z"))).toEqual({ state: "open" });
+  });
   it("used up or expired attempts can't start", () => {
     expect(unlockOf({ kind: "assessment", attemptsLeft: 0, endsAt }, { mocks: 0, samples: 1 }, now)).toEqual({ state: "used" });
     expect(unlockOf({ kind: "prep", attemptsLeft: 1, endsAt: "2026-10-20T00:00:00Z" }, { mocks: 1, samples: 0 }, now)).toEqual({ state: "expired" });

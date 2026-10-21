@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "Je bezwaar: je uitslag is opnieuw beoordeeld",
  "Your appeal: you can take the test again": "Je bezwaar: je mag de toets opnieuw doen",
  "{{org}} asked for credits": "{{org}} heeft credits aangevraagd",
- "{{n}} credits for staff tests.": "{{n}} credits voor toetsen van medewerkers."
+ "{{n}} credits for staff tests.": "{{n}} credits voor toetsen van medewerkers.",
+ "You have a level test to take": "Je hebt een niveautest te maken",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} heeft je een niveautest {{level}} gegeven. Slaag ervoor voor het certificaat van niveau {{level}}. Maak hem binnen {{n}} dagen.",
+ "Your final assessment is ready": "Je eindtoets staat klaar",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} heeft je de eindtoets voor {{program}} gegeven: {{product}}. Maak hem binnen {{n}} dagen.",
+ "Not enough credits for a final assessment": "Niet genoeg credits voor een eindtoets",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} cursisten wachten nog op hun eindtoets. Elk heeft {{credits}} credits nodig.",
+ "Real test withdrawn before it was started": "Echte toets ingetrokken voordat hij was gestart",
+ "Level test withdrawn before it was started": "Niveautest ingetrokken voordat hij was gestart",
+ "Test expired without being started": "Toets verlopen zonder te zijn gestart"
 }

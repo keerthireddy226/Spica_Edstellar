@@ -1,5 +1,6 @@
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
+import { includeFinalAssessment } from "../assessment/service.js";
 import { POOL_VALIDITY_MONTHS, assignMonths } from "../licenses/service.js";
 import { PAYMENT_CONFIG, chooseProvider, type ProviderName } from "./providers.js";
 import { getTenantPlan, orgUnitPriceCents, purchaseUpgradesTo, setTier, type TenantPlan } from "../plans/service.js";
@@ -164,6 +165,7 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
   let order: Record<string, any>;
   let invoiceId: string;
   let upgradedTo: PlanTier | null = null;
+  let product: Record<string, any> | null = null;
   try {
     await client.query("BEGIN");
     order = (await client.query(`SELECT * FROM payment_orders WHERE id = $1 FOR UPDATE`, [orderId])).rows[0];
@@ -180,7 +182,6 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
 
     // A product becomes the learner's own (an entitlement); months and licences go to the licence pool.
     let purchase: { rows: { id: string }[] } = { rows: [{ id: null as unknown as string }] };
-    let product: Record<string, any> | null = null;
     if (order.kind === "product") {
       product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
       const ent = await client.query(
@@ -287,7 +288,14 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
       });
     }
   }
-  if (order.kind === "product" && order.buyer_id) accessCache.delete(order.buyer_id);
+  if (order.kind === "product" && order.buyer_id) {
+    accessCache.delete(order.buyer_id);
+    // Full access includes a final assessment.
+    if (product?.kind === "full") {
+      const e = (await pool.query(`SELECT ends_at FROM entitlements WHERE order_id = $1`, [order.id])).rows[0];
+      if (e) await includeFinalAssessment(order.buyer_id, order.tenant_id, e.ends_at).catch((err) => console.error("final assessment not included:", err));
+    }
+  }
   if (order.kind === "individual_plan" && order.buyer_id) {
     await assignMonths({ tenantId: order.tenant_id, userId: order.buyer_id, months: order.quantity, actorId: order.buyer_id, actorRole: "system" });
   }

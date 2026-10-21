@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 // What a learner owns: Full access (a licence or the Plus plan), preparation
 // for one test, and real-test attempts.
-export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack";
+export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack" | "final";
 
 export interface Owned {
   id: string;

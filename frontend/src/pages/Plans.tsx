@@ -155,6 +155,7 @@ export function Plans() {
             )}
             <Feature ok>{t("plans.features.tutor")}</Feature>
             <Feature ok>{t("plans.features.progress")}</Feature>
+            <Feature ok>{tr("One final assessment on the test you choose")}</Feature>
             <Feature ok>{tr("Certificate provided")}</Feature>
           </ul>
 

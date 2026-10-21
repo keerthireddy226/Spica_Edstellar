@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "మీ అప్పీల్: మీ ఫలితాన్ని మళ్లీ మూల్యాంకనం చేశాం",
  "Your appeal: you can take the test again": "మీ అప్పీల్: మీరు టెస్ట్‌ను మళ్లీ రాయవచ్చు",
  "{{org}} asked for credits": "{{org}} క్రెడిట్‌లు అడిగింది",
- "{{n}} credits for staff tests.": "సిబ్బంది టెస్ట్‌ల కోసం {{n}} క్రెడిట్‌లు."
+ "{{n}} credits for staff tests.": "సిబ్బంది టెస్ట్‌ల కోసం {{n}} క్రెడిట్‌లు.",
+ "You have a level test to take": "మీరు రాయాల్సిన స్థాయి టెస్ట్ ఉంది",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} మీకు స్థాయి {{level}} టెస్ట్ ఇచ్చింది. స్థాయి {{level}} సర్టిఫికెట్ కోసం దీనిలో పాస్ అవ్వండి. {{n}} రోజుల్లోపు రాయండి.",
+ "Your final assessment is ready": "మీ తుది అసెస్‌మెంట్ సిద్ధంగా ఉంది",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} మీకు {{program}} కోసం తుది అసెస్‌మెంట్ ఇచ్చింది: {{product}}. {{n}} రోజుల్లోపు రాయండి.",
+ "Not enough credits for a final assessment": "తుది అసెస్‌మెంట్‌కు సరిపడా క్రెడిట్‌లు లేవు",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} మంది అభ్యాసకులు ఇంకా తమ తుది అసెస్‌మెంట్ కోసం ఎదురుచూస్తున్నారు. ఒక్కొక్కరికి {{credits}} క్రెడిట్‌లు అవసరం.",
+ "Real test withdrawn before it was started": "ప్రారంభించకముందే అసలు టెస్ట్ ఉపసంహరించబడింది",
+ "Level test withdrawn before it was started": "ప్రారంభించకముందే స్థాయి టెస్ట్ ఉపసంహరించబడింది",
+ "Test expired without being started": "టెస్ట్ ప్రారంభించకుండానే గడువు ముగిసింది"
 }

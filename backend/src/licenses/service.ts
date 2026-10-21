@@ -3,6 +3,7 @@ import { assertFeature } from "../plans/service.js";
 import { invalidateAccess } from "./accessCache.js";
 import { emitEvent } from "../webhooks/service.js";
 import { pool } from "../db.js";
+import { includeFinalAssessment } from "../assessment/service.js";
 
 export const LICENSE_PRICE_CENTS = 10000; // 100 USD per license-month
 export const GRACE_DAYS = 3;
@@ -375,6 +376,8 @@ export async function assignMonths(args: {
     await client.query("COMMIT");
     invalidateAccess(args.userId);
     const accessEndsAt = new Date(end.rows[0].e).toISOString();
+    // Full access includes a final assessment (a real test with a certificate).
+    await includeFinalAssessment(args.userId, args.tenantId, accessEndsAt).catch((err) => console.error("final assessment not included:", err));
     await emitEvent(args.tenantId, "license.assigned", { learnerId: args.userId, months: args.months, kind, accessEndsAt });
     return { kind, accessEndsAt, source };
   } catch (err) {

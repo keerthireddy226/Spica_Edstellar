@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { z } from "zod";
-import { myTests } from "./service.js";
+import { AttemptError, chooseFinalTest, myTests } from "./service.js";
 import { AppealError, fileAppeal } from "../quality/service.js";
 
 // My tests: the learner's real assessment attempts. Starting one goes through
@@ -12,6 +12,18 @@ assessmentRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) =
   try {
     res.json({ tests: await myTests(req.user!.id) });
   } catch (err) {
+    next(err);
+  }
+});
+
+// Chooses the test of the final assessment included with Full access.
+assessmentRouter.post("/:id/choose", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ testTypeId: z.string().min(1).max(60) }).parse(req.body);
+    await chooseFinalTest(req.user!.id, String(req.params.id), body.testTypeId);
+    res.json({ ok: true });
+  } catch (err) {
+    if (err instanceof AttemptError) return res.status(err.code === "attempt_not_found" ? 404 : 400).json({ error: err.code });
     next(err);
   }
 });

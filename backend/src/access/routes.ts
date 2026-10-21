@@ -3,6 +3,7 @@ import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { requireStaff } from "../admin/staff.js";
+import { includeFinalAssessment } from "../assessment/service.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { accessOf, allowedItemTypes } from "./entitlements.js";
 
@@ -137,6 +138,8 @@ accessRouter.post("/grants", requireAuth, async (req: AuthedRequest, res, next) 
       [u.id, p.id, p.test_type_id, p.kind === "level" || p.kind === "pack" ? body.level : null, p.attempts, body.days ?? p.duration_days, u.tenant_id, req.user!.id],
     );
     accessCache.delete(u.id);
+    // Full access includes a final assessment.
+    if (p.kind === "full") await includeFinalAssessment(u.id, u.tenant_id, r.rows[0].ends_at);
     res.status(201).json({ id: r.rows[0].id, endsAt: r.rows[0].ends_at });
   } catch (err) {
     next(err);

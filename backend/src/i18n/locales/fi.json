@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked": "Valituksesi: tuloksesi arvioitiin uudelleen",
  "Your appeal: you can take the test again": "Valituksesi: voit tehdä kokeen uudelleen",
  "{{org}} asked for credits": "{{org}} pyysi krediittejä",
- "{{n}} credits for staff tests.": "{{n}} krediittiä henkilöstön kokeisiin."
+ "{{n}} credits for staff tests.": "{{n}} krediittiä henkilöstön kokeisiin.",
+ "You have a level test to take": "Sinulla on tasotesti tehtävänä",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.": "{{org}} antoi sinulle tasotestin {{level}}. Läpäise se, niin saat tason {{level}} todistuksen. Tee se {{n}} päivän kuluessa.",
+ "Your final assessment is ready": "Loppukokeesi on valmis",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.": "{{org}} antoi sinulle ohjelman {{program}} loppukokeen: {{product}}. Tee se {{n}} päivän kuluessa.",
+ "Not enough credits for a final assessment": "Krediitit eivät riitä loppukokeeseen",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.": "{{program}}: {{n}} opiskelijaa odottaa yhä loppukoettaan. Kukin tarvitsee {{credits}} krediittiä.",
+ "Real test withdrawn before it was started": "Oikea koe peruttu ennen aloittamista",
+ "Level test withdrawn before it was started": "Tasotesti peruttu ennen aloittamista",
+ "Test expired without being started": "Koe vanheni aloittamatta"
 }

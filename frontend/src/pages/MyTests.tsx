@@ -5,7 +5,7 @@ import { Award, CalendarClock, ClipboardCheck, FileText, Lock, PlayCircle, Shiel
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { Button } from "@/components/Button";
 import { PracticeTests } from "@/pages/PracticeTests";
-import { getMyTests, type AttemptStatus, type OwnedTest } from "@/api/assessment";
+import { chooseFinalTest, getMyTests, type AttemptStatus, type OwnedTest } from "@/api/assessment";
 import { getPriceList } from "@/api/payments";
 import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
@@ -82,7 +82,45 @@ function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appea
 const takeLink = (t: OwnedTest, mode: "certified" | "sample", sessionId?: string) =>
   `${ROUTES.MY_TESTS_TAKE}?entitlement=${t.id}&mode=${mode}${sessionId ? `&session=${sessionId}` : ""}`;
 
-function TestCard({ t }: { t: OwnedTest }) {
+// The final assessment included with Full access: the learner picks its test first.
+function ChooseTest({ t, onChosen }: { t: OwnedTest; onChosen: () => void }) {
+  const [testTypeId, setTestTypeId] = useState(t.choices[0]?.id ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  async function choose() {
+    setBusy(true);
+    setError(false);
+    try {
+      await chooseFinalTest(t.id, testTypeId);
+      onChosen();
+    } catch {
+      setError(true);
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex flex-col gap-3 bg-paper-warm rounded-input px-4 py-3">
+      <p className="text-sm text-ink">
+        {tr("Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.")}
+      </p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <select value={testTypeId} onChange={(e) => setTestTypeId(e.target.value)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink cursor-pointer">
+          {t.choices.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <Button onClick={choose} disabled={!testTypeId || busy} className="!py-2">
+          {tr("Choose this test")}
+        </Button>
+      </div>
+      {error && <p className="text-sm text-error">{tr("Couldn't save your choice. Try again.")}</p>}
+    </div>
+  );
+}
+
+function TestCard({ t, onChanged }: { t: OwnedTest; onChanged: () => void }) {
   const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const u = t.unlock;
@@ -92,9 +130,17 @@ function TestCard({ t }: { t: OwnedTest }) {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {t.kind === "prep" ? tr("Preparation + assessment") : t.kind === "level" ? tr("Level test") : tr("Assessment")}
+            {t.kind === "prep"
+              ? tr("Preparation + assessment")
+              : t.kind === "level"
+                ? tr("Level test")
+                : t.kind === "final"
+                  ? tr("Final assessment · included with Full access")
+                  : tr("Assessment")}
           </p>
-          <h2 className="font-display font-bold text-xl text-ink">{t.kind === "level" && t.level ? tr("Level {{level}} test", { level: t.level }) : (t.testName ?? t.name)}</h2>
+          <h2 className="font-display font-bold text-xl text-ink">
+            {t.kind === "level" && t.level ? tr("Level {{level}} test", { level: t.level }) : t.kind === "final" && !t.testName ? tr("Final assessment") : (t.testName ?? t.name)}
+          </h2>
           <p className="text-sm text-muted flex items-center gap-1.5 mt-0.5">
             <CalendarClock size={14} /> {u.state === "expired" ? tr("Ended {{date}}", { date: day(t.endsAt) }) : tr("Available until {{date}}", { date: day(t.endsAt) })}
           </p>
@@ -104,7 +150,9 @@ function TestCard({ t }: { t: OwnedTest }) {
         </span>
       </div>
 
-      {open ? (
+      {t.chooseTest && u.state !== "expired" ? (
+        <ChooseTest t={t} onChosen={onChanged} />
+      ) : open ? (
         <div className="flex items-center justify-between gap-3 flex-wrap bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
           <span className="text-sm text-ink">{tr("Your real test is in progress. Its clock keeps running.")}</span>
           <Button onClick={() => navigate(takeLink(t, "certified", open.sessionId))} className="flex items-center gap-2 !py-2">
@@ -203,10 +251,13 @@ export function MyTests() {
   const [error, setError] = useState(false);
   // Whether the learner buys their own tests (individuals) or their organization gives them.
   const [canBuy, setCanBuy] = useState(true);
-  useEffect(() => {
+  function load() {
     getMyTests()
       .then((r) => setTests(r.tests))
       .catch(() => setError(true));
+  }
+  useEffect(() => {
+    load();
     getPriceList()
       .then((r) => setCanBuy(r.canBuy))
       .catch(() => {});
@@ -231,6 +282,7 @@ export function MyTests() {
           </p>
           <ul className="text-sm text-ink list-disc pl-5 flex flex-col gap-1">
             <li>{tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")}</li>
+            <li>{tr("Full access includes one: choose its test here, then it opens after a mock test of that test.")}</li>
             <li>{tr("With Real test + certificate, it opens after a free sample.")}</li>
             <li>{tr("A level test proves one level (A1 to C2) with that level's certificate.")}</li>
           </ul>
@@ -243,7 +295,7 @@ export function MyTests() {
           )}
         </div>
       ) : (
-        tests.map((t) => <TestCard key={t.id} t={t} />)
+        tests.map((t) => <TestCard key={t.id} t={t} onChanged={load} />)
       )}
     </div>
   );
@@ -264,6 +316,7 @@ export function TakeOwnedTest() {
   if (!test) return <p className="text-sm text-error">{tr("This test isn't available.")}</p>;
   // A real test that isn't open (and not being resumed) goes back to My tests, which says why.
   const resuming = !!params.get("session") || test.attempts.some((a) => a.status === "in_progress");
-  if (mode === "certified" && test.unlock.state !== "open" && !resuming) return <Navigate to={ROUTES.MY_TESTS} replace />;
+  // A final assessment's test is chosen on My tests first.
+  if (!test.testTypeId || (mode === "certified" && test.unlock.state !== "open" && !resuming)) return <Navigate to={ROUTES.MY_TESTS} replace />;
   return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.kind === "level" && test.level ? tr("Level {{level}} test", { level: test.level }) : test.testName, level: test.kind === "level" ? test.level : null }} />;
 }

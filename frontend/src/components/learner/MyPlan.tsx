@@ -22,6 +22,7 @@ function opens(o: Owned): string {
   if (o.kind === "prep") return tr("Practice tests, mock tests and Practice Modules for this test, then one real test with a certificate.");
   if (o.kind === "assessment") return tr("One real test, strictly proctored, with a score report and a certificate.");
   if (o.kind === "level") return tr("One level test at {{level}}. Pass it for that level's certificate.", { level: o.level ?? "—" });
+  if (o.kind === "final") return tr("Your final assessment: one real test on the test you choose, with a certificate. Included with Full access.");
   if (o.kind === "pack") return tr("Practice Modules in every question type, aiming at {{level}}.", { level: o.level ?? "—" });
   return tr("Every test, mock test and Practice Module.");
 }
@@ -37,7 +38,7 @@ export function OwnedList({ access }: { access: MyAccess }) {
           <div key={o.id} className="flex items-start gap-3 border border-rule rounded-xl px-3.5 py-3">
             <Icon size={18} className="text-navy-deep shrink-0 mt-0.5" />
             <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="text-sm font-semibold text-ink">{o.name}</span>
+              <span className="text-sm font-semibold text-ink">{o.kind === "final" ? tr("Final assessment") : o.name}</span>
               <span className="text-xs text-muted">{opens(o)}</span>
               <span className="text-xs text-ink">
                 {tr("Until {{date}}", { date: formatShortDate(o.endsAt) })}

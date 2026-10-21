@@ -122,6 +122,7 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
           <Item ok>{tr("Every test: practice tests, Practice Modules, AI tutor")}</Item>
           <Item ok>{plus?.mocksPerMonth ? tr("{{n}} mock tests a month", { n: plus.mocksPerMonth }) : tr("Mock tests")}</Item>
           <Item ok>{tr("Level test retakes")}</Item>
+          <Item ok>{tr("One final assessment on the test you choose")}</Item>
           <Item ok>{tr("Certificate provided")}</Item>
         </Card>
         <Card eyebrow={tr("Prepare for one test")} title={tr("Preparation + real test + certificate")} price={<>{tr("from {{p}}", { p: price(min("prep")) })} <small className="text-sm font-medium text-muted">{tr("30 days")}</small></>} action={buy}>
@@ -199,6 +200,7 @@ function Organizations({ data, isOrgAdmin }: { data: Overview; isOrgAdmin: boole
           }
         >
           <p className="text-sm text-muted">{tr("1 license = 1 learner's access to everything for a month, certificate provided.")}</p>
+          <p className="text-sm text-muted">{tr("Each licensed learner gets one final assessment, a real test with a certificate.")}</p>
           <Rows
             rows={data.licenseBands.map((b, i) => [
               data.licenseBands[i + 1] ? tr("{{a}}–{{b}} licenses", { a: b.minQuantity, b: data.licenseBands[i + 1].minQuantity - 1 }) : tr("{{a}} or more", { a: b.minQuantity }),
