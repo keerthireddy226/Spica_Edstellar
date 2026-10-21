@@ -120,6 +120,8 @@ const periodQuery = z.object({
   period: z.enum(["since_start", "last_30", "quarter", "custom"]).default("since_start"),
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // 1: each learner's skills, strengths and areas to improve (the detailed PDF).
+  detail: z.enum(["0", "1"]).optional(),
 });
 
 analyticsRouter.get("/batches/:id/report", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -128,9 +130,27 @@ analyticsRouter.get("/batches/:id/report", requireAuth, async (req: AuthedReques
     if (!scope) return;
     const q = periodQuery.safeParse(req.query);
     if (!q.success) return res.status(400).json({ error: "invalid_period" });
-    const data = await batchReport(scope.tenantId, scope.batchId, { ...q.data, canOpenReports: await canOpenReports(scope) });
+    const { detail, ...period } = q.data;
+    const data = await batchReport(scope.tenantId, scope.batchId, { ...period, detail: detail === "1", canOpenReports: await canOpenReports(scope) });
     if (!data) return res.status(404).json({ error: "batch_not_found" });
     res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// One learner of the batch: each skill's level and score, start and now,
+// performance, strengths and areas to improve (levels and scores, which
+// Managers always see).
+analyticsRouter.get("/batches/:id/learners/:userId", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const scope = await batchScope(req, res);
+    if (!scope) return;
+    if (!z.string().uuid().safeParse(req.params.userId).success) return res.status(404).json({ error: "learner_not_found" });
+    const data = await batchReport(scope.tenantId, scope.batchId, { period: "since_start", detail: true, userId: String(req.params.userId), canOpenReports: await canOpenReports(scope) });
+    const learner = data?.learners[0];
+    if (!data || !learner) return res.status(404).json({ error: "learner_not_found" });
+    res.json({ batch: data.batch, goal: data.goal, generatedAt: data.generatedAt, canOpenReports: data.canOpenReports, learner });
   } catch (err) {
     next(err);
   }

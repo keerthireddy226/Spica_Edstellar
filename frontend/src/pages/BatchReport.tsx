@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, ChevronDown, Download } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { ScoreReport } from "@/components/report/ScoreReport";
 import {
+  getBatchLearner,
   getBatchLearnerReport,
   getBatchReport,
+  type BatchLearnerData,
   type BatchReport,
   type BatchReportLearner,
   type BatchReportPeriod,
@@ -150,6 +152,43 @@ function ScoreSpread({ scores, goalMin, goalLevel }: { scores: number[]; goalMin
         {[10, 20, 30, 40, 50, 60, 70, 80, 90].map((n) => (
           <span key={n}>{n}</span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Under the spread: how many learners are at each level now, and the middle and range of scores.
+function SpreadSummary({ learners, scores, goalMin, goalLevel }: { learners: BatchReportLearner[]; scores: number[]; goalMin: number | null; goalLevel: string | null }) {
+  if (!scores.length) return null;
+  const sorted = [...scores].sort((a, b) => a - b);
+  const mid = sorted.length % 2 ? sorted[(sorted.length - 1) / 2] : Math.round((sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2);
+  const counts = LEVELS.map((lv) => [lv, learners.filter((l) => l.current?.level === lv).length] as const).filter(([, n]) => n > 0);
+  const atGoal = goalMin !== null ? scores.filter((s) => s >= goalMin).length : null;
+  return (
+    <div className="flex flex-col gap-3 border-t border-rule pt-3">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-lg bg-paper-warm py-2">
+          <b className="block font-display text-lg text-ink tabular-nums">{mid}</b>
+          <span className="text-xs text-muted">{tr("Middle score")}</span>
+        </div>
+        <div className="rounded-lg bg-paper-warm py-2">
+          <b className="block font-display text-lg text-ink tabular-nums">{`${sorted[0]}–${sorted[sorted.length - 1]}`}</b>
+          <span className="text-xs text-muted">{tr("Lowest to highest")}</span>
+        </div>
+        <div className="rounded-lg bg-paper-warm py-2">
+          <b className="block font-display text-lg text-ink tabular-nums">{atGoal !== null ? `${atGoal} / ${scores.length}` : "—"}</b>
+          <span className="text-xs text-muted">{goalLevel ? tr("At {{level}} or above", { level: goalLevel }) : tr("No goal set")}</span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Overall level now")}</span>
+        <div className="flex flex-wrap gap-2">
+          {counts.map(([lv, n]) => (
+            <span key={lv} className="inline-flex items-center gap-1.5 text-[13px] font-semibold rounded-pill px-2.5 py-1" style={levelStyle(lv)}>
+              {lv} <span className="font-normal">·</span> {n}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -354,6 +393,7 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
         <Card title={tr("Spread of Spica scores")}>
           <p className="text-[13.5px] text-muted -mt-2">{tr("Each learner's latest score on the 10–90 scale ({{n}} of {{total}} have one).", { n: data.scores.length, total: s.learners })}</p>
           <ScoreSpread scores={data.scores} goalMin={data.goal?.minScore ?? null} goalLevel={data.goal?.level ?? null} />
+          <SpreadSummary learners={data.learners} scores={data.scores} goalMin={data.goal?.minScore ?? null} goalLevel={data.goal?.level ?? null} />
         </Card>
         <Card title={tr("Skill profile")}>
           <div className="flex flex-col items-center gap-2">
@@ -414,7 +454,7 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
         title={tr("Learners")}
         aside={
           <span className="text-[13px] text-muted print:hidden">
-            {data.learners.some((l) => l.reportSessionId) ? tr("Click a name to open their score report") : tr("Sorted by Spica score")}
+            {tr("Click a name to open the learner's report in a new tab")}
           </span>
         }
       >
@@ -435,13 +475,14 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
               {learners.map((l) => (
                 <tr key={l.id} className="br-row border-t border-rule align-middle">
                   <td className="px-3 py-2.5">
-                    {l.reportSessionId ? (
-                      <Link to={`/batch-report/${batchId}/reports/${l.reportSessionId}`} className="font-semibold text-ink whitespace-nowrap underline decoration-rule-strong underline-offset-[3px] hover:decoration-navy">
-                        {l.name}
-                      </Link>
-                    ) : (
-                      <span className="font-semibold text-ink whitespace-nowrap">{l.name}</span>
-                    )}
+                    <a
+                      href={`/batch-report/${batchId}/learners/${l.id}`}
+                      target="_blank"
+                      rel="noopener"
+                      className="font-semibold text-ink whitespace-nowrap underline decoration-rule-strong underline-offset-[3px] hover:decoration-navy"
+                    >
+                      {l.name}
+                    </a>
                     {l.participantId && <span className="block text-xs text-muted font-mono">{l.participantId}</span>}
                   </td>
                   <td className="px-3 py-2.5 font-display font-semibold whitespace-nowrap text-ink">
@@ -538,6 +579,35 @@ export function BatchReportPage() {
   const [data, setData] = useState<BatchReport | null>(null);
   const [error, setError] = useState(false);
   const back = user?.role === "manager" ? ROUTES.MANAGER_ANALYTICS : ROUTES.ORG_ADMIN_ANALYTICS;
+  // Download PDF: the summarised report (this page), or the detailed one with a page per learner.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [printKind, setPrintKind] = useState<"summary" | "detailed" | null>(null);
+  const [detailData, setDetailData] = useState<BatchReport | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  useEffect(() => setDetailData(null), [id, period, from, to]);
+  useEffect(() => {
+    if (!printKind || (printKind === "detailed" && !detailData)) return;
+    // Let the learner pages render before the print window opens.
+    const t = setTimeout(() => {
+      window.print();
+      setPrintKind(null);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [printKind, detailData]);
+  async function download(kind: "summary" | "detailed") {
+    setMenuOpen(false);
+    if (kind === "detailed" && !detailData) {
+      setPreparing(true);
+      try {
+        setDetailData(await getBatchReport(id, { period, from, to, detail: true }));
+      } catch {
+        setPreparing(false);
+        return;
+      }
+      setPreparing(false);
+    }
+    setPrintKind(kind);
+  }
 
   useEffect(() => {
     if (period === "custom" && !(from && to)) return;
@@ -584,9 +654,26 @@ export function BatchReportPage() {
               <input id="br-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tr("To")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink" />
             </>
           )}
-          <Button onClick={() => window.print()} disabled={!data} className="flex items-center gap-2 !px-4 !py-2 !text-sm">
-            <Download size={15} /> {tr("Download PDF")}
-          </Button>
+          <div className="relative">
+            <Button onClick={() => setMenuOpen((o) => !o)} disabled={!data || preparing} aria-expanded={menuOpen} className="flex items-center gap-2 !px-4 !py-2 !text-sm">
+              <Download size={15} /> {preparing ? tr("Preparing…") : tr("Download PDF")} <ChevronDown size={15} />
+            </Button>
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-[320px] bg-surface border border-rule rounded-xl shadow-lg p-1.5 flex flex-col z-20">
+                {(
+                  [
+                    ["summary", tr("Summarised report"), tr("The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.")],
+                    ["detailed", tr("Detailed report"), tr("The summary, then a page for each learner: skill scores and levels, performance, strengths and areas to improve.")],
+                  ] as const
+                ).map(([kind, label, note]) => (
+                  <button key={kind} onClick={() => download(kind)} className="text-left rounded-lg px-3 py-2.5 hover:bg-paper-warm cursor-pointer">
+                    <span className="block text-sm font-semibold text-ink">{label}</span>
+                    <span className="block text-xs text-muted">{note}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <table className="br-frame">
@@ -602,7 +689,21 @@ export function BatchReportPage() {
                 {error ? (
                   <p className="text-sm text-error">{tr("This report isn't available.")}</p>
                 ) : data ? (
-                  <BatchReportView data={data} batchId={id} />
+                  <>
+                    <BatchReportView data={data} batchId={id} />
+                    {/* The detailed PDF: a page for each learner after the summary. */}
+                    {printKind === "detailed" && detailData && (
+                      <div className="hidden print:block">
+                        {[...detailData.learners]
+                          .sort((a, b) => (b.current?.score ?? -1) - (a.current?.score ?? -1) || a.name.localeCompare(b.name))
+                          .map((l) => (
+                            <div key={l.id} className="br-page">
+                              <LearnerDetail l={l} batch={detailData.batch} goal={detailData.goal} batchId={id} canOpenReports={false} />
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="text-sm text-muted">{tr("Loading…")}</p>
                 )}
@@ -645,6 +746,248 @@ export function BatchLearnerReportPage() {
           <p className="text-sm text-muted">{tr("Loading…")}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+const VS_GOAL: Record<"above" | "meets" | "below", { label: () => string; cls: string }> = {
+  above: { label: () => tr("Above goal"), cls: "text-success" },
+  meets: { label: () => tr("Meets goal"), cls: "text-success" },
+  below: { label: () => tr("Below goal"), cls: "text-error" },
+};
+
+// A learner's mock test scores over time, with the goal's first score.
+function ScoreTrend({ mocks, goalMin }: { mocks: BatchReportLearner["mocks"]; goalMin: number | null }) {
+  const pts = mocks.filter((m) => m.score !== null) as { date: string; score: number; level: string | null }[];
+  if (!pts.length) return <p className="text-sm text-muted">{tr("No mock test yet.")}</p>;
+  const W = 320;
+  const H = 110;
+  // The scale fits the scores (and the goal), so small gains show.
+  const vals = [...pts.map((p) => p.score), ...(goalMin !== null ? [goalMin] : [])];
+  const lo = Math.max(10, Math.min(...vals) - 6);
+  const hi = Math.min(90, Math.max(...vals) + 6);
+  const y = (s: number) => H - 16 - ((s - lo) / Math.max(1, hi - lo)) * (H - 36);
+  const x = (i: number) => (pts.length === 1 ? W / 2 : 28 + (i * (W - 56)) / (pts.length - 1));
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[420px] h-auto" role="img" aria-label={tr("Mock test scores")}>
+      {goalMin !== null && (
+        <>
+          <line x1={0} x2={W} y1={y(goalMin)} y2={y(goalMin)} stroke="var(--color-ink)" strokeDasharray="4 4" opacity={0.5} />
+          <text x={W - 2} y={y(goalMin) - 4} textAnchor="end" fontSize={10} fill="var(--color-muted)">
+            {goalMin}
+          </text>
+        </>
+      )}
+      <polyline points={pts.map((p, i) => `${x(i)},${y(p.score)}`).join(" ")} fill="none" stroke="var(--color-navy)" strokeWidth={2.5} />
+      {pts.map((p, i) => (
+        <g key={p.date}>
+          <circle cx={x(i)} cy={y(p.score)} r={4} fill="var(--color-navy)" />
+          <text x={x(i)} y={y(p.score) - 9} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--color-ink)">
+            {p.score}
+          </text>
+          <text x={x(i)} y={H - 1} textAnchor="middle" fontSize={10} fill="var(--color-muted)">
+            {shortDay(p.date)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// One learner: each skill's level and Spica score, start and now, against the
+// goal; performance; strengths and areas to improve. On its own page (a new
+// tab from the Batch report) and once per learner in the detailed PDF.
+export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: BatchReportLearner; batch: BatchReport["batch"]; goal: BatchReport["goal"]; batchId: string; canOpenReports: boolean }) {
+  const { t } = useTranslation();
+  const ins = l.insights;
+  const change = l.current?.score != null && l.start?.score != null ? l.current.score - l.start.score : null;
+  const skillName = (k: ReportSkill) => t(`skills.${k}`);
+  const strengths = [
+    ...(ins?.strongSkills ?? []).map((k) => {
+      const s = ins!.skills.find((x) => x.skill === k)!;
+      return s.change !== null && s.change > 0
+        ? tr("{{skill}}: {{level}}, score {{score}} (+{{n}} since the start)", { skill: skillName(k), level: s.level, score: s.score, n: s.change })
+        : tr("{{skill}}: {{level}}, score {{score}}", { skill: skillName(k), level: s.level, score: s.score });
+    }),
+    ...(ins?.strongTypes ?? []).map((x) => tr("{{type}} ({{skill}}): {{right}} of {{total}} right", { type: x.type, skill: skillName(x.skill), right: x.right, total: x.total })),
+  ];
+  const improve = [
+    ...(ins?.weakSkills ?? []).map((w) => {
+      const s = ins!.skills.find((x) => x.skill === w.skill)!;
+      return w.gap && w.target
+        ? tr("{{skill}}: {{level}}, score {{score}}, needs +{{n}} for {{goal}}", { skill: skillName(w.skill), level: s.level, score: s.score, n: w.gap, goal: w.target })
+        : tr("{{skill}}: {{level}}, score {{score}}", { skill: skillName(w.skill), level: s.level, score: s.score });
+    }),
+    ...(ins?.focusTypes ?? []).map((x) => tr("{{type}} ({{skill}}): {{right}} of {{total}} right", { type: x.type, skill: skillName(x.skill), right: x.right, total: x.total })),
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <Card>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1 min-w-0">
+            <span className="font-logo font-bold text-xl text-navy leading-none">Spica</span>
+            <span className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-muted mt-2">{tr("Learner report")}</span>
+            <h1 className="font-display font-bold text-[26px] leading-tight text-ink">{l.name}</h1>
+            <p className="text-sm text-muted">
+              {[l.participantId, batch.name, batch.testName, goal ? (goal.date ? tr("Goal {{level}} by {{date}}", { level: goal.level, date: day(goal.date) }) : tr("Goal {{level}}", { level: goal.level })) : null]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-sm text-ink">
+              {l.start?.level && l.current?.level ? (
+                <span>
+                  {tr("Start {{level}} · {{score}}", { level: l.start.level, score: l.start.score ?? "—" })} → <b>{tr("Now {{level}} · {{score}}", { level: l.current.level, score: l.current.score ?? "—" })}</b>
+                  {change !== null && change !== 0 && <b className={change > 0 ? "text-success" : "text-error"}>{` (${change > 0 ? "+" : ""}${change})`}</b>}
+                </span>
+              ) : null}
+              {l.goal && <Chip status={l.goal} />}
+              {l.projected && <span className="text-muted">{tr("Trend reaches {{level}} by the goal date", { level: l.projected })}</span>}
+            </div>
+          </div>
+          <div className="flex flex-col items-center rounded-xl bg-paper-warm px-6 py-3 min-w-[130px]">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Spica score")}</span>
+            <span className="font-display font-bold text-[44px] leading-none text-ink tabular-nums">{l.current?.score ?? "—"}</span>
+            <span className="text-xs text-muted">{tr("out of 90")}</span>
+            {l.current?.level && <span className="font-display font-bold text-navy-deep">{tr("CEFR {{level}}", { level: l.current.level })}</span>}
+          </div>
+        </div>
+      </Card>
+
+      <Card title={tr("Skills")} aside={<span className="text-[13px] text-muted">{l.levelSource === "mock" ? tr("From the latest mock test") : l.levelSource === "level_test" ? tr("From the latest level test") : ""}</span>}>
+        {ins?.skills.length ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3">
+            {ins.skills.map((s) => (
+              <div key={s.skill} className="br-avoid border border-rule rounded-xl p-3.5 flex flex-col gap-2" style={{ borderTop: `4px solid ${SKILL_COLOUR[s.skill]}` }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-ink">{skillName(s.skill)}</span>
+                  {s.vsGoal && (
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill border border-current ${VS_GOAL[s.vsGoal].cls}`}>{VS_GOAL[s.vsGoal].label()}</span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <span className="font-display font-bold text-[26px] leading-none text-ink">{s.level}</span>
+                  <span className="text-sm text-muted">{tr("score {{n}}", { n: s.score })}</span>
+                </div>
+                <div className="relative h-2 rounded-pill bg-paper-warm">
+                  <i className="absolute inset-y-0 left-0 rounded-pill" style={{ width: `${((s.score - 10) / 80) * 100}%`, background: SKILL_COLOUR[s.skill] }} />
+                  {goal?.minScore != null && <i className="absolute -top-1 -bottom-1 w-0.5 bg-ink" style={{ left: `${((goal.minScore - 10) / 80) * 100}%` }} />}
+                </div>
+                <span className="text-xs text-muted">
+                  {s.startLevel
+                    ? s.change
+                      ? tr("Start {{level}} · {{score}}, {{change}} since then", { level: s.startLevel, score: s.startScore ?? "—", change: `${s.change > 0 ? "+" : ""}${s.change}` })
+                      : tr("Start {{level}} · {{score}}, no change", { level: s.startLevel, score: s.startScore ?? "—" })
+                    : tr("No starting level")}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">{tr("No level yet: this learner hasn't taken a level test or mock test.")}</p>
+        )}
+      </Card>
+
+      <Card title={tr("Performance")}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3">
+          <Stat value={String(l.practiceTests)} label={tr("Practice tests")} note={tr("Finished in this period")} />
+          <Stat value={String(l.mockTests)} label={tr("Mock tests")} note={tr("Finished in this period")} />
+          <Stat value={l.minutes ? hours(l.minutes) : "—"} label={tr("Practice time")} note={tr("In this period")} />
+          <Stat value={lastActive(l)} label={tr("Last active")} note={l.accessEndsAt ? tr("Access until {{date}}", { date: day(l.accessEndsAt) }) : "—"} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <span className="text-sm font-semibold text-ink">{tr("Mock test scores")}</span>
+          <ScoreTrend mocks={l.mocks} goalMin={goal?.minScore ?? null} />
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-4">
+        <Card title={tr("Strengths")}>
+          {strengths.length ? (
+            <ul className="list-disc pl-5 text-sm text-ink flex flex-col gap-1">
+              {strengths.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">{tr("Not enough results yet.")}</p>
+          )}
+        </Card>
+        <Card title={tr("Areas to improve")}>
+          {improve.length ? (
+            <ul className="list-disc pl-5 text-sm text-ink flex flex-col gap-1">
+              {improve.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">{tr("Not enough results yet.")}</p>
+          )}
+        </Card>
+      </div>
+
+      {canOpenReports && l.reportSessionId && (
+        <Link to={`/batch-report/${batchId}/reports/${l.reportSessionId}`} className="print:hidden self-start text-sm font-semibold text-navy-deep hover:underline">
+          {tr("Open the full score report of the latest mock test")}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// A learner's page, opened in a new tab from the Batch report.
+export function BatchLearnerPage() {
+  const { id = "", userId = "" } = useParams();
+  const [data, setData] = useState<BatchLearnerData | null>(null);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    getBatchLearner(id, userId)
+      .then((r) => {
+        setData(r);
+        document.title = `${r.learner.name} · ${tr("Learner report")}`;
+      })
+      .catch(() => setError(true));
+  }, [id, userId]);
+  return (
+    <div className="batch-report min-h-screen bg-paper">
+      <style>{PRINT_CSS}</style>
+      <div className="print:hidden sticky top-0 z-10 bg-paper/95 backdrop-blur border-b border-rule">
+        <div className="max-w-[1000px] mx-auto px-4 py-3 flex items-center gap-3">
+          <Link to={`/batch-report/${id}`} className="flex items-center gap-1.5 text-sm font-semibold text-ink hover:text-navy">
+            <ArrowLeft size={16} /> {tr("Batch report")}
+          </Link>
+          <div className="flex-1" />
+          <Button onClick={() => window.print()} disabled={!data} className="flex items-center gap-2 !px-4 !py-2 !text-sm">
+            <Download size={15} /> {tr("Download PDF")}
+          </Button>
+        </div>
+      </div>
+      <table className="br-frame">
+        <thead>
+          <tr>
+            <td className="br-gap" />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div className="max-w-[1000px] mx-auto px-4 py-5 print:p-0">
+                {error ? (
+                  <p className="text-sm text-error">{tr("This report isn't available.")}</p>
+                ) : data ? (
+                  <LearnerDetail l={data.learner} batch={data.batch} goal={data.goal} batchId={id} canOpenReports={data.canOpenReports} />
+                ) : (
+                  <p className="text-sm text-muted">{tr("Loading…")}</p>
+                )}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td className="br-gap" />
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }

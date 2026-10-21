@@ -124,6 +124,30 @@ export interface BatchReportLearner {
   missedMocks: number;
   lastMissedMock: string | null;
   reportSessionId: string | null;
+  // Each mock test's Spica score, oldest first.
+  mocks: { date: string; score: number | null; level: string | null }[];
+  // With detail: each skill against the goal, strengths and areas to improve.
+  insights: LearnerInsights | null;
+}
+
+export interface LearnerInsights {
+  skills: { skill: ReportSkill; level: string; score: number; startLevel: string | null; startScore: number | null; change: number | null; vsGoal: "above" | "meets" | "below" | null }[];
+  strongSkills: ReportSkill[];
+  weakSkills: { skill: ReportSkill; gap: number | null; target: string | null }[];
+  strongTypes: { skill: ReportSkill; type: string; right: number; total: number }[];
+  focusTypes: { skill: ReportSkill; type: string; right: number; total: number }[];
+}
+
+export interface BatchLearnerData {
+  batch: BatchReport["batch"];
+  goal: BatchReport["goal"];
+  generatedAt: string;
+  canOpenReports: boolean;
+  learner: BatchReportLearner;
+}
+
+export function getBatchLearner(batchId: string, userId: string): Promise<BatchLearnerData> {
+  return api(`/analytics/batches/${batchId}/learners/${userId}`);
 }
 
 export interface BatchReport {
@@ -157,8 +181,9 @@ export interface BatchReport {
   canOpenReports: boolean;
 }
 
-export function getBatchReport(id: string, q: { period: BatchReportPeriod; from?: string; to?: string }): Promise<BatchReport> {
+export function getBatchReport(id: string, q: { period: BatchReportPeriod; from?: string; to?: string; detail?: boolean }): Promise<BatchReport> {
   const p = new URLSearchParams({ period: q.period });
+  if (q.detail) p.set("detail", "1");
   if (q.period === "custom" && q.from && q.to) {
     p.set("from", q.from);
     p.set("to", q.to);

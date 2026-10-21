@@ -8,7 +8,7 @@ import { learnerAccessMap } from "../licenses/service.js";
 import { levelSummary } from "../placement/levels.js";
 import { CEFR_LEVELS } from "../placement/cefr.js";
 import { memberStatus, INACTIVE_DAYS, type MockPoint } from "../programs/monitoring.js";
-import { BANDS, levelOfScore, spicaScore } from "./scoreReport.js";
+import { BANDS, levelOfScore, scoreReport, spicaScore } from "./scoreReport.js";
 
 export const SKILLS = ["speaking", "listening", "reading", "writing"] as const;
 type Skill = (typeof SKILLS)[number];
@@ -99,6 +99,55 @@ export interface BatchReportOptions {
   to?: string;
   // Org Admins, and Managers when the organization allows it.
   canOpenReports: boolean;
+  // Each learner's skills, strengths and areas to improve (the learner page and the detailed PDF).
+  detail?: boolean;
+  // Only this learner (the learner page).
+  userId?: string;
+}
+
+type VsGoal = "above" | "meets" | "below" | null;
+export interface LearnerInsights {
+  skills: { skill: Skill; level: string; score: number; startLevel: string | null; startScore: number | null; change: number | null; vsGoal: VsGoal }[];
+  strongSkills: Skill[];
+  // Below the goal: how far to it. Everyone else: their lowest skill and how far to its next level.
+  weakSkills: { skill: Skill; gap: number | null; target: string | null }[];
+  // Question types from the latest mock test: mostly right, and mostly wrong.
+  strongTypes: { skill: Skill; type: string; right: number; total: number }[];
+  focusTypes: { skill: Skill; type: string; right: number; total: number }[];
+}
+
+// What a learner does well and should work on: each skill against the goal,
+// and (from their latest mock test with answers) their best and weakest question types.
+async function insightsOf(start: Snapshot | null, current: Snapshot | null, goalLevel: string | null, goalMin: number | null, mockId: string | null): Promise<LearnerInsights> {
+  const order = BANDS.map((x) => x.level as string);
+  const skills = SKILLS.flatMap((s) => {
+    const now = current?.skills[s];
+    if (!now) return [];
+    const st = start?.skills[s] ?? null;
+    const vsGoal: VsGoal = goalLevel ? (order.indexOf(now.level) > order.indexOf(goalLevel) ? "above" : order.indexOf(now.level) === order.indexOf(goalLevel) ? "meets" : "below") : null;
+    return [{ skill: s, level: now.level, score: now.score, startLevel: st?.level ?? null, startScore: st?.score ?? null, change: st ? now.score - st.score : null, vsGoal }];
+  });
+  const byScore = [...skills].sort((a, b) => b.score - a.score);
+  const atGoal = byScore.filter((x) => x.vsGoal === "above" || x.vsGoal === "meets");
+  const below = byScore.filter((x) => x.vsGoal === "below").reverse();
+  const strongSkills = (atGoal.length ? atGoal : byScore.slice(0, 1)).slice(0, 2).map((x) => x.skill);
+  const next = (level: string) => BANDS[order.indexOf(level) + 1] ?? null;
+  const weakSkills = below.length
+    ? below.map((x) => ({ skill: x.skill, gap: goalMin !== null ? Math.max(0, goalMin - x.score) : null, target: goalLevel }))
+    : byScore.slice(-1).map((x) => {
+        const n = next(x.level);
+        return { skill: x.skill, gap: n ? n.min - x.score : null, target: n ? (n.level as string) : null };
+      });
+  const strongTypes: LearnerInsights["strongTypes"] = [];
+  const focusTypes: LearnerInsights["focusTypes"] = [];
+  if (mockId) {
+    const sr = await scoreReport(mockId, null).catch(() => null);
+    for (const k of sr?.skills ?? []) {
+      for (const t of k.strengths) strongTypes.push({ skill: k.skill as Skill, type: t.typeName, right: t.right, total: t.total });
+      for (const t of k.focus) focusTypes.push({ skill: k.skill as Skill, type: t.typeName, right: t.right, total: t.total });
+    }
+  }
+  return { skills, strongSkills, weakSkills, strongTypes: strongTypes.slice(0, 4), focusTypes: focusTypes.slice(0, 4) };
 }
 
 export async function batchReport(tenantId: string, batchId: string, opts: BatchReportOptions) {
@@ -132,8 +181,8 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       `SELECT u.id, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name, u.participant_id,
          (SELECT max(t) FROM (SELECT max(s.started_at) AS t FROM sessions s WHERE s.user_id = u.id
                               UNION ALL SELECT max(a.submitted_at) FROM attempts a JOIN sessions s2 ON s2.id = a.session_id WHERE s2.user_id = u.id) x) AS last_activity
-       FROM users u WHERE u.batch_id = $1 AND u.role = 'learner' AND u.deleted_at IS NULL ORDER BY name`,
-      [batchId],
+       FROM users u WHERE u.batch_id = $1 AND u.role = 'learner' AND u.deleted_at IS NULL AND ($2::uuid IS NULL OR u.id = $2) ORDER BY name`,
+      [batchId, opts.userId ?? null],
     )
   ).rows;
   const ids = members.map((m) => m.id as string);
@@ -254,8 +303,16 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       lastMissedMock: mi?.last_missed_mock ? dateOnly(mi.last_missed_mock) : null,
       // The latest mock's score report, when the viewer may open it.
       reportSessionId: opts.canOpenReports && mock && answeredMocks.has(mock.id) ? (mock.id as string) : null,
+      // Each mock test's Spica score, oldest first.
+      mocks: ownMocks.map((x) => ({ date: new Date(x.completed_at).toISOString(), score: fromMock(x).score, level: fromMock(x).level })),
+      answeredMockId: mock && answeredMocks.has(mock.id) ? (mock.id as string) : null,
+      insights: null as LearnerInsights | null,
     };
   });
+  if (opts.detail) {
+    const min = goalLevel ? (BANDS.find((x) => x.level === goalLevel)?.min ?? null) : null;
+    for (const l of learners) l.insights = await insightsOf(l.start, l.current, goalLevel, min, l.answeredMockId);
+  }
 
   const mean = (xs: number[]) => (xs.length ? Math.round(xs.reduce((x, y) => x + y, 0) / xs.length) : null);
   const goalMin = goalLevel ? (BANDS.find((x) => x.level === goalLevel)?.min ?? null) : null;

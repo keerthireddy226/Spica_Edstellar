@@ -41,7 +41,7 @@ import { IntegrityReviews } from "@/pages/IntegrityReviews";
 import { AssessInvite, CandidateAssessmentPage } from "@/pages/recruitment/CandidatePages";
 import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
 import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
-import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
+import { BatchLearnerPage, BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
 import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
@@ -169,6 +169,14 @@ function App() {
           element={
             <ProtectedRoute>
               <BatchReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/batch-report/:id/learners/:userId"
+          element={
+            <ProtectedRoute>
+              <BatchLearnerPage />
             </ProtectedRoute>
           }
         />
