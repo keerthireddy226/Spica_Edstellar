@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
 import { isPhone } from "@/lib/device";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Volume2, CheckCircle2, Clock, X, ArrowRightCircle } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -412,6 +412,14 @@ function PlacementTestRun() {
             <p className="text-xs text-error">{t("placementTest.failedNote", { failed: summary.failedCount })}</p>
           )}
           <IntegrityResultNote sessionId={sessionId} />
+
+          {/* The free level check estimates; the final assessment certifies. */}
+          <div className="rounded-input bg-paper-warm px-4 py-3 text-sm text-ink flex flex-col gap-1">
+            <span>{tr("This is a free estimate of your level. To prove it with a certificate, take a final assessment: one strictly proctored real test.")}</span>
+            <Link to={ROUTES.MY_TESTS} className="self-start font-semibold text-navy-deep hover:underline">
+              {tr("About the final assessment")}
+            </Link>
+          </div>
 
           <Button onClick={() => navigate(ROUTES.ROADMAP)} className="w-full">
             {t("placementTest.goToRoadmap")}

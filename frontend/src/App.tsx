@@ -43,6 +43,7 @@ import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
 import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
 import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
 import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
+import { EnglishLevelPage, EnglishLevelsIndex } from "@/pages/public/EnglishLevel";
 import { OrgAdminTests } from "@/pages/orgAdmin/OrgAdminTests";
 import { AssessmentQuality } from "@/pages/staff/AssessmentQuality";
 import { SpicaPlans } from "@/pages/SpicaPlans";
@@ -107,6 +108,9 @@ function App() {
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />
+        {/* Public pages per English level (no account needed). */}
+        <Route path="/english-level" element={<EnglishLevelsIndex />} />
+        <Route path="/english-level/:level" element={<EnglishLevelPage />} />
         <Route
           path={ROUTES.MFA_SETUP}
           element={

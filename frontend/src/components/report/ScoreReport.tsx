@@ -7,7 +7,7 @@ import type { ReportAbout, ScoreReport as ScoreReportData, ScoreSkill, ScoreType
 import { tr } from "@/i18n/tr";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
-const BANDS = [
+export const BANDS = [
   { level: "Pre-A1", min: 10, max: 19 },
   { level: "A1", min: 20, max: 29 },
   { level: "A2", min: 30, max: 39 },
@@ -39,7 +39,7 @@ const MEASURES: Record<ScoreSkill, () => string> = {
 };
 
 // What a learner can do at each level, per skill.
-const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
+export const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
   speaking: {
     "Pre-A1": () => tr("Say a few familiar words and very short phrases about yourself."),
     A1: () => tr("Introduce yourself and answer simple questions about familiar things, slowly."),
