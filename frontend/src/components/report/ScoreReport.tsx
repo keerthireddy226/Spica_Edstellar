@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, ScoreReport as ScoreReportData, ScoreSkill, ScoreTypeResult } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
+import { subBandLabel } from "@/lib/subBand";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
 export const BANDS = [
@@ -154,7 +155,9 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
       <style>{`.sr-frame, .sr-frame > thead, .sr-frame > tbody, .sr-frame > tfoot, .sr-frame > * > tr, .sr-frame > * > tr > td { display: block; }
 .sr-frame .sr-gap, .sr-frame .sr-foot { display: none; }
 @media print {
-  @page { size: A4; margin: 0; }
+  /* No top or side margin (so no browser date/address lines there); a small
+     bottom margin carries the page number. */
+  @page { size: A4; margin: 0 0 7mm 0; @bottom-right { content: counter(page) " / " counter(pages); font-size: 9px; color: #7d6f5b; margin-right: 12mm; } }
   .score-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 13px; }
   .score-report .sr-body { gap: 10px; }
   .score-report section { box-shadow: none; padding: 12px 14px; gap: 8px; }
@@ -168,7 +171,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
   .sr-frame > * > tr { display: table-row; }
   .sr-frame > * > tr > td { display: table-cell; padding: 0 12mm; }
   .sr-frame .sr-gap { display: table-cell; height: 10mm; padding: 0; }
-  .sr-frame .sr-foot { display: table-cell; padding: 3mm 12mm 6mm; }
+  .sr-frame .sr-foot { display: table-cell; padding: 3mm 12mm 1mm; }
 }
 `}</style>
       <table className="sr-frame">
@@ -195,7 +198,17 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
               </p>
             )}
           </div>
-          <Button variant="secondary" onClick={() => window.print()} className="print:hidden flex items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              // "Save as PDF" names the file after the page title.
+              const before = document.title;
+              document.title = ["Spica score report", score.learner.name, score.reportId, date].filter(Boolean).join(" - ");
+              window.print();
+              document.title = before;
+            }}
+            className="print:hidden flex items-center gap-2"
+          >
             <Download size={15} /> {tr("Download PDF")}
           </Button>
         </div>
@@ -226,7 +239,10 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">{tr("Spica score")}</span>
             <span className="font-display font-bold text-5xl sm:text-6xl text-ink leading-none tabular-nums">{score.overall.score}</span>
             <span className="text-xs text-muted">{tr("out of 90")}</span>
-            <span className="font-display font-bold text-xl text-navy-deep">{tr("CEFR {{level}}", { level: score.overall.level })}</span>
+            <span className="font-display font-bold text-xl text-navy-deep">
+              {tr("CEFR {{level}}", { level: score.overall.level })}
+              {subBandLabel(score.overall.score) ? ` · ${subBandLabel(score.overall.score)}` : ""}
+            </span>
             {/* Practice and mock results predict; only the final assessment certifies. */}
             {about && about.deliveryMode !== "certified" && <span className="text-[11px] font-semibold text-muted text-center">{tr("Predicted level, not a certificate")}</span>}
           </div>

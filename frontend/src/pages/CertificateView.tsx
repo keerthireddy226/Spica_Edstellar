@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, Download, Share2, ShieldCheck, ShieldX } from "lucide-react";
 import { linkedInAddUrl } from "@/lib/linkedin";
+import { subBandLabel } from "@/lib/subBand";
 import { Button } from "@/components/Button";
 import { formatDay } from "@/api/certificates";
 
@@ -88,7 +89,9 @@ export function CertificateView() {
   const levels = result
     ? [
         cert.spicaScore != null ? { label: tr("Spica score"), value: String(cert.spicaScore), note: tr("out of 90") } : null,
-        cert.cefrLevel ? { label: tr("CEFR level"), value: cert.cefrLevel, note: cert.spicaScore == null ? tr("Passed") : null } : null,
+        cert.cefrLevel
+          ? { label: tr("CEFR level"), value: `${cert.cefrLevel}${subBandLabel(cert.spicaScore) ? ` · ${subBandLabel(cert.spicaScore)}` : ""}`, note: cert.spicaScore == null ? tr("Passed") : null }
+          : null,
         ...SKILL_ORDER.filter((k) => cert.skillScores?.[k]).map((k) => {
           const s = cert.skillScores![k];
           return {
