@@ -45,6 +45,7 @@ import { governanceRouter, selfEraseRouter } from "./governance/routes.js";
 import { ssoAdminRouter, ssoRouter } from "./sso/routes.js";
 import { scimRouter } from "./sso/scim.js";
 import { reportsRouter } from "./reports/routes.js";
+import { accessRouter } from "./access/routes.js";
 import { certificatesRouter } from "./certificates/routes.js";
 import { systemCheckRouter } from "./systemCheck/routes.js";
 import { catalogueRouter } from "./catalogue/routes.js";
@@ -127,6 +128,7 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/plans", plansRouter);
 app.use("/api/branding", brandingRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/access", accessRouter);
 app.use("/api/certificates", auditTrail(CERTIFICATE_AUDIT), certificatesRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

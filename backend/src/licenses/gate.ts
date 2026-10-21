@@ -1,4 +1,5 @@
 import type { NextFunction, Response } from "express";
+import { accessOf, ownsSomething } from "../access/entitlements.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { accessCache } from "./accessCache.js";
 import { freeTierUsage, learnerAccess, learnerKind } from "./service.js";
@@ -32,6 +33,9 @@ export function requireAccess(feature: GatedFeature) {
         const access = cached.access;
         const live = access.status === "active" || access.status === "grace";
         if (live) return next();
+        // Something bought or sent outside a licence (one test's preparation, a
+        // certified attempt): the routes check exactly what it opens.
+        if (ownsSomething(await accessOf(req.user!.id))) return next();
         if (kind === "org") {
           return res.status(403).json({ error: "license_required", status: access.status, accessEndsAt: access.accessEndsAt });
         }

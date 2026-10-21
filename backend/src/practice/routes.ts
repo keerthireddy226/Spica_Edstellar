@@ -1,6 +1,7 @@
 import { mockLimits, practiceFeedback } from "../practiceTests/modes.js";
 import { reviewQuestions } from "../reports/feedbackReport.js";
 import { answerDetail } from "../reports/scoreReport.js";
+import { allowedItemTypes, narrowedAccess } from "../access/entitlements.js";
 import { z } from "zod";
 import { Router } from "express";
 import { pool } from "../db.js";
@@ -345,6 +346,16 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
   try {
     const body = startSessionSchema.parse(req.body);
     const count = body.count ?? (body.itemTypeId ? DEFAULT_TASK_ITEMS : DEFAULT_ITEMS);
+
+    // Preparation for one test opens only that test's question types.
+    const narrowed = await narrowedAccess(req.user!.id);
+    if (narrowed) {
+      const allowed = (await allowedItemTypes(narrowed)) ?? [];
+      const typeId =
+        body.itemTypeId ??
+        (body.setId ? (await pool.query(`SELECT u.item_type_id FROM sets s JOIN units u ON u.id = s.unit_id WHERE s.id = $1`, [body.setId])).rows[0]?.item_type_id : null);
+      if (typeId ? !allowed.includes(typeId) : !allowed.length) return res.status(403).json({ error: "type_not_included" });
+    }
 
     if (body.check) {
       const started = await startLevelCheck(req.user!.id, body.skill);

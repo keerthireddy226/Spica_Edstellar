@@ -1,5 +1,6 @@
 import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
 import { scoreReport } from "../reports/scoreReport.js";
+import { canPrepare, narrowedAccess } from "../access/entitlements.js";
 import { z } from "zod";
 import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { Router } from "express";
@@ -434,6 +435,11 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       : null;
     if (body.formId && !builtForm) return res.status(404).json({ error: "unknown_form" });
     const testTypeId: string = builtForm ? builtForm.test_type_id : body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!;
+    // Preparation for one test opens only that test's practice tests and mocks.
+    if (!candidate) {
+      const narrowed = await narrowedAccess(req.user!.id);
+      if (narrowed && !canPrepare(narrowed, testTypeId)) return res.status(403).json({ error: "test_not_included", testTypeId });
+    }
     // Practice sets open in order: the set before this one must be completed
     // (this applies to resuming too).
     if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
