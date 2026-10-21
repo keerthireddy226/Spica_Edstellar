@@ -148,16 +148,39 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
   const worst = [...score.skills].sort((a, b) => a.score - b.score)[0];
 
   return (
-    <div className="score-report flex flex-col gap-4">
+    <div className="score-report">
       {/* Printed (Download PDF): A4 without the browser's date/URL lines, colours kept, the
           report alone in a fixed two-column layout. */}
-      <style>{`@media print {
+      <style>{`.sr-frame, .sr-frame > thead, .sr-frame > tbody, .sr-frame > tfoot, .sr-frame > * > tr, .sr-frame > * > tr > td { display: block; }
+.sr-frame .sr-gap, .sr-frame .sr-foot { display: none; }
+@media print {
   @page { size: A4; margin: 0; }
-  .score-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 11mm 12mm; gap: 10px; font-size: 13px; }
+  .score-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 13px; }
+  .score-report .sr-body { gap: 10px; }
   .score-report section { box-shadow: none; padding: 12px 14px; gap: 8px; }
-  /* Each printed page after the first starts with its own top margin. */
-  .score-report .print-page { break-before: page; padding-top: 11mm; }
-}`}</style>
+  .score-report .print-page { break-before: page; }
+  /* A table frame: its header row is every page's top margin, its footer row
+     every page's footer (who, report ID, where to check it, QR code). */
+  .sr-frame { display: table; width: 100%; border-collapse: collapse; }
+  .sr-frame > thead { display: table-header-group; }
+  .sr-frame > tbody { display: table-row-group; }
+  .sr-frame > tfoot { display: table-footer-group; }
+  .sr-frame > * > tr { display: table-row; }
+  .sr-frame > * > tr > td { display: table-cell; padding: 0 12mm; }
+  .sr-frame .sr-gap { display: table-cell; height: 10mm; padding: 0; }
+  .sr-frame .sr-foot { display: table-cell; padding: 3mm 12mm 6mm; }
+}
+`}</style>
+      <table className="sr-frame">
+        <thead>
+          <tr>
+            <td className="sr-gap" />
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+      <div className="sr-body flex flex-col gap-4">
       {/* Page 1: who, the score and the four skills. Page 2: the profile and a card per
           skill. Page 3: speaking and writing in detail. */}
       {/* Header */}
@@ -329,8 +352,32 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
         </p>
       )}
       <p className="text-xs text-muted">
-        {tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
+        {about?.deliveryMode === "certified"
+          ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
+          : tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
       </p>
+      </div>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td className="sr-foot">
+              <div className="flex items-center gap-3 border-t border-rule pt-2 text-[10px] text-muted">
+                <span className="font-logo font-bold text-sm text-navy">Spica</span>
+                <span className="flex-1">
+                  {tr("Score report")} · {score.learner.name}
+                  {score.reportId ? ` · ${tr("Report ID")} ${score.reportId}` : ""} · {date}
+                  <span className="block">
+                    {about?.deliveryMode === "certified" ? tr("Check the certificate at {{url}}", { url: score.check.url }) : score.check.url}
+                  </span>
+                </span>
+                <img src={score.check.qr} alt="" className="h-[16mm] w-[16mm]" />
+              </div>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   );
 }

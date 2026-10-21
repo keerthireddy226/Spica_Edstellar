@@ -3,7 +3,9 @@
 // skill's strongest and weakest question types, an eight-part skill profile
 // and the speaking and writing breakdowns. Worked out from the stored answers
 // when the report is opened: no AI call, nothing to rebuild.
+import QRCode from "qrcode";
 import { pool } from "../db.js";
+import { APP_URL } from "../auth/mailer.js";
 import { levelSummary } from "../placement/levels.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
@@ -59,6 +61,9 @@ export interface ScoreReport {
   learner: { name: string; learnerId: string | null };
   reportId: string | null;
   completedAt: string | null;
+  // Printed on every page of the PDF: where to check it (a real test's
+  // certificate page, otherwise the report itself) and its QR code.
+  check: { url: string; qr: string };
   overall: { score: number; level: string } | null;
   goal: string | null;
   skills: {
@@ -233,9 +238,12 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
     { key: "spelling", value: writing?.spelling ?? null },
   ];
 
+  const cert = (await pool.query(`SELECT code FROM certificates WHERE session_id = $1 AND kind = 'result' AND revoked_at IS NULL LIMIT 1`, [sessionId])).rows[0];
+  const checkUrl = cert ? `${APP_URL}/certificate/${cert.code}` : `${APP_URL}/practice-tests/report/${sessionId}`;
   return {
     learner: { name: s.name, learnerId: s.participant_id ?? null },
     reportId: s.test_code ?? null,
+    check: { url: checkUrl, qr: await QRCode.toDataURL(checkUrl, { margin: 0, width: 160, color: { dark: "#1f3a5f", light: "#ffffff" } }) },
     completedAt: s.completed_at ? new Date(s.completed_at).toISOString() : null,
     overall: overallScore === null ? null : { score: overallScore, level: levelOfScore(overallScore) },
     goal,

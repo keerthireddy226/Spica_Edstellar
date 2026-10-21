@@ -341,6 +341,8 @@ export interface ScoreReport {
   learner: { name: string; learnerId: string | null };
   reportId: string | null;
   completedAt: string | null;
+  // On every page of the PDF: where to check it, and its QR code.
+  check: { url: string; qr: string };
   overall: { score: number; level: string } | null;
   goal: string | null;
   skills: {
