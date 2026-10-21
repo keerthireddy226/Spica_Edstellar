@@ -165,7 +165,8 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
   const gem = spoken.map((r) => r.manner_scores?.gemini).filter((g): g is NonNullable<typeof g> => !!g);
   const wpm = spoken.map((r) => r.manner_scores?.wordsPerMinute).filter((x): x is number => typeof x === "number" && x > 0);
   const fillers = spoken.map((r) => r.manner_scores?.fillerCount).filter((x): x is number => typeof x === "number");
-  const typeScore = (types: string[]) => pct(avg(rows.filter((r) => types.includes(r.item_type_id)).map(scoreOf).filter((x): x is number => x !== null)));
+  // Only answered questions: a skipped one says nothing about grammar or vocabulary.
+  const typeScore = (types: string[]) => pct(avg(rows.filter((r) => types.includes(r.item_type_id) && answered(r)).map(scoreOf).filter((x): x is number => x !== null)));
   const clarity = pct(avg(gem.map((g) => (g.pronunciation ?? 0) * 100)));
   const fluency = pct(avg(gem.map((g) => (g.fluency ?? 0) * 100)));
   const spokenGrammar = typeScore(["sentence_builds"]);

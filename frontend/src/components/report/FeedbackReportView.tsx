@@ -456,9 +456,12 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
   return (
     <div className="flex flex-col gap-4">
-      {about}
+      <div className={data.score?.overall ? "print:hidden" : ""}>{about}</div>
       {data.score?.overall && <ScoreReport score={data.score} about={data.about} analysis={data.report.analysis} />}
-      <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} scored={!!data.score?.overall} />
+      {/* The PDF is the score report alone. */}
+      <div className={data.score?.overall ? "print:hidden" : ""}>
+        <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} scored={!!data.score?.overall} />
+      </div>
     </div>
   );
 }

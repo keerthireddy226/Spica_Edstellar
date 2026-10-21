@@ -145,7 +145,18 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
   const worst = [...score.skills].sort((a, b) => a.score - b.score)[0];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="score-report flex flex-col gap-4">
+      {/* Printed (Download PDF): A4 without the browser's date/URL lines, colours kept, the
+          report alone in a fixed two-column layout. */}
+      <style>{`@media print {
+  @page { size: A4; margin: 0; }
+  .score-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 11mm 12mm; gap: 10px; font-size: 13px; }
+  .score-report section { box-shadow: none; padding: 12px 14px; gap: 8px; }
+  /* Each printed page after the first starts with its own top margin. */
+  .score-report .print-page { break-before: page; padding-top: 11mm; }
+}`}</style>
+      {/* Page 1: who, the score and the four skills. Page 2: the profile and a card per
+          skill. Page 3: speaking and writing in detail. */}
       {/* Header */}
       <Section label={tr("Report details")}>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -162,7 +173,7 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
             <Download size={15} /> {tr("Download PDF")}
           </Button>
         </div>
-        <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-rule pt-4 text-sm">
+        <dl className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3 border-t border-rule pt-4 text-sm">
           <div>
             <dd className="font-semibold text-ink">{score.learner.name}</dd>
             <dt className="text-xs text-muted">{tr("Name")}</dt>
@@ -184,8 +195,8 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
 
       {/* Overall */}
       <Section label={tr("Overall score")}>
-        <div className="grid sm:grid-cols-[200px_1fr] gap-5 items-center">
-          <div className="flex sm:flex-col items-center justify-center gap-2 sm:gap-1 rounded-card bg-paper-warm p-4">
+        <div className="grid sm:grid-cols-[200px_1fr] print:grid-cols-[170px_1fr] gap-5 items-center">
+          <div className="flex sm:flex-col print:flex-col items-center justify-center gap-2 sm:gap-1 print:gap-1 rounded-card bg-paper-warm p-4">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">{tr("Spica score")}</span>
             <span className="font-display font-bold text-5xl sm:text-6xl text-ink leading-none tabular-nums">{score.overall.score}</span>
             <span className="text-xs text-muted">{tr("out of 90")}</span>
@@ -243,11 +254,12 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
         <SkillBars score={score} />
       </Section>
 
+      <div className="print-page flex flex-col gap-4 print:gap-2.5">
       {/* Skill profile */}
       <ProfileChart score={score} />
 
       {/* Skill by skill */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 print:grid-cols-2 gap-4 print:gap-2.5">
         {score.skills.map((s) => {
           // The question type that went least well; none when every type went well.
           const tip = s.focus[0] ?? null;
@@ -286,8 +298,14 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
         })}
       </div>
 
-      {score.speaking && <SpeakingDetail s={score.speaking} />}
-      {score.writing && <WritingDetail w={score.writing} />}
+      </div>
+
+      {(score.speaking || score.writing) && (
+        <div className="print-page flex flex-col gap-4 print:gap-2.5">
+          {score.speaking && <SpeakingDetail s={score.speaking} />}
+          {score.writing && <WritingDetail w={score.writing} />}
+        </div>
+      )}
 
       {best && worst && best.skill !== worst.skill && (
         <p className="text-sm text-muted">
@@ -371,8 +389,8 @@ function ProfileChart({ score }: { score: ScoreReportData }) {
         <h3 className="font-display font-bold text-lg text-ink">{tr("Your skill profile")}</h3>
         <span className="text-xs text-muted">{tr("Each part of your English out of 100. The further out, the stronger.")}</span>
       </div>
-      <div className="grid md:grid-cols-[minmax(0,1fr)_220px] gap-5 items-center">
-        <svg viewBox="-50 0 540 410" className="w-full max-w-[520px] h-auto mx-auto" role="img" aria-label={parts.map((p) => `${name(p.key)} ${p.value}`).join(", ")}>
+      <div className="grid md:grid-cols-[minmax(0,1fr)_220px] print:grid-cols-[minmax(0,1fr)_200px] gap-5 items-center">
+        <svg viewBox="-50 0 540 410" className="w-full max-w-[520px] print:max-w-[340px] h-auto mx-auto" role="img" aria-label={parts.map((p) => `${name(p.key)} ${p.value}`).join(", ")}>
           {[25, 50, 75, 100].map((v) => (
             <g key={v}>
               <polygon points={ring(v)} fill="none" stroke="var(--color-rule-strong)" strokeWidth={1} />
@@ -457,7 +475,7 @@ export function SpeakingDetail({ s }: { s: NonNullable<ScoreReportData["speaking
             : tr("We couldn't hear any speech in {{n}} recordings, so they aren't counted here. Check your microphone before the next set.", { n: s.silent })}
         </p>
       )}
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 print:grid-cols-2 gap-3">
         {s.fluency !== null && <Metric title={tr("Fluency")} value={s.fluency} color={c} note={facts.length ? facts.join(" · ") : tr("How smoothly you keep talking.")} />}
         {s.clarity !== null && <Metric title={tr("Pronunciation & clarity")} value={s.clarity} color={c} note={tr("How easily your words were understood.")} />}
         {s.grammar !== null && <Metric title={tr("Grammar")} value={s.grammar} color={c} note={tr("From Sentence Builds: putting words in the right order.")} />}
@@ -483,7 +501,7 @@ export function WritingDetail({ w }: { w: NonNullable<ScoreReportData["writing"]
         <h3 className="font-display font-bold text-lg text-ink">{tr("Writing in detail")}</h3>
         <p className="text-xs text-muted">{w.answers === 1 ? tr("From your 1 written answer.") : tr("From your {{n}} written answers.", { n: w.answers })}</p>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 print:grid-cols-2 gap-3">
         {w.grammar !== null && (
           <Metric
             title={tr("Grammar")}
