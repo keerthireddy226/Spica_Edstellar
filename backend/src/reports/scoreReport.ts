@@ -112,7 +112,7 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
     )
   ).rows[0];
   if (!s) return null;
-  const rows = (
+  const raw = (
     await pool.query(
       `SELECT i.item_type_id, it.name AS type_name, it.skills, it.input_method, i.cefr_level, i.content, i.answer_set,
          a.response_text, a.response_uri, coalesce(sc.status, 'pending') AS status, sc.content_score, sc.manner_scores
@@ -121,7 +121,9 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
       [sessionId],
     )
   ).rows as Row[];
-  if (!rows.length) return null;
+  if (!raw.length) return null;
+  // Questions left blank count as wrong, as in the result saved when the test finished.
+  const rows = raw.map((r) => (r.status === "pending" && !answered(r) ? { ...r, status: "scored", content_score: 0 } : r));
 
   const summary = levelSummary(rows as never);
   const goalRaw: string | null = stored?.target?.level ?? (s.goal_level && s.goal_level !== "unsure" ? s.goal_level : null);

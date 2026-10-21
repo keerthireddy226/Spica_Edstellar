@@ -165,7 +165,7 @@ export function ScoreReport({ score, about, analysis }: { score: ScoreReportData
             <h2 className="font-display font-bold text-2xl text-ink mt-1">{tr("Score report")}</h2>
             {test && (
               <p className="text-sm text-muted">
-                {test} · {about?.deliveryMode === "mock" ? tr("Mock test") : tr("Practice test")}
+                {test} · {about?.deliveryMode === "certified" ? tr("Real test") : about?.deliveryMode === "mock" ? tr("Mock test") : tr("Practice test")}
               </p>
             )}
           </div>

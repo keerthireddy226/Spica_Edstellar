@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import { Router, type Response } from "express";
 import sharp from "sharp";
 import { z } from "zod";
+import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { isSuperAdmin, requirePermission, staffCanSeeUser, staffOwnsTenant, staffPermissions } from "../admin/staff.js";
@@ -25,6 +26,7 @@ import {
   PROCTORED_SESSION_TYPES,
   PROCTORING_MODES,
   PROCTORING_REGIONS,
+  certifiedPolicy,
   consentVersion,
   learnerPolicy,
   sessionPolicy,
@@ -288,9 +290,11 @@ function testConsentVersion(policyVersion: string | null): string {
   return `${TEST_CONSENT_PREFIX}:${policyVersion ?? "practice"}`;
 }
 
-// mode: a practice test's practice or mock mode (candidates always take a mock).
+// mode: a practice test's practice or mock mode (candidates always take a mock),
+// or a real attempt or its sample (always strict).
 async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
-  const { policy } = await learnerPolicy(userId);
+  const learner = (await learnerPolicy(userId)).policy;
+  const policy = mode === "certified" || mode === "sample" ? certifiedPolicy(learner) : learner;
   const org = await learnerOrgPolicy(userId);
   const t = (await pool.query(`SELECT u.role, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
   // Modules and practice mode are practice: no proctoring policy applies, only face checks and grading.
@@ -309,7 +313,7 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
 }
 
 const kindSchema = preTestKind;
-const DELIVERY_MODES = ["practice", "mock"] as const;
+const DELIVERY_MODES = ["practice", "mock", "certified", "sample"] as const;
 type DeliveryMode = (typeof DELIVERY_MODES)[number];
 const modeSchema = z.enum(DELIVERY_MODES).optional();
 
@@ -973,6 +977,9 @@ proctoringRouter.post("/reviews/:sessionId/decision", requireAuth, async (req: A
         [si.session_id, body.verdict === "violation" ? "fraud_confirmed" : "certified", req.user!.id, body.note ?? null],
       );
     }
+    // A real assessment attempt: cleared gets (back) its result certificate, a violation loses it.
+    if (body.verdict === "violation") await holdResultCertificate(si.session_id);
+    else await issueResultCertificate(si.session_id).catch((err) => console.error("result certificate failed:", err));
     await recordAudit({
       tenantId: si.tenant_id,
       actorId: req.user!.id,

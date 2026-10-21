@@ -26,7 +26,16 @@ interface VerifiedCertificate {
   orgLogoUrl: string | null;
   verifyUrl: string;
   qr: string;
+  // A result certificate: one real assessment attempt, valid for a year.
+  kind?: "completion" | "result";
+  testName?: string | null;
+  spicaScore?: number | null;
+  skillScores?: Record<string, { level: string; score: number }> | null;
+  validUntil?: string | null;
+  expired?: boolean;
 }
+
+const SKILL_ORDER = ["speaking", "listening", "reading", "writing"];
 
 const INK = "#1d2b3a";
 const NAVY = "#1f3a5f";
@@ -71,7 +80,18 @@ export function CertificateView() {
   if (!cert) return null;
 
   const course = !!cert.courseName;
-  const levels = [
+  const result = cert.kind === "result";
+  const levels = result
+    ? [
+        cert.spicaScore != null ? { label: tr("Spica score"), value: String(cert.spicaScore), note: tr("out of 90") } : null,
+        cert.cefrLevel ? { label: tr("CEFR level"), value: cert.cefrLevel, note: null } : null,
+        ...SKILL_ORDER.filter((k) => cert.skillScores?.[k]).map((k) => ({
+          label: t(`skills.${k}`),
+          value: cert.skillScores![k].level,
+          note: tr("score {{n}}", { n: cert.skillScores![k].score }),
+        })),
+      ].filter((x): x is { label: string; value: string; note: string | null } => !!x)
+    : [
     cert.goalLevel ? { label: tr("Goal"), value: cert.goalLevel, note: null } : null,
     cert.cefrLevel ? { label: course ? tr("Level reached in Spica") : tr("Level"), value: cert.cefrLevel, note: null } : null,
     cert.versantLevel
@@ -81,7 +101,7 @@ export function CertificateView() {
           note: [cert.versantScore ? tr("score {{n}}", { n: cert.versantScore }) : null, cert.versantTakenOn ? formatDay(cert.versantTakenOn) : null].filter(Boolean).join(" · "),
         }
       : null,
-  ].filter((x): x is { label: string; value: string; note: string | null } => !!x);
+      ].filter((x): x is { label: string; value: string; note: string | null } => !!x);
 
   return (
     <div className="app-surface min-h-screen flex flex-col items-center gap-4 p-3 sm:p-10 print:p-0 print:bg-white print:block">
@@ -94,7 +114,7 @@ export function CertificateView() {
           </span>
         ) : (
           <span className="flex items-center gap-1.5 text-sm text-error font-semibold">
-            <ShieldX size={16} /> {t("certificate.revoked")}
+            <ShieldX size={16} /> {cert.expired && !cert.revoked && cert.validUntil ? tr("This certificate expired on {{date}}.", { date: formatDay(cert.validUntil, true) }) : t("certificate.revoked")}
           </span>
         )}
         {cert.valid && (
@@ -140,7 +160,7 @@ export function CertificateView() {
                   {tr("Certificate")}
                 </p>
                 <h1 className="font-display font-bold text-[40px] leading-tight" style={{ color: NAVY }}>
-                  {tr("of Completion")}
+                  {result ? tr("of English Proficiency") : tr("of Completion")}
                 </h1>
                 <p className="text-sm mt-4" style={{ color: MUTED }}>
                   {t("certificate.awardedTo")}
@@ -154,7 +174,9 @@ export function CertificateView() {
                   </p>
                 )}
                 <p className="text-[15px] mt-4 max-w-[640px] leading-relaxed">
-                  {course
+                  {result
+                    ? tr("has taken the Spica {{test}} test, strictly proctored, with this result", { test: cert.testName ?? "" })
+                    : course
                     ? tr("has completed the {{course}} course", { course: cert.courseName })
                     : `${t("certificate.completed")}${cert.batchName ? ` — ${cert.batchName}` : ""}`}
                   {course && cert.periodFrom && cert.periodTo ? (
@@ -163,15 +185,20 @@ export function CertificateView() {
                       {tr("from {{from}} to {{to}}", { from: formatDay(cert.periodFrom, true), to: formatDay(cert.periodTo, true) })}
                     </>
                   ) : null}
-                  {cert.organizationName ? `, ${cert.organizationName}` : ""}.
+                  {!result && cert.organizationName ? `, ${cert.organizationName}` : ""}
+                  {result ? ":" : "."}
                 </p>
               </div>
 
               {/* Levels. */}
               {levels.length > 0 && (
-                <div className="flex justify-center gap-4 mt-5">
-                  {levels.map((l) => (
-                    <div key={l.label} className="min-w-[150px] rounded-lg border px-5 py-2.5 text-center" style={{ borderColor: `${NAVY}33`, background: "#ffffff" }}>
+                <div className={`flex justify-center ${result ? "gap-2.5" : "gap-4"} mt-5`}>
+                  {levels.map((l, i) => (
+                    <div
+                      key={l.label}
+                      className={`${result ? "min-w-[112px] px-3" : "min-w-[150px] px-5"} rounded-lg border py-2.5 text-center`}
+                      style={{ borderColor: result && i < 2 ? GOLD : `${NAVY}33`, background: "#ffffff" }}
+                    >
                       <p className="text-[10px] uppercase tracking-[0.15em]" style={{ color: MUTED }}>
                         {l.label}
                       </p>
@@ -194,6 +221,11 @@ export function CertificateView() {
                   <span>
                     {tr("Issued")} <b style={{ color: INK }}>{formatDay(cert.issuedAt, true)}</b>
                   </span>
+                  {cert.validUntil && (
+                    <span>
+                      {tr("Valid until")} <b style={{ color: INK }}>{formatDay(cert.validUntil, true)}</b>
+                    </span>
+                  )}
                   <span>
                     {tr("Certificate ID")} <b className="font-mono" style={{ color: INK }}>{cert.code}</b>
                   </span>

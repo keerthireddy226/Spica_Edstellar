@@ -2,6 +2,7 @@
 // reasons a reviewer can read. The score only decides what a person looks
 // at first: "flagged" means "needs a human", never "cheated".
 import { pool } from "../db.js";
+import { holdResultCertificate } from "../assessment/service.js";
 import { notifyFlagged } from "./alerts.js";
 import { enqueue } from "../queue/queue.js";
 import { needsConsent, normalizePolicy, sessionPolicy } from "./policy.js";
@@ -199,6 +200,9 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
     await pool.query(`UPDATE placements SET status = 'pending_review' WHERE session_id = $1 AND status = 'certified' AND reviewed_at IS NULL`, [sessionId]);
   }
 
+  // A real attempt flagged after its certificate was issued (the voice check
+  // runs later): the certificate is held until a reviewer decides.
+  if (status === "flagged" && si.status !== "flagged") await holdResultCertificate(sessionId).catch((err) => console.error("certificate hold failed:", err));
   // Every newly flagged test reaches its reviewers, whatever the risk level.
   if (status === "flagged" && si.status !== "flagged") {
     await notifyFlagged(sessionId, riskLevel, reasons).catch((err) => console.error("integrity notification failed:", err));

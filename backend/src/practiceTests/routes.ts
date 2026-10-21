@@ -36,6 +36,7 @@ import {
   practiceFeedback,
   recordView,
   secondsLeft,
+  isTimed,
   type DeliveryMode,
   type MockComposition,
 } from "./modes.js";
@@ -44,6 +45,7 @@ import { activeProgramOf, learnerProgram, recordProgramSession } from "../progra
 import { enqueue } from "../queue/queue.js";
 import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.js";
 import { learnerQuota } from "../programs/quotas.js";
+import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
 
 export const practiceTestsRouter = Router();
 
@@ -135,7 +137,7 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
   const attemptsResult = await pool.query(`SELECT item_id, response_text FROM attempts WHERE session_id = $1`, [sessionRow.id]);
   const attemptByItem = new Map(attemptsResult.rows.map((r) => [r.item_id, r.response_text]));
   // A mock's questions carry their limit and, once shown, the seconds left.
-  const mock = sessionRow.delivery_mode === "mock" ? (sessionRow.composition as MockComposition) : null;
+  const mock = isTimed(sessionRow.delivery_mode) ? (sessionRow.composition as MockComposition) : null;
   const views = mock ? await itemViews(sessionRow.id) : null;
   const items = itemIds
     .map((id) => byId.get(id))
@@ -153,26 +155,34 @@ function mockTiming(c: MockComposition) {
   return { deadlineAt: c.deadlineAt ?? null, serverNow: new Date().toISOString() };
 }
 
-// The learner's open mock test, if any: one at a time.
+// The learner's open timed test (a mock, a real attempt or a sample), if any: one at a time.
 // A mock whose time ran out while the learner was away, with nothing
 // answered, is set aside (abandoned): it isn't finished with every question
 // skipped, doesn't count towards the month's mocks or show in their reports,
 // and the learner starts a fresh one. One with answers is finished as usual.
+// A real (certified) attempt set aside before any question was shown (say the
+// connection dropped during the proctoring checks) gives the attempt back.
 async function setAsideExpiredMocks(userId: string): Promise<void> {
-  await pool.query(
+  const r = await pool.query(
     `UPDATE sessions s SET completed_at = now(), composition = s.composition || '{"abandoned": true}'::jsonb
-     WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NULL
+     WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode IN ('mock', 'certified', 'sample') AND s.completed_at IS NULL
        AND (s.composition->>'deadlineAt')::timestamptz < now()
-       AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))`,
+       AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+     RETURNING s.id, s.delivery_mode, s.entitlement_id`,
     [userId],
   );
+  for (const s of r.rows) {
+    if (s.delivery_mode !== "certified" || !s.entitlement_id) continue;
+    const seen = await pool.query(`SELECT 1 FROM session_item_views WHERE session_id = $1 LIMIT 1`, [s.id]);
+    if (!seen.rowCount) await pool.query(`UPDATE entitlements SET attempts_used = greatest(0, attempts_used - 1) WHERE id = $1`, [s.entitlement_id]);
+  }
 }
 
 async function openMock(userId: string): Promise<{ id: string; composition: Record<string, unknown>; test_code: string; delivery_mode: DeliveryMode } | null> {
   await setAsideExpiredMocks(userId);
   const r = await pool.query(
     `SELECT id, composition, test_code, delivery_mode FROM sessions
-     WHERE user_id = $1 AND session_type = 'mocktest' AND delivery_mode = 'mock' AND completed_at IS NULL
+     WHERE user_id = $1 AND session_type = 'mocktest' AND delivery_mode IN ('mock', 'certified', 'sample') AND completed_at IS NULL
      ORDER BY started_at DESC LIMIT 1`,
     [userId],
   );
@@ -204,10 +214,16 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
 practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const s = (
-      await pool.query(`SELECT id, completed_at FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`, [req.params.sessionId, req.user!.id])
+      await pool.query(`SELECT id, completed_at, delivery_mode FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`, [req.params.sessionId, req.user!.id])
     ).rows[0];
     if (!s) return res.status(404).json({ error: "session_not_found" });
     if (!s.completed_at) return res.status(409).json({ error: "session_not_completed" });
+    // A real assessment attempt shows its score report only: its questions
+    // stay secret, so they can be used again.
+    if (s.delivery_mode === "certified") {
+      const score = await scoreReport(s.id, null).catch(() => null);
+      return res.json({ status: score?.overall ? "ready" : "pending", report: null, about: await reportAbout(s.id), score });
+    }
     const r = (await pool.query(`SELECT status, report_level, report, updated_at FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
     // Explanations the AI couldn't write at the time: try again (at most hourly), showing this report meanwhile.
     if (r?.status === "ready" && r.report?.explanationsMissing && Date.now() - new Date(r.updated_at).getTime() > 3_600_000) {
@@ -258,7 +274,7 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
         deliveryMode: x.delivery_mode ?? "practice",
         completedAt: x.completed_at,
         testTypeId: x.test_type_id,
-        examName: x.delivery_mode === "mock" ? null : x.exam_name,
+        examName: isTimed(x.delivery_mode) ? null : x.exam_name,
         cefrLevel: x.result?.cefrLevel ?? null,
         percent: x.result?.overallPercent ?? null,
         reportStatus: x.report_status ?? null,
@@ -411,9 +427,13 @@ const startSessionSchema = z
     // A practice test built in the assessment builder (a published form).
     formId: z.string().uuid().optional(),
     testTypeId: z.string().min(1).max(60).optional(),
-    mode: z.enum(["practice", "mock"]).default("practice"),
+    mode: z.enum(["practice", "mock", "certified", "sample"]).default("practice"),
+    // The purchase a real attempt (or its sample) belongs to.
+    entitlementId: z.string().uuid().optional(),
   })
-  .refine((b) => b.examId || b.formId || (b.mode === "mock" && b.testTypeId), { message: "examId, formId or testTypeId required" });
+  .refine((b) => b.examId || b.formId || (b.mode === "mock" && b.testTypeId) || ((b.mode === "certified" || b.mode === "sample") && b.entitlementId), {
+    message: "examId, formId, testTypeId or entitlementId required",
+  });
 
 // Resumes an open session for the same set (practice) or test type (mock)
 // instead of starting a new one.
@@ -424,6 +444,18 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const body = startSessionSchema.parse(req.body);
     const candidate = req.user!.role === "candidate";
     const mode: DeliveryMode = candidate ? "mock" : body.mode;
+    const timed = isTimed(mode);
+    // A real attempt or its sample: of the test the learner bought, open by the unlock rule.
+    const owned = !candidate && (mode === "certified" || mode === "sample");
+    let ownedTestType: string | null = null;
+    if (owned) {
+      try {
+        ownedTestType = (await checkStart(req.user!.id, body.entitlementId!, mode)).testTypeId;
+      } catch (err) {
+        if (err instanceof AttemptError) return res.status(403).json({ error: err.code, ...err.detail });
+        throw err;
+      }
+    }
     // A candidate takes exactly the exam set their invitation assigned.
     if (candidate) {
       const a = await activeAssessment(req.user!.id);
@@ -434,9 +466,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       ? (await pool.query(`SELECT id, test_type_id, code, duration_minutes, short_form FROM forms WHERE id = $1 AND status = 'published' AND purpose = 'practice'`, [body.formId])).rows[0]
       : null;
     if (body.formId && !builtForm) return res.status(404).json({ error: "unknown_form" });
-    const testTypeId: string = builtForm ? builtForm.test_type_id : body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!;
+    const testTypeId: string = ownedTestType ?? (builtForm ? builtForm.test_type_id : body.examId ? await testTypeOfExam(body.examId) : body.testTypeId!);
     // Preparation for one test opens only that test's practice tests and mocks.
-    if (!candidate) {
+    if (!candidate && !owned) {
       const narrowed = await narrowedAccess(req.user!.id);
       if (narrowed && !canPrepare(narrowed, testTypeId)) return res.status(403).json({ error: "test_not_included", testTypeId });
     }
@@ -446,11 +478,11 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       return res.status(403).json({ error: "set_locked" });
     }
     if (!testTypeId || !(await liveTestType(testTypeId))) return res.status(404).json({ error: "unknown_product" });
-    const { allowedTestProducts } = candidate ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
+    const { allowedTestProducts } = candidate || owned ? { allowedTestProducts: null } : await learnerOrgPolicy(req.user!.id);
     if (allowedTestProducts && !allowedTestProducts.includes(testTypeId)) return res.status(403).json({ error: "product_not_enabled" });
 
     let existing =
-      mode === "mock"
+      timed
         ? await openMock(req.user!.id)
         : (
             await pool.query(
@@ -473,9 +505,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
     if (existing) {
       const existingType = (existing.composition.testTypeId as string | undefined) ?? (await testTypeOfExam(existing.composition.examId as string));
-      // One open mock at a time: finish the other one first.
-      if (mode === "mock" && existingType !== testTypeId) {
-        return res.status(409).json({ error: "mock_in_progress", sessionId: existing.id, testTypeId: existingType });
+      // One open timed test at a time: finish the other one first.
+      if (timed && (existingType !== testTypeId || existing.delivery_mode !== mode)) {
+        return res.status(409).json({ error: "mock_in_progress", sessionId: existing.id, testTypeId: existingType, deliveryMode: existing.delivery_mode });
       }
       const { partBoundaries, items, timing } = await loadExamSession(req.user!.id, existing);
       return res.json({
@@ -492,8 +524,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
 
     // Monthly limits apply to each new practice test or mock (candidates
-    // take their one assessment).
-    if (!candidate) {
+    // take their one assessment; real attempts and samples are bought).
+    if (!candidate && !owned) {
       try {
         await assertQuota(req.user!.id, mode);
       } catch (err) {
@@ -502,7 +534,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       }
     }
     // A test of the learner's program's test type counts towards it.
-    const program = candidate ? null : await activeProgramOf(req.user!.id);
+    const program = candidate || owned ? null : await activeProgramOf(req.user!.id);
     const programId = program?.test_type_id === testTypeId ? program.id : null;
 
     let examId: string | null = body.examId ?? null;
@@ -510,7 +542,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     // A built test (assessment builder): its questions, time limits and duration.
     let built: { id: string; code: string; durationMinutes: number; shortForm: boolean; timers: Record<string, number> } | null = null;
     // Published mock forms are used before the per-learner draw.
-    const mockForm = mode === "mock" && !candidate ? await pickMockForm(testTypeId, req.user!.id) : null;
+    const mockForm = timed && !candidate ? await pickMockForm(testTypeId, req.user!.id) : null;
     const formToUse: { id: string; code: string; duration_minutes: number; short_form: boolean } | null =
       builtForm ?? (mockForm ? (await pool.query(`SELECT id, code, duration_minutes, short_form FROM forms WHERE id = $1`, [mockForm.id])).rows[0] : null);
     if (formToUse) {
@@ -518,7 +550,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       form = { rows: fr.rows, partIdByOrder: fr.partIdByOrder };
       built = { id: formToUse.id, code: formToUse.code, durationMinutes: formToUse.duration_minutes, shortForm: formToUse.short_form, timers: fr.timers };
       examId = null;
-    } else if (mode === "mock" && !candidate) {
+    } else if (timed && !candidate) {
       // A learner's mock: questions they haven't seen, laid out like the first set.
       const template = await mockTemplateExam(testTypeId);
       if (!template) return res.status(404).json({ error: "no_exam_items_available" });
@@ -531,7 +563,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
     const formRows = form?.rows ?? [];
     if (built && formRows.length === 0) return res.status(404).json({ error: "no_exam_items_available" });
-    const rows = formRows.length ? formRows : await selectExamItems(examId!);
+    const allRows = formRows.length ? formRows : await selectExamItems(examId!);
+    // The free sample: the first questions of each part.
+    const rows = mode === "sample" ? samplePick(allRows, (r) => r.sort_order) : allRows;
     if (rows.length === 0) {
       return res.status(404).json({ error: "no_exam_items_available" });
     }
@@ -540,20 +574,29 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const itemIds = rows.map((r) => r.id);
     const timers = builtTest?.timers ?? {};
     const mock: MockComposition | null =
-      mode === "mock"
+      timed
         ? await mockLimits(itemIds, timers).then((limits) => {
             // A built mock's whole-test deadline follows its duration (never shorter than its questions need).
             const byQuestions = mockDeadline(limits, partBoundaries.length).getTime();
-            const byDuration = builtTest ? Date.now() + (builtTest.durationMinutes + 10) * 60_000 : 0;
+            const byDuration = builtTest && mode !== "sample" ? Date.now() + (builtTest.durationMinutes + 10) * 60_000 : 0;
             return { limits, deadlineAt: new Date(Math.max(byQuestions, byDuration)).toISOString() };
           })
         : null;
 
     const examCode = examId ? ((await pool.query(`SELECT code FROM exams WHERE id = $1`, [examId])).rows[0]?.code ?? "") : "";
     const testCode = newTestCode(examPrefix(examCode));
-    const sessionResult = await pool.query(
-      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code, delivery_mode, program_id)
-       VALUES ($1, 'mocktest', 'coach', $2, $3, $4, $5) RETURNING id`,
+    // A real attempt is used up as the session is created.
+    const client = await pool.connect();
+    let sessionResult;
+    try {
+      await client.query("BEGIN");
+      if (mode === "certified" && !(await useAttempt(client, req.user!.id, body.entitlementId!))) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({ error: "attempt_used" });
+      }
+      sessionResult = await client.query(
+      `INSERT INTO sessions (user_id, session_type, mode, composition, test_code, delivery_mode, program_id, entitlement_id)
+       VALUES ($1, 'mocktest', 'coach', $2, $3, $4, $5, $6) RETURNING id`,
       [
         req.user!.id,
         JSON.stringify({
@@ -568,8 +611,16 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         testCode,
         mode,
         programId,
+        owned ? body.entitlementId : null,
       ],
     );
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
 
     await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
     const payload = await withAudioUrls(req.user!.id, rows.map(toItemPayload));
@@ -637,7 +688,7 @@ practiceTestsRouter.post("/session/:sessionId/view", requireAuth, async (req: Au
     if (!session) return res.status(404).json({ error: "session_not_found" });
     if (session.completed_at) return res.status(409).json({ error: "session_already_completed" });
     if (!((session.composition.itemIds as string[]) ?? []).includes(itemId)) return res.status(404).json({ error: "item_not_found" });
-    if (session.delivery_mode !== "mock") return res.json({ secondsLeft: null });
+    if (!isTimed(session.delivery_mode)) return res.json({ secondsLeft: null });
     const shownAt = await recordView(session.id, itemId);
     res.json({ secondsLeft: secondsLeft(session.composition as MockComposition, itemId, shownAt), ...mockTiming(session.composition as MockComposition) });
   } catch (err) {
@@ -659,7 +710,7 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
     // Mock: forward only, and an answer after the question's time counts as
     // unanswered (the server's clock, not the browser's).
     let late = false;
-    if (session.delivery_mode === "mock") {
+    if (isTimed(session.delivery_mode)) {
       if (!((session.composition.itemIds as string[]) ?? []).includes(body.itemId)) return res.status(404).json({ error: "item_not_found" });
       const answered = await pool.query(`SELECT 1 FROM attempts WHERE session_id = $1 AND item_id = $2`, [session.id, body.itemId]);
       if (answered.rows[0]) return res.status(409).json({ error: "already_answered" });
@@ -676,7 +727,7 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
 
     const { attemptId, grade, wasCorrect } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
-    if (session.delivery_mode === "mock") return res.status(201).json({ attemptId, status: grade.status, late });
+    if (isTimed(session.delivery_mode)) return res.status(201).json({ attemptId, status: grade.status, late });
     // Practice: the correct answer and the grader's reason come back at once
     // (a recorded answer's once its background grading is done; see /feedback).
     const answered = !!(body.responseText || body.audioBase64);
@@ -693,7 +744,7 @@ practiceTestsRouter.get("/session/:sessionId/feedback/:itemId", requireAuth, asy
   try {
     const session = await openSessionOf(req);
     if (!session) return res.status(404).json({ error: "session_not_found" });
-    if (session.delivery_mode === "mock") return res.status(403).json({ error: "no_feedback_in_mock" });
+    if (isTimed(session.delivery_mode)) return res.status(403).json({ error: "no_feedback_in_mock" });
     const feedback = await practiceFeedback(session.id, String(req.params.itemId));
     if (!feedback) return res.status(404).json({ error: "not_answered" });
     res.json({ feedback });
@@ -732,7 +783,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
 
   // A mock's questions never reached (time ran out, or the learner ended
   // early) count as unanswered in the report.
-  if (justFinished && deliveryMode === "mock") {
+  if (justFinished && isTimed(deliveryMode)) {
     try {
       const done = await pool.query(`SELECT item_id FROM attempts WHERE session_id = $1`, [req.params.sessionId]);
       const answered = new Set(done.rows.map((r) => r.item_id));
@@ -790,7 +841,7 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     const level = levelSummary(rows);
     // A mock's estimated score range on the exam family's scale, where it publishes one.
     // A short form isn't the exam's format, so its score range wouldn't mean anything.
-    const scale = deliveryMode === "mock" && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
+    const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
     const skillScoreBands = level?.skillLevels
       ? Object.fromEntries(Object.entries(level.skillLevels as Record<string, string | null>).map(([k, v]) => [k, bandForLevel(scale, v)]))
       : null;
@@ -812,7 +863,8 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       // Each skill's level against the learner's Practice Modules path: a
       // higher one lifts the path (and the plan); a lower one is shown with a
       // nudge to take a level check, never lowering the path by itself.
-      if (req.user!.role === "learner") {
+      // A sample is too short to say anything about levels.
+      if (req.user!.role === "learner" && deliveryMode !== "sample") {
         const pathCompare = await applyTestLevels(req.user!.id, (level?.skillLevels as Record<string, unknown> | undefined) ?? null).catch((err) => {
           console.error("applyTestLevels failed:", err);
           return {};
@@ -852,8 +904,8 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
   }
 
-  // The feedback report is built in the background.
-  if (justFinished) {
+  // The feedback report is built in the background (a real attempt has its score report only).
+  if (justFinished && deliveryMode !== "certified") {
     await enqueue("report.build", { sessionId: req.params.sessionId }, { dedupeKey: `report.build:${req.params.sessionId}`, maxAttempts: 5 }).catch((err) =>
       console.error("practiceTests /complete: report not queued:", err),
     );

@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}} demandent votre attention.",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 apprenant de vos groupes n'a pas d'accès actif. Demandez plus de licences à votre administrateur d'organisation.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} apprenants de vos groupes n'ont pas d'accès actif. Demandez plus de licences à votre administrateur d'organisation.",
- "Reason: {{reason}} (Your Org Admin decides.)": "Motif : {{reason}} (Votre administrateur d'organisation décide.)"
+ "Reason: {{reason}} (Your Org Admin decides.)": "Motif : {{reason}} (Votre administrateur d'organisation décide.)",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}} : score Spica {{score}}, niveau {{level}}."
 }

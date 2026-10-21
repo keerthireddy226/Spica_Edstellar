@@ -443,7 +443,7 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
   }, []);
   if (error) return <p className="text-sm text-error">{tr("Could not load the report.")}</p>;
   const about = data?.about ? <AboutLine about={data.about} /> : null;
-  if (!data || (data.status === "pending" && !data.report)) {
+  if (!data || (data.status === "pending" && !data.report && data.about?.deliveryMode !== "certified")) {
     return (
       <div className="flex flex-col gap-3">
         {about}
@@ -452,6 +452,10 @@ export function FeedbackReportView({ load, upgradeLink = false }: { load: () => 
         </p>
       </div>
     );
+  }
+  // A real assessment attempt has its score report only (its questions stay secret).
+  if (!data.report && data.about?.deliveryMode === "certified") {
+    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" /> : <p className="text-sm text-muted">{tr("Your answers are still being scored. Check back soon.")}</p>;
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
   return (

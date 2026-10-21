@@ -134,6 +134,11 @@ export function startMockSession(testTypeId: string): Promise<ExamSessionData> {
   return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ testTypeId, mode: "mock" }) });
 }
 
+// The real assessment attempt (certified) or its free sample, for a purchase.
+export function startOwnedSession(entitlementId: string, mode: "certified" | "sample"): Promise<ExamSessionData> {
+  return api("/practice-tests/session", { method: "POST", body: JSON.stringify({ entitlementId, mode }) });
+}
+
 export function getExamSession(sessionId: string): Promise<ExamSessionData & { completed: boolean }> {
   return api(`/practice-tests/session/${sessionId}`);
 }
@@ -307,7 +312,7 @@ export interface FeedbackReport {
 
 // What a report is about: practice test or mock test, the test, set and date.
 export interface ReportAbout {
-  deliveryMode: "practice" | "mock";
+  deliveryMode: DeliveryMode;
   testTypeName: string | null;
   familyName: string | null;
   setName: string | null;

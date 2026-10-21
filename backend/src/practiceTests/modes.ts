@@ -10,7 +10,10 @@ import { groupItems, shuffle, type FormRow } from "../proctoring/forms.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 
-export type DeliveryMode = "practice" | "mock";
+// certified: the real assessment attempt (strictly proctored, one attempt, a
+// result certificate). sample: its short free version. Both run like a mock.
+export type DeliveryMode = "practice" | "mock" | "certified" | "sample";
+export const isTimed = (mode: string | null | undefined): boolean => mode === "mock" || mode === "certified" || mode === "sample";
 
 // Network and upload time allowed after a question's limit (a recorded answer
 // can take a few seconds to upload).

@@ -21,8 +21,10 @@ certificatesRouter.get("/verify/:code", verifyLimiter, async (req, res, next) =>
     if (!c) return res.status(404).json({ valid: false });
     // Only what's printed on the certificate itself, plus its QR code.
     const verifyUrl = `${APP_URL}/certificate/${c.code}`;
+    // A result certificate is valid for a year.
+    const expired = !!c.validUntil && c.validUntil < new Date().toISOString().slice(0, 10);
     res.json({
-      valid: !c.revokedAt,
+      valid: !c.revokedAt && !expired,
       revoked: !!c.revokedAt,
       code: c.code,
       learnerName: c.learnerName,
@@ -38,6 +40,12 @@ certificatesRouter.get("/verify/:code", verifyLimiter, async (req, res, next) =>
       versantLevel: c.versantLevel,
       versantScore: c.versantScore,
       versantTakenOn: c.versantTakenOn,
+      kind: c.kind,
+      testName: c.testName,
+      spicaScore: c.spicaScore,
+      skillScores: c.skillScores,
+      validUntil: c.validUntil,
+      expired,
       orgLogoUrl: c.hasOrgLogo && !c.revokedAt ? `/api/certificates/verify/${c.code}/logo` : null,
       verifyUrl,
       qr: await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240, color: { dark: "#1f3a5f", light: "#ffffff" } }),

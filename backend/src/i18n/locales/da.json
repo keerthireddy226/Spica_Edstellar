@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}} kræver opmærksomhed.",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 kursist på dine hold har ingen aktiv adgang. Bed din organisationsadministrator om flere licenser.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} kursister på dine hold har ingen aktiv adgang. Bed din organisationsadministrator om flere licenser.",
- "Reason: {{reason}} (Your Org Admin decides.)": "Begrundelse: {{reason}} (Din organisationsadministrator beslutter.)"
+ "Reason: {{reason}} (Your Org Admin decides.)": "Begrundelse: {{reason}} (Din organisationsadministrator beslutter.)",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-score {{score}}, niveau {{level}}."
 }

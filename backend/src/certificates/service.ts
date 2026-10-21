@@ -30,6 +30,12 @@ export interface Certificate {
   versantScore: number | null;
   versantTakenOn: string | null;
   hasOrgLogo: boolean;
+  // A result certificate: one real assessment attempt.
+  kind: "completion" | "result";
+  testName: string | null;
+  spicaScore: number | null;
+  skillScores: Record<string, { level: string; score: number }> | null;
+  validUntil: string | null;
 }
 
 // A course certificate's details: the course, its period, the goal, the
@@ -62,10 +68,15 @@ function toCert(r: Record<string, any>): Certificate {
     versantScore: r.versant_score ?? null,
     versantTakenOn: r.versant_taken_on ? dateOnly(r.versant_taken_on) : null,
     hasOrgLogo: !!r.org_logo,
+    kind: r.kind ?? "completion",
+    testName: r.test_name ?? null,
+    spicaScore: r.spica_score ?? null,
+    skillScores: r.skill_scores ?? null,
+    validUntil: r.valid_until ? dateOnly(r.valid_until) : null,
   };
 }
 
-// One certificate per learner per batch (or one general one with no batch).
+// One completion certificate per learner per batch (or one general one with no batch).
 // Names and the level reached are copied in, so it stays accurate later.
 export async function issueCertificate(args: { userId: string; batchId: string | null; issuedBy: string | null; course?: CourseDetails }): Promise<Certificate | null> {
   const u = (
@@ -90,8 +101,8 @@ export async function issueCertificate(args: { userId: string; batchId: string |
       c
         ? `UPDATE certificates SET revoked_at = NULL, issued_at = now(), issued_by = $2, cefr_level = $3, learner_name = $4, organization_name = $5,
              course_name = $6, period_from = $7, period_to = $8, goal_level = $9, versant_level = $10, versant_score = $11, versant_taken_on = $12
-           WHERE user_id = $1 AND batch_id IS NULL RETURNING *`
-        : `UPDATE certificates SET revoked_at = NULL WHERE user_id = $1 AND batch_id IS NULL RETURNING *`,
+           WHERE user_id = $1 AND batch_id IS NULL AND kind = 'completion' RETURNING *`
+        : `UPDATE certificates SET revoked_at = NULL WHERE user_id = $1 AND batch_id IS NULL AND kind = 'completion' RETURNING *`,
       c ? [u.id, args.issuedBy, level, u.name, u.type === "cohort" ? u.org : null, ...courseValues] : [u.id],
     );
     if (existing.rows[0]) return toCert(existing.rows[0]);
@@ -102,7 +113,7 @@ export async function issueCertificate(args: { userId: string; batchId: string |
         `INSERT INTO certificates (code, user_id, tenant_id, batch_id, learner_name, participant_id, organization_name, batch_name, cefr_level, issued_by,
            course_name, period_from, period_to, goal_level, versant_level, versant_score, versant_taken_on)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-         ON CONFLICT (user_id, batch_id) DO UPDATE SET revoked_at = NULL${
+         ON CONFLICT (user_id, batch_id) WHERE kind = 'completion' DO UPDATE SET revoked_at = NULL${
            c
              ? `, issued_at = now(), issued_by = EXCLUDED.issued_by, cefr_level = EXCLUDED.cefr_level, course_name = EXCLUDED.course_name,
                 period_from = EXCLUDED.period_from, period_to = EXCLUDED.period_to, goal_level = EXCLUDED.goal_level,

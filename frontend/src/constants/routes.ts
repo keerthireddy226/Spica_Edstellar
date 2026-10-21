@@ -21,6 +21,9 @@ export const ROUTES = {
   PRACTICE_TESTS: "/practice-tests",
   MOCK_EXAMS: "/mock-exams",
   MY_REPORTS: "/my-reports",
+  // The real assessment attempts the learner owns, and taking one (or its sample).
+  MY_TESTS: "/my-tests",
+  MY_TESTS_TAKE: "/my-tests/take",
   MODULE_REPORT: "/my-reports/module/:sessionId",
   TEST_REPORT: "/practice-tests/report/:sessionId",
   TUTOR: "/tutor",

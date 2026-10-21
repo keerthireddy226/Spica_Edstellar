@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}} vaatii huomiota.",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "1 opiskelijalla ryhmissäsi ei ole voimassa olevaa käyttöoikeutta. Pyydä lisää lisenssejä organisaation ylläpitäjältä.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "{{n}} opiskelijalla ryhmissäsi ei ole voimassa olevaa käyttöoikeutta. Pyydä lisää lisenssejä organisaation ylläpitäjältä.",
- "Reason: {{reason}} (Your Org Admin decides.)": "Syy: {{reason}} (Organisaation ylläpitäjä päättää.)"
+ "Reason: {{reason}} (Your Org Admin decides.)": "Syy: {{reason}} (Organisaation ylläpitäjä päättää.)",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica-pisteet {{score}}, taso {{level}}."
 }

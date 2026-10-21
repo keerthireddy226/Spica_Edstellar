@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText } from "lucide-react";
+import { getMyTests } from "@/api/assessment";
+import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award } from "lucide-react";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -74,6 +75,13 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
   const locked = hasPlacement !== true;
   const onModulesPage = location.pathname === ROUTES.MODULES;
   const [modulesExpanded, setModulesExpanded] = useState(onModulesPage);
+  // My tests shows once the learner owns a real test.
+  const [hasTests, setHasTests] = useState(false);
+  useEffect(() => {
+    getMyTests()
+      .then((r) => setHasTests(r.tests.length > 0))
+      .catch(() => setHasTests(false));
+  }, []);
 
   // Re-expand whenever navigation lands on the Modules page (e.g. via a
   // dashboard card click) — a plain mount-time useState default only ever
@@ -173,6 +181,16 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             locked={locked}
             onClick={go}
           />
+          {hasTests && (
+            <NavEntry
+              to={ROUTES.MY_TESTS}
+              icon={Award}
+              label={tr("My tests")}
+              isActive={location.pathname.startsWith(ROUTES.MY_TESTS)}
+              locked={false}
+              onClick={go}
+            />
+          )}
           <NavEntry
             to={ROUTES.MY_REPORTS}
             icon={FileText}

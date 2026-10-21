@@ -26,6 +26,7 @@ import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
+import { OwnedFinished, OwnedIntro } from "@/components/assessment/OwnedScreens";
 import { isPhone } from "@/lib/device";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
@@ -38,6 +39,7 @@ import {
   getExamsForProduct,
   startExamSession,
   startMockSession,
+  startOwnedSession,
   startFormSession,
   getExamSession,
   markItemShown,
@@ -78,7 +80,7 @@ import { markChecked, quickDeviceCheck, resumeNeedsFullCheck, type QuickCheckPro
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
-import type { DeliveryMode, PreTestKind } from "@/api/proctoring";
+import { isTimedMode, type DeliveryMode, type PreTestKind } from "@/api/proctoring";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
@@ -103,6 +105,8 @@ const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 interface PendingStart {
   key: string;
   mode: DeliveryMode;
+  // A real attempt or its sample: the purchase it belongs to.
+  entitlementId?: string;
   examId?: string;
   // A practice test built by staff (assessment builder).
   formId?: string;
@@ -122,8 +126,16 @@ interface CachedAnswer {
 
 // Practice tests and mock tests are separate sections of the learner app,
 // sharing this page: "practice" lists practice sets, "mock" the mock tests.
-export function PracticeTests({ section = "practice" }: { section?: "practice" | "mock" }) {
-  const isMockSection = section === "mock";
+// The real assessment attempt (certified) or its free sample, opened from My tests.
+export interface OwnedStart {
+  entitlementId: string;
+  mode: "certified" | "sample";
+  testTypeId: string;
+  testName: string | null;
+}
+
+export function PracticeTests({ section = "practice", owned }: { section?: "practice" | "mock"; owned?: OwnedStart }) {
+  const isMockSection = section === "mock" || !!owned;
   // Practice tests and mocks run on a computer; a phone sees why and where to practise instead.
   const [phone] = useState(isPhone);
   const license = useMyLicense();
@@ -155,7 +167,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   // "Watch the test demo" from the exam list, outside any test.
   const [showDemo, setShowDemo] = useState(false);
 
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(owned?.testTypeId ?? null);
   // The exam catalogue: families and their test types.
   const [catalogue, setCatalogue] = useState<CatalogueFamily[] | null>(null);
   // The learner's mock test in progress, if any (one at a time).
@@ -236,7 +248,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   const [testCode, setTestCode] = useState<string | null>(null);
   // Practice: go back, results in the report at the end. Mock: exam conditions.
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("practice");
-  const isMock = deliveryMode === "mock";
+  const isMock = isTimedMode(deliveryMode);
   // A mock mixes questions from every set, so it has no set Test ID.
   const activeTestId = isMock ? null : activeTestIdOfSet;
   // Mock tests: the server's clock minus this computer's, and when the whole
@@ -361,7 +373,13 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
     setError(null);
     try {
       const res =
-        start.mode === "mock" ? await startMockSession(start.testTypeId!) : start.formId ? await startFormSession(start.formId) : await startExamSession(start.examId!);
+        (start.mode === "certified" || start.mode === "sample") && start.entitlementId
+          ? await startOwnedSession(start.entitlementId, start.mode)
+          : start.mode === "mock"
+            ? await startMockSession(start.testTypeId!)
+            : start.formId
+              ? await startFormSession(start.formId)
+              : await startExamSession(start.examId!);
       applySessionData(res);
       markChecked(res.sessionId);
     } catch (err) {
@@ -370,7 +388,9 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         code === "computer_required"
           ? tr("Open this test on a computer. On your phone you can keep practising in Practice Modules.")
           : code === "mock_in_progress"
-            ? tr("You have another mock test in progress. Finish it first.")
+            ? tr("You have another timed test in progress. Finish it first.")
+            : code?.startsWith("attempt_")
+              ? tr("This test can't start now. Go back to My tests to see why.")
             : code === "quota_reached"
               ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
               : t("practiceTests.loadError"),
@@ -792,7 +812,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
   if (phone && (pendingStart || (sessionId && !summary))) {
     return (
       <div className="max-w-2xl mx-auto w-full">
-        <PhoneBlockNotice what={isMockSection || pendingStart?.mode === "mock" ? "mock" : "tests"} />
+        <PhoneBlockNotice what={isMockSection || isTimedMode(pendingStart?.mode) ? "mock" : "tests"} />
       </div>
     );
   }
@@ -817,6 +837,20 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           }}
         />
       </div>
+    );
+  }
+
+  // A real attempt or its sample: what to expect, then Start.
+  if (owned && !pendingStart && !sessionId && !summary) {
+    return (
+      <OwnedIntro
+        owned={owned}
+        minutes={selectedType?.durationMinutes ?? null}
+        error={error}
+        starting={starting}
+        onBack={() => navigate(ROUTES.MY_TESTS)}
+        onStart={() => setPendingStart({ key: `${owned.mode}:${owned.entitlementId}`, mode: owned.mode, testTypeId: owned.testTypeId, entitlementId: owned.entitlementId })}
+      />
     );
   }
 
@@ -851,6 +885,10 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
 
   // A candidate's result goes to the recruiter, not to a score screen.
   if (summary && isCandidate) return <CandidateFinished sessionId={sessionId} />;
+  // A real attempt is scored and checked before its result shows; a sample opens the real test.
+  if (summary && (summary.deliveryMode === "certified" || summary.deliveryMode === "sample")) {
+    return <OwnedFinished mode={summary.deliveryMode} onDone={() => navigate(ROUTES.MY_TESTS)} />;
+  }
 
   // Takes priority over the running-session view below — completing a test
   // never clears sessionId/items (Back-to-exams needs them to still be
@@ -1008,7 +1046,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
         {isMock && (
           <div className="w-full flex flex-col gap-2 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
             <span className="flex items-center gap-2 font-semibold">
-              <Timer size={18} className="text-navy-deep shrink-0" /> {tr("How a mock test runs")}
+              <Timer size={18} className="text-navy-deep shrink-0" /> {deliveryMode === "mock" ? tr("How a mock test runs") : tr("How the test runs")}
             </span>
             <ul className="list-disc pl-5 flex flex-col gap-1">
               <li>{tr("The test moves forward with the timer. There is no Skip and no Back, and spoken answers have no Next button.")}</li>
@@ -1109,7 +1147,7 @@ export function PracticeTests({ section = "practice" }: { section?: "practice" |
           )}
           <div className="flex items-center gap-2">
             <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
-              {isMock ? tr("Mock test") : tr("Practice")}
+              {deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
             </span>
             <span className="text-sm font-semibold text-ink">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
           </div>

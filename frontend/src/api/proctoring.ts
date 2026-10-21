@@ -88,7 +88,9 @@ export interface PreTestInfo {
 }
 
 // mode: a practice test's practice or mock mode. Practice mode isn't monitored.
-export type DeliveryMode = "practice" | "mock";
+// certified: the real assessment attempt; sample: its short free version. Both run like a mock.
+export type DeliveryMode = "practice" | "mock" | "certified" | "sample";
+export const isTimedMode = (m: DeliveryMode | null | undefined): boolean => m === "mock" || m === "certified" || m === "sample";
 
 export function getPreTestInfo(kind: PreTestKind, mode?: DeliveryMode): Promise<PreTestInfo> {
   return api(`/proctoring/pre-test?kind=${encodeURIComponent(kind)}${mode ? `&mode=${mode}` : ""}`);

@@ -1,0 +1,286 @@
+// The real assessment attempt. A learner who owns an attempt (Preparation +
+// Assessment, or Assessment only) takes the test once, strictly proctored, and
+// gets a score report and a result certificate valid for a year.
+//
+// When it opens: preparation buyers after their first mock test, or in the
+// last 7 days of their access; assessment-only buyers after the free sample
+// (a short version of the same test). The attempt is used up when it starts.
+import type { PoolClient } from "pg";
+import { pool } from "../db.js";
+import { accessCache } from "../licenses/accessCache.js";
+import { notify } from "../notifications/service.js";
+import { scoreReport } from "../reports/scoreReport.js";
+import { randomBytes } from "node:crypto";
+
+const DAY = 86_400_000;
+export const UNLOCK_DAYS_BEFORE_END = 7;
+// Questions per part in the free sample.
+export const SAMPLE_PER_PART = 2;
+// A result certificate is valid this long.
+export const VALID_MONTHS = 12;
+// Time after finishing for the slower checks (voice) before a certificate is issued.
+const SETTLE_MINUTES = 10;
+
+export type AttemptKind = "prep" | "assessment";
+export type Unlock =
+  | { state: "open" }
+  | { state: "mock_needed"; opensOn: string }
+  | { state: "sample_needed" }
+  | { state: "used" }
+  | { state: "expired" };
+
+// Pure: whether an owned attempt can be started now.
+export function unlockOf(
+  e: { kind: AttemptKind; attemptsLeft: number; endsAt: string | Date },
+  done: { mocks: number; samples: number },
+  now = new Date(),
+): Unlock {
+  const ends = new Date(e.endsAt).getTime();
+  if (ends <= now.getTime()) return { state: "expired" };
+  if (e.attemptsLeft <= 0) return { state: "used" };
+  if (e.kind === "assessment") return done.samples > 0 ? { state: "open" } : { state: "sample_needed" };
+  const opens = ends - UNLOCK_DAYS_BEFORE_END * DAY;
+  if (done.mocks > 0 || now.getTime() >= opens) return { state: "open" };
+  return { state: "mock_needed", opensOn: new Date(opens).toISOString() };
+}
+
+export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "void";
+
+interface OwnedAttemptRow {
+  id: string;
+  product_id: string;
+  kind: AttemptKind;
+  name: string;
+  test_type_id: string;
+  test_name: string | null;
+  attempts_total: number;
+  attempts_used: number;
+  starts_at: Date;
+  ends_at: Date;
+}
+
+async function ownedAttempts(userId: string, entitlementId?: string): Promise<OwnedAttemptRow[]> {
+  return (
+    await pool.query(
+      `SELECT e.id, e.product_id, p.kind, p.name, e.test_type_id, tt.name AS test_name, e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
+       FROM entitlements e JOIN products p ON p.id = e.product_id LEFT JOIN test_types tt ON tt.id = e.test_type_id
+       WHERE e.user_id = $1 AND e.revoked_at IS NULL AND p.kind IN ('prep', 'assessment') AND e.test_type_id IS NOT NULL
+         AND e.attempts_total > 0 AND e.starts_at <= now() AND ($2::uuid IS NULL OR e.id = $2)
+       ORDER BY e.ends_at DESC`,
+      [userId, entitlementId ?? null],
+    )
+  ).rows;
+}
+
+// Mock tests of the test since the purchase began, and samples taken for it.
+async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number }> {
+  const r = (
+    await pool.query(
+      `SELECT count(*) FILTER (WHERE s.delivery_mode = 'mock')::int AS mocks, count(*) FILTER (WHERE s.delivery_mode = 'sample')::int AS samples
+       FROM sessions s LEFT JOIN exams x ON x.id::text = s.composition->>'examId'
+       WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL AND s.completed_at >= $3
+         AND s.delivery_mode IN ('mock', 'sample') AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
+         AND coalesce(s.composition->>'testTypeId', x.test_type_id) = $2`,
+      [userId, e.test_type_id, e.starts_at],
+    )
+  ).rows[0];
+  return { mocks: r.mocks, samples: r.samples };
+}
+
+// What My tests shows: each owned attempt, whether it can start, and the attempts taken.
+export async function myTests(userId: string) {
+  const owned = await ownedAttempts(userId);
+  const sessions = owned.length
+    ? (
+        await pool.query(
+          `SELECT s.id, s.entitlement_id, s.started_at, s.completed_at, s.result, s.composition->>'abandoned' AS abandoned,
+             si.status AS integrity, c.code AS certificate_code, c.revoked_at AS certificate_revoked, c.spica_score, c.cefr_level AS certificate_level, c.valid_until,
+             EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
+                     WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending') AS grading
+           FROM sessions s LEFT JOIN session_integrity si ON si.session_id = s.id LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result'
+           WHERE s.user_id = $1 AND s.delivery_mode = 'certified' AND s.entitlement_id = ANY($2::uuid[])
+           ORDER BY s.started_at DESC`,
+          [userId, owned.map((o) => o.id)],
+        )
+      ).rows
+    : [];
+  return Promise.all(
+    owned.map(async (e) => {
+      const done = await doneFor(userId, e);
+      const attemptsLeft = Math.max(0, e.attempts_total - e.attempts_used);
+      return {
+        id: e.id,
+        productId: e.product_id,
+        kind: e.kind,
+        name: e.name,
+        testTypeId: e.test_type_id,
+        testName: e.test_name,
+        attemptsLeft,
+        endsAt: new Date(e.ends_at).toISOString(),
+        unlock: unlockOf({ kind: e.kind, attemptsLeft, endsAt: e.ends_at }, done),
+        mocksDone: done.mocks,
+        samplesDone: done.samples,
+        attempts: sessions
+          .filter((s) => s.entitlement_id === e.id)
+          .map((s) => ({
+            sessionId: s.id as string,
+            startedAt: new Date(s.started_at).toISOString(),
+            completedAt: s.completed_at ? new Date(s.completed_at).toISOString() : null,
+            status: attemptStatus(s),
+            certificateCode: s.certificate_code && !s.certificate_revoked ? (s.certificate_code as string) : null,
+            spicaScore: s.certificate_code && !s.certificate_revoked ? (s.spica_score as number | null) : null,
+            level: s.certificate_code && !s.certificate_revoked ? (s.certificate_level as string | null) : null,
+            validUntil: s.valid_until && !s.certificate_revoked ? new Date(s.valid_until).toISOString().slice(0, 10) : null,
+          })),
+      };
+    }),
+  );
+}
+
+function attemptStatus(s: Record<string, any>): AttemptStatus {
+  if (!s.completed_at) return "in_progress";
+  if (s.integrity === "violation") return "void";
+  if (s.certificate_code && !s.certificate_revoked) return "certified";
+  if (s.integrity === "flagged") return "under_review";
+  return "scoring";
+}
+
+export class AttemptError extends Error {
+  constructor(public code: string, public detail: Record<string, unknown> = {}) {
+    super(code);
+  }
+}
+
+// Checks a certified attempt (or a sample) can start for this purchase.
+export async function checkStart(userId: string, entitlementId: string, mode: "certified" | "sample"): Promise<{ testTypeId: string }> {
+  const [e] = await ownedAttempts(userId, entitlementId);
+  if (!e) throw new AttemptError("attempt_not_found");
+  if (new Date(e.ends_at).getTime() <= Date.now()) throw new AttemptError("attempt_expired");
+  if (mode === "sample") return { testTypeId: e.test_type_id };
+  // The attempt already started (and used up): resuming it is fine.
+  const open = await pool.query(`SELECT 1 FROM sessions WHERE user_id = $1 AND entitlement_id = $2 AND delivery_mode = 'certified' AND completed_at IS NULL`, [userId, e.id]);
+  if (open.rowCount) return { testTypeId: e.test_type_id };
+  const attemptsLeft = Math.max(0, e.attempts_total - e.attempts_used);
+  const unlock = unlockOf({ kind: e.kind, attemptsLeft, endsAt: e.ends_at }, await doneFor(userId, e));
+  if (unlock.state !== "open") throw new AttemptError(`attempt_${unlock.state}`, unlock.state === "mock_needed" ? { opensOn: unlock.opensOn } : {});
+  return { testTypeId: e.test_type_id };
+}
+
+// Uses up one attempt, in the transaction that creates the session.
+export async function useAttempt(client: PoolClient, userId: string, entitlementId: string): Promise<boolean> {
+  const r = await client.query(
+    `UPDATE entitlements SET attempts_used = attempts_used + 1
+     WHERE id = $1 AND user_id = $2 AND revoked_at IS NULL AND ends_at > now() AND attempts_used < attempts_total RETURNING id`,
+    [entitlementId, userId],
+  );
+  accessCache.delete(userId);
+  return (r.rowCount ?? 0) > 0;
+}
+
+// Keeps only the first questions of each part: the free sample.
+export function samplePick<T>(rows: T[], partOf: (r: T) => string | number, perPart = SAMPLE_PER_PART): T[] {
+  const seen = new Map<string | number, number>();
+  return rows.filter((r) => {
+    const n = seen.get(partOf(r)) ?? 0;
+    seen.set(partOf(r), n + 1);
+    return n < perPart;
+  });
+}
+
+const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function newCode(): string {
+  const bytes = randomBytes(12);
+  let s = "";
+  for (const b of bytes) s += ALPHABET[b % ALPHABET.length];
+  return `SPC-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`;
+}
+
+// The result certificate of one certified attempt: issued (or issued again
+// after a reviewer cleared it) once the answers are scored. Returns its code.
+export async function issueResultCertificate(sessionId: string): Promise<string | null> {
+  const s = (
+    await pool.query(
+      `SELECT s.id, s.user_id, s.completed_at, s.composition, u.participant_id, u.tenant_id,
+         coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name, t.name AS org, t.type AS org_type, b.name AS batch, u.batch_id,
+         tt.id AS test_type_id, tt.name AS test_name
+       FROM sessions s JOIN users u ON u.id = s.user_id JOIN tenants t ON t.id = u.tenant_id LEFT JOIN batches b ON b.id = u.batch_id
+       LEFT JOIN exams x ON x.id::text = s.composition->>'examId' LEFT JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', x.test_type_id)
+       WHERE s.id = $1 AND s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL`,
+      [sessionId],
+    )
+  ).rows[0];
+  if (!s) return null;
+  const score = await scoreReport(sessionId, null);
+  if (!score?.overall) return null;
+  const skills = Object.fromEntries(score.skills.map((k) => [k.skill, { level: k.level, score: k.score }]));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await pool.query(
+        `INSERT INTO certificates (code, kind, user_id, tenant_id, batch_id, learner_name, participant_id, organization_name, batch_name,
+           cefr_level, session_id, test_type_id, test_name, spica_score, skill_scores, valid_until)
+         VALUES ($1, 'result', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, (now() + make_interval(months => $15))::date)
+         ON CONFLICT (session_id) DO UPDATE SET revoked_at = NULL
+         RETURNING code, (xmax = 0) AS created`,
+        [
+          newCode(),
+          s.user_id,
+          s.tenant_id,
+          s.batch_id,
+          s.name,
+          s.participant_id,
+          s.org_type === "cohort" ? s.org : null,
+          s.batch,
+          score.overall.level,
+          sessionId,
+          s.test_type_id,
+          s.test_name,
+          score.overall.score,
+          JSON.stringify(skills),
+          VALID_MONTHS,
+        ],
+      );
+      const { code, created } = r.rows[0];
+      if (created) {
+        await notify({
+          userId: s.user_id,
+          kind: "result_certificate",
+          title: "Your certificate is ready",
+          body: `${s.test_name ?? "Your test"}: Spica score ${score.overall.score}, level ${score.overall.level}.`,
+          link: "/my-tests",
+          email: true,
+          dedupeKey: `result_certificate:${sessionId}`,
+        }).catch((err) => console.error("certificate notification failed:", err));
+      }
+      return code as string;
+    } catch (err) {
+      if (!(err && typeof err === "object" && "constraint" in err && err.constraint === "certificates_code_key")) throw err;
+    }
+  }
+  return null;
+}
+
+// A certificate stops counting while its attempt is flagged again or found to be a violation.
+export async function holdResultCertificate(sessionId: string): Promise<void> {
+  await pool.query(`UPDATE certificates SET revoked_at = now() WHERE session_id = $1 AND kind = 'result' AND revoked_at IS NULL`, [sessionId]);
+}
+
+// Periodic: certified attempts that finished a while ago, with every answer
+// scored and proctoring clear (or cleared by a reviewer), get their certificate.
+export async function issueDueResultCertificates(): Promise<number> {
+  const due = (
+    await pool.query(
+      `SELECT s.id FROM sessions s JOIN session_integrity si ON si.session_id = s.id
+       WHERE s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
+         AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
+         AND si.status IN ('clear', 'cleared')
+         AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id)
+         AND NOT EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
+                         WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending')
+       ORDER BY s.completed_at LIMIT 50`,
+      [SETTLE_MINUTES],
+    )
+  ).rows;
+  let n = 0;
+  for (const r of due) if (await issueResultCertificate(r.id).catch((err) => (console.error("result certificate failed:", err), null))) n++;
+  return n;
+}

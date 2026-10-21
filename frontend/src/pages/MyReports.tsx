@@ -122,8 +122,8 @@ export function MyReports() {
                 onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
                 className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-paper-warm/60 cursor-pointer"
               >
-                <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "mock" ? "bg-navy/10 text-navy-deep" : "bg-accent/15 text-accent"}`}>
-                  {h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
+                <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "practice" ? "bg-accent/15 text-accent" : "bg-navy/10 text-navy-deep"}`}>
+                  {h.deliveryMode === "certified" ? tr("Real test") : h.deliveryMode === "sample" ? tr("Sample test") : h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-ink truncate">{tt ? testTypeName(tt, t) : (h.examName ?? "")}</span>

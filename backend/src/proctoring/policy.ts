@@ -214,11 +214,20 @@ export function practicePolicy(p: ProctoringPolicy): ProctoringPolicy {
   return { ...presetPolicy("off", p.region), retentionDays: p.retentionDays };
 }
 
-// The policy for one session: the learner's, made light for a practice session.
+// The real assessment attempt is always strictly proctored (biometrics follow
+// the region's rules); its sample runs the same way, so the learner meets
+// every check before the attempt that counts.
+export function certifiedPolicy(p: ProctoringPolicy): ProctoringPolicy {
+  return presetPolicy("strict", p.region);
+}
+
+// The policy for one session: the learner's, made light for a practice
+// session and strict for a real attempt or its sample.
 export async function sessionPolicy(sessionId: string, userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
   const { policy, tenantId } = await learnerPolicy(userId);
   const s = (await pool.query(`SELECT delivery_mode FROM sessions WHERE id = $1`, [sessionId])).rows[0];
-  return { policy: s?.delivery_mode === "practice" ? practicePolicy(policy) : policy, tenantId };
+  const mode = s?.delivery_mode;
+  return { policy: mode === "practice" ? practicePolicy(policy) : mode === "certified" || mode === "sample" ? certifiedPolicy(policy) : policy, tenantId };
 }
 
 // Consent wording version. Changing the wording means a new version, so

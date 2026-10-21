@@ -84,7 +84,7 @@ export interface ReportQuestion {
 // What a report is about, shown at its top: practice test or mock test, the
 // test and exam family, the set, its code and when it was taken.
 export interface ReportAbout {
-  deliveryMode: "practice" | "mock";
+  deliveryMode: "practice" | "mock" | "certified" | "sample";
   testTypeName: string | null;
   familyName: string | null;
   setName: string | null;
@@ -109,11 +109,11 @@ export async function reportAbout(sessionId: string): Promise<ReportAbout | null
   ).rows[0];
   if (!r) return null;
   return {
-    deliveryMode: r.delivery_mode === "mock" ? "mock" : "practice",
+    deliveryMode: ["mock", "certified", "sample"].includes(r.delivery_mode) ? r.delivery_mode : "practice",
     testTypeName: r.test_type_name ?? null,
     familyName: r.family_name ?? null,
     // A mock is built from questions across sets: it has no set name.
-    setName: r.delivery_mode === "mock" ? null : (r.set_name ?? null),
+    setName: r.delivery_mode === "practice" ? (r.set_name ?? null) : null,
     testCode: r.test_code ?? null,
     completedAt: r.completed_at ? new Date(r.completed_at).toISOString() : null,
   };

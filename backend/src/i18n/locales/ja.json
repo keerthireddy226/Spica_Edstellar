@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}}人に対応が必要です。",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "あなたのグループに有効なアクセスがない学習者が1人います。組織管理者にライセンスの追加を依頼してください。",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "あなたのグループに有効なアクセスがない学習者が{{n}}人います。組織管理者にライセンスの追加を依頼してください。",
- "Reason: {{reason}} (Your Org Admin decides.)": "理由：{{reason}}（組織管理者が判断します。）"
+ "Reason: {{reason}} (Your Org Admin decides.)": "理由：{{reason}}（組織管理者が判断します。）",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spicaスコア {{score}}、レベル {{level}}。"
 }

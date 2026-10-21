@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}} వాటిపై దృష్టి పెట్టాలి.",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "మీ బ్యాచ్‌లలో 1 అభ్యాసకుడికి సక్రియ యాక్సెస్ లేదు. మీ సంస్థ అడ్మిన్‌ను మరిన్ని లైసెన్స్‌లు అడగండి.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "మీ బ్యాచ్‌లలో {{n}} మంది అభ్యాసకులకు సక్రియ యాక్సెస్ లేదు. మీ సంస్థ అడ్మిన్‌ను మరిన్ని లైసెన్స్‌లు అడగండి.",
- "Reason: {{reason}} (Your Org Admin decides.)": "కారణం: {{reason}} (మీ సంస్థ అడ్మిన్ నిర్ణయిస్తారు.)"
+ "Reason: {{reason}} (Your Org Admin decides.)": "కారణం: {{reason}} (మీ సంస్థ అడ్మిన్ నిర్ణయిస్తారు.)",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}: Spica స్కోర్ {{score}}, స్థాయి {{level}}."
 }

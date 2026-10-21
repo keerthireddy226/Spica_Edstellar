@@ -291,5 +291,6 @@
  "{{n}} need attention.": "{{n}} 名需要关注。",
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.": "你的班级中有 1 名学员没有有效的访问权限。请向组织管理员申请更多许可证。",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.": "你的班级中有 {{n}} 名学员没有有效的访问权限。请向组织管理员申请更多许可证。",
- "Reason: {{reason}} (Your Org Admin decides.)": "原因：{{reason}}（由组织管理员决定。）"
+ "Reason: {{reason}} (Your Org Admin decides.)": "原因：{{reason}}（由组织管理员决定。）",
+ "{{test}}: Spica score {{score}}, level {{level}}.": "{{test}}：Spica 分数 {{score}}，等级 {{level}}。"
 }

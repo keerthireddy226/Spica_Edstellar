@@ -42,6 +42,7 @@ import { AssessInvite, CandidateAssessmentPage } from "@/pages/recruitment/Candi
 import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
 import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
 import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
+import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -230,6 +231,8 @@ function App() {
           <Route path={ROUTES.TEST_REPORT} element={<TestReport />} />
           <Route path={ROUTES.MOCK_EXAMS} element={<LicenseGate feature="mocktest"><PracticeTests section="mock" /></LicenseGate>} />
           <Route path={ROUTES.MY_REPORTS} element={<MyReports />} />
+          <Route path={ROUTES.MY_TESTS} element={<MyTests />} />
+          <Route path={ROUTES.MY_TESTS_TAKE} element={<TakeOwnedTest />} />
           <Route path={ROUTES.MODULE_REPORT} element={<ModuleReportPage />} />
           <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
