@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "Từ {{level}} trở lên",
  "No goal set": "Chưa đặt mục tiêu",
  "Overall level now": "Trình độ tổng thể hiện tại",
- "Click a name to open the learner's report in a new tab": "Nhấp vào tên để mở báo cáo của học viên trong tab mới",
  "Preparing…": "Đang chuẩn bị…",
  "Summarised report": "Báo cáo tóm tắt",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "Kết quả chung của lớp: tóm tắt, mục tiêu, trình độ, điểm số, ai cần chú ý và danh sách học viên.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Truy cập đến {{date}}",
  "Not enough results yet.": "Chưa đủ kết quả.",
  "Areas to improve": "Điểm cần cải thiện",
- "Open the full score report of the latest mock test": "Mở phiếu điểm đầy đủ của bài thi thử gần nhất"
+ "Open the full score report of the latest mock test": "Mở phiếu điểm đầy đủ của bài thi thử gần nhất",
+ "Click a name to open the learner's report": "Nhấp vào tên để mở báo cáo của học viên"
 }

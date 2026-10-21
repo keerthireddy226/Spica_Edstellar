@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} या उससे ऊपर",
  "No goal set": "कोई लक्ष्य तय नहीं",
  "Overall level now": "अब का कुल स्तर",
- "Click a name to open the learner's report in a new tab": "शिक्षार्थी की रिपोर्ट नए टैब में खोलने के लिए किसी नाम पर क्लिक करें",
  "Preparing…": "तैयार हो रहा है…",
  "Summarised report": "सारांश रिपोर्ट",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "बैच के कुल नतीजे: सारांश, लक्ष्य, स्तर, स्कोर, किसे ध्यान देने की ज़रूरत है और शिक्षार्थियों की सूची।",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "{{date}} तक पहुँच",
  "Not enough results yet.": "अभी पर्याप्त नतीजे नहीं हैं।",
  "Areas to improve": "सुधार के क्षेत्र",
- "Open the full score report of the latest mock test": "नवीनतम मॉक टेस्ट की पूरी स्कोर रिपोर्ट खोलें"
+ "Open the full score report of the latest mock test": "नवीनतम मॉक टेस्ट की पूरी स्कोर रिपोर्ट खोलें",
+ "Click a name to open the learner's report": "शिक्षार्थी की रिपोर्ट खोलने के लिए नाम पर क्लिक करें"
 }

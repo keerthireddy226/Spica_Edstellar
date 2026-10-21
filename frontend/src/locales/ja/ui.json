@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} 以上",
  "No goal set": "目標未設定",
  "Overall level now": "現在の総合レベル",
- "Click a name to open the learner's report in a new tab": "名前をクリックすると、学習者のレポートが新しいタブで開きます",
  "Preparing…": "準備中…",
  "Summarised report": "サマリーレポート",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "グループ全体の結果：サマリー、目標、レベル、スコア、要対応の学習者、学習者一覧。",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "{{date}} までアクセス可能",
  "Not enough results yet.": "まだ十分な結果がありません。",
  "Areas to improve": "改善点",
- "Open the full score report of the latest mock test": "最新の模擬テストのスコアレポート全体を開く"
+ "Open the full score report of the latest mock test": "最新の模擬テストのスコアレポート全体を開く",
+ "Click a name to open the learner's report": "名前をクリックすると学習者のレポートが開きます"
 }

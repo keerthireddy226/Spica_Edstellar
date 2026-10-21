@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ChevronDown, Download } from "lucide-react";
+import { ArrowLeft, ChevronDown, Download, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { ScoreReport } from "@/components/report/ScoreReport";
@@ -259,7 +259,7 @@ function AttentionList({ title, tone, items }: { title: string; tone: "error" | 
   );
 }
 
-export function BatchReportView({ data, batchId }: { data: BatchReport; batchId: string }) {
+export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; onOpenLearner: (userId: string) => void }) {
   const { t } = useTranslation();
   const s = data.summary;
   const g = data.goalCounts;
@@ -454,7 +454,7 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
         title={tr("Learners")}
         aside={
           <span className="text-[13px] text-muted print:hidden">
-            {tr("Click a name to open the learner's report in a new tab")}
+            {tr("Click a name to open the learner's report")}
           </span>
         }
       >
@@ -475,14 +475,13 @@ export function BatchReportView({ data, batchId }: { data: BatchReport; batchId:
               {learners.map((l) => (
                 <tr key={l.id} className="br-row border-t border-rule align-middle">
                   <td className="px-3 py-2.5">
-                    <a
-                      href={`/batch-report/${batchId}/learners/${l.id}`}
-                      target="_blank"
-                      rel="noopener"
-                      className="font-semibold text-ink whitespace-nowrap underline decoration-rule-strong underline-offset-[3px] hover:decoration-navy"
+                    <button
+                      type="button"
+                      onClick={() => onOpenLearner(l.id)}
+                      className="font-semibold text-ink whitespace-nowrap underline decoration-rule-strong underline-offset-[3px] hover:decoration-navy cursor-pointer text-left"
                     >
                       {l.name}
-                    </a>
+                    </button>
                     {l.participantId && <span className="block text-xs text-muted font-mono">{l.participantId}</span>}
                   </td>
                   <td className="px-3 py-2.5 font-display font-semibold whitespace-nowrap text-ink">
@@ -567,6 +566,10 @@ const PRINT_CSS = `
   .batch-report .br-flow { border: 0; padding: 0; background: none; }
   .batch-report .br-page { break-before: page; }
   .batch-report table thead { display: table-header-group; }
+  /* A learner's report open over the page prints on its own. */
+  .batch-report[data-modal] > .br-frame, .batch-report[data-modal] > .br-toolbar { display: none !important; }
+  .batch-report .br-modal { position: static !important; background: none !important; padding: 10mm 12mm !important; overflow: visible !important; display: block !important; }
+  .batch-report .br-modal-panel { max-width: none !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; background: none !important; }
 }`;
 
 export function BatchReportPage() {
@@ -584,6 +587,8 @@ export function BatchReportPage() {
   const [printKind, setPrintKind] = useState<"summary" | "detailed" | null>(null);
   const [detailData, setDetailData] = useState<BatchReport | null>(null);
   const [preparing, setPreparing] = useState(false);
+  // A learner's report, shown over the page.
+  const [openLearner, setOpenLearner] = useState<string | null>(null);
   useEffect(() => setDetailData(null), [id, period, from, to]);
   useEffect(() => {
     if (!printKind || (printKind === "detailed" && !detailData)) return;
@@ -626,9 +631,10 @@ export function BatchReportPage() {
   }, [data]);
 
   return (
-    <div className="batch-report min-h-screen bg-paper">
+    <div className="batch-report min-h-screen bg-paper" data-modal={openLearner ? "" : undefined}>
       <style>{PRINT_CSS}</style>
-      <div className="print:hidden sticky top-0 z-10 bg-paper/95 backdrop-blur border-b border-rule">
+      {openLearner && <LearnerModal batchId={id} userId={openLearner} onClose={() => setOpenLearner(null)} />}
+      <div className="br-toolbar print:hidden sticky top-0 z-10 bg-paper/95 backdrop-blur border-b border-rule">
         <div className="max-w-[1000px] mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
           <button onClick={() => navigate(`${back}?tab=batches&batch=${id}`)} className="flex items-center gap-1.5 text-sm font-semibold text-ink hover:text-navy cursor-pointer">
             <ArrowLeft size={16} /> {tr("Analytics")}
@@ -690,7 +696,7 @@ export function BatchReportPage() {
                   <p className="text-sm text-error">{tr("This report isn't available.")}</p>
                 ) : data ? (
                   <>
-                    <BatchReportView data={data} batchId={id} />
+                    <BatchReportView data={data} onOpenLearner={setOpenLearner} />
                     {/* The detailed PDF: a page for each learner after the summary. */}
                     {printKind === "detailed" && detailData && (
                       <div className="hidden print:block">
@@ -769,7 +775,7 @@ function ScoreTrend({ mocks, goalMin }: { mocks: BatchReportLearner["mocks"]; go
   const y = (s: number) => H - 16 - ((s - lo) / Math.max(1, hi - lo)) * (H - 36);
   const x = (i: number) => (pts.length === 1 ? W / 2 : 28 + (i * (W - 56)) / (pts.length - 1));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[420px] h-auto" role="img" aria-label={tr("Mock test scores")}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[420px] print:max-w-[280px] h-auto" role="img" aria-label={tr("Mock test scores")}>
       {goalMin !== null && (
         <>
           <line x1={0} x2={W} y1={y(goalMin)} y2={y(goalMin)} stroke="var(--color-ink)" strokeDasharray="4 4" opacity={0.5} />
@@ -823,8 +829,8 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
   return (
     <div className="flex flex-col gap-4">
       <Card>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex flex-col gap-1 min-w-0">
+        <div className="flex flex-wrap print:flex-nowrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
             <span className="font-logo font-bold text-xl text-navy leading-none">Spica</span>
             <span className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-muted mt-2">{tr("Learner report")}</span>
             <h1 className="font-display font-bold text-[26px] leading-tight text-ink">{l.name}</h1>
@@ -844,7 +850,7 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
               {l.projected && <span className="text-muted">{tr("Trend reaches {{level}} by the goal date", { level: l.projected })}</span>}
             </div>
           </div>
-          <div className="flex flex-col items-center rounded-xl bg-paper-warm px-6 py-3 min-w-[130px]">
+          <div className="flex flex-col items-center rounded-xl bg-paper-warm px-6 py-3 min-w-[130px] shrink-0">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Spica score")}</span>
             <span className="font-display font-bold text-[44px] leading-none text-ink tabular-nums">{l.current?.score ?? "—"}</span>
             <span className="text-xs text-muted">{tr("out of 90")}</span>
@@ -934,60 +940,50 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
   );
 }
 
-// A learner's page, opened in a new tab from the Batch report.
-export function BatchLearnerPage() {
-  const { id = "", userId = "" } = useParams();
+// A learner's report over the Batch report: Close, or Download PDF for this learner alone.
+function LearnerModal({ batchId, userId, onClose }: { batchId: string; userId: string; onClose: () => void }) {
   const [data, setData] = useState<BatchLearnerData | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
-    getBatchLearner(id, userId)
-      .then((r) => {
-        setData(r);
-        document.title = `${r.learner.name} · ${tr("Learner report")}`;
-      })
-      .catch(() => setError(true));
-  }, [id, userId]);
+    let live = true;
+    setData(null);
+    setError(false);
+    getBatchLearner(batchId, userId)
+      .then((r) => live && setData(r))
+      .catch(() => live && setError(true));
+    return () => {
+      live = false;
+    };
+  }, [batchId, userId]);
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", esc);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", esc);
+      document.body.style.overflow = overflow;
+    };
+  }, [onClose]);
   return (
-    <div className="batch-report min-h-screen bg-paper">
-      <style>{PRINT_CSS}</style>
-      <div className="print:hidden sticky top-0 z-10 bg-paper/95 backdrop-blur border-b border-rule">
-        <div className="max-w-[1000px] mx-auto px-4 py-3 flex items-center gap-3">
-          <Link to={`/batch-report/${id}`} className="flex items-center gap-1.5 text-sm font-semibold text-ink hover:text-navy">
-            <ArrowLeft size={16} /> {tr("Batch report")}
-          </Link>
-          <div className="flex-1" />
-          <Button onClick={() => window.print()} disabled={!data} className="flex items-center gap-2 !px-4 !py-2 !text-sm">
+    <div className="br-modal fixed inset-0 z-50 bg-ink/40 overflow-y-auto px-3 py-6" onClick={onClose} role="dialog" aria-modal="true" aria-label={data?.learner.name ?? tr("Learner report")}>
+      <div className="br-modal-panel bg-paper rounded-card shadow-2xl w-full max-w-[960px] mx-auto p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="print:hidden flex items-center justify-end gap-2 mb-3">
+          <Button variant="secondary" onClick={() => window.print()} disabled={!data} className="flex items-center gap-2 !px-3.5 !py-2 !text-sm">
             <Download size={15} /> {tr("Download PDF")}
           </Button>
+          <button onClick={onClose} aria-label={tr("Close")} className="h-9 w-9 rounded-full flex items-center justify-center text-ink hover:bg-paper-warm cursor-pointer">
+            <X size={18} />
+          </button>
         </div>
+        {error ? (
+          <p className="text-sm text-error">{tr("This report isn't available.")}</p>
+        ) : data ? (
+          <LearnerDetail l={data.learner} batch={data.batch} goal={data.goal} batchId={batchId} canOpenReports={data.canOpenReports} />
+        ) : (
+          <p className="text-sm text-muted py-10 text-center">{tr("Loading…")}</p>
+        )}
       </div>
-      <table className="br-frame">
-        <thead>
-          <tr>
-            <td className="br-gap" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div className="max-w-[1000px] mx-auto px-4 py-5 print:p-0">
-                {error ? (
-                  <p className="text-sm text-error">{tr("This report isn't available.")}</p>
-                ) : data ? (
-                  <LearnerDetail l={data.learner} batch={data.batch} goal={data.goal} batchId={id} canOpenReports={data.canOpenReports} />
-                ) : (
-                  <p className="text-sm text-muted">{tr("Loading…")}</p>
-                )}
-              </div>
-            </td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td className="br-gap" />
-          </tr>
-        </tfoot>
-      </table>
     </div>
   );
 }

@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "På {{level}} eller derover",
  "No goal set": "Intet mål sat",
  "Overall level now": "Samlet niveau nu",
- "Click a name to open the learner's report in a new tab": "Klik på et navn for at åbne kursistens rapport i en ny fane",
  "Preparing…": "Forbereder…",
  "Summarised report": "Opsummeret rapport",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "Holdets samlede resultater: oversigt, mål, niveauer, scorer, hvem der kræver opmærksomhed og kursistlisten.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Adgang indtil {{date}}",
  "Not enough results yet.": "Ikke nok resultater endnu.",
  "Areas to improve": "Områder at forbedre",
- "Open the full score report of the latest mock test": "Åbn den fulde scorerapport for den seneste prøveeksamen"
+ "Open the full score report of the latest mock test": "Åbn den fulde scorerapport for den seneste prøveeksamen",
+ "Click a name to open the learner's report": "Klik på et navn for at åbne kursistens rapport"
 }

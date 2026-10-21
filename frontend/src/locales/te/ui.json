@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} లేదా అంతకంటే ఎక్కువ",
  "No goal set": "లక్ష్యం నిర్ణయించలేదు",
  "Overall level now": "ప్రస్తుత మొత్తం స్థాయి",
- "Click a name to open the learner's report in a new tab": "అభ్యాసకుడి నివేదికను కొత్త ట్యాబ్‌లో తెరవడానికి పేరుపై క్లిక్ చేయండి",
  "Preparing…": "సిద్ధం చేస్తోంది…",
  "Summarised report": "సంక్షిప్త నివేదిక",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "బ్యాచ్ మొత్తం ఫలితాలు: సారాంశం, లక్ష్యం, స్థాయిలు, స్కోర్లు, ఎవరికి శ్రద్ధ అవసరం మరియు అభ్యాసకుల జాబితా.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "{{date}} వరకు యాక్సెస్",
  "Not enough results yet.": "ఇంకా తగినన్ని ఫలితాలు లేవు.",
  "Areas to improve": "మెరుగుపరచుకోవాల్సిన అంశాలు",
- "Open the full score report of the latest mock test": "తాజా మాక్ టెస్ట్ పూర్తి స్కోర్ నివేదికను తెరవండి"
+ "Open the full score report of the latest mock test": "తాజా మాక్ టెస్ట్ పూర్తి స్కోర్ నివేదికను తెరవండి",
+ "Click a name to open the learner's report": "అభ్యాసకుడి నివేదికను తెరవడానికి పేరుపై క్లిక్ చేయండి"
 }

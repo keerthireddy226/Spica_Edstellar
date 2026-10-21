@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} tai yli",
  "No goal set": "Tavoitetta ei asetettu",
  "Overall level now": "Kokonaistaso nyt",
- "Click a name to open the learner's report in a new tab": "Avaa opiskelijan raportti uuteen välilehteen napsauttamalla nimeä",
  "Preparing…": "Valmistellaan…",
  "Summarised report": "Tiivistetty raportti",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "Ryhmän kokonaistulokset: yhteenveto, tavoite, tasot, pisteet, ketkä tarvitsevat huomiota ja opiskelijalista.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Käyttöoikeus {{date}} asti",
  "Not enough results yet.": "Ei vielä tarpeeksi tuloksia.",
  "Areas to improve": "Kehitettävät alueet",
- "Open the full score report of the latest mock test": "Avaa viimeisimmän mallikokeen koko tulosraportti"
+ "Open the full score report of the latest mock test": "Avaa viimeisimmän mallikokeen koko tulosraportti",
+ "Click a name to open the learner's report": "Avaa opiskelijan raportti napsauttamalla nimeä"
 }

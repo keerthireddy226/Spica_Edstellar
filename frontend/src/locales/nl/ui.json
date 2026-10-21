@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} of hoger",
  "No goal set": "Geen doel ingesteld",
  "Overall level now": "Algemeen niveau nu",
- "Click a name to open the learner's report in a new tab": "Klik op een naam om het rapport van de cursist in een nieuw tabblad te openen",
  "Preparing…": "Voorbereiden…",
  "Summarised report": "Samenvattend rapport",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "De totale resultaten van de groep: samenvatting, doel, niveaus, scores, wie aandacht nodig heeft en de lijst met cursisten.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Toegang tot {{date}}",
  "Not enough results yet.": "Nog niet genoeg resultaten.",
  "Areas to improve": "Verbeterpunten",
- "Open the full score report of the latest mock test": "Open het volledige scorerapport van de laatste proeftoets"
+ "Open the full score report of the latest mock test": "Open het volledige scorerapport van de laatste proeftoets",
+ "Click a name to open the learner's report": "Klik op een naam om het rapport van de cursist te openen"
 }

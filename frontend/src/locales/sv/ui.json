@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "På {{level}} eller högre",
  "No goal set": "Inget mål satt",
  "Overall level now": "Total nivå nu",
- "Click a name to open the learner's report in a new tab": "Klicka på ett namn för att öppna deltagarens rapport i en ny flik",
  "Preparing…": "Förbereder…",
  "Summarised report": "Sammanfattad rapport",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "Gruppens samlade resultat: sammanfattning, mål, nivåer, poäng, vem som behöver uppmärksamhet och deltagarlistan.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Åtkomst till {{date}}",
  "Not enough results yet.": "Inte tillräckligt med resultat än.",
  "Areas to improve": "Förbättringsområden",
- "Open the full score report of the latest mock test": "Öppna hela resultatrapporten för senaste provprovet"
+ "Open the full score report of the latest mock test": "Öppna hela resultatrapporten för senaste provprovet",
+ "Click a name to open the learner's report": "Klicka på ett namn för att öppna deltagarens rapport"
 }

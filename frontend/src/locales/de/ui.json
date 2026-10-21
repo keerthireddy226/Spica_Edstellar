@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "{{level}} oder höher",
  "No goal set": "Kein Ziel festgelegt",
  "Overall level now": "Gesamtniveau jetzt",
- "Click a name to open the learner's report in a new tab": "Klicke auf einen Namen, um den Bericht der Person in einem neuen Tab zu öffnen",
  "Preparing…": "Wird vorbereitet…",
  "Summarised report": "Zusammengefasster Bericht",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "Die Gesamtergebnisse der Gruppe: Übersicht, Ziel, Niveaus, Scores, wer Aufmerksamkeit braucht und die Liste der Lernenden.",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "Zugang bis {{date}}",
  "Not enough results yet.": "Noch nicht genug Ergebnisse.",
  "Areas to improve": "Verbesserungsbereiche",
- "Open the full score report of the latest mock test": "Vollständigen Ergebnisbericht des letzten Probetests öffnen"
+ "Open the full score report of the latest mock test": "Vollständigen Ergebnisbericht des letzten Probetests öffnen",
+ "Click a name to open the learner's report": "Klicke auf einen Namen, um den Bericht der lernenden Person zu öffnen"
 }

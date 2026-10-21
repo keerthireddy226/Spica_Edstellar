@@ -4337,7 +4337,6 @@
  "At {{level}} or above": "达到 {{level}} 或以上",
  "No goal set": "未设定目标",
  "Overall level now": "当前总体等级",
- "Click a name to open the learner's report in a new tab": "点击姓名可在新标签页中打开该学员的报告",
  "Preparing…": "正在准备…",
  "Summarised report": "摘要报告",
  "The batch's overall results: summary, goal, levels, scores, who needs attention and the learner list.": "班级整体结果：摘要、目标、等级、分数、需要关注的学员以及学员名单。",
@@ -4367,5 +4366,6 @@
  "Access until {{date}}": "访问权限至 {{date}}",
  "Not enough results yet.": "结果还不够。",
  "Areas to improve": "待提升方面",
- "Open the full score report of the latest mock test": "打开最近一次模拟测试的完整成绩单"
+ "Open the full score report of the latest mock test": "打开最近一次模拟测试的完整成绩单",
+ "Click a name to open the learner's report": "点击姓名即可打开该学员的报告"
 }
