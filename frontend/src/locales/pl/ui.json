@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "Test to jedna z przesłanek, a nie jedyny czynnik: weź pod uwagę także rozmowę, doświadczenie i referencje. Poziom to szacunek z pewnym marginesem, więc ostrożnie traktuj wyniki bliskie minimum.",
  "Shared link valid until {{date}}.": "Udostępniony link ważny do {{date}}.",
  "Your certificate ends soon": "Twój certyfikat wkrótce wygaśnie",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Twój certyfikat {{code}} jest ważny do {{date}}. Przedłuż go o 12 miesięcy albo zdaj nowy test końcowy, aby pokazać swój obecny poziom."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Twój certyfikat {{code}} jest ważny do {{date}}. Przedłuż go o 12 miesięcy albo zdaj nowy test końcowy, aby pokazać swój obecny poziom.",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "Oceniamy Twoje odpowiedzi i sprawdzamy zapis nadzoru. Raport wyników i certyfikat pojawią się w zakładce Test, zwykle w ciągu godziny, a my wyślemy Ci e-mail.",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "Twój prawdziwy test jest już dostępny w zakładce Test. Przystąp do niego, kiedy zechcesz.",
+ "Go to Assessment": "Przejdź do zakładki Test",
+ "Your final assessment is on the Assessment page.": "Twój test końcowy jest w zakładce Test.",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "Test końcowy zapewnia ci twoja organizacja. Pojawi się w zakładce Test.",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} należy do Ciebie. Testy próbne i egzaminy próbne są już dostępne; Twój prawdziwy test jest w zakładce Test.",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} należy do Ciebie. Znajdziesz to w zakładce Test.",
+ "This test can't start now. Go back to the Assessment page to see why.": "Tego testu nie można teraz rozpocząć. Wróć do zakładki Test, aby sprawdzić dlaczego.",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "Test końcowy: Twój prawdziwy test z certyfikatem otworzy się {{date}} w zakładce Test.",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Wybierz test w zakładce Test. Udostępnimy go po egzaminie próbnym z tego testu lub w ostatnich 7 dniach twojego dostępu, a na koniec otrzymasz certyfikat.",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "Test do twojego testu końcowego z {{program}} jest ustawiony. Przystąp do niego w zakładce Test przed {{date}}."
 }

@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "テストは判断材料の一つであり、唯一の要素ではありません。面接、経験、推薦状とあわせて判断してください。レベルはある程度の誤差を含む推定値なので、最低基準に近い結果は慎重に扱ってください。",
  "Shared link valid until {{date}}.": "共有リンクの有効期限：{{date}}",
  "Your certificate ends soon": "修了証の有効期限が近づいています",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "修了証 {{code}} の有効期限は {{date}} です。さらに 12 か月有効にするか、新しい最終アセスメントを受けて現在のレベルを示しましょう。"
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "修了証 {{code}} の有効期限は {{date}} です。さらに 12 か月有効にするか、新しい最終アセスメントを受けて現在のレベルを示しましょう。",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "回答の採点と試験監督記録の確認を行っています。スコアレポートと修了証は通常1時間以内にアセスメントページに表示され、メールでもお知らせします。",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "本番テストがアセスメントページで受験可能になりました。準備ができたらいつでも受験できます。",
+ "Go to Assessment": "アセスメントへ",
+ "Your final assessment is on the Assessment page.": "最終アセスメントはアセスメントページにあります。",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "最終アセスメントは組織から提供されます。アセスメントページに表示されます。",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}}をご利用いただけます。練習テストと模擬テストはすぐに受けられます。本番テストはアセスメントページにあります。",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}}をご利用いただけます。アセスメントページからご確認ください。",
+ "This test can't start now. Go back to the Assessment page to see why.": "このテストは今は開始できません。理由はアセスメントページで確認してください。",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "最終アセスメント：修了証付きの本番テストが{{date}}にアセスメントページで受験可能になります。",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "アセスメントページでテストを選んでください。そのテストの模擬試験を受けた後、またはアクセス期間の最後の7日間に受験可能になり、修了証が発行されます。",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "{{program}}の最終アセスメントのテストが設定されました。{{date}}までにアセスメントページで受験してください。"
 }

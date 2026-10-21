@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "టెస్ట్ ఒక ఆధారం మాత్రమే, ఏకైక అంశం కాదు: ఇంటర్వ్యూ, అనుభవం మరియు రెఫరెన్స్‌లతో కలిపి పరిగణించండి. స్థాయి అనేది కొంత తేడాతో కూడిన అంచనా, కాబట్టి కనీస స్థాయికి దగ్గరగా ఉన్న ఫలితాలను జాగ్రత్తగా చూడండి.",
  "Shared link valid until {{date}}.": "షేర్ చేసిన లింక్ {{date}} వరకు చెల్లుతుంది.",
  "Your certificate ends soon": "మీ సర్టిఫికెట్ త్వరలో ముగుస్తుంది",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "మీ సర్టిఫికెట్ {{code}} {{date}} వరకు చెల్లుతుంది. దాన్ని మరో 12 నెలలు చెల్లుబాటులో ఉంచండి, లేదా మీ ప్రస్తుత స్థాయిని చూపడానికి కొత్త తుది అసెస్‌మెంట్ రాయండి."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "మీ సర్టిఫికెట్ {{code}} {{date}} వరకు చెల్లుతుంది. దాన్ని మరో 12 నెలలు చెల్లుబాటులో ఉంచండి, లేదా మీ ప్రస్తుత స్థాయిని చూపడానికి కొత్త తుది అసెస్‌మెంట్ రాయండి.",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "మేము మీ సమాధానాలకు స్కోర్ ఇస్తున్నాము, ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నాము. మీ స్కోర్ నివేదిక, సర్టిఫికెట్ సాధారణంగా గంటలోపే అసెస్‌మెంట్ పేజీలో ఉంటాయి, మేము మీకు ఈమెయిల్ కూడా పంపుతాము.",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "మీ అసలు టెస్ట్ ఇప్పుడు అసెస్‌మెంట్ పేజీలో తెరిచి ఉంది, మీరు సిద్ధమైనప్పుడు రాయండి.",
+ "Go to Assessment": "అసెస్‌మెంట్‌కు వెళ్లండి",
+ "Your final assessment is on the Assessment page.": "మీ తుది అసెస్‌మెంట్ అసెస్‌మెంట్ పేజీలో ఉంది.",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "మీ సంస్థ మీకు తుది అసెస్‌మెంట్ ఇస్తుంది. అది అసెస్‌మెంట్ పేజీలో కనిపిస్తుంది.",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} ఇప్పుడు మీది. దీని అభ్యాస పరీక్షలు మరియు మాక్ టెస్ట్‌లు ఇప్పుడు తెరిచి ఉన్నాయి; మీ అసలు టెస్ట్ అసెస్‌మెంట్ పేజీలో ఉంది.",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} ఇప్పుడు మీది. దాన్ని అసెస్‌మెంట్ పేజీలో చూడండి.",
+ "This test can't start now. Go back to the Assessment page to see why.": "ఈ టెస్ట్ ఇప్పుడు ప్రారంభం కాదు. ఎందుకో చూడటానికి అసెస్‌మెంట్ పేజీకి తిరిగి వెళ్లండి.",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "తుది అసెస్‌మెంట్: సర్టిఫికెట్‌తో కూడిన మీ అసలు టెస్ట్ {{date}}న అసెస్‌మెంట్ పేజీలో తెరుచుకుంటుంది.",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "అసెస్‌మెంట్ పేజీలో మీ టెస్ట్‌ను ఎంచుకోండి. ఆ టెస్ట్ యొక్క ఒక మాక్ పరీక్ష తర్వాత, లేదా మీ యాక్సెస్ చివరి 7 రోజుల్లో ఇది తెరుచుకుంటుంది, సర్టిఫికెట్‌తో ముగుస్తుంది.",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "{{program}} కోసం మీ తుది అసెస్‌మెంట్ టెస్ట్ సెట్ చేయబడింది. {{date}} లోపు అసెస్‌మెంట్ పేజీలో దాన్ని రాయండి."
 }

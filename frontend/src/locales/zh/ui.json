@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "测试只是参考之一，不是唯一因素：请结合面试、经验和推荐人综合判断。等级是有一定误差的估计，因此对接近最低要求的结果请谨慎对待。",
  "Shared link valid until {{date}}.": "共享链接有效期至 {{date}}。",
  "Your certificate ends soon": "你的证书即将到期",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "你的证书 {{code}} 有效期至 {{date}}。可再续期 12 个月，或参加新的结业测评来展示你当前的水平。"
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "你的证书 {{code}} 有效期至 {{date}}。可再续期 12 个月，或参加新的结业测评来展示你当前的水平。",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "我们正在为你的回答评分并检查监考记录。成绩单和证书通常会在一小时内出现在“测评”页面中，我们也会发邮件通知你。",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "你的正式测试已在“测评”页面中开放，准备好后随时可以参加。",
+ "Go to Assessment": "前往“测评”",
+ "Your final assessment is on the Assessment page.": "你的结业测评在“测评”页面中。",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "你的组织为你提供结业测评，它会显示在“测评”页面中。",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} 已归你所有。其练习测试和模拟测试现已开放；你的正式测试在“测评”页面中。",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} 已归你所有。可在“测评”页面中找到。",
+ "This test can't start now. Go back to the Assessment page to see why.": "此测试现在无法开始。返回“测评”页面查看原因。",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "结业测评：你的正式测试（含证书）将于 {{date}} 在“测评”页面中开放。",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "在“测评”页面中选择你的测试。完成该测试的一次模拟考试后，或在访问权限的最后 7 天内即可开放，结束后可获得证书。",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "你的 {{program}} 结业测评已设定测试。请在 {{date}} 前于“测评”页面中参加。"
 }

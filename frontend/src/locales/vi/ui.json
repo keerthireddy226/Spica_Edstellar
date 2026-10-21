@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "Bài thi là một căn cứ, không phải yếu tố duy nhất: hãy cân nhắc cùng buổi phỏng vấn, kinh nghiệm và người tham chiếu. Trình độ là ước tính có sai số nhất định, vì vậy hãy thận trọng với kết quả sát mức tối thiểu.",
  "Shared link valid until {{date}}.": "Liên kết chia sẻ có hiệu lực đến {{date}}.",
  "Your certificate ends soon": "Chứng chỉ của bạn sắp hết hạn",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Chứng chỉ {{code}} của bạn có hiệu lực đến {{date}}. Hãy gia hạn thêm 12 tháng, hoặc làm bài đánh giá cuối khóa mới để thể hiện trình độ hiện tại."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Chứng chỉ {{code}} của bạn có hiệu lực đến {{date}}. Hãy gia hạn thêm 12 tháng, hoặc làm bài đánh giá cuối khóa mới để thể hiện trình độ hiện tại.",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "Chúng tôi đang chấm điểm câu trả lời và kiểm tra hồ sơ giám sát thi. Phiếu điểm và chứng chỉ sẽ có trên trang Đánh giá, thường trong vòng một giờ, và chúng tôi sẽ gửi email cho bạn.",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "Bài thi thật của bạn đã mở trên trang Đánh giá, bạn có thể làm khi sẵn sàng.",
+ "Go to Assessment": "Đến Đánh giá",
+ "Your final assessment is on the Assessment page.": "Bài đánh giá cuối khóa của bạn nằm trên trang Đánh giá.",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "Tổ chức của bạn cấp cho bạn bài đánh giá cuối khóa. Bài này hiển thị trên trang Đánh giá.",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} đã là của bạn. Các bài thi luyện tập và bài thi thử đã mở; bài thi thật của bạn nằm trên trang Đánh giá.",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} đã là của bạn. Hãy tìm trên trang Đánh giá.",
+ "This test can't start now. Go back to the Assessment page to see why.": "Bài thi này chưa thể bắt đầu. Hãy quay lại trang Đánh giá để xem lý do.",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "Bài đánh giá cuối khóa: bài thi thật của bạn, kèm chứng chỉ, sẽ mở vào {{date}} trên trang Đánh giá.",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Chọn bài thi trên trang Đánh giá. Bài này mở sau một bài thi thử của bài thi đó, hoặc trong 7 ngày cuối của quyền truy cập, và kết thúc bằng một chứng chỉ.",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "Bài đánh giá cuối khóa cho {{program}} đã được đặt bài thi. Hãy làm trên trang Đánh giá trước {{date}}."
 }

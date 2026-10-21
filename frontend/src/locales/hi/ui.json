@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "टेस्ट एक आधार है, अकेला कारक नहीं: इसे इंटरव्यू, अनुभव और रेफ़रेंस के साथ मिलाकर देखें। स्तर एक अनुमान है जिसमें कुछ अंतर हो सकता है, इसलिए न्यूनतम के क़रीब वाले परिणामों को सावधानी से देखें।",
  "Shared link valid until {{date}}.": "साझा लिंक {{date}} तक मान्य है।",
  "Your certificate ends soon": "आपका सर्टिफ़िकेट जल्द समाप्त हो रहा है",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "आपका सर्टिफ़िकेट {{code}} {{date}} तक मान्य है। इसे 12 महीने और मान्य रखें, या अपना मौजूदा स्तर दिखाने के लिए नया अंतिम आकलन दें।"
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "आपका सर्टिफ़िकेट {{code}} {{date}} तक मान्य है। इसे 12 महीने और मान्य रखें, या अपना मौजूदा स्तर दिखाने के लिए नया अंतिम आकलन दें।",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "हम आपके जवाबों को स्कोर कर रहे हैं और प्रॉक्टरिंग रिकॉर्ड जाँच रहे हैं। आपकी स्कोर रिपोर्ट और सर्टिफ़िकेट आकलन पेज पर होंगे, आमतौर पर एक घंटे के अंदर, और हम आपको ईमेल करेंगे।",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "आपका असली टेस्ट अब आकलन पेज पर खुला है, जब भी आप तैयार हों।",
+ "Go to Assessment": "आकलन पर जाएँ",
+ "Your final assessment is on the Assessment page.": "आपका अंतिम आकलन, आकलन पेज पर है।",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "आपका संगठन आपको आपका अंतिम आकलन देता है। यह आकलन पेज पर दिखेगा।",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} अब आपका है। इसके अभ्यास परीक्षण और मॉक टेस्ट अभी खुले हैं; आपका असली टेस्ट आकलन पेज पर है।",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} अब आपका है। इसे आकलन पेज पर देखें।",
+ "This test can't start now. Go back to the Assessment page to see why.": "यह टेस्ट अभी शुरू नहीं हो सकता। वजह जानने के लिए आकलन पेज पर वापस जाएँ।",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "अंतिम आकलन: सर्टिफ़िकेट वाला आपका असली टेस्ट {{date}} को आकलन पेज पर खुलेगा।",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "आकलन पेज पर अपना टेस्ट चुनें। यह उस टेस्ट की एक मॉक परीक्षा के बाद, या आपकी पहुँच के आख़िरी 7 दिनों में खुलता है, और सर्टिफ़िकेट के साथ ख़त्म होता है।",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "{{program}} के लिए आपके अंतिम आकलन का टेस्ट तय हो गया है। इसे {{date}} से पहले आकलन पेज पर दें।"
 }

@@ -4843,5 +4843,16 @@
  "The test is one input, not the only factor: weigh it with the interview, experience and references. A level is an estimate with some margin, so treat results close to the minimum with care.": "El examen es un dato más, no el único factor: valóralo junto con la entrevista, la experiencia y las referencias. Un nivel es una estimación con cierto margen, así que trata con cuidado los resultados cercanos al mínimo.",
  "Shared link valid until {{date}}.": "Enlace compartido válido hasta el {{date}}.",
  "Your certificate ends soon": "Tu certificado caduca pronto",
- "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Tu certificado {{code}} es válido hasta el {{date}}. Mantenlo vigente 12 meses más o haz una nueva evaluación final para mostrar tu nivel actual."
+ "Your certificate {{code}} is valid until {{date}}. Keep it valid 12 more months, or take a new final assessment to show your level now.": "Tu certificado {{code}} es válido hasta el {{date}}. Mantenlo vigente 12 meses más o haz una nueva evaluación final para mostrar tu nivel actual.",
+ "We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.": "Estamos corrigiendo tus respuestas y revisando el registro de supervisión. Tu informe de puntuación y tu certificado estarán en la página Evaluación, normalmente en menos de una hora, y te enviaremos un correo.",
+ "Your real test is now open on the Assessment page, whenever you're ready.": "Tu examen real ya está abierto en la página Evaluación, cuando estés listo.",
+ "Go to Assessment": "Ir a Evaluación",
+ "Your final assessment is on the Assessment page.": "Tu evaluación final está en la página Evaluación.",
+ "Your organization gives you your final assessment. It shows on the Assessment page.": "Tu organización te da tu evaluación final. Aparece en la página Evaluación.",
+ "{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.": "{{name}} ya es tuyo. Sus pruebas de práctica y exámenes simulados ya están abiertos; tu examen real está en la página Evaluación.",
+ "{{name}} is yours. Find it on the Assessment page.": "{{name}} ya es tuyo. Lo encontrarás en la página Evaluación.",
+ "This test can't start now. Go back to the Assessment page to see why.": "Este examen no puede empezar ahora. Vuelve a la página Evaluación para ver por qué.",
+ "Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.": "Evaluación final: tu examen real, con certificado, se abre el {{date}} en la página Evaluación.",
+ "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.": "Elige tu examen en la página Evaluación. Se abre después de un examen simulado de ese examen o en los últimos 7 días de tu acceso, y termina con un certificado.",
+ "Your final assessment for {{program}} is set to its test. Take it on the Assessment page before {{date}}.": "Tu evaluación final de {{program}} ya tiene su examen. Hazla en la página Evaluación antes del {{date}}."
 }
