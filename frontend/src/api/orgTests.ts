@@ -1,9 +1,9 @@
 import { api } from "@/lib/api";
 
-// Tests & credits: an organization gives learners a real test or preparation for one test.
+// Tests & credits: an organization gives learners a real test, a level test or preparation for one test.
 export interface GivableProduct {
   id: string;
-  kind: "prep" | "assessment" | "pack";
+  kind: "prep" | "assessment" | "level" | "pack";
   name: string;
   testTypeId: string;
   testName: string | null;
@@ -12,13 +12,17 @@ export interface GivableProduct {
   attempts: number;
 }
 
-export type GivenStatus = "waiting" | "in_progress" | "taken" | "certified" | "expired" | "expired_refunded" | "withdrawn";
+export type GivenStatus = "waiting" | "in_progress" | "taken" | "certified" | "not_passed" | "expired" | "expired_refunded" | "withdrawn";
 
 export interface GivenTest {
   id: string;
   productId: string;
   kind: string;
   name: string;
+  // A level test's level; the program whose final assessment this is.
+  testLevel: string | null;
+  programId: string | null;
+  programName: string | null;
   learnerId: string;
   learner: string;
   participantId: string | null;
@@ -42,7 +46,7 @@ export function getOrgTests(): Promise<OrgTests> {
   return api("/org-tests");
 }
 
-export function giveTests(body: { productId: string; userIds?: string[]; batchId?: string; periods?: number }): Promise<{ given: number; creditsUsed: number; balance: number }> {
+export function giveTests(body: { productId: string; userIds?: string[]; batchId?: string; periods?: number; level?: string }): Promise<{ given: number; creditsUsed: number; balance: number }> {
   return api("/org-tests/give", { method: "POST", body: JSON.stringify(body) });
 }
 

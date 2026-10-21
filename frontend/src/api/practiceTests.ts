@@ -237,6 +237,9 @@ export interface Program {
   startsOn: string;
   targetDate: string;
   status: "active" | "completed" | "archived";
+  // Ends with a real test (with a certificate), given with credits from this day.
+  finalAssessment?: boolean;
+  finalAssessmentOn?: string | null;
 }
 
 export interface ScheduleItem {

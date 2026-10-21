@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Target, Users, CalendarDays, X, CheckCircle2, AlertTriangle, Clock, Download } from "lucide-react";
+import { Plus, Target, Users, CalendarDays, X, CheckCircle2, AlertTriangle, Clock, Download, Award } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { formatShortDate } from "@/api/licenses";
@@ -22,6 +22,7 @@ import {
   programExportPath,
 } from "@/api/orgAdmin";
 import { downloadCsv } from "@/api/analytics";
+import { getOrgTests } from "@/api/orgTests";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import type { Program } from "@/api/practiceTests";
 import { testTypeName } from "@/lib/testTypes";
@@ -51,7 +52,27 @@ const ERROR_TEXT: Record<string, () => string> = {
   test_type_not_enabled: () => tr("This test isn't turned on for your organization. Turn it on in Settings."),
   unknown_test_type: () => tr("This test isn't available yet."),
   bad_dates: () => tr("The target date must be after the start date."),
+  no_final_assessment: () => tr("This test has no real test to end with."),
 };
+
+// Credits for one learner's final assessment (the test's real test), by test.
+type FinalCredits = Record<string, number>;
+
+// The option to end a program with a final assessment, with its cost.
+function FinalAssessmentOption({ checked, onChange, credits, members }: { checked: boolean; onChange: (v: boolean) => void; credits: number; members?: number }) {
+  return (
+    <label className="flex items-start gap-2.5 text-sm text-ink cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 accent-navy cursor-pointer" />
+      <span>
+        <span className="font-semibold">{tr("End with a final assessment")}</span>
+        <span className="block text-xs text-muted">
+          {tr("7 days before the target date, each learner gets the real test, strictly proctored, with a certificate. {{n}} credits per learner, from Tests & credits.", { n: credits })}
+          {members ? ` ${tr("About {{n}} credits for this batch.", { n: credits * members })}` : ""}
+        </span>
+      </span>
+    </label>
+  );
+}
 
 function errorText(err: unknown): string {
   const code = err instanceof ApiError ? (err.body as { error?: string } | undefined)?.error : undefined;
@@ -94,11 +115,13 @@ function today(): string {
 function CreateProgramModal({
   batches,
   testTypes,
+  finalCredits,
   onClose,
   onCreated,
 }: {
   batches: OrgBatch[];
   testTypes: CatalogueTestType[];
+  finalCredits: FinalCredits;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -111,16 +134,18 @@ function CreateProgramModal({
   const [skillTargets, setSkillTargets] = useState<Record<string, string>>({});
   const [startsOn, setStartsOn] = useState(today());
   const [targetDate, setTargetDate] = useState("");
+  const [finalAssessment, setFinalAssessment] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const testType = testTypes.find((x) => x.id === testTypeId);
+  const finalCost = finalCredits[testTypeId];
 
   async function submit() {
     setBusy(true);
     setError(null);
     try {
       const targetSkills = Object.fromEntries(Object.entries(skillTargets).filter(([s, v]) => v && testType?.skills.includes(s as (typeof SKILLS)[number])));
-      await createProgram({ name: name.trim(), batchId, testTypeId, domain, targetLevel, targetSkills, startsOn, targetDate });
+      await createProgram({ name: name.trim(), batchId, testTypeId, domain, targetLevel, targetSkills, startsOn, targetDate, finalAssessment: finalAssessment && !!finalCost });
       onCreated();
     } catch (err) {
       setError(errorText(err));
@@ -197,6 +222,11 @@ function CreateProgramModal({
           </Field>
         )}
       </div>
+      {finalCost !== undefined && (
+        <div className="mt-5">
+          <FinalAssessmentOption checked={finalAssessment} onChange={setFinalAssessment} credits={finalCost} members={batches.find((b) => b.id === batchId)?.learnerCount} />
+        </div>
+      )}
       <p className="text-sm text-muted mt-5">
         {tr("Spica plans each member's practice tests and mock tests from their latest level and the time left, within your plan's monthly limits. Plans update after every mock test.")}
       </p>
@@ -338,12 +368,14 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
 function ProgramDetailModal({
   id,
   testTypes,
+  finalCredits,
   viewer,
   onClose,
   onChanged,
 }: {
   id: string;
   testTypes: CatalogueTestType[];
+  finalCredits: FinalCredits;
   viewer: ProgramViewer;
   onClose: () => void;
   onChanged: () => void;
@@ -397,6 +429,7 @@ function ProgramDetailModal({
             <p className="text-sm text-muted flex-1">
               {tt ? testTypeName(tt, t) : p!.testTypeId} · {tr("Target {{level}}", { level: p!.targetLevel })} · {formatShortDate(p!.startsOn)} – {formatShortDate(p!.targetDate)} ·{" "}
               {STATUS_LABEL[p!.status]()}
+              {p!.finalAssessment && p!.finalAssessmentOn && ` · ${tr("Final assessment from {{date}}", { date: formatShortDate(p!.finalAssessmentOn) })}`}
             </p>
             <Button
               variant="secondary"
@@ -443,6 +476,16 @@ function ProgramDetailModal({
               <Button variant="secondary" disabled={busy} onClick={() => save({ status: "completed" })}>
                 {tr("Mark completed")}
               </Button>
+              {finalCredits[p!.testTypeId] !== undefined && (
+                <div className="basis-full border-t border-rule pt-3">
+                  <FinalAssessmentOption
+                    checked={!!p!.finalAssessment}
+                    onChange={(v) => !busy && save({ finalAssessment: v })}
+                    credits={finalCredits[p!.testTypeId]}
+                    members={data.members.length}
+                  />
+                </div>
+              )}
             </div>
           )}
           {canEdit && p!.status !== "archived" && p!.status !== "active" && (
@@ -513,6 +556,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [viewing, setViewing] = useState<string | null>(null);
+  const [finalCredits, setFinalCredits] = useState<FinalCredits>({});
 
   function load() {
     listPrograms(viewer)
@@ -524,6 +568,9 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
     if (viewer === "org-admin") {
       getBatches()
         .then((r) => setBatches(r.batches))
+        .catch(() => {});
+      getOrgTests()
+        .then((r) => setFinalCredits(Object.fromEntries(r.products.filter((x) => x.kind === "assessment").map((x) => [x.testTypeId, x.credits]))))
         .catch(() => {});
     }
     // Live tests the organization has turned on.
@@ -611,6 +658,14 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
                     <Clock size={13} /> {tr("{{n}} planned", { n: p.items.due })}
                   </span>
                 </div>
+                {p.finalAssessment && (
+                  <span className="flex items-center gap-1 text-xs text-navy-deep">
+                    <Award size={13} />
+                    {p.final.given
+                      ? tr("Final assessment: {{given}} given, {{taken}} taken, {{certified}} certified", { given: p.final.given, taken: p.final.taken, certified: p.final.certified })
+                      : tr("Final assessment from {{date}}", { date: formatShortDate(p.finalAssessmentOn ?? p.targetDate) })}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -621,6 +676,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
         <CreateProgramModal
           batches={freeBatches}
           testTypes={testTypes}
+          finalCredits={finalCredits}
           onClose={() => setCreating(false)}
           onCreated={() => {
             setCreating(false);
@@ -628,7 +684,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
           }}
         />
       )}
-      {viewing && <ProgramDetailModal id={viewing} testTypes={testTypes} viewer={viewer} onClose={() => setViewing(null)} onChanged={load} />}
+      {viewing && <ProgramDetailModal id={viewing} testTypes={testTypes} finalCredits={finalCredits} viewer={viewer} onClose={() => setViewing(null)} onChanged={load} />}
     </div>
   );
 }

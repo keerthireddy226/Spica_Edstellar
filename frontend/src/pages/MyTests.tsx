@@ -93,7 +93,7 @@ function TestCard({ t }: { t: OwnedTest }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
             {t.kind === "prep" ? tr("Preparation + assessment") : t.kind === "level" ? tr("Level test") : tr("Assessment")}
           </p>
-          <h2 className="font-display font-bold text-xl text-ink">{t.testName ?? t.name}</h2>
+          <h2 className="font-display font-bold text-xl text-ink">{t.kind === "level" && t.level ? tr("Level {{level}} test", { level: t.level }) : (t.testName ?? t.name)}</h2>
           <p className="text-sm text-muted flex items-center gap-1.5 mt-0.5">
             <CalendarClock size={14} /> {u.state === "expired" ? tr("Ended {{date}}", { date: day(t.endsAt) }) : tr("Available until {{date}}", { date: day(t.endsAt) })}
           </p>
@@ -248,5 +248,5 @@ export function TakeOwnedTest() {
   // A real test that isn't open (and not being resumed) goes back to My tests, which says why.
   const resuming = !!params.get("session") || test.attempts.some((a) => a.status === "in_progress");
   if (mode === "certified" && test.unlock.state !== "open" && !resuming) return <Navigate to={ROUTES.MY_TESTS} replace />;
-  return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.testName, level: test.kind === "level" ? test.level : null }} />;
+  return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.kind === "level" && test.level ? tr("Level {{level}} test", { level: test.level }) : test.testName, level: test.kind === "level" ? test.level : null }} />;
 }

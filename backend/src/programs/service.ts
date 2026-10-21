@@ -6,6 +6,9 @@ import { CEFR_LEVELS } from "../placement/cefr.js";
 import { learnerQuota, quotaWindow } from "./quotas.js";
 import { buildSchedule, programGap } from "./schedule.js";
 import type { DeliveryMode } from "../practiceTests/modes.js";
+import { notify } from "../notifications/service.js";
+import { giveTests } from "../orgTests/service.js";
+import { creditBalance } from "../recruitment/service.js";
 
 const cefr = z.enum(CEFR_LEVELS as [string, ...string[]]);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -22,8 +25,13 @@ export const programSchema = z
     targetSkills: z.partialRecord(z.enum(SKILLS), cefr).default({}),
     startsOn: isoDate,
     targetDate: isoDate,
+    // End with a final assessment: the real test, given with credits before the target date.
+    finalAssessment: z.boolean().default(false),
   })
-  .refine((p) => p.targetDate > p.startsOn, { message: "targetDate must be after startsOn", path: ["targetDate"] });
+  .refine((p) => p.targetDate > p.startsOn, {
+    message: "targetDate must be after startsOn",
+    path: ["targetDate"],
+  });
 
 export const programEditSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
@@ -32,10 +40,11 @@ export const programEditSchema = z.object({
   targetSkills: z.partialRecord(z.enum(SKILLS), cefr).optional(),
   targetDate: isoDate.optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
+  finalAssessment: z.boolean().optional(),
 });
 
 export class ProgramError extends Error {
-  constructor(public code: "batch_not_found" | "batch_not_active" | "unknown_test_type" | "test_type_not_enabled" | "batch_has_program" | "program_not_found" | "bad_dates") {
+  constructor(public code: "batch_not_found" | "batch_not_active" | "unknown_test_type" | "test_type_not_enabled" | "batch_has_program" | "program_not_found" | "bad_dates" | "no_final_assessment") {
     super(code);
   }
 }
@@ -52,6 +61,10 @@ interface ProgramRow {
   starts_on: string;
   target_date: string;
   status: "active" | "completed" | "archived";
+  final_assessment: boolean;
+  final_assessment_days: number;
+  final_assessment_short_at: Date | null;
+  created_by: string | null;
 }
 
 function today(): string {
@@ -66,7 +79,11 @@ function dateStr(v: unknown): string {
 }
 
 function normalizeRow(r: Record<string, unknown>): ProgramRow {
-  return { ...(r as unknown as ProgramRow), starts_on: dateStr(r.starts_on), target_date: dateStr(r.target_date) };
+  return {
+    ...(r as unknown as ProgramRow),
+    starts_on: dateStr(r.starts_on),
+    target_date: dateStr(r.target_date),
+  };
 }
 
 export async function getProgram(id: string, tenantId?: string): Promise<ProgramRow | null> {
@@ -76,10 +93,7 @@ export async function getProgram(id: string, tenantId?: string): Promise<Program
 
 // The learner's active program (one per batch, one batch per learner).
 export async function activeProgramOf(userId: string): Promise<ProgramRow | null> {
-  const r = await pool.query(
-    `SELECT p.* FROM programs p JOIN users u ON u.batch_id = p.batch_id WHERE u.id = $1 AND p.status = 'active'`,
-    [userId],
-  );
+  const r = await pool.query(`SELECT p.* FROM programs p JOIN users u ON u.batch_id = p.batch_id WHERE u.id = $1 AND p.status = 'active'`, [userId]);
   return r.rows[0] ? normalizeRow(r.rows[0]) : null;
 }
 
@@ -154,15 +168,22 @@ async function checkBatchAndType(tenantId: string, batchId: string, testTypeId: 
   if (allowed && !allowed.includes(testTypeId)) throw new ProgramError("test_type_not_enabled");
 }
 
+// The real test a program's final assessment gives, with its credits.
+export async function finalAssessmentProduct(testTypeId: string): Promise<{ id: string; credits: number } | null> {
+  const r = await pool.query(`SELECT id, credits FROM products WHERE kind = 'assessment' AND active AND credits IS NOT NULL AND test_type_id = $1 ORDER BY sort_order LIMIT 1`, [testTypeId]);
+  return r.rows[0] ?? null;
+}
+
 export async function createProgram(tenantId: string, actorId: string, input: z.infer<typeof programSchema>): Promise<ProgramRow> {
   await checkBatchAndType(tenantId, input.batchId, input.testTypeId);
+  if (input.finalAssessment && !(await finalAssessmentProduct(input.testTypeId))) throw new ProgramError("no_final_assessment");
   let row;
   try {
     row = (
       await pool.query(
-        `INSERT INTO programs (tenant_id, name, domain, test_type_id, target_level, target_skills, batch_id, starts_on, target_date, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-        [tenantId, input.name, input.domain, input.testTypeId, input.targetLevel, JSON.stringify(input.targetSkills), input.batchId, input.startsOn, input.targetDate, actorId],
+        `INSERT INTO programs (tenant_id, name, domain, test_type_id, target_level, target_skills, batch_id, starts_on, target_date, created_by, final_assessment)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+        [tenantId, input.name, input.domain, input.testTypeId, input.targetLevel, JSON.stringify(input.targetSkills), input.batchId, input.startsOn, input.targetDate, actorId, input.finalAssessment],
       )
     ).rows[0];
   } catch (err) {
@@ -171,6 +192,7 @@ export async function createProgram(tenantId: string, actorId: string, input: z.
   }
   const p = normalizeRow(row);
   await planProgram(p);
+  await giveFinalAssessments(p);
   return p;
 }
 
@@ -178,14 +200,26 @@ export async function updateProgram(tenantId: string, id: string, input: z.infer
   const p = await getProgram(id, tenantId);
   if (!p) throw new ProgramError("program_not_found");
   if (input.targetDate && input.targetDate <= p.starts_on) throw new ProgramError("bad_dates");
+  if (input.finalAssessment && !(await finalAssessmentProduct(p.test_type_id))) throw new ProgramError("no_final_assessment");
   let row;
   try {
     row = (
       await pool.query(
         `UPDATE programs SET name = coalesce($3, name), domain = coalesce($4, domain), target_level = coalesce($5, target_level),
-           target_skills = coalesce($6, target_skills), target_date = coalesce($7, target_date), status = coalesce($8, status), updated_at = now()
+           target_skills = coalesce($6, target_skills), target_date = coalesce($7, target_date), status = coalesce($8, status),
+           final_assessment = coalesce($9, final_assessment), updated_at = now()
          WHERE id = $1 AND tenant_id = $2 RETURNING *`,
-        [id, tenantId, input.name ?? null, input.domain ?? null, input.targetLevel ?? null, input.targetSkills ? JSON.stringify(input.targetSkills) : null, input.targetDate ?? null, input.status ?? null],
+        [
+          id,
+          tenantId,
+          input.name ?? null,
+          input.domain ?? null,
+          input.targetLevel ?? null,
+          input.targetSkills ? JSON.stringify(input.targetSkills) : null,
+          input.targetDate ?? null,
+          input.status ?? null,
+          input.finalAssessment ?? null,
+        ],
       )
     ).rows[0];
   } catch (err) {
@@ -195,7 +229,66 @@ export async function updateProgram(tenantId: string, id: string, input: z.infer
   }
   const updated = normalizeRow(row);
   await planProgram(updated);
+  await giveFinalAssessments(updated);
   return updated;
+}
+
+// The day a program's final assessment is given: final_assessment_days before the target date.
+export function finalAssessmentOn(p: Pick<ProgramRow, "target_date" | "final_assessment_days">): string {
+  const d = new Date(`${p.target_date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - p.final_assessment_days);
+  return d.toISOString().slice(0, 10);
+}
+
+// From its day until the target date, each member of an active program with a
+// final assessment who hasn't had it gets the program's real test, paid with
+// the organization's credits. When credits run short, the Org Admins hear once.
+export async function giveFinalAssessments(p: ProgramRow): Promise<number> {
+  if (p.status !== "active" || !p.final_assessment || today() < finalAssessmentOn(p) || today() > p.target_date) return 0;
+  const product = await finalAssessmentProduct(p.test_type_id);
+  if (!product) return 0;
+  const waiting = (
+    await pool.query(
+      `SELECT u.id FROM users u WHERE u.batch_id = $1 AND u.tenant_id = $2 AND u.role = 'learner' AND u.deleted_at IS NULL
+         AND NOT EXISTS (SELECT 1 FROM entitlements e WHERE e.user_id = u.id AND e.program_id = $3)
+       ORDER BY u.created_at`,
+      [p.batch_id, p.tenant_id, p.id],
+    )
+  ).rows.map((r) => r.id as string);
+  if (!waiting.length) return 0;
+  const affordable = Math.min(waiting.length, Math.floor((await creditBalance(p.tenant_id)) / product.credits));
+  let given = 0;
+  if (affordable > 0) {
+    const actorId =
+      p.created_by ?? (await pool.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL ORDER BY created_at LIMIT 1`, [p.tenant_id])).rows[0]?.id;
+    given = (
+      await giveTests({
+        tenantId: p.tenant_id,
+        actorId,
+        userIds: waiting.slice(0, affordable),
+        productId: product.id,
+        programId: p.id,
+      })
+    ).given;
+  }
+  const short = waiting.length - given;
+  if (short > 0 && !p.final_assessment_short_at) {
+    await pool.query(`UPDATE programs SET final_assessment_short_at = now() WHERE id = $1`, [p.id]);
+    const admins = await pool.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'org_admin' AND deleted_at IS NULL`, [p.tenant_id]);
+    for (const a of admins.rows) {
+      await notify({
+        userId: a.id,
+        kind: "program_alert",
+        title: "Not enough credits for a final assessment",
+        body: `${p.name}: ${short} learners are still waiting for their final assessment. Each needs ${product.credits} credits.`,
+        link: "/orgadmin/tests",
+        email: true,
+      }).catch((err) => console.error("final assessment notification failed:", err));
+    }
+  } else if (short === 0 && p.final_assessment_short_at) {
+    await pool.query(`UPDATE programs SET final_assessment_short_at = NULL WHERE id = $1`, [p.id]);
+  }
+  return given;
 }
 
 // A finished practice test or mock ticks off the member's earliest open item
@@ -226,8 +319,13 @@ export async function recordProgramSession(userId: string, sessionId: string, ki
 }
 
 // Daily: items past their day become missed, programs past their target
-// date complete, and new batch members get a plan.
-export async function runProgramsDaily(): Promise<{ missed: number; completed: number; planned: number }> {
+// date complete, new batch members get a plan, and final assessments are given.
+export async function runProgramsDaily(): Promise<{
+  missed: number;
+  completed: number;
+  planned: number;
+  finalAssessments: number;
+}> {
   const missed = await pool.query(`UPDATE schedule_items SET status = 'missed' WHERE status = 'due' AND due_on < $1`, [today()]);
   const completed = await pool.query(`UPDATE programs SET status = 'completed', updated_at = now() WHERE status = 'active' AND target_date < $1`, [today()]);
   const newcomers = await pool.query(
@@ -238,7 +336,18 @@ export async function runProgramsDaily(): Promise<{ missed: number; completed: n
     const p = await getProgram(n.id);
     if (p) await planMember(p, n.user_id);
   }
-  return { missed: missed.rowCount ?? 0, completed: completed.rowCount ?? 0, planned: newcomers.rows.length };
+  let finalAssessments = 0;
+  const finals = await pool.query(`SELECT id FROM programs WHERE status = 'active' AND final_assessment AND target_date >= $1`, [today()]);
+  for (const f of finals.rows) {
+    const p = await getProgram(f.id);
+    if (p) finalAssessments += await giveFinalAssessments(p).catch((err) => (console.error("final assessment failed:", err), 0));
+  }
+  return {
+    missed: missed.rowCount ?? 0,
+    completed: completed.rowCount ?? 0,
+    planned: newcomers.rows.length,
+    finalAssessments,
+  };
 }
 
 // ---- Views ----
@@ -253,13 +362,23 @@ export async function listPrograms(tenantId: string) {
     `SELECT p.*, b.name AS batch_name,
        (SELECT count(*)::int FROM users u WHERE u.batch_id = p.batch_id AND u.role = 'learner' AND u.deleted_at IS NULL) AS members,
        (SELECT json_build_object('done', count(*) FILTER (WHERE si.status = 'done'), 'missed', count(*) FILTER (WHERE si.status = 'missed'),
-          'due', count(*) FILTER (WHERE si.status = 'due')) FROM schedule_items si WHERE si.program_id = p.id) AS items
+          'due', count(*) FILTER (WHERE si.status = 'due')) FROM schedule_items si WHERE si.program_id = p.id) AS items,
+       (SELECT json_build_object('given', count(*) FILTER (WHERE e.revoked_at IS NULL), 'taken', count(*) FILTER (WHERE e.attempts_used > 0),
+          'certified', count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c JOIN sessions s ON s.id = c.session_id
+            WHERE s.entitlement_id = e.id AND c.kind = 'result' AND c.revoked_at IS NULL)))
+        FROM entitlements e WHERE e.program_id = p.id) AS final
      FROM programs p JOIN batches b ON b.id = p.batch_id
      WHERE p.tenant_id = $1 AND p.status <> 'archived'
      ORDER BY p.status, p.target_date`,
     [tenantId],
   );
-  return r.rows.map((row) => ({ ...programJson(normalizeRow(row)), batchName: row.batch_name, members: row.members, items: row.items }));
+  return r.rows.map((row) => ({
+    ...programJson(normalizeRow(row)),
+    batchName: row.batch_name,
+    members: row.members,
+    items: row.items,
+    final: row.final,
+  }));
 }
 
 export function programJson(p: ProgramRow) {
@@ -274,6 +393,8 @@ export function programJson(p: ProgramRow) {
     startsOn: p.starts_on,
     targetDate: p.target_date,
     status: p.status,
+    finalAssessment: p.final_assessment,
+    finalAssessmentOn: p.final_assessment ? finalAssessmentOn(p) : null,
   };
 }
 
@@ -311,12 +432,14 @@ export async function programMembers(p: ProgramRow) {
 export async function learnerProgram(userId: string) {
   const p = await activeProgramOf(userId);
   if (!p) return null;
-  const items = await pool.query(
-    `SELECT id, due_on, kind, status FROM schedule_items WHERE program_id = $1 AND user_id = $2 ORDER BY due_on`,
-    [p.id, userId],
-  );
+  const items = await pool.query(`SELECT id, due_on, kind, status FROM schedule_items WHERE program_id = $1 AND user_id = $2 ORDER BY due_on`, [p.id, userId]);
   const level = await latestLevel(userId, p.test_type_id);
-  const all = items.rows.map((i) => ({ id: i.id as string, dueOn: dateStr(i.due_on), kind: i.kind as DeliveryMode, status: i.status as string }));
+  const all = items.rows.map((i) => ({
+    id: i.id as string,
+    dueOn: dateStr(i.due_on),
+    kind: i.kind as DeliveryMode,
+    status: i.status as string,
+  }));
   // The test's name, also when its family is hidden from the catalogue.
   const testTypeName = (await pool.query(`SELECT name FROM test_types WHERE id = $1`, [p.test_type_id])).rows[0]?.name ?? null;
   return {

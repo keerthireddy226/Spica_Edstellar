@@ -7,8 +7,9 @@ import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
 
 // Tests & credits: give learners a real test (strictly proctored, with a
-// certificate) or preparation for one test, paid with the organization's
-// credits. Full access stays on the Licenses page.
+// certificate), a level test, or preparation for one test, paid with the
+// organization's credits. Full access stays on the Licenses page. Programs
+// with a final assessment give theirs here automatically.
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(document.documentElement.lang || undefined, { day: "numeric", month: "short", year: "numeric" });
 
@@ -17,10 +18,15 @@ const STATUS: Record<GivenStatus, { label: () => string; cls: string }> = {
   in_progress: { label: () => tr("In progress"), cls: "text-navy-deep" },
   taken: { label: () => tr("Taken, being scored"), cls: "text-warning" },
   certified: { label: () => tr("Certified"), cls: "text-success" },
+  not_passed: { label: () => tr("Not passed"), cls: "text-warning" },
   expired: { label: () => tr("Expired"), cls: "text-muted" },
   expired_refunded: { label: () => tr("Expired, credits returned"), cls: "text-muted" },
   withdrawn: { label: () => tr("Withdrawn"), cls: "text-muted" },
 };
+
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+// Kinds that are one test (not months of access).
+const oneTest = (kind: string) => kind === "assessment" || kind === "level";
 
 const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink";
 
@@ -30,6 +36,8 @@ export function OrgAdminTests() {
   const [batches, setBatches] = useState<OrgBatch[]>([]);
   const [productId, setProductId] = useState("");
   const [periods, setPeriods] = useState(1);
+  const [level, setLevel] = useState("B1");
+  const [packLevel, setPackLevel] = useState("");
   const [who, setWho] = useState<"batch" | "learners">("learners");
   const [batchId, setBatchId] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -49,7 +57,7 @@ export function OrgAdminTests() {
 
   const product = data?.products.find((p) => p.id === productId) ?? null;
   const count = who === "batch" ? learners.filter((l) => l.batchId === batchId).length : picked.size;
-  const each = product ? product.credits * (product.kind === "assessment" ? 1 : periods) : 0;
+  const each = product ? product.credits * (oneTest(product.kind) ? 1 : periods) : 0;
   const total = each * count;
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -61,7 +69,11 @@ export function OrgAdminTests() {
     setBusy(true);
     setNote(null);
     try {
-      const r = await giveTests({ productId: product.id, periods: product.kind === "assessment" ? undefined : periods, ...(who === "batch" ? { batchId } : { userIds: [...picked] }) });
+      const r = await giveTests({
+        productId: product.id,
+        periods: oneTest(product.kind) ? undefined : periods,
+        level: product.kind === "level" ? level : product.kind === "pack" ? packLevel || undefined : undefined,
+        ...(who === "batch" ? { batchId } : { userIds: [...picked] }) });
       setNote({ ok: true, text: r.given === 1 ? tr("Given to 1 learner. {{c}} credits used.", { c: r.creditsUsed }) : tr("Given to {{n}} learners. {{c}} credits used.", { n: r.given, c: r.creditsUsed }) });
       setPicked(new Set());
       load();
@@ -82,6 +94,7 @@ export function OrgAdminTests() {
   if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
   const groups = [
     { kind: "assessment" as const, label: tr("Real test (with a certificate)") },
+    { kind: "level" as const, label: tr("Level test + certificate") },
     { kind: "prep" as const, label: tr("Prepare for one test, then a real test") },
     { kind: "pack" as const, label: tr("Practice pack (Practice Modules only)") },
   ];
@@ -89,7 +102,7 @@ export function OrgAdminTests() {
     <div className="flex flex-col gap-5 w-full">
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">{tr("Tests & credits")}</h1>
-        <p className="text-sm text-muted mt-1">{tr("Give your people a real, strictly proctored test with a certificate, or a month of preparation for one test. Paid with credits; Full access stays on Licenses.")}</p>
+        <p className="text-sm text-muted mt-1">{tr("Give your people a real, strictly proctored test with a certificate, a level test, or a month of preparation for one test. Paid with credits; Full access stays on Licenses.")}</p>
       </div>
 
       <section className="bg-surface border border-rule rounded-card p-5 flex flex-wrap items-center gap-4">
@@ -98,7 +111,7 @@ export function OrgAdminTests() {
         </span>
         <div className="flex-1 min-w-[200px]">
           <p className="font-display font-bold text-2xl text-ink tabular-nums">{tr("{{n}} credits", { n: data.balance })}</p>
-          <p className="text-xs text-muted">{tr("The same credits pay for recruitment invitations. A real test that expires unused gives its credits back.")}</p>
+          <p className="text-xs text-muted">{tr("The same credits pay for recruitment invitations. A real test or level test that expires unused gives its credits back.")}</p>
         </div>
         <div className="flex items-center gap-2">
           <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} className={`${input} w-24`} aria-label={tr("Credits")} />
@@ -123,8 +136,8 @@ export function OrgAdminTests() {
                     .filter((p) => p.kind === g.kind)
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        {`${p.testName ?? p.name} · ${
-                          p.kind === "assessment"
+                        {`${p.testName ?? (p.kind === "level" ? tr("Any level, A1 to C2") : p.name)} · ${
+                          oneTest(p.kind)
                             ? p.credits === 1
                               ? tr("1 credit")
                               : tr("{{n}} credits", { n: p.credits })
@@ -138,7 +151,33 @@ export function OrgAdminTests() {
               ))}
             </select>
           </label>
-          {product && product.kind !== "assessment" && (
+          {product?.kind === "level" && (
+            <label className="flex flex-col gap-1 text-sm text-ink">
+              {tr("Level")}
+              <select value={level} onChange={(e) => setLevel(e.target.value)} className={input}>
+                {LEVELS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-muted">{tr("Pass it (70% overall, at least 50% in each skill) for that level's certificate. Unused tests give their credit back.")}</span>
+            </label>
+          )}
+          {product?.kind === "pack" && (
+            <label className="flex flex-col gap-1 text-sm text-ink">
+              {tr("Level to aim for")}
+              <select value={packLevel} onChange={(e) => setPackLevel(e.target.value)} className={input}>
+                <option value="">{tr("Keep each learner's goal")}</option>
+                {LEVELS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {product && !oneTest(product.kind) && (
             <label className="flex flex-col gap-1 text-sm text-ink">
               {tr("Months")}
               <select value={periods} onChange={(e) => setPeriods(Number(e.target.value))} className={input}>
@@ -237,7 +276,10 @@ export function OrgAdminTests() {
                       <span className="font-semibold text-ink">{g.learner}</span>
                       {g.participantId && <span className="block text-xs text-muted font-mono">{g.participantId}</span>}
                     </td>
-                    <td className="px-3 py-2 text-ink">{g.name}</td>
+                    <td className="px-3 py-2 text-ink">
+                      {g.kind === "level" && g.testLevel ? tr("Level {{level}} test", { level: g.testLevel }) : g.name}
+                      {g.programName && <span className="block text-xs text-muted">{tr("Final assessment: {{program}}", { program: g.programName })}</span>}
+                    </td>
                     <td className="px-3 py-2 text-ink whitespace-nowrap">{day(g.givenAt)}</td>
                     <td className="px-3 py-2 text-ink whitespace-nowrap">{day(g.endsAt)}</td>
                     <td className="px-3 py-2 tabular-nums text-ink">{g.credits}</td>
@@ -256,7 +298,7 @@ export function OrgAdminTests() {
                           onClick={() => withdrawTest(g.id).then(load)}
                           className="text-sm font-semibold text-error hover:underline cursor-pointer"
                         >
-                          {g.kind === "assessment" ? tr("Withdraw (credits back)") : tr("Withdraw")}
+                          {oneTest(g.kind) ? tr("Withdraw (credits back)") : tr("Withdraw")}
                         </button>
                       )}
                     </td>

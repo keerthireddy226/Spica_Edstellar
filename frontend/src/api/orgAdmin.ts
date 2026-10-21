@@ -428,12 +428,15 @@ export interface ProgramInput {
   targetSkills: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
   startsOn: string;
   targetDate: string;
+  finalAssessment?: boolean;
 }
 
 export interface ProgramSummary extends Program {
   batchName: string;
   members: number;
   items: { done: number; missed: number; due: number };
+  // Final assessments given, started and certified.
+  final: { given: number; taken: number; certified: number };
 }
 
 export type MemberStatus = "at_target" | "on_track" | "at_risk" | "too_early";
@@ -494,7 +497,7 @@ export function getMemberReport(programId: string, sessionId: string, viewer: Pr
 
 export function updateProgram(
   id: string,
-  input: Partial<Pick<ProgramInput, "name" | "domain" | "targetLevel" | "targetSkills" | "targetDate">> & { status?: Program["status"] },
+  input: Partial<Pick<ProgramInput, "name" | "domain" | "targetLevel" | "targetSkills" | "targetDate" | "finalAssessment">> & { status?: Program["status"] },
 ): Promise<Program> {
   return api(`/org-admin/programs/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }

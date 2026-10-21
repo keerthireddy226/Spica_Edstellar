@@ -55,6 +55,8 @@ const giveSchema = z
     batchId: z.string().uuid().optional(),
     // Preparation: how many 30-day periods.
     periods: z.number().int().min(1).max(12).optional(),
+    // Level test (required) or practice pack (optional goal).
+    level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
   })
   .refine((b) => (b.userIds && b.userIds.length) || b.batchId, { message: "learners required" });
 
@@ -66,8 +68,8 @@ orgTestsRouter.post("/give", requireAuth, async (req: AuthedRequest, res, next) 
     const userIds = body.batchId
       ? (await pool.query(`SELECT id FROM users WHERE batch_id = $1 AND tenant_id = $2 AND role = 'learner' AND deleted_at IS NULL`, [body.batchId, tenantId])).rows.map((r) => r.id)
       : body.userIds!;
-    const r = await giveTests({ tenantId, actorId: req.user!.id, userIds, productId: body.productId, periods: body.periods });
-    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "tests.given", details: { productId: body.productId, learners: r.given, credits: r.creditsUsed }, ip: req.ip });
+    const r = await giveTests({ tenantId, actorId: req.user!.id, userIds, productId: body.productId, periods: body.periods, level: body.level });
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "tests.given", details: { productId: body.productId, level: body.level, learners: r.given, credits: r.creditsUsed }, ip: req.ip });
     res.status(201).json(r);
   } catch (err) {
     handle(err, res, next);

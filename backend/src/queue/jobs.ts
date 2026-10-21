@@ -85,7 +85,7 @@ export function registerJobs() {
   // are whole days, so running hourly changes nothing twice).
   every(60, "programs.daily", async () => {
     const r = await runProgramsDaily();
-    if (r.missed || r.completed || r.planned) console.log("programs:", r);
+    if (r.missed || r.completed || r.planned || r.finalAssessments) console.log("programs:", r);
   });
   // Program alerts (at risk, inactive, missed mock) to Org Admins and Managers, once a day.
   every(24 * 60, "programs.alerts", async () => {

@@ -1861,6 +1861,9 @@ function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: 
           {tt ? testTypeName(tt, t) : (p.testTypeName ?? tr("A test no longer offered"))} · {tr("Target {{level}} by {{date}}", { level: p.targetLevel, date: formatShortDate(p.targetDate) })}
           {mine.latestLevel ? ` · ${tr("Your latest level: {{level}}", { level: mine.latestLevel })}` : ""}
         </span>
+        {p.finalAssessment && p.finalAssessmentOn && (
+          <span className="text-xs text-navy-deep">{tr("Final assessment: your real test, with a certificate, opens on {{date}} in My tests.", { date: formatShortDate(p.finalAssessmentOn) })}</span>
+        )}
         <span className="text-xs text-muted">
           {tr("{{done}} done, {{missed}} missed", { done: mine.done, missed: mine.missed })}
           {next

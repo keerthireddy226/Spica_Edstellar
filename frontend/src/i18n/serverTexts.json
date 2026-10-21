@@ -305,5 +305,14 @@
  "Your appeal: your result was re-marked",
  "Your appeal: you can take the test again",
  "{{org}} asked for credits",
- "{{n}} credits for staff tests."
+ "{{n}} credits for staff tests.",
+ "You have a level test to take",
+ "{{org}} gave you a level {{level}} test. Pass it for the level {{level}} certificate. Take it within {{n}} days.",
+ "Your final assessment is ready",
+ "{{org}} gave you the final assessment for {{program}}: {{product}}. Take it within {{n}} days.",
+ "Not enough credits for a final assessment",
+ "{{program}}: {{n}} learners are still waiting for their final assessment. Each needs {{credits}} credits.",
+ "Real test withdrawn before it was started",
+ "Level test withdrawn before it was started",
+ "Test expired without being started"
 ]

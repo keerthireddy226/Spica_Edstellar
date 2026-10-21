@@ -26,6 +26,7 @@ const PROGRAM_ERROR_STATUS: Record<ProgramError["code"], number> = {
   program_not_found: 404,
   batch_not_active: 409,
   batch_has_program: 409,
+  no_final_assessment: 400,
   unknown_test_type: 400,
   test_type_not_enabled: 400,
   bad_dates: 400,
