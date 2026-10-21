@@ -17,6 +17,7 @@ import {
   decideAssessment,
   getAssessment,
   getCandidateReport,
+  shareAssessment,
   confirmAssessment,
   getCredits,
   getJob,
@@ -175,6 +176,28 @@ function CandidateFeedback({ id }: { id: string }) {
   );
 }
 
+// A read-only link for hiring managers, copied to the clipboard.
+function ShareButton({ id }: { id: string }) {
+  const [shared, setShared] = useState<{ url: string; until: string } | null>(null);
+  return shared ? (
+    <span className="text-xs text-success self-center max-w-xs">
+      {tr("Link copied. Anyone with it can open this report until {{date}}.", { date: shared.until })}
+    </span>
+  ) : (
+    <Button
+      variant="secondary"
+      onClick={async () => {
+        const r = await shareAssessment(id).catch(() => null);
+        if (!r) return;
+        await navigator.clipboard?.writeText(r.url).catch(() => {});
+        setShared(r);
+      }}
+    >
+      {tr("Share with a hiring manager")}
+    </Button>
+  );
+}
+
 // One candidate: result, integrity, decision.
 export function CandidateReport({ id, onClose, onChanged }: { id: string; onClose: () => void; onChanged: () => void }) {
   const { user } = useAuth();
@@ -220,10 +243,13 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
       }
       actions={
         a.status === "completed" ? (
-          <Button variant="secondary" onClick={() => window.open(`/recruitment/report/${a.id}`, "_blank")}>
-            <Printer size={15} className="inline mr-1.5" />
-            {tr("Print or save as PDF")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => window.open(`/recruitment/report/${a.id}`, "_blank")}>
+              <Printer size={15} className="inline mr-1.5" />
+              {tr("Print or save as PDF")}
+            </Button>
+            <ShareButton id={a.id} />
+          </div>
         ) : undefined
       }
       stats={[

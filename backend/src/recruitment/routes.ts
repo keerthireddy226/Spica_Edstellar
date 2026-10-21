@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 // Recruitment API: the candidate's invitation link, the recruiter console
 // (job openings, invitations, results, decisions, team, credits), and the
 // Edstellar staff controls for an organization's products and credits.
@@ -12,6 +13,7 @@ import { hashToken } from "../auth/tokens.js";
 import { createSession, setSessionCookie } from "../auth/routes.js";
 import { createAndInviteUser } from "../auth/invite.js";
 import { recordAudit } from "../audit/service.js";
+import { APP_URL } from "../auth/mailer.js";
 import { notify } from "../notifications/service.js";
 import { emitEvent } from "../webhooks/service.js";
 import { requirePermission, staffOwnsTenant } from "../admin/staff.js";
@@ -55,6 +57,37 @@ async function recruiterTenant(req: AuthedRequest, res: Response): Promise<strin
     return null;
   }
   return req.user.tenantId;
+}
+
+// One candidate's assessment with its job, integrity and decision.
+async function assessmentDetail(id: string, tenantId: string): Promise<Record<string, any> | undefined> {
+  return (
+    await pool.query(
+        `SELECT a.*, j.title AS job_title, j.test_kind, j.min_cefr, j.department, j.location,
+           si.status AS integrity_status, si.risk_level, si.risk_score, si.reasons AS integrity_reasons, si.reviewed_at AS integrity_reviewed_at,
+           e.name AS exam_name, e.test_id AS exam_test_id, ts.test_code, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
+           concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
+           concat_ws(' ', conf.first_name, conf.last_name) AS confirmed_by_name, t.category AS tenant_category,
+           (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status,
+           (SELECT code FROM certificates c WHERE c.session_id = a.session_id AND c.revoked_at IS NULL LIMIT 1) AS certificate_code
+         FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
+         LEFT JOIN session_integrity si ON si.session_id = a.session_id
+         LEFT JOIN sessions ts ON ts.id = a.session_id
+         LEFT JOIN exams e ON e.id = a.exam_id
+         LEFT JOIN users inv ON inv.id = a.invited_by
+         LEFT JOIN users dec ON dec.id = a.decided_by
+         LEFT JOIN users conf ON conf.id = a.confirmed_by
+         JOIN tenants t ON t.id = a.tenant_id
+         WHERE a.id = $1 AND a.tenant_id = $2`,
+        [id, tenantId],
+      )
+  ).rows[0];
+}
+
+function assessmentJson(a: Record<string, any>) {
+  const { token_hash: _t, ...rest } = a;
+  // Questions for the interview, aimed at the skills the test showed weakest.
+  return { assessment: rest, interview: a.status === "completed" ? interviewQuestions(a.result, a.min_cefr) : [] };
 }
 
 // ---------- Candidate: the invitation link ----------
@@ -370,31 +403,57 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
   const tenantId = await recruiterTenant(req, res);
   if (!tenantId) return;
   try {
-    const a = (
-      await pool.query(
-        `SELECT a.*, j.title AS job_title, j.test_kind, j.min_cefr, j.department, j.location,
-           si.status AS integrity_status, si.risk_level, si.risk_score, si.reasons AS integrity_reasons, si.reviewed_at AS integrity_reviewed_at,
-           e.name AS exam_name, e.test_id AS exam_test_id, ts.test_code, concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name,
-           concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
-           concat_ws(' ', conf.first_name, conf.last_name) AS confirmed_by_name, t.category AS tenant_category,
-           (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status,
-           (SELECT code FROM certificates c WHERE c.session_id = a.session_id AND c.revoked_at IS NULL LIMIT 1) AS certificate_code
-         FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
-         LEFT JOIN session_integrity si ON si.session_id = a.session_id
-         LEFT JOIN sessions ts ON ts.id = a.session_id
-         LEFT JOIN exams e ON e.id = a.exam_id
-         LEFT JOIN users inv ON inv.id = a.invited_by
-         LEFT JOIN users dec ON dec.id = a.decided_by
-         LEFT JOIN users conf ON conf.id = a.confirmed_by
-         JOIN tenants t ON t.id = a.tenant_id
-         WHERE a.id = $1 AND a.tenant_id = $2`,
-        [req.params.id, tenantId],
-      )
-    ).rows[0];
+    const a = await assessmentDetail(String(req.params.id), tenantId);
     if (!a) return res.status(404).json({ error: "assessment_not_found" });
-    const { token_hash: _t, ...rest } = a;
-    // Questions for the interview, aimed at the skills the test showed weakest.
-    res.json({ assessment: rest, interview: a.status === "completed" ? interviewQuestions(a.result, a.min_cefr) : [] });
+    res.json(assessmentJson(a));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// A link a recruiter shares with hiring managers: the candidate's report,
+// read only, without logging in, for SHARE_DAYS.
+const SHARE_DAYS = 30;
+function shareSignature(id: string, until: number): string {
+  return createHmac("sha256", process.env.SESSION_SECRET ?? "dev-share-secret").update(`share:${id}:${until}`).digest("hex").slice(0, 24);
+}
+
+recruitmentRouter.post("/assessments/:id/share", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const a = (await pool.query(`SELECT id, email, first_name, last_name FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2 AND status = 'completed'`, [req.params.id, tenantId])).rows[0];
+    if (!a) return res.status(404).json({ error: "assessment_not_found" });
+    const until = Math.floor(Date.now() / 86_400_000) + SHARE_DAYS;
+    const token = `${a.id}.${until}.${shareSignature(a.id, until)}`;
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "recruitment.report_shared",
+      targetType: "candidate",
+      targetId: a.id,
+      targetLabel: [a.first_name, a.last_name].filter(Boolean).join(" ") || a.email,
+      details: { days: SHARE_DAYS },
+      ip: req.ip,
+    });
+    res.json({ url: `${APP_URL}/recruitment/shared/${token}`, until: new Date(until * 86_400_000).toISOString().slice(0, 10) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Public: the shared report, while its link is valid.
+recruitmentRouter.get("/shared/:token", async (req, res, next) => {
+  try {
+    const [id, untilRaw, sig] = String(req.params.token).split(".");
+    const until = Number(untilRaw);
+    const valid = id && sig && Number.isInteger(until) && until >= Math.floor(Date.now() / 86_400_000) && sig.length === 24;
+    if (!valid || !timingSafeEqual(Buffer.from(sig), Buffer.from(shareSignature(id, until)))) return res.status(404).json({ error: "link_not_valid" });
+    const t = (await pool.query(`SELECT tenant_id FROM recruitment_assessments WHERE id = $1`, [id])).rows[0];
+    const a = t ? await assessmentDetail(id, t.tenant_id) : null;
+    if (!a || a.status !== "completed") return res.status(404).json({ error: "link_not_valid" });
+    res.json({ ...assessmentJson(a), sharedUntil: new Date(until * 86_400_000).toISOString().slice(0, 10) });
   } catch (err) {
     next(err);
   }

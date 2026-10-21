@@ -108,6 +108,8 @@ function App() {
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />
+        {/* A candidate's report shared with a hiring manager (no login). */}
+        <Route path="/recruitment/shared/:token" element={<CandidateReportPrint />} />
         {/* Public pages per English level (no account needed). */}
         <Route path="/english-level" element={<EnglishLevelsIndex />} />
         <Route path="/english-level/:level" element={<EnglishLevelPage />} />

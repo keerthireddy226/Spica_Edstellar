@@ -193,6 +193,17 @@ export interface InterviewQuestion {
   reason: "below_minimum" | "weakest";
 }
 
+// A read-only link to a candidate's report for hiring managers (no login, 30 days).
+export function shareAssessment(id: string): Promise<{ url: string; until: string }> {
+  return api(`/recruitment/assessments/${id}/share`, { method: "POST", body: "{}" });
+}
+
+export async function getSharedAssessment(token: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[]; sharedUntil: string }> {
+  const r = await fetch(`/api/recruitment/shared/${encodeURIComponent(token)}`);
+  if (!r.ok) throw new Error("link_not_valid");
+  return r.json();
+}
+
 export function getAssessment(id: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[] }> {
   return api(`/recruitment/assessments/${id}`);
 }
