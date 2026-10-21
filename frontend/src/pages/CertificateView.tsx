@@ -30,7 +30,8 @@ interface VerifiedCertificate {
   kind?: "completion" | "result";
   testName?: string | null;
   spicaScore?: number | null;
-  skillScores?: Record<string, { level: string; score: number }> | null;
+  // score: a Spica score; percent: a level test's share right.
+  skillScores?: Record<string, { level: string; score?: number; percent?: number }> | null;
   validUntil?: string | null;
   expired?: boolean;
 }
@@ -84,12 +85,15 @@ export function CertificateView() {
   const levels = result
     ? [
         cert.spicaScore != null ? { label: tr("Spica score"), value: String(cert.spicaScore), note: tr("out of 90") } : null,
-        cert.cefrLevel ? { label: tr("CEFR level"), value: cert.cefrLevel, note: null } : null,
-        ...SKILL_ORDER.filter((k) => cert.skillScores?.[k]).map((k) => ({
-          label: t(`skills.${k}`),
-          value: cert.skillScores![k].level,
-          note: tr("score {{n}}", { n: cert.skillScores![k].score }),
-        })),
+        cert.cefrLevel ? { label: tr("CEFR level"), value: cert.cefrLevel, note: cert.spicaScore == null ? tr("Passed") : null } : null,
+        ...SKILL_ORDER.filter((k) => cert.skillScores?.[k]).map((k) => {
+          const s = cert.skillScores![k];
+          return {
+            label: t(`skills.${k}`),
+            value: s.percent != null ? `${s.percent}%` : s.level,
+            note: s.percent != null ? tr("right at {{level}}", { level: s.level }) : tr("score {{n}}", { n: s.score ?? "—" }),
+          };
+        }),
       ].filter((x): x is { label: string; value: string; note: string | null } => !!x)
     : [
     cert.goalLevel ? { label: tr("Goal"), value: cert.goalLevel, note: null } : null,
@@ -174,7 +178,9 @@ export function CertificateView() {
                   </p>
                 )}
                 <p className="text-[15px] mt-4 max-w-[640px] leading-relaxed">
-                  {result
+                  {result && cert.spicaScore == null && cert.cefrLevel
+                    ? tr("has passed the Spica level test at {{level}}, strictly proctored", { level: cert.cefrLevel })
+                    : result
                     ? tr("has taken the Spica {{test}} test, strictly proctored, with this result", { test: cert.testName ?? "" })
                     : course
                     ? tr("has completed the {{course}} course", { course: cert.courseName })

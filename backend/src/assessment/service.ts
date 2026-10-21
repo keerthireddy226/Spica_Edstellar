@@ -10,10 +10,13 @@ import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { notify } from "../notifications/service.js";
 import { scoreReport } from "../reports/scoreReport.js";
+import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
 import { randomBytes } from "node:crypto";
 
 const DAY = 86_400_000;
 export const UNLOCK_DAYS_BEFORE_END = 7;
+// A level test runs on the 4 Skills test's runner (device checks, proctoring).
+export const LEVEL_ENGINE_TEST = "fourSkills";
 // Questions per part in the free sample.
 export const SAMPLE_PER_PART = 2;
 // A result certificate is valid this long.
@@ -21,30 +24,36 @@ export const VALID_MONTHS = 12;
 // Time after finishing for the slower checks (voice) before a certificate is issued.
 const SETTLE_MINUTES = 10;
 
-export type AttemptKind = "prep" | "assessment";
+export type AttemptKind = "prep" | "assessment" | "level";
 export type Unlock =
   | { state: "open" }
   | { state: "mock_needed"; opensOn: string }
   | { state: "sample_needed" }
+  | { state: "retake_wait"; opensOn: string }
   | { state: "used" }
   | { state: "expired" };
 
-// Pure: whether an owned attempt can be started now.
+// Pure: whether an owned attempt can be started now. A level test opens at
+// once, except within LEVEL_RETAKE_DAYS of a level test at that level that wasn't passed.
 export function unlockOf(
   e: { kind: AttemptKind; attemptsLeft: number; endsAt: string | Date },
-  done: { mocks: number; samples: number },
+  done: { mocks: number; samples: number; lastLevelFail?: Date | string | null },
   now = new Date(),
 ): Unlock {
   const ends = new Date(e.endsAt).getTime();
   if (ends <= now.getTime()) return { state: "expired" };
   if (e.attemptsLeft <= 0) return { state: "used" };
+  if (e.kind === "level") {
+    const opens = done.lastLevelFail ? new Date(done.lastLevelFail).getTime() + LEVEL_RETAKE_DAYS * DAY : 0;
+    return now.getTime() >= opens ? { state: "open" } : { state: "retake_wait", opensOn: new Date(opens).toISOString() };
+  }
   if (e.kind === "assessment") return done.samples > 0 ? { state: "open" } : { state: "sample_needed" };
   const opens = ends - UNLOCK_DAYS_BEFORE_END * DAY;
   if (done.mocks > 0 || now.getTime() >= opens) return { state: "open" };
   return { state: "mock_needed", opensOn: new Date(opens).toISOString() };
 }
 
-export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "void";
+export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "not_passed" | "void";
 
 interface OwnedAttemptRow {
   id: string;
@@ -53,6 +62,7 @@ interface OwnedAttemptRow {
   name: string;
   test_type_id: string;
   test_name: string | null;
+  level: string | null;
   attempts_total: number;
   attempts_used: number;
   starts_at: Date;
@@ -62,18 +72,29 @@ interface OwnedAttemptRow {
 async function ownedAttempts(userId: string, entitlementId?: string): Promise<OwnedAttemptRow[]> {
   return (
     await pool.query(
-      `SELECT e.id, e.product_id, p.kind, p.name, e.test_type_id, tt.name AS test_name, e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
+      `SELECT e.id, e.product_id, p.kind, p.name, coalesce(e.test_type_id, $3) AS test_type_id, tt.name AS test_name, e.level,
+         e.attempts_total, e.attempts_used, e.starts_at, e.ends_at
        FROM entitlements e JOIN products p ON p.id = e.product_id LEFT JOIN test_types tt ON tt.id = e.test_type_id
-       WHERE e.user_id = $1 AND e.revoked_at IS NULL AND p.kind IN ('prep', 'assessment') AND e.test_type_id IS NOT NULL
+       WHERE e.user_id = $1 AND e.revoked_at IS NULL
+         AND ((p.kind IN ('prep', 'assessment') AND e.test_type_id IS NOT NULL) OR (p.kind = 'level' AND e.level IS NOT NULL))
          AND e.attempts_total > 0 AND e.starts_at <= now() AND ($2::uuid IS NULL OR e.id = $2)
        ORDER BY e.ends_at DESC`,
-      [userId, entitlementId ?? null],
+      [userId, entitlementId ?? null, LEVEL_ENGINE_TEST],
     )
   ).rows;
 }
 
 // Mock tests of the test since the purchase began, and samples taken for it.
-async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number }> {
+async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null }> {
+  if (e.kind === "level") {
+    // The latest level test at this level that wasn't passed.
+    const f = await pool.query(
+      `SELECT max(completed_at) AS at FROM sessions WHERE user_id = $1 AND delivery_mode = 'certified' AND completed_at IS NOT NULL
+         AND composition->>'levelTest' = $2 AND result->'levelTest'->>'passed' = 'false'`,
+      [userId, e.level],
+    );
+    return { mocks: 0, samples: 0, lastLevelFail: f.rows[0]?.at ?? null };
+  }
   const r = (
     await pool.query(
       `SELECT count(*) FILTER (WHERE s.delivery_mode = 'mock')::int AS mocks, count(*) FILTER (WHERE s.delivery_mode = 'sample')::int AS samples
@@ -114,7 +135,8 @@ export async function myTests(userId: string) {
         kind: e.kind,
         name: e.name,
         testTypeId: e.test_type_id,
-        testName: e.test_name,
+        testName: e.kind === "level" ? `Level ${e.level} test` : e.test_name,
+        level: e.level,
         attemptsLeft,
         endsAt: new Date(e.ends_at).toISOString(),
         unlock: unlockOf({ kind: e.kind, attemptsLeft, endsAt: e.ends_at }, done),
@@ -131,6 +153,8 @@ export async function myTests(userId: string) {
             spicaScore: s.certificate_code && !s.certificate_revoked ? (s.spica_score as number | null) : null,
             level: s.certificate_code && !s.certificate_revoked ? (s.certificate_level as string | null) : null,
             validUntil: s.valid_until && !s.certificate_revoked ? new Date(s.valid_until).toISOString().slice(0, 10) : null,
+            // A level test's result: passed or not, overall and each skill's share right.
+            levelResult: s.result?.levelTest ?? null,
           })),
       };
     }),
@@ -140,6 +164,7 @@ export async function myTests(userId: string) {
 function attemptStatus(s: Record<string, any>): AttemptStatus {
   if (!s.completed_at) return "in_progress";
   if (s.integrity === "violation") return "void";
+  if (s.result?.levelTest && s.result.levelTest.passed === false) return "not_passed";
   if (s.certificate_code && !s.certificate_revoked) return "certified";
   if (s.integrity === "flagged") return "under_review";
   return "scoring";
@@ -152,18 +177,19 @@ export class AttemptError extends Error {
 }
 
 // Checks a certified attempt (or a sample) can start for this purchase.
-export async function checkStart(userId: string, entitlementId: string, mode: "certified" | "sample"): Promise<{ testTypeId: string }> {
+export async function checkStart(userId: string, entitlementId: string, mode: "certified" | "sample"): Promise<{ testTypeId: string; level: string | null }> {
   const [e] = await ownedAttempts(userId, entitlementId);
   if (!e) throw new AttemptError("attempt_not_found");
   if (new Date(e.ends_at).getTime() <= Date.now()) throw new AttemptError("attempt_expired");
-  if (mode === "sample") return { testTypeId: e.test_type_id };
+  const level = e.kind === "level" ? e.level : null;
+  if (mode === "sample") return { testTypeId: e.test_type_id, level };
   // The attempt already started (and used up): resuming it is fine.
   const open = await pool.query(`SELECT 1 FROM sessions WHERE user_id = $1 AND entitlement_id = $2 AND delivery_mode = 'certified' AND completed_at IS NULL`, [userId, e.id]);
-  if (open.rowCount) return { testTypeId: e.test_type_id };
+  if (open.rowCount) return { testTypeId: e.test_type_id, level };
   const attemptsLeft = Math.max(0, e.attempts_total - e.attempts_used);
   const unlock = unlockOf({ kind: e.kind, attemptsLeft, endsAt: e.ends_at }, await doneFor(userId, e));
-  if (unlock.state !== "open") throw new AttemptError(`attempt_${unlock.state}`, unlock.state === "mock_needed" ? { opensOn: unlock.opensOn } : {});
-  return { testTypeId: e.test_type_id };
+  if (unlock.state !== "open") throw new AttemptError(`attempt_${unlock.state}`, "opensOn" in unlock ? { opensOn: unlock.opensOn } : {});
+  return { testTypeId: e.test_type_id, level };
 }
 
 // Uses up one attempt, in the transaction that creates the session.
@@ -210,9 +236,26 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
     )
   ).rows[0];
   if (!s) return null;
-  const score = await scoreReport(sessionId, null);
-  if (!score?.overall) return null;
-  const skills = Object.fromEntries(score.skills.map((k) => [k.skill, { level: k.level, score: k.score }]));
+  // A level test: the level's certificate, only when passed; each skill's share right.
+  const levelTest = s.composition?.levelTest as string | undefined;
+  let level: string;
+  let spica: number | null;
+  let skills: Record<string, unknown>;
+  let testName: string | null = s.test_name;
+  if (levelTest) {
+    const r = (await pool.query(`SELECT result->'levelTest' AS lt FROM sessions WHERE id = $1`, [sessionId])).rows[0]?.lt;
+    if (!r?.passed) return null;
+    level = levelTest;
+    spica = null;
+    testName = `Level ${levelTest} test`;
+    skills = Object.fromEntries(Object.entries((r.skillPercents ?? {}) as Record<string, number | null>).filter(([, v]) => typeof v === "number").map(([k, v]) => [k, { level: levelTest, percent: v }]));
+  } else {
+    const score = await scoreReport(sessionId, null);
+    if (!score?.overall) return null;
+    level = score.overall.level;
+    spica = score.overall.score;
+    skills = Object.fromEntries(score.skills.map((k) => [k.skill, { level: k.level, score: k.score }]));
+  }
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await pool.query(
@@ -230,11 +273,11 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
           s.participant_id,
           s.org_type === "cohort" ? s.org : null,
           s.batch,
-          score.overall.level,
+          level,
           sessionId,
           s.test_type_id,
-          s.test_name,
-          score.overall.score,
+          testName,
+          spica,
           JSON.stringify(skills),
           VALID_MONTHS,
         ],
@@ -245,7 +288,7 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
           userId: s.user_id,
           kind: "result_certificate",
           title: "Your certificate is ready",
-          body: `${s.test_name ?? "Your test"}: Spica score ${score.overall.score}, level ${score.overall.level}.`,
+          body: spica !== null ? `${testName ?? "Your test"}: Spica score ${spica}, level ${level}.` : `${testName}: passed.`,
           link: "/my-tests",
           email: true,
           dedupeKey: `result_certificate:${sessionId}`,
@@ -273,6 +316,8 @@ export async function issueDueResultCertificates(): Promise<number> {
        WHERE s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
          AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND si.status IN ('clear', 'cleared')
+         -- A level test that wasn't passed has no certificate.
+         AND coalesce(s.result->'levelTest'->>'passed', 'true') <> 'false'
          AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id)
          AND NOT EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
                          WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending')

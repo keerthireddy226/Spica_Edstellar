@@ -5,15 +5,18 @@ export type Unlock =
   | { state: "open" }
   | { state: "mock_needed"; opensOn: string }
   | { state: "sample_needed" }
+  | { state: "retake_wait"; opensOn: string }
   | { state: "used" }
   | { state: "expired" };
 
-export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "void";
+export type AttemptStatus = "in_progress" | "scoring" | "under_review" | "certified" | "not_passed" | "void";
 
 export interface OwnedTest {
   id: string;
   productId: string;
-  kind: "prep" | "assessment";
+  kind: "prep" | "assessment" | "level";
+  // A level test's level.
+  level: string | null;
   name: string;
   testTypeId: string;
   testName: string | null;
@@ -31,6 +34,7 @@ export interface OwnedTest {
     spicaScore: number | null;
     level: string | null;
     validUntil: string | null;
+    levelResult: { level: string; passed: boolean; overallPercent: number | null; skillPercents: Record<string, number | null> } | null;
   }[];
 }
 

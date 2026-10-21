@@ -12,7 +12,7 @@ export function OwnedIntro({
   onBack,
   onStart,
 }: {
-  owned: { mode: "certified" | "sample"; testName: string | null };
+  owned: { mode: "certified" | "sample"; testName: string | null; level?: string | null };
   minutes: number | null;
   error: string | null;
   starting: boolean;
@@ -22,7 +22,16 @@ export function OwnedIntro({
   const [ready, setReady] = useState(false);
   const real = owned.mode === "certified";
   const test = owned.testName ?? tr("your test");
-  const rules = real
+  const level = owned.level ?? null;
+  const rules = real && level
+    ? [
+        tr("Questions at {{level}} in all four skills. A pass needs 70% overall and at least 50% in each skill.", { level }),
+        tr("Pass it for a {{level}} certificate, valid for a year. If you don't pass, you can take a new level test 7 days later.", { level }),
+        tr("You have one attempt. It's used up as soon as the test starts."),
+        tr("It's strictly proctored: you show an ID and your room first, and your camera, microphone and screen are watched throughout."),
+        tr("The test moves on with the timer: there is no Skip and no Back."),
+      ]
+    : real
     ? [
         tr("This attempt counts: your score report and certificate come from it."),
         tr("You have one attempt. It's used up as soon as the test starts."),

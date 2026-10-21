@@ -292,5 +292,10 @@
  "1 learner in your batches has no active access. Request more licenses from your Org Admin.",
  "{{n}} learners in your batches have no active access. Request more licenses from your Org Admin.",
  "Reason: {{reason}} (Your Org Admin decides.)",
- "{{test}}: Spica score {{score}}, level {{level}}."
+ "{{test}}: Spica score {{score}}, level {{level}}.",
+ "{{test}}: passed.",
+ "You can prepare for a test",
+ "You have a real test to take",
+ "{{org}} gave you {{product}}: practice for {{n}} days, then one real test.",
+ "{{org}} gave you {{product}}. Take it within {{n}} days."
 ]

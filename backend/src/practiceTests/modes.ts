@@ -246,3 +246,46 @@ export async function practiceFeedback(sessionId: string, itemId: string): Promi
     reason: r.reason ?? null,
   };
 }
+
+// ---- Level tests (A1-C2) ----
+
+// A level test: questions at one CEFR level covering all four skills, from
+// the Practice Modules question bank (which has every level). Parts in order.
+export const LEVEL_TEST_BLUEPRINT: { itemTypeId: string; count: number }[] = [
+  { itemTypeId: "reading", count: 3 }, // Read Aloud: speaking, reading
+  { itemTypeId: "repeats", count: 4 }, // listening, speaking
+  { itemTypeId: "short_answer", count: 3 }, // listening, speaking
+  { itemTypeId: "response_selection", count: 4 }, // listening
+  { itemTypeId: "reading_comprehension", count: 4 }, // reading
+  { itemTypeId: "sentence_completion", count: 5 }, // writing
+  { itemTypeId: "dictation", count: 4 }, // listening, writing
+  { itemTypeId: "email_writing", count: 1 }, // writing
+];
+// Pass: this share right overall, and at least LEVEL_SKILL_MIN in every skill.
+export const LEVEL_PASS_OVERALL = 70;
+export const LEVEL_SKILL_MIN = 50;
+// After a level test that wasn't passed, the next one opens this many days later.
+export const LEVEL_RETAKE_DAYS = 7;
+
+// The level test's questions for a learner: unseen ones first, at the level.
+export async function levelTestItemIds(level: string, userId: string, perPart?: (n: number) => number): Promise<string[]> {
+  const seen = await seenItemIds(userId);
+  const ids: string[] = [];
+  for (const part of LEVEL_TEST_BLUEPRINT) {
+    const want = perPart ? perPart(part.count) : part.count;
+    const r = await pool.query(
+      `SELECT id FROM items WHERE item_type_id = $1 AND cefr_level = $2 AND status = 'approved' AND exam_part_id IS NULL`,
+      [part.itemTypeId, level],
+    );
+    const pool_ = shuffle(r.rows.map((x) => x.id as string)).sort((a, b) => Number(seen.has(a)) - Number(seen.has(b)));
+    ids.push(...pool_.slice(0, want));
+  }
+  return ids;
+}
+
+// Whether a finished level test was passed, from each skill's share right.
+export function levelTestPassed(overallPercent: number | null, skillPercents: Record<string, number | null | undefined>): boolean {
+  if (overallPercent === null || overallPercent < LEVEL_PASS_OVERALL) return false;
+  const skills = Object.values(skillPercents).filter((x): x is number => typeof x === "number");
+  return skills.length > 0 && skills.every((p) => p >= LEVEL_SKILL_MIN);
+}

@@ -37,6 +37,9 @@ import {
   recordView,
   secondsLeft,
   isTimed,
+  LEVEL_TEST_BLUEPRINT,
+  levelTestItemIds,
+  levelTestPassed,
   type DeliveryMode,
   type MockComposition,
 } from "./modes.js";
@@ -117,6 +120,21 @@ async function selectFormItems(ids: string[], examId: string) {
     rows: ids.map((id) => byId.get(id)).filter(Boolean) as typeof result.rows,
     partIdByOrder: new Map<number, string>(parts.rows.map((p) => [p.sort_order, p.id])),
   };
+}
+
+// A level test's questions, part by part (the blueprint's order), shaped like a set's rows.
+async function levelTestRows(level: string, userId: string) {
+  const ids = await levelTestItemIds(level, userId);
+  const order = new Map(LEVEL_TEST_BLUEPRINT.map((p, i) => [p.itemTypeId, i + 1]));
+  const r = await pool.query(
+    `SELECT i.id, i.item_type_id, i.content, it.skills, it.input_method, it.instruction_text, it.question_instruction,
+       COALESCE(i.timer_seconds, it.timer_seconds) AS timer_seconds, it.two_phase_read_seconds, it.two_phase_write_seconds, it.prep_seconds, it.min_words, it.max_words,
+       'level-' || it.id AS exam_part_id, it.name AS part_label
+     FROM items i JOIN item_types it ON it.id = i.item_type_id WHERE i.id = ANY($1::uuid[])`,
+    [ids],
+  );
+  const byId = new Map(r.rows.map((x) => [x.id, { ...x, sort_order: order.get(x.item_type_id) ?? 99 }]));
+  return ids.map((id) => byId.get(id)).filter(Boolean) as (Awaited<ReturnType<typeof selectExamItems>>[number])[];
 }
 
 // Used by both the resume-below and /session/current equivalents — loads an
@@ -454,9 +472,13 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     // A real attempt or its sample: of the test the learner bought, open by the unlock rule.
     const owned = !candidate && (mode === "certified" || mode === "sample");
     let ownedTestType: string | null = null;
+    // A level test (A1-C2): questions at that level.
+    let ownedLevel: string | null = null;
     if (owned) {
       try {
-        ownedTestType = (await checkStart(req.user!.id, body.entitlementId!, mode)).testTypeId;
+        const started = await checkStart(req.user!.id, body.entitlementId!, mode);
+        ownedTestType = started.testTypeId;
+        ownedLevel = started.level;
       } catch (err) {
         if (err instanceof AttemptError) return res.status(403).json({ error: err.code, ...err.detail });
         throw err;
@@ -547,11 +569,15 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     let form: Awaited<ReturnType<typeof selectFormItems>> | null = null;
     // A built test (assessment builder): its questions, time limits and duration.
     let built: { id: string; code: string; durationMinutes: number; shortForm: boolean; timers: Record<string, number> } | null = null;
+    const levelRows = ownedLevel ? await levelTestRows(ownedLevel, req.user!.id) : null;
     // Published mock forms are used before the per-learner draw.
-    const mockForm = timed && !candidate ? await pickMockForm(testTypeId, req.user!.id) : null;
+    const mockForm = timed && !candidate && !levelRows ? await pickMockForm(testTypeId, req.user!.id) : null;
     const formToUse: { id: string; code: string; duration_minutes: number; short_form: boolean } | null =
       builtForm ?? (mockForm ? (await pool.query(`SELECT id, code, duration_minutes, short_form FROM forms WHERE id = $1`, [mockForm.id])).rows[0] : null);
-    if (formToUse) {
+    if (levelRows) {
+      form = { rows: levelRows, partIdByOrder: new Map<number, string>() };
+      examId = null;
+    } else if (formToUse) {
       const fr = await formSessionRows(formToUse.id);
       form = { rows: fr.rows, partIdByOrder: fr.partIdByOrder };
       built = { id: formToUse.id, code: formToUse.code, durationMinutes: formToUse.duration_minutes, shortForm: formToUse.short_form, timers: fr.timers };
@@ -610,7 +636,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
           testTypeId,
           itemIds,
           partBoundaries,
-          randomized: !!formRows.length && !builtTest,
+          randomized: !!formRows.length && !builtTest && !levelRows,
+          ...(ownedLevel ? { levelTest: ownedLevel } : {}),
           ...(builtTest ? { formId: builtTest.id, formCode: builtTest.code, durationMinutes: builtTest.durationMinutes, shortForm: builtTest.shortForm, timers } : {}),
           ...mock,
         }),
@@ -810,13 +837,13 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   // pending" response instead of failing the whole request.
   try {
     const summaryResult = await pool.query(
-      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label,
+      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, coalesce(ep.part_label, it.name) AS part_label,
          a.response_text, a.response_uri
        FROM attempts a
        JOIN scores sc ON sc.attempt_id = a.id
        JOIN items i ON i.id = a.item_id
        JOIN item_types it ON it.id = i.item_type_id
-       JOIN exam_parts ep ON ep.id = i.exam_part_id
+       LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id
        WHERE a.session_id = $1`,
       [req.params.sessionId],
     );
@@ -863,6 +890,17 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
           skillPercents: level?.skillPercents ?? null,
           overallPercent: overall,
           scoreBand: bandForLevel(scale, level?.cefrLevel),
+          // A level test: passed at 70% overall and at least 50% in each skill.
+          ...(composition.levelTest
+            ? {
+                levelTest: {
+                  level: composition.levelTest,
+                  passed: levelTestPassed(overall, (level?.skillPercents ?? {}) as Record<string, number>),
+                  overallPercent: overall,
+                  skillPercents: level?.skillPercents ?? {},
+                },
+              }
+            : {}),
         }),
       ]);
       await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});

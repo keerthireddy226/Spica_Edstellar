@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Award, CalendarClock, ClipboardCheck, FileText, Lock, PlayCircle, ShieldCheck } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -19,6 +20,7 @@ const STATUS: Record<AttemptStatus, { label: () => string; cls: string }> = {
   scoring: { label: () => tr("Being scored"), cls: "text-warning" },
   under_review: { label: () => tr("Under review"), cls: "text-warning" },
   certified: { label: () => tr("Certified"), cls: "text-success" },
+  not_passed: { label: () => tr("Not passed"), cls: "text-error" },
   void: { label: () => tr("Not valid"), cls: "text-error" },
 };
 
@@ -26,6 +28,7 @@ const takeLink = (t: OwnedTest, mode: "certified" | "sample", sessionId?: string
   `${ROUTES.MY_TESTS_TAKE}?entitlement=${t.id}&mode=${mode}${sessionId ? `&session=${sessionId}` : ""}`;
 
 function TestCard({ t }: { t: OwnedTest }) {
+  const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const u = t.unlock;
   const open = t.attempts.find((a) => a.status === "in_progress");
@@ -33,7 +36,9 @@ function TestCard({ t }: { t: OwnedTest }) {
     <section className="bg-surface border border-rule rounded-card p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{t.kind === "prep" ? tr("Preparation + assessment") : tr("Assessment")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {t.kind === "prep" ? tr("Preparation + assessment") : t.kind === "level" ? tr("Level test") : tr("Assessment")}
+          </p>
           <h2 className="font-display font-bold text-xl text-ink">{t.testName ?? t.name}</h2>
           <p className="text-sm text-muted flex items-center gap-1.5 mt-0.5">
             <CalendarClock size={14} /> {u.state === "expired" ? tr("Ended {{date}}", { date: day(t.endsAt) }) : tr("Available until {{date}}", { date: day(t.endsAt) })}
@@ -78,6 +83,10 @@ function TestCard({ t }: { t: OwnedTest }) {
             {tr("Start the free sample")}
           </Button>
         </div>
+      ) : u.state === "retake_wait" ? (
+        <div className="flex items-center gap-2 bg-paper-warm rounded-input px-4 py-3 text-sm text-ink">
+          <Lock size={16} className="text-muted shrink-0" /> {tr("You can take a new level test from {{date}}, 7 days after the last one.", { date: day(u.opensOn) })}
+        </div>
       ) : u.state === "expired" && !t.attempts.length ? (
         <p className="text-sm text-muted">{tr("This purchase ended before the test was taken.")}</p>
       ) : null}
@@ -97,6 +106,15 @@ function TestCard({ t }: { t: OwnedTest }) {
               {a.status === "certified" && a.spicaScore !== null && (
                 <span className="font-display font-semibold text-ink">{tr("Spica score {{score}} · {{level}}", { score: a.spicaScore, level: a.level ?? "—" })}</span>
               )}
+              {a.levelResult && a.status !== "in_progress" && (
+                <span className="text-xs text-ink">
+                  {tr("{{n}}% overall", { n: a.levelResult.overallPercent ?? 0 })}
+                  {Object.entries(a.levelResult.skillPercents)
+                    .filter(([, v]) => typeof v === "number")
+                    .map(([k, v]) => ` · ${tx(`skills.${k}`)} ${v}%`)
+                    .join("")}
+                </span>
+              )}
               <span className="flex-1" />
               {a.status === "certified" && (
                 <>
@@ -113,6 +131,9 @@ function TestCard({ t }: { t: OwnedTest }) {
               {a.status === "scoring" && <span className="text-xs text-muted">{tr("Your certificate arrives once scoring and the proctoring checks are done.")}</span>}
               {a.status === "under_review" && <span className="text-xs text-muted">{tr("A reviewer is checking the proctoring record. We'll email you when it's done.")}</span>}
               {a.status === "void" && <span className="text-xs text-muted">{tr("The proctoring review found a problem, so this attempt doesn't count.")}</span>}
+              {a.status === "not_passed" && (
+                <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill.")}</span>
+              )}
             </div>
           ))}
         </div>
@@ -172,5 +193,5 @@ export function TakeOwnedTest() {
   // A real test that isn't open (and not being resumed) goes back to My tests, which says why.
   const resuming = !!params.get("session") || test.attempts.some((a) => a.status === "in_progress");
   if (mode === "certified" && test.unlock.state !== "open" && !resuming) return <Navigate to={ROUTES.MY_TESTS} replace />;
-  return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.testName }} />;
+  return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.testName, level: test.kind === "level" ? test.level : null }} />;
 }

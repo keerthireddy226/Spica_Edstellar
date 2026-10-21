@@ -132,6 +132,8 @@ export interface OwnedStart {
   mode: "certified" | "sample";
   testTypeId: string;
   testName: string | null;
+  // A level test's level (A1-C2).
+  level?: string | null;
 }
 
 export function PracticeTests({ section = "practice", owned }: { section?: "practice" | "mock"; owned?: OwnedStart }) {
