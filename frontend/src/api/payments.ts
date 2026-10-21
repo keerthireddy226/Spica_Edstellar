@@ -196,7 +196,7 @@ export type ShopCurrency = "INR" | "USD" | "EUR" | "GBP" | "AED" | "SGD";
 
 export interface PricedProduct {
   id: string;
-  kind: "full" | "prep" | "assessment" | "level";
+  kind: "full" | "prep" | "assessment" | "level" | "pack";
   testTypeId: string | null;
   testTypeName: string | null;
   name: string;

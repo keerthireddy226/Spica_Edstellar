@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Award, BookOpen, ClipboardCheck, X } from "lucide-react";
+import { Award, BookOpen, ClipboardCheck, Dumbbell, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import {
   createProductOrder,
@@ -29,11 +29,17 @@ const GROUPS: { kind: PricedProduct["kind"]; title: () => string; note: () => st
   },
   { kind: "assessment", title: () => tr("Real test only"), note: () => tr("One strictly proctored real test with a score report and a certificate. A free sample comes first."), icon: Award },
   { kind: "level", title: () => tr("Level test"), note: () => tr("One test at the level you choose. Pass it (70% overall, at least 50% in each skill) for that level's certificate."), icon: ClipboardCheck },
+  {
+    kind: "pack",
+    title: () => tr("Practice pack"),
+    note: () => tr("30 days of Practice Modules in every question type, at your level as it grows, aiming at the level you choose. No tests."),
+    icon: Dumbbell,
+  },
 ];
 
 function Checkout({ product, currency, onClose }: { product: PricedProduct; currency: ShopCurrency; onClose: () => void }) {
   const navigate = useNavigate();
-  const [level, setLevel] = useState(product.kind === "level" ? "B1" : "");
+  const [level, setLevel] = useState(product.kind === "level" || product.kind === "pack" ? "B1" : "");
   const [q, setQ] = useState<ProductQuote | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,9 +71,9 @@ function Checkout({ product, currency, onClose }: { product: PricedProduct; curr
             <X size={17} />
           </button>
         </div>
-        {product.kind === "level" && (
+        {(product.kind === "level" || product.kind === "pack") && (
           <label className="flex flex-col gap-1 text-sm text-ink">
-            {tr("Level")}
+            {product.kind === "pack" ? tr("Level to aim for") : tr("Level")}
             <select value={level} onChange={(e) => setLevel(e.target.value)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm">
               {LEVELS.map((l) => (
                 <option key={l} value={l}>
@@ -170,7 +176,7 @@ export function ProductShop() {
               {items.map((p) => (
                 <div key={p.id} className="flex items-center justify-between gap-3 border border-rule rounded-xl px-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-ink">{p.testTypeName ?? (p.kind === "level" ? tr("Any level, A1 to C2") : p.name)}</p>
+                    <p className="text-sm font-semibold text-ink">{p.testTypeName ?? (p.kind === "level" || p.kind === "pack" ? tr("Any level, A1 to C2") : p.name)}</p>
                     <p className="text-sm text-ink tabular-nums">{formatAmount(p.amount, p.currency)}</p>
                   </div>
                   {data.canBuy && (

@@ -50,6 +50,7 @@ import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.j
 import { learnerQuota } from "../programs/quotas.js";
 import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
 import { qualitySettings } from "../quality/settings.js";
+import { snapshot } from "../reports/batchReport.js";
 
 export const practiceTestsRouter = Router();
 
@@ -876,7 +877,16 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
     });
 
     // The same CEFR level logic as the placement test, from each question's level.
-    const level = levelSummary(rows);
+    const summary = levelSummary(rows);
+    // The overall level is the Spica score's (the mean of the skills' scores),
+    // as on the score report, so a high percentage never shows a low level.
+    const level = summary
+      ? {
+          ...summary,
+          cefrLevel: (snapshot(summary.skillLevels as never, summary.skillPercents as never, graded.length ? Math.round((graded.filter(rowCorrect).length / graded.length) * 100) : null, summary.cefrLevel).level ??
+            summary.cefrLevel) as typeof summary.cefrLevel,
+        }
+      : null;
     // A mock's estimated score range on the exam family's scale, where it publishes one.
     // A short form isn't the exam's format, so its score range wouldn't mean anything.
     const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;

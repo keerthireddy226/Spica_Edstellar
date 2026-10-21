@@ -1,3 +1,4 @@
+import { tr } from "@/i18n/tr";
 import type { TestItem } from "@/api/testSession";
 
 // Heard, not read — showing the source text would let a learner read it back instead of listening.
@@ -88,9 +89,12 @@ export function getSpokenSegments(item: TestItem): string[] {
 export function getVisibleText(item: TestItem): string {
   const c = item.content as Record<string, unknown>;
   const text = (c.text ?? c.question ?? c.sentence ?? c.passage ?? c.prompt ?? c.situation ?? "") as string;
-  // Sentence Completion: the word to put in the right form, when there is one.
+  // Sentence Completion: the word to put in the right form, when there is one,
+  // and how many words the gap takes when it's more than one.
   const hint = typeof c.hint_word === "string" ? c.hint_word.trim() : "";
-  return hint ? `${text}  (${hint})` : text;
+  const words = typeof c.blank_words === "number" && c.blank_words > 1 ? tr("{{n}} words", { n: c.blank_words }) : "";
+  const extra = [hint, words].filter(Boolean).join(" · ");
+  return extra ? `${text}  (${extra})` : text;
 }
 
 // Types showing a passage plus a separate question, not one field — read silently, then answer.

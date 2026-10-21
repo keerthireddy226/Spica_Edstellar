@@ -128,13 +128,13 @@ accessRouter.post("/grants", requireAuth, async (req: AuthedRequest, res, next) 
       .parse(req.body);
     const p = (await pool.query(`SELECT * FROM products WHERE id = $1`, [body.productId])).rows[0];
     if (!p) return res.status(404).json({ error: "product_not_found" });
-    if (p.kind === "level" && !body.level) return res.status(400).json({ error: "level_required" });
+    if ((p.kind === "level" || p.kind === "pack") && !body.level) return res.status(400).json({ error: "level_required" });
     const u = (await pool.query(`SELECT id, tenant_id FROM users WHERE lower(email) = lower($1) AND deleted_at IS NULL`, [body.email])).rows[0];
     if (!u) return res.status(404).json({ error: "user_not_found" });
     const r = await pool.query(
       `INSERT INTO entitlements (user_id, product_id, test_type_id, level, attempts_total, ends_at, source, tenant_id, granted_by)
        VALUES ($1, $2, $3, $4, $5, now() + make_interval(days => $6), 'grant', $7, $8) RETURNING id, ends_at`,
-      [u.id, p.id, p.test_type_id, p.kind === "level" ? body.level : null, p.attempts, body.days ?? p.duration_days, u.tenant_id, req.user!.id],
+      [u.id, p.id, p.test_type_id, p.kind === "level" || p.kind === "pack" ? body.level : null, p.attempts, body.days ?? p.duration_days, u.tenant_id, req.user!.id],
     );
     accessCache.delete(u.id);
     res.status(201).json({ id: r.rows[0].id, endsAt: r.rows[0].ends_at });

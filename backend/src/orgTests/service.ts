@@ -19,11 +19,11 @@ export async function givableProducts() {
   const r = await pool.query(
     `SELECT p.id, p.kind, p.name, p.test_type_id, tt.name AS test_name, p.credits, p.duration_days, p.attempts
      FROM products p LEFT JOIN test_types tt ON tt.id = p.test_type_id
-     WHERE p.active AND p.kind IN ('prep', 'assessment') AND p.credits IS NOT NULL ORDER BY p.sort_order`,
+     WHERE p.active AND p.kind IN ('prep', 'assessment', 'pack') AND p.credits IS NOT NULL ORDER BY p.sort_order`,
   );
   return r.rows.map((x) => ({
     id: x.id as string,
-    kind: x.kind as "prep" | "assessment",
+    kind: x.kind as "prep" | "assessment" | "pack",
     name: x.name as string,
     testTypeId: x.test_type_id as string,
     testName: x.test_name as string | null,
@@ -35,9 +35,9 @@ export async function givableProducts() {
 
 // Gives each learner the product: a real test, or preparation for `periods` x 30 days.
 export async function giveTests(args: { tenantId: string; actorId: string; userIds: string[]; productId: string; periods?: number }) {
-  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind IN ('prep', 'assessment') AND credits IS NOT NULL`, [args.productId])).rows[0];
+  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind IN ('prep', 'assessment', 'pack') AND credits IS NOT NULL`, [args.productId])).rows[0];
   if (!p) throw new OrgTestError("product_not_found", 404);
-  const periods = p.kind === "prep" ? Math.max(1, Math.min(12, args.periods ?? 1)) : 1;
+  const periods = p.kind === "prep" || p.kind === "pack" ? Math.max(1, Math.min(12, args.periods ?? 1)) : 1;
   const learners = (
     await pool.query(
       `SELECT id, coalesce(nullif(concat_ws(' ', first_name, last_name), ''), email) AS name FROM users
@@ -50,7 +50,7 @@ export async function giveTests(args: { tenantId: string; actorId: string; userI
   const balance = await creditBalance(args.tenantId);
   if (each * learners.length > balance) throw new OrgTestError("not_enough_credits", 402, { needed: each * learners.length, balance });
   const org = (await pool.query(`SELECT name FROM tenants WHERE id = $1`, [args.tenantId])).rows[0]?.name ?? "";
-  const days = p.kind === "prep" ? periods * 30 : p.duration_days;
+  const days = p.kind === "prep" || p.kind === "pack" ? periods * 30 : p.duration_days;
   for (const l of learners) {
     const e = await pool.query(
       `INSERT INTO entitlements (user_id, product_id, test_type_id, attempts_total, ends_at, source, tenant_id, granted_by, credits_spent)
@@ -59,18 +59,20 @@ export async function giveTests(args: { tenantId: string; actorId: string; userI
     );
     await pool.query(
       `INSERT INTO recruitment_credit_events (tenant_id, delta, reason, actor_id, entitlement_id, note) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [args.tenantId, -each, p.kind === "prep" ? "access" : "assessment", args.actorId, e.rows[0].id, `${p.name} for ${l.name}`],
+      [args.tenantId, -each, p.kind === "assessment" ? "assessment" : "access", args.actorId, e.rows[0].id, `${p.name} for ${l.name}`],
     );
     accessCache.delete(l.id);
     await notify({
       userId: l.id,
       kind: "test_given",
-      title: p.kind === "prep" ? "You can prepare for a test" : "You have a real test to take",
+      title: p.kind === "assessment" ? "You have a real test to take" : p.kind === "pack" ? "You have a practice pack" : "You can prepare for a test",
       body:
         p.kind === "prep"
           ? `${org} gave you ${p.name}: practice for ${days} days, then one real test.`
-          : `${org} gave you ${p.name}. Take it within ${days} days.`,
-      link: p.kind === "prep" ? "/practice-tests" : "/my-tests",
+          : p.kind === "pack"
+            ? `${org} gave you ${p.name}: Practice Modules for ${days} days.`
+            : `${org} gave you ${p.name}. Take it within ${days} days.`,
+      link: p.kind === "prep" ? "/practice-tests" : p.kind === "pack" ? "/modules" : "/my-tests",
       email: true,
       sentBy: args.actorId,
     }).catch((err) => console.error("test notification failed:", err));

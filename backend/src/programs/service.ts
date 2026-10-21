@@ -114,9 +114,13 @@ export async function planMember(p: ProgramRow, userId: string): Promise<number>
   const quota = await learnerQuota(userId);
   const window = await quotaWindow(userId);
   const from = p.starts_on > today() ? p.starts_on : today();
+  // A learner whose own exam comes before the program's target date stops at it.
+  const exam = (await pool.query(`SELECT exam_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0]?.exam_date;
+  const examDay = exam ? dateStr(exam) : null;
+  const targetDate = examDay && examDay > from && examDay < p.target_date ? examDay : p.target_date;
   const items = buildSchedule({
     from,
-    targetDate: p.target_date,
+    targetDate,
     gap: programGap(p, await latestLevel(userId, p.test_type_id)),
     practicePerMonth: quota?.practicePerMonth ?? null,
     mocksPerMonth: quota?.mocksPerMonth ?? null,

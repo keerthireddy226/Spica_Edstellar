@@ -189,6 +189,13 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
         [order.buyer_id, product!.id, product!.test_type_id, order.level, product!.attempts, product!.duration_days, order.tenant_id, order.id],
       );
       await client.query(`UPDATE payment_orders SET entitlement_id = $2 WHERE id = $1`, [order.id, ent.rows[0].id]);
+      // A practice pack aims at the level chosen: it becomes the learner's goal.
+      if (product!.kind === "pack" && order.level) {
+        await client.query(
+          `INSERT INTO participant_profiles (user_id, goal_level) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET goal_level = EXCLUDED.goal_level, updated_at = now()`,
+          [order.buyer_id, order.level],
+        );
+      }
     } else {
       purchase = await client.query(
         `INSERT INTO license_purchases (tenant_id, quantity, unit_price_cents, currency, source, reference, note, created_by, pool_expires_at)

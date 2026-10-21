@@ -22,6 +22,7 @@ function opens(o: Owned): string {
   if (o.kind === "prep") return tr("Practice tests, mock tests and Practice Modules for this test, then one real test with a certificate.");
   if (o.kind === "assessment") return tr("One real test, strictly proctored, with a score report and a certificate.");
   if (o.kind === "level") return tr("One level test at {{level}}. Pass it for that level's certificate.", { level: o.level ?? "—" });
+  if (o.kind === "pack") return tr("Practice Modules in every question type, aiming at {{level}}.", { level: o.level ?? "—" });
   return tr("Every test, mock test and Practice Module.");
 }
 
@@ -40,7 +41,7 @@ export function OwnedList({ access }: { access: MyAccess }) {
               <span className="text-xs text-muted">{opens(o)}</span>
               <span className="text-xs text-ink">
                 {tr("Until {{date}}", { date: formatShortDate(o.endsAt) })}
-                {o.kind !== "full" && ` · ${o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
+                {o.kind !== "full" && o.kind !== "pack" && ` · ${o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
               </span>
             </div>
           </div>

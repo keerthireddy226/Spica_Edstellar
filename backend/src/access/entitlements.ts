@@ -5,7 +5,7 @@
 import { pool } from "../db.js";
 import { learnerAccess, type LearnerAccess } from "../licenses/service.js";
 
-export type ProductKind = "full" | "prep" | "assessment" | "level";
+export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack";
 
 export interface EntitlementRow {
   id: string;
@@ -37,6 +37,8 @@ export interface Access {
   full: { endsAt: string | null } | null;
   // Tests the learner prepares for (practice tests, mocks, their Practice Modules question types).
   prepTests: string[];
+  // A practice pack: every Practice Modules question type (no tests).
+  practicePack: boolean;
   // Everything owned besides Full access, still valid (with or without attempts left).
   owned: Owned[];
   // Certified attempts that can still be started.
@@ -63,8 +65,9 @@ export function resolveAccess(licence: Pick<LearnerAccess, "status" | "accessEnd
   return {
     full: live ? { endsAt: licence!.status === "grace" ? licence!.graceEndsAt : licence!.accessEndsAt } : owned.some((o) => o.kind === "full") ? { endsAt: owned.filter((o) => o.kind === "full").map((o) => o.endsAt).sort().pop() ?? null } : null,
     prepTests: [...new Set(owned.filter((o) => o.kind === "prep" && o.testTypeId).map((o) => o.testTypeId!))],
+    practicePack: owned.some((o) => o.kind === "pack"),
     owned,
-    attempts: owned.filter((o) => o.attemptsLeft > 0 && o.kind !== "full"),
+    attempts: owned.filter((o) => o.attemptsLeft > 0 && o.kind !== "full" && o.kind !== "pack"),
   };
 }
 
@@ -108,7 +111,7 @@ export async function itemTypesOfTests(testTypeIds: string[]): Promise<string[]>
 // Practice Modules question types the learner may practise: all with Full
 // access, else those of the tests they prepare for (null = no limit).
 export async function allowedItemTypes(a: Access): Promise<string[] | null> {
-  if (a.full) return null;
+  if (a.full || a.practicePack) return null;
   return itemTypesOfTests(a.prepTests);
 }
 

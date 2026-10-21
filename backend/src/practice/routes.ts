@@ -350,11 +350,12 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
     // Preparation for one test opens only that test's question types.
     const narrowed = await narrowedAccess(req.user!.id);
     if (narrowed) {
-      const allowed = (await allowedItemTypes(narrowed)) ?? [];
+      const allowedOrAll = await allowedItemTypes(narrowed);
+      const allowed = allowedOrAll ?? [];
       const typeId =
         body.itemTypeId ??
         (body.setId ? (await pool.query(`SELECT u.item_type_id FROM sets s JOIN units u ON u.id = s.unit_id WHERE s.id = $1`, [body.setId])).rows[0]?.item_type_id : null);
-      if (typeId ? !allowed.includes(typeId) : !allowed.length) return res.status(403).json({ error: "type_not_included" });
+      if (allowedOrAll !== null && (typeId ? !allowed.includes(typeId) : !allowed.length)) return res.status(403).json({ error: "type_not_included" });
     }
 
     if (body.check) {

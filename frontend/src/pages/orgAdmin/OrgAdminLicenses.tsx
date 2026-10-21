@@ -15,6 +15,7 @@ import { getOrgLicenseRequests, type LicenseRequest } from "@/api/licenses";
 import { useSearchParams } from "react-router-dom";
 import { getInvoices, formatAmount, listInvoiceOrders, cancelInvoiceOrder, type InvoiceSummary, type InvoiceOrder } from "@/api/payments";
 import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 import { getOrgOverview } from "@/api/orgAdmin";
 import {
   getOrgLicenseOverview,
@@ -223,6 +224,13 @@ export function OrgAdminLicenses() {
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
           <p className="text-sm text-muted mt-1">
             {tr("1 license = 1 learner's access for 1 month, starting when you assign it · {{formatMoney}} per license", { formatMoney: formatMoney(data.pricePerLicenseCents) })}</p>
+          <p className="text-sm text-ink mt-1">
+            {tr("A license opens everything. To give one test only, a real test with a certificate, or a practice pack, use")}{" "}
+            <Link to={ROUTES.ORG_ADMIN_TESTS} className="font-semibold text-navy-deep hover:underline">
+              {tr("Tests & credits")}
+            </Link>
+            .
+          </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowBuy(true)} className="flex items-center gap-2">

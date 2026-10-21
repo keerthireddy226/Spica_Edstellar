@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { activeProgramOf, planMember } from "../programs/service.js";
 import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -238,6 +239,11 @@ meRouter.patch("/goals", requireAuth, async (req: AuthedRequest, res, next) => {
     }
     // A new goal, exam date or daily time gets a new study plan.
     if (b.goalLevel !== undefined || b.examDate !== undefined || b.dailyMinutes !== undefined) await rebuildRoadmap(req.user!.id);
+    // A program's test plan stops at the learner's own exam date.
+    if (b.examDate !== undefined) {
+      const p = await activeProgramOf(req.user!.id);
+      if (p) await planMember(p, req.user!.id).catch((err) => console.error("program replan failed:", err));
+    }
     res.json({ ok: true });
   } catch (err) {
     next(err);

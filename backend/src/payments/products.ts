@@ -72,7 +72,7 @@ export async function upgradeCredit(userId: string, currency: Currency): Promise
 export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string } = {}): Promise<ProductQuote> {
   const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
-  if (p.kind === "level" && !["A1", "A2", "B1", "B2", "C1", "C2"].includes(opts.level ?? "")) throw new PaymentError("invalid_quantity");
+  if ((p.kind === "level" || p.kind === "pack") && !["A1", "A2", "B1", "B2", "C1", "C2"].includes(opts.level ?? "")) throw new PaymentError("invalid_quantity");
   const currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
   const priced = (await pool.query(`SELECT amount FROM product_prices WHERE product_id = $1 AND currency = $2`, [productId, currency])).rows[0];
   // No price in this currency: USD.
@@ -92,7 +92,7 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     productName: p.name,
     kind: p.kind,
     testTypeId: p.test_type_id,
-    level: p.kind === "level" ? (opts.level ?? null) : null,
+    level: p.kind === "level" || p.kind === "pack" ? (opts.level ?? null) : null,
     currency: finalCurrency,
     provider,
     price,

@@ -49,7 +49,7 @@ export function OrgAdminTests() {
 
   const product = data?.products.find((p) => p.id === productId) ?? null;
   const count = who === "batch" ? learners.filter((l) => l.batchId === batchId).length : picked.size;
-  const each = product ? product.credits * (product.kind === "prep" ? periods : 1) : 0;
+  const each = product ? product.credits * (product.kind === "assessment" ? 1 : periods) : 0;
   const total = each * count;
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -61,7 +61,7 @@ export function OrgAdminTests() {
     setBusy(true);
     setNote(null);
     try {
-      const r = await giveTests({ productId: product.id, periods: product.kind === "prep" ? periods : undefined, ...(who === "batch" ? { batchId } : { userIds: [...picked] }) });
+      const r = await giveTests({ productId: product.id, periods: product.kind === "assessment" ? undefined : periods, ...(who === "batch" ? { batchId } : { userIds: [...picked] }) });
       setNote({ ok: true, text: r.given === 1 ? tr("Given to 1 learner. {{c}} credits used.", { c: r.creditsUsed }) : tr("Given to {{n}} learners. {{c}} credits used.", { n: r.given, c: r.creditsUsed }) });
       setPicked(new Set());
       load();
@@ -83,6 +83,7 @@ export function OrgAdminTests() {
   const groups = [
     { kind: "assessment" as const, label: tr("Real test (with a certificate)") },
     { kind: "prep" as const, label: tr("Prepare for one test, then a real test") },
+    { kind: "pack" as const, label: tr("Practice pack (Practice Modules only)") },
   ];
   return (
     <div className="flex flex-col gap-5 w-full">
@@ -122,14 +123,14 @@ export function OrgAdminTests() {
                     .filter((p) => p.kind === g.kind)
                     .map((p) => (
                       <option key={p.id} value={p.id}>
-                        {`${p.testName ?? p.name} · ${p.kind === "prep" ? tr("{{n}} credits a month", { n: p.credits }) : tr("{{n}} credits", { n: p.credits })}`}
+                        {`${p.testName ?? p.name} · ${p.kind === "assessment" ? tr("{{n}} credits", { n: p.credits }) : tr("{{n}} credits a month", { n: p.credits })}`}
                       </option>
                     ))}
                 </optgroup>
               ))}
             </select>
           </label>
-          {product?.kind === "prep" && (
+          {product && product.kind !== "assessment" && (
             <label className="flex flex-col gap-1 text-sm text-ink">
               {tr("Months")}
               <select value={periods} onChange={(e) => setPeriods(Number(e.target.value))} className={input}>

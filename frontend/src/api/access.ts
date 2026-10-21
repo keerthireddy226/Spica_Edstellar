@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 
 // What a learner owns: Full access (a licence or the Plus plan), preparation
 // for one test, and real-test attempts.
-export type ProductKind = "full" | "prep" | "assessment" | "level";
+export type ProductKind = "full" | "prep" | "assessment" | "level" | "pack";
 
 export interface Owned {
   id: string;
@@ -19,6 +19,8 @@ export interface Owned {
 export interface MyAccess {
   full: { endsAt: string | null } | null;
   prepTests: string[];
+  // A practice pack: every Practice Modules question type (no tests).
+  practicePack: boolean;
   owned: Owned[];
   attempts: Owned[];
   // Practice Modules question types open to the learner (null = all).

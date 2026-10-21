@@ -3,7 +3,7 @@ import { api } from "@/lib/api";
 // Tests & credits: an organization gives learners a real test or preparation for one test.
 export interface GivableProduct {
   id: string;
-  kind: "prep" | "assessment";
+  kind: "prep" | "assessment" | "pack";
   name: string;
   testTypeId: string;
   testName: string | null;
