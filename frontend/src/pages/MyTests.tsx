@@ -237,8 +237,9 @@ function TestCard({ t, onChanged }: { t: OwnedTest; onChanged: () => void }) {
               {a.status === "void" && <span className="text-xs text-muted">{tr("The proctoring review found a problem, so this attempt doesn't count.")}</span>}
               {a.status === "passed" && <span className="text-xs text-muted">{tr("You showed this level. Your certificate comes from your final assessment.")}</span>}
               {a.status === "not_passed" && (
-                <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill.")}</span>
+                <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill. A retake of this level is half price.")}</span>
               )}
+              {a.status === "passed" && <span className="text-xs text-muted">{tr("The next level's test is 25% off.")}</span>}
               <AppealLine sessionId={a.sessionId} appeal={a.appeal} canAppeal={a.canAppeal && a.status !== "in_progress"} />
             </div>
           ))}

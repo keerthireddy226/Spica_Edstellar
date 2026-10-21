@@ -105,6 +105,12 @@ function Checkout({ product, currency, onClose }: { product: PricedProduct; curr
                 <span>−{formatAmount(q.credit, q.currency)}</span>
               </div>
             )}
+            {q.discount > 0 && (
+              <div className="flex justify-between text-success">
+                <span>{q.discountReason === "level_retake" ? tr("Retake at half price") : tr("25% off the next level")}</span>
+                <span>−{formatAmount(q.discount, q.currency)}</span>
+              </div>
+            )}
             {q.taxAmount > 0 && (
               <div className="flex justify-between">
                 <span>{q.taxLabel}</span>

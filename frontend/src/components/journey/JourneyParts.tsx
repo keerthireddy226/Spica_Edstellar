@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
+  Award,
   BookOpen,
   CalendarDays,
   CalendarPlus,
@@ -26,6 +27,7 @@ import { CALENDAR_FILE_URL, emailTestDates } from "@/api/certificates";
 import type { SkillTag } from "@/api/testSession";
 import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import { formatShortDate } from "@/api/licenses";
+import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
 const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, speaking: Mic, reading: BookOpen, writing: PenLine };
@@ -121,9 +123,11 @@ export function PathToGoal({ j }: { j: Journey }) {
       </h2>
       <ol className="relative flex flex-col gap-4 pl-6">
         <span className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-rule" aria-hidden="true" />
-        {j.steps.map((step) => {
+        {j.steps.map((step, i) => {
           const done = step.skills.every((s) => s.state === "done");
           const active = !done && step.skills.some((s) => s.state === "now");
+          // The level just finished in Practice Modules: a level test checks it (no certificate).
+          const justDone = done && !j.steps[i + 1]?.skills.every((s) => s.state === "done");
           return (
             <li key={step.level} className="relative">
               <span
@@ -158,9 +162,22 @@ export function PathToGoal({ j }: { j: Journey }) {
                   );
                 })}
               </div>
+              {justDone && (
+                <Link to={ROUTES.SPICA_PLANS} className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-navy-deep hover:underline">
+                  {tr("You finished {{level}} in Practice Modules. Check it with a level test", { level: step.level })} <ArrowRight size={12} />
+                </Link>
+              )}
             </li>
           );
         })}
+        {/* The last step: practice ends with the final assessment, the one test that gives a certificate. */}
+        <li className="relative">
+          <span className="absolute -left-6 top-0.5 h-5 w-5 rounded-full flex items-center justify-center bg-surface border-2 border-navy text-navy-deep">
+            <Award size={11} />
+          </span>
+          <p className="text-sm font-semibold text-ink">{tr("Final assessment: certify your level")}</p>
+          <p className="text-xs text-muted mt-0.5">{tr("One strictly proctored real test gives your certificate, at the level you show.")}</p>
+        </li>
       </ol>
       <p className="text-[11px] text-muted">{tr("A skill moves up a level when its question types pass 7 sets at 70% or more, or after a level check or a mock test.")}</p>
     </section>

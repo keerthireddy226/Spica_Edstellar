@@ -221,6 +221,9 @@ export interface ProductQuote {
   provider: "stripe" | "razorpay" | "test";
   price: number;
   credit: number;
+  // A level test's discount: a retake at half price, or 25% off the next level.
+  discount: number;
+  discountReason: "level_retake" | "next_level" | null;
   subtotal: number;
   taxLabel: string | null;
   taxRate: number;

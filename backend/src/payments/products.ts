@@ -43,6 +43,9 @@ export interface ProductQuote {
   // The product's price, the upgrade credit, and what's charged.
   price: number;
   credit: number;
+  // A level test's discount: half price to retake a level not passed, 25% off the next level after a pass.
+  discount: number;
+  discountReason: "level_retake" | "next_level" | null;
   subtotal: number;
   taxLabel: string | null;
   taxRate: number;
@@ -69,6 +72,32 @@ export async function upgradeCredit(userId: string, currency: Currency): Promise
   }, 0);
 }
 
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+export const LEVEL_RETAKE_OFF = 50;
+export const NEXT_LEVEL_OFF = 25;
+
+// Pure: the discount on a level test at `level`, from the buyer's finished level
+// tests (newest first): the last one at this level not passed, or the level
+// below passed.
+export function levelDiscountOf(level: string, results: { level: string; passed: boolean }[]): { percent: number; reason: "level_retake" | "next_level" } | null {
+  const same = results.find((r) => r.level === level);
+  if (same && !same.passed) return { percent: LEVEL_RETAKE_OFF, reason: "level_retake" };
+  const below = LEVELS[LEVELS.indexOf(level) - 1];
+  if (!same && below && results.some((r) => r.level === below && r.passed)) return { percent: NEXT_LEVEL_OFF, reason: "next_level" };
+  return null;
+}
+
+async function levelResults(userId: string): Promise<{ level: string; passed: boolean }[]> {
+  return (
+    await pool.query(
+      `SELECT composition->>'levelTest' AS level, (result->'levelTest'->>'passed')::boolean AS passed FROM sessions
+       WHERE user_id = $1 AND delivery_mode = 'certified' AND completed_at IS NOT NULL AND result->'levelTest'->>'passed' IS NOT NULL
+       ORDER BY completed_at DESC`,
+      [userId],
+    )
+  ).rows;
+}
+
 export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string } = {}): Promise<ProductQuote> {
   const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind <> 'final'`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
@@ -83,7 +112,9 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
   const provider = providerFor(finalCurrency);
   if (!provider) throw new PaymentError("no_provider");
   const credit = p.kind === "full" ? Math.min(price, await upgradeCredit(buyer.userId, finalCurrency)) : 0;
-  const subtotal = price - credit;
+  const off = p.kind === "level" ? levelDiscountOf(opts.level!, await levelResults(buyer.userId)) : null;
+  const discount = off ? Math.round((price * off.percent) / 100) : 0;
+  const subtotal = price - credit - discount;
   // GST applies to sales billed in India.
   const taxRate = buyer.billingCountry === "IN" && finalCurrency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
   const taxAmount = Math.round((subtotal * taxRate) / 100);
@@ -97,6 +128,8 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     provider,
     price,
     credit,
+    discount,
+    discountReason: off?.reason ?? null,
     subtotal,
     taxLabel: taxRate > 0 ? `GST ${taxRate}%` : null,
     taxRate,
@@ -109,9 +142,9 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
 
 export async function createProductOrder(buyer: Buyer, q: ProductQuote): Promise<string> {
   const r = await pool.query(
-    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, product_id, level, credit_amount)
-     VALUES ($1, $2, 'product', 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-    [buyer.tenantId, buyer.userId, q.currency, q.price, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo), q.productId, q.level, q.credit],
+    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, product_id, level, credit_amount, discount_amount, discount_reason)
+     VALUES ($1, $2, 'product', 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
+    [buyer.tenantId, buyer.userId, q.currency, q.price, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo), q.productId, q.level, q.credit, q.discount, q.discountReason],
   );
   return r.rows[0].id;
 }

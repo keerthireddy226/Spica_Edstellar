@@ -211,7 +211,9 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
 
     const description =
       order.kind === "product"
-        ? `${product!.name}${order.level ? ` (${order.level})` : ""}${Number(order.credit_amount) > 0 ? " — less credit for unused preparation" : ""}`
+        ? `${product!.name}${order.level ? ` (${order.level})` : ""}${Number(order.credit_amount) > 0 ? " — less credit for unused preparation" : ""}${
+            order.discount_reason === "level_retake" ? " — retake at half price" : order.discount_reason === "next_level" ? " — 25% off the next level" : ""
+          }`
         : order.kind === "individual_plan"
           ? `Spica learner access — ${order.quantity} month${order.quantity === 1 ? "" : "s"}`
           : `Spica learner licenses (1 license = 1 learner-month)`;
