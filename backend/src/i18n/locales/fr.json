@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} est certifié au niveau {{level}}",
  "{{test}}: level {{level}}.": "{{test}} : niveau {{level}}.",
  "Your certificate is on hold": "Votre certificat est en attente",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un évaluateur vérifie l'enregistrement de surveillance de votre test, votre certificat {{code}} est donc en attente. Nous vous enverrons un e-mail une fois terminé."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un évaluateur vérifie l'enregistrement de surveillance de votre test, votre certificat {{code}} est donc en attente. Nous vous enverrons un e-mail une fois terminé.",
+ "Spica: final assessment": "Spica : évaluation finale",
+ "Final assessment": "Évaluation finale"
 }

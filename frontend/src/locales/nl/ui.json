@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} is gecertificeerd op {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: niveau {{level}}.",
  "Your certificate is on hold": "Je certificaat staat in de wacht",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Een beoordelaar controleert de toezichtgegevens van je toets, dus certificaat {{code}} staat in de wacht. We sturen je een e-mail als dat klaar is."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Een beoordelaar controleert de toezichtgegevens van je toets, dus certificaat {{code}} staat in de wacht. We sturen je een e-mail als dat klaar is.",
+ "Take your final assessment: it's open": "Maak je eindtoets: hij is open",
+ "Choose the test for your final assessment": "Kies de toets voor je eindtoets",
+ "in every paid plan": "in elk betaald abonnement",
+ "open now": "nu open",
+ "opens after a mock test": "na een proeftoets",
+ "after your final assessment": "na je eindtoets",
+ "Take your final assessment": "Maak je eindtoets",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "Je plan bevat een eindtoets met een certificaat. Kies de toets, zodat je oefening erop gericht is.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "Hij is open, en je proeftoetsen laten zien dat je er klaar voor bent. Eén toets onder streng toezicht levert je certificaat op.",
+ "Spica: final assessment": "Spica: eindtoets"
 }

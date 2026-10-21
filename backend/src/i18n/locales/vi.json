@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} đã được chứng nhận trình độ {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: trình độ {{level}}.",
  "Your certificate is on hold": "Chứng chỉ của bạn đang bị tạm giữ",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Người xem xét đang kiểm tra hồ sơ giám sát thi của bài thi của bạn, nên chứng chỉ {{code}} đang bị tạm giữ. Chúng tôi sẽ gửi email cho bạn khi hoàn tất."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Người xem xét đang kiểm tra hồ sơ giám sát thi của bài thi của bạn, nên chứng chỉ {{code}} đang bị tạm giữ. Chúng tôi sẽ gửi email cho bạn khi hoàn tất.",
+ "Spica: final assessment": "Spica: bài đánh giá cuối khóa",
+ "Final assessment": "Bài đánh giá cuối khóa"
 }

@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}",
  "{{test}}: level {{level}}.",
  "Your certificate is on hold",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.",
+ "Spica: final assessment",
+ "Final assessment"
 ]

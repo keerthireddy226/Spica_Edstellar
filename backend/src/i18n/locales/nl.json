@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} is gecertificeerd op {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: niveau {{level}}.",
  "Your certificate is on hold": "Je certificaat staat in de wacht",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Een beoordelaar controleert de toezichtgegevens van je toets, dus certificaat {{code}} staat in de wacht. We sturen je een e-mail als dat klaar is."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Een beoordelaar controleert de toezichtgegevens van je toets, dus certificaat {{code}} staat in de wacht. We sturen je een e-mail als dat klaar is.",
+ "Spica: final assessment": "Spica: eindtoets",
+ "Final assessment": "Eindtoets"
 }

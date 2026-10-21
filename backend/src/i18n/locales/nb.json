@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} er sertifisert på {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: nivå {{level}}.",
  "Your certificate is on hold": "Sertifikatet ditt er satt på vent",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En kontrollør sjekker tilsynsregistreringen fra testen din, så sertifikat {{code}} er satt på vent. Vi sender deg en e-post når det er gjort."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En kontrollør sjekker tilsynsregistreringen fra testen din, så sertifikat {{code}} er satt på vent. Vi sender deg en e-post når det er gjort.",
+ "Spica: final assessment": "Spica: avsluttende test",
+ "Final assessment": "Avsluttende test"
 }

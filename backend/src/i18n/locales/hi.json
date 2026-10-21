@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} {{level}} स्तर पर प्रमाणित हैं",
  "{{test}}: level {{level}}.": "{{test}}: स्तर {{level}}।",
  "Your certificate is on hold": "आपका सर्टिफ़िकेट रोका गया है",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "एक समीक्षक आपके टेस्ट का प्रॉक्टरिंग रिकॉर्ड जाँच रहा है, इसलिए सर्टिफ़िकेट {{code}} रोका गया है। पूरा होने पर हम आपको ईमेल करेंगे।"
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "एक समीक्षक आपके टेस्ट का प्रॉक्टरिंग रिकॉर्ड जाँच रहा है, इसलिए सर्टिफ़िकेट {{code}} रोका गया है। पूरा होने पर हम आपको ईमेल करेंगे।",
+ "Spica: final assessment": "Spica: अंतिम आकलन",
+ "Final assessment": "अंतिम आकलन"
 }

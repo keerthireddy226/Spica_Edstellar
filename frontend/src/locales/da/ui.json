@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} er certificeret på {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: niveau {{level}}.",
  "Your certificate is on hold": "Dit certifikat er sat i bero",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En bedømmer gennemgår tilsynsoptagelsen fra din test, så certifikat {{code}} er sat i bero. Vi sender dig en e-mail, når det er gjort."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En bedømmer gennemgår tilsynsoptagelsen fra din test, så certifikat {{code}} er sat i bero. Vi sender dig en e-mail, når det er gjort.",
+ "Take your final assessment: it's open": "Tag din afsluttende test: den er åben",
+ "Choose the test for your final assessment": "Vælg testen til din afsluttende test",
+ "in every paid plan": "i alle betalte planer",
+ "open now": "åben nu",
+ "opens after a mock test": "åbner efter en prøveeksamen",
+ "after your final assessment": "efter din afsluttende test",
+ "Take your final assessment": "Tag din afsluttende test",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "Din plan omfatter en afsluttende test med certifikat. Vælg dens test, så din træning sigter mod den.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "Den er åben, og dine prøveeksamener viser, at du er klar. Én test under streng tilsyn giver dit certifikat.",
+ "Spica: final assessment": "Spica: afsluttende test"
 }

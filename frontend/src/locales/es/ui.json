@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} tiene certificado el nivel {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: nivel {{level}}.",
  "Your certificate is on hold": "Tu certificado está en espera",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisor está comprobando el registro de supervisión de tu examen, así que el certificado {{code}} está en espera. Te enviaremos un correo cuando termine."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisor está comprobando el registro de supervisión de tu examen, así que el certificado {{code}} está en espera. Te enviaremos un correo cuando termine.",
+ "Take your final assessment: it's open": "Haz tu evaluación final: ya está abierta",
+ "Choose the test for your final assessment": "Elige el examen de tu evaluación final",
+ "in every paid plan": "en todos los planes de pago",
+ "open now": "abierta ya",
+ "opens after a mock test": "tras un examen de práctica",
+ "after your final assessment": "tras tu evaluación final",
+ "Take your final assessment": "Haz tu evaluación final",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "Tu plan incluye una evaluación final con certificado. Elige su examen para que tu práctica se centre en él.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "Está abierta y tus exámenes de práctica muestran que estás listo. Un solo examen con supervisión estricta te da el certificado.",
+ "Spica: final assessment": "Spica: evaluación final"
 }

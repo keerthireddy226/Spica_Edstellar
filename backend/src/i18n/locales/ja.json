@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} さんが{{level}}に認定されました",
  "{{test}}: level {{level}}.": "{{test}}：レベル {{level}}。",
  "Your certificate is on hold": "修了証は保留中です",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。"
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。",
+ "Spica: final assessment": "Spica：最終アセスメント",
+ "Final assessment": "最終アセスメント"
 }

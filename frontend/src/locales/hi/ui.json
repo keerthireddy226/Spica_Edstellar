@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} {{level}} स्तर पर प्रमाणित हैं",
  "{{test}}: level {{level}}.": "{{test}}: स्तर {{level}}।",
  "Your certificate is on hold": "आपका सर्टिफ़िकेट रोका गया है",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "एक समीक्षक आपके टेस्ट का प्रॉक्टरिंग रिकॉर्ड जाँच रहा है, इसलिए सर्टिफ़िकेट {{code}} रोका गया है। पूरा होने पर हम आपको ईमेल करेंगे।"
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "एक समीक्षक आपके टेस्ट का प्रॉक्टरिंग रिकॉर्ड जाँच रहा है, इसलिए सर्टिफ़िकेट {{code}} रोका गया है। पूरा होने पर हम आपको ईमेल करेंगे।",
+ "Take your final assessment: it's open": "अपना अंतिम आकलन दें: यह खुला है",
+ "Choose the test for your final assessment": "अपने अंतिम आकलन के लिए टेस्ट चुनें",
+ "in every paid plan": "हर पेड प्लान में",
+ "open now": "अभी खुला",
+ "opens after a mock test": "मॉक टेस्ट के बाद खुलेगा",
+ "after your final assessment": "अंतिम आकलन के बाद",
+ "Take your final assessment": "अपना अंतिम आकलन दें",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "आपके प्लान में सर्टिफ़िकेट के साथ एक अंतिम आकलन शामिल है। उसका टेस्ट चुनें ताकि आपका अभ्यास उसी पर केंद्रित रहे।",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "यह खुला है, और आपके मॉक टेस्ट दिखाते हैं कि आप तैयार हैं। सख़्त प्रॉक्टरिंग वाला एक टेस्ट आपको सर्टिफ़िकेट दिलाता है।",
+ "Spica: final assessment": "Spica: अंतिम आकलन"
 }

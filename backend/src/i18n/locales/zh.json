@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} 已获 {{level}} 认证",
  "{{test}}: level {{level}}.": "{{test}}：等级 {{level}}。",
  "Your certificate is on hold": "你的证书暂缓发放",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "审核人员正在检查你这次测试的监考记录，因此证书 {{code}} 暂缓发放。完成后我们会发邮件通知你。"
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "审核人员正在检查你这次测试的监考记录，因此证书 {{code}} 暂缓发放。完成后我们会发邮件通知你。",
+ "Spica: final assessment": "Spica：结业测评",
+ "Final assessment": "结业测评"
 }

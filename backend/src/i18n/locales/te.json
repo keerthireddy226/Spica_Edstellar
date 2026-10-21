@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} {{level}} స్థాయిలో ధృవీకరించబడ్డారు",
  "{{test}}: level {{level}}.": "{{test}}: స్థాయి {{level}}.",
  "Your certificate is on hold": "మీ సర్టిఫికెట్ నిలిపివేయబడింది",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "ఒక సమీక్షకుడు మీ టెస్ట్ ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నారు, కాబట్టి సర్టిఫికెట్ {{code}} నిలిపివేయబడింది. అది పూర్తయ్యాక మేము మీకు ఈమెయిల్ పంపుతాము."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "ఒక సమీక్షకుడు మీ టెస్ట్ ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నారు, కాబట్టి సర్టిఫికెట్ {{code}} నిలిపివేయబడింది. అది పూర్తయ్యాక మేము మీకు ఈమెయిల్ పంపుతాము.",
+ "Spica: final assessment": "Spica: తుది అసెస్‌మెంట్",
+ "Final assessment": "తుది అసెస్‌మెంట్"
 }

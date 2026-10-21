@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} ha la certificazione {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: livello {{level}}.",
  "Your certificate is on hold": "Il tuo certificato è in sospeso",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisore sta controllando i dati di sorveglianza del tuo test, quindi il certificato {{code}} è in sospeso. Ti invieremo un'email quando avrà finito."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisore sta controllando i dati di sorveglianza del tuo test, quindi il certificato {{code}} è in sospeso. Ti invieremo un'email quando avrà finito.",
+ "Take your final assessment: it's open": "Sostieni la valutazione finale: è aperta",
+ "Choose the test for your final assessment": "Scegli il test per la tua valutazione finale",
+ "in every paid plan": "in ogni piano a pagamento",
+ "open now": "aperta ora",
+ "opens after a mock test": "dopo un test simulato",
+ "after your final assessment": "dopo la valutazione finale",
+ "Take your final assessment": "Sostieni la valutazione finale",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "Il tuo piano include una valutazione finale con certificato. Scegli il suo test, così la tua pratica punta a quello.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "È aperta e i tuoi test simulati mostrano che sei pronto. Un solo test con sorveglianza rigorosa ti dà il certificato.",
+ "Spica: final assessment": "Spica: valutazione finale"
 }

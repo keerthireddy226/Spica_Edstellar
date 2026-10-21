@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} är certifierad på {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: nivå {{level}}.",
  "Your certificate is on hold": "Ditt certifikat är pausat",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En granskare kontrollerar provövervakningsdata från ditt test, så certifikat {{code}} är pausat. Vi mejlar dig när det är klart."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En granskare kontrollerar provövervakningsdata från ditt test, så certifikat {{code}} är pausat. Vi mejlar dig när det är klart.",
+ "Spica: final assessment": "Spica: sluttest",
+ "Final assessment": "Sluttest"
 }

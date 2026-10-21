@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} on sertifioitu tasolle {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: taso {{level}}.",
  "Your certificate is on hold": "Todistuksesi on pidossa",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis.",
+ "Take your final assessment: it's open": "Suorita loppukokeesi: se on avoinna",
+ "Choose the test for your final assessment": "Valitse koe loppukoettasi varten",
+ "in every paid plan": "kaikissa maksullisissa tilauksissa",
+ "open now": "avoinna nyt",
+ "opens after a mock test": "avautuu mallikokeen jälkeen",
+ "after your final assessment": "loppukokeesi jälkeen",
+ "Take your final assessment": "Suorita loppukokeesi",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "Suunnitelmaasi kuuluu loppukoe ja todistus. Valitse sen koe, jotta harjoittelusi tähtää siihen.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "Se on avoinna, ja mallikokeesi osoittavat, että olet valmis. Yksi tiukasti valvottu koe antaa todistuksesi.",
+ "Spica: final assessment": "Spica: loppukoe"
 }

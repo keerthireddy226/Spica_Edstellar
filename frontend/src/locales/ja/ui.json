@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} さんが{{level}}に認定されました",
  "{{test}}: level {{level}}.": "{{test}}：レベル {{level}}。",
  "Your certificate is on hold": "修了証は保留中です",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。"
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。",
+ "Take your final assessment: it's open": "最終アセスメントを受けましょう：受験できます",
+ "Choose the test for your final assessment": "最終アセスメントのテストを選ぶ",
+ "in every paid plan": "すべての有料プランに含まれます",
+ "open now": "受験可能",
+ "opens after a mock test": "模擬テスト後に解放",
+ "after your final assessment": "最終アセスメント後",
+ "Take your final assessment": "最終アセスメントを受ける",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "プランには修了証付きの最終アセスメントが含まれています。練習の目標になるよう、そのテストを選んでください。",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "受験可能になり、模擬テストの結果から準備ができていることがわかります。厳格な試験監督付きのテスト1回で修了証を取得できます。",
+ "Spica: final assessment": "Spica：最終アセスメント"
 }

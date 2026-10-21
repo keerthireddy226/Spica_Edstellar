@@ -4879,5 +4879,15 @@
  "{{name}} is certified {{level}}": "{{name}} {{level}} స్థాయిలో ధృవీకరించబడ్డారు",
  "{{test}}: level {{level}}.": "{{test}}: స్థాయి {{level}}.",
  "Your certificate is on hold": "మీ సర్టిఫికెట్ నిలిపివేయబడింది",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "ఒక సమీక్షకుడు మీ టెస్ట్ ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నారు, కాబట్టి సర్టిఫికెట్ {{code}} నిలిపివేయబడింది. అది పూర్తయ్యాక మేము మీకు ఈమెయిల్ పంపుతాము."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "ఒక సమీక్షకుడు మీ టెస్ట్ ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నారు, కాబట్టి సర్టిఫికెట్ {{code}} నిలిపివేయబడింది. అది పూర్తయ్యాక మేము మీకు ఈమెయిల్ పంపుతాము.",
+ "Take your final assessment: it's open": "మీ తుది అసెస్‌మెంట్ రాయండి: ఇది తెరిచి ఉంది",
+ "Choose the test for your final assessment": "మీ తుది అసెస్‌మెంట్ కోసం టెస్ట్‌ను ఎంచుకోండి",
+ "in every paid plan": "ప్రతి చెల్లింపు ప్లాన్‌లో",
+ "open now": "ఇప్పుడు తెరిచి ఉంది",
+ "opens after a mock test": "మాక్ టెస్ట్ తర్వాత తెరుచుకుంటుంది",
+ "after your final assessment": "తుది అసెస్‌మెంట్ తర్వాత",
+ "Take your final assessment": "మీ తుది అసెస్‌మెంట్ రాయండి",
+ "Your plan includes a final assessment with a certificate. Pick its test so your practice aims at it.": "మీ ప్లాన్‌లో సర్టిఫికెట్‌తో కూడిన తుది అసెస్‌మెంట్ ఉంది. మీ ప్రాక్టీస్ దానిపై దృష్టి పెట్టేలా దాని టెస్ట్‌ను ఎంచుకోండి.",
+ "It's open, and your mock tests show you're ready. One strictly proctored test gives your certificate.": "ఇది తెరిచి ఉంది, మీరు సిద్ధంగా ఉన్నారని మీ మాక్ టెస్ట్‌లు చూపిస్తున్నాయి. కఠినమైన ప్రాక్టరింగ్‌తో ఒక టెస్ట్ మీకు సర్టిఫికెట్ ఇస్తుంది.",
+ "Spica: final assessment": "Spica: తుది అసెస్‌మెంట్"
 }

@@ -372,5 +372,7 @@
  "{{name}} is certified {{level}}": "{{name}} on sertifioitu tasolle {{level}}",
  "{{test}}: level {{level}}.": "{{test}}: taso {{level}}.",
  "Your certificate is on hold": "Todistuksesi on pidossa",
- "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis."
+ "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis.",
+ "Spica: final assessment": "Spica: loppukoe",
+ "Final assessment": "Loppukoe"
 }
