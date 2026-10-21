@@ -2,6 +2,7 @@
 // where its learners started and are now, who reached the goal and who needs
 // attention. Levels and Spica scores come from each learner's latest mock test
 // (else their latest level test); the start is their first level test.
+import { certifiedMap } from "../certificates/service.js";
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { learnerAccessMap } from "../licenses/service.js";
@@ -218,7 +219,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
     ),
     pool.query(
       `SELECT count(*)::int AS n FROM certificates c
-       WHERE (c.batch_id = $1 OR c.user_id = ANY($2::uuid[])) AND c.revoked_at IS NULL AND c.issued_at >= $3::date AND c.issued_at < $4::date + 1`,
+       WHERE (c.batch_id = $1 OR c.user_id = ANY($2::uuid[])) AND c.kind = 'result' AND c.revoked_at IS NULL AND c.issued_at >= $3::date AND c.issued_at < $4::date + 1`,
       [batchId, ids, from, to],
     ),
     pool.query(
@@ -247,6 +248,8 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
   );
 
   const now = Date.now();
+  // Each member's latest final assessment certificate.
+  const certified = await certifiedMap(ids);
   const learners = members.map((m) => {
     const own = placements.rows.filter((p) => p.user_id === m.id);
     const ownMocks = leveled.filter((x) => x.user_id === m.id);
@@ -292,6 +295,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       id: m.id as string,
       name: m.name as string,
       participantId: (m.participant_id as string | null) ?? null,
+      certified: certified.get(m.id) ?? null,
       start,
       current,
       levelSource: mock ? ("mock" as const) : lastPlacement ? ("level_test" as const) : null,
@@ -355,7 +359,9 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       practiceMinutes: learners.reduce((x, l) => x + l.minutes, 0),
       practiceTests: learners.reduce((x, l) => x + l.practiceTests, 0),
       mockTests: learners.reduce((x, l) => x + l.mockTests, 0),
+      // Final assessment certificates issued in the period, and members certified now.
       certificates: certificates.rows[0].n as number,
+      certified: learners.filter((l) => l.certified).length,
       scoreNow: mean(learners.map((l) => l.current?.score).filter((x): x is number => typeof x === "number")),
       scoreStart: mean(learners.map((l) => l.start?.score).filter((x): x is number => typeof x === "number")),
     },

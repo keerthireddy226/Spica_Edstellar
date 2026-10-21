@@ -97,6 +97,15 @@ managerRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next
       activeBatches: counts.rows[0].active_batches,
       totalLearners: counts.rows[0].learners,
       sessionsCompletedToday: sessionsToday.rows[0].n,
+      // Learners in their batches holding a valid final assessment certificate.
+      certifiedLearners: (
+        await pool.query(
+          `SELECT count(DISTINCT c.user_id)::int AS n FROM certificates c JOIN users cu ON cu.id = c.user_id
+           WHERE cu.batch_id = ANY($1::uuid[]) AND cu.role = 'learner' AND cu.deleted_at IS NULL AND c.kind = 'result' AND c.revoked_at IS NULL
+             AND (c.valid_until IS NULL OR c.valid_until >= current_date)`,
+          [batchIds],
+        )
+      ).rows[0].n as number,
       myPool: myPool ?? null,
       licenses: { licensed: l.licensed, unlicensed: l.unlicensed, grace: l.grace, endingSoon: l.ending_soon, fromFixed: l.from_fixed, fromPool: l.from_pool },
     });

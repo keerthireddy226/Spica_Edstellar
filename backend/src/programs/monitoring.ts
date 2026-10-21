@@ -1,6 +1,7 @@
 // Organization monitoring of programs (ASSESSMENT_ENGINE.md section 9): each
 // member's latest levels, trend across mocks, on track or at risk, last
 // activity, and daily alerts to the organization.
+import { certifiedMap } from "../certificates/service.js";
 import { pool } from "../db.js";
 import { CEFR_LEVELS, type CefrLevel } from "../placement/cefr.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
@@ -97,6 +98,9 @@ export async function programMonitoring(p: ProgramRow) {
       [p.id],
     )
   ).rows;
+  // The program's final assessment for each member, and their certificate.
+  const finals = (await pool.query(`SELECT user_id, attempts_used FROM entitlements WHERE program_id = $1 AND revoked_at IS NULL`, [p.id])).rows;
+  const certified = await certifiedMap(ids);
   const daysLeft = Math.max(0, Math.round((Date.parse(`${p.target_date}T00:00:00Z`) - Date.now()) / DAY));
 
   return members.map((m) => {
@@ -135,6 +139,14 @@ export async function programMonitoring(p: ProgramRow) {
       missedMocks: it?.missed_mocks ?? 0,
       next: it?.next_due ? { dueOn: new Date(it.next_due).toISOString().slice(0, 10), kind: it.next_kind } : null,
       integrity: lastMock ? { status: lastMock.integrity_status ?? null, risk: lastMock.risk_level ?? null } : null,
+      certified: certified.get(m.id) ?? null,
+      finalAssessment: certified.get(m.id)
+        ? ("certified" as const)
+        : finals.find((f) => f.user_id === m.id)
+          ? finals.find((f) => f.user_id === m.id)!.attempts_used > 0
+            ? ("taken" as const)
+            : ("waiting" as const)
+          : ("none" as const),
     };
   });
 }
@@ -147,7 +159,27 @@ export function monitoringCsv(p: ProgramRow, rows: MemberRow[]): string {
     const safe = /^[=+\-@]/.test(s) ? `'${s}` : s;
     return /[",\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
   };
-  const header = ["Name", "Email", "Latest level", "Listening", "Speaking", "Reading", "Writing", "Target", "Status", "Projected by target date", "Mocks taken", "Done", "Missed", "Last activity", "Next test"];
+  const header = [
+    "Name",
+    "Email",
+    "Latest level",
+    "Listening",
+    "Speaking",
+    "Reading",
+    "Writing",
+    "Target",
+    "Status",
+    "Projected by target date",
+    "Mocks taken",
+    "Done",
+    "Missed",
+    "Last activity",
+    "Next test",
+    "Final assessment",
+    "Certified level",
+    "Spica score",
+    "Certificate",
+  ];
   const lines = rows.map((r) =>
     [
       r.name,
@@ -165,6 +197,10 @@ export function monitoringCsv(p: ProgramRow, rows: MemberRow[]): string {
       r.missed,
       r.lastActivity?.slice(0, 10),
       r.next ? `${r.next.kind} ${r.next.dueOn}` : "",
+      r.finalAssessment,
+      r.certified?.level,
+      r.certified?.score,
+      r.certified?.code,
     ]
       .map(cell)
       .join(","),

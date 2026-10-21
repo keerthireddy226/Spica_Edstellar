@@ -1,3 +1,4 @@
+import type { CertifiedSummary } from "@/components/CertifiedCell";
 import { api } from "@/lib/api";
 import type { LearnerEngagement } from "@/api/notifications";
 import type { ReportAbout, ScoreReport as ScoreReportData } from "@/api/practiceTests";
@@ -17,6 +18,7 @@ export interface AnalyticsOverview {
     sessionsLast30Days: number;
     newLast30Days: number;
     placementTaken: number;
+    certified?: number;
     avgMinutesPerActiveLearnerPerWeek: number;
     dailyReminderAdoption: number;
   };
@@ -61,11 +63,12 @@ export interface BatchAnalytics {
     fixedLicensesUsed: number;
     remindedLearners: number;
     needsAttention: number;
+    certified?: number;
   };
   cefr: { start: string | null; target: string | null; current: Record<string, number> };
   weeklyActive: { week: string; activeLearners: number }[];
   skills: { skill: string; accuracy: number | null; avgMinutes: number }[];
-  learners: (LearnerEngagement & { riskScore: number })[];
+  learners: (LearnerEngagement & { riskScore: number; certified?: CertifiedSummary | null })[];
 }
 
 export function getAnalyticsOverview(): Promise<AnalyticsOverview> {
@@ -110,6 +113,8 @@ export interface BatchReportLearner {
   id: string;
   name: string;
   participantId: string | null;
+  // Their latest final assessment certificate.
+  certified: CertifiedSummary | null;
   start: LevelSnapshot | null;
   current: LevelSnapshot | null;
   levelSource: "mock" | "level_test" | null;
@@ -163,6 +168,7 @@ export interface BatchReport {
     practiceTests: number;
     mockTests: number;
     certificates: number;
+    certified: number;
     scoreNow: number | null;
     scoreStart: number | null;
   };

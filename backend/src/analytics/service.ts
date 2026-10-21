@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { certifiedMap } from "../certificates/service.js";
 import { learnerEngagement, type LearnerEngagement } from "../notifications/engagement.js";
 
 // Gender and age are only ever shown in groups this size or larger.
@@ -90,7 +91,9 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
          (SELECT coalesce(sum(d.active_ms), 0)::bigint FROM learner_activity_daily d JOIN learners l ON l.id = d.user_id WHERE d.day > (now() AT TIME ZONE 'UTC')::date - 28) AS active_ms28,
          (SELECT count(*)::int FROM learners l WHERE l.created_at > now() - interval '30 days') AS new30,
          (SELECT count(*)::int FROM learners l JOIN reminder_preferences rp ON rp.user_id = l.id AND rp.enabled) AS reminders_on,
-         (SELECT count(*)::int FROM learners l WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id)) AS placed`,
+         (SELECT count(*)::int FROM learners l WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id)) AS placed,
+         (SELECT count(DISTINCT c.user_id)::int FROM certificates c JOIN learners l ON l.id = c.user_id
+          WHERE c.kind = 'result' AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until >= current_date)) AS certified`,
       params,
     )
   ).rows[0];
@@ -171,6 +174,8 @@ export async function overview(scope: Scope, opts: { withCompanies: boolean; wit
       sessionsLast30Days: totals.sessions30,
       newLast30Days: totals.new30,
       placementTaken: totals.placed,
+      // Learners holding a valid final assessment certificate.
+      certified: totals.certified as number,
       avgMinutesPerActiveLearnerPerWeek: totals.active28 ? Math.round(Number(totals.active_ms28) / 60000 / 4 / totals.active28) : 0,
       dailyReminderAdoption: learnerCount ? Math.round((totals.reminders_on / learnerCount) * 100) : 0,
     },
@@ -254,6 +259,7 @@ export async function batchAnalytics(tenantId: string, batchId: string) {
   const ends = b.duration_months ? new Date(new Date(b.begins_on).getTime() + b.duration_months * 30.44 * 86400000) : null;
   const daysLeft = ends ? Math.max(0, Math.ceil((ends.getTime() - Date.now()) / 86400000)) : null;
 
+  const certified = await certifiedMap(learners.map((l) => l.id));
   const cefrCurrent: Record<string, number> = {};
   for (const l of learners) {
     const k = l.currentCefr ?? "Not placed";
@@ -293,6 +299,7 @@ export async function batchAnalytics(tenantId: string, batchId: string) {
       fixedLicensesUsed: b.fixed_used,
       remindedLearners: reminded.length,
       needsAttention: learners.filter((l) => l.needsAttention).length,
+      certified: learners.filter((l) => certified.has(l.id)).length,
     },
     cefr: { start: b.start_cefr, target: b.target_cefr, current: cefrCurrent },
     weeklyActive: weekly.rows.map((w) => ({ week: w.week, activeLearners: w.active })),
@@ -302,7 +309,7 @@ export async function batchAnalytics(tenantId: string, batchId: string) {
       avgMinutes: s.minutes,
     })),
     learners: learners
-      .map((l) => ({ ...l, riskScore: riskScore(l) }))
+      .map((l) => ({ ...l, riskScore: riskScore(l), certified: certified.get(l.id) ?? null }))
       .sort((a, z) => z.riskScore - a.riskScore),
   };
 }
@@ -349,15 +356,38 @@ export async function learnersCsv(scope: Scope): Promise<string> {
        (SELECT count(*) FROM sessions s WHERE s.user_id = l.id AND ${GENUINE}) AS sessions,
        (SELECT max(s.completed_at) FROM sessions s WHERE s.user_id = l.id AND ${GENUINE}) AS last_active,
        (SELECT max(a.ends_at) FROM license_assignments a WHERE a.user_id = l.id AND a.reclaimed_at IS NULL) AS access_ends,
-       to_char(l.created_at, 'YYYY-MM-DD') AS joined
+       to_char(l.created_at, 'YYYY-MM-DD') AS joined,
+       ct.cefr_level AS certified_level, ct.spica_score AS certified_score, ct.code AS certificate, to_char(ct.issued_at, 'YYYY-MM-DD') AS certified_on
      FROM learners l JOIN users u ON u.id = l.id
+     LEFT JOIN LATERAL (SELECT cefr_level, spica_score, code, issued_at FROM certificates c WHERE c.user_id = l.id AND c.kind = 'result' AND c.revoked_at IS NULL
+                          AND (c.valid_until IS NULL OR c.valid_until >= current_date) ORDER BY issued_at DESC LIMIT 1) ct ON true
      LEFT JOIN batches b ON b.id = l.batch_id
      LEFT JOIN participant_profiles pp ON pp.user_id = l.id
      ORDER BY l.tenant_name, b.name, u.first_name`,
     params,
   );
   return toCsv(
-    ["Participant ID", "First name", "Last name", "Email", "Organization", "Batch", "Country", "City", "Job role", "Language", "CEFR", "Sessions completed", "Last active", "Access ends", "Joined"],
+    [
+      "Participant ID",
+      "First name",
+      "Last name",
+      "Email",
+      "Organization",
+      "Batch",
+      "Country",
+      "City",
+      "Job role",
+      "Language",
+      "CEFR",
+      "Sessions completed",
+      "Last active",
+      "Access ends",
+      "Joined",
+      "Certified level",
+      "Spica score",
+      "Certificate",
+      "Certified on",
+    ],
     r.rows.map((x) => [
       x.participant_id,
       x.first_name,
@@ -374,13 +404,17 @@ export async function learnersCsv(scope: Scope): Promise<string> {
       x.last_active ? new Date(x.last_active).toISOString().slice(0, 10) : "",
       x.access_ends ? new Date(x.access_ends).toISOString().slice(0, 10) : "",
       x.joined,
+      x.certified_level,
+      x.certified_score,
+      x.certificate,
+      x.certified_on,
     ]),
   );
 }
 
 export function batchCsv(data: NonNullable<Awaited<ReturnType<typeof batchAnalytics>>>): string {
   return toCsv(
-    ["Participant ID", "Name", "Email", "Status", "Current CEFR", "Goal", "Sessions", "Last active", "License", "Access ends", "Reminders sent", "Risk score"],
+    ["Participant ID", "Name", "Email", "Status", "Current CEFR", "Goal", "Sessions", "Last active", "License", "Access ends", "Reminders sent", "Risk score", "Certified level", "Spica score", "Certificate"],
     data.learners.map((l) => [
       l.participantId,
       [l.firstName, l.lastName].filter(Boolean).join(" "),
@@ -394,6 +428,9 @@ export function batchCsv(data: NonNullable<Awaited<ReturnType<typeof batchAnalyt
       l.license.accessEndsAt ? l.license.accessEndsAt.slice(0, 10) : "",
       l.remindersSent,
       l.riskScore,
+      l.certified?.level,
+      l.certified?.score,
+      l.certified?.code,
     ]),
   );
 }

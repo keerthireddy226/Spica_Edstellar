@@ -27,6 +27,7 @@ import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import type { Program } from "@/api/practiceTests";
 import { testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
+import { CertifiedCell } from "@/components/CertifiedCell";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const SKILLS = ["listening", "speaking", "reading", "writing"] as const;
@@ -346,6 +347,17 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
         <td className={`py-2 text-xs ${m.inactiveDays !== null && m.inactiveDays >= 14 ? "text-error" : "text-muted"}`}>
           {m.lastActivity ? formatShortDate(m.lastActivity) : tr("Never")}
         </td>
+        {p.finalAssessment && (
+          <td className="py-2 pr-3 whitespace-nowrap">
+            {m.certified ? (
+              <CertifiedCell c={m.certified} />
+            ) : (
+              <span className="text-xs text-muted">
+                {m.finalAssessment === "taken" ? tr("Taken, being scored") : m.finalAssessment === "waiting" ? tr("Given, not taken") : tr("Not given yet")}
+              </span>
+            )}
+          </td>
+        )}
       </tr>
       {open && (
         <tr className="border-b border-rule/60 bg-paper-warm/40">
@@ -566,6 +578,7 @@ function ProgramDetailModal({
                   <th className="py-2 pr-3 font-semibold">{tr("Mocks")}</th>
                   <th className="py-2 pr-3 font-semibold">{tr("Projected")}</th>
                   <th className="py-2 pr-3 font-semibold">{tr("Done / missed")}</th>
+                  {p!.finalAssessment && <th className="py-2 pr-3 font-semibold">{tr("Final assessment")}</th>}
                   <th className="py-2 font-semibold">{tr("Last activity")}</th>
                 </tr>
               </thead>

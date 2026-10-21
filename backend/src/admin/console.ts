@@ -653,7 +653,7 @@ staffConsoleRouter.get("/insights", requireAuth, async (req: AuthedRequest, res,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM participant_profiles pp WHERE pp.user_id = l.id AND pp.onboarding_complete))::int AS onboarded,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id))::int AS placed,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0 AND d.day > current_date - 7))::int AS practising,
-           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.revoked_at IS NULL))::int AS certified
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.kind = 'result' AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until >= current_date)))::int AS certified
          FROM l`,
         p,
       ),
@@ -668,7 +668,7 @@ staffConsoleRouter.get("/insights", requireAuth, async (req: AuthedRequest, res,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = l.id))::int AS signed_in,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM learner_activity_daily d WHERE d.user_id = l.id AND d.sessions > 0 AND d.day > current_date - 7))::int AS active7,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM placements pl WHERE pl.user_id = l.id))::int AS placed,
-           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.revoked_at IS NULL))::int AS certified,
+           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = l.id AND c.kind = 'result' AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until >= current_date)))::int AS certified,
            coalesce(round(avg((SELECT ps.practice_minutes FROM progress_stats ps WHERE ps.user_id = l.id))), 0)::int AS avg_minutes,
            mode() WITHIN GROUP (ORDER BY (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1)) AS typical_level
          FROM l WHERE l.tenant_type = 'cohort'

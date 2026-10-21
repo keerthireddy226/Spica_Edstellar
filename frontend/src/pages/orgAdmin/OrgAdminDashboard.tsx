@@ -13,6 +13,10 @@ import { tr } from "@/i18n/tr";
 const SESSION_TYPE_LABEL: Record<string, string> = {
   practice: tr("Practice"),
   mocktest: tr("Mock Test"),
+  practice_test: tr("Practice test"),
+  final: tr("Final assessment"),
+  level_test: tr("Level test"),
+  sample: tr("Free sample"),
   placement: tr("Placement"),
   coach: tr("Coach Mode"),
 };
@@ -167,11 +171,12 @@ export function OrgAdminDashboard() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard label={tr("Batches")} value={overview.totalBatches} icon={Layers} index={0} />
         <StatCard label={tr("Managers")} value={overview.totalManagers} icon={ShieldCheck} index={1} />
         <StatCard label={tr("Learners")} value={overview.totalLearners} icon={Users} index={2} />
-        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={3} />
+        <StatCard label={tr("Certified")} value={overview.certifiedLearners ?? 0} icon={Award} index={3} />
+        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={4} />
       </div>
 
       {overview.totalBatches === 0 && (

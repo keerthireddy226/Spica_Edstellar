@@ -6,6 +6,7 @@ import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Card, Stat, StackedBar, WeeklyBars } from "@/components/analytics/Charts";
 
 import { tr } from "@/i18n/tr";
+import { CertifiedCell } from "@/components/CertifiedCell";
 const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const SKILL_LABEL: Record<string, string> = { listening: tr("Listening"), speaking: tr("Speaking"), reading: tr("Reading"), writing: tr("Writing") };
 
@@ -139,6 +140,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
                   <th className="px-2 py-2">{tr("Learner")}</th>
                   <th className="px-2 py-2">{tr("Status")}</th>
                   <th className="px-2 py-2">{tr("Level")}</th>
+                  <th className="px-2 py-2">{tr("Certified")}</th>
                   <th className="px-2 py-2">{tr("Sessions")}</th>
                   <th className="px-2 py-2">{tr("Last active")}</th>
                   <th className="px-2 py-2">{tr("License")}</th>
@@ -161,6 +163,9 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
                       </span>
                     </td>
                     <td className="px-2 py-2 text-muted whitespace-nowrap">{l.currentCefr ?? "—"}</td>
+                    <td className="px-2 py-2">
+                      <CertifiedCell c={l.certified} />
+                    </td>
                     <td className="px-2 py-2 text-muted">{l.sessionsCompleted}</td>
                     <td className="px-2 py-2 text-muted whitespace-nowrap">{timeAgo(l.lastActiveAt)}</td>
                     <td className="px-2 py-2">

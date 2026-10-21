@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getLearnerEngagement } from "@/api/notifications";
 import { ROUTES } from "@/constants/routes";
-import { Layers, Users, CalendarCheck, ArrowRight } from "lucide-react";
+import { Award, Layers, Users, CalendarCheck, ArrowRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { getManagerOverview, type ManagerOverview } from "@/api/manager";
@@ -98,10 +98,11 @@ export function ManagerDashboard() {
         </Link>
       </div>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label={tr("Active batches")} value={overview.activeBatches} icon={Layers} index={0} />
         <StatCard label={tr("Learners")} value={overview.totalLearners} icon={Users} index={1} />
-        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={2} />
+        <StatCard label={tr("Certified")} value={overview.certifiedLearners ?? 0} icon={Award} index={2} />
+        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={3} />
       </div>
 
       <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex items-center gap-5 flex-wrap">

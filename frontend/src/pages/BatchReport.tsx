@@ -18,6 +18,7 @@ import {
 } from "@/api/analytics";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { CertifiedCell } from "@/components/CertifiedCell";
 
 // The Batch report: what a batch did in a period, where its learners started
 // and are now, who reached the goal and who needs attention. Org Admins and
@@ -329,7 +330,7 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
       {data.goal && g && (
         <Card
           title={data.goal.date ? tr("Goal: {{level}} by {{date}}", { level: data.goal.level, date: day(data.goal.date) }) : tr("Goal: {{level}}", { level: data.goal.level })}
-          aside={<span className="text-sm text-muted">{s.certificates === 1 ? tr("1 certificate issued") : tr("{{n}} certificates issued", { n: s.certificates })}</span>}
+          aside={<span className="text-sm text-muted">{tr("{{n}} of {{total}} certified by a final assessment", { n: s.certified, total: s.learners })}</span>}
         >
           <div className="flex h-[30px] rounded-lg overflow-hidden text-[12.5px] font-semibold text-white">
             {(
@@ -480,6 +481,7 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
                 <th className="px-3 py-2.5">{tr("Learner")}</th>
                 <th className="px-3 py-2.5">{tr("Level")}</th>
                 <th className="px-3 py-2.5">{tr("Spica score")}</th>
+                <th className="px-3 py-2.5">{tr("Certified")}</th>
                 <th className="px-3 py-2.5">{tr("Tests · mocks")}</th>
                 <th className="px-3 py-2.5">{tr("Practice")}</th>
                 {data.goal && <th className="px-3 py-2.5">{tr("Goal")}</th>}
@@ -523,6 +525,9 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
                     ) : (
                       <span className="text-muted">—</span>
                     )}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <CertifiedCell c={l.certified} />
                   </td>
                   <td className="px-3 py-2.5 tabular-nums text-ink">{`${l.practiceTests} · ${l.mockTests}`}</td>
                   <td className="px-3 py-2.5 tabular-nums text-ink whitespace-nowrap">{l.minutes ? hours(l.minutes) : "—"}</td>
@@ -940,6 +945,18 @@ export function LearnerDetail({
           <Stat value={l.minutes ? hours(l.minutes) : "—"} label={tr("Practice time")} note={tr("In this period")} />
           <Stat value={lastActive(l)} label={tr("Last active")} note={l.accessEndsAt ? tr("Access until {{date}}", { date: day(l.accessEndsAt) }) : "—"} />
         </div>
+        <p className="text-sm text-ink">
+          <span className="font-semibold">{tr("Final assessment")}:</span>{" "}
+          {l.certified ? (
+            <a href={`/certificate/${l.certified.code}`} target="_blank" rel="noopener" className="font-semibold text-success hover:underline">
+              {l.certified.score !== null
+                ? tr("Certified {{level}} · Spica score {{score}}", { level: l.certified.level ?? "—", score: l.certified.score })
+                : tr("Certified {{level}}", { level: l.certified.level ?? "—" })}
+            </a>
+          ) : (
+            <span className="text-muted">{tr("Not certified yet")}</span>
+          )}
+        </p>
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-ink">{tr("Mock test scores")}</span>
           <div className={compact ? "max-w-[340px]" : ""}>

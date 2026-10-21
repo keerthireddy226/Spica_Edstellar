@@ -25,6 +25,7 @@ export interface ManagerOverview {
   activeBatches: number;
   totalLearners: number;
   sessionsCompletedToday: number;
+  certifiedLearners?: number;
   myPool: ManagerPool | null;
   licenses: { licensed: number; unlicensed: number; grace: number; endingSoon: number; fromFixed: number; fromPool: number };
 }

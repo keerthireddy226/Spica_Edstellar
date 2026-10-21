@@ -86,7 +86,9 @@ orgAdminRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, nex
         `(SELECT 'signup' AS kind, concat_ws(' ', first_name, last_name) AS who, role AS detail, created_at AS occurred_at
           FROM users WHERE tenant_id = $1 AND role IN ('learner', 'manager') AND deleted_at IS NULL)
          UNION ALL
-         (SELECT 'session_completed', concat_ws(' ', u.first_name, u.last_name), s.session_type, s.completed_at
+         (SELECT 'session_completed', concat_ws(' ', u.first_name, u.last_name),
+            CASE WHEN s.session_type <> 'mocktest' THEN s.session_type WHEN s.delivery_mode = 'certified' THEN (CASE WHEN s.composition->>'levelTest' IS NOT NULL THEN 'level_test' ELSE 'final' END)
+                 WHEN s.delivery_mode = 'sample' THEN 'sample' WHEN s.delivery_mode = 'practice' THEN 'practice_test' ELSE 'mocktest' END, s.completed_at
           FROM sessions s JOIN users u ON u.id = s.user_id
           WHERE u.tenant_id = $1 AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})
          UNION ALL
@@ -111,6 +113,10 @@ orgAdminRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, nex
       totalManagers: counts.rows[0].manager_count,
       totalLearners: counts.rows[0].learner_count,
       sessionsCompletedToday: sessionsToday.rows[0].n,
+      // Learners holding a valid final assessment certificate.
+      certifiedLearners: (await pool.query(`SELECT (SELECT count(DISTINCT c.user_id)::int FROM certificates c JOIN users cu ON cu.id = c.user_id
+               WHERE cu.tenant_id = $1 AND cu.role = 'learner' AND cu.deleted_at IS NULL AND c.kind = 'result' AND c.revoked_at IS NULL
+                 AND (c.valid_until IS NULL OR c.valid_until >= current_date)) AS n`, [tenantId])).rows[0].n as number,
       activityFeed: activityFeed.rows.map((r) => ({
         kind: r.kind,
         who: r.who,

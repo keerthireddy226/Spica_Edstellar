@@ -24,6 +24,7 @@ export interface OrgAdminOverview {
   totalManagers: number;
   totalLearners: number;
   sessionsCompletedToday: number;
+  certifiedLearners?: number;
   activityFeed: { kind: ActivityKind; who: string; detail: string | null; occurredAt: string }[];
 }
 
@@ -466,6 +467,9 @@ export interface ProgramMember {
   missedMocks: number;
   next: { dueOn: string; kind: "practice" | "mock" } | null;
   integrity: { status: string | null; risk: string | null } | null;
+  // The program's final assessment: not given yet, waiting to be taken, taken, or certified.
+  finalAssessment?: "none" | "waiting" | "taken" | "certified";
+  certified?: CertifiedSummary | null;
 }
 
 export interface ProgramAlert {
