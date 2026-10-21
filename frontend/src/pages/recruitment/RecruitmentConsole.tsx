@@ -31,6 +31,7 @@ import {
   saveRecruitmentSettings,
   updateJob,
   type AssessmentReport,
+  type InterviewQuestion,
   type AssessmentResult,
   type CandidateRow,
   type Cefr,
@@ -45,6 +46,7 @@ import {
 import { tr } from "@/i18n/tr";
 import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
+import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { trServer } from "@/i18n/serverText";
 
 const CEFR: Cefr[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -180,12 +182,14 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
   const [confirmLevel, setConfirmLevel] = useState<Cefr | "">("");
   const [confirmNote, setConfirmNote] = useState("");
   const [a, setA] = useState<AssessmentReport | null>(null);
+  const [interview, setInterview] = useState<InterviewQuestion[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(() => {
     getAssessment(id)
       .then((r) => {
         setA(r.assessment);
+        setInterview(r.interview ?? []);
         setNote(r.assessment.decision_note ?? "");
         setConfirmLevel(r.assessment.confirmed_level ?? r.assessment.result?.cefrLevel ?? "");
         setConfirmNote(r.assessment.confirm_note ?? "");
@@ -272,6 +276,12 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
           )}
         </Panel>
         {a.status === "completed" && <CandidateFeedback id={id} />}
+        {interview.length > 0 && (
+          <Panel title={tr("Questions for the interview")}>
+            <p className="text-xs text-muted">{tr("To check in person the skills the test showed weakest, at the level the job needs.")}</p>
+            <InterviewQuestionList questions={interview} />
+          </Panel>
+        )}
         {a.status === "completed" && adm && (
           <Panel title={tr("Confirm the result")}>
             <p className="text-xs text-muted">

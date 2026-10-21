@@ -7,7 +7,8 @@ import { useBranding } from "@/components/AppShell/useBranding";
 import { ROUTES } from "@/constants/routes";
 import { OrgAdminDashboard } from "@/pages/orgAdmin/OrgAdminDashboard";
 import { TEST_KIND_LABEL } from "@/components/recruitment/testKinds";
-import { getAssessment, type AssessmentReport } from "@/api/recruitment";
+import { getAssessment, type AssessmentReport, type InterviewQuestion } from "@/api/recruitment";
+import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { tr } from "@/i18n/tr";
 
 // An organization that only bought recruitment lands on recruitment.
@@ -37,10 +38,14 @@ const INTEGRITY_TEXT: Record<string, () => string> = {
 export function CandidateReportPrint() {
   const { id = "" } = useParams();
   const [a, setA] = useState<AssessmentReport | null>(null);
+  const [interview, setInterview] = useState<InterviewQuestion[]>([]);
   const [error, setError] = useState(false);
   useEffect(() => {
     getAssessment(id)
-      .then((r) => setA(r.assessment))
+      .then((r) => {
+        setA(r.assessment);
+        setInterview(r.interview ?? []);
+      })
       .catch(() => setError(true));
   }, [id]);
   if (error) return <p className="p-8 text-sm text-error">{tr("This report isn't available.")}</p>;
@@ -130,6 +135,13 @@ export function CandidateReportPrint() {
         {a.integrity_status ? INTEGRITY_TEXT[a.integrity_status]() : tr("Not proctored")}
         {a.identity_status ? ` · ${a.identity_status === "verified" ? tr("ID verified") : a.identity_status === "rejected" ? tr("ID rejected") : tr("ID check waiting")}` : ""}
       </p>
+      {interview.length > 0 && (
+        <>
+          <h2 className="text-lg font-bold mt-6">{tr("Questions for the interview")}</h2>
+          <p className="text-xs text-black/60 mb-2">{tr("To check in person the skills the test showed weakest, at the level the job needs.")}</p>
+          <InterviewQuestionList questions={interview} print />
+        </>
+      )}
       {a.decision && (
         <>
           <h2 className="text-lg font-bold mt-6">{tr("Decision")}</h2>

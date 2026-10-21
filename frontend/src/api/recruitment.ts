@@ -184,7 +184,16 @@ export function confirmAssessment(id: string, level: Cefr | null, note?: string)
   return api(`/recruitment/assessments/${id}/confirm`, { method: "POST", body: JSON.stringify({ level, note }) });
 }
 
-export function getAssessment(id: string): Promise<{ assessment: AssessmentReport }> {
+// A question for the interview, aimed at a skill the test showed weak.
+export interface InterviewQuestion {
+  skill: "speaking" | "listening" | "reading" | "writing";
+  level: string;
+  question: string;
+  listenFor: string;
+  reason: "below_minimum" | "weakest";
+}
+
+export function getAssessment(id: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[] }> {
   return api(`/recruitment/assessments/${id}`);
 }
 

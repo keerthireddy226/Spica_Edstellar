@@ -4,6 +4,7 @@
 import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
 import { Router, type NextFunction, type Response } from "express";
 import { z } from "zod";
+import { interviewQuestions } from "./interviewQuestions.js";
 import { enqueue } from "../queue/queue.js";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -392,7 +393,8 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
     ).rows[0];
     if (!a) return res.status(404).json({ error: "assessment_not_found" });
     const { token_hash: _t, ...rest } = a;
-    res.json({ assessment: rest });
+    // Questions for the interview, aimed at the skills the test showed weakest.
+    res.json({ assessment: rest, interview: a.status === "completed" ? interviewQuestions(a.result, a.min_cefr) : [] });
   } catch (err) {
     next(err);
   }
