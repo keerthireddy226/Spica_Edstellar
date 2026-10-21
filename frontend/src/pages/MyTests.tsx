@@ -6,7 +6,9 @@ import { LearnerHero } from "@/components/learner/LearnerHero";
 import { Button } from "@/components/Button";
 import { PracticeTests } from "@/pages/PracticeTests";
 import { chooseFinalTest, getMyTests, type AttemptStatus, type OwnedTest } from "@/api/assessment";
-import { getPriceList } from "@/api/payments";
+import { formatAmount, getPriceList, type PricedProduct, type ShopCurrency } from "@/api/payments";
+import { Checkout } from "@/components/plans/ProductShop";
+import { linkedInAddUrl } from "@/lib/linkedin";
 import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -83,6 +85,44 @@ function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appea
 const takeLink = (t: OwnedTest, mode: "certified" | "sample", sessionId?: string) =>
   `${ROUTES.MY_TESTS_TAKE}?entitlement=${t.id}&mode=${mode}${sessionId ? `&session=${sessionId}` : ""}`;
 
+type Shop = { products: PricedProduct[]; currency: ShopCurrency } | null;
+
+// What a learner can do with a final assessment certificate: add it to
+// LinkedIn and, buying for themselves, keep it valid longer or order a printed copy.
+function CertificateExtras({ a, testName, shop }: { a: OwnedTest["attempts"][number]; testName: string; shop: Shop }) {
+  const [buying, setBuying] = useState<PricedProduct | null>(null);
+  if (!a.certificateCode || !a.certificateId) return null;
+  const extra = (kind: PricedProduct["kind"]) => shop?.products.find((p) => p.kind === kind) ?? null;
+  const offers = [!a.lifetime ? extra("cert_extend") : null, !a.lifetime ? extra("cert_lifetime") : null, extra("cert_print")].filter((p): p is PricedProduct => !!p);
+  const label = (p: PricedProduct) =>
+    p.kind === "cert_extend" ? tr("Keep it valid 12 more months") : p.kind === "cert_lifetime" ? tr("Make it valid for life") : tr("Order a printed copy");
+  return (
+    <div className="basis-full flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs pl-0 sm:pl-[7.75rem]">
+      <a
+        href={linkedInAddUrl({
+          name: `${testName}: ${a.level ?? ""}${a.spicaScore !== null ? `, Spica score ${a.spicaScore}` : ""}`,
+          code: a.certificateCode,
+          issuedAt: a.issuedAt ?? a.startedAt,
+          validUntil: a.validUntil,
+          verifyUrl: `${window.location.origin}/certificate/${a.certificateCode}`,
+        })}
+        target="_blank"
+        rel="noopener"
+        className="font-semibold text-navy-deep hover:underline"
+      >
+        {tr("Add to LinkedIn")}
+      </a>
+      {a.lifetime && <span className="text-muted">{tr("Valid for life")}</span>}
+      {offers.map((p) => (
+        <button key={p.id} onClick={() => setBuying(p)} className="font-semibold text-navy-deep hover:underline cursor-pointer">
+          {label(p)} · {formatAmount(p.amount, p.currency)}
+        </button>
+      ))}
+      {buying && shop && <Checkout product={buying} currency={shop.currency} certificateId={a.certificateId} onClose={() => setBuying(null)} />}
+    </div>
+  );
+}
+
 // The final assessment included with Full access: the learner picks its test first.
 function ChooseTest({ t, onChosen }: { t: OwnedTest; onChosen: () => void }) {
   const [testTypeId, setTestTypeId] = useState(t.choices[0]?.id ?? "");
@@ -121,7 +161,7 @@ function ChooseTest({ t, onChosen }: { t: OwnedTest; onChosen: () => void }) {
   );
 }
 
-function TestCard({ t, onChanged }: { t: OwnedTest; onChanged: () => void }) {
+function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void; shop: Shop }) {
   const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const u = t.unlock;
@@ -241,6 +281,7 @@ function TestCard({ t, onChanged }: { t: OwnedTest; onChanged: () => void }) {
               )}
               {a.status === "passed" && <span className="text-xs text-muted">{tr("The next level's test is 25% off.")}</span>}
               <AppealLine sessionId={a.sessionId} appeal={a.appeal} canAppeal={a.canAppeal && a.status !== "in_progress"} />
+              {a.status === "certified" && <CertificateExtras a={a} testName={t.testName ?? t.name} shop={shop} />}
             </div>
           ))}
         </div>
@@ -254,6 +295,7 @@ export function MyTests() {
   const [error, setError] = useState(false);
   // Whether the learner buys their own tests (individuals) or their organization gives them.
   const [canBuy, setCanBuy] = useState(true);
+  const [shop, setShop] = useState<Shop>(null);
   function load() {
     getMyTests()
       .then((r) => setTests(r.tests))
@@ -262,7 +304,10 @@ export function MyTests() {
   useEffect(() => {
     load();
     getPriceList()
-      .then((r) => setCanBuy(r.canBuy))
+      .then((r) => {
+        setCanBuy(r.canBuy);
+        if (r.canBuy) setShop({ products: r.products, currency: r.currency });
+      })
       .catch(() => {});
   }, []);
   return (
@@ -298,7 +343,7 @@ export function MyTests() {
           )}
         </div>
       ) : (
-        tests.map((t) => <TestCard key={t.id} t={t} onChanged={load} />)
+        tests.map((t) => <TestCard key={t.id} t={t} onChanged={load} shop={shop} />)
       )}
     </div>
   );

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Download, ShieldCheck, ShieldX } from "lucide-react";
+import { BadgeCheck, Download, Share2, ShieldCheck, ShieldX } from "lucide-react";
+import { linkedInAddUrl } from "@/lib/linkedin";
 import { Button } from "@/components/Button";
 import { formatDay } from "@/api/certificates";
 
@@ -34,6 +35,8 @@ interface VerifiedCertificate {
   skillScores?: Record<string, { level: string; score?: number; percent?: number }> | null;
   validUntil?: string | null;
   expired?: boolean;
+  // The test passed the face and ID checks.
+  identityVerified?: boolean;
 }
 
 const SKILL_ORDER = ["speaking", "listening", "reading", "writing"];
@@ -125,6 +128,16 @@ export function CertificateView() {
           <Button variant="secondary" onClick={() => window.print()} className="flex items-center gap-2 !px-3.5 !py-2">
             <Download size={15} /> {tr("Download PDF")}
           </Button>
+        )}
+        {cert.valid && cert.kind === "result" && (
+          <a
+            href={linkedInAddUrl({ name: `${cert.testName ?? "Spica English"}: ${cert.cefrLevel ?? ""}${cert.spicaScore != null ? `, Spica score ${cert.spicaScore}` : ""}`, code: cert.code, issuedAt: cert.issuedAt, validUntil: cert.validUntil ?? null, verifyUrl: cert.verifyUrl })}
+            target="_blank"
+            rel="noopener"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-pill border border-rule-strong text-sm font-semibold text-ink hover:bg-paper-warm"
+          >
+            <Share2 size={15} /> {tr("Add to LinkedIn")}
+          </a>
         )}
       </div>
       {cert.valid && <p className="print:hidden text-xs text-muted -mt-2 text-center">{tr("In the print window, choose \"Save as PDF\".")}</p>}
@@ -227,9 +240,18 @@ export function CertificateView() {
                   <span>
                     {tr("Issued")} <b style={{ color: INK }}>{formatDay(cert.issuedAt, true)}</b>
                   </span>
-                  {cert.validUntil && (
+                  {cert.validUntil ? (
                     <span>
                       {tr("Valid until")} <b style={{ color: INK }}>{formatDay(cert.validUntil, true)}</b>
+                    </span>
+                  ) : cert.kind === "result" ? (
+                    <span>
+                      <b style={{ color: INK }}>{tr("Valid for life")}</b>
+                    </span>
+                  ) : null}
+                  {cert.identityVerified && (
+                    <span className="flex items-center gap-1" style={{ color: NAVY }}>
+                      <BadgeCheck size={13} /> <b>{tr("Identity verified")}</b> · {tr("face and ID checked during the test")}
                     </span>
                   )}
                   <span>

@@ -53,6 +53,8 @@ export interface ProductQuote {
   total: number;
   durationDays: number;
   attempts: number;
+  // A certificate extra: the final assessment certificate it's for.
+  certificateId: string | null;
 }
 
 // Unused time of the buyer's paid preparation purchases, in this currency, as credit.
@@ -98,9 +100,16 @@ async function levelResults(userId: string): Promise<{ level: string; passed: bo
   ).rows;
 }
 
-export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string } = {}): Promise<ProductQuote> {
+export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string; certificateId?: string } = {}): Promise<ProductQuote> {
   const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind <> 'final'`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
+  // A certificate extra is for one of the buyer's own final assessment certificates.
+  if (String(p.kind).startsWith("cert_")) {
+    const c = opts.certificateId
+      ? (await pool.query(`SELECT valid_until FROM certificates WHERE id = $1 AND user_id = $2 AND kind = 'result' AND revoked_at IS NULL`, [opts.certificateId, buyer.userId])).rows[0]
+      : null;
+    if (!c || (p.kind !== "cert_print" && c.valid_until === null)) throw new PaymentError("invalid_quantity");
+  }
   if ((p.kind === "level" || p.kind === "pack") && !["A1", "A2", "B1", "B2", "C1", "C2"].includes(opts.level ?? "")) throw new PaymentError("invalid_quantity");
   const currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
   const priced = (await pool.query(`SELECT amount FROM product_prices WHERE product_id = $1 AND currency = $2`, [productId, currency])).rows[0];
@@ -137,14 +146,33 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     total: subtotal + taxAmount,
     durationDays: p.duration_days,
     attempts: p.attempts,
+    certificateId: String(p.kind).startsWith("cert_") ? opts.certificateId! : null,
   };
 }
 
-export async function createProductOrder(buyer: Buyer, q: ProductQuote): Promise<string> {
+export async function createProductOrder(buyer: Buyer, q: ProductQuote, shipping?: Record<string, string> | null): Promise<string> {
   const r = await pool.query(
-    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, product_id, level, credit_amount, discount_amount, discount_reason)
-     VALUES ($1, $2, 'product', 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
-    [buyer.tenantId, buyer.userId, q.currency, q.price, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo), q.productId, q.level, q.credit, q.discount, q.discountReason],
+    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, product_id, level, credit_amount, discount_amount, discount_reason, certificate_id, shipping)
+     VALUES ($1, $2, 'product', 1, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
+    [
+      buyer.tenantId,
+      buyer.userId,
+      q.currency,
+      q.price,
+      q.subtotal,
+      q.taxRate,
+      q.taxAmount,
+      q.total,
+      q.provider,
+      JSON.stringify(buyer.billTo),
+      q.productId,
+      q.level,
+      q.credit,
+      q.discount,
+      q.discountReason,
+      q.certificateId,
+      shipping ? JSON.stringify(shipping) : null,
+    ],
   );
   return r.rows[0].id;
 }

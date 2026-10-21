@@ -73,6 +73,19 @@ const productOrderSchema = z.object({
   productId: z.string().min(1).max(60),
   currency: z.string().length(3).optional(),
   level: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
+  // A certificate extra: which certificate, and for a printed copy where to post it.
+  certificateId: z.string().uuid().optional(),
+  shipping: z
+    .object({
+      name: z.string().trim().min(1).max(120),
+      line1: z.string().trim().min(1).max(200),
+      line2: z.string().trim().max(200).optional(),
+      city: z.string().trim().min(1).max(100),
+      postalCode: z.string().trim().min(1).max(20),
+      country: z.string().trim().min(2).max(60),
+      phone: z.string().trim().max(30).optional(),
+    })
+    .optional(),
 });
 
 paymentsRouter.get("/product-quote", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -93,7 +106,8 @@ paymentsRouter.post("/product-orders", requireAuth, async (req: AuthedRequest, r
     if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
     const body = productOrderSchema.parse(req.body);
     const q = await productQuote(buyer, body.productId, body);
-    const orderId = await createProductOrder(buyer, q);
+    if (body.productId === "cert_print" && !body.shipping) return res.status(400).json({ error: "shipping_required" });
+    const orderId = await createProductOrder(buyer, q, body.productId === "cert_print" ? body.shipping : null);
     const returnPath = "/checkout/return";
     const name = `${q.productName}${q.level ? ` (${q.level})` : ""}`;
     if (q.provider === "stripe") {

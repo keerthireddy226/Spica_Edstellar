@@ -36,6 +36,8 @@ export interface Certificate {
   spicaScore: number | null;
   skillScores: Record<string, { level: string; score: number }> | null;
   validUntil: string | null;
+  // A result certificate whose test passed the face and ID checks.
+  identityVerified: boolean;
 }
 
 // A course certificate's details: the course, its period, the goal, the
@@ -73,6 +75,7 @@ function toCert(r: Record<string, any>): Certificate {
     spicaScore: r.spica_score ?? null,
     skillScores: r.skill_scores ?? null,
     validUntil: r.valid_until ? dateOnly(r.valid_until) : null,
+    identityVerified: !!r.identity_verified,
   };
 }
 
@@ -180,7 +183,10 @@ export async function revokeCertificate(tenantId: string, id: string): Promise<b
 // Anyone with the code (an employer, a university) can check it's real.
 export async function verifyCertificate(code: string): Promise<(Certificate & { tenantId: string | null }) | null> {
   const r = await pool.query(
-    `SELECT c.*, CASE WHEN t.type = 'cohort' THEN t.logo_path END AS org_logo FROM certificates c LEFT JOIN tenants t ON t.id = c.tenant_id WHERE c.code = $1`,
+    `SELECT c.*, CASE WHEN t.type = 'cohort' THEN t.logo_path END AS org_logo,
+       EXISTS (SELECT 1 FROM session_integrity si WHERE si.session_id = c.session_id AND si.status IN ('clear', 'cleared') AND NOT si.biometric_opt_out
+               AND coalesce((si.policy->>'idVerification')::boolean, false) AND coalesce((si.policy->>'faceMatch')::boolean, false)) AS identity_verified
+     FROM certificates c LEFT JOIN tenants t ON t.id = c.tenant_id WHERE c.code = $1`,
     [code.trim().toUpperCase()],
   );
   return r.rows[0] ? { ...toCert(r.rows[0]), tenantId: r.rows[0].tenant_id } : null;

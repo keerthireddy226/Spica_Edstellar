@@ -2,8 +2,54 @@ import { useEffect, useState } from "react";
 import { Award, CheckCircle2, ExternalLink, FileText, XCircle } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
-import { decideCertificateRequest, formatDay, getCertificateRequests, versantProofUrl, type CertificateRequest } from "@/api/certificates";
+import {
+  decideCertificateRequest,
+  formatDay,
+  getCertificatePrints,
+  getCertificateRequests,
+  markCertificatePosted,
+  versantProofUrl,
+  type CertificatePrint,
+  type CertificateRequest,
+} from "@/api/certificates";
 import { tr } from "@/i18n/tr";
+
+// Printed copies of final assessment certificates that learners paid for: print, post, mark posted.
+function PrintsToPost() {
+  const [prints, setPrints] = useState<CertificatePrint[] | null>(null);
+  const load = () =>
+    getCertificatePrints()
+      .then((r) => setPrints(r.prints))
+      .catch(() => setPrints([]));
+  useEffect(() => {
+    load();
+  }, []);
+  if (!prints?.length) return null;
+  return (
+    <section className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3">
+      <h2 className="font-display font-semibold text-lg text-ink">{tr("Printed certificates to post")}</h2>
+      {prints.map((p) => (
+        <div key={p.id} className="flex flex-wrap items-start gap-3 border-t border-rule pt-3 first:border-t-0 first:pt-0 text-sm">
+          <div className="flex-1 min-w-[220px]">
+            <a href={`/certificate/${p.code}`} target="_blank" rel="noopener" className="font-semibold text-navy-deep hover:underline">
+              {p.learnerName} · {p.code}
+            </a>
+            <p className="text-muted whitespace-pre-line">
+              {[p.shipping.name, p.shipping.line1, p.shipping.line2, `${p.shipping.city} ${p.shipping.postalCode}`, p.shipping.country, p.shipping.phone].filter(Boolean).join("\n")}
+            </p>
+          </div>
+          {p.status === "to_print" ? (
+            <Button variant="secondary" onClick={() => markCertificatePosted(p.id).then(load)} className="!py-1.5 !px-3 text-sm">
+              {tr("Mark as posted")}
+            </Button>
+          ) : (
+            <span className="text-xs text-success font-semibold">{tr("Posted {{date}}", { date: formatDay(p.postedAt ?? p.createdAt) })}</span>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+}
 
 // Course certificate requests: an org admin sees their own learners', Spica
 // staff the individual learners'. Each shows what the learner has done and
@@ -44,6 +90,7 @@ export function CertificateRequests({ viewer }: { viewer: "org" | "staff" }) {
           </button>
         ))}
       </div>
+      {viewer === "staff" && <PrintsToPost />}
       {error && <p className="text-sm text-error">{error}</p>}
       {rows && rows.length === 0 && <p className="text-sm text-muted">{tab === "pending" ? tr("No requests waiting.") : tr("No requests yet.")}</p>}
       <div className="flex flex-col gap-3">

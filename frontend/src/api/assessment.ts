@@ -35,6 +35,9 @@ export interface OwnedTest {
     completedAt: string | null;
     status: AttemptStatus;
     certificateCode: string | null;
+    certificateId: string | null;
+    lifetime: boolean;
+    issuedAt: string | null;
     spicaScore: number | null;
     level: string | null;
     validUntil: string | null;

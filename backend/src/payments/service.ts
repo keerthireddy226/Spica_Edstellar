@@ -182,7 +182,17 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
 
     // A product becomes the learner's own (an entitlement); months and licences go to the licence pool.
     let purchase: { rows: { id: string }[] } = { rows: [{ id: null as unknown as string }] };
-    if (order.kind === "product") {
+    if (order.kind === "product" && String(order.product_id).startsWith("cert_")) {
+      // A certificate extra changes the certificate (or queues a printed copy); nothing is owned.
+      product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
+      if (product!.kind === "cert_extend") {
+        await client.query(`UPDATE certificates SET valid_until = greatest(valid_until, current_date) + interval '12 months' WHERE id = $1 AND valid_until IS NOT NULL`, [order.certificate_id]);
+      } else if (product!.kind === "cert_lifetime") {
+        await client.query(`UPDATE certificates SET valid_until = NULL WHERE id = $1`, [order.certificate_id]);
+      } else if (product!.kind === "cert_print") {
+        await client.query(`INSERT INTO certificate_prints (certificate_id, order_id, shipping) VALUES ($1, $2, $3)`, [order.certificate_id, order.id, JSON.stringify(order.shipping ?? {})]);
+      }
+    } else if (order.kind === "product") {
       product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
       const ent = await client.query(
         `INSERT INTO entitlements (user_id, product_id, test_type_id, level, attempts_total, ends_at, source, tenant_id, order_id)
@@ -288,6 +298,20 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
         link: "/orgadmin/plan",
         email: true,
       });
+    }
+  }
+  // A printed copy to post: Spica staff hear about it.
+  if (product?.kind === "cert_print") {
+    const code = (await pool.query(`SELECT code FROM certificates WHERE id = $1`, [order.certificate_id])).rows[0]?.code;
+    for (const s of (await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows) {
+      await notify({
+        userId: s.id,
+        kind: "invoice_paid",
+        title: "A printed certificate to post",
+        body: `Print certificate ${code ?? ""} and post it. The address is on the order.`,
+        link: "/superadmin/certificates",
+        email: true,
+      }).catch(() => {});
     }
   }
   if (order.kind === "product" && order.buyer_id) {

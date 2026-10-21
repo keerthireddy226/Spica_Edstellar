@@ -46,6 +46,7 @@ certificatesRouter.get("/verify/:code", verifyLimiter, async (req, res, next) =>
       skillScores: c.skillScores,
       validUntil: c.validUntil,
       expired,
+      identityVerified: c.kind === "result" && c.identityVerified,
       orgLogoUrl: c.hasOrgLogo && !c.revokedAt ? `/api/certificates/verify/${c.code}/logo` : null,
       verifyUrl,
       qr: await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240, color: { dark: "#1f3a5f", light: "#ffffff" } }),
@@ -131,6 +132,33 @@ certificatesRouter.post("/me/request", requireAuth, async (req: AuthedRequest, r
     res.status(201).json({ id: await requestCertificate(req.user!.id) });
   } catch (err) {
     courseError(err, res, next);
+  }
+});
+
+// ---- Printed certificates to post (Spica staff) ----
+
+certificatesRouter.get("/prints", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!["admin", "super_admin"].includes(req.user!.role)) return res.status(403).json({ error: "forbidden" });
+  try {
+    const r = await pool.query(
+      `SELECT p.id, p.status, p.shipping, p.created_at, p.posted_at, c.code, c.learner_name FROM certificate_prints p JOIN certificates c ON c.id = p.certificate_id
+       ORDER BY (p.status = 'to_print') DESC, p.created_at DESC LIMIT 200`,
+    );
+    res.json({
+      prints: r.rows.map((x) => ({ id: x.id, status: x.status, shipping: x.shipping, createdAt: x.created_at, postedAt: x.posted_at, code: x.code, learnerName: x.learner_name })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+certificatesRouter.post("/prints/:id/posted", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!["admin", "super_admin"].includes(req.user!.role)) return res.status(403).json({ error: "forbidden" });
+  try {
+    await pool.query(`UPDATE certificate_prints SET status = 'posted', posted_at = now() WHERE id = $1`, [String(req.params.id)]);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
   }
 });
 

@@ -75,3 +75,16 @@ export function formatDay(day: string | null, long = false): string {
   if (!day) return "—";
   return new Date(`${day.slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: long ? "long" : "short", day: "numeric" });
 }
+
+// Printed final assessment certificates to post (Spica staff).
+export interface CertificatePrint {
+  id: string;
+  status: "to_print" | "posted";
+  shipping: { name: string; line1: string; line2?: string; city: string; postalCode: string; country: string; phone?: string };
+  createdAt: string;
+  postedAt: string | null;
+  code: string;
+  learnerName: string;
+}
+export const getCertificatePrints = () => api<{ prints: CertificatePrint[] }>("/certificates/prints");
+export const markCertificatePosted = (id: string) => api<{ ok: true }>(`/certificates/prints/${id}/posted`, { method: "POST", body: "{}" });

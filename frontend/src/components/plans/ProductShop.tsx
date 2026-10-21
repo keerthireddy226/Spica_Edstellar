@@ -11,6 +11,7 @@ import {
   type PricedProduct,
   type ProductQuote,
   type ShopCurrency,
+  type Shipping,
 } from "@/api/payments";
 import { tr } from "@/i18n/tr";
 
@@ -47,23 +48,29 @@ const GROUPS: { kind: PricedProduct["kind"]; title: () => string; note: () => st
   },
 ];
 
-function Checkout({ product, currency, onClose }: { product: PricedProduct; currency: ShopCurrency; onClose: () => void }) {
+const EMPTY_SHIPPING: Shipping = { name: "", line1: "", line2: "", city: "", postalCode: "", country: "", phone: "" };
+
+// Checkout for one product. A certificate extra passes the certificate; a printed copy asks where to post it.
+export function Checkout({ product, currency, certificateId, onClose }: { product: PricedProduct; currency: ShopCurrency; certificateId?: string; onClose: () => void }) {
   const navigate = useNavigate();
   const [level, setLevel] = useState(product.kind === "level" || product.kind === "pack" ? "B1" : "");
+  const [ship, setShip] = useState<Shipping>(EMPTY_SHIPPING);
+  const needsShipping = product.kind === "cert_print";
+  const shipReady = !needsShipping || (ship.name.trim() && ship.line1.trim() && ship.city.trim() && ship.postalCode.trim() && ship.country.trim());
   const [q, setQ] = useState<ProductQuote | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     setQ(null);
-    getProductQuote(product.id, currency, level || undefined)
+    getProductQuote(product.id, currency, level || undefined, certificateId)
       .then(setQ)
       .catch(() => setError(tr("Prices couldn't load. Try again.")));
-  }, [product.id, currency, level]);
+  }, [product.id, currency, level, certificateId]);
   async function pay() {
     setPaying(true);
     setError(null);
     try {
-      await startCheckout(await createProductOrder(product.id, currency, level || undefined), navigate);
+      await startCheckout(await createProductOrder(product.id, currency, level || undefined, { certificateId, shipping: needsShipping ? ship : undefined }), navigate);
     } catch {
       setError(tr("Checkout couldn't start. Try again."));
       setPaying(false);
@@ -92,6 +99,30 @@ function Checkout({ product, currency, onClose }: { product: PricedProduct; curr
               ))}
             </select>
           </label>
+        )}
+        {needsShipping && (
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                ["name", tr("Full name"), true],
+                ["line1", tr("Address"), true],
+                ["line2", tr("Address line 2 (optional)"), true],
+                ["city", tr("City"), false],
+                ["postalCode", tr("Postal code"), false],
+                ["country", tr("Country"), false],
+                ["phone", tr("Phone (optional)"), false],
+              ] as [keyof Shipping, string, boolean][]
+            ).map(([k, label, wide]) => (
+              <input
+                key={k}
+                value={ship[k] ?? ""}
+                onChange={(e) => setShip((s) => ({ ...s, [k]: e.target.value }))}
+                placeholder={label}
+                aria-label={label}
+                className={`rounded-input border border-rule bg-surface px-3 py-2 text-sm ${wide ? "col-span-2" : ""}`}
+              />
+            ))}
+          </div>
         )}
         {q ? (
           <div className="text-sm flex flex-col gap-1 bg-paper-warm rounded-input px-3.5 py-2.5">
@@ -122,7 +153,7 @@ function Checkout({ product, currency, onClose }: { product: PricedProduct; curr
               <span>{formatAmount(q.total, q.currency)}</span>
             </div>
             <span className="text-xs text-muted">
-              {tr("Valid for {{n}} days", { n: q.durationDays })}
+              {!product.kind.startsWith("cert_") && tr("Valid for {{n}} days", { n: q.durationDays })}
               {q.attempts > 0 ? ` · ${q.attempts === 1 ? tr("1 real test") : tr("{{n}} real tests", { n: q.attempts })}` : ""}
             </span>
           </div>
@@ -130,7 +161,7 @@ function Checkout({ product, currency, onClose }: { product: PricedProduct; curr
           <p className="text-sm text-muted">{tr("Loading…")}</p>
         ) : null}
         {error && <p className="text-sm text-error">{error}</p>}
-        <Button onClick={pay} disabled={!q || paying} className="w-full">
+        <Button onClick={pay} disabled={!q || paying || !shipReady} className="w-full">
           {paying ? tr("Starting checkout…") : q ? tr("Pay {{amount}}", { amount: formatAmount(q.total, q.currency) }) : tr("Pay")}
         </Button>
       </div>

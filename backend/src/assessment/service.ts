@@ -131,7 +131,7 @@ export async function myTests(userId: string) {
     ? (
         await pool.query(
           `SELECT s.id, s.entitlement_id, s.started_at, s.completed_at, s.result, s.composition->>'abandoned' AS abandoned,
-             si.status AS integrity, c.code AS certificate_code, c.revoked_at AS certificate_revoked, c.spica_score, c.cefr_level AS certificate_level, c.valid_until,
+             si.status AS integrity, c.id AS certificate_id, c.code AS certificate_code, c.revoked_at AS certificate_revoked, c.spica_score, c.cefr_level AS certificate_level, c.valid_until,
              (SELECT row_to_json(x) FROM (SELECT status, decision_note AS note FROM result_appeals ra WHERE ra.session_id = s.id) x) AS appeal,
              EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
                      WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending') AS grading
@@ -170,9 +170,13 @@ export async function myTests(userId: string) {
             completedAt: s.completed_at ? new Date(s.completed_at).toISOString() : null,
             status: attemptStatus(s),
             certificateCode: s.certificate_code && !s.certificate_revoked ? (s.certificate_code as string) : null,
+            certificateId: s.certificate_code && !s.certificate_revoked ? (s.certificate_id as string) : null,
             spicaScore: s.certificate_code && !s.certificate_revoked ? (s.spica_score as number | null) : null,
             level: s.certificate_code && !s.certificate_revoked ? (s.certificate_level as string | null) : null,
             validUntil: s.valid_until && !s.certificate_revoked ? new Date(s.valid_until).toISOString().slice(0, 10) : null,
+            // A certificate with no end date is valid for life.
+            lifetime: !!s.certificate_code && !s.certificate_revoked && !s.valid_until,
+            issuedAt: s.certificate_code ? (s.completed_at ? new Date(s.completed_at).toISOString() : null) : null,
             // A level test's result: passed or not, overall and each skill's share right.
             levelResult: s.result?.levelTest ?? null,
             appeal: (s.appeal as { status: string; note: string | null } | null) ?? null,

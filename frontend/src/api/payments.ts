@@ -196,7 +196,7 @@ export type ShopCurrency = "INR" | "USD" | "EUR" | "GBP" | "AED" | "SGD";
 
 export interface PricedProduct {
   id: string;
-  kind: "full" | "prep" | "assessment" | "level" | "pack";
+  kind: "full" | "prep" | "assessment" | "level" | "pack" | "cert_extend" | "cert_lifetime" | "cert_print";
   testTypeId: string | null;
   testTypeName: string | null;
   name: string;
@@ -233,12 +233,24 @@ export interface ProductQuote {
   attempts: number;
 }
 
-export function getProductQuote(productId: string, currency: ShopCurrency, level?: string): Promise<ProductQuote> {
+// Where a printed certificate is posted.
+export interface Shipping {
+  name: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  phone?: string;
+}
+
+export function getProductQuote(productId: string, currency: ShopCurrency, level?: string, certificateId?: string): Promise<ProductQuote> {
   const p = new URLSearchParams({ productId, currency });
   if (level) p.set("level", level);
+  if (certificateId) p.set("certificateId", certificateId);
   return api(`/payments/product-quote?${p}`);
 }
 
-export function createProductOrder(productId: string, currency: ShopCurrency, level?: string): Promise<CreatedOrder> {
-  return api("/payments/product-orders", { method: "POST", body: JSON.stringify({ productId, currency, level }) });
+export function createProductOrder(productId: string, currency: ShopCurrency, level?: string, extra?: { certificateId?: string; shipping?: Shipping }): Promise<CreatedOrder> {
+  return api("/payments/product-orders", { method: "POST", body: JSON.stringify({ productId, currency, level, ...extra }) });
 }
