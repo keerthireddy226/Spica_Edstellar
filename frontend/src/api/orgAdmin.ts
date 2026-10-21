@@ -429,6 +429,7 @@ export interface ProgramInput {
   startsOn: string;
   targetDate: string;
   finalAssessment?: boolean;
+  finalAssessmentDays?: number;
 }
 
 export interface ProgramSummary extends Program {
@@ -497,7 +498,7 @@ export function getMemberReport(programId: string, sessionId: string, viewer: Pr
 
 export function updateProgram(
   id: string,
-  input: Partial<Pick<ProgramInput, "name" | "domain" | "targetLevel" | "targetSkills" | "targetDate" | "finalAssessment">> & { status?: Program["status"] },
+  input: Partial<Pick<ProgramInput, "name" | "domain" | "targetLevel" | "targetSkills" | "targetDate" | "finalAssessment" | "finalAssessmentDays">> & { status?: Program["status"] },
 ): Promise<Program> {
   return api(`/org-admin/programs/${id}`, { method: "PATCH", body: JSON.stringify(input) });
 }

@@ -222,8 +222,10 @@ export function OrgAdminLicenses() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
+          <p className="text-xs font-semibold uppercase tracking-wide text-navy-deep mt-1">{tr("Full access")}</p>
           <p className="text-sm text-muted mt-1">
-            {tr("1 license = 1 learner's access for 1 month, starting when you assign it · {{formatMoney}} per license", { formatMoney: formatMoney(data.pricePerLicenseCents) })}</p>
+            {tr("1 license = 1 learner's Full access for 1 month, starting when you assign it · {{formatMoney}} per license", { formatMoney: formatMoney(data.pricePerLicenseCents) })}</p>
+          <p className="text-sm text-muted mt-1">{tr("Full access includes one final assessment with a certificate for each learner.")}</p>
           <p className="text-sm text-ink mt-1">
             {tr("A license opens everything. To give one test only, a real test with a certificate, or a practice pack, use")}{" "}
             <Link to={ROUTES.ORG_ADMIN_TESTS} className="font-semibold text-navy-deep hover:underline">

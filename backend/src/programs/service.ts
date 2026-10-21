@@ -29,6 +29,8 @@ export const programSchema = z
     targetDate: isoDate,
     // End with a final assessment: the real test, given with credits before the target date.
     finalAssessment: z.boolean().default(false),
+    // How many days before the target date it's given.
+    finalAssessmentDays: z.number().int().min(1).max(60).default(7),
   })
   .refine((p) => p.targetDate > p.startsOn, {
     message: "targetDate must be after startsOn",
@@ -43,6 +45,7 @@ export const programEditSchema = z.object({
   targetDate: isoDate.optional(),
   status: z.enum(["active", "completed", "archived"]).optional(),
   finalAssessment: z.boolean().optional(),
+  finalAssessmentDays: z.number().int().min(1).max(60).optional(),
 });
 
 export class ProgramError extends Error {
@@ -183,9 +186,9 @@ export async function createProgram(tenantId: string, actorId: string, input: z.
   try {
     row = (
       await pool.query(
-        `INSERT INTO programs (tenant_id, name, domain, test_type_id, target_level, target_skills, batch_id, starts_on, target_date, created_by, final_assessment)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-        [tenantId, input.name, input.domain, input.testTypeId, input.targetLevel, JSON.stringify(input.targetSkills), input.batchId, input.startsOn, input.targetDate, actorId, input.finalAssessment],
+        `INSERT INTO programs (tenant_id, name, domain, test_type_id, target_level, target_skills, batch_id, starts_on, target_date, created_by, final_assessment, final_assessment_days)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+        [tenantId, input.name, input.domain, input.testTypeId, input.targetLevel, JSON.stringify(input.targetSkills), input.batchId, input.startsOn, input.targetDate, actorId, input.finalAssessment, input.finalAssessmentDays],
       )
     ).rows[0];
   } catch (err) {
@@ -209,7 +212,7 @@ export async function updateProgram(tenantId: string, id: string, input: z.infer
       await pool.query(
         `UPDATE programs SET name = coalesce($3, name), domain = coalesce($4, domain), target_level = coalesce($5, target_level),
            target_skills = coalesce($6, target_skills), target_date = coalesce($7, target_date), status = coalesce($8, status),
-           final_assessment = coalesce($9, final_assessment), updated_at = now()
+           final_assessment = coalesce($9, final_assessment), final_assessment_days = coalesce($10, final_assessment_days), updated_at = now()
          WHERE id = $1 AND tenant_id = $2 RETURNING *`,
         [
           id,
@@ -221,6 +224,7 @@ export async function updateProgram(tenantId: string, id: string, input: z.infer
           input.targetDate ?? null,
           input.status ?? null,
           input.finalAssessment ?? null,
+          input.finalAssessmentDays ?? null,
         ],
       )
     ).rows[0];
@@ -418,6 +422,7 @@ export function programJson(p: ProgramRow) {
     targetDate: p.target_date,
     status: p.status,
     finalAssessment: p.final_assessment,
+    finalAssessmentDays: p.final_assessment_days,
     finalAssessmentOn: p.final_assessment ? finalAssessmentOn(p) : null,
   };
 }

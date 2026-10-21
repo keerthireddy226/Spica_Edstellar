@@ -59,18 +59,48 @@ const ERROR_TEXT: Record<string, () => string> = {
 type FinalCredits = Record<string, number>;
 
 // The option to end a program with a final assessment, with its cost.
-function FinalAssessmentOption({ checked, onChange, credits, members }: { checked: boolean; onChange: (v: boolean) => void; credits: number; members?: number }) {
+function FinalAssessmentOption({
+  checked,
+  onChange,
+  days,
+  onDays,
+  credits,
+  members,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  days: number;
+  onDays: (d: number) => void;
+  credits: number;
+  members?: number;
+}) {
   return (
-    <label className="flex items-start gap-2.5 text-sm text-ink cursor-pointer">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 accent-navy cursor-pointer" />
-      <span>
-        <span className="font-semibold">{tr("End with a final assessment")}</span>
-        <span className="block text-xs text-muted">
-          {tr("7 days before the target date, each learner gets the real test, strictly proctored, with a certificate. {{n}} credits per learner, from Tests & credits.", { n: credits })}
-          {members ? ` ${tr("About {{n}} credits for this batch.", { n: credits * members })}` : ""}
+    <div className="flex flex-col gap-2">
+      <label className="flex items-start gap-2.5 text-sm text-ink cursor-pointer">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 accent-navy cursor-pointer" />
+        <span>
+          <span className="font-semibold">{tr("End with a final assessment")}</span>
+          <span className="block text-xs text-muted">
+            {tr("Before the target date, each learner gets the real test, strictly proctored, with a certificate. Learners whose licence includes one use it; others cost {{n}} credits each, from Tests & credits.", { n: credits })}
+            {members ? ` ${tr("At most {{n}} credits for this batch.", { n: credits * members })}` : ""}
+          </span>
         </span>
-      </span>
-    </label>
+      </label>
+      {checked && (
+        <label className="flex items-center gap-2 text-sm text-ink pl-6">
+          {tr("Open it")}
+          <input
+            type="number"
+            min={1}
+            max={60}
+            value={days}
+            onChange={(e) => onDays(Math.max(1, Math.min(60, Number(e.target.value) || 7)))}
+            className="w-16 rounded-input border border-rule bg-surface px-2 py-1 text-sm"
+          />
+          {tr("days before the target date")}
+        </label>
+      )}
+    </div>
   );
 }
 
@@ -135,6 +165,7 @@ function CreateProgramModal({
   const [startsOn, setStartsOn] = useState(today());
   const [targetDate, setTargetDate] = useState("");
   const [finalAssessment, setFinalAssessment] = useState(false);
+  const [finalDays, setFinalDays] = useState(7);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const testType = testTypes.find((x) => x.id === testTypeId);
@@ -145,7 +176,7 @@ function CreateProgramModal({
     setError(null);
     try {
       const targetSkills = Object.fromEntries(Object.entries(skillTargets).filter(([s, v]) => v && testType?.skills.includes(s as (typeof SKILLS)[number])));
-      await createProgram({ name: name.trim(), batchId, testTypeId, domain, targetLevel, targetSkills, startsOn, targetDate, finalAssessment: finalAssessment && !!finalCost });
+      await createProgram({ name: name.trim(), batchId, testTypeId, domain, targetLevel, targetSkills, startsOn, targetDate, finalAssessment: finalAssessment && !!finalCost, finalAssessmentDays: finalDays });
       onCreated();
     } catch (err) {
       setError(errorText(err));
@@ -224,7 +255,14 @@ function CreateProgramModal({
       </div>
       {finalCost !== undefined && (
         <div className="mt-5">
-          <FinalAssessmentOption checked={finalAssessment} onChange={setFinalAssessment} credits={finalCost} members={batches.find((b) => b.id === batchId)?.learnerCount} />
+          <FinalAssessmentOption
+            checked={finalAssessment}
+            onChange={setFinalAssessment}
+            days={finalDays}
+            onDays={setFinalDays}
+            credits={finalCost}
+            members={batches.find((b) => b.id === batchId)?.learnerCount}
+          />
         </div>
       )}
       <p className="text-sm text-muted mt-5">
@@ -481,6 +519,8 @@ function ProgramDetailModal({
                   <FinalAssessmentOption
                     checked={!!p!.finalAssessment}
                     onChange={(v) => !busy && save({ finalAssessment: v })}
+                    days={p!.finalAssessmentDays ?? 7}
+                    onDays={(d) => !busy && save({ finalAssessmentDays: d })}
                     credits={finalCredits[p!.testTypeId]}
                     members={data.members.length}
                   />

@@ -239,6 +239,7 @@ export interface Program {
   status: "active" | "completed" | "archived";
   // Ends with a real test (with a certificate), given with credits from this day.
   finalAssessment?: boolean;
+  finalAssessmentDays?: number;
   finalAssessmentOn?: string | null;
 }
 

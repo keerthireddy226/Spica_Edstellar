@@ -269,19 +269,23 @@ export const LEVEL_SKILL_MIN = 50;
 // After a level test that wasn't passed, the next one opens this many days later.
 export const LEVEL_RETAKE_DAYS = 7;
 
-// The level test's questions for a learner: unseen ones first, at the level.
-// Questions used in `exposureCap` real tests or more go last (kept out while
-// enough others remain), so a real test's questions don't circulate.
+// The level test's questions for a learner, at the level: the questions
+// written only for level tests first (never practised anywhere else), then
+// unseen ones. Questions used in `exposureCap` real tests or more go last
+// (kept out while enough others remain), so a real test's questions don't circulate.
 export async function levelTestItemIds(level: string, userId: string, exposureCap = Infinity): Promise<string[]> {
   const seen = await seenItemIds(userId);
   const ids: string[] = [];
   for (const part of LEVEL_TEST_BLUEPRINT) {
     const r = await pool.query(
-      `SELECT id, certified_exposures FROM items WHERE item_type_id = $1 AND cefr_level = $2 AND status = 'approved' AND exam_part_id IS NULL`,
+      `SELECT id, certified_exposures, pool = 'level_test' AS reserved FROM items WHERE item_type_id = $1 AND cefr_level = $2 AND status = 'approved' AND exam_part_id IS NULL`,
       [part.itemTypeId, level],
     );
-    const pool_ = shuffle(r.rows as { id: string; certified_exposures: number }[]).sort(
-      (a, b) => Number(a.certified_exposures >= exposureCap) - Number(b.certified_exposures >= exposureCap) || Number(seen.has(a.id)) - Number(seen.has(b.id)),
+    const pool_ = shuffle(r.rows as { id: string; certified_exposures: number; reserved: boolean }[]).sort(
+      (a, b) =>
+        Number(b.reserved) - Number(a.reserved) ||
+        Number(a.certified_exposures >= exposureCap) - Number(b.certified_exposures >= exposureCap) ||
+        Number(seen.has(a.id)) - Number(seen.has(b.id)),
     );
     ids.push(...pool_.slice(0, part.count).map((x) => x.id));
   }
