@@ -51,7 +51,7 @@ export function OwnedIntro({
   return (
     <div className="max-w-2xl mx-auto w-full flex flex-col gap-4">
       <button onClick={onBack} className="self-start flex items-center gap-1.5 text-sm font-semibold text-ink hover:text-navy cursor-pointer">
-        <ArrowLeft size={16} /> {tr("My tests")}
+        <ArrowLeft size={16} /> {tr("Assessment")}
       </button>
       <div className="bg-surface border border-rule rounded-card p-6 sm:p-8 flex flex-col gap-5">
         <div className="flex items-start gap-4">
@@ -96,11 +96,11 @@ export function OwnedFinished({ mode, onDone }: { mode: "certified" | "sample"; 
       <h1 className="font-display font-bold text-2xl text-ink">{mode === "certified" ? tr("Test finished") : tr("Sample finished")}</h1>
       <p className="text-sm text-muted">
         {mode === "certified"
-          ? tr("We're scoring your answers and checking the proctoring record. Your score report and certificate will be in My tests, usually within the hour, and we'll email you.")
-          : tr("Your real test is now open in My tests, whenever you're ready.")}
+          ? tr("We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.")
+          : tr("Your real test is now open on the Assessment page, whenever you're ready.")}
       </p>
       <Button onClick={onDone} className="w-full">
-        {tr("Go to My tests")}
+        {tr("Go to Assessment")}
       </Button>
     </div>
   );

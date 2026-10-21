@@ -270,8 +270,8 @@ export async function giveFinalAssessments(p: ProgramRow): Promise<number> {
       userId: r.user_id,
       kind: "test_given",
       title: "Your final assessment is ready",
-      body: `Your final assessment for ${p.name} is set to its test. Take it in My tests before ${p.target_date}.`,
-      link: "/my-tests",
+      body: `Your final assessment for ${p.name} is set to its test. Take it on the Assessment page before ${p.target_date}.`,
+      link: "/assessment",
       email: true,
     }).catch((err) => console.error("final assessment notification failed:", err));
   }

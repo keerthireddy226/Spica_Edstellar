@@ -1,6 +1,6 @@
 import { api } from "@/lib/api";
 
-// My tests: the real assessment attempts the learner owns.
+// Assessment (once "My tests"): the real assessment attempts the learner owns.
 export type Unlock =
   | { state: "open" }
   | { state: "mock_needed"; opensOn: string }

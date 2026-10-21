@@ -4,7 +4,7 @@ import { z } from "zod";
 import { AttemptError, chooseFinalTest, myTests, readiness, switchPrepTest } from "./service.js";
 import { AppealError, fileAppeal } from "../quality/service.js";
 
-// My tests: the learner's real assessment attempts. Starting one goes through
+// Assessment (once "My tests"): the learner's real assessment attempts. Starting one goes through
 // POST /api/practice-tests/session with mode "certified" (or "sample").
 export const assessmentRouter = Router();
 

@@ -101,10 +101,10 @@ export function FinalAssessmentCard() {
                     ? tr("Your final assessment opens after a mock test of that test, or on {{date}}.", { date: day(f.unlock.opensOn) })
                     : f.unlock.state === "sample_needed"
                       ? tr("Take the free sample, then your final assessment opens.")
-                      : tr("Your final assessment is in My tests.")}
+                      : tr("Your final assessment is on the Assessment page.")}
             </span>
             <Link to={ROUTES.MY_TESTS} className={`${linkBtn} bg-navy text-white`}>
-              {f.chooseTest ? tr("Choose your test") : f.unlock.state === "open" ? tr("Take my final assessment") : tr("Go to My tests")}
+              {f.chooseTest ? tr("Choose your test") : f.unlock.state === "open" ? tr("Take my final assessment") : tr("Go to Assessment")}
             </Link>
           </>
         ) : canBuy ? (
@@ -115,7 +115,7 @@ export function FinalAssessmentCard() {
             </Link>
           </>
         ) : (
-          <span className="text-sm text-ink">{tr("Your organization gives you your final assessment. It shows in My tests.")}</span>
+          <span className="text-sm text-ink">{tr("Your organization gives you your final assessment. It shows on the Assessment page.")}</span>
         )}
       </div>
     </section>

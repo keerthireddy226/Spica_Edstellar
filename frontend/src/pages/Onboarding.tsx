@@ -211,7 +211,7 @@ function emptyForm(): FormState {
 }
 
 // Where a learner goes after onboarding: the placement test, unless all they
-// own is a real test (bought on its own), which waits for them in My tests.
+// own is a real test (bought on its own), which waits for them on the Assessment page.
 async function afterOnboarding(): Promise<string> {
   const a = await getMyAccess().catch(() => null);
   return a && !a.full && a.prepTests.length === 0 && a.attempts.length > 0 ? ROUTES.MY_TESTS : ROUTES.PLACEMENT;

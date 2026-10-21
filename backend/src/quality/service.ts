@@ -315,7 +315,7 @@ export async function decideAppeal(id: string, outcome: "upheld" | "changed" | "
     kind: "result_appeal",
     title: outcome === "upheld" ? "Your appeal: the result stands" : outcome === "changed" ? "Your appeal: your result was re-marked" : "Your appeal: you can take the test again",
     body: note,
-    link: "/my-tests",
+    link: "/assessment",
     email: true,
     sentBy: actorId,
   });

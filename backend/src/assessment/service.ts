@@ -122,7 +122,7 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
   return { mocks: r.mocks, samples: r.samples };
 }
 
-// What My tests shows: each owned attempt, whether it can start, and the attempts taken.
+// What Assessment shows: each owned attempt, whether it can start, and the attempts taken.
 export async function myTests(userId: string) {
   const owned = await ownedAttempts(userId);
   const { appealDays } = await qualitySettings();
@@ -286,8 +286,8 @@ export async function includeFinalAssessment(userId: string, tenantId: string | 
     userId,
     kind: "test_given",
     title: "Your plan includes a final assessment",
-    body: "Choose your test in My tests. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.",
-    link: "/my-tests",
+    body: "Choose your test on the Assessment page. It opens after a mock test of that test, or in the last 7 days of your access, and ends with a certificate.",
+    link: "/assessment",
   }).catch((err) => console.error("final assessment notification failed:", err));
   return "added";
 }
@@ -355,7 +355,7 @@ export async function sendRecertifyReminders(): Promise<number> {
       kind: "result_certificate",
       title: "Your certificate ends soon",
       body: `Your certificate ${c.code} is valid until ${c.until}. Keep it valid 12 more months, or take a new final assessment to show your level now.`,
-      link: "/my-tests",
+      link: "/assessment",
       email: true,
       dedupeKey: `recertify:${c.id}`,
     }).catch((err) => console.error("recertify reminder failed:", err));
@@ -479,7 +479,7 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
           kind: "result_certificate",
           title: "Your certificate is ready",
           body: spica !== null ? `${testName ?? "Your test"}: Spica score ${spica}, level ${level}.` : `${testName}: passed.`,
-          link: "/my-tests",
+          link: "/assessment",
           email: true,
           dedupeKey: `result_certificate:${sessionId}`,
         }).catch((err) => console.error("certificate notification failed:", err));

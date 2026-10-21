@@ -89,8 +89,8 @@ export function CheckoutReturn() {
             <p className="text-sm text-muted">
               {result.kind === "product" && result.product
                 ? result.product.kind === "prep"
-                  ? tr("{{name}} is yours. Its practice tests and mock tests are open now; your real test is in My tests.", { name: result.product.name })
-                  : tr("{{name}} is yours. Find it in My tests.", { name: `${result.product.name}${result.product.level ? ` (${result.product.level})` : ""}` })
+                  ? tr("{{name}} is yours. Its practice tests and mock tests are open now; your real test is on the Assessment page.", { name: result.product.name })
+                  : tr("{{name}} is yours. Find it on the Assessment page.", { name: `${result.product.name}${result.product.level ? ` (${result.product.level})` : ""}` })
                 : result.kind === "individual_plan"
                 ? result.quantity === 1
                   ? tr("1 month of full access added to your account.")
@@ -101,7 +101,7 @@ export function CheckoutReturn() {
             </p>
             <div className="flex gap-3 w-full">
               <Link to={result.kind === "product" ? ROUTES.MY_TESTS : backTo} className="flex-1">
-                <Button className="w-full">{result.kind === "product" ? tr("Go to My tests") : backLabel}</Button>
+                <Button className="w-full">{result.kind === "product" ? tr("Go to Assessment") : backLabel}</Button>
               </Link>
               <Link to={`/invoice/${result.invoiceId}`} target="_blank">
                 <Button variant="secondary">{tr("View invoice")}</Button>

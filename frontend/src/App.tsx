@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthContext, useAuth, useAuthState } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MfaSetup } from "@/pages/MfaSetup";
@@ -87,6 +87,12 @@ function DefaultRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />;
   return <Navigate to={LANDING_ROUTE_BY_ROLE[user.role]} replace />;
+}
+
+// A moved page: the new address, keeping ?query.
+function KeepQueryRedirect({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
 }
 
 function App() {
@@ -242,6 +248,9 @@ function App() {
           <Route path={ROUTES.MY_REPORTS} element={<MyReports />} />
           <Route path={ROUTES.MY_TESTS} element={<MyTests />} />
           <Route path={ROUTES.MY_TESTS_TAKE} element={<TakeOwnedTest />} />
+          {/* Earlier links and emails said /my-tests. */}
+          <Route path="/my-tests" element={<KeepQueryRedirect to={ROUTES.MY_TESTS} />} />
+          <Route path="/my-tests/take" element={<KeepQueryRedirect to={ROUTES.MY_TESTS_TAKE} />} />
           <Route path={ROUTES.MODULE_REPORT} element={<ModuleReportPage />} />
           <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />

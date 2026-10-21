@@ -113,7 +113,7 @@ export async function giveTests(args: { tenantId: string; actorId: string; userI
               : p.kind === "level"
                 ? `${org} gave you a level ${level} test. Take it within ${days} days.`
                 : `${org} gave you ${p.name}. Take it within ${days} days.`,
-      link: p.kind === "prep" ? "/practice-tests" : p.kind === "pack" ? "/modules" : "/my-tests",
+      link: p.kind === "prep" ? "/practice-tests" : p.kind === "pack" ? "/modules" : "/assessment",
       email: true,
       sentBy: args.actorId,
     }).catch((err) => console.error("test notification failed:", err));

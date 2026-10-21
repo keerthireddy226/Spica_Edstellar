@@ -127,7 +127,7 @@ interface CachedAnswer {
 
 // Practice tests and mock tests are separate sections of the learner app,
 // sharing this page: "practice" lists practice sets, "mock" the mock tests.
-// The real assessment attempt (certified) or its free sample, opened from My tests.
+// The real assessment attempt (certified) or its free sample, opened from Assessment.
 export interface OwnedStart {
   entitlementId: string;
   mode: "certified" | "sample";
@@ -394,7 +394,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           : code === "mock_in_progress"
             ? tr("You have another timed test in progress. Finish it first.")
             : code?.startsWith("attempt_")
-              ? tr("This test can't start now. Go back to My tests to see why.")
+              ? tr("This test can't start now. Go back to the Assessment page to see why.")
             : code === "quota_reached"
               ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
               : t("practiceTests.loadError"),
@@ -1870,7 +1870,7 @@ function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: 
           {mine.latestLevel ? ` · ${tr("Your latest level: {{level}}", { level: mine.latestLevel })}` : ""}
         </span>
         {p.finalAssessment && p.finalAssessmentOn && (
-          <span className="text-xs text-navy-deep">{tr("Final assessment: your real test, with a certificate, opens on {{date}} in My tests.", { date: formatShortDate(p.finalAssessmentOn) })}</span>
+          <span className="text-xs text-navy-deep">{tr("Final assessment: your real test, with a certificate, opens on {{date}} on the Assessment page.", { date: formatShortDate(p.finalAssessmentOn) })}</span>
         )}
         <span className="text-xs text-muted">
           {tr("{{done}} done, {{missed}} missed", { done: mine.done, missed: mine.missed })}

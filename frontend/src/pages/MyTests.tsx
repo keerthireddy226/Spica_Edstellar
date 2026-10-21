@@ -13,7 +13,7 @@ import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
-// My tests: the real assessment attempts the learner owns. Each opens by the
+// Assessment (once "My tests"): the real assessment attempts the learner owns. Each opens by the
 // unlock rule (after a mock test or in the last 7 days for preparation; after
 // the free sample for assessment only), and shows its result and certificate.
 
@@ -314,7 +314,7 @@ export function MyTests() {
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
         eyebrow={tr("Your results")}
-        title={tr("My tests")}
+        title={tr("Assessment")}
         subtitle={tr("Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.")}
         icon={ClipboardCheck}
       />
@@ -362,9 +362,9 @@ export function TakeOwnedTest() {
   }, [entitlementId]);
   if (test === undefined) return null;
   if (!test) return <p className="text-sm text-error">{tr("This test isn't available.")}</p>;
-  // A real test that isn't open (and not being resumed) goes back to My tests, which says why.
+  // A real test that isn't open (and not being resumed) goes back to Assessment, which says why.
   const resuming = !!params.get("session") || test.attempts.some((a) => a.status === "in_progress");
-  // A final assessment's test is chosen on My tests first.
+  // A final assessment's test is chosen on Assessment first.
   if (!test.testTypeId || (mode === "certified" && test.unlock.state !== "open" && !resuming)) return <Navigate to={ROUTES.MY_TESTS} replace />;
   return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.kind === "level" && test.level ? tr("Level {{level}} test", { level: test.level }) : test.testName, level: test.kind === "level" ? test.level : null }} />;
 }

@@ -177,7 +177,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
           <NavEntry
             to={ROUTES.MY_TESTS}
             icon={Award}
-            label={tr("My tests")}
+            label={tr("Assessment")}
             isActive={location.pathname.startsWith(ROUTES.MY_TESTS)}
             locked={false}
             onClick={go}

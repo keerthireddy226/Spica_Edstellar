@@ -99,7 +99,7 @@ export function OwnedList({ access }: { access: MyAccess }) {
       })}
       {access.attempts.length > 0 && (
         <Link to={ROUTES.MY_TESTS} className="self-start text-sm font-semibold text-navy-deep hover:underline">
-          {tr("Go to My tests")}
+          {tr("Go to Assessment")}
         </Link>
       )}
     </div>
