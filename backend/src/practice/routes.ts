@@ -1,5 +1,6 @@
 import { mockLimits, practiceFeedback } from "../practiceTests/modes.js";
 import { reviewQuestions } from "../reports/feedbackReport.js";
+import { answerDetail } from "../reports/scoreReport.js";
 import { z } from "zod";
 import { Router } from "express";
 import { pool } from "../db.js";
@@ -745,6 +746,8 @@ practiceRouter.get("/session/:sessionId/report", requireAuth, async (req: Authed
       completedAt: row.completed_at,
       context: await contextOf(req.user!.id, c),
       ...(await sessionCounts(row.id, c.itemIds ?? [])),
+      // Speaking and writing in detail (fluency, clarity, spelling...), from the answers.
+      detail: await answerDetail(row.id).catch(() => null),
     });
   } catch (err) {
     next(err);
@@ -821,6 +824,7 @@ practiceRouter.post("/session/:sessionId/complete", requireAuth, async (req: Aut
       pendingCount,
       failedCount,
       questions: await reviewQuestions(req.params.sessionId as string, composition.itemIds ?? []),
+      detail: await answerDetail(req.params.sessionId as string).catch(() => null),
       context: { ...ctx.context, retry: composition.retry === true, check: composition.check === true },
       next: ctx.next,
       // A Level check's result: the skill's level now, and where it started.

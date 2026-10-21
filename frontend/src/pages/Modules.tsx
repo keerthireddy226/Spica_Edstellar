@@ -86,6 +86,7 @@ import {
 
 import { tr } from "@/i18n/tr";
 import { QuestionReview } from "@/components/report/FeedbackReportView";
+import { SpeakingDetail, WritingDetail } from "@/components/report/ScoreReport";
 import { ModuleGuide } from "@/components/practice/ModuleGuide";
 import { beep, loadMuted, saveMuted } from "@/lib/countdownBeep";
 import { Confetti } from "@/components/Confetti";
@@ -1635,6 +1636,8 @@ function ModulesPage() {
             </Button>
           </div>
         </div>
+        {summary.detail?.speaking && <SpeakingDetail s={summary.detail.speaking} />}
+        {summary.detail?.writing && <WritingDetail w={summary.detail.writing} />}
         {qs.length > 0 && <QuestionReview questions={qs} initialFilter="all" />}
       </div>
     );

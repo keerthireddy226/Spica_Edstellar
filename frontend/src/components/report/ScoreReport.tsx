@@ -434,7 +434,7 @@ function Metric({ title, value, note, color }: { title: string; value: number; n
   );
 }
 
-function SpeakingDetail({ s }: { s: NonNullable<ScoreReportData["speaking"]> }) {
+export function SpeakingDetail({ s }: { s: NonNullable<ScoreReportData["speaking"]> }) {
   const c = SKILL_COLOR.speaking;
   const facts = [
     s.wordsPerMinute !== null ? tr("{{n}} words a minute", { n: s.wordsPerMinute }) : null,
@@ -444,10 +444,19 @@ function SpeakingDetail({ s }: { s: NonNullable<ScoreReportData["speaking"]> }) 
     <Section label={tr("Speaking in detail")}>
       <div>
         <h3 className="font-display font-bold text-lg text-ink">{tr("Speaking in detail")}</h3>
-        <p className="text-xs text-muted">
-          {s.answers === 1 ? tr("From your 1 spoken answer.") : tr("From your {{n}} spoken answers.", { n: s.answers })} {tr("Scored on how clearly you're understood, never on your accent.")}
-        </p>
+        {s.answers > 0 && (
+          <p className="text-xs text-muted">
+            {s.answers === 1 ? tr("From your 1 spoken answer.") : tr("From your {{n}} spoken answers.", { n: s.answers })} {tr("Scored on how clearly you're understood, never on your accent.")}
+          </p>
+        )}
       </div>
+      {s.silent > 0 && (
+        <p className="text-sm text-warning bg-warning/10 rounded-input px-3 py-2">
+          {s.silent === 1
+            ? tr("We couldn't hear any speech in 1 recording, so it isn't counted here. Check your microphone before the next set.")
+            : tr("We couldn't hear any speech in {{n}} recordings, so they aren't counted here. Check your microphone before the next set.", { n: s.silent })}
+        </p>
+      )}
       <div className="grid sm:grid-cols-2 gap-3">
         {s.fluency !== null && <Metric title={tr("Fluency")} value={s.fluency} color={c} note={facts.length ? facts.join(" · ") : tr("How smoothly you keep talking.")} />}
         {s.clarity !== null && <Metric title={tr("Pronunciation & clarity")} value={s.clarity} color={c} note={tr("How easily your words were understood.")} />}
@@ -465,7 +474,7 @@ function SpeakingDetail({ s }: { s: NonNullable<ScoreReportData["speaking"]> }) 
   );
 }
 
-function WritingDetail({ w }: { w: NonNullable<ScoreReportData["writing"]> }) {
+export function WritingDetail({ w }: { w: NonNullable<ScoreReportData["writing"]> }) {
   const c = SKILL_COLOR.writing;
   const count = (k: string) => w.errors[k] ?? 0;
   return (
@@ -475,10 +484,22 @@ function WritingDetail({ w }: { w: NonNullable<ScoreReportData["writing"]> }) {
         <p className="text-xs text-muted">{w.answers === 1 ? tr("From your 1 written answer.") : tr("From your {{n}} written answers.", { n: w.answers })}</p>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
-        {w.grammar !== null && <Metric title={tr("Grammar")} value={w.grammar} color={c} note={count("grammar") === 1 ? tr("1 grammar error.") : tr("{{n}} grammar errors.", { n: count("grammar") })} />}
+        {w.grammar !== null && (
+          <Metric
+            title={tr("Grammar")}
+            value={w.grammar}
+            color={c}
+            note={!w.marked ? tr("From how well your written answers were scored.") : count("grammar") === 1 ? tr("1 grammar error.") : tr("{{n}} grammar errors.", { n: count("grammar") })}
+          />
+        )}
         {w.vocabulary !== null && <Metric title={tr("Vocabulary")} value={w.vocabulary} color={c} note={count("vocabulary") === 1 ? tr("1 word choice to improve.") : tr("{{n}} word choices to improve.", { n: count("vocabulary") })} />}
         {w.spelling !== null && (
-          <Metric title={tr("Spelling & punctuation")} value={w.spelling} color={c} note={tr("{{s}} spelling, {{p}} punctuation errors.", { s: count("spelling"), p: count("punctuation") })} />
+          <Metric
+            title={tr("Spelling & punctuation")}
+            value={w.spelling}
+            color={c}
+            note={w.marked ? tr("{{s}} spelling, {{p}} punctuation errors.", { s: count("spelling"), p: count("punctuation") }) : tr("From your Dictation answers, word by word.")}
+          />
         )}
         {w.task !== null && <Metric title={tr("Task & content")} value={w.task} color={c} note={tr("How fully your answers covered the task.")} />}
       </div>

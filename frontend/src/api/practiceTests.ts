@@ -344,6 +344,7 @@ export interface ScoreReport {
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;
+    silent: number;
     wordsPerMinute: number | null;
     fillers: number | null;
     fluency: number | null;
@@ -359,9 +360,13 @@ export interface ScoreReport {
     spelling: number | null;
     task: number | null;
     errors: Record<string, number>;
+    marked: boolean;
     example: { text: string; correction: string; reason: string } | null;
   } | null;
 }
+
+// Speaking and writing in detail, for a Practice Modules set.
+export type AnswerDetail = Pick<ScoreReport, "speaking" | "writing">;
 
 export interface ReportResponse {
   status: "pending" | "ready" | "failed";

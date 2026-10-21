@@ -20,6 +20,8 @@ export interface PracticeContext {
 }
 
 export interface PracticeSummary {
+  // Speaking and writing in detail (null while recorded answers are still being scored).
+  detail?: import("@/api/practiceTests").AnswerDetail | null;
   gradedCount: number;
   correctCount: number;
   // Genuinely unanswered, or nothing to grade yet.
@@ -179,6 +181,7 @@ export function getModuleHistory(): Promise<{ sessions: ModuleHistoryEntry[] }> 
 export interface ModuleReport extends Omit<ModuleHistoryEntry, "skill" | "itemTypeId" | "typeName" | "unitName" | "setName" | "retry"> {
   context: PracticeContext;
   questions: ReportQuestion[];
+  detail?: import("@/api/practiceTests").AnswerDetail | null;
 }
 
 export function getModuleReport(sessionId: string): Promise<ModuleReport> {

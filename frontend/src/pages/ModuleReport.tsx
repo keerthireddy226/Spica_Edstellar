@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import { ProgressRing } from "@/components/ProgressRing";
 import { QuestionReview } from "@/components/report/FeedbackReportView";
+import { SpeakingDetail, WritingDetail } from "@/components/report/ScoreReport";
 import { getModuleReport, testsLine, type ModuleReport } from "@/api/practiceSession";
 import { formatShortDate } from "@/api/licenses";
 import { tr } from "@/i18n/tr";
@@ -73,6 +74,8 @@ export function ModuleReportPage() {
           </div>
         </div>
       </div>
+      {report.detail?.speaking && <SpeakingDetail s={report.detail.speaking} />}
+      {report.detail?.writing && <WritingDetail w={report.detail.writing} />}
       {report.questions.length > 0 && <QuestionReview questions={report.questions} initialFilter="all" />}
     </div>
   );

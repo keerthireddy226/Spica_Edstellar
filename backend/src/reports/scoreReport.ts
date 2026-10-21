@@ -74,6 +74,8 @@ export interface ScoreReport {
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;
+    // Recordings in which no speech was heard (left out of the scores).
+    silent: number;
     wordsPerMinute: number | null;
     fillers: number | null;
     fluency: number | null;
@@ -89,6 +91,8 @@ export interface ScoreReport {
     spelling: number | null;
     task: number | null;
     errors: Record<string, number>;
+    // The scores come from marked errors (a full test report), else from the answers' scores.
+    marked: boolean;
     example: { text: string; correction: string; reason: string } | null;
   } | null;
 }
@@ -154,7 +158,10 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
   const overallScore = skills.length ? Math.round(avg(skills.map((x) => x.score))!) : null;
 
   // Speaking: the recordings' fluency and clarity (0-1 from the grader), speed and fillers.
-  const spoken = rows.filter((r) => r.input_method === "mic" && answered(r) && r.status === "scored");
+  const recorded = rows.filter((r) => r.input_method === "mic" && answered(r) && r.status === "scored");
+  const heard = (r: Row) => !!(r.manner_scores?.gemini?.transcript?.trim() || r.response_text?.trim());
+  const spoken = recorded.filter(heard);
+  const silent = recorded.length - spoken.length;
   const gem = spoken.map((r) => r.manner_scores?.gemini).filter((g): g is NonNullable<typeof g> => !!g);
   const wpm = spoken.map((r) => r.manner_scores?.wordsPerMinute).filter((x): x is number => typeof x === "number" && x > 0);
   const fillers = spoken.map((r) => r.manner_scores?.fillerCount).filter((x): x is number => typeof x === "number");
@@ -167,9 +174,10 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
   const exampleRow = spoken
     .filter((r) => ["story_retelling", "conversations", "short_answer", "open_questions", "speaking_situations"].includes(r.item_type_id) && (r.manner_scores?.gemini?.transcript || r.response_text))
     .sort((a, b) => (a.manner_scores?.gemini?.pronunciation ?? 1) - (b.manner_scores?.gemini?.pronunciation ?? 1))[0];
-  const speaking = spoken.length
+  const speaking = recorded.length
     ? {
         answers: spoken.length,
+        silent,
         wordsPerMinute: wpm.length ? Math.round(avg(wpm)!) : null,
         fillers: fillers.length ? fillers.reduce((a, b) => a + b, 0) : null,
         fluency,
@@ -205,6 +213,7 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
         spelling: fromErrors((errors.spelling ?? 0) + (errors.punctuation ?? 0)) ?? dictationAccuracy,
         task: typeScore(["passage_reconstruction", "email_writing", "free_writing", "summary_and_opinion"]),
         errors,
+        marked: words >= 20,
         example: firstError ? { text: firstError.text, correction: firstError.correction, reason: firstError.reason } : null,
       }
     : null;
@@ -232,4 +241,10 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
     speaking,
     writing,
   };
+}
+
+// The speaking and writing breakdowns alone (a Practice Modules set).
+export async function answerDetail(sessionId: string): Promise<{ speaking: ScoreReport["speaking"]; writing: ScoreReport["writing"] }> {
+  const r = await scoreReport(sessionId, null);
+  return { speaking: r?.speaking ?? null, writing: r?.writing ?? null };
 }
