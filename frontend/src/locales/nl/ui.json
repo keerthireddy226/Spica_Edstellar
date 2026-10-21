@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Nog niet genoeg resultaten.",
  "Areas to improve": "Verbeterpunten",
  "Open the full score report of the latest mock test": "Open het volledige scorerapport van de laatste proeftoets",
- "Click a name to open the learner's report": "Klik op een naam om het rapport van de cursist te openen"
+ "Click a name to open the learner's report": "Klik op een naam om het rapport van de cursist te openen",
+ "Score dropped since the start": "Score gedaald sinds de start",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Een week of langer stil",
+ "No mock test yet": "Nog geen proeftoets",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} alleen uit de niveautest",
+ "Hasn't started yet.": "Nog niet begonnen.",
+ "Not practising: last active {{n}} days ago.": "Oefent niet: {{n}} dagen geleden voor het laatst actief.",
+ "Quiet: last active {{n}} days ago.": "Stil: {{n}} dagen geleden voor het laatst actief.",
+ "Won't reach {{level}} by the goal date at this pace.": "Haalt {{level}} niet vóór de doeldatum in dit tempo.",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica-score gedaald van {{from}} naar {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Nog geen proeftoets, dus de voortgang is niet te volgen.",
+ "Missed a planned mock test.": "Geplande proeftoets gemist.",
+ "Access ends {{date}}.": "Toegang loopt af op {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Niets heeft aandacht nodig: actief, getoetst en op schema."
 }

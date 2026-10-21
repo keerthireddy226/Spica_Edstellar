@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "ఇంకా తగినన్ని ఫలితాలు లేవు.",
  "Areas to improve": "మెరుగుపరచుకోవాల్సిన అంశాలు",
  "Open the full score report of the latest mock test": "తాజా మాక్ టెస్ట్ పూర్తి స్కోర్ నివేదికను తెరవండి",
- "Click a name to open the learner's report": "అభ్యాసకుడి నివేదికను తెరవడానికి పేరుపై క్లిక్ చేయండి"
+ "Click a name to open the learner's report": "అభ్యాసకుడి నివేదికను తెరవడానికి పేరుపై క్లిక్ చేయండి",
+ "Score dropped since the start": "ప్రారంభం నుండి స్కోర్ తగ్గింది",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "ఒక వారం లేదా అంతకంటే ఎక్కువ రోజులుగా నిశ్శబ్దం",
+ "No mock test yet": "ఇంకా మాక్ టెస్ట్ లేదు",
+ "{{name}}: {{level}} from the level test only": "{{name}}: స్థాయి టెస్ట్ నుండి మాత్రమే {{level}}",
+ "Hasn't started yet.": "ఇంకా ప్రారంభించలేదు.",
+ "Not practising: last active {{n}} days ago.": "సాధన చేయడం లేదు: చివరిగా {{n}} రోజుల క్రితం సక్రియంగా ఉన్నారు.",
+ "Quiet: last active {{n}} days ago.": "నిశ్శబ్దం: చివరిగా {{n}} రోజుల క్రితం సక్రియంగా ఉన్నారు.",
+ "Won't reach {{level}} by the goal date at this pace.": "ఈ వేగంతో లక్ష్య తేదీ నాటికి {{level}} చేరలేరు.",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica స్కోర్ {{from}} నుండి {{to}}కి తగ్గింది.",
+ "No mock test yet, so progress can't be tracked.": "ఇంకా మాక్ టెస్ట్ లేదు, కాబట్టి పురోగతిని ట్రాక్ చేయలేము.",
+ "Missed a planned mock test.": "ప్రణాళిక చేసిన మాక్ టెస్ట్‌ను మిస్ అయ్యారు.",
+ "Access ends {{date}}.": "యాక్సెస్ {{date}}న ముగుస్తుంది.",
+ "Nothing needs attention: active, tested and on course.": "శ్రద్ధ అవసరమైనది ఏదీ లేదు: సక్రియంగా ఉన్నారు, టెస్ట్ చేశారు, సరైన దారిలో ఉన్నారు."
 }

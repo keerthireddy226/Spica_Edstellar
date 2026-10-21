@@ -17,6 +17,10 @@ type SkillMap<T> = Record<Skill, T>;
 const DAY = 86_400_000;
 // Access ending within this many days goes on the attention list.
 const ACCESS_ENDING_DAYS = 14;
+// No activity for this many days (and fewer than INACTIVE_DAYS): quiet.
+const QUIET_DAYS = 7;
+// A Spica score this much lower than at the start counts as a drop.
+const DROP_POINTS = 3;
 
 export type PeriodKey = "since_start" | "last_30" | "quarter" | "custom";
 export type GoalStatus = "reached" | "on_track" | "at_risk" | "too_early";
@@ -387,7 +391,20 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
         .map((l) => ({ id: l.id, name: l.name, endsAt: l.accessEndsAt! }))
         .sort((x, y) => x.endsAt.localeCompare(y.endsAt)),
       missedMock: learners.filter((l) => l.missedMocks > 0).map((l) => ({ id: l.id, name: l.name, count: l.missedMocks, last: l.lastMissedMock })),
+      // Practising, but quiet for a week (not yet the inactive list's two).
+      quiet: learners
+        .filter((l) => l.inactiveDays !== null && l.inactiveDays >= QUIET_DAYS && l.inactiveDays < INACTIVE_DAYS)
+        .map((l) => ({ id: l.id, name: l.name, days: l.inactiveDays! }))
+        .sort((x, y) => y.days - x.days),
+      // Started, but no mock test yet: their progress can't be tracked.
+      noMock: learners.filter((l) => l.inactiveDays !== null && l.mocks.length === 0).map((l) => ({ id: l.id, name: l.name, level: l.current?.level ?? null })),
+      // Spica score lower now than at the start.
+      dropped: learners
+        .filter((l) => l.start?.score != null && l.current?.score != null && l.current.score - l.start.score <= -DROP_POINTS)
+        .map((l) => ({ id: l.id, name: l.name, from: l.start!.score!, to: l.current!.score! }))
+        .sort((x, y) => x.to - x.from - (y.to - y.from)),
       accessEndingDays: ACCESS_ENDING_DAYS,
+      quietDays: QUIET_DAYS,
     },
     canOpenReports: opts.canOpenReports,
   };

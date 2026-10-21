@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "まだ十分な結果がありません。",
  "Areas to improve": "改善点",
  "Open the full score report of the latest mock test": "最新の模擬テストのスコアレポート全体を開く",
- "Click a name to open the learner's report": "名前をクリックすると学習者のレポートが開きます"
+ "Click a name to open the learner's report": "名前をクリックすると学習者のレポートが開きます",
+ "Score dropped since the start": "開始時からスコアが低下",
+ "{{name}}: {{from}} → {{to}}": "{{name}}：{{from}} → {{to}}",
+ "Quiet for a week or more": "1週間以上活動なし",
+ "No mock test yet": "模擬テスト未受験",
+ "{{name}}: {{level}} from the level test only": "{{name}}：レベルテストのみによる {{level}}",
+ "Hasn't started yet.": "まだ開始していません。",
+ "Not practising: last active {{n}} days ago.": "練習していない：最終アクティブ {{n}} 日前。",
+ "Quiet: last active {{n}} days ago.": "活動なし：最終アクティブ {{n}} 日前。",
+ "Won't reach {{level}} by the goal date at this pace.": "今のペースでは目標日までに {{level}} に届かない見込みです。",
+ "Spica score dropped from {{from}} to {{to}}.": "Spicaスコアが {{from}} から {{to}} に低下しました。",
+ "No mock test yet, so progress can't be tracked.": "模擬テスト未受験のため、進捗を追跡できません。",
+ "Missed a planned mock test.": "予定の模擬テストを未受験。",
+ "Access ends {{date}}.": "アクセス終了日：{{date}}。",
+ "Nothing needs attention: active, tested and on course.": "要対応事項なし：アクティブで、テスト済み、順調です。"
 }

@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Risultati ancora insufficienti.",
  "Areas to improve": "Aree da migliorare",
  "Open the full score report of the latest mock test": "Apri il report dei punteggi completo dell'ultimo test simulato",
- "Click a name to open the learner's report": "Fai clic su un nome per aprire il report dello studente"
+ "Click a name to open the learner's report": "Fai clic su un nome per aprire il report dello studente",
+ "Score dropped since the start": "Punteggio in calo dall'inizio",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Inattivi da una settimana o più",
+ "No mock test yet": "Ancora nessun test simulato",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} solo dal test di livello",
+ "Hasn't started yet.": "Non ha ancora iniziato.",
+ "Not practising: last active {{n}} days ago.": "Non si esercita: ultima attività {{n}} giorni fa.",
+ "Quiet: last active {{n}} days ago.": "Inattivo: ultima attività {{n}} giorni fa.",
+ "Won't reach {{level}} by the goal date at this pace.": "A questo ritmo non raggiungerà {{level}} entro la data obiettivo.",
+ "Spica score dropped from {{from}} to {{to}}.": "Punteggio Spica sceso da {{from}} a {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Ancora nessun test simulato, quindi i progressi non si possono seguire.",
+ "Missed a planned mock test.": "Test simulato pianificato saltato.",
+ "Access ends {{date}}.": "L'accesso termina il {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Niente richiede attenzione: attivo, testato e in linea."
 }

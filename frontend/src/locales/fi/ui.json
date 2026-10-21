@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Ei vielä tarpeeksi tuloksia.",
  "Areas to improve": "Kehitettävät alueet",
  "Open the full score report of the latest mock test": "Avaa viimeisimmän mallikokeen koko tulosraportti",
- "Click a name to open the learner's report": "Avaa opiskelijan raportti napsauttamalla nimeä"
+ "Click a name to open the learner's report": "Avaa opiskelijan raportti napsauttamalla nimeä",
+ "Score dropped since the start": "Pisteet laskeneet alusta",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Hiljaa viikon tai pidempään",
+ "No mock test yet": "Ei vielä mallikoetta",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} vain tasotestin perusteella",
+ "Hasn't started yet.": "Ei ole vielä aloittanut.",
+ "Not practising: last active {{n}} days ago.": "Ei harjoittele: viimeksi aktiivinen {{n}} päivää sitten.",
+ "Quiet: last active {{n}} days ago.": "Hiljaa: viimeksi aktiivinen {{n}} päivää sitten.",
+ "Won't reach {{level}} by the goal date at this pace.": "Ei saavuta tasoa {{level}} tavoitepäivään mennessä tällä tahdilla.",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica-pisteet laskivat: {{from}} → {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Ei vielä mallikoetta, joten edistymistä ei voi seurata.",
+ "Missed a planned mock test.": "Suunniteltu mallikoe jäi väliin.",
+ "Access ends {{date}}.": "Käyttöoikeus päättyy {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Ei huomioitavaa: aktiivinen, testattu ja aikataulussa."
 }

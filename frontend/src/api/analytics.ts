@@ -176,7 +176,11 @@ export interface BatchReport {
     offPace: { id: string; name: string; score: number | null; needs: number | null; projected: string | null }[];
     accessEnding: { id: string; name: string; endsAt: string }[];
     missedMock: { id: string; name: string; count: number; last: string | null }[];
+    quiet: { id: string; name: string; days: number }[];
+    noMock: { id: string; name: string; level: string | null }[];
+    dropped: { id: string; name: string; from: number; to: number }[];
     accessEndingDays: number;
+    quietDays: number;
   };
   canOpenReports: boolean;
 }

@@ -93,7 +93,7 @@ function Card({ title, aside, children, className = "" }: { title?: string; asid
 function Stat({ value, label, note }: { value: string; label: string; note: React.ReactNode }) {
   return (
     <div className="border border-rule rounded-xl p-3.5 flex flex-col gap-0.5 min-w-0">
-      <span className="font-display font-bold text-[28px] leading-tight text-ink tabular-nums">{value}</span>
+      <span className="ld-stat font-display font-bold text-[28px] leading-tight text-ink tabular-nums">{value}</span>
       <span className="text-sm font-semibold text-ink">{label}</span>
       <span className="text-xs text-muted">{note}</span>
     </div>
@@ -421,7 +421,7 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
       </div>
 
       <Card title={tr("Needs attention")}>
-        {a.inactive.length + a.offPace.length + a.accessEnding.length + a.missedMock.length === 0 ? (
+        {a.inactive.length + a.offPace.length + a.accessEnding.length + a.missedMock.length + a.quiet.length + a.noMock.length + a.dropped.length === 0 ? (
           <p className="text-sm text-muted">{tr("Nobody needs attention right now.")}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3">
@@ -444,6 +444,21 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
               title={tr("Missed a planned mock test")}
               tone="warning"
               items={a.missedMock.map((x) => (x.last ? tr("{{name}}: planned for {{date}}", { name: x.name, date: shortDay(x.last) }) : x.name))}
+            />
+            <AttentionList
+              title={tr("Score dropped since the start")}
+              tone="error"
+              items={a.dropped.map((x) => tr("{{name}}: {{from}} → {{to}}", { name: x.name, from: x.from, to: x.to }))}
+            />
+            <AttentionList
+              title={tr("Quiet for a week or more")}
+              tone="warning"
+              items={a.quiet.map((x) => tr("{{name}}: last active {{n}} days ago", { name: x.name, n: x.days }))}
+            />
+            <AttentionList
+              title={tr("No mock test yet")}
+              tone="warning"
+              items={a.noMock.map((x) => (x.level ? tr("{{name}}: {{level}} from the level test only", { name: x.name, level: x.level }) : x.name))}
             />
           </div>
         )}
@@ -803,8 +818,33 @@ function ScoreTrend({ mocks, goalMin }: { mocks: BatchReportLearner["mocks"]; go
 // One learner: each skill's level and Spica score, start and now, against the
 // goal; performance; strengths and areas to improve. On its own page (a new
 // tab from the Batch report) and once per learner in the detailed PDF.
-export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: BatchReportLearner; batch: BatchReport["batch"]; goal: BatchReport["goal"]; batchId: string; canOpenReports: boolean }) {
+export function LearnerDetail({
+  l,
+  batch,
+  goal,
+  batchId,
+  canOpenReports,
+  compact = false,
+}: {
+  l: BatchReportLearner;
+  batch: BatchReport["batch"];
+  goal: BatchReport["goal"];
+  batchId: string;
+  canOpenReports: boolean;
+  // Tighter, for the popup.
+  compact?: boolean;
+}) {
   const { t } = useTranslation();
+  // What needs attention for this learner.
+  const endsInDays = l.accessEndsAt ? (Date.parse(l.accessEndsAt) - Date.now()) / 86_400_000 : null;
+  const flags = [
+    l.inactiveDays === null ? tr("Hasn't started yet.") : l.inactiveDays >= 14 ? tr("Not practising: last active {{n}} days ago.", { n: l.inactiveDays }) : l.inactiveDays >= 7 ? tr("Quiet: last active {{n}} days ago.", { n: l.inactiveDays }) : null,
+    l.goal === "at_risk" && goal ? tr("Won't reach {{level}} by the goal date at this pace.", { level: goal.level }) : null,
+    l.start?.score != null && l.current?.score != null && l.current.score - l.start.score <= -3 ? tr("Spica score dropped from {{from}} to {{to}}.", { from: l.start.score, to: l.current.score }) : null,
+    l.inactiveDays !== null && l.mocks.length === 0 ? tr("No mock test yet, so progress can't be tracked.") : null,
+    l.missedMocks > 0 ? tr("Missed a planned mock test.") : null,
+    endsInDays !== null && endsInDays >= 0 && endsInDays <= 14 ? tr("Access ends {{date}}.", { date: day(l.accessEndsAt) }) : null,
+  ].filter((x): x is string => !!x);
   const ins = l.insights;
   const change = l.current?.score != null && l.start?.score != null ? l.current.score - l.start.score : null;
   const skillName = (k: ReportSkill) => t(`skills.${k}`);
@@ -827,7 +867,7 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
     ...(ins?.focusTypes ?? []).map((x) => tr("{{type}} ({{skill}}): {{right}} of {{total}} right", { type: x.type, skill: skillName(x.skill), right: x.right, total: x.total })),
   ];
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col ${compact ? "ld-compact gap-3" : "gap-4"}`}>
       <Card>
         <div className="flex flex-wrap print:flex-nowrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
@@ -852,7 +892,7 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
           </div>
           <div className="flex flex-col items-center rounded-xl bg-paper-warm px-6 py-3 min-w-[130px] shrink-0">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Spica score")}</span>
-            <span className="font-display font-bold text-[44px] leading-none text-ink tabular-nums">{l.current?.score ?? "—"}</span>
+            <span className="ld-score font-display font-bold text-[44px] leading-none text-ink tabular-nums">{l.current?.score ?? "—"}</span>
             <span className="text-xs text-muted">{tr("out of 90")}</span>
             {l.current?.level && <span className="font-display font-bold text-navy-deep">{tr("CEFR {{level}}", { level: l.current.level })}</span>}
           </div>
@@ -861,17 +901,17 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
 
       <Card title={tr("Skills")} aside={<span className="text-[13px] text-muted">{l.levelSource === "mock" ? tr("From the latest mock test") : l.levelSource === "level_test" ? tr("From the latest level test") : ""}</span>}>
         {ins?.skills.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-3">
+          <div className={`grid grid-cols-1 ${compact ? "grid-cols-2 sm:grid-cols-4 gap-2" : "sm:grid-cols-2 gap-3"} print:grid-cols-4 print:gap-2`}>
             {ins.skills.map((s) => (
-              <div key={s.skill} className="br-avoid border border-rule rounded-xl p-3.5 flex flex-col gap-2" style={{ borderTop: `4px solid ${SKILL_COLOUR[s.skill]}` }}>
-                <div className="flex items-center justify-between gap-2">
+              <div key={s.skill} className={`br-avoid border border-rule rounded-xl ${compact ? "p-2.5 gap-1.5" : "p-3.5 gap-2"} print:p-2.5 print:gap-1.5 flex flex-col min-w-0`} style={{ borderTop: `4px solid ${SKILL_COLOUR[s.skill]}` }}>
+                <div className="flex flex-col items-start gap-1">
                   <span className="font-semibold text-ink">{skillName(s.skill)}</span>
                   {s.vsGoal && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill border border-current ${VS_GOAL[s.vsGoal].cls}`}>{VS_GOAL[s.vsGoal].label()}</span>
+                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-pill border border-current whitespace-nowrap ${VS_GOAL[s.vsGoal].cls}`}>{VS_GOAL[s.vsGoal].label()}</span>
                   )}
                 </div>
                 <div className="flex items-baseline gap-3">
-                  <span className="font-display font-bold text-[26px] leading-none text-ink">{s.level}</span>
+                  <span className="ld-level font-display font-bold text-[26px] leading-none text-ink">{s.level}</span>
                   <span className="text-sm text-muted">{tr("score {{n}}", { n: s.score })}</span>
                 </div>
                 <div className="relative h-2 rounded-pill bg-paper-warm">
@@ -902,11 +942,28 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold text-ink">{tr("Mock test scores")}</span>
-          <ScoreTrend mocks={l.mocks} goalMin={goal?.minScore ?? null} />
+          <div className={compact ? "max-w-[340px]" : ""}>
+            <ScoreTrend mocks={l.mocks} goalMin={goal?.minScore ?? null} />
+          </div>
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 gap-4">
+      <Card title={tr("Needs attention")}>
+        {flags.length ? (
+          <ul className="flex flex-col gap-1.5 text-sm text-ink">
+            {flags.map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <i className="mt-1.5 h-2 w-2 rounded-full bg-error shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-success">{tr("Nothing needs attention: active, tested and on course.")}</p>
+        )}
+      </Card>
+
+      <div className={`grid grid-cols-1 sm:grid-cols-2 print:grid-cols-2 ${compact ? "gap-3" : "gap-4"}`}>
         <Card title={tr("Strengths")}>
           {strengths.length ? (
             <ul className="list-disc pl-5 text-sm text-ink flex flex-col gap-1">
@@ -940,6 +997,18 @@ export function LearnerDetail({ l, batch, goal, batchId, canOpenReports }: { l: 
   );
 }
 
+// The popup's learner report: smaller type and tighter boxes.
+const COMPACT_CSS = `
+.ld-compact .br-card { padding: 14px 16px; gap: 10px; border-radius: 14px; }
+.ld-compact h1 { font-size: 21px; }
+.ld-compact h2 { font-size: 15px; }
+.ld-compact .ld-score { font-size: 34px; }
+.ld-compact .ld-level { font-size: 20px; }
+.ld-compact .ld-stat { font-size: 20px; }
+.ld-compact .br-card .border.rounded-xl { padding: 10px 12px; }
+.ld-compact .br-card > div > div { min-width: 0; }
+`;
+
 // A learner's report over the Batch report: Close, or Download PDF for this learner alone.
 function LearnerModal({ batchId, userId, onClose }: { batchId: string; userId: string; onClose: () => void }) {
   const [data, setData] = useState<BatchLearnerData | null>(null);
@@ -967,8 +1036,9 @@ function LearnerModal({ batchId, userId, onClose }: { batchId: string; userId: s
   }, [onClose]);
   return (
     <div className="br-modal fixed inset-0 z-50 bg-ink/40 overflow-y-auto px-3 py-6" onClick={onClose} role="dialog" aria-modal="true" aria-label={data?.learner.name ?? tr("Learner report")}>
-      <div className="br-modal-panel bg-paper rounded-card shadow-2xl w-full max-w-[960px] mx-auto p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="print:hidden flex items-center justify-end gap-2 mb-3">
+      <div className="br-modal-panel bg-paper rounded-card shadow-2xl w-full max-w-[760px] mx-auto p-3 sm:p-4" onClick={(e) => e.stopPropagation()}>
+        <style>{COMPACT_CSS}</style>
+        <div className="print:hidden flex items-center justify-end gap-2 mb-2">
           <Button variant="secondary" onClick={() => window.print()} disabled={!data} className="flex items-center gap-2 !px-3.5 !py-2 !text-sm">
             <Download size={15} /> {tr("Download PDF")}
           </Button>
@@ -979,7 +1049,7 @@ function LearnerModal({ batchId, userId, onClose }: { batchId: string; userId: s
         {error ? (
           <p className="text-sm text-error">{tr("This report isn't available.")}</p>
         ) : data ? (
-          <LearnerDetail l={data.learner} batch={data.batch} goal={data.goal} batchId={batchId} canOpenReports={data.canOpenReports} />
+          <LearnerDetail l={data.learner} batch={data.batch} goal={data.goal} batchId={batchId} canOpenReports={data.canOpenReports} compact />
         ) : (
           <p className="text-sm text-muted py-10 text-center">{tr("Loading…")}</p>
         )}

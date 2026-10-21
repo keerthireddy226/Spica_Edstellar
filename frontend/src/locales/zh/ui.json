@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "结果还不够。",
  "Areas to improve": "待提升方面",
  "Open the full score report of the latest mock test": "打开最近一次模拟测试的完整成绩单",
- "Click a name to open the learner's report": "点击姓名即可打开该学员的报告"
+ "Click a name to open the learner's report": "点击姓名即可打开该学员的报告",
+ "Score dropped since the start": "分数较开始时下降",
+ "{{name}}: {{from}} → {{to}}": "{{name}}：{{from}} → {{to}}",
+ "Quiet for a week or more": "一周或更长时间无动态",
+ "No mock test yet": "尚无模拟测试",
+ "{{name}}: {{level}} from the level test only": "{{name}}：{{level}} 仅来自水平测试",
+ "Hasn't started yet.": "尚未开始。",
+ "Not practising: last active {{n}} days ago.": "未在练习：最近活跃于 {{n}} 天前。",
+ "Quiet: last active {{n}} days ago.": "无动态：最近活跃于 {{n}} 天前。",
+ "Won't reach {{level}} by the goal date at this pace.": "按目前进度，无法在目标日期前达到 {{level}}。",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica 分数从 {{from}} 降至 {{to}}。",
+ "No mock test yet, so progress can't be tracked.": "尚无模拟测试，因此无法跟踪进度。",
+ "Missed a planned mock test.": "错过了计划的模拟测试。",
+ "Access ends {{date}}.": "访问权限将于 {{date}} 到期。",
+ "Nothing needs attention: active, tested and on course.": "无需关注：保持活跃、已参加测试且进展顺利。"
 }

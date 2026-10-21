@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Chưa đủ kết quả.",
  "Areas to improve": "Điểm cần cải thiện",
  "Open the full score report of the latest mock test": "Mở phiếu điểm đầy đủ của bài thi thử gần nhất",
- "Click a name to open the learner's report": "Nhấp vào tên để mở báo cáo của học viên"
+ "Click a name to open the learner's report": "Nhấp vào tên để mở báo cáo của học viên",
+ "Score dropped since the start": "Điểm giảm so với lúc bắt đầu",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Im lặng từ một tuần trở lên",
+ "No mock test yet": "Chưa có bài thi thử",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} chỉ từ bài kiểm tra trình độ",
+ "Hasn't started yet.": "Chưa bắt đầu.",
+ "Not practising: last active {{n}} days ago.": "Không luyện tập: hoạt động lần cuối {{n}} ngày trước.",
+ "Quiet: last active {{n}} days ago.": "Im lặng: hoạt động lần cuối {{n}} ngày trước.",
+ "Won't reach {{level}} by the goal date at this pace.": "Với tốc độ này sẽ không đạt {{level}} trước ngày mục tiêu.",
+ "Spica score dropped from {{from}} to {{to}}.": "Điểm Spica giảm từ {{from}} xuống {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Chưa có bài thi thử nên chưa thể theo dõi tiến độ.",
+ "Missed a planned mock test.": "Bỏ lỡ bài thi thử đã lên kế hoạch.",
+ "Access ends {{date}}.": "Quyền truy cập hết hạn vào {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Không có gì cần chú ý: đang hoạt động, đã kiểm tra và đúng tiến độ."
 }

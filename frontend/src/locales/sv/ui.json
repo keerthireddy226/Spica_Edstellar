@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Inte tillräckligt med resultat än.",
  "Areas to improve": "Förbättringsområden",
  "Open the full score report of the latest mock test": "Öppna hela resultatrapporten för senaste provprovet",
- "Click a name to open the learner's report": "Klicka på ett namn för att öppna deltagarens rapport"
+ "Click a name to open the learner's report": "Klicka på ett namn för att öppna deltagarens rapport",
+ "Score dropped since the start": "Poängen har sjunkit sedan start",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Tysta i en vecka eller mer",
+ "No mock test yet": "Inget provprov ännu",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} endast från nivåtestet",
+ "Hasn't started yet.": "Har inte börjat ännu.",
+ "Not practising: last active {{n}} days ago.": "Övar inte: senast aktiv för {{n}} dagar sedan.",
+ "Quiet: last active {{n}} days ago.": "Tyst: senast aktiv för {{n}} dagar sedan.",
+ "Won't reach {{level}} by the goal date at this pace.": "Når inte {{level}} till måldatumet i den här takten.",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica-poängen sjönk från {{from}} till {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Inget provprov ännu, så framstegen kan inte följas.",
+ "Missed a planned mock test.": "Missade ett planerat provprov.",
+ "Access ends {{date}}.": "Åtkomsten går ut {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Inget behöver uppmärksamhet: aktiv, testad och enligt plan."
 }

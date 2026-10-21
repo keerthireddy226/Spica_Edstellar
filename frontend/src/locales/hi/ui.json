@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "अभी पर्याप्त नतीजे नहीं हैं।",
  "Areas to improve": "सुधार के क्षेत्र",
  "Open the full score report of the latest mock test": "नवीनतम मॉक टेस्ट की पूरी स्कोर रिपोर्ट खोलें",
- "Click a name to open the learner's report": "शिक्षार्थी की रिपोर्ट खोलने के लिए नाम पर क्लिक करें"
+ "Click a name to open the learner's report": "शिक्षार्थी की रिपोर्ट खोलने के लिए नाम पर क्लिक करें",
+ "Score dropped since the start": "शुरुआत से स्कोर गिरा",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "एक हफ़्ते या उससे ज़्यादा से शांत",
+ "No mock test yet": "अभी तक कोई मॉक टेस्ट नहीं",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} सिर्फ़ स्तर टेस्ट से",
+ "Hasn't started yet.": "अभी शुरू नहीं किया।",
+ "Not practising: last active {{n}} days ago.": "अभ्यास नहीं कर रहे: आख़िरी बार {{n}} दिन पहले सक्रिय।",
+ "Quiet: last active {{n}} days ago.": "शांत: आख़िरी बार {{n}} दिन पहले सक्रिय।",
+ "Won't reach {{level}} by the goal date at this pace.": "इस रफ़्तार से लक्ष्य की तारीख़ तक {{level}} तक नहीं पहुँचेंगे।",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica स्कोर {{from}} से गिरकर {{to}} हुआ।",
+ "No mock test yet, so progress can't be tracked.": "अभी तक कोई मॉक टेस्ट नहीं, इसलिए प्रगति ट्रैक नहीं की जा सकती।",
+ "Missed a planned mock test.": "तय मॉक टेस्ट छूट गया।",
+ "Access ends {{date}}.": "पहुँच {{date}} को ख़त्म होगी।",
+ "Nothing needs attention: active, tested and on course.": "ध्यान देने लायक कुछ नहीं: सक्रिय, टेस्ट दिया और सही राह पर।"
 }

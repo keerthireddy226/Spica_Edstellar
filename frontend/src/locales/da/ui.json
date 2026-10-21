@@ -4367,5 +4367,19 @@
  "Not enough results yet.": "Ikke nok resultater endnu.",
  "Areas to improve": "Områder at forbedre",
  "Open the full score report of the latest mock test": "Åbn den fulde scorerapport for den seneste prøveeksamen",
- "Click a name to open the learner's report": "Klik på et navn for at åbne kursistens rapport"
+ "Click a name to open the learner's report": "Klik på et navn for at åbne kursistens rapport",
+ "Score dropped since the start": "Score faldet siden start",
+ "{{name}}: {{from}} → {{to}}": "{{name}}: {{from}} → {{to}}",
+ "Quiet for a week or more": "Stille i en uge eller mere",
+ "No mock test yet": "Ingen prøveeksamen endnu",
+ "{{name}}: {{level}} from the level test only": "{{name}}: {{level}} kun fra niveautesten",
+ "Hasn't started yet.": "Er ikke startet endnu.",
+ "Not practising: last active {{n}} days ago.": "Øver ikke: sidst aktiv for {{n}} dage siden.",
+ "Quiet: last active {{n}} days ago.": "Stille: sidst aktiv for {{n}} dage siden.",
+ "Won't reach {{level}} by the goal date at this pace.": "Når ikke {{level}} inden måldatoen i dette tempo.",
+ "Spica score dropped from {{from}} to {{to}}.": "Spica-score faldet fra {{from}} til {{to}}.",
+ "No mock test yet, so progress can't be tracked.": "Ingen prøveeksamen endnu, så fremskridt kan ikke følges.",
+ "Missed a planned mock test.": "Har misset en planlagt prøveeksamen.",
+ "Access ends {{date}}.": "Adgang udløber {{date}}.",
+ "Nothing needs attention: active, tested and on course.": "Intet kræver opmærksomhed: aktiv, testet og på rette spor."
 }
