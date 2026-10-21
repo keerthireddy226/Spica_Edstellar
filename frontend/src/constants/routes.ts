@@ -29,6 +29,10 @@ export const ROUTES = {
   TUTOR: "/tutor",
   PROFILE: "/profile",
   PLANS: "/plans",
+  // Every plan, for individuals and organizations (read-only overview).
+  SPICA_PLANS: "/spica-plans",
+  ORG_ADMIN_SPICA_PLANS: "/orgadmin/spica-plans",
+  MANAGER_SPICA_PLANS: "/manager/spica-plans",
   CHECKOUT_RETURN: "/checkout/return",
   MFA_SETUP: "/security/two-step",
   CERTIFICATE: "/certificate/:code",

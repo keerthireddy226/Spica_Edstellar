@@ -4,7 +4,7 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { getMyTests } from "@/api/assessment";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags } from "lucide-react";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -217,6 +217,14 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
               onClick={go}
             />
           )}
+          <NavEntry
+            to={ROUTES.SPICA_PLANS}
+            icon={Tags}
+            label={tr("Spica plans")}
+            isActive={location.pathname === ROUTES.SPICA_PLANS}
+            locked={false}
+            onClick={go}
+          />
           <NavEntry
             to={ROUTES.PROFILE}
             icon={User}

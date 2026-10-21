@@ -45,6 +45,7 @@ import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
 import { MyTests, TakeOwnedTest } from "@/pages/MyTests";
 import { OrgAdminTests } from "@/pages/orgAdmin/OrgAdminTests";
 import { AssessmentQuality } from "@/pages/staff/AssessmentQuality";
+import { SpicaPlans } from "@/pages/SpicaPlans";
 import { AdminsList } from "@/pages/admin/AdminsList";
 import { OrgAdminsList } from "@/pages/admin/OrgAdminsList";
 import { ManagersList } from "@/pages/admin/ManagersList";
@@ -239,6 +240,7 @@ function App() {
           <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
           <Route path={ROUTES.PLANS} element={<Plans />} />
+          <Route path={ROUTES.SPICA_PLANS} element={<SpicaPlans />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route
@@ -310,6 +312,7 @@ function App() {
           <Route path={ROUTES.ORG_ADMIN_LICENSES} element={<OrgAdminLicenses />} />
           <Route path={ROUTES.ORG_ADMIN_TESTS} element={<OrgAdminTests />} />
           <Route path={ROUTES.ORG_ADMIN_PLAN} element={<OrgAdminPlan />} />
+          <Route path={ROUTES.ORG_ADMIN_SPICA_PLANS} element={<SpicaPlans />} />
           <Route path={ROUTES.ORG_ADMIN_AUDIT} element={<OrgAdminAudit />} />
           <Route path={ROUTES.ORG_ADMIN_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.ORG_ADMIN_SETTINGS} element={<OrgAdminSettings />} />
@@ -344,6 +347,7 @@ function App() {
           <Route path={ROUTES.MANAGER_LEARNERS} element={<ManagerLearners />} />
           <Route path={ROUTES.MANAGER_ACTIVITY} element={<ManagerActivity />} />
           <Route path={ROUTES.MANAGER_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.MANAGER_SPICA_PLANS} element={<SpicaPlans />} />
           <Route path={ROUTES.MANAGER_ANALYTICS} element={<AnalyticsPage />} />
         </Route>
         <Route path="*" element={<DefaultRedirect />} />

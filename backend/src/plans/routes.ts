@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { EDUCATION_DISCOUNT_PERCENT, FEATURES, VOLUME_BANDS, type PlanFeature } from "./config.js";
+import { ASSESSMENT_BANDS } from "../recruitment/service.js";
 import { Router, type Response } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -17,6 +19,29 @@ import {
 } from "./service.js";
 
 export const plansRouter = Router();
+
+// ---- Spica plans: every plan, for anyone signed in ----
+
+// The overview page: organization tiers with their features, licence and
+// credit prices, and (for an organization's people) their own tier and price.
+plansRouter.get("/overview", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const t = req.user!.tenantId
+      ? (await pool.query(`SELECT type, category FROM tenants WHERE id = $1`, [req.user!.tenantId])).rows[0]
+      : null;
+    const org = t?.type === "cohort" && req.user!.tenantId ? await planSummary(req.user!.tenantId) : null;
+    res.json({
+      catalog: planCatalog(t?.category ?? null),
+      features: (Object.keys(FEATURES) as PlanFeature[]).map((k) => ({ key: k, label: FEATURES[k].label, available: FEATURES[k].available })),
+      licenseBands: VOLUME_BANDS,
+      educationDiscountPercent: EDUCATION_DISCOUNT_PERCENT,
+      creditBands: ASSESSMENT_BANDS,
+      organization: org ? { tier: org.tier, customPriceCents: org.customPriceCents } : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ---- Org Admin and Manager: their own organization's plan ----
 

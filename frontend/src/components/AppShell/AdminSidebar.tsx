@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -71,6 +71,7 @@ const ORG_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ORG_ADMIN_INTEGRITY, icon: ShieldAlert, label: tr("Test integrity") },
   { to: ROUTES.ORG_ADMIN_AUDIT, icon: ScrollText, label: tr("Audit log") },
   { to: ROUTES.ORG_ADMIN_PLAN, icon: Gem, label: tr("Plan") },
+  { to: ROUTES.ORG_ADMIN_SPICA_PLANS, icon: Tags, label: tr("Spica plans") },
   { to: ROUTES.ORG_ADMIN_SETTINGS, icon: Settings, label: tr("Settings") },
   { to: ROUTES.ORG_ADMIN_DEVELOPERS, icon: Plug, label: tr("Integrations") },
   { to: ROUTES.ORG_ADMIN_ANALYTICS, icon: BarChart3, label: tr("Analytics"), product: "skills" },
@@ -89,6 +90,7 @@ const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_PROGRAMS, icon: Target, label: tr("Programs") },
   { to: ROUTES.MANAGER_LEARNERS, icon: Users, label: tr("Learners") },
   { to: ROUTES.MANAGER_ANALYTICS, icon: BarChart3, label: tr("Analytics") },
+  { to: ROUTES.MANAGER_SPICA_PLANS, icon: Tags, label: tr("Spica plans") },
   { to: ROUTES.MANAGER_ACTIVITY, icon: ScrollText, label: tr("Activity") },
   { to: ROUTES.MANAGER_PROFILE, icon: User, label: tr("Profile") },
 ];
