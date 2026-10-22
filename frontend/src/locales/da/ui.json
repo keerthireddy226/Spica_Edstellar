@@ -5100,5 +5100,17 @@
  "Free switch": "Gratis skift",
  "Switch to another test (once, until {{date}})": "Skift til en anden test (én gang, indtil {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din næste rigtige test åbner {{date}}, 30 dage efter din sidste, som lå under dit mål. Øv dig i mellemtiden.",
- "A test of all four skills also gives the candidate a certificate.": "En test i alle fire færdigheder giver også kandidaten et certifikat."
+ "A test of all four skills also gives the candidate a certificate.": "En test i alle fire færdigheder giver også kandidaten et certifikat.",
+ "Choose a country first": "Vælg først et land",
+ "Search your city": "Søg efter din by",
+ "Not listed? Keep “{{city}}”": "Står den ikke på listen? Behold “{{city}}”",
+ "No city found. Keep “{{city}}”": "Ingen by fundet. Behold “{{city}}”",
+ "No certificate yet": "Intet certifikat endnu",
+ "Your certificate appears here once your test is scored and its checks are done.": "Dit certifikat vises her, når din test er bedømt, og kontrollerne er færdige.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Der var høj baggrundsstøj i dit sidste mundtlige svar. Den kan overdøve dine ord og sænke din score i tale. Find et mere stille sted, før du taler igen.",
+ "Continue anyway": "Fortsæt alligevel",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Dine certifikater fra den afsluttende test. Hvert certifikat har en kontrolside, som alle kan åbne via linket eller QR-koden.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Din test: tag den gratis prøve og derefter den rigtige test, når den åbner. Din scorerapport og dit certifikat vises her.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Et par hurtige spørgsmål (cirka et minut), så er din test klar på siden Vurdering.",
+ "Your test result will show your level": "Dit testresultat viser dit niveau"
 }

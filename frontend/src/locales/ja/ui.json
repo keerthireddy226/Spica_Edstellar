@@ -5100,5 +5100,17 @@
  "Free switch": "無料で切り替え",
  "Switch to another test (once, until {{date}})": "別のテストに切り替える（1回のみ、{{date}}まで）",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "次の本番テストは{{date}}に受けられます。目標に届かなかった前回から30日後です。それまで練習しましょう。",
- "A test of all four skills also gives the candidate a certificate.": "4技能すべてのテストでは、受験者に証明書も発行されます。"
+ "A test of all four skills also gives the candidate a certificate.": "4技能すべてのテストでは、受験者に証明書も発行されます。",
+ "Choose a country first": "先に国を選んでください",
+ "Search your city": "市区町村を検索",
+ "Not listed? Keep “{{city}}”": "見つかりませんか？「{{city}}」のままにする",
+ "No city found. Keep “{{city}}”": "市区町村が見つかりません。「{{city}}」のままにする",
+ "No certificate yet": "まだ修了証はありません",
+ "Your certificate appears here once your test is scored and its checks are done.": "テストの採点とチェックが完了すると、ここに修了証が表示されます。",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "直前の話した回答に大きな周囲の雑音がありました。雑音で声が聞き取りにくくなり、スピーキングのスコアが下がる可能性があります。次に話す前に、より静かな場所に移動してください。",
+ "Continue anyway": "このまま続ける",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "最終アセスメントの修了証です。各修了証には確認ページがあり、リンクまたは QR コードから誰でも開けます。",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "あなたのテスト：まず無料サンプルを受け、本番テストが開いたら受験してください。スコアレポートと修了証はここに表示されます。",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "いくつかの簡単な質問（約1分）に答えると、アセスメントページでテストを受けられるようになります。",
+ "Your test result will show your level": "テスト結果でレベルがわかります"
 }

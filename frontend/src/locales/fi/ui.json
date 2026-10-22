@@ -5100,5 +5100,17 @@
  "Free switch": "Maksuton vaihto",
  "Switch to another test (once, until {{date}})": "Vaihda toiseen kokeeseen (kerran, {{date}} asti)",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Seuraava oikea kokeesi avautuu {{date}}, 30 päivää edellisen jälkeen, joka jäi alle tavoitteesi. Harjoittele sillä välin.",
- "A test of all four skills also gives the candidate a certificate.": "Kaikkien neljän taidon koe antaa myös hakijalle todistuksen."
+ "A test of all four skills also gives the candidate a certificate.": "Kaikkien neljän taidon koe antaa myös hakijalle todistuksen.",
+ "Choose a country first": "Valitse ensin maa",
+ "Search your city": "Hae kaupunkiasi",
+ "Not listed? Keep “{{city}}”": "Eikö listalla? Säilytä ”{{city}}”",
+ "No city found. Keep “{{city}}”": "Kaupunkia ei löytynyt. Säilytä ”{{city}}”",
+ "No certificate yet": "Ei vielä todistusta",
+ "Your certificate appears here once your test is scored and its checks are done.": "Todistuksesi näkyy tässä, kun kokeesi on pisteytetty ja tarkistukset ovat valmiit.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Viimeisessä puhutussa vastauksessasi oli kovaa taustamelua. Se voi peittää sanasi ja laskea puhumisen pisteitäsi. Siirry hiljaisempaan paikkaan ennen kuin puhut uudelleen.",
+ "Continue anyway": "Jatka silti",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Loppukokeen todistuksesi. Jokaisella on tarkistussivu, jonka kuka tahansa voi avata linkistä tai QR-koodista.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Kokeesi: tee maksuton näyte ja sitten oikea koe, kun se avautuu. Tulosraporttisi ja todistuksesi näkyvät tässä.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Muutama nopea kysymys (noin minuutti), ja kokeesi on valmiina Arviointi-sivulla.",
+ "Your test result will show your level": "Koetuloksesi näyttää tasosi"
 }

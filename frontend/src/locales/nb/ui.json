@@ -5100,5 +5100,17 @@
  "Free switch": "Gratis bytte",
  "Switch to another test (once, until {{date}})": "Bytt til en annen test (én gang, til {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din neste ekte test åpner {{date}}, 30 dager etter den forrige, som var under målet ditt. Øv i mellomtiden.",
- "A test of all four skills also gives the candidate a certificate.": "En test i alle fire ferdigheter gir også kandidaten et sertifikat."
+ "A test of all four skills also gives the candidate a certificate.": "En test i alle fire ferdigheter gir også kandidaten et sertifikat.",
+ "Choose a country first": "Velg et land først",
+ "Search your city": "Søk etter byen din",
+ "Not listed? Keep “{{city}}”": "Står den ikke på listen? Behold «{{city}}»",
+ "No city found. Keep “{{city}}”": "Fant ingen by. Behold «{{city}}»",
+ "No certificate yet": "Ingen sertifikat ennå",
+ "Your certificate appears here once your test is scored and its checks are done.": "Sertifikatet ditt vises her når testen din er vurdert og kontrollene er ferdige.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Det var høy bakgrunnsstøy i det siste muntlige svaret ditt. Den kan overdøve ordene dine og gi lavere poengsum i muntlig. Flytt deg et roligere sted før du snakker igjen.",
+ "Continue anyway": "Fortsett likevel",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Sertifikatene dine fra den avsluttende testen. Hvert sertifikat har en kontrollside som alle kan åpne via lenken eller QR-koden.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Testen din: ta den gratis eksempeltesten, og deretter den ekte testen når den åpner. Resultatrapporten og sertifikatet ditt vises her.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Noen raske spørsmål (omtrent ett minutt), så er testen din klar på Vurdering-siden.",
+ "Your test result will show your level": "Testresultatet ditt viser nivået ditt"
 }

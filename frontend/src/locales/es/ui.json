@@ -5100,5 +5100,17 @@
  "Free switch": "Cambio gratuito",
  "Switch to another test (once, until {{date}})": "Cambiar a otro examen (una vez, hasta el {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Tu próximo examen real se abre el {{date}}, 30 días después del último, que quedó por debajo de tu objetivo. Mientras tanto, practica.",
- "A test of all four skills also gives the candidate a certificate.": "Un examen de las cuatro destrezas también da al candidato un certificado."
+ "A test of all four skills also gives the candidate a certificate.": "Un examen de las cuatro destrezas también da al candidato un certificado.",
+ "Choose a country first": "Elige primero un país",
+ "Search your city": "Busca tu ciudad",
+ "Not listed? Keep “{{city}}”": "¿No aparece? Mantener «{{city}}»",
+ "No city found. Keep “{{city}}”": "No se encontró la ciudad. Mantener «{{city}}»",
+ "No certificate yet": "Aún no tienes certificado",
+ "Your certificate appears here once your test is scored and its checks are done.": "Tu certificado aparece aquí cuando tu examen esté corregido y terminen las comprobaciones.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Hubo mucho ruido de fondo en tu última respuesta oral. Puede tapar tus palabras y bajar tu puntuación de expresión oral. Ve a un lugar más tranquilo antes de volver a hablar.",
+ "Continue anyway": "Continuar de todos modos",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Tus certificados de la evaluación final. Cada uno tiene una página de verificación que cualquiera puede abrir desde su enlace o código QR.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Tu examen: haz la muestra gratuita y luego el examen real cuando se abra. Tu informe de puntuación y tu certificado aparecen aquí.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Unas preguntas rápidas (cerca de un minuto) y tu examen estará listo en la página Evaluación.",
+ "Your test result will show your level": "El resultado de tu examen mostrará tu nivel"
 }

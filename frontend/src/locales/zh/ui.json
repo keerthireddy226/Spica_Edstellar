@@ -5100,5 +5100,17 @@
  "Free switch": "免费切换",
  "Switch to another test (once, until {{date}})": "切换到其他测试（仅一次，截至 {{date}}）",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "你的下一次正式测试将于 {{date}} 开放，即上一次（未达到目标）的 30 天后。在此期间请继续练习。",
- "A test of all four skills also gives the candidate a certificate.": "涵盖全部四项技能的测试也会为候选人颁发证书。"
+ "A test of all four skills also gives the candidate a certificate.": "涵盖全部四项技能的测试也会为候选人颁发证书。",
+ "Choose a country first": "请先选择国家/地区",
+ "Search your city": "搜索你的城市",
+ "Not listed? Keep “{{city}}”": "没有找到？保留“{{city}}”",
+ "No city found. Keep “{{city}}”": "未找到城市。保留“{{city}}”",
+ "No certificate yet": "还没有证书",
+ "Your certificate appears here once your test is scored and its checks are done.": "测试评分完成且检查结束后，你的证书会显示在这里。",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "你上一个口语回答中有很大的背景噪音。噪音可能盖过你的声音，降低你的口语分数。再次开口前，请换到更安静的地方。",
+ "Continue anyway": "仍然继续",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "你的结业测评证书。每张证书都有一个验证页面，任何人都可以通过链接或二维码打开。",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "你的测试：先做免费体验测试，正式测试开放后再参加。你的成绩单和证书会显示在这里。",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "回答几个简单问题（约一分钟），你的测试就会在测评页面准备就绪。",
+ "Your test result will show your level": "你的测试结果将显示你的等级"
 }

@@ -5100,5 +5100,17 @@
  "Free switch": "Gratis wisselen",
  "Switch to another test (once, until {{date}})": "Wisselen naar een andere toets (eenmalig, tot {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Je volgende echte toets opent op {{date}}, 30 dagen na je vorige, die onder je doel lag. Oefen in de tussentijd.",
- "A test of all four skills also gives the candidate a certificate.": "Een toets van alle vier vaardigheden geeft de kandidaat ook een certificaat."
+ "A test of all four skills also gives the candidate a certificate.": "Een toets van alle vier vaardigheden geeft de kandidaat ook een certificaat.",
+ "Choose a country first": "Kies eerst een land",
+ "Search your city": "Zoek je plaats",
+ "Not listed? Keep “{{city}}”": "Staat er niet bij? “{{city}}” behouden",
+ "No city found. Keep “{{city}}”": "Geen plaats gevonden. “{{city}}” behouden",
+ "No certificate yet": "Nog geen certificaat",
+ "Your certificate appears here once your test is scored and its checks are done.": "Je certificaat verschijnt hier zodra je toets is beoordeeld en de controles klaar zijn.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Er was luid achtergrondgeluid in je laatste gesproken antwoord. Dat kan je woorden overstemmen en je spreekscore verlagen. Ga naar een stillere plek voordat je weer spreekt.",
+ "Continue anyway": "Toch doorgaan",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Je certificaten van de eindtoets. Elk certificaat heeft een controlepagina die iedereen via de link of QR-code kan openen.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Je toets: maak de gratis voorbeeldtoets en daarna de echte toets zodra die opengaat. Je scorerapport en certificaat verschijnen hier.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Een paar korte vragen (ongeveer een minuut), dan staat je toets klaar op de pagina Assessment.",
+ "Your test result will show your level": "Je toetsuitslag laat je niveau zien"
 }

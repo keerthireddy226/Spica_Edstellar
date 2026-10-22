@@ -5100,5 +5100,17 @@
  "Free switch": "Kostnadsfritt byte",
  "Switch to another test (once, until {{date}})": "Byt till ett annat test (en gång, till {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Ditt nästa riktiga test öppnar {{date}}, 30 dagar efter det förra, som låg under ditt mål. Öva under tiden.",
- "A test of all four skills also gives the candidate a certificate.": "Ett test av alla fyra färdigheter ger också kandidaten ett certifikat."
+ "A test of all four skills also gives the candidate a certificate.": "Ett test av alla fyra färdigheter ger också kandidaten ett certifikat.",
+ "Choose a country first": "Välj ett land först",
+ "Search your city": "Sök efter din stad",
+ "Not listed? Keep “{{city}}”": "Finns den inte med? Behåll ”{{city}}”",
+ "No city found. Keep “{{city}}”": "Ingen stad hittades. Behåll ”{{city}}”",
+ "No certificate yet": "Inget certifikat än",
+ "Your certificate appears here once your test is scored and its checks are done.": "Ditt certifikat visas här när ditt test är bedömt och kontrollerna är klara.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Det var högt bakgrundsljud i ditt senaste muntliga svar. Det kan överrösta dina ord och sänka poängen för muntlig färdighet. Gå till ett tystare ställe innan du talar igen.",
+ "Continue anyway": "Fortsätt ändå",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Dina certifikat från sluttestet. Varje certifikat har en kontrollsida som vem som helst kan öppna via länken eller QR-koden.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Ditt test: gör det gratis smakprovet och sedan det riktiga testet när det öppnar. Din resultatrapport och ditt certifikat visas här.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Några snabba frågor (ungefär en minut), sedan är ditt test klart på sidan Test.",
+ "Your test result will show your level": "Ditt testresultat visar din nivå"
 }

@@ -5100,5 +5100,17 @@
  "Free switch": "Đổi miễn phí",
  "Switch to another test (once, until {{date}})": "Đổi sang bài thi khác (một lần, đến {{date}})",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Bài thi thật tiếp theo của bạn mở vào {{date}}, 30 ngày sau lần trước, khi bạn chưa đạt mục tiêu. Hãy luyện tập trong thời gian này.",
- "A test of all four skills also gives the candidate a certificate.": "Bài thi đủ bốn kỹ năng cũng cấp chứng chỉ cho ứng viên."
+ "A test of all four skills also gives the candidate a certificate.": "Bài thi đủ bốn kỹ năng cũng cấp chứng chỉ cho ứng viên.",
+ "Choose a country first": "Hãy chọn quốc gia trước",
+ "Search your city": "Tìm thành phố của bạn",
+ "Not listed? Keep “{{city}}”": "Không có trong danh sách? Giữ “{{city}}”",
+ "No city found. Keep “{{city}}”": "Không tìm thấy thành phố. Giữ “{{city}}”",
+ "No certificate yet": "Chưa có chứng chỉ",
+ "Your certificate appears here once your test is scored and its checks are done.": "Chứng chỉ của bạn sẽ hiện ở đây sau khi bài thi được chấm điểm và kiểm tra xong.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "Câu trả lời nói gần nhất của bạn có tiếng ồn nền lớn. Tiếng ồn có thể át lời bạn nói và làm giảm điểm nói của bạn. Hãy chuyển đến nơi yên tĩnh hơn trước khi nói tiếp.",
+ "Continue anyway": "Vẫn tiếp tục",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Chứng chỉ bài đánh giá cuối khóa của bạn. Mỗi chứng chỉ có một trang xác minh mà ai cũng có thể mở từ đường liên kết hoặc mã QR.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Bài thi của bạn: làm bài thi mẫu miễn phí, rồi làm bài thi thật khi bài mở. Phiếu điểm và chứng chỉ của bạn sẽ hiện ở đây.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Vài câu hỏi nhanh (khoảng một phút), sau đó bài thi của bạn sẽ sẵn sàng trên trang Đánh giá.",
+ "Your test result will show your level": "Kết quả bài thi sẽ cho biết trình độ của bạn"
 }

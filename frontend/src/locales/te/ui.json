@@ -5100,5 +5100,17 @@
  "Free switch": "ఉచిత మార్పు",
  "Switch to another test (once, until {{date}})": "మరో టెస్ట్‌కి మారండి (ఒక్కసారి, {{date}} వరకు)",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "మీ తదుపరి అసలు టెస్ట్ {{date}}న తెరుచుకుంటుంది, మీ లక్ష్యం కంటే తక్కువ వచ్చిన గతసారి తర్వాత 30 రోజులకు. ఈలోగా ప్రాక్టీస్ చేయండి.",
- "A test of all four skills also gives the candidate a certificate.": "నాలుగు నైపుణ్యాల టెస్ట్ అభ్యర్థికి సర్టిఫికెట్ కూడా ఇస్తుంది."
+ "A test of all four skills also gives the candidate a certificate.": "నాలుగు నైపుణ్యాల టెస్ట్ అభ్యర్థికి సర్టిఫికెట్ కూడా ఇస్తుంది.",
+ "Choose a country first": "ముందుగా దేశాన్ని ఎంచుకోండి",
+ "Search your city": "మీ నగరాన్ని వెతకండి",
+ "Not listed? Keep “{{city}}”": "జాబితాలో లేదా? “{{city}}” ఉంచండి",
+ "No city found. Keep “{{city}}”": "నగరం కనబడలేదు. “{{city}}” ఉంచండి",
+ "No certificate yet": "ఇంకా సర్టిఫికెట్ లేదు",
+ "Your certificate appears here once your test is scored and its checks are done.": "మీ టెస్ట్‌కు స్కోర్ వచ్చి, తనిఖీలు పూర్తయిన తర్వాత మీ సర్టిఫికెట్ ఇక్కడ కనిపిస్తుంది.",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "మీ చివరి మాట్లాడిన సమాధానంలో ఎక్కువ నేపథ్య శబ్దం ఉంది. అది మీ మాటలను కప్పివేసి మీ మాట్లాడే స్కోర్‌ను తగ్గించవచ్చు. మళ్లీ మాట్లాడే ముందు మరింత నిశ్శబ్దమైన చోటికి వెళ్లండి.",
+ "Continue anyway": "అయినా కొనసాగించండి",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "మీ తుది అసెస్‌మెంట్ సర్టిఫికెట్‌లు. ప్రతి దానికీ ఒక తనిఖీ పేజీ ఉంది, దాన్ని లింక్ లేదా QR కోడ్ ద్వారా ఎవరైనా తెరవవచ్చు.",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "మీ టెస్ట్: ముందుగా ఉచిత నమూనా టెస్ట్ రాయండి, అసలు టెస్ట్ తెరుచుకున్నప్పుడు దాన్ని రాయండి. మీ స్కోర్ నివేదిక, సర్టిఫికెట్ ఇక్కడ కనిపిస్తాయి.",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "కొన్ని చిన్న ప్రశ్నలు (సుమారు ఒక నిమిషం), ఆ తర్వాత మీ టెస్ట్ అసెస్‌మెంట్ పేజీలో సిద్ధంగా ఉంటుంది.",
+ "Your test result will show your level": "మీ టెస్ట్ ఫలితం మీ స్థాయిని చూపిస్తుంది"
 }

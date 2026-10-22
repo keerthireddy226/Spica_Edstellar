@@ -5100,5 +5100,17 @@
  "Free switch": "मुफ़्त बदलाव",
  "Switch to another test (once, until {{date}})": "दूसरे टेस्ट पर बदलें (एक बार, {{date}} तक)",
  "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "आपका अगला असली टेस्ट {{date}} को खुलेगा, पिछले वाले के 30 दिन बाद, जो आपके लक्ष्य से कम था। तब तक अभ्यास करें।",
- "A test of all four skills also gives the candidate a certificate.": "चारों कौशलों का टेस्ट उम्मीदवार को सर्टिफ़िकेट भी देता है।"
+ "A test of all four skills also gives the candidate a certificate.": "चारों कौशलों का टेस्ट उम्मीदवार को सर्टिफ़िकेट भी देता है।",
+ "Choose a country first": "पहले देश चुनें",
+ "Search your city": "अपना शहर खोजें",
+ "Not listed? Keep “{{city}}”": "सूची में नहीं है? “{{city}}” रखें",
+ "No city found. Keep “{{city}}”": "कोई शहर नहीं मिला। “{{city}}” रखें",
+ "No certificate yet": "अभी कोई सर्टिफ़िकेट नहीं",
+ "Your certificate appears here once your test is scored and its checks are done.": "आपके टेस्ट का स्कोर आने और जाँच पूरी होने पर आपका सर्टिफ़िकेट यहाँ दिखेगा।",
+ "There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.": "आपके पिछले बोले गए जवाब में बैकग्राउंड का तेज़ शोर था। इससे आपके शब्द दब सकते हैं और आपका बोलने का स्कोर कम हो सकता है। दोबारा बोलने से पहले किसी शांत जगह पर जाएँ।",
+ "Continue anyway": "फिर भी जारी रखें",
+ "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "आपके अंतिम आकलन के सर्टिफ़िकेट। हर सर्टिफ़िकेट का एक जाँच पेज है, जिसे कोई भी उसके लिंक या QR कोड से खोल सकता है।",
+ "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "आपका टेस्ट: मुफ़्त नमूना टेस्ट दें, फिर असली टेस्ट खुलने पर उसे दें। आपकी स्कोर रिपोर्ट और सर्टिफ़िकेट यहाँ दिखेंगे।",
+ "A few quick questions (about a minute), then your test is ready on the Assessment page.": "कुछ छोटे सवाल (लगभग एक मिनट), फिर आपका टेस्ट आकलन पेज पर तैयार होगा।",
+ "Your test result will show your level": "आपके टेस्ट के नतीजे में आपका स्तर दिखेगा"
 }
