@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { ViewAsBanner } from "@/components/AppShell/ViewAsBanner";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth, type Role } from "@/hooks/useAuth";
@@ -16,6 +16,9 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
   const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Bumped by every sidebar click: the page opens afresh at its main view.
+  // Bumped in a transition, like the router's own location change, so both
+  // land together: bumped alone, the old page remounts first and its URL
+  // tidying (?product=...) undoes the new link.
   const [navKey, setNavKey] = useState(0);
 
   if (!user) {
@@ -29,7 +32,7 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
     // Printed (Print / PDF): the page alone, at full length.
     <div className="flex h-screen bg-paper overflow-hidden print:block print:h-auto print:overflow-visible">
       {/* The sidebar (aside) and header are hidden in print by index.css. */}
-      <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => setNavKey((k) => k + 1)} />
+      <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => startTransition(() => setNavKey((k) => k + 1))} />
 
       <div className="flex-1 flex flex-col min-w-0 print:block">
         <div className="print:hidden">
