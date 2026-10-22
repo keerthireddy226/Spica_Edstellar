@@ -20,10 +20,10 @@ export function Card({ title, subtitle, children, actions }: { title: string; su
 
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5" title={hint}>
-      <p className="text-xs text-muted">{label}</p>
-      <p className="text-2xl font-display font-bold text-ink mt-0.5">{value}</p>
-      {hint && <p className="text-[11px] text-muted mt-0.5 truncate">{hint}</p>}
+    <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5 h-full flex flex-col" title={hint}>
+      <p className="text-xs text-muted leading-snug">{label}</p>
+      <p className="text-2xl font-display font-bold text-ink mt-0.5 tabular-nums">{value}</p>
+      {hint && <p className="text-[11px] text-muted mt-auto pt-0.5 leading-snug line-clamp-2">{hint}</p>}
     </div>
   );
 }
@@ -36,7 +36,12 @@ export function BarList({ data, label, emptyText = tr("No data yet.") }: { data:
   const hidden = known.filter((d) => d.count === null);
   const shown = known.filter((d) => d.count !== null);
   if (shown.length === 0 && hidden.length === 0) {
-    return <p className="text-sm text-muted">{unknown ? `${emptyText} (${unknown.count} not answered)` : emptyText}</p>;
+    return (
+      <p className="text-sm text-muted">
+        {emptyText}
+        {unknown ? ` ${tr("{{v}} not answered.", { v: unknown.count })}` : ""}
+      </p>
+    );
   }
   return (
     <div className="flex flex-col gap-2">
@@ -53,7 +58,7 @@ export function BarList({ data, label, emptyText = tr("No data yet.") }: { data:
       ))}
       {(hidden.length > 0 || unknown) && (
         <p className="text-[11px] text-muted pt-1">
-          {hidden.length > 0 && `${hidden.map((h) => label(h.key)).join(", ")}: fewer than 5 (hidden for privacy). `}
+          {hidden.length > 0 && `${tr("{{groups}}: fewer than 5 (hidden for privacy).", { groups: hidden.map((h) => label(h.key)).join(", ") })} `}
           {unknown && tr("{{v}} not answered.", { v: unknown.count })}
         </p>
       )}
@@ -64,9 +69,13 @@ export function BarList({ data, label, emptyText = tr("No data yet.") }: { data:
 // Simple weekly column chart (no chart library needed).
 export function WeeklyBars({ data, valueLabel }: { data: { week: string; value: number }[]; valueLabel: string }) {
   const max = Math.max(1, ...data.map((d) => d.value));
+  const empty = data.every((d) => !d.value);
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-end gap-1.5 h-36">
+      <div className="relative flex items-end gap-1.5 h-36">
+        {empty && (
+          <p className="absolute inset-0 flex items-center justify-center text-sm text-muted pointer-events-none">{tr("Nothing in the last 12 weeks yet.")}</p>
+        )}
         {data.map((d) => (
           <div key={d.week} className="flex-1 flex flex-col items-center justify-end gap-1 h-full" title={tr("{{value}} {{valueLabel}} · week of {{week}}", { value: d.value, valueLabel: valueLabel, week: d.week })}>
             <span className="text-[10px] text-muted tabular-nums">{d.value || ""}</span>

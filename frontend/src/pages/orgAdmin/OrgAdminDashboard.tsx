@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Layers, ShieldCheck, Users, CalendarCheck, Pencil, Check, X, UserPlus, CheckCircle2, Award } from "lucide-react";
+import { Layers, ShieldCheck, Users, CalendarCheck, Pencil, Check, X, UserPlus, CheckCircle2, Award, ArrowRight, Activity } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { cardGradient } from "@/lib/cardGradients";
+import { OrgLoadError, OrgLoading, OrgNotice, OrgStatTile } from "@/components/OrgAdminUi";
 import { getOrgOverview, updateOrganizationName, type OrgAdminOverview } from "@/api/orgAdmin";
 import { getOrgLicenseSummary, formatShortDate, type PoolSummary } from "@/api/licenses";
 import { Link } from "react-router-dom";
@@ -35,11 +35,14 @@ function activitySentence(item: OrgAdminOverview["activityFeed"][number]): strin
       return item.detail === "manager" ? tr("{{who}} — Manager onboarded", { who: who }) : tr("{{who}} — Learner onboarded", { who: who });
     case "session_completed":
       return tr("{{who}} completed a {{v}} session", { who: who, v: SESSION_TYPE_LABEL[item.detail ?? ""] ?? item.detail });
+    // A placement (level) test's review status — not a certificate, which
+    // only the final assessment gives.
     case "placement":
-      return tr("{{who}}'s placement result: {{result}}", {
-        who,
-        result: item.detail === "certified" ? tr("Certified") : item.detail === "fraud_confirmed" ? tr("Fraud flagged") : tr("Pending review"),
-      });
+      return item.detail === "fraud_confirmed"
+        ? tr("{{who}}'s placement test: violation confirmed", { who })
+        : item.detail === "pending_review"
+          ? tr("{{who}}'s placement test is waiting for review", { who })
+          : tr("{{who}} took the placement test", { who });
     default:
       return who;
   }
@@ -57,25 +60,34 @@ function timeAgo(iso: string): string {
 
 function RecentActivity({ data }: { data: OrgAdminOverview["activityFeed"] }) {
   return (
-    <div className="bg-navy/5 border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
-      <h3 className="font-mono text-[11px] font-medium tracking-[.2em] uppercase text-muted">{tr("Recent activity")}</h3>
+    <div className="bg-surface border border-rule rounded-card shadow-sm flex flex-col">
+      <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
+        <h2 className="font-display font-bold text-ink flex items-center gap-2">
+          <Activity size={17} className="text-navy" /> {tr("Recent activity")}
+        </h2>
+        <Link to={ROUTES.ORG_ADMIN_AUDIT} className="text-xs font-semibold text-navy hover:underline flex items-center gap-1">
+          {tr("Audit log")} <ArrowRight size={13} />
+        </Link>
+      </div>
       {data.length === 0 ? (
-        <p className="text-sm text-muted">{tr("Nothing has happened yet.")}</p>
+        <p className="text-sm text-muted px-5 pb-5">{tr("Nothing has happened yet.")}</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <ul className="divide-y divide-rule border-t border-rule">
           {data.map((item, i) => {
-            const Icon = ACTIVITY_ICON[item.kind];
+            const Icon = ACTIVITY_ICON[item.kind] ?? CheckCircle2;
             return (
-              <div key={i} className="flex items-center gap-3 text-sm">
+              <li key={i} className="flex items-center gap-3 text-sm px-5 py-2.5">
                 <span className="h-8 w-8 rounded-full bg-navy/10 text-navy flex items-center justify-center shrink-0">
-                  <Icon size={16} strokeWidth={1.8} />
+                  <Icon size={15} strokeWidth={1.8} />
                 </span>
-                <span className="text-ink flex-1">{activitySentence(item)}</span>
-                <span className="text-muted text-xs shrink-0">{timeAgo(item.occurredAt)}</span>
-              </div>
+                <span className="text-ink flex-1 min-w-0">{activitySentence(item)}</span>
+                <span className="text-muted text-xs shrink-0 tabular-nums" title={new Date(item.occurredAt).toLocaleString()}>
+                  {timeAgo(item.occurredAt)}
+                </span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );
@@ -128,36 +140,24 @@ function OrgNameEditor({ overview, onRenamed }: { overview: OrgAdminOverview; on
   );
 }
 
-function StatCard({ label, value, icon: Icon, index }: { label: string; value: number; icon: LucideIcon; index: number }) {
-  return (
-    <div style={cardGradient(index)} className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex items-center gap-4">
-      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div>
-        <p className="text-2xl font-display font-bold text-white">{value}</p>
-        <p className="text-xs text-white/80">{label}</p>
-      </div>
-    </div>
-  );
-}
-
 export function OrgAdminDashboard() {
   const [overview, setOverview] = useState<OrgAdminOverview | null>(null);
   const [licenses, setLicenses] = useState<PoolSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  function load() {
+    setError(null);
     getOrgOverview()
       .then(setOverview)
       .catch(() => setError(tr("Could not load your organization.")));
     getOrgLicenseSummary()
       .then(setLicenses)
       .catch(() => {});
-  }, []);
+  }
+  useEffect(load, []);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!overview) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error) return <OrgLoadError text={error} onRetry={load} />;
+  if (!overview) return <OrgLoading />;
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -166,28 +166,35 @@ export function OrgAdminDashboard() {
         <div className="mt-1 flex items-center gap-3 flex-wrap">
           <OrgNameEditor overview={overview} onRenamed={(name) => setOverview({ ...overview, organizationName: name })} />
           {overview.onboardedBy && (
-            <span className="text-sm text-muted">{tr("· Onboarded by {{name}}({{email}})", { name: overview.onboardedBy.name, email: overview.onboardedBy.email })}</span>
+            <span className="text-sm text-muted">
+              <span aria-hidden className="mr-3">·</span>
+              {tr("Onboarded by {{name}} ({{email}})", { name: overview.onboardedBy.name, email: overview.onboardedBy.email })}
+            </span>
           )}
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label={tr("Batches")} value={overview.totalBatches} icon={Layers} index={0} />
-        <StatCard label={tr("Managers")} value={overview.totalManagers} icon={ShieldCheck} index={1} />
-        <StatCard label={tr("Learners")} value={overview.totalLearners} icon={Users} index={2} />
-        <StatCard label={tr("Certified")} value={overview.certifiedLearners ?? 0} icon={Award} index={3} />
-        <StatCard label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={4} />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <OrgStatTile label={tr("Batches")} value={overview.totalBatches} icon={Layers} index={0} to={ROUTES.ORG_ADMIN_BATCHES} />
+        <OrgStatTile label={tr("Managers")} value={overview.totalManagers} icon={ShieldCheck} index={1} to={ROUTES.ORG_ADMIN_MANAGERS} />
+        <OrgStatTile label={tr("Learners")} value={overview.totalLearners} icon={Users} index={2} to={ROUTES.ORG_ADMIN_LEARNERS} />
+        <OrgStatTile label={tr("Certified")} value={overview.certifiedLearners ?? 0} icon={Award} index={3} to={ROUTES.ORG_ADMIN_CERTIFICATES} />
+        <OrgStatTile label={tr("Sessions completed today")} value={overview.sessionsCompletedToday} icon={CalendarCheck} index={4} to={ROUTES.ORG_ADMIN_ANALYTICS} />
       </div>
 
       {overview.totalBatches === 0 && (
-        <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
-          {tr("No batches yet — create one from the Batches page, then invite learners into it.")}</p>
+        <OrgNotice>
+          {tr("No batches yet — create one from the Batches page, then invite learners into it.")}{" "}
+          <Link to={ROUTES.ORG_ADMIN_BATCHES} className="font-semibold text-navy hover:underline">
+            {tr("Batches")} →
+          </Link>
+        </OrgNotice>
       )}
 
       {licenses && (
         <Link
           to={ROUTES.ORG_ADMIN_LICENSES}
-          className="bg-surface border border-rule rounded-card shadow-sm p-5 flex items-center gap-5 flex-wrap hover:border-rule-strong transition-colors"
+          className="bg-surface border border-rule rounded-card shadow-sm p-5 flex items-center gap-x-6 gap-y-4 flex-wrap hover:border-rule-strong hover:shadow-md transition-all"
         >
           <span className="h-11 w-11 rounded-2xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
             <KeyRound size={22} strokeWidth={1.8} />
@@ -197,7 +204,7 @@ export function OrgAdminDashboard() {
             <p className="text-xs text-muted">
               {licenses.nextPoolExpiry
                 ? tr("{{nextPoolExpiryQuantity}} unassigned expire {{formatShortDate}}", { nextPoolExpiryQuantity: licenses.nextPoolExpiryQuantity, formatShortDate: formatShortDate(licenses.nextPoolExpiry) })
-                : "1 license = 1 learner-month"}
+                : tr("1 license = 1 learner-month")}
             </p>
           </div>
           {(
@@ -208,11 +215,12 @@ export function OrgAdminDashboard() {
               [tr("No license"), licenses.unlicensedLearners, "text-error"],
             ] as const
           ).map(([label, value, cls]) => (
-            <div key={label} className="text-center min-w-20">
-              <p className={`font-display font-bold text-xl ${cls}`}>{value}</p>
-              <p className="text-[11px] text-muted">{label}</p>
+            <div key={label} className="text-center min-w-24 sm:border-l sm:border-rule sm:pl-6">
+              <p className={`font-display font-bold text-xl tabular-nums ${cls}`}>{value}</p>
+              <p className="text-[11px] text-muted whitespace-nowrap">{label}</p>
             </div>
           ))}
+          <ArrowRight size={16} className="text-muted shrink-0 hidden sm:block" />
         </Link>
       )}
 

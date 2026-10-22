@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { Award, ExternalLink, FileText} from "lucide-react";
+import { Link } from "react-router-dom";
+import { Award, ExternalLink, FileText } from "lucide-react";
+import { ROUTES } from "@/constants/routes";
+import { OrgEmptyState, OrgLoadError, OrgLoading, OrgNotice } from "@/components/OrgAdminUi";
 import { Button } from "@/components/Button";
 import {
   formatDay,
@@ -53,34 +56,57 @@ function PrintsToPost() {
 // The organization's final assessment certificates, newest first.
 function OrgCertificates() {
   const [certs, setCerts] = useState<CertificateSummary[] | null>(null);
-  useEffect(() => {
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
     orgCertificates()
       .then((r) => setCerts(r.certificates.filter((c) => c.kind === "result" && !c.revokedAt)))
-      .catch(() => setCerts([]));
-  }, []);
-  if (!certs) return null;
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  if (failed) return <OrgLoadError text={tr("Couldn't load the certificates.")} onRetry={load} />;
+  if (!certs) return <OrgLoading />;
+  if (certs.length === 0) {
+    return (
+      <OrgEmptyState
+        icon={Award}
+        title={tr("Final assessment certificates")}
+        text={tr("No learner is certified yet. Certificates come from the final assessment, given on Tests & credits or at the end of a program.")}
+        action={
+          <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold">
+            <Link to={ROUTES.ORG_ADMIN_TESTS} className="text-navy hover:underline">
+              {tr("Tests & credits")} →
+            </Link>
+            <Link to={ROUTES.ORG_ADMIN_PROGRAMS} className="text-navy hover:underline">
+              {tr("Programs")} →
+            </Link>
+          </div>
+        }
+      />
+    );
+  }
   return (
-    <section className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3">
-      <h2 className="font-display font-semibold text-lg text-ink">{tr("Final assessment certificates")}</h2>
-      {certs.length === 0 ? (
-        <p className="text-sm text-muted">{tr("No learner is certified yet. Certificates come from the final assessment, given on Tests & credits or at the end of a program.")}</p>
-      ) : (
+    <section className="bg-surface border border-rule rounded-card shadow-sm flex flex-col">
+      <h2 className="font-display font-semibold text-lg text-ink px-5 pt-5 pb-3 flex items-center gap-2">
+        {tr("Final assessment certificates")} <span className="text-sm font-sans font-normal text-muted">({certs.length})</span>
+      </h2>
+      {(
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[680px]">
             <thead>
-              <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-b border-rule">
-                <th className="py-2 pr-3">{tr("Learner")}</th>
-                <th className="py-2 pr-3">{tr("Test")}</th>
-                <th className="py-2 pr-3">{tr("Level")}</th>
-                <th className="py-2 pr-3">{tr("Issued")}</th>
-                <th className="py-2 pr-3">{tr("Valid until")}</th>
-                <th className="py-2" />
+              <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-y border-rule bg-paper-warm/50">
+                <th className="py-2.5 px-5">{tr("Learner")}</th>
+                <th className="py-2.5 pr-3">{tr("Test")}</th>
+                <th className="py-2.5 pr-3">{tr("Level")}</th>
+                <th className="py-2.5 pr-3">{tr("Issued")}</th>
+                <th className="py-2.5 pr-3">{tr("Valid until")}</th>
+                <th className="py-2.5 pr-5" />
               </tr>
             </thead>
             <tbody>
               {certs.map((c) => (
-                <tr key={c.id} className="border-t border-rule">
-                  <td className="py-2 pr-3">
+                <tr key={c.id} className="border-t border-rule first:border-t-0 hover:bg-paper-warm/40">
+                  <td className="py-2.5 px-5">
                     <span className="font-semibold text-ink">{c.learnerName}</span>
                     {c.participantId && <span className="block text-xs text-muted font-mono">{c.participantId}</span>}
                   </td>
@@ -91,7 +117,7 @@ function OrgCertificates() {
                   </td>
                   <td className="py-2 pr-3 text-muted whitespace-nowrap">{formatDay(c.issuedAt.slice(0, 10))}</td>
                   <td className="py-2 pr-3 text-muted whitespace-nowrap">{c.validUntil ? formatDay(c.validUntil) : tr("Valid for life")}</td>
-                  <td className="py-2">
+                  <td className="py-2.5 pr-5 text-right">
                     <a href={`/certificate/${c.code}`} target="_blank" rel="noopener" className="text-sm font-semibold text-navy-deep hover:underline">
                       {tr("Open")}
                     </a>
@@ -124,13 +150,11 @@ export function CertificateRequests({ viewer }: { viewer: "org" | "staff" }) {
   return (
     <div className="flex flex-col gap-5 w-full">
       <div>
-        <h1 className="font-display font-bold text-2xl text-ink flex items-center gap-2">
-          <Award size={22} className="text-accent" /> {tr("Certificates")}
-        </h1>
-        <p className="text-sm text-ink mt-2 bg-paper-warm rounded-input px-4 py-3 max-w-3xl">
-          {tr("Certificates now come only from the final assessment: a real, strictly proctored test. Certificates of completion are no longer issued, and requests that were waiting were closed. Certificates already issued stay valid.")}
-        </p>
+        <h1 className="font-display font-bold text-2xl text-ink">{tr("Certificates")}</h1>
       </div>
+      <OrgNotice>
+        {tr("Certificates now come only from the final assessment: a real, strictly proctored test. Certificates of completion are no longer issued, and requests that were waiting were closed. Certificates already issued stay valid.")}
+      </OrgNotice>
       {viewer === "org" && <OrgCertificates />}
       {viewer === "staff" && <PrintsToPost />}
       {rows && rows.length > 0 && <h2 className="font-display font-semibold text-lg text-ink">{tr("Earlier course certificate requests")}</h2>}

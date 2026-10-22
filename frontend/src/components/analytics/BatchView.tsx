@@ -27,20 +27,20 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Stat label={tr("Learners")} value={s.learners} hint={data.batch.managers.length ? tr("Managed by {{join}}", { join: data.batch.managers.join(", ") }) : tr("No manager")} />
-        <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5">
-          <p className="text-xs text-muted">{tr("On track")}</p>
+        <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5 h-full flex flex-col">
+          <p className="text-xs text-muted leading-snug">{tr("On track")}</p>
           <p className="text-2xl font-display font-bold text-ink mt-0.5">{s.onTrackPercent}%</p>
           <Compare value={s.onTrackPercent} org={s.orgOnTrackPercent} unit="%" />
         </div>
-        <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5">
-          <p className="text-xs text-muted">{tr("Practice / learner / week")}</p>
+        <div className="bg-surface border border-rule rounded-card shadow-sm px-4 py-3.5 h-full flex flex-col">
+          <p className="text-xs text-muted leading-snug">{tr("Practice / learner / week")}</p>
           <p className="text-2xl font-display font-bold text-ink mt-0.5">{tr("{{avgMinutesPerLearnerPerWeek}} min", { avgMinutesPerLearnerPerWeek: s.avgMinutesPerLearnerPerWeek })}</p>
           <Compare value={s.avgMinutesPerLearnerPerWeek} org={s.orgAvgMinutesPerLearnerPerWeek} unit=" min" />
         </div>
         <Stat
           label={tr("Days left")}
           value={data.batch.daysLeft ?? "—"}
-          hint={data.batch.endsOn ? `Ends ${formatShortDate(data.batch.endsOn)}` : tr("Set a duration to track this")}
+          hint={data.batch.endsOn ? tr("Ends {{date}}", { date: formatShortDate(data.batch.endsOn) }) : tr("Set a duration to track this")}
         />
         <Stat
           label={tr("Licensed learners")}
@@ -50,7 +50,7 @@ export function BatchView({ data }: { data: BatchAnalytics }) {
         <Stat
           label={tr("Fixed licenses")}
           value={s.fixedLicenses === null ? tr("None") : `${s.fixedLicensesUsed} / ${s.fixedLicenses}`}
-          hint={s.fixedLicenses === null ? tr("Uses Manager's pool") : `${Math.max(0, s.fixedLicenses - s.fixedLicensesUsed)} left`}
+          hint={s.fixedLicenses === null ? tr("Uses Manager's pool") : tr("{{n}} left", { n: Math.max(0, s.fixedLicenses - s.fixedLicensesUsed) })}
         />
       </div>
 

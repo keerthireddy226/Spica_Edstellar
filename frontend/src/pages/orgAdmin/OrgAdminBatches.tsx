@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Layers, Users, Trash2, MapPin } from "lucide-react";
+import { Plus, Layers, Users, Trash2, MapPin, ArrowRight } from "lucide-react";
+import { OrgEmptyState, OrgLoadError, OrgLoading, OrgTabs } from "@/components/OrgAdminUi";
 import { cardGradient } from "@/lib/cardGradients";
 import { Button } from "@/components/Button";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
@@ -62,6 +63,7 @@ export function OrgAdminBatches() {
   const [statusFilter, setStatusFilter] = useState<BatchStatus>("active");
 
   function load() {
+    setError(null);
     getBatches()
       .then((res) => setBatches(res.batches))
       .catch(() => setError(tr("Could not load batches.")));
@@ -100,30 +102,32 @@ export function OrgAdminBatches() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!batches && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {error && <OrgLoadError text={error} onRetry={load} />}
+      {!batches && !error && <OrgLoading />}
       {batches && batches.length > 0 && (
-        <div className="flex items-center gap-1 border-b border-rule">
-          {(["active", "completed", "archived"] as BatchStatus[]).map((st) => {
-            const n = batches.filter((b) => b.status === st).length;
-            return (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
-                  statusFilter === st ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
-                }`}
-              >
-                {BATCH_STATUS_LABEL[st]} ({n})
-              </button>
-            );
-          })}
-        </div>
+        <OrgTabs
+          value={statusFilter}
+          onChange={setStatusFilter}
+          tabs={(["active", "completed", "archived"] as BatchStatus[]).map((st) => [st, `${BATCH_STATUS_LABEL[st]} (${batches.filter((b) => b.status === st).length})`] as const)}
+        />
       )}
 
-      {batches?.length === 0 && <p className="text-sm text-muted">{tr("No batches yet — create your first one.")}</p>}
+      {batches?.length === 0 && (
+        <OrgEmptyState
+          icon={Layers}
+          title={tr("No batches yet — create your first one.")}
+          text={tr("Sub-groups inside your organization — e.g. \"2026 Intake\".")}
+          action={
+            <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
+              <Plus size={16} /> {tr("New Batch")}
+            </Button>
+          }
+        />
+      )}
       {batches && batches.length > 0 && batches.filter((b) => b.status === statusFilter).length === 0 && (
-        <p className="text-sm text-muted">{tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[statusFilter].toLowerCase() })}</p>
+        <p className="text-sm text-muted bg-surface border border-dashed border-rule-strong rounded-card px-5 py-8 text-center">
+          {tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[statusFilter].toLowerCase() })}
+        </p>
       )}
 
       {batches && batches.length > 0 && (
@@ -136,7 +140,7 @@ export function OrgAdminBatches() {
               onClick={() => setViewingBatchId(b.id)}
               onKeyDown={(e) => e.key === "Enter" && setViewingBatchId(b.id)}
               style={cardGradient(i)}
-              className="relative rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 text-left cursor-pointer"
+              className="relative rounded-card shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all p-5 flex flex-col gap-3 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
             >
               <button
                 onClick={(e) => {
@@ -144,11 +148,12 @@ export function OrgAdminBatches() {
                   setDeletingBatch(b);
                 }}
                 title={tr("Delete batch")}
+                aria-label={tr("Delete batch")}
                 className="absolute top-3 right-3 p-1.5 rounded-input text-white/70 hover:bg-black/15 hover:text-white transition-colors cursor-pointer"
               >
                 <Trash2 size={15} />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5 pr-8">
                 <span className="h-9 w-9 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
                   <Layers size={18} strokeWidth={1.8} />
                 </span>
@@ -183,7 +188,12 @@ export function OrgAdminBatches() {
                 <p className="text-xs text-white/70">
                   {b.durationMonths === 1 ? tr("1 month") : tr("{{n}} months", { n: b.durationMonths })}
                   {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }) : ""}
-                  {b.endDate ? ` · ${b.status === "active" ? "ends" : "ended"} ${new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                  {b.endDate
+                    ? " · " +
+                      (b.status === "active"
+                        ? tr("ends {{date}}", { date: new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) })
+                        : tr("ended {{date}}", { date: new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }))
+                    : ""}
                 </p>
               )}
               {b.status !== "active" && (
@@ -195,7 +205,7 @@ export function OrgAdminBatches() {
                 {b.managerNames.length === 0 ? tr("No manager assigned yet") : tr("Managed by {{join}}", { join: b.managerNames.join(", ") })}
                 {b.createdBy?.role === "manager" ? tr(" · created by {{name}}", { name: b.createdBy.name }) : ""}
               </p>
-              <div className="text-xs text-white/85 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
+              <div className="mt-auto text-xs text-white/85 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
                 <span>
                   {b.fixedLicenses != null
                     ? tr("Fixed licenses: {{fixedUsed}} used of {{fixedLicenses}} · {{max}} left", { fixedUsed: b.licenses.fixedUsed, fixedLicenses: b.fixedLicenses, max: Math.max(0, b.fixedLicenses - b.licenses.fixedUsed) })
@@ -205,6 +215,9 @@ export function OrgAdminBatches() {
                   {tr("{{licensed}} licensed · {{unlicensed}} without a license", { licensed: b.licenses.licensed, unlicensed: b.licenses.unlicensed })}{b.licenses.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: b.licenses.endingSoon }) : ""}
                 </span>
               </div>
+              <span className="self-end text-xs font-semibold text-white/90 flex items-center gap-1">
+                {tr("View details")} <ArrowRight size={13} />
+              </span>
             </div>
           ))}
         </div>

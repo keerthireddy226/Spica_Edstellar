@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { EraseLearnerModal } from "@/components/EraseLearnerModal";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
-import { Ban, RotateCcw, Trash2, Eraser, ArrowRightLeft, UserPlus } from "lucide-react";
+import { Ban, RotateCcw, Trash2, Eraser, ArrowRightLeft, UserPlus, Users } from "lucide-react";
+import { OrgEmptyState, OrgLoadError, OrgLoading, OrgNotice, OrgSearch, OrgTabs } from "@/components/OrgAdminUi";
+import { getLearnerEngagement } from "@/api/notifications";
 import { Button } from "@/components/Button";
 import { OrgInviteLearnerModal, batchLabel } from "@/components/OrgInviteLearnerModal";
 import { getOrgLicenseSummary } from "@/api/licenses";
@@ -46,6 +48,8 @@ export function OrgAdminLearners() {
   const [notice, setNotice] = useState<string | null>(null);
   const [erasingLearner, setErasingLearner] = useState<OrgLearner | null>(null);
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<"all" | "follow_up">("all");
+  const [followUpCount, setFollowUpCount] = useState<number | null>(null);
   const q = query.trim().toLowerCase();
   const shown = (learners ?? []).filter(
     (l) =>
@@ -54,6 +58,10 @@ export function OrgAdminLearners() {
   );
 
   function load() {
+    setError(null);
+    getLearnerEngagement()
+      .then((d) => setFollowUpCount(d.learners.filter((l) => l.status === "not_started" || l.status === "inactive" || l.status === "slow").length))
+      .catch(() => {});
     getOrgLearners()
       .then((res) => setLearners(res.learners))
       .catch(() => setError(tr("Could not load learners.")));
@@ -118,90 +126,129 @@ export function OrgAdminLearners() {
       </div>
 
       {notice && (
-        <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>
+        <OrgNotice tone="success" onClose={() => setNotice(null)}>
+          {notice}
+        </OrgNotice>
       )}
 
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!learners && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
-      {learners?.length === 0 && <p className="text-sm text-muted">{tr("No learners yet — invite them here, or a Manager can invite them into their batch.")}</p>}
-
-      <FollowUpPanel />
-
-      {learners && learners.length > 0 && (
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr("Search by name, email, employee ID, department or batch")}
-          className="w-full sm:max-w-md rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+      {error && <OrgLoadError text={error} onRetry={load} />}
+      {!learners && !error && <OrgLoading />}
+      {learners?.length === 0 && (
+        <OrgEmptyState
+          icon={Users}
+          title={tr("No learners yet")}
+          text={tr("No learners yet — invite them here, or a Manager can invite them into their batch.")}
+          action={
+            <Button onClick={() => setShowInvite(true)} className="flex items-center gap-2">
+              <UserPlus size={16} /> {tr("Invite Learners")}
+            </Button>
+          }
         />
       )}
 
       {learners && learners.length > 0 && (
+        <OrgTabs
+          value={view}
+          onChange={setView}
+          tabs={[
+            ["all", tr("All learners ({{n}})", { n: learners.length })],
+            ["follow_up", followUpCount ? tr("Follow up ({{n}})", { n: followUpCount }) : tr("Follow up")],
+          ]}
+        />
+      )}
+
+      {view === "follow_up" && <FollowUpPanel />}
+
+      {view === "all" && learners && learners.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <OrgSearch
+            value={query}
+            onChange={setQuery}
+            placeholder={tr("Search by name, email, employee ID, department or batch")}
+            className="w-full sm:max-w-md"
+          />
+          {q && <span className="text-xs text-muted">{tr("{{n}} of {{total}} shown", { n: shown.length, total: learners.length })}</span>}
+        </div>
+      )}
+
+      {view === "all" && learners && learners.length > 0 && (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[980px]">
             <thead>
-              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">{tr("Learner")}</th>
-                <th className="px-4 py-3">{tr("Department")}</th>
-                <th className="px-4 py-3">{tr("Batch")}</th>
-                <th className="px-4 py-3">{tr("Certified")}</th>
-                <th className="px-4 py-3">{tr("Sessions completed")}</th>
-                <th className="px-4 py-3">{tr("License")}</th>
-                <th className="px-4 py-3">{tr("Status")}</th>
-                <th className="px-4 py-3" />
+              <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                <th className="px-3 py-3">{tr("Learner")}</th>
+                <th className="px-3 py-3">{tr("Department")}</th>
+                <th className="px-3 py-3">{tr("Batch")}</th>
+                <th className="px-3 py-3">{tr("Certified")}</th>
+                <th className="px-3 py-3 text-center">{tr("Sessions completed")}</th>
+                <th className="px-3 py-3">{tr("License")}</th>
+                <th className="px-3 py-3">{tr("Status")}</th>
+                <th className="px-3 py-3"><span className="sr-only">{tr("Actions")}</span></th>
               </tr>
             </thead>
             <tbody>
+              {shown.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted">
+                    {tr("No learners match.")}
+                  </td>
+                </tr>
+              )}
               {shown.map((l) => (
                 <tr
                   key={l.id}
                   onClick={() => setViewingLearnerId(l.id)}
                   className="border-b border-rule last:border-0 cursor-pointer hover:bg-paper-warm transition-colors"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-3">
                       <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
                         {initials(l.firstName, l.lastName, l.email)}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 max-w-[200px]">
                         <p className="text-ink font-medium truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
-                        <p className="text-muted text-xs truncate">
+                        <p className="text-muted text-xs truncate" title={l.email}>
                           {l.participantId ? `${l.participantId} · ` : ""}
                           {l.email}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted">
+                  <td className="px-3 py-3 text-muted">
                     <p>{l.department ?? "—"}</p>
                     {(l.employeeId || l.jobTitle) && <p className="text-xs">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
                   </td>
-                  <td className="px-4 py-3 text-muted">{l.batchName ?? <span className="text-xs italic">{tr("No batch yet")}</span>}</td>
-                  <td className="px-4 py-3"><CertifiedCell c={l.certified} /></td>
-                  <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
-                  <td className="px-4 py-3">{l.license && <LicenseStatusPill license={l.license} />}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {l.active ? tr("Active") : tr("Deactivated")}
-                    </span>
-                    {l.active && l.hasLoggedIn === false && (
+                  <td className="px-3 py-3 text-muted whitespace-nowrap">{l.batchName ?? <span className="text-xs italic">{tr("No batch yet")}</span>}</td>
+                  <td className="px-3 py-3"><CertifiedCell c={l.certified} /></td>
+                  <td className="px-3 py-3 text-muted tabular-nums text-center">{l.sessionCount}</td>
+                  <td className="px-3 py-3 whitespace-nowrap">{l.license && <LicenseStatusPill license={l.license} />}</td>
+                  <td className="px-3 py-3 whitespace-nowrap">
+                    {l.active && l.hasLoggedIn === false ? (
+                      // Not signed in yet: one pill that resends the invite.
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleResend(l);
                         }}
                         disabled={busyId === l.id}
-                        className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer disabled:opacity-50"
+                        title={tr("Invite pending · resend")}
+                        className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-warning/15 text-warning hover:bg-warning/25 cursor-pointer disabled:opacity-50"
                       >
-                        {tr("Invite pending · resend")}</button>
+                        {tr("Invite pending")} · {tr("Resend")}
+                      </button>
+                    ) : (
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
+                        {l.active ? tr("Active") : tr("Deactivated")}
+                      </span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3">
                     <div className="flex items-center gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => setMovingLearner(l)}
                         disabled={batches.filter((b) => b.id !== l.batchId && b.status === "active").length === 0}
                         title={l.batchId ? tr("Move to another batch") : tr("Put in a batch")}
+                        aria-label={l.batchId ? tr("Move to another batch") : tr("Put in a batch")}
                         className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <ArrowRightLeft size={16} />
@@ -210,6 +257,7 @@ export function OrgAdminLearners() {
                         onClick={() => handleToggleActive(l)}
                         disabled={busyId === l.id}
                         title={l.active ? tr("Deactivate") : tr("Activate")}
+                        aria-label={l.active ? tr("Deactivate") : tr("Activate")}
                         className={`p-1.5 rounded-input transition-colors cursor-pointer disabled:opacity-50 ${
                           l.active ? "text-muted hover:bg-error/10 hover:text-error" : "text-success hover:bg-success/10"
                         }`}
@@ -219,6 +267,7 @@ export function OrgAdminLearners() {
                       <button
                         onClick={() => setErasingLearner(l)}
                         title={tr("Erase personal data")}
+                        aria-label={tr("Erase personal data")}
                         className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer"
                       >
                         <Eraser size={16} />
@@ -227,6 +276,7 @@ export function OrgAdminLearners() {
                         onClick={() => setDeletingLearner(l)}
                         disabled={busyId === l.id}
                         title={tr("Delete")}
+                        aria-label={tr("Delete")}
                         className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <Trash2 size={16} />

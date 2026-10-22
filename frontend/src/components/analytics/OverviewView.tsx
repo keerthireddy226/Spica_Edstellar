@@ -23,12 +23,12 @@ export function OverviewView({ data, showCompanies }: { data: AnalyticsOverview;
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3">
         <Stat label={tr("Learners")} value={tot.learners} hint={tr("{{newLast30Days}} joined in the last 30 days", { newLast30Days: tot.newLast30Days })} />
         <Stat label={tr("Active this week")} value={tot.activeLast7Days} hint={tr("{{activeRate}}% of learners", { activeRate: activeRate })} />
         <Stat label={tr("Active (28 days)")} value={tot.activeLast28Days} />
         <Stat label={tr("Sessions (30 days)")} value={tot.sessionsLast30Days} />
-        <Stat label={tr("Avg practice / week")} value={`${tot.avgMinutesPerActiveLearnerPerWeek} min`} hint={tr("Per active learner, last 4 weeks")} />
+        <Stat label={tr("Avg practice / week")} value={tr("{{n}} min", { n: tot.avgMinutesPerActiveLearnerPerWeek })} hint={tr("Per active learner, last 4 weeks")} />
         <Stat label={tr("Placement taken")} value={tot.placementTaken} hint={tr("{{dailyReminderAdoption}}% use daily reminders", { dailyReminderAdoption: tot.dailyReminderAdoption })} />
         <Stat label={tr("Certified")} value={tot.certified ?? 0} hint={tr("By a final assessment")} />
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/Button";
+import { OrgLoadError, OrgLoading, OrgNotice } from "@/components/OrgAdminUi";
 import { LANGUAGES } from "@/i18n";
 import { getOrgSettings, removeOrgLogo, updateOrgSettings, uploadOrgLogo, type OrgSettings } from "@/api/orgAdmin";
 import { refreshBranding } from "@/components/AppShell/useBranding";
@@ -59,16 +60,18 @@ export function OrgAdminSettings() {
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  function loadSettings() {
+    setMessage(null);
     getOrgSettings()
       .then((s) => {
         setSettings(s);
         setDraft(s);
       })
       .catch(() => setMessage({ ok: false, text: tr("Could not load settings.") }));
-  }, []);
+  }
+  useEffect(loadSettings, []);
 
-  if (!draft || !settings) return <p className="text-sm text-muted">{message?.text ?? tr("Loading…")}</p>;
+  if (!draft || !settings) return message ? <OrgLoadError text={message.text} onRetry={loadSettings} /> : <OrgLoading />;
 
   const dirty = JSON.stringify({ ...draft, logoUrl: null }) !== JSON.stringify({ ...settings, logoUrl: null });
   const set = <K extends keyof OrgSettings>(k: K, v: OrgSettings[K]) => setDraft({ ...draft, [k]: v });
@@ -139,7 +142,11 @@ export function OrgAdminSettings() {
           {saving ? tr("Saving…") : tr("Save changes")}
         </Button>
       </div>
-      {message && <p className={`text-sm ${message.ok ? "text-success" : "text-error"}`}>{message.text}</p>}
+      {message && !dirty && (
+        <OrgNotice tone={message.ok ? "success" : "error"} onClose={() => setMessage(null)}>
+          {message.text}
+        </OrgNotice>
+      )}
 
       <Section title={tr("Branding")} description={tr("Your logo and colour appear in the app header for your Managers and learners.")}>
         <div className="flex items-center gap-4">
@@ -388,6 +395,28 @@ export function OrgAdminSettings() {
           </div>
         )}
       </Section>
+
+      {/* Changes above save together; keep the button in reach while scrolling. */}
+      {dirty && (
+        <div className="sticky bottom-4 z-20 flex flex-wrap items-center gap-3 bg-surface border border-rule-strong rounded-card shadow-lg px-5 py-3">
+          <p className={`text-sm flex-1 min-w-0 ${message && !message.ok ? "text-error" : "text-ink"}`}>
+            {message && !message.ok ? message.text : tr("You have unsaved changes.")}
+          </p>
+          <Button
+            variant="secondary"
+            disabled={saving}
+            onClick={() => {
+              setDraft(settings);
+              setMessage(null);
+            }}
+          >
+            {tr("Discard")}
+          </Button>
+          <Button onClick={save} disabled={saving}>
+            {saving ? tr("Saving…") : tr("Save changes")}
+          </Button>
+        </div>
+      )}
 
       <SsoSettingsSection />
 

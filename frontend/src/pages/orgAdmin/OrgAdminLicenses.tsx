@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Users, CalendarClock, AlertTriangle, PackageCheck, UserX, Search, Check } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { cardGradient } from "@/lib/cardGradients";
+import { KeyRound, Users, CalendarClock, AlertTriangle, PackageCheck, UserX, Check } from "lucide-react";
+import { OrgLoadError, OrgLoading, OrgNotice, OrgSearch, OrgStatTile, OrgTabs } from "@/components/OrgAdminUi";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { AssignLicenseModal } from "@/components/licenses/AssignLicenseModal";
@@ -38,21 +37,6 @@ type Tab = "learners" | "requests" | "budgets" | "purchases" | "invoices" | "act
 type StatusFilter = "all" | AccessStatus | "expiring";
 
 const SOURCE_LABEL = { purchase: tr("Purchase"), credit: tr("Credit"), comp: tr("Complimentary") } as const;
-
-function StatCard({ label, value, hint, icon: Icon, index }: { label: string; value: number; hint?: string; icon: LucideIcon; index: number }) {
-  return (
-    <div style={cardGradient(index)} className="rounded-card shadow-sm p-5 flex items-center gap-4">
-      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-2xl font-display font-bold text-white">{value}</p>
-        <p className="text-xs text-white/80">{label}</p>
-        {hint && <p className="text-[11px] text-white/70 truncate">{hint}</p>}
-      </div>
-    </div>
-  );
-}
 
 function eventSentence(e: LicenseEvent): string {
   const one = e.quantity === 1;
@@ -165,6 +149,7 @@ export function OrgAdminLicenses() {
   const [invoiceOrders, setInvoiceOrders] = useState<InvoiceOrder[]>([]);
 
   function load() {
+    setError(null);
     getOrgLicenseOverview()
       .then(setData)
       .catch(() => setError(tr("Could not load licenses.")));
@@ -202,8 +187,8 @@ export function OrgAdminLicenses() {
     });
   }, [data, filter, query]);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error && !data) return <OrgLoadError text={error} onRetry={load} />;
+  if (!data) return <OrgLoading />;
 
   const s = data.summary;
   const poolExpiringSoon = s.nextPoolExpiry && new Date(s.nextPoolExpiry).getTime() - Date.now() < 30 * 86400000;
@@ -220,19 +205,13 @@ export function OrgAdminLicenses() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
-          <p className="text-xs font-semibold uppercase tracking-wide text-navy-deep mt-1">{tr("Full access")}</p>
+        <div className="min-w-0 max-w-3xl">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="font-display font-bold text-2xl text-ink">{tr("Licenses")}</h1>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-navy-deep bg-navy/10 rounded-pill px-2.5 py-0.5">{tr("Full access")}</span>
+          </div>
           <p className="text-sm text-muted mt-1">
             {tr("1 license = 1 learner's Full access for 1 month, starting when you assign it · {{formatMoney}} per license", { formatMoney: formatMoney(data.pricePerLicenseCents) })}</p>
-          <p className="text-sm text-muted mt-1">{tr("Full access includes one final assessment with a certificate for each learner.")}</p>
-          <p className="text-sm text-ink mt-1">
-            {tr("A license opens everything. To give one test only, a real test with a certificate, or a practice pack, use")}{" "}
-            <Link to={ROUTES.ORG_ADMIN_TESTS} className="font-semibold text-navy-deep hover:underline">
-              {tr("Tests & credits")}
-            </Link>
-            .
-          </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <Button onClick={() => setShowBuy(true)} className="flex items-center gap-2">
@@ -243,13 +222,30 @@ export function OrgAdminLicenses() {
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard label={tr("Unreserved in pool")} value={s.unreserved} hint={s.reservedForBatches + s.reservedForManagers ? tr("{{v}} set aside", { v: s.reservedForBatches + s.reservedForManagers }) : undefined} icon={PackageCheck} index={0} />
-        <StatCard label={tr("Purchased (all time)")} value={s.purchased} hint={`${s.assigned} assigned`} icon={KeyRound} index={1} />
-        <StatCard label={tr("Learners active")} value={s.activeLearners} hint={s.queuedMonths ? tr("{{queuedMonths}} months queued", { queuedMonths: s.queuedMonths }) : undefined} icon={Users} index={2} />
-        <StatCard label={tr("Ending in 7 days")} value={s.expiringSoonLearners} icon={CalendarClock} index={3} />
-        <StatCard label={tr("Expired / grace")} value={s.expiredLearners + s.graceLearners} icon={AlertTriangle} index={4} />
-        <StatCard label={tr("No license yet")} value={s.unlicensedLearners} icon={UserX} index={5} />
+      <OrgNotice>
+        <span className="block">{tr("Full access includes one final assessment with a certificate for each learner.")}</span>
+        <span className="block mt-0.5 text-muted">
+          {tr("A license opens everything. To give one test only, a real test with a certificate, or a practice pack, use")}{" "}
+          <Link to={ROUTES.ORG_ADMIN_TESTS} className="font-semibold text-navy-deep hover:underline">
+            {tr("Tests & credits")}
+          </Link>
+          .
+        </span>
+      </OrgNotice>
+
+      {error && (
+        <OrgNotice tone="error" onClose={() => setError(null)}>
+          {error}
+        </OrgNotice>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
+        <OrgStatTile label={tr("Unreserved in pool")} value={s.unreserved} hint={s.reservedForBatches + s.reservedForManagers ? tr("{{v}} set aside", { v: s.reservedForBatches + s.reservedForManagers }) : undefined} icon={PackageCheck} index={0} />
+        <OrgStatTile label={tr("Purchased (all time)")} value={s.purchased} hint={tr("{{n}} assigned", { n: s.assigned })} icon={KeyRound} index={1} />
+        <OrgStatTile label={tr("Learners active")} value={s.activeLearners} hint={s.queuedMonths ? tr("{{queuedMonths}} months queued", { queuedMonths: s.queuedMonths }) : undefined} icon={Users} index={2} />
+        <OrgStatTile label={tr("Ending in 7 days")} value={s.expiringSoonLearners} icon={CalendarClock} index={3} />
+        <OrgStatTile label={tr("Expired / grace")} value={s.expiredLearners + s.graceLearners} icon={AlertTriangle} index={4} />
+        <OrgStatTile label={tr("No license yet")} value={s.unlicensedLearners} icon={UserX} index={5} />
       </div>
 
       {(poolExpiringSoon || s.expiredUnused > 0 || (s.unlicensedLearners > 0 && s.available > 0)) && (
@@ -278,28 +274,18 @@ export function OrgAdminLicenses() {
         </div>
       )}
 
-      <div className="flex items-center gap-1 border-b border-rule">
-        {(
-          [
-            ["learners", tr("Learners")],
-            ["requests", pendingRequests ? tr("Requests ({{pendingRequests}})", { pendingRequests: pendingRequests }) : tr("Requests")],
-            ["budgets", tr("Allotments")],
-            ["purchases", tr("Purchases")],
-            ["invoices", tr("Invoices")],
-            ["activity", tr("Activity")],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 transition-colors cursor-pointer ${
-              tab === key ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <OrgTabs<Tab>
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          ["learners", tr("Learners")],
+          ["requests", pendingRequests ? tr("Requests ({{pendingRequests}})", { pendingRequests: pendingRequests }) : tr("Requests")],
+          ["budgets", tr("Allotments")],
+          ["purchases", tr("Purchases")],
+          ["invoices", tr("Invoices")],
+          ["activity", tr("Activity")],
+        ]}
+      />
 
       {tab === "learners" && (
         <div className="flex flex-col gap-4">
@@ -317,21 +303,13 @@ export function OrgAdminLicenses() {
                 </button>
               ))}
             </div>
-            <div className="relative ml-auto">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={tr("Search name, email, ID, batch")}
-                className="w-64 rounded-input border border-rule bg-paper pl-8 pr-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-              />
-            </div>
+            <OrgSearch value={query} onChange={setQuery} placeholder={tr("Search name, email, ID, batch")} className="w-full sm:w-72 sm:ml-auto" />
           </div>
 
-          <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+            <table className="w-full text-sm min-w-[720px]">
               <thead>
-                <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                   <th className="px-4 py-3">{tr("Learner")}</th>
                   <th className="px-4 py-3">{tr("Batch")}</th>
                   <th className="px-4 py-3">{tr("License")}</th>
@@ -438,10 +416,10 @@ export function OrgAdminLicenses() {
                 <p className="font-display font-bold text-ink">{section.heading}</p>
                 <p className="text-xs text-muted">{section.hint}</p>
               </div>
-              <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
+              <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+                <table className="w-full text-sm min-w-[560px]">
                   <thead>
-                    <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                    <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                       <th className="px-4 py-3">{section.firstCol}</th>
                       <th className="px-4 py-3">{tr("Allotted")}</th>
                       <th className="px-4 py-3">{tr("Assigned")}</th>
@@ -468,10 +446,10 @@ export function OrgAdminLicenses() {
       )}
 
       {tab === "purchases" && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+              <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <th className="px-4 py-3">{tr("Date")}</th>
                 <th className="px-4 py-3">{tr("Licenses")}</th>
                 <th className="px-4 py-3">{tr("Assigned / left")}</th>
@@ -512,9 +490,9 @@ export function OrgAdminLicenses() {
       )}
 
       {tab === "invoices" && invoiceOrders.filter((o) => o.status === "created").length > 0 && (
-        <div className="bg-surface border border-warning/40 rounded-card shadow-sm overflow-hidden">
+        <div className="bg-surface border border-warning/40 rounded-card shadow-sm overflow-x-auto">
           <p className="px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-muted">{tr("Awaiting payment")}</p>
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[640px]">
             <tbody>
               {invoiceOrders
                 .filter((o) => o.status === "created")
@@ -524,12 +502,16 @@ export function OrgAdminLicenses() {
                     <td className="px-4 py-3 text-muted">{o.poNumber ? `PO ${o.poNumber}` : "—"}</td>
                     <td className="px-4 py-3 text-muted">{tr("{{quantity}} licenses", { quantity: o.quantity })}</td>
                     <td className="px-4 py-3 text-ink">{formatAmount(o.total, o.currency)}</td>
-                    <td className="px-4 py-3 text-muted">{o.dueDate ? `due ${formatShortDate(o.dueDate)}` : ""}</td>
+                    <td className="px-4 py-3 text-muted">{o.dueDate ? tr("due {{date}}", { date: formatShortDate(o.dueDate) }) : ""}</td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
                       <Link to={`/quote/${o.id}`} target="_blank" className="text-xs font-semibold text-navy hover:underline mr-3">
                         {tr("Proforma")}</Link>
                       <button
-                        onClick={() => cancelInvoiceOrder(o.id).then(load)}
+                        onClick={() =>
+                          cancelInvoiceOrder(o.id)
+                            .then(load)
+                            .catch(() => setError(tr("Couldn't cancel that order. Try again.")))
+                        }
                         className="text-xs font-semibold text-muted hover:text-error cursor-pointer"
                       >
                         {tr("Cancel")}</button>
@@ -542,10 +524,10 @@ export function OrgAdminLicenses() {
       )}
 
       {tab === "invoices" && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
-              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+              <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <th className="px-4 py-3">{tr("Invoice")}</th>
                 <th className="px-4 py-3">{tr("Date")}</th>
                 <th className="px-4 py-3">{tr("Licenses")}</th>
@@ -587,16 +569,18 @@ export function OrgAdminLicenses() {
       )}
 
       {tab === "activity" && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
-          {data.events.length === 0 && <p className="text-sm text-muted">{tr("No license activity yet.")}</p>}
-          {data.events.map((e) => (
-            <div key={e.id} className="flex items-start justify-between gap-4 text-sm">
-              <span className="text-ink">{eventSentence(e)}</span>
-              <span className="text-xs text-muted shrink-0 text-right">
-                {e.actor ?? tr("System")} · {formatShortDate(e.createdAt)}
-              </span>
-            </div>
-          ))}
+        <div className="bg-surface border border-rule rounded-card shadow-sm">
+          {data.events.length === 0 && <p className="text-sm text-muted px-5 py-6 text-center">{tr("No license activity yet.")}</p>}
+          <ul className="divide-y divide-rule">
+            {data.events.map((e) => (
+              <li key={e.id} className="flex items-start justify-between gap-4 text-sm px-5 py-3">
+                <span className="text-ink min-w-0">{eventSentence(e)}</span>
+                <span className="text-xs text-muted shrink-0 text-right">
+                  {e.actor ?? tr("System")} · {formatShortDate(e.createdAt)}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

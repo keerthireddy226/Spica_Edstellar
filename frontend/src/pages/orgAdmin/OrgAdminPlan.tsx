@@ -3,6 +3,7 @@ import { useBranding } from "@/components/AppShell/useBranding";
 import { RecruitmentPlanCard } from "@/components/recruitment/RecruitmentPlanCard";
 import { Check, Clock, Gem, Minus, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
+import { OrgLoading } from "@/components/OrgAdminUi";
 import { BuyLicensesModal } from "@/components/licenses/BuyLicensesModal";
 import { refreshPlan, usePlan } from "@/components/plans/usePlan";
 import { cancelDowngrade, formatUsdCents, scheduleDowngrade, sendEnterpriseInquiry, TIER_LABELS, type PlanSummary, type PlanTier } from "@/api/plans";
@@ -71,6 +72,7 @@ const TIER_ORDER: PlanTier[] = ["starter", "business", "enterprise"];
 function ChangePlanCard({ plan }: { plan: PlanSummary }) {
   const [pending, setPending] = useState(plan.pendingTier ?? null);
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   const lower = TIER_ORDER.slice(0, TIER_ORDER.indexOf(plan.tier));
   const [tier, setTier] = useState<PlanTier | "">(lower[lower.length - 1] ?? "");
   if (!lower.length && !pending) return null;
@@ -78,6 +80,7 @@ function ChangePlanCard({ plan }: { plan: PlanSummary }) {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
       <h2 className="font-display font-semibold text-lg text-ink">{tr("Change plan")}</h2>
+      {pending && failed && <p className="text-sm text-error">{tr("Couldn't change the plan. Try again.")}</p>}
       {pending ? (
         <div className="flex flex-wrap items-center gap-3 rounded-input bg-paper-warm px-4 py-3 text-sm">
           <span className="flex-1 text-ink">{tr("Your organization moves to {{tier}} on {{date}}. Until then, nothing changes.", { tier: TIER_LABELS[pending.tier], date: formatShortDate(pending.on) })}</span>
@@ -86,8 +89,12 @@ function ChangePlanCard({ plan }: { plan: PlanSummary }) {
             disabled={busy}
             onClick={async () => {
               setBusy(true);
-              await cancelDowngrade().catch(() => {});
-              setPending(null);
+              setFailed(false);
+              const ok = await cancelDowngrade()
+                .then(() => true)
+                .catch(() => false);
+              if (ok) setPending(null);
+              else setFailed(true);
               setBusy(false);
             }}
           >
@@ -111,14 +118,17 @@ function ChangePlanCard({ plan }: { plan: PlanSummary }) {
               onClick={async () => {
                 if (!tier) return;
                 setBusy(true);
+                setFailed(false);
                 const r = await scheduleDowngrade(tier).catch(() => null);
                 if (r) setPending({ tier, label: TIER_LABELS[tier], on: r.on });
+                else setFailed(true);
                 setBusy(false);
               }}
             >
               {tr("Move at the end of the period")}
             </Button>
           </div>
+          {failed && <p className="text-sm text-error">{tr("Couldn't change the plan. Try again.")}</p>}
           {tier === "starter" && starterLimits.length > 0 && (
             <p className="text-xs text-warning">{tr("Starter allows 3 Managers and 5 batches. You have more now: existing ones stay, but you can't add more.")}</p>
           )}
@@ -148,7 +158,7 @@ export function OrgAdminPlan() {
   }
 
   if (!plan) {
-    return <p className="text-sm text-muted">{tr("Loading your plan…")}</p>;
+    return <OrgLoading text={tr("Loading your plan…")} />;
   }
 
   const pilotDaysLeft = plan.pilotEndsAt ? Math.max(0, Math.ceil((new Date(plan.pilotEndsAt).getTime() - Date.now()) / 86400000)) : null;
@@ -194,7 +204,7 @@ export function OrgAdminPlan() {
           <div className="text-right">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Your price")}</p>
             <p className="font-display font-bold text-xl text-ink">
-              {plan.customPriceCents !== null ? formatUsdCents(plan.customPriceCents) : `from ${formatUsdCents(Math.min(...plan.bands.map((b) => b.unitPriceCents)))}`}
+              {plan.customPriceCents !== null ? formatUsdCents(plan.customPriceCents) : tr("from {{price}}", { price: formatUsdCents(Math.min(...plan.bands.map((b) => b.unitPriceCents))) })}
               <span className="text-sm font-normal text-muted"> {tr("/ license")}</span>
             </p>
             {plan.customPriceCents !== null && <p className="text-xs text-muted">{tr("Negotiated price")}</p>}
@@ -210,8 +220,9 @@ export function OrgAdminPlan() {
               <span>
                 <span className="text-muted">{tr("Contract")}</span>{" "}
                 <span className="text-ink font-medium">
-                  {plan.contract.start ? `${formatShortDate(plan.contract.start)} – ` : "until "}
-                  {formatShortDate(plan.contract.end)}
+                  {plan.contract.start
+                    ? `${formatShortDate(plan.contract.start)} – ${formatShortDate(plan.contract.end)}`
+                    : tr("until {{date}}", { date: formatShortDate(plan.contract.end) })}
                 </span>
               </span>
             )}
@@ -232,9 +243,9 @@ export function OrgAdminPlan() {
             return (
               <div key={l.key} className="rounded-input border border-rule px-4 py-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink font-medium capitalize">{l.key}</span>
-                  <span className="text-muted">
-                    {l.used} {l.max === null ? tr("· unlimited") : `of ${l.max}`}
+                  <span className="text-ink font-medium">{l.key === "managers" ? tr("Managers") : l.key === "batches" ? tr("Batches") : l.key}</span>
+                  <span className="text-muted tabular-nums">
+                    {l.max === null ? `${l.used} ${tr("· unlimited")}` : tr("{{used}} of {{max}}", { used: l.used, max: l.max })}
                   </span>
                 </div>
                 {l.max !== null && (
@@ -287,7 +298,7 @@ export function OrgAdminPlan() {
                   </p>
                   <p className="text-xs text-muted font-normal">{TIER_BLURB[c.tier]}</p>
                   <p className="text-xs text-ink font-normal mt-1">
-                    {c.tier === "enterprise" ? tr("Custom pricing") : `from ${formatUsdCents(c.fromPriceCents)} / license`}
+                    {c.tier === "enterprise" ? tr("Custom pricing") : `${tr("from {{price}}", { price: formatUsdCents(c.fromPriceCents) })} ${tr("/ license")}`}
                   </p>
                 </th>
               ))}

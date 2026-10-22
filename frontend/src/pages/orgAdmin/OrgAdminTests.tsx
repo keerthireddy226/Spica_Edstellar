@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Award, Coins, Send } from "lucide-react";
+import { OrgLoadError, OrgLoading, OrgNotice, OrgSearch } from "@/components/OrgAdminUi";
 import { Button } from "@/components/Button";
 import { getBatches, getOrgLearners, type OrgBatch, type OrgLearner } from "@/api/orgAdmin";
 import { getOrgTests, giveTests, requestCredits, withdrawTest, type GivenStatus, type OrgTests } from "@/api/orgTests";
@@ -29,7 +30,7 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 // Kinds that are one test (not months of access).
 const oneTest = (kind: string) => kind === "assessment" || kind === "level";
 
-const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink";
+const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink focus:border-navy focus:outline-none";
 
 export function OrgAdminTests() {
   const [data, setData] = useState<OrgTests | null>(null);
@@ -46,14 +47,24 @@ export function OrgAdminTests() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [askQty, setAskQty] = useState("50");
+  const [askNote, setAskNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [withdrawing, setWithdrawing] = useState<string | null>(null);
 
   function load() {
-    getOrgTests().then(setData);
+    setLoadError(false);
+    getOrgTests()
+      .then(setData)
+      .catch(() => setLoadError(true));
   }
   useEffect(() => {
     load();
-    getOrgLearners().then((r) => setLearners(r.learners));
-    getBatches().then((r) => setBatches(r.batches));
+    getOrgLearners()
+      .then((r) => setLearners(r.learners))
+      .catch(() => {});
+    getBatches()
+      .then((r) => setBatches(r.batches))
+      .catch(() => {});
   }, []);
 
   const product = data?.products.find((p) => p.id === productId) ?? null;
@@ -87,12 +98,30 @@ export function OrgAdminTests() {
   }
   async function ask() {
     const n = Number(askQty);
-    if (!n) return;
-    await requestCredits(n).catch(() => null);
-    setNote({ ok: true, text: tr("Request sent to your Spica contact for {{n}} credits.", { n }) });
+    if (!n || n < 1) return;
+    setAskNote(null);
+    try {
+      await requestCredits(n);
+      setAskNote({ ok: true, text: tr("Request sent to your Spica contact for {{n}} credits.", { n }) });
+    } catch {
+      setAskNote({ ok: false, text: tr("Couldn't send the request. Try again.") });
+    }
+  }
+  async function withdraw(id: string) {
+    setWithdrawing(id);
+    try {
+      await withdrawTest(id);
+      load();
+    } catch {
+      setNote({ ok: false, text: tr("Couldn't withdraw the test. Try again.") });
+    } finally {
+      setWithdrawing(null);
+    }
   }
 
-  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (loadError && !data) return <OrgLoadError text={tr("Could not load tests and credits.")} onRetry={load} />;
+  if (!data) return <OrgLoading />;
+  const allShownPicked = shown.length > 0 && shown.every((l) => picked.has(l.id));
   const groups = [
     { kind: "assessment" as const, label: tr("Real test (with a certificate)") },
     { kind: "level" as const, label: tr("Level test (no certificate)") },
@@ -106,28 +135,36 @@ export function OrgAdminTests() {
         <p className="text-sm text-muted mt-1">{tr("Give your people a real, strictly proctored test with a certificate, a level test, or a month of preparation for one test. Paid with credits; Full access stays on Licenses.")}</p>
       </div>
 
-      <section className="bg-surface border border-rule rounded-card p-5 flex flex-wrap items-center gap-4">
-        <span className="h-12 w-12 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center">
-          <Coins size={24} />
-        </span>
-        <div className="flex-1 min-w-[200px]">
-          <p className="font-display font-bold text-2xl text-ink tabular-nums">{tr("{{n}} credits", { n: data.balance })}</p>
-          <p className="text-xs text-muted">{tr("The same credits pay for recruitment invitations. A real test or level test that expires unused gives its credits back.")}</p>
+      <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="h-12 w-12 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center shrink-0">
+            <Coins size={24} />
+          </span>
+          <div className="flex-1 min-w-[200px]">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Credits")}</p>
+            <p className="font-display font-bold text-2xl text-ink tabular-nums">{tr("{{n}} credits", { n: data.balance })}</p>
+            <p className="text-xs text-muted">{tr("The same credits pay for recruitment invitations. A real test or level test that expires unused gives its credits back.")}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} className={`${input} w-24`} aria-label={tr("Credits")} />
+            <Button variant="secondary" onClick={ask} disabled={!Number(askQty) || Number(askQty) < 1} className="!py-2">
+              {tr("Ask for more credits")}
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <input type="number" min={1} value={askQty} onChange={(e) => setAskQty(e.target.value)} className={`${input} w-24`} aria-label={tr("Credits")} />
-          <Button variant="secondary" onClick={ask} className="!py-2">
-            {tr("Ask for more credits")}
-          </Button>
-        </div>
+        {askNote && (
+          <OrgNotice tone={askNote.ok ? "success" : "error"} onClose={() => setAskNote(null)}>
+            {askNote.text}
+          </OrgNotice>
+        )}
       </section>
 
-      <section className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-4">
+      <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
         <h2 className="font-display font-semibold text-lg text-ink flex items-center gap-2">
           <Send size={18} /> {tr("Give a test")}
         </h2>
         <div className="grid sm:grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1 text-sm text-ink">
+          <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
             {tr("Test")}
             <select value={productId} onChange={(e) => setProductId(e.target.value)} className={input}>
               <option value="">{tr("Choose a test")}</option>
@@ -153,7 +190,7 @@ export function OrgAdminTests() {
             </select>
           </label>
           {product?.kind === "level" && (
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
               {tr("Level")}
               <select value={level} onChange={(e) => setLevel(e.target.value)} className={input}>
                 {LEVELS.map((l) => (
@@ -162,11 +199,11 @@ export function OrgAdminTests() {
                   </option>
                 ))}
               </select>
-              <span className="text-xs text-muted">{tr("Checks one level: a pass is 70% overall and at least 50% in each skill. No certificate; certificates come from the final assessment. Unused tests give their credit back.")}</span>
+              <span className="text-xs font-normal normal-case tracking-normal text-muted">{tr("Checks one level: a pass is 70% overall and at least 50% in each skill. No certificate; certificates come from the final assessment. Unused tests give their credit back.")}</span>
             </label>
           )}
           {product?.kind === "pack" && (
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
               {tr("Level to aim for")}
               <select value={packLevel} onChange={(e) => setPackLevel(e.target.value)} className={input}>
                 <option value="">{tr("Keep each learner's goal")}</option>
@@ -179,7 +216,7 @@ export function OrgAdminTests() {
             </label>
           )}
           {product && !oneTest(product.kind) && (
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
               {tr("Months")}
               <select value={periods} onChange={(e) => setPeriods(Number(e.target.value))} className={input}>
                 {[1, 2, 3, 6].map((n) => (
@@ -191,32 +228,53 @@ export function OrgAdminTests() {
             </label>
           )}
         </div>
-        <div className="flex gap-2">
-          {(["learners", "batch"] as const).map((w) => (
-            <button
-              key={w}
-              onClick={() => setWho(w)}
-              className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold border cursor-pointer ${who === w ? "bg-navy text-white border-navy" : "border-rule text-ink"}`}
-            >
-              {w === "learners" ? tr("Choose learners") : tr("A whole batch")}
-            </button>
-          ))}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Who gets it")}</span>
+          <div className="flex gap-1 self-start bg-paper-warm/60 border border-rule rounded-pill p-1">
+            {(["learners", "batch"] as const).map((w) => (
+              <button
+                key={w}
+                onClick={() => setWho(w)}
+                aria-pressed={who === w}
+                className={`px-3.5 py-1.5 rounded-pill text-sm font-semibold cursor-pointer transition-colors ${who === w ? "bg-navy text-white shadow-sm" : "text-muted hover:text-ink"}`}
+              >
+                {w === "learners" ? tr("Choose learners") : tr("A whole batch")}
+              </button>
+            ))}
+          </div>
         </div>
         {who === "batch" ? (
           <select value={batchId} onChange={(e) => setBatchId(e.target.value)} className={`${input} max-w-sm`}>
             <option value="">{tr("Choose a batch")}</option>
             {batches.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name}
+                {b.name} · {tr("Learners: {{count}}", { count: learners.filter((l) => l.batchId === b.id).length })}
               </option>
             ))}
           </select>
         ) : (
           <div className="flex flex-col gap-2">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr("Search by name, email or ID")} className={`${input} max-w-sm`} />
+            <div className="flex items-center gap-3 flex-wrap">
+              <OrgSearch value={search} onChange={setSearch} placeholder={tr("Search by name, email or ID")} className="w-full sm:max-w-sm" />
+              <button
+                onClick={() =>
+                  setPicked((s) => {
+                    const n = new Set(s);
+                    shown.forEach((l) => (allShownPicked ? n.delete(l.id) : n.add(l.id)));
+                    return n;
+                  })
+                }
+                disabled={shown.length === 0}
+                className="text-sm font-semibold text-navy hover:underline cursor-pointer disabled:opacity-50"
+              >
+                {allShownPicked ? tr("Clear selection") : tr("Select all shown")}
+              </button>
+              {picked.size > 0 && <span className="text-xs text-muted">{tr("{{n}} selected", { n: picked.size })}</span>}
+            </div>
             <div className="max-h-64 overflow-y-auto border border-rule rounded-xl divide-y divide-rule">
+              {shown.length === 0 && <p className="px-3 py-4 text-sm text-muted text-center">{learners.length ? tr("No learners match.") : tr("No learners yet.")}</p>}
               {shown.map((l) => (
-                <label key={l.id} className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-paper-warm/50">
+                <label key={l.id} className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-paper-warm/50 ${picked.has(l.id) ? "bg-navy/5" : ""}`}>
                   <input
                     type="checkbox"
                     checked={picked.has(l.id)}
@@ -247,21 +305,26 @@ export function OrgAdminTests() {
             {busy ? tr("Giving…") : tr("Give the test")}
           </Button>
         </div>
-        {note && <p className={`text-sm ${note.ok ? "text-success" : "text-error"}`}>{note.text}</p>}
+        {note && (
+          <OrgNotice tone={note.ok ? "success" : "error"} onClose={() => setNote(null)}>
+            {note.text}
+          </OrgNotice>
+        )}
       </section>
 
-      <section className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3">
+      <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
         <h2 className="font-display font-semibold text-lg text-ink flex items-center gap-2">
           <Award size={18} /> {tr("Tests given")}
+          {data.given.length > 0 && <span className="text-sm font-sans font-normal text-muted">({data.given.length})</span>}
         </h2>
         {data.given.length === 0 ? (
-          <p className="text-sm text-muted">{tr("No tests given yet.")}</p>
+          <p className="text-sm text-muted bg-paper-warm/50 border border-dashed border-rule-strong rounded-xl px-4 py-6 text-center">{tr("No tests given yet.")}</p>
         ) : (
           <div className="overflow-x-auto border border-rule rounded-xl">
             <table className="w-full text-sm min-w-[760px]">
               <thead>
                 <tr className="bg-paper-warm/60 text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
-                  <th className="px-3 py-2">{tr("Learner")}</th>
+                  <th className="px-3 py-2.5">{tr("Learner")}</th>
                   <th className="px-3 py-2">{tr("Test")}</th>
                   <th className="px-3 py-2">{tr("Given")}</th>
                   <th className="px-3 py-2">{tr("Until")}</th>
@@ -296,8 +359,9 @@ export function OrgAdminTests() {
                       )}
                       {g.status === "waiting" && (
                         <button
-                          onClick={() => withdrawTest(g.id).then(load)}
-                          className="text-sm font-semibold text-error hover:underline cursor-pointer"
+                          onClick={() => withdraw(g.id)}
+                          disabled={withdrawing === g.id}
+                          className="text-sm font-semibold text-error hover:underline cursor-pointer disabled:opacity-50"
                         >
                           {oneTest(g.kind) ? tr("Withdraw (credits back)") : tr("Withdraw")}
                         </button>

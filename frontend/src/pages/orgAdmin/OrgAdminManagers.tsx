@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { UserPlus, X, Mail, Ban, RotateCcw, Trash2, Pencil, Repeat, Eye, Search, ShieldCheck, Users, KeyRound, Inbox } from "lucide-react";
+import { UserPlus, X, Mail, Ban, RotateCcw, Trash2, Pencil, Repeat, Eye, ShieldCheck, Users, KeyRound, Inbox } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { cardGradient } from "@/lib/cardGradients";
+import { OrgEmptyState, OrgLoadError, OrgLoading, OrgNotice, OrgSearch, OrgStatTile } from "@/components/OrgAdminUi";
 import { ManagerHandoverModal } from "@/components/ManagerHandoverModal";
 import { getOrgLicenseOverview, LICENSE_ERROR_TEXT, type BatchBudget } from "@/api/licenses";
 import { ApiError } from "@/lib/api";
@@ -33,27 +34,13 @@ type ManagerStatus = "active" | "pending" | "deactivated";
 const statusOf = (m: OrgManager): ManagerStatus => (!m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active");
 
 function relative(iso: string | null | undefined): string {
-  if (!iso) return "never";
+  if (!iso) return tr("never");
   const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 60) return mins <= 1 ? tr("just now") : tr("{{mins}} min ago", { mins: mins });
   const hours = Math.round(mins / 60);
   if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
   return days < 30 ? (days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days })) : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
-}
-
-function StatCard({ label, value, icon: Icon, index }: { label: string; value: number | string; icon: LucideIcon; index: number }) {
-  return (
-    <div style={cardGradient(index)} className="rounded-card shadow-sm p-5 flex items-center gap-4">
-      <span className="h-11 w-11 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-        <Icon size={22} strokeWidth={1.8} />
-      </span>
-      <div className="min-w-0">
-        <p className="text-2xl font-display font-bold text-white">{value}</p>
-        <p className="text-xs text-white/80">{label}</p>
-      </div>
-    </div>
-  );
 }
 
 function ActionButton({
@@ -71,7 +58,7 @@ function ActionButton({
   tone?: "danger" | "success";
   disabled?: boolean;
 }) {
-  const color = tone === "danger" ? "hover:bg-red-900/30" : tone === "success" ? "bg-white/20" : "hover:bg-white/20";
+  const color = tone === "danger" ? "hover:bg-black/25 hover:border-white/60" : tone === "success" ? "bg-white/20 hover:bg-white/30" : "hover:bg-white/20";
   return (
     <button
       onClick={onClick}
@@ -139,7 +126,7 @@ function ManagerFormModal({
     try {
       if (editing) {
         await updateManager(manager.id, { firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment, ...profile });
-        onSaved(`${firstName.trim()} ${lastName.trim()} updated.`);
+        onSaved(tr("{{name}} updated.", { name: `${firstName.trim()} ${lastName.trim()}`.trim() }));
       } else {
         await onboardManager({ email: email.trim(), firstName: firstName.trim(), lastName: lastName.trim(), batchIds, licenseAllotment, ...profile });
         onSaved(tr("Invite sent to {{trim}} — they'll receive an email to set their password.", { trim: email.trim() }));
@@ -268,7 +255,7 @@ function ManagerFormModal({
                             {others.length > 0 && <p className="text-[11px] text-muted ml-6 truncate">{tr("also managed by {{join}}", { join: others.join(", ") })}</p>}
                           </td>
                           <td className="px-3 py-2.5 text-right text-xs text-muted">
-                            {fixed?.budget != null ? `${fixed.used} / ${fixed.budget} used` : tr("None — uses Manager's pool")}
+                            {fixed?.budget != null ? tr("{{used}} / {{budget}} used", { used: fixed.used, budget: fixed.budget }) : tr("None — uses Manager's pool")}
                           </td>
                         </tr>
                       );
@@ -329,10 +316,13 @@ export function OrgAdminManagers() {
   const [busyId, setBusyId] = useState<string | null>(null);
 
   function load() {
+    setError(null);
     getManagers()
       .then((res) => setManagers(res.managers))
       .catch(() => setError(tr("Could not load managers.")));
-    getBatches().then((res) => setBatches(res.batches));
+    getBatches()
+      .then((res) => setBatches(res.batches))
+      .catch(() => {});
     getOrgLicenseOverview()
       .then((res) => {
         setBudgets(res.batches);
@@ -395,27 +385,44 @@ export function OrgAdminManagers() {
       </div>
 
       {justInvited && (
-        <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
+        <OrgNotice tone="success" onClose={() => setJustInvited(null)}>
           {justInvited}
-        </p>
+        </OrgNotice>
       )}
 
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!managers && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
-      {managers?.length === 0 && <p className="text-sm text-muted">{tr("No managers yet.")}</p>}
+      {error && (managers ? <OrgNotice tone="error" onClose={() => setError(null)}>{error}</OrgNotice> : <OrgLoadError text={error} onRetry={load} />)}
+      {!managers && !error && <OrgLoading />}
+      {managers?.length === 0 && (
+        <OrgEmptyState
+          icon={ShieldCheck}
+          title={tr("No managers yet.")}
+          text={tr("Each one scoped to only the batch(es) you assign them.")}
+          action={
+            <Button onClick={() => setShowOnboard(true)} className="flex items-center gap-2">
+              <UserPlus size={16} /> {tr("Onboard Manager")}
+            </Button>
+          }
+        />
+      )}
 
       {managers && managers.length > 0 && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard index={0} icon={ShieldCheck} value={counts.active} label={counts.active === 1 ? tr("Active manager") : tr("Active managers")} />
-            <StatCard index={1} icon={Users} value={counts.learners} label={tr("Learners in their batches")} />
-            <StatCard
+            <OrgStatTile index={0} icon={ShieldCheck} value={counts.active} label={counts.active === 1 ? tr("Active manager") : tr("Active managers")} />
+            <OrgStatTile index={1} icon={Users} value={counts.learners} label={tr("Learners in their batches")} to={ROUTES.ORG_ADMIN_LEARNERS} />
+            <OrgStatTile
               index={2}
               icon={KeyRound}
               value={counts.allotted ? `${counts.used} / ${counts.allotted}` : "—"}
               label={counts.allotted ? tr("Pool licenses used · {{v}} left", { v: counts.allotted - counts.used }) : tr("No manager pools yet")}
             />
-            <StatCard index={3} icon={Inbox} value={counts.requests} label={counts.requests === 1 ? tr("Pending license request") : tr("Pending license requests")} />
+            <OrgStatTile
+              index={3}
+              icon={Inbox}
+              value={counts.requests}
+              label={counts.requests === 1 ? tr("Pending license request") : tr("Pending license requests")}
+              to={`${ROUTES.ORG_ADMIN_LICENSES}?tab=requests`}
+            />
           </div>
 
           {(counts.pending > 0 || counts.requests > 0) && (
@@ -425,7 +432,7 @@ export function OrgAdminManagers() {
                   {counts.pending === 1 ? tr("1 invite not accepted yet") : tr("{{n}} invites not accepted yet", { n: counts.pending })}</span>
               )}
               {counts.requests > 0 && (
-                <Link to={ROUTES.ORG_ADMIN_LICENSES} className="bg-navy/10 text-navy rounded-pill px-3 py-1 font-semibold hover:underline">
+                <Link to={`${ROUTES.ORG_ADMIN_LICENSES}?tab=requests`} className="bg-navy/10 text-navy rounded-pill px-3 py-1 font-semibold hover:underline">
                   {counts.requests === 1 ? tr("Review 1 license request") : tr("Review {{n}} license requests", { n: counts.requests })} →
                 </Link>
               )}
@@ -433,15 +440,7 @@ export function OrgAdminManagers() {
           )}
 
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-56 max-w-md">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={tr("Search by name, email, job title or batch")}
-                className="w-full rounded-input border border-rule bg-paper pl-9 pr-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-              />
-            </div>
+            <OrgSearch value={query} onChange={setQuery} placeholder={tr("Search by name, email, job title or batch")} className="flex-1 min-w-56 max-w-md" />
             <div className="flex items-center gap-1 bg-surface border border-rule rounded-pill p-1 max-w-full overflow-x-auto">
               {(
                 [
@@ -464,7 +463,9 @@ export function OrgAdminManagers() {
             </div>
           </div>
 
-          {shown.length === 0 && <p className="text-sm text-muted">{tr("No managers match.")}</p>}
+          {shown.length === 0 && (
+            <p className="text-sm text-muted bg-surface border border-dashed border-rule-strong rounded-card px-5 py-8 text-center">{tr("No managers match.")}</p>
+          )}
 
           <div className="grid lg:grid-cols-2 gap-4">
             {shown.map((m, i) => {
@@ -538,7 +539,7 @@ export function OrgAdminManagers() {
                           </p>
                           <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
                             <div
-                              className={`h-full rounded-full ${left === 0 ? "bg-red-200" : "bg-white"}`}
+                              className={`h-full rounded-full ${left === 0 ? "bg-white/60" : "bg-white"}`}
                               style={{ width: `${m.licensesAllotted ? Math.min(100, (m.licensesUsed / m.licensesAllotted) * 100) : 0}%` }}
                             />
                           </div>
@@ -551,10 +552,10 @@ export function OrgAdminManagers() {
                     <span>
                       {status === "pending" ? tr("Hasn't signed in yet") : tr("Last active {{relative}}", { relative: relative(m.lastLoginAt) })}
                       {" · "}{tr("Added")}{" "}{new Date(m.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
-                      {m.invitedByName ? ` by ${m.invitedByName}` : ""}
+                      {m.invitedByName ? tr(" by {{name}}", { name: m.invitedByName }) : ""}
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (
-                      <Link to={ROUTES.ORG_ADMIN_LICENSES} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
+                      <Link to={`${ROUTES.ORG_ADMIN_LICENSES}?tab=requests`} className="font-semibold text-white bg-white/20 rounded-pill px-2.5 py-0.5 hover:bg-white/30">
                         {m.pendingRequests === 1 ? tr("1 license request waiting") : tr("{{n}} license requests waiting", { n: m.pendingRequests })}</Link>
                     )}
                   </div>

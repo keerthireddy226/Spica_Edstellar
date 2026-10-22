@@ -114,7 +114,7 @@ export function RequestLicenseChangeModal({
                     <option key={b.batchId} value={b.batchId}>
                       {b.budget === null
                         ? tr("{{batchName}} — no fixed licenses yet (uses your pool)", { batchName: b.batchName })
-                        : `${b.batchName} (fixed) — ${b.budget} allotted, ${b.used} assigned`}
+                        : tr("{{batchName}} (fixed) — {{budget}} allotted, {{used}} assigned", { batchName: b.batchName, budget: b.budget, used: b.used })}
                     </option>
                   ))}
                 </select>

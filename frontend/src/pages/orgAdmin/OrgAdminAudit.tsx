@@ -36,7 +36,7 @@ function describe(e: AuditEntry): string {
   if (typeof d.quantity === "number") extra.push(`${d.quantity}`);
   if (d.fromTier && d.toTier) extra.push(`${d.fromTier} → ${d.toTier}`);
   if (typeof d.note === "string" && d.note) extra.push(trServer(d.note));
-  if (d.learners && typeof d.learners === "object" && "count" in (d.learners as object)) extra.push(`${(d.learners as { count: number }).count} rows`);
+  if (d.learners && typeof d.learners === "object" && "count" in (d.learners as object)) extra.push(tr("{{n}} rows", { n: (d.learners as { count: number }).count }));
   return [verb, e.targetLabel, extra.length ? `(${extra.join(" · ")})` : ""].filter(Boolean).join(" ");
 }
 
@@ -129,34 +129,40 @@ export function OrgAdminAudit() {
               <label className="text-xs text-muted">{tr("To")}</label>
               <input type="date" value={filters.to ?? ""} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value || undefined }))} className={inputClass} />
             </div>
+            {(filters.action || filters.actorId || filters.from || filters.to) && (
+              <button onClick={() => setFilters({})} className="text-sm font-semibold text-navy hover:underline cursor-pointer pb-2">
+                {tr("Clear filters")}
+              </button>
+            )}
           </div>
 
-          {error && <p className="text-sm text-error">{error}</p>}
+          {error && <p className="text-sm text-error bg-error/10 border border-error/25 rounded-input px-3.5 py-2.5">{error}</p>}
 
           <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
             <table className="w-full text-sm min-w-[600px]">
               <thead>
-                <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                   <th className="px-4 py-3 w-44">{tr("When")}</th>
                   <th className="px-4 py-3 w-48">{tr("Who")}</th>
                   <th className="px-4 py-3">{tr("What")}</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.length === 0 && !loading && (
+                {entries.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-6 text-center text-muted">
-                      {tr("Nothing recorded for these filters yet.")}</td>
+                    <td colSpan={3} className="px-4 py-8 text-center text-muted">
+                      {loading ? tr("Loading…") : tr("Nothing recorded for these filters yet.")}
+                    </td>
                   </tr>
                 )}
                 {entries.map((e) => (
                   <tr key={`${e.source}-${e.id}`} className="border-b border-rule last:border-0 align-top">
-                    <td className="px-4 py-3 text-muted whitespace-nowrap">
+                    <td className="px-4 py-3 text-muted whitespace-nowrap tabular-nums">
                       {new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-ink">{e.actorLabel ?? tr("System")}</p>
-                      {e.actorRole && <p className="text-xs text-muted">{e.actorRole.replace("_", " ")}</p>}
+                      {e.actorRole && <p className="text-xs text-muted capitalize">{e.actorRole.replace("_", " ")}</p>}
                     </td>
                     <td className="px-4 py-3 text-ink">{describe(e)}</td>
                   </tr>

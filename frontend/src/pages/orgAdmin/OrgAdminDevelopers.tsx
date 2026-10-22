@@ -9,7 +9,7 @@ import { developersApi, type ApiKeyInfo, type WebhookInfo } from "@/api/develope
 
 import { tr } from "@/i18n/tr";
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
-const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "never");
+const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : tr("never"));
 
 function ApiKeys() {
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);
@@ -37,7 +37,7 @@ function ApiKeys() {
         <div className="rounded-input bg-success/10 border border-success/25 px-4 py-3 flex flex-col gap-2">
           <p className="text-sm text-ink font-semibold">{tr("Copy this key now — it won't be shown again.")}</p>
           <div className="flex gap-2 items-center">
-            <code className="text-xs break-all bg-white px-2 py-1.5 rounded border border-rule flex-1">{newKey}</code>
+            <code className="text-xs break-all bg-surface text-ink px-2 py-1.5 rounded border border-rule flex-1">{newKey}</code>
             <button onClick={() => navigator.clipboard?.writeText(newKey)} className="text-navy cursor-pointer" title={tr("Copy")}>
               <Copy size={16} />
             </button>
@@ -117,10 +117,10 @@ function WebhookRow({ hook, onChanged }: { hook: WebhookInfo; onChanged: () => v
           <label className="flex items-center gap-1.5 text-xs text-ink cursor-pointer">
             <input type="checkbox" checked={hook.enabled} onChange={(e) => developersApi.updateWebhook(hook.id, { enabled: e.target.checked }).then(onChanged)} className="h-4 w-4 accent-navy" />
             {tr("On")}</label>
-          <button onClick={() => developersApi.testWebhook(hook.id).then(() => setTimeout(onChanged, 3000))} disabled={!hook.enabled} title={tr("Send a test event")} className="text-navy disabled:opacity-40 cursor-pointer">
+          <button onClick={() => developersApi.testWebhook(hook.id).then(() => setTimeout(onChanged, 3000))} disabled={!hook.enabled} title={tr("Send a test event")} aria-label={tr("Send a test event")} className="text-navy disabled:opacity-40 cursor-pointer">
             <Send size={15} />
           </button>
-          <button onClick={() => developersApi.deleteWebhook(hook.id).then(onChanged)} title={tr("Delete")} className="text-muted hover:text-error cursor-pointer">
+          <button onClick={() => developersApi.deleteWebhook(hook.id).then(onChanged)} title={tr("Delete")} aria-label={tr("Delete")} className="text-muted hover:text-error cursor-pointer">
             <Trash2 size={15} />
           </button>
         </div>
@@ -244,6 +244,7 @@ const USES: { icon: LucideIcon; title: string; text: string; example: string }[]
 export function OrgAdminDevelopers() {
   const allowed = useHasFeature("api_access");
   const [asked, setAsked] = useState(false);
+  const [askFailed, setAskFailed] = useState(false);
   return (
     <div className="flex flex-col gap-5 w-full">
       <div>
@@ -275,8 +276,11 @@ export function OrgAdminDevelopers() {
               disabled={asked}
               onClick={() =>
                 sendEnterpriseInquiry(tr("Interested in integrations (API and webhooks)."))
-                  .then(() => setAsked(true))
-                  .catch(() => {})
+                  .then(() => {
+                    setAsked(true);
+                    setAskFailed(false);
+                  })
+                  .catch(() => setAskFailed(true))
               }
             >
               {asked ? tr("We'll be in touch") : tr("Talk to us about Enterprise")}
@@ -284,6 +288,7 @@ export function OrgAdminDevelopers() {
             <a href="/api/v1/openapi.json" target="_blank" rel="noreferrer" className="text-sm font-semibold text-navy hover:underline">
               {tr("Show the API reference to your IT team")}</a>
           </div>
+          {askFailed && <p className="text-sm text-error">{tr("Couldn't send. Please try again.")}</p>}
         </div>
       ) : (
         <>

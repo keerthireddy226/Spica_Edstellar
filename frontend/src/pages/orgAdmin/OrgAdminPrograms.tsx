@@ -2,6 +2,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Target, Users, CalendarDays, X, CheckCircle2, AlertTriangle, Clock, Download, Award } from "lucide-react";
 import { Button } from "@/components/Button";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+import { OrgEmptyState, OrgLoadError, OrgLoading } from "@/components/OrgAdminUi";
 import { ApiError } from "@/lib/api";
 import { formatShortDate } from "@/api/licenses";
 import { getCatalogue, type CatalogueTestType } from "@/api/practiceTests";
@@ -361,7 +364,7 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
       </tr>
       {open && (
         <tr className="border-b border-rule/60 bg-paper-warm/40">
-          <td colSpan={7} className="px-3 py-3">
+          <td colSpan={p.finalAssessment ? 8 : 7} className="px-3 py-3">
             <div className="flex flex-col gap-2 text-sm">
               <div className="flex flex-wrap gap-2">
                 {(["listening", "speaking", "reading", "writing"] as const)
@@ -589,6 +592,14 @@ function ProgramDetailModal({
               </tbody>
             </table>
             {data.members.length === 0 && <p className="text-sm text-muted py-4">{tr("This batch has no learners yet.")}</p>}
+            {data.members.length > 0 && shown.length === 0 && (
+              <p className="text-sm text-muted py-4">
+                {tr("No learners with this status.")}{" "}
+                <button onClick={() => setFilter("all")} className="font-semibold text-navy hover:underline cursor-pointer">
+                  {tr("Show all")}
+                </button>
+              </p>
+            )}
           </div>
           <p className="text-xs text-muted">
             {tr("Projected: the level the trend across a learner's mock tests reaches by the target date (from 2 mocks). Latest level comes from the latest mock, or the placement test before the first.")}
@@ -612,6 +623,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
   const [finalCredits, setFinalCredits] = useState<FinalCredits>({});
 
   function load() {
+    setError(null);
     listPrograms(viewer)
       .then((r) => setPrograms(r.programs))
       .catch(() => setError(tr("Could not load programs.")));
@@ -653,21 +665,37 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
           </Button>
         )}
       </div>
-      {programs && freeBatches.length === 0 && batches.length > 0 && (
-        <p className="text-xs text-muted -mt-2">{tr("Every active batch already has a program.")}</p>
+      {viewer === "org-admin" && programs && freeBatches.length === 0 && (
+        <p className="text-xs text-muted -mt-2 sm:text-right">
+          {batches.some((b) => b.status === "active") ? (
+            tr("Every active batch already has a program.")
+          ) : (
+            <>
+              {tr("A program needs an active batch.")}{" "}
+              <Link to={ROUTES.ORG_ADMIN_BATCHES} className="font-semibold text-navy hover:underline">
+                {tr("Batches")} →
+              </Link>
+            </>
+          )}
+        </p>
       )}
-      {error && <p className="text-sm text-error">{error}</p>}
+      {error && <OrgLoadError text={error} onRetry={load} />}
 
       {programs === null ? (
-        <p className="text-sm text-muted">{tr("Loading…")}</p>
+        !error && <OrgLoading />
       ) : programs.length === 0 ? (
-        <div className="bg-surface border border-rule rounded-card p-8 text-center flex flex-col items-center gap-2">
-          <Target size={28} className="text-navy-deep" />
-          <p className="font-semibold text-ink">{tr("No programs yet")}</p>
-          <p className="text-sm text-muted max-w-md">
-            {tr("A program sets a target level and date for a batch, for example English 4 Skills Essentials B2 by 15 December.")}
-          </p>
-        </div>
+        <OrgEmptyState
+          icon={Target}
+          title={tr("No programs yet")}
+          text={tr("A program sets a target level and date for a batch, for example English 4 Skills Essentials B2 by 15 December.")}
+          action={
+            viewer === "org-admin" && freeBatches.length > 0 && testTypes.length > 0 ? (
+              <Button onClick={() => setCreating(true)} className="flex items-center gap-2">
+                <Plus size={16} /> {tr("New program")}
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {programs.map((p) => {
@@ -676,7 +704,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
               <button
                 key={p.id}
                 onClick={() => setViewing(p.id)}
-                className="text-left bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                className="text-left bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 shadow-sm hover:shadow-md hover:border-rule-strong transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-display font-bold text-base text-ink">{p.name}</span>
@@ -700,7 +728,7 @@ export function OrgAdminPrograms({ viewer = "org-admin" }: { viewer?: ProgramVie
                     <CalendarDays size={13} /> {tr("By {{date}}", { date: formatShortDate(p.targetDate) })}
                   </span>
                 </div>
-                <div className="flex gap-3 text-xs">
+                <div className="flex flex-wrap gap-3 text-xs mt-auto pt-3 border-t border-rule">
                   <span className="flex items-center gap-1 text-success">
                     <CheckCircle2 size={13} /> {tr("{{n}} done", { n: p.items.done })}
                   </span>
