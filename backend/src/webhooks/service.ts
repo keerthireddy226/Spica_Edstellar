@@ -106,6 +106,8 @@ export async function deliverWebhook(deliveryId: string, attempt: number) {
       });
       code = res.status;
       if (res.status < 200 || res.status >= 300) error = `HTTP ${res.status}`;
+      // Only the status matters; the reply is closed so its connection isn't left paused.
+      await res.body?.cancel().catch(() => {});
     } finally {
       clearTimeout(timer);
     }

@@ -162,6 +162,20 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 await startFileMirror();
 
 const port = process.env.PORT ?? 4000;
+// Node's fetch (undici) can fail an internal assert(!this.paused) when a server
+// closes a connection whose reply wasn't read, outside any try/catch, which
+// ended the whole process (Render, 2026-10-22). Replies are now always read or
+// closed; this keeps that one known internal failure from stopping the server
+// if it still happens. Any other uncaught error still exits, as before.
+process.on("uncaughtException", (err: NodeJS.ErrnoException) => {
+  if (err?.code === "ERR_ASSERTION" && /undici/.test(err.stack ?? "") && /Parser\.finish/.test(err.stack ?? "")) {
+    console.error("[fetch] undici connection assertion ignored:", err.message);
+    return;
+  }
+  console.error(err);
+  process.exit(1);
+});
+
 const server = app.listen(port, () => {
   console.log(`Spica backend listening on :${port}`);
   registerJobs();

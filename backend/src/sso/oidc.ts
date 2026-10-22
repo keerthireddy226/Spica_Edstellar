@@ -23,7 +23,11 @@ async function getJson<T>(raw: string): Promise<T> {
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch(url, { signal: ctrl.signal, redirect: "error", headers: { Accept: "application/json" } });
-    if (!r.ok) throw new Error(`${url.host} answered HTTP ${r.status}`);
+    if (!r.ok) {
+      // Close the unread reply before giving up (an unread body can crash Node's fetch later).
+      await r.body?.cancel().catch(() => {});
+      throw new Error(`${url.host} answered HTTP ${r.status}`);
+    }
     return (await r.json()) as T;
   } finally {
     clearTimeout(timer);

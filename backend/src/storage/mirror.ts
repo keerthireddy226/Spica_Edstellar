@@ -29,6 +29,14 @@ function config(): Config | null {
   return url && key && bucket ? { url, key, bucket } : null;
 }
 
+// Every reply must be read or closed. An unread body leaves its connection
+// paused; when the server later closes it, Node's fetch (undici) fails an
+// internal assert(!this.paused) outside any try/catch and the process exits
+// (the Render crashes of 2026-10-22, a few minutes after each start).
+async function discard(r: globalThis.Response): Promise<void> {
+  await r.body?.cancel().catch(() => {});
+}
+
 const headers = (c: Config, extra: Record<string, string> = {}) => ({ Authorization: `Bearer ${c.key}`, apikey: c.key, ...extra });
 const objectUrl = (c: Config, key: string) => `${c.url}/storage/v1/object/${c.bucket}/${key.split("/").map(encodeURIComponent).join("/")}`;
 
@@ -85,6 +93,7 @@ async function upload(c: Config, key: string) {
     body: await readFile(key),
   });
   if (!r.ok) throw new Error(`upload ${key}: ${r.status} ${await r.text()}`);
+  await discard(r);
 }
 
 async function remove(c: Config, keys: string[]) {
@@ -94,6 +103,7 @@ async function remove(c: Config, keys: string[]) {
     body: JSON.stringify({ prefixes: keys }),
   });
   if (!r.ok) throw new Error(`delete: ${r.status} ${await r.text()}`);
+  await discard(r);
 }
 
 async function scan(c: Config) {
@@ -150,7 +160,10 @@ export async function startFileMirror(): Promise<void> {
     method: "POST",
     headers: headers(c, { "Content-Type": "application/json" }),
     body: JSON.stringify({ id: c.bucket, name: c.bucket, public: false }),
-  }).catch(() => null);
+  })
+    // Usually "already exists": the reply isn't needed, but it must be closed.
+    .then(discard)
+    .catch(() => null);
 
   let remote: { key: string; size: number }[];
   try {
@@ -200,6 +213,7 @@ function ensureLocal(key: string): Promise<boolean> {
     const r = await fetch(objectUrl(c, key), { headers: headers(c) });
     if (!r.ok) {
       console.error(`[file-mirror] download ${key}: ${r.status}`);
+      await discard(r);
       return false;
     }
     const tmp = path.join(TMP_DIR, `${randomUUID()}`);
@@ -243,7 +257,10 @@ export async function pushAllFiles(): Promise<number> {
     method: "POST",
     headers: headers(c, { "Content-Type": "application/json" }),
     body: JSON.stringify({ id: c.bucket, name: c.bucket, public: false }),
-  }).catch(() => null);
+  })
+    // Usually "already exists": the reply isn't needed, but it must be closed.
+    .then(discard)
+    .catch(() => null);
   const remote = new Map((await Promise.all(ROOTS.map((r) => listAll(c, r)))).flat().map((o) => [o.key, o.size]));
   const queue = [...(await localFiles())].filter(([k, f]) => remote.get(k) !== f.size).map(([k]) => k);
   const total = queue.length;
