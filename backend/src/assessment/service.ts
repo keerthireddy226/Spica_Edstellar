@@ -253,6 +253,8 @@ export async function checkStart(userId: string, entitlementId: string, mode: "c
   if (new Date(e.ends_at).getTime() <= Date.now()) throw new AttemptError("attempt_expired");
   if (e.kind === "final" && !e.chosen_test) throw new AttemptError("test_not_chosen");
   const level = e.kind === "level" ? e.level : null;
+  // A level test has no sample: it would be drawn from the level test's own questions.
+  if (mode === "sample" && e.kind === "level") throw new AttemptError("sample_not_offered");
   if (mode === "sample") return { testTypeId: e.test_type_id, level };
   // The attempt already started (and used up): resuming it is fine.
   const open = await pool.query(`SELECT 1 FROM sessions WHERE user_id = $1 AND entitlement_id = $2 AND delivery_mode = 'certified' AND completed_at IS NULL`, [userId, e.id]);

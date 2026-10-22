@@ -429,6 +429,7 @@ export function TakeOwnedTest() {
   // A real test that isn't open (and not being resumed) goes back to Assessment, which says why.
   const resuming = !!params.get("session") || test.attempts.some((a) => a.status === "in_progress");
   // A final assessment's test is chosen on Assessment first.
-  if (!test.testTypeId || (mode === "certified" && test.unlock.state !== "open" && !resuming)) return <Navigate to={ROUTES.MY_TESTS} replace />;
+  // A level test has no free sample.
+  if (!test.testTypeId || (mode === "sample" && test.kind === "level") || (mode === "certified" && test.unlock.state !== "open" && !resuming)) return <Navigate to={ROUTES.MY_TESTS} replace />;
   return <PracticeTests owned={{ entitlementId: test.id, mode, testTypeId: test.testTypeId, testName: test.kind === "level" && test.level ? tr("Level {{level}} test", { level: test.level }) : test.testName, level: test.kind === "level" ? test.level : null }} />;
 }
