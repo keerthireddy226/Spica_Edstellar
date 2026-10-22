@@ -74,7 +74,8 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
   const certificatesPage = useHasCertificatesPage();
   // The organization may have switched Modules off for its learners.
   const modulesOn = useModulesEnabled();
-  const locked = hasPlacement !== true;
+  // Greyed out only once the server says there is no placement yet, not while it is being checked.
+  const locked = hasPlacement === false;
   const onModulesPage = location.pathname === ROUTES.MODULES;
   const [modulesExpanded, setModulesExpanded] = useState(onModulesPage);
 
