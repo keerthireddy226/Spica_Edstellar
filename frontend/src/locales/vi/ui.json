@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} đang chờ hoặc đang chạy",
  "Job queues": "Hàng đợi tác vụ",
  "{{n}} jobs done in 7 days": "{{n}} tác vụ hoàn thành trong 7 ngày",
- "Watch or at risk": "Cần theo dõi hoặc có rủi ro"
+ "Watch or at risk": "Cần theo dõi hoặc có rủi ro",
+ "Your result shows once every answer is scored.": "Kết quả của bạn sẽ hiển thị khi tất cả câu trả lời đã được chấm điểm."
 }

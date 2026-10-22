@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} कतार में या चल रहे हैं",
  "Job queues": "जॉब कतारें",
  "{{n}} jobs done in 7 days": "7 दिनों में {{n}} जॉब पूरे हुए",
- "Watch or at risk": "निगरानी में या जोखिम में"
+ "Watch or at risk": "निगरानी में या जोखिम में",
+ "Your result shows once every answer is scored.": "सभी उत्तरों का स्कोर तय होने के बाद आपका परिणाम दिखेगा।"
 }

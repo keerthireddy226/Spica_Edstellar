@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} i kö eller körs",
  "Job queues": "Jobbköer",
  "{{n}} jobs done in 7 days": "{{n}} jobb klara på 7 dagar",
- "Watch or at risk": "Bevaka eller i riskzonen"
+ "Watch or at risk": "Bevaka eller i riskzonen",
+ "Your result shows once every answer is scored.": "Ditt resultat visas när alla svar har bedömts."
 }

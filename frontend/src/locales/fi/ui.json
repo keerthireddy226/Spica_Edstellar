@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} jonossa tai käynnissä",
  "Job queues": "Työjonot",
  "{{n}} jobs done in 7 days": "{{n}} työtä tehty 7 päivässä",
- "Watch or at risk": "Seurattavat tai riskissä"
+ "Watch or at risk": "Seurattavat tai riskissä",
+ "Your result shows once every answer is scored.": "Tuloksesi näkyy, kun kaikki vastaukset on pisteytetty."
 }

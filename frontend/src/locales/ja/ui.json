@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} 件が待機中または実行中",
  "Job queues": "ジョブキュー",
  "{{n}} jobs done in 7 days": "7 日間で {{n}} 件のジョブが完了",
- "Watch or at risk": "要注意またはリスクあり"
+ "Watch or at risk": "要注意またはリスクあり",
+ "Your result shows once every answer is scored.": "すべての回答の採点が終わると、結果が表示されます。"
 }

@@ -253,7 +253,7 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
               {a.status === "certified" && a.spicaScore !== null && (
                 <span className="font-display font-semibold text-ink">{tr("Spica score {{score}} · {{level}}", { score: a.spicaScore, level: a.level ?? "—" })}</span>
               )}
-              {a.levelResult && a.status !== "in_progress" && (
+              {a.levelResult && a.levelResult.passed !== null && a.status !== "in_progress" && (
                 <span className="text-xs text-ink">
                   {tr("{{n}}% overall", { n: a.levelResult.overallPercent ?? 0 })}
                   {Object.entries(a.levelResult.skillPercents)
@@ -275,7 +275,13 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
                   )}
                 </>
               )}
-              {a.status === "scoring" && <span className="text-xs text-muted">{tr("Your certificate arrives once scoring and the proctoring checks are done.")}</span>}
+              {a.status === "scoring" && (
+                <span className="text-xs text-muted">
+                  {a.levelResult
+                    ? tr("Your result shows once every answer is scored.")
+                    : tr("Your certificate arrives once scoring and the proctoring checks are done.")}
+                </span>
+              )}
               {a.status === "under_review" && <span className="text-xs text-muted">{tr("A reviewer is checking the proctoring record. We'll email you when it's done.")}</span>}
               {a.status === "void" && <span className="text-xs text-muted">{tr("The proctoring review found a problem, so this attempt doesn't count.")}</span>}
               {a.status === "passed" && <span className="text-xs text-muted">{tr("You showed this level. Your certificate comes from your final assessment.")}</span>}

@@ -8,8 +8,6 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { submitAttemptSchema } from "../placement/schemas.js";
 import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
-import { isTrulyCorrect } from "../placement/fluencySignals.js";
-import { passThresholdForLevel } from "../placement/cefr.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
@@ -20,7 +18,6 @@ import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
 import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
-import { levelSummary } from "../placement/levels.js";
 import { examPrefix, newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { listCatalogue, liveTestType, testTypeOfExam } from "../catalogue/service.js";
@@ -39,7 +36,6 @@ import {
   isTimed,
   LEVEL_TEST_BLUEPRINT,
   levelTestItemIds,
-  levelTestPassed,
   type DeliveryMode,
   type MockComposition,
 } from "./modes.js";
@@ -50,7 +46,7 @@ import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.j
 import { learnerQuota } from "../programs/quotas.js";
 import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
 import { qualitySettings } from "../quality/settings.js";
-import { snapshot } from "../reports/batchReport.js";
+import { levelTestOutcome, loadScoreRows, summarizeScores } from "./sessionScore.js";
 
 export const practiceTestsRouter = Router();
 
@@ -848,33 +844,8 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
   // error and no way forward. Fall back to a minimal "you finished, score
   // pending" response instead of failing the whole request.
   try {
-    const summaryResult = await pool.query(
-      `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, coalesce(ep.part_label, it.name) AS part_label,
-         a.response_text, a.response_uri
-       FROM attempts a
-       JOIN scores sc ON sc.attempt_id = a.id
-       JOIN items i ON i.id = a.item_id
-       JOIN item_types it ON it.id = i.item_type_id
-       LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id
-       WHERE a.session_id = $1`,
-      [req.params.sessionId],
-    );
-    // A question left blank (skipped, or never reached) counts as wrong in
-    // every figure: the percentage, the skill levels and the sections. It used
-    // to be left out, so 2 right answers out of 42 questions showed as 100%.
-    const isBlank = (r: { response_text: string | null; response_uri: string | null }) => !r.response_text && !r.response_uri;
-    const skippedCount = summaryResult.rows.filter((r) => r.status === "pending" && isBlank(r)).length;
-    const rows = summaryResult.rows.map((r) => (r.status === "pending" && isBlank(r) ? { ...r, status: "scored", content_score: 0 } : r));
-    const graded = rows.filter((r) => r.status === "scored");
-    const rowCorrect = (r: (typeof rows)[number]) =>
-      isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
-    const correctCount = graded.filter(rowCorrect).length;
-    // "Pending" splits into two very different things for the learner: a
-    // real answer that's still waiting on AI grading, vs. a question left
-    // blank (Skip, or never reached) — the latter will never grade itself,
-    // so lumping it into "still being reviewed" is misleading.
-    const pendingCount = rows.filter((r) => r.status === "pending").length;
-    const failedCount = rows.filter((r) => r.status === "failed").length;
+    const scored = summarizeScores(await loadScoreRows(req.params.sessionId as string));
+    const { rows, graded, rowCorrect, correctCount, pendingCount, failedCount, skippedCount, level, overall } = scored;
 
     const partLabels = [...new Set(rows.map((r) => r.part_label))];
     const partResults = partLabels.map((label) => {
@@ -882,17 +853,6 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       return { label, gradedCount: partRows.length, correctCount: partRows.filter(rowCorrect).length };
     });
 
-    // The same CEFR level logic as the placement test, from each question's level.
-    const summary = levelSummary(rows);
-    // The overall level is the Spica score's (the mean of the skills' scores),
-    // as on the score report, so a high percentage never shows a low level.
-    const level = summary
-      ? {
-          ...summary,
-          cefrLevel: (snapshot(summary.skillLevels as never, summary.skillPercents as never, graded.length ? Math.round((graded.filter(rowCorrect).length / graded.length) * 100) : null, summary.cefrLevel).level ??
-            summary.cefrLevel) as typeof summary.cefrLevel,
-        }
-      : null;
     // A mock's estimated score range on the exam family's scale, where it publishes one.
     // A short form isn't the exam's format, so its score range wouldn't mean anything.
     const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
@@ -900,7 +860,6 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
       ? Object.fromEntries(Object.entries(level.skillLevels as Record<string, string | null>).map(([k, v]) => [k, bandForLevel(scale, v)]))
       : null;
     if (justFinished) {
-      const overall = graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : null;
       // Kept for programs (the learner's latest level) and reports.
       await pool.query(`UPDATE sessions SET result = $2 WHERE id = $1`, [
         req.params.sessionId,
@@ -911,18 +870,11 @@ practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req
           skillPercents: level?.skillPercents ?? null,
           overallPercent: overall,
           scoreBand: bandForLevel(scale, level?.cefrLevel),
-          // A level test: passed at 70% overall and at least 50% in each skill.
+          // A level test: passed at 70% overall and at least 50% in each skill,
+          // decided once every answer is scored.
           ...(composition.levelTest
             ? {
-                levelTest: {
-                  level: composition.levelTest,
-                  passed: levelTestPassed(overall, (level?.skillPercents ?? {}) as Record<string, number>, {
-                    overall: (await qualitySettings()).levelPassOverall,
-                    skill: (await qualitySettings()).levelSkillMin,
-                  }),
-                  overallPercent: overall,
-                  skillPercents: level?.skillPercents ?? {},
-                },
+                levelTest: await levelTestOutcome(composition.levelTest as string, scored),
               }
             : {}),
         }),

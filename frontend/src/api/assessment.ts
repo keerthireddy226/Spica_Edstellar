@@ -41,7 +41,8 @@ export interface OwnedTest {
     spicaScore: number | null;
     level: string | null;
     validUntil: string | null;
-    levelResult: { level: string; passed: boolean; overallPercent: number | null; skillPercents: Record<string, number | null> } | null;
+    // passed null: an answer is still being scored, so it isn't decided yet.
+    levelResult: { level: string; passed: boolean | null; overallPercent: number | null; skillPercents: Record<string, number | null> } | null;
     appeal: { status: "open" | "upheld" | "changed" | "new_attempt"; note: string | null } | null;
     canAppeal: boolean;
   }[];

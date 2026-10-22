@@ -5025,5 +5025,6 @@
  "{{n}} queued or running": "{{n}} en cola o en curso",
  "Job queues": "Colas de trabajos",
  "{{n}} jobs done in 7 days": "{{n}} trabajos hechos en 7 días",
- "Watch or at risk": "En observación o en riesgo"
+ "Watch or at risk": "En observación o en riesgo",
+ "Your result shows once every answer is scored.": "Tu resultado aparecerá cuando se hayan puntuado todas las respuestas."
 }
