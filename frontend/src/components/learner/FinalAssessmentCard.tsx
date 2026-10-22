@@ -99,7 +99,9 @@ export function FinalAssessmentCard({ compact = false }: { compact?: boolean } =
                     ? tr("Your final assessment opens after a mock test of that test, or on {{date}}.", { date: day(f.unlock.opensOn) })
                     : f.unlock.state === "sample_needed"
                       ? tr("Take the free sample, then your final assessment opens.")
-                      : tr("Your final assessment is on the Assessment page.")}
+                      : f.unlock.state === "retake_wait"
+                        ? tr("Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.", { date: day(f.unlock.opensOn) })
+                        : tr("Your final assessment is on the Assessment page.")}
             </span>
             <Link to={ROUTES.MY_TESTS} className={`${linkBtn} bg-navy text-white`}>
               {f.chooseTest ? tr("Choose your test") : f.unlock.state === "open" ? tr("Take my final assessment") : tr("Go to Assessment")}

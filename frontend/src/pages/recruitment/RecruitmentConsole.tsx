@@ -664,6 +664,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
         <input type="checkbox" checked={f.showResultToCandidate} onChange={(e) => setF({ ...f, showResultToCandidate: e.target.checked })} className="h-4 w-4 accent-navy" />
         {tr("Show candidates their level when they finish")}
       </label>
+      {f.showResultToCandidate && <p className="text-xs text-muted -mt-1 ml-6">{tr("A test of all four skills also gives the candidate a certificate.")}</p>}
       {error && <p className="text-sm text-error">{error}</p>}
       <div className="flex gap-2 pt-1">
         <Button onClick={save} disabled={busy || f.title.trim().length < 2}>

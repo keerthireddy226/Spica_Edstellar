@@ -34,6 +34,10 @@ const SETTLE_MINUTES = 10;
 // The final assessment included with Full access stays valid this long after access ends.
 export const FINAL_GRACE_DAYS = 14;
 export const FINAL_PRODUCT = "final_assessment";
+// After a real test that scored below the learner's goal, the next one opens
+// this many days later: time to practise first (owner decision 2026-10-22).
+export const FINAL_RETAKE_DAYS = 30;
+const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export type AttemptKind = "prep" | "assessment" | "level" | "final";
 export type Unlock =
@@ -48,12 +52,17 @@ export type Unlock =
 // once, except within LEVEL_RETAKE_DAYS of a level test at that level that wasn't passed.
 export function unlockOf(
   e: { kind: AttemptKind; attemptsLeft: number; endsAt: string | Date },
-  done: { mocks: number; samples: number; lastLevelFail?: Date | string | null; retakeDays?: number },
+  done: { mocks: number; samples: number; lastLevelFail?: Date | string | null; retakeDays?: number; lastBelowGoal?: Date | string | null },
   now = new Date(),
 ): Unlock {
   const ends = new Date(e.endsAt).getTime();
   if (ends <= now.getTime()) return { state: "expired" };
   if (e.attemptsLeft <= 0) return { state: "used" };
+  // A real test below the goal: the next one waits FINAL_RETAKE_DAYS.
+  if (e.kind !== "level" && done.lastBelowGoal) {
+    const opens = new Date(done.lastBelowGoal).getTime() + FINAL_RETAKE_DAYS * DAY;
+    if (now.getTime() < opens) return { state: "retake_wait", opensOn: new Date(opens).toISOString() };
+  }
   if (e.kind === "level") {
     const opens = done.lastLevelFail ? new Date(done.lastLevelFail).getTime() + (done.retakeDays ?? LEVEL_RETAKE_DAYS) * DAY : 0;
     return now.getTime() >= opens ? { state: "open" } : { state: "retake_wait", opensOn: new Date(opens).toISOString() };
@@ -100,7 +109,10 @@ async function ownedAttempts(userId: string, entitlementId?: string): Promise<Ow
 
 // Mock tests of the test since the purchase began (any test while a final
 // assessment's test isn't chosen), and samples taken for it.
-async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null; retakeDays?: number }> {
+async function doneFor(
+  userId: string,
+  e: OwnedAttemptRow,
+): Promise<{ mocks: number; samples: number; lastLevelFail?: Date | null; retakeDays?: number; lastBelowGoal?: Date | null }> {
   if (e.kind === "level") {
     // The latest level test at this level that wasn't passed.
     const f = await pool.query(
@@ -122,7 +134,30 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
       [userId, e.kind === "final" ? e.chosen_test : e.test_type_id, e.starts_at],
     )
   ).rows[0];
-  return { mocks: r.mocks, samples: r.samples };
+  return { mocks: r.mocks, samples: r.samples, lastBelowGoal: await lastRealTestBelowGoal(userId) };
+}
+
+// When the learner's latest real test (final assessment, not a level test)
+// finished, if its level was below their goal; null otherwise. Its level is the
+// certificate's, else the result's once every answer is scored. A void attempt,
+// or one an appeal granted a new attempt for, doesn't count.
+async function lastRealTestBelowGoal(userId: string): Promise<Date | null> {
+  const r = (
+    await pool.query(
+      `SELECT s.completed_at, coalesce(c.cefr_level, CASE WHEN s.result ? 'unscored' THEN NULL ELSE s.result->>'cefrLevel' END) AS level,
+         (SELECT goal_level FROM participant_profiles WHERE user_id = $1) AS goal
+       FROM sessions s
+       LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result' AND c.revoked_at IS NULL
+       LEFT JOIN session_integrity si ON si.session_id = s.id
+       WHERE s.user_id = $1 AND s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL AND s.composition->>'levelTest' IS NULL
+         AND NOT coalesce((s.composition->>'abandoned')::boolean, false) AND coalesce(si.status, '') <> 'violation'
+         AND NOT EXISTS (SELECT 1 FROM result_appeals ra WHERE ra.session_id = s.id AND ra.status = 'new_attempt')
+       ORDER BY s.completed_at DESC LIMIT 1`,
+      [userId],
+    )
+  ).rows[0];
+  if (!r?.level || !CEFR.includes(r.goal)) return null;
+  return CEFR.indexOf(r.level) < CEFR.indexOf(r.goal) ? r.completed_at : null;
 }
 
 // What Assessment shows: each owned attempt, whether it can start, and the attempts taken.
@@ -415,7 +450,9 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
        WHERE s.id = $1 AND s.completed_at IS NOT NULL
          AND (s.delivery_mode = 'certified' OR (u.role = 'candidate' AND EXISTS (
            SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
-           WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)))`,
+           WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)
+           -- A candidate's certificate only for a test of all four skills, not the shorter ones.
+           AND tt.skills @> '{speaking,listening,reading,writing}'))`,
       [sessionId],
     )
   ).rows[0];
@@ -546,9 +583,13 @@ export async function issueDueResultCertificates(): Promise<number> {
   const due = (
     await pool.query(
       `SELECT s.id FROM sessions s JOIN session_integrity si ON si.session_id = s.id
-       WHERE (s.delivery_mode = 'certified' OR EXISTS (
+       WHERE (s.delivery_mode = 'certified' OR (EXISTS (
                SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
-               WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate))
+               WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)
+             -- A candidate's certificate only for a test of all four skills.
+             AND (SELECT tt.skills FROM test_types tt
+                  WHERE tt.id = coalesce(s.composition->>'testTypeId', (SELECT x.test_type_id FROM exams x WHERE x.id::text = s.composition->>'examId')))
+                 @> '{speaking,listening,reading,writing}'))
          AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
          AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND si.status IN ('clear', 'cleared')

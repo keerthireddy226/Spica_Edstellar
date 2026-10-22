@@ -28,6 +28,18 @@ describe("unlockOf", () => {
   });
 });
 
+describe("after a real test below the goal", () => {
+  it("the next real test waits 30 days; a level test doesn't", () => {
+    const last = "2026-10-10T10:00:00Z";
+    expect(unlockOf({ kind: "final", attemptsLeft: 1, endsAt }, { mocks: 1, samples: 0, lastBelowGoal: last }, now)).toEqual({
+      state: "retake_wait",
+      opensOn: "2026-11-09T10:00:00.000Z",
+    });
+    expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 1, lastBelowGoal: last }, new Date("2026-11-10T00:00:00Z"))).toEqual({ state: "open" });
+    expect(unlockOf({ kind: "level", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 0, lastBelowGoal: last }, now)).toEqual({ state: "open" });
+  });
+});
+
 describe("samplePick", () => {
   it("keeps the first questions of each part", () => {
     const rows = [1, 1, 1, 2, 3, 3, 3].map((part, i) => ({ part, i }));
