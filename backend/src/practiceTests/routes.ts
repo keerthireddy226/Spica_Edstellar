@@ -814,14 +814,17 @@ practiceTestsRouter.post("/session/:sessionId/attempts", requireAuth, async (req
     const graded = await gradeAndSaveAttempt(session.id, body, { deferSpeaking: true });
     if (!graded) return res.status(404).json({ error: "item_not_found" });
 
-    const { attemptId, grade, wasCorrect } = graded;
+    // noisy: loud background noise in a recorded answer, so the learner can
+    // move somewhere quieter before the next one (a mock too: it's about the
+    // room, not the answer's score).
+    const { attemptId, grade, wasCorrect, noisy } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
-    if (isTimed(session.delivery_mode)) return res.status(201).json({ attemptId, status: grade.status, late });
+    if (isTimed(session.delivery_mode)) return res.status(201).json({ attemptId, status: grade.status, late, noisy });
     // Practice: the correct answer and the grader's reason come back at once
     // (a recorded answer's once its background grading is done; see /feedback).
     const answered = !!(body.responseText || body.audioBase64);
     const feedback = answered ? await practiceFeedback(session.id, body.itemId) : null;
-    res.status(201).json({ attemptId, status: grade.status, correct, feedback });
+    res.status(201).json({ attemptId, status: grade.status, correct, feedback, noisy });
   } catch (err) {
     next(err);
   }

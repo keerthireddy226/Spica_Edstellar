@@ -129,10 +129,11 @@ export function nextCheckQuestion(sessionId: string): Promise<{ done: false; ite
   return api(`/practice/session/${sessionId}/check-next`, { method: "POST" });
 }
 
+// noisy: loud background noise in this recorded answer (the learner is told).
 export function submitPracticeAttempt(
   sessionId: string,
   payload: { itemId: string; responseText?: string; audioBase64?: string; audioMimeType?: string; durationMs?: number; activeMs?: number },
-): Promise<{ attemptId: string; status: string; correct: boolean | null; feedback?: PracticeFeedback | null }> {
+): Promise<{ attemptId: string; status: string; correct: boolean | null; feedback?: PracticeFeedback | null; noisy?: boolean }> {
   return api(`/practice/session/${sessionId}/attempts`, {
     method: "POST",
     body: JSON.stringify(payload),

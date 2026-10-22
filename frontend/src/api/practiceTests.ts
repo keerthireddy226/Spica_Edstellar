@@ -175,6 +175,8 @@ export interface ExamAttemptResult {
   feedback?: PracticeFeedback | null;
   // Mock only: the answer came after the question's time and counts as unanswered.
   late?: boolean;
+  // Loud background noise in this recorded answer (the learner is told).
+  noisy?: boolean;
 }
 
 export function submitExamAttempt(

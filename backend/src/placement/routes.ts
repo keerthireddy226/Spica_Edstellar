@@ -375,7 +375,7 @@ placementRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Au
 
     // Adaptive step: skip counts as wrong (same as a miss); a grading-service
     // failure stays at the same level (not the learner's fault either way).
-    const { attemptId, item, grade, wasCorrect } = graded;
+    const { attemptId, item, grade, wasCorrect, noisy } = graded;
     const currentType = item.item_type_id as string;
     const typeState = composition.perType[currentType];
     let nextItem: ItemPoolRow | null = null;
@@ -424,6 +424,8 @@ placementRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Au
       attemptId,
       status: grade.status,
       correct: grade.status === "scored" ? wasCorrect : grade.correct,
+      // Loud background noise in this recorded answer: the learner is told.
+      noisy,
       // null means there's nothing left to ask — the frontend should call
       // /complete once it sees this instead of waiting on a fixed count.
       nextItem: nextItem ? (await withAudioUrls(req.user!.id, [toItemPayload(nextItem)]))[0] : null,

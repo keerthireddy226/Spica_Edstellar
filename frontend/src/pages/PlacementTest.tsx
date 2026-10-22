@@ -23,6 +23,7 @@ import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
+import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { deviceNeedsFor } from "@/lib/systemCheck";
@@ -78,6 +79,8 @@ function PlacementTestRun() {
   const [items, setItems] = useState<TestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  // When a spoken answer with loud background noise went in (see NoisyAnswerAlert).
+  const [noisyAnswerAt, setNoisyAnswerAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [hasPlayed, setHasPlayed] = useState(false);
@@ -258,6 +261,7 @@ function PlacementTestRun() {
         durationMs: recordingDurationMs ?? undefined,
         activeMs: Date.now() - questionShownAtRef.current,
       });
+      if (result.noisy) setNoisyAnswerAt(Date.now());
       await advanceOrFinish(result.nextItem);
     } catch {
       setError(t("placementTest.submitError"));
@@ -477,7 +481,12 @@ function PlacementTestRun() {
       .then(setSummary)
       .catch(() => setError(t("placementTest.submitError")));
   };
-  const overlay = <ProctoringOverlay proctor={proctor} onFinish={finishTerminated} />;
+  const overlay = (
+    <>
+      <ProctoringOverlay proctor={proctor} onFinish={finishTerminated} />
+      <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
+    </>
+  );
 
   if (showTypeIntro) {
     return (

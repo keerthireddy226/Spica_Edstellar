@@ -52,6 +52,9 @@ export interface GradedAttempt {
   // "pending"/"failed" grade; callers gate it by grade.status for their own
   // response's `correct` field.
   wasCorrect: boolean;
+  // The recording had loud background noise (see proctoring/answerAudio.ts):
+  // the learner is told right after the answer.
+  noisy: boolean;
 }
 
 // Shared by placement/practice attempt submission: loads item, grades, records score.
@@ -102,11 +105,12 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   const effectiveResponseText = (item.input_method === "mic" ? geminiScores?.transcript || body.responseText : body.responseText) || undefined;
 
   // Recording is saved for playback/review, but grading itself runs on the transcript only (see aiGrading.ts).
-  // Background noise in the recording, for the reviewer and the learner's feedback.
+  // Background noise in the recording, for the reviewer and the learner's
+  // feedback. Measured now even when grading waits for the background job
+  // (a local ffmpeg read, under 0.1 s), so the learner is told straight away
+  // and can move somewhere quieter before the next answer.
   const noise: AnswerNoise | null =
-    item.input_method === "mic" && responseUri && !deferred
-      ? await measureAnswerNoise(path.join(UPLOADS_DIR, path.basename(responseUri)))
-      : null;
+    item.input_method === "mic" && responseUri ? await measureAnswerNoise(path.join(UPLOADS_DIR, path.basename(responseUri))) : null;
 
   const noSpeech = item.input_method === "mic" && heardNoSpeech(geminiScores, body.responseText);
   const grade: GradeResult = deferred
@@ -175,7 +179,8 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
     [attemptId, grade.score, mannerScores ? JSON.stringify(mannerScores) : null, grade.status, modelVersion, grade.reason ?? null],
   );
 
-  if (noise && !noSpeech) await recordNoisyAnswer(sessionId, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
+  // A deferred answer goes on the integrity timeline once it's graded (gradeSpeakingAttempt).
+  if (noise && !noSpeech && !deferred) await recordNoisyAnswer(sessionId, attemptId, noise).catch((err) => console.error("noisy answer record failed:", err));
 
   if (deferred && responseUri) {
     // Keyed by the recording, so re-recording an answer queues a fresh grading.
@@ -185,7 +190,7 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // For mic answers, "correct" also requires pronunciation/fluency/pace, not just content.
   const wasCorrect = isTrulyCorrect(grade.score, item.cefr_level, item.input_method, mannerScores, passThresholdForLevel);
 
-  return { attemptId, item, grade, mannerScores, wasCorrect };
+  return { attemptId, item, grade, mannerScores, wasCorrect, noisy: !!noise?.noisy && !noSpeech };
 }
 
 const BACKGROUND_TIMEOUT_MS = 60_000;

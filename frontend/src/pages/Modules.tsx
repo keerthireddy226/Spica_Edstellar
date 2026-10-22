@@ -94,6 +94,7 @@ import { Confetti } from "@/components/Confetti";
 import { MyPath } from "@/components/practice/MyPath";
 import { markChecked, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
+import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { useSmallScreen } from "@/lib/device";
 import type { PracticeFeedback } from "@/api/practiceTests";
 // Fallback reading time for a two-phase item with no server-set duration.
@@ -943,6 +944,8 @@ function ModulesPage() {
 
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // When a spoken answer with loud background noise went in (see NoisyAnswerAlert).
+  const [noisyAnswerAt, setNoisyAnswerAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [hasPlayed, setHasPlayed] = useState(false);
@@ -1302,6 +1305,7 @@ function ModulesPage() {
         durationMs: recordingDurationMs ?? undefined,
         activeMs: Date.now() - questionShownAtRef.current,
       });
+      if (res.noisy) setNoisyAnswerAt(Date.now());
       cacheCurrentAnswer();
       markChecked(sessionId);
       setWelcomeBack(false);
@@ -1898,6 +1902,7 @@ function ModulesPage() {
             </>
           )}
           {error && <p className="text-sm text-error text-center">{error}</p>}
+          <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
         </div>
 
         <div

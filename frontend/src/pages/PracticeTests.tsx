@@ -76,6 +76,7 @@ import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
+import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { markChecked, quickDeviceCheck, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
@@ -280,6 +281,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
 
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // When a spoken answer with loud background noise went in (see NoisyAnswerAlert).
+  const [noisyAnswerAt, setNoisyAnswerAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [answerText, setAnswerText] = useState("");
   const [hasPlayed, setHasPlayed] = useState(false);
@@ -692,7 +695,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setSubmitting(true);
     setError(null);
     try {
-      await submitExamAttempt(sessionId, {
+      const res = await submitExamAttempt(sessionId, {
         itemId: current.id,
         responseText: (recorded ? recorded.transcript : answerText).trim() || undefined,
         audioBase64: recorded?.audioBase64 ?? pendingAudio?.base64,
@@ -700,6 +703,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         durationMs: recorded?.durationMs ?? recordingDurationMs ?? undefined,
         activeMs: Date.now() - questionShownAtRef.current,
       });
+      if (res.noisy) setNoisyAnswerAt(Date.now());
       cacheCurrentAnswer();
       markChecked(sessionId);
       // Straight on: right and wrong answers are in the report at the end
@@ -1032,7 +1036,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     if (proctor.loading || !proctor.setup) return null;
     return <ProctoringGate proctor={proctor} sessionId={sessionId} />;
   }
-  const overlay = <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />;
+  const overlay = (
+    <>
+      <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />
+      <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
+    </>
+  );
 
   // --- Exam overview (Pearson-style Part/Task/Questions table), fresh starts only ---
   if (sessionId && current && showExamOverview) {

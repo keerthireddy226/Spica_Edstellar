@@ -518,13 +518,13 @@ practiceRouter.post("/session/:sessionId/attempts", requireAuth, async (req: Aut
     // A Level check judges the answer itself and shows nothing until the end.
     if (check) await recordCheckAnswer(session.id, body.itemId, body.responseText);
 
-    const { attemptId, grade, wasCorrect } = graded;
+    const { attemptId, grade, wasCorrect, noisy } = graded;
     const correct = grade.status === "scored" ? wasCorrect : grade.correct;
     // Feedback right after the answer: right or wrong, the right answer and
     // why (a recorded answer's once its background grading is done; see /feedback).
     const answered = !!(body.responseText || body.audioBase64);
     const feedback = answered && !check ? await practiceFeedback(session.id, body.itemId) : null;
-    res.status(201).json({ attemptId, status: grade.status, correct, feedback });
+    res.status(201).json({ attemptId, status: grade.status, correct, feedback, noisy });
   } catch (err) {
     next(err);
   }

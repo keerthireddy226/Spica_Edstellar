@@ -37,6 +37,8 @@ interface AttemptResult {
   attemptId: string;
   status: "scored" | "pending" | "failed";
   correct: boolean | null;
+  // Loud background noise in this recorded answer (the learner is told).
+  noisy?: boolean;
   // The placement test is adaptive now — this is the next question to show,
   // chosen based on whether this answer was right. null means there's
   // nothing left to ask; the caller should call completeSession instead of

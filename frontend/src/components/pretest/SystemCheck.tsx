@@ -13,6 +13,7 @@ import {
   type DeviceNeeds,
   type NoiseLevel,
 } from "@/lib/systemCheck";
+import { roomNoiseFrom } from "@/lib/roomNoise";
 import { tr } from "@/i18n/tr";
 
 // "active" is waiting on the learner; "running" is the check working by itself.
@@ -20,9 +21,8 @@ type RowStatus = "waiting" | "active" | "running" | "pass" | "fail" | "warn";
 
 const RECORD_SECONDS = 4;
 const NOISE_SECONDS = 3;
-// Raw RMS of the processed mic signal. Room noise above this is worth a
-// warning; a test recording that never peaks above SPEECH_PEAK heard nothing.
-const NOISY_RMS = 0.02;
+// RMS of the processed mic signal: a test recording that never peaks above
+// this heard nothing. Room noise is judged in lib/roomNoise.ts.
 const SPEECH_PEAK = 0.05;
 
 function StatusChip({ status }: { status: RowStatus }) {
@@ -115,10 +115,12 @@ function useMicCheck() {
   const [deviceId, setDeviceId] = useState<string>("");
   const [clipUrl, setClipUrl] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // The same microphone without noise suppression or automatic gain, for the
+  // room reading (the processed signal hides steady noise).
+  const rawStreamRef = useRef<MediaStream | null>(null);
+  const roomAnalyserRef = useRef<AnalyserNode | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number | null>(null);
-  const rmsRef = useRef(0);
-  const samplesRef = useRef<number[] | null>(null);
   const peakRef = useRef(0);
 
   const release = useCallback(() => {
@@ -126,8 +128,29 @@ function useMicCheck() {
     rafRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    rawStreamRef.current?.getTracks().forEach((t) => t.stop());
+    rawStreamRef.current = null;
+    roomAnalyserRef.current = null;
     ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
+  }, []);
+
+  // A few seconds of the room while the learner stays silent. Sampled on a
+  // timer, not animation frames, so a hidden tab still gets a reading.
+  const measureRoom = useCallback(async (): Promise<NoiseLevel> => {
+    const analyser = roomAnalyserRef.current;
+    if (!analyser) return "quiet";
+    const data = new Float32Array(analyser.fftSize);
+    const readings: number[] = [];
+    const timer = setInterval(() => {
+      analyser.getFloatTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+      readings.push(Math.sqrt(sum / data.length));
+    }, 100);
+    await new Promise((r) => setTimeout(r, NOISE_SECONDS * 1000));
+    clearInterval(timer);
+    return roomNoiseFrom(readings) ?? "quiet";
   }, []);
 
   useEffect(() => release, [release]);
@@ -145,7 +168,7 @@ function useMicCheck() {
       setStage("asking");
       let stream: MediaStream;
       try {
-        // Same processing as the real test recording, so the reading matches what gets graded.
+        // Same processing as the real test recording, so the test recording sounds like what gets graded.
         stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, ...(id ? { deviceId: { exact: id } } : {}) },
         });
@@ -155,19 +178,36 @@ function useMicCheck() {
         return;
       }
       streamRef.current = stream;
+      const deviceId = stream.getAudioTracks()[0]?.getSettings().deviceId ?? id;
+      // Without it (a browser that won't open the microphone twice) the room
+      // is read from the processed signal, which misses steady noise.
+      const raw = await navigator.mediaDevices
+        .getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) } })
+        .catch(() => null);
+      if (streamRef.current !== stream) {
+        raw?.getTracks().forEach((t) => t.stop());
+        return; // switched device meanwhile
+      }
+      rawStreamRef.current = raw;
       const ctx = new AudioContext();
       ctxRef.current = ctx;
+      // Created after the permission prompt, outside the click: Safari (and
+      // Chrome before any click) starts it suspended, and a suspended
+      // context's analyser reads silence.
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 1024;
       ctx.createMediaStreamSource(stream).connect(analyser);
+      const roomAnalyser = ctx.createAnalyser();
+      roomAnalyser.fftSize = 2048;
+      ctx.createMediaStreamSource(raw ?? stream).connect(roomAnalyser);
+      roomAnalyserRef.current = roomAnalyser;
       const data = new Float32Array(analyser.fftSize);
       const tick = () => {
         analyser.getFloatTimeDomainData(data);
         let sum = 0;
         for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
         const rms = Math.sqrt(sum / data.length);
-        rmsRef.current = rms;
-        samplesRef.current?.push(rms);
         peakRef.current = Math.max(peakRef.current, rms);
         setLevel(Math.min(1, rms * 4));
         rafRef.current = requestAnimationFrame(tick);
@@ -176,20 +216,16 @@ function useMicCheck() {
 
       const all = await navigator.mediaDevices.enumerateDevices().catch(() => []);
       setDevices(all.filter((d) => d.kind === "audioinput"));
-      setDeviceId(stream.getAudioTracks()[0]?.getSettings().deviceId ?? id ?? "");
+      setDeviceId(deviceId ?? "");
 
       // A few seconds of silence first: how loud is the room?
       setStage("noise");
-      samplesRef.current = [];
-      await new Promise((r) => setTimeout(r, NOISE_SECONDS * 1000));
-      const samples = samplesRef.current ?? [];
-      samplesRef.current = null;
-      const avg = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
+      const room = await measureRoom();
       if (streamRef.current !== stream) return; // switched device meanwhile
-      setNoise(avg > NOISY_RMS ? "noisy" : "quiet");
+      setNoise(room);
       setStage("ready");
     },
-    [release],
+    [release, measureRoom],
   );
 
   const record = useCallback(() => {
@@ -216,14 +252,10 @@ function useMicCheck() {
     const stream = streamRef.current;
     if (!stream) return;
     setNoiseBusy(true);
-    samplesRef.current = [];
-    await new Promise((r) => setTimeout(r, NOISE_SECONDS * 1000));
-    const samples = samplesRef.current ?? [];
-    samplesRef.current = null;
-    const avg = samples.length ? samples.reduce((a, b) => a + b, 0) / samples.length : 0;
-    if (streamRef.current === stream) setNoise(avg > NOISY_RMS ? "noisy" : "quiet");
+    const room = await measureRoom();
+    if (streamRef.current === stream) setNoise(room);
     setNoiseBusy(false);
-  }, []);
+  }, [measureRoom]);
 
   return { stage, setStage, level, noise, noiseBusy, devices, deviceId, clipUrl, open, record, release, remeasureNoise };
 }
@@ -422,7 +454,7 @@ export function SystemCheck({
         >
           {mic.noise === "noisy" && !mic.noiseBusy && (
             <>
-              <p className="text-xs text-ink bg-warning/15 rounded-input p-3">
+              <p role="alert" className="text-xs text-ink bg-warning/15 rounded-input p-3">
                 {tr("Background noise can lower your speaking score. Move somewhere quieter or close the windows. Even a fan can be noisy.")}
               </p>
               <Button variant="secondary" className="self-start" disabled={mic.stage === "recording"} onClick={mic.remeasureNoise}>
@@ -449,7 +481,8 @@ export function SystemCheck({
           )
         }
       >
-        {allOk ? tr("Continue") : tr("Finish the checks to continue")}
+        {/* A noisy room warns but never blocks: the learner may have nowhere quieter. */}
+        {!allOk ? tr("Finish the checks to continue") : needs.mic && mic.noise === "noisy" ? tr("Continue anyway") : tr("Continue")}
       </Button>
     </Shell>
   );

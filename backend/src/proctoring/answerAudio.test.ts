@@ -33,6 +33,18 @@ describe("measureAnswerNoise", () => {
     expect(r.noisy).toBe(true);
   });
 
+  it("flags steady loud noise with no speech standing out of it", async () => {
+    const file = path.join(dir, "only-noise.wav");
+    spawnSync(ffmpegPath as unknown as string, ["-y", "-v", "error", "-f", "lavfi", "-i", "anoisesrc=color=pink:amplitude=0.3:sample_rate=16000:duration=4:seed=3", "-ac", "1", file]);
+    expect((await measureAnswerNoise(file)).noisy).toBe(true);
+  });
+
+  it("doesn't call a silent recording noisy", async () => {
+    const file = path.join(dir, "silent.wav");
+    spawnSync(ffmpegPath as unknown as string, ["-y", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=16000:cl=mono", "-t", "3", file]);
+    expect(await measureAnswerNoise(file)).toEqual({ snrDb: null, noisy: false });
+  });
+
   it("has no measurement for a file it can't read", async () => {
     expect(await measureAnswerNoise(path.join(dir, "missing.webm"))).toEqual({ snrDb: null, noisy: false });
   });
