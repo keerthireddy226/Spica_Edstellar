@@ -789,7 +789,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     await finishTest();
   }
   finishEarlyRef.current = finishEarly;
-  useTestFocus(isMock && !!sessionId && !summary, deliveryMode, isMock && !!sessionId && !summary && !finishing && proctor.ready, finishEarlyRef);
+  useTestFocus(isMock && !!sessionId && !summary, deliveryMode, owned?.testName ?? (selectedType ? testTypeName(selectedType, t) : null), !!owned?.level, isMock && !!sessionId && !summary && !finishing && proctor.ready, finishEarlyRef);
 
   function handleBack() {
     stopSpokenAudio();
