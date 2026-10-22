@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/constants/routes";
 import { useTranslation } from "react-i18next";
 import { BadgeCheck, Download, RotateCcw, Share2, ShieldCheck, ShieldX } from "lucide-react";
 import { linkedInAddUrl } from "@/lib/linkedin";
@@ -53,6 +56,13 @@ const GOLD = "#b8893b";
 export function CertificateView() {
   const { t } = useTranslation();
   const { code = "" } = useParams();
+  // Back: to the page it was opened from; opened in a new tab or from a
+  // link, a signed-in learner goes to their certificates. Someone checking a
+  // certificate from its link or QR code (not signed in) gets no Back.
+  const navigate = useNavigate();
+  const { key: locationKey } = useLocation();
+  const { user } = useAuth();
+  const back = locationKey !== "default" ? () => navigate(-1) : user?.role === "learner" ? () => navigate(ROUTES.MY_CERTIFICATES) : null;
   const [cert, setCert] = useState<VerifiedCertificate | null>(null);
   const [missing, setMissing] = useState(false);
   // The check itself failed (network or server), which isn't the same as "no such certificate".
@@ -143,6 +153,14 @@ export function CertificateView() {
     <div className="app-surface min-h-screen flex flex-col items-center gap-4 p-3 sm:p-10 print:p-0 print:bg-white print:block">
       {/* One landscape A4 page when printed or saved as a PDF. */}
       <style>{`@page { size: A4 landscape; margin: 0; } @media print { html, body { background: #fff !important; } .cert-page { transform: none !important; } }`}</style>
+      {back && (
+        <button
+          onClick={back}
+          className="print:hidden self-start sm:self-auto sm:w-full sm:max-w-[960px] flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer"
+        >
+          <ArrowLeft size={16} /> {tr("Back")}
+        </button>
+      )}
       <div className="print:hidden flex flex-wrap items-center justify-center gap-3">
         {cert.valid ? (
           <span className="flex items-center gap-1.5 text-sm text-success font-semibold">
