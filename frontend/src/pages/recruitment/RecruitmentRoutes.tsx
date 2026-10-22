@@ -34,6 +34,16 @@ const INTEGRITY_TEXT: Record<string, () => string> = {
   violation: () => tr("Violation confirmed"),
 };
 
+// Every decision, recruitment and admissions alike.
+const DECISION_TEXT: Record<NonNullable<AssessmentReport["decision"]>, () => string> = {
+  shortlisted: () => tr("Shortlisted"),
+  rejected: () => tr("Rejected"),
+  hired: () => tr("Hired"),
+  admitted: () => tr("Admitted"),
+  waitlisted: () => tr("Waitlisted"),
+  declined: () => tr("Declined"),
+};
+
 // A clean one-page report to print or save as PDF for the hiring manager.
 // Also opened by a hiring manager from a shared link (`token`), without logging in.
 export function CandidateReportPrint() {
@@ -52,7 +62,7 @@ export function CandidateReportPrint() {
       .catch(() => setError(true));
   }, [id, token]);
   if (error) return <p className="p-8 text-sm text-error">{token ? tr("This link has expired or isn't valid. Ask the recruiter for a new one.") : tr("This report isn't available.")}</p>;
-  if (!a) return null;
+  if (!a) return <p className="p-8 text-sm text-black/60 bg-white min-h-screen">{tr("Loading…")}</p>;
   const name = [a.first_name, a.last_name].filter(Boolean).join(" ") || a.email;
   const r = a.result;
   return (
@@ -151,7 +161,7 @@ export function CandidateReportPrint() {
       {a.decision && (
         <>
           <h2 className="text-lg font-bold mt-6">{tr("Decision")}</h2>
-          <p className="text-sm mt-1">{a.decision === "hired" ? tr("Hired") : a.decision === "rejected" ? tr("Rejected") : tr("Shortlisted")}</p>
+          <p className="text-sm mt-1">{DECISION_TEXT[a.decision]()}</p>
           {a.decision_note && <p className="text-sm text-black/70">{a.decision_note}</p>}
         </>
       )}

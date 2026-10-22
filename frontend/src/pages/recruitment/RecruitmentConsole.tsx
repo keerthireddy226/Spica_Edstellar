@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Briefcase, Coins, Download, Mail, Plus, Printer, RotateCw, Send, ShieldAlert, Trash2, UserCheck, UserPlus, Users, XCircle } from "lucide-react";
+import { Briefcase, Check, ChevronRight, Coins, Download, Mail, Plus, Printer, RotateCw, Send, ShieldAlert, Trash2, UserCheck, UserPlus, Users, XCircle } from "lucide-react";
 import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
 import { EmptyNote, FilterPills, PageHeader, Panel, StatCard, StatusPill } from "@/components/staff/StaffKit";
@@ -99,6 +99,10 @@ function personName(r: { first_name: string | null; last_name: string | null; em
   return [r.first_name, r.last_name].filter(Boolean).join(" ") || r.email;
 }
 
+function initialsOf(r: { first_name: string | null; last_name: string | null; email: string }): string {
+  return `${r.first_name?.[0] ?? ""}${r.last_name?.[0] ?? ""}`.toUpperCase() || r.email.slice(0, 2).toUpperCase();
+}
+
 function money(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
@@ -179,22 +183,57 @@ function CandidateFeedback({ id }: { id: string }) {
 // A read-only link for hiring managers, copied to the clipboard.
 function ShareButton({ id }: { id: string }) {
   const [shared, setShared] = useState<{ url: string; until: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
   return shared ? (
-    <span className="text-xs text-success self-center max-w-xs">
+    <span className="text-xs text-white bg-white/15 rounded-input px-3 py-2 self-center max-w-xs">
       {tr("Link copied. Anyone with it can open this report until {{date}}.", { date: shared.until })}
     </span>
   ) : (
     <Button
       variant="secondary"
+      disabled={busy}
+      title={failed ? tr("Could not create a link.") : undefined}
       onClick={async () => {
+        setBusy(true);
+        setFailed(false);
         const r = await shareAssessment(id).catch(() => null);
-        if (!r) return;
+        setBusy(false);
+        if (!r) {
+          setFailed(true);
+          return;
+        }
         await navigator.clipboard?.writeText(r.url).catch(() => {});
         setShared(r);
       }}
     >
-      {tr("Share with a hiring manager")}
+      {failed ? tr("Could not create a link.") : tr("Share with a hiring manager")}
     </Button>
+  );
+}
+
+// The modal frame while something loads, or when it could not.
+function ModalPlaceholder({ title, icon, error, onClose, onRetry }: { title: string; icon: typeof Briefcase; error: string | null; onClose: () => void; onRetry?: () => void }) {
+  return (
+    <DetailModal title={title} icon={icon} onClose={onClose}>
+      {error ? (
+        <div className="flex items-center justify-between gap-3 bg-error/10 border border-error/25 rounded-card px-4 py-3 text-sm text-error">
+          <span>{error}</span>
+          {onRetry && (
+            <button onClick={onRetry} className="font-semibold underline cursor-pointer">
+              {tr("Try again")}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-20 rounded-card bg-paper-warm border border-rule animate-pulse" />
+          ))}
+          <p className="sr-only">{tr("Loading…")}</p>
+        </div>
+      )}
+    </DetailModal>
   );
 }
 
@@ -208,7 +247,9 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
   const [interview, setInterview] = useState<InterviewQuestion[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const load = useCallback(() => {
+    setLoadError(null);
     getAssessment(id)
       .then((r) => {
         setA(r.assessment);
@@ -217,10 +258,10 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
         setConfirmLevel(r.assessment.confirmed_level ?? r.assessment.result?.cefrLevel ?? "");
         setConfirmNote(r.assessment.confirm_note ?? "");
       })
-      .catch(() => {});
+      .catch(() => setLoadError(tr("Could not load this report.")));
   }, [id]);
   useEffect(load, [load]);
-  if (!a) return null;
+  if (!a) return <ModalPlaceholder title={loadError ? tr("Something went wrong") : tr("Loading…")} icon={UserCheck} error={loadError} onClose={onClose} onRetry={load} />;
   const integrityRoute = user?.role === "recruiter" ? ROUTES.RECRUITER_INTEGRITY : ROUTES.ORG_ADMIN_INTEGRITY;
   async function decide(d: Decision | null) {
     setBusy(true);
@@ -232,11 +273,17 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
   return (
     <DetailModal
       title={personName(a)}
-      subtitle={[a.email, a.job_title].join(" · ")}
+      subtitle={a.email}
       icon={UserCheck}
       onClose={onClose}
       badges={
         <>
+          {a.job_title && (
+            <Badge>
+              <Briefcase size={11} className="inline mr-1 -mt-0.5" />
+              {a.job_title}
+            </Badge>
+          )}
           <Badge tone={a.status === "completed" ? "good" : a.status === "expired" ? "warn" : "neutral"}>{STATUS_TEXT[a.status]()}</Badge>
           {a.decision && <Badge tone={a.decision === "rejected" ? "bad" : "good"}>{DECISION_TEXT[a.decision]()}</Badge>}
         </>
@@ -358,31 +405,33 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
             />
             {adm && !a.confirmed_level && <p className="text-xs text-warning">{tr("Confirm the result first.")}</p>}
             <div className="flex flex-wrap gap-2">
-              {adm ? (
-                <>
-                  <Button onClick={() => decide("admitted")} disabled={busy || !a.confirmed_level}>
-                    {tr("Admit")}
+              {(adm
+                ? ([
+                    ["admitted", tr("Admit")],
+                    ["waitlisted", tr("Waitlist")],
+                    ["declined", tr("Decline")],
+                  ] as [Decision, string][])
+                : ([
+                    ["shortlisted", tr("Shortlist")],
+                    ["hired", tr("Mark as hired")],
+                    ["rejected", tr("Reject")],
+                  ] as [Decision, string][])
+              ).map(([d, label], i) => {
+                const current = a.decision === d;
+                return (
+                  <Button
+                    key={d}
+                    variant={current || (!a.decision && i === 0) ? "primary" : "secondary"}
+                    aria-pressed={current}
+                    onClick={() => !current && decide(d)}
+                    disabled={busy || (adm && !a.confirmed_level)}
+                    className={current ? "ring-2 ring-navy/30 ring-offset-2 ring-offset-surface" : ""}
+                  >
+                    {current && <Check size={15} className="inline mr-1.5 -mt-0.5" />}
+                    {label}
                   </Button>
-                  <Button variant="secondary" onClick={() => decide("waitlisted")} disabled={busy || !a.confirmed_level}>
-                    {tr("Waitlist")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => decide("declined")} disabled={busy || !a.confirmed_level}>
-                    {tr("Decline")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button onClick={() => decide("shortlisted")} disabled={busy}>
-                    {tr("Shortlist")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => decide("hired")} disabled={busy}>
-                    {tr("Mark as hired")}
-                  </Button>
-                  <Button variant="secondary" onClick={() => decide("rejected")} disabled={busy}>
-                    {tr("Reject")}
-                  </Button>
-                </>
-              )}
+                );
+              })}
               {a.decision && (
                 <button onClick={() => decide(null)} disabled={busy} className="text-sm text-muted underline cursor-pointer">
                   {tr("Clear decision")}
@@ -472,17 +521,57 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
     }
   }
   if (job.status === "closed") return <EmptyNote>{tr("This job opening is closed. Reopen it to invite people.")}</EmptyNote>;
+  const field = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+  const label = "text-[11px] font-semibold uppercase tracking-wide text-muted";
+  const total = people.length * cost;
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr("Email")} type="email" className="rounded-input border border-rule bg-surface px-3 py-2 text-sm sm:col-span-3" />
-        <input value={first} onChange={(e) => setFirst(e.target.value)} placeholder={tr("First name")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
-        <input value={last} onChange={(e) => setLast(e.target.value)} placeholder={tr("Last name")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
+    <div className="flex flex-col gap-4 max-w-3xl">
+      <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+        <p className="font-display font-bold text-ink">{tr("Invite one person")}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className={label}>{tr("Email")}</span>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className={field} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={label}>{tr("First name")}</span>
+            <input value={first} onChange={(e) => setFirst(e.target.value)} className={field} />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={label}>{tr("Last name")}</span>
+            <input value={last} onChange={(e) => setLast(e.target.value)} className={field} />
+          </label>
+        </div>
       </div>
-      <label className="flex flex-col gap-1 text-sm text-ink">
-        {tr("Or paste many, one per line: email, first name, last name")}
-        <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} rows={5} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm font-mono" />
-      </label>
+      <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+        <p className="font-display font-bold text-ink">{tr("Invite many at once")}</p>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs text-muted">{tr("Or paste many, one per line: email, first name, last name")}</span>
+          <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} rows={5} placeholder="name@example.com, Asha, Rao" className={`${field} font-mono`} />
+        </label>
+      </div>
+      <div className="flex items-center gap-4 flex-wrap bg-paper-warm border border-rule rounded-card px-5 py-3">
+        <div className="flex items-center gap-5">
+          <div>
+            <p className="font-display font-bold text-xl text-ink">{people.length}</p>
+            <p className="text-[11px] text-muted">{tr("Ready")}</p>
+          </div>
+          <div>
+            <p className={`font-display font-bold text-xl ${total > credits ? "text-error" : "text-ink"}`}>{total}</p>
+            <p className="text-[11px] text-muted">{tr("Credits needed")}</p>
+          </div>
+          <div>
+            <p className="font-display font-bold text-xl text-ink">{credits}</p>
+            <p className="text-[11px] text-muted">{tr("Credits left")}</p>
+          </div>
+        </div>
+        <div className="ml-auto">
+          <Button onClick={send} disabled={busy || people.length === 0}>
+            <Send size={15} className="inline mr-1.5" />
+            {busy ? tr("Sending...") : tr("Send invitations")}
+          </Button>
+        </div>
+      </div>
       <p className="text-xs text-muted">
         {cost === 1
           ? tr("{{n}} people ready. Each invitation uses one credit ({{c}} left). Unused invitations are refunded when they expire or are cancelled.", { n: people.length, c: credits })
@@ -493,13 +582,9 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
               c: credits,
             })}
       </p>
-      {note && <p className={`text-sm ${note.ok ? "text-success" : "text-error"}`}>{note.text}</p>}
-      <div>
-        <Button onClick={send} disabled={busy || people.length === 0}>
-          <Send size={15} className="inline mr-1.5" />
-          {busy ? tr("Sending...") : tr("Send invitations")}
-        </Button>
-      </div>
+      {note && (
+        <p className={`text-sm rounded-input px-3.5 py-2.5 border ${note.ok ? "text-success bg-success/10 border-success/25" : "text-error bg-error/10 border-error/25"}`}>{note.text}</p>
+      )}
     </div>
   );
 }
@@ -518,7 +603,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm w-full";
+  const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm w-full text-ink focus:border-navy focus:outline-none disabled:opacity-60";
   async function save() {
     setBusy(true);
     setError(null);
@@ -580,7 +665,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
         {tr("Show candidates their level when they finish")}
       </label>
       {error && <p className="text-sm text-error">{error}</p>}
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-1">
         <Button onClick={save} disabled={busy || f.title.trim().length < 2}>
           {busy ? tr("Saving...") : tr("Save")}
         </Button>
@@ -601,14 +686,16 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
   const [filter, setFilter] = useState<CandidateFilter>("all");
   const [sort, setSort] = useState<"level" | "recent">("level");
   const [report, setReport] = useState<string | null>(null);
-  const [flash, setFlash] = useState<string | null>(null);
+  const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const load = useCallback(() => {
+    setLoadError(null);
     getJob(jobId)
       .then(setData)
-      .catch(() => {});
+      .catch(() => setLoadError(tr("Something went wrong")));
   }, [jobId]);
   useEffect(load, [load]);
-  if (!data) return null;
+  if (!data) return <ModalPlaceholder title={loadError ? tr("Something went wrong") : tr("Loading…")} icon={Briefcase} error={loadError} onClose={onClose} onRetry={load} />;
   const { job, candidates } = data;
   const rank = (c: CandidateRow) => (c.result?.cefrLevel ? CEFR.indexOf(c.result.cefrLevel) * 1000 : 0) + (c.result?.overallPercent ?? -1);
   const shown = candidates
@@ -629,9 +716,9 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
   async function act(fn: () => Promise<unknown>, done: string) {
     try {
       await fn();
-      setFlash(done);
+      setFlash({ ok: true, text: done });
     } catch {
-      setFlash(tr("That didn't work. Try again."));
+      setFlash({ ok: false, text: tr("That didn't work. Try again.") });
     }
     changed();
   }
@@ -647,7 +734,13 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
           <a href={jobExportUrl(job.id)} className="text-sm font-semibold underline flex items-center gap-1">
             <Download size={14} /> {tr("Export CSV")}
           </a>
-          <Button variant="secondary" onClick={() => act(() => updateJob(job.id, { status: job.status === "open" ? "closed" : "open" }), job.status === "open" ? tr("Job opening closed.") : tr("Job opening reopened."))}>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              (job.status === "closed" || window.confirm(tr("Close this job opening? Candidates can't be invited until you reopen it."))) &&
+              act(() => updateJob(job.id, { status: job.status === "open" ? "closed" : "open" }), job.status === "open" ? tr("Job opening closed.") : tr("Job opening reopened."))
+            }
+          >
             {job.status === "open" ? tr("Close job") : tr("Reopen job")}
           </Button>
         </>
@@ -666,7 +759,14 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
       tab={tab}
       onTab={setTab}
     >
-      {flash && <p className="text-sm text-success mb-3">{flash}</p>}
+      {flash && (
+        <div className={`text-sm rounded-input px-3.5 py-2.5 border mb-4 flex items-center justify-between gap-3 ${flash.ok ? "text-success bg-success/10 border-success/25" : "text-error bg-error/10 border-error/25"}`}>
+          <span>{flash.text}</span>
+          <button onClick={() => setFlash(null)} title={tr("Dismiss")} className="cursor-pointer opacity-70 hover:opacity-100">
+            <XCircle size={15} />
+          </button>
+        </div>
+      )}
       {tab === "candidates" && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 justify-between">
@@ -690,15 +790,18 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
           {shown.length === 0 ? (
             <EmptyNote>{candidates.length ? tr("No candidates match this filter.") : tr("Nobody invited yet. Use the Invite tab.")}</EmptyNote>
           ) : (
-            <div className="bg-surface border border-rule rounded-card divide-y divide-rule">
+            <div className="bg-surface border border-rule rounded-card shadow-sm divide-y divide-rule overflow-hidden">
               {shown.map((c) => (
-                <div key={c.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <button onClick={() => setReport(c.id)} className="min-w-0 flex-1 text-left cursor-pointer">
+                <div key={c.id} className="px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 hover:bg-paper-warm/50 transition-colors">
+                  <button onClick={() => setReport(c.id)} className="min-w-0 flex-1 text-left cursor-pointer flex items-center gap-3">
+                    <span className="h-9 w-9 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center text-xs font-bold shrink-0">{initialsOf(c)}</span>
+                    <span className="min-w-0">
                     <p className="text-sm font-semibold text-ink truncate">{personName(c)}</p>
                     <p className="text-xs text-muted truncate">
                       {c.email} · {c.completed_at ? tr("finished {{d}}", { d: dateTime(c.completed_at) }) : tr("invited {{d}}", { d: dateTime(c.invited_at) })}
                       {c.test_code ? ` · ${c.test_code}` : ""}
                     </p>
+                    </span>
                   </button>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <ResultBadge result={c.result} min={job.min_cefr} />
@@ -736,7 +839,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
           onSave={async (j) => {
             await updateJob(job.id, job.invited > 0 ? { ...j, testKind: undefined } : j);
             setTab("candidates");
-            setFlash(tr("Job opening saved."));
+            setFlash({ ok: true, text: tr("Job opening saved.") });
             changed();
           }}
         />
@@ -747,6 +850,8 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
 }
 
 function TeamPanel({ canManage }: { canManage: boolean }) {
+  const { user } = useAuth();
+  const adm = useAdmissions();
   const [rows, setRows] = useState<Recruiter[] | null>(null);
   const [f, setF] = useState({ email: "", firstName: "", lastName: "" });
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -766,9 +871,10 @@ function TeamPanel({ canManage }: { canManage: boolean }) {
       setNote({ ok: false, text: err instanceof ApiError && err.message === "email_already_registered" ? tr("That email already has a Spica account.") : tr("Could not add the recruiter.") });
     }
   }
-  const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm";
+  const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
   return (
     <div className="flex flex-col gap-4">
+      {!canManage && <p className="text-xs text-muted">{tr("Only your Org Admin can add or remove recruiters.")}</p>}
       {canManage && (
         <Panel title={tr("Add a recruiter")}>
           <p className="text-sm text-muted">{tr("Recruiters see job openings, candidates and their integrity reviews. They don't see your employees.")}</p>
@@ -786,14 +892,23 @@ function TeamPanel({ canManage }: { canManage: boolean }) {
           </div>
         </Panel>
       )}
-      {rows === null ? null : rows.length === 0 ? (
+      {rows === null ? (
+        <div className="h-16 rounded-card bg-paper-warm border border-rule animate-pulse" aria-busy="true" />
+      ) : rows.length === 0 ? (
         <EmptyNote>{tr("No recruiters yet.")}</EmptyNote>
       ) : (
-        <div className="bg-surface border border-rule rounded-card divide-y divide-rule">
+        <Panel title={`${adm ? tr("Admissions team") : tr("Recruiters")} (${rows.length})`}>
+        <div className="divide-y divide-rule -my-1">
           {rows.map((r) => (
-            <div key={r.id} className="px-4 py-3 flex items-center gap-3">
+            <div key={r.id} className="py-3 flex items-center gap-3">
+              <span className="h-10 w-10 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">{initialsOf(r)}</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink truncate">{personName(r)}</p>
+                <p className="text-sm font-semibold text-ink truncate">
+                  {personName(r)}
+                  {user?.email && r.email.toLowerCase() === user.email.toLowerCase() && (
+                    <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-pill bg-navy/10 text-navy-deep">{tr("You")}</span>
+                  )}
+                </p>
                 <p className="text-xs text-muted truncate">
                   {r.email} · {r.last_login_at ? tr("last signed in {{d}}", { d: dateTime(r.last_login_at) }) : tr("hasn't signed in yet")} · {tr("{{n}} invited", { n: r.invited })}
                 </p>
@@ -810,6 +925,7 @@ function TeamPanel({ canManage }: { canManage: boolean }) {
             </div>
           ))}
         </div>
+        </Panel>
       )}
     </div>
   );
@@ -827,18 +943,26 @@ function CreditsPanel({ overview }: { overview: RecruitmentOverview }) {
   const [data, setData] = useState<{ balance: number; used: number; events: CreditEvent[] } | null>(null);
   const [qty, setQty] = useState(50);
   const [note, setNote] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   useEffect(() => {
     getCredits()
       .then(setData)
-      .catch(() => {});
+      .catch(() => setLoadFailed(true));
   }, []);
   async function request() {
+    setBusy(true);
     const r = await requestCredits(qty, note.trim() || undefined).catch(() => null);
-    setMsg(r ? tr("Request sent to your Edstellar contact: {{n}} credits at {{p}} each.", { n: qty, p: money(r.unitPriceCents) }) : tr("Could not send the request."));
+    setBusy(false);
+    setMsg(
+      r
+        ? { ok: true, text: tr("Request sent to your Edstellar contact: {{n}} credits at {{p}} each.", { n: qty, p: money(r.unitPriceCents) }) }
+        : { ok: false, text: tr("Could not send the request.") },
+    );
   }
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       <Panel title={tr("Get more credits")}>
         <p className="text-sm text-muted">
           {tr("One credit costs {{p}}. A test takes 1 to 4 credits: Placement 1, Speaking & Listening and Writing 2, 4 Skills Essentials 3, Professional English 4. Credits don't expire.", { p: money(overview.unitPriceCents) })}
@@ -849,18 +973,20 @@ function CreditsPanel({ overview }: { overview: RecruitmentOverview }) {
             <input type="number" min={1} value={qty} onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))} className="w-28 rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
           </label>
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={tr("Note (PO number, timing)")} className="flex-1 min-w-40 rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
-          <Button onClick={request}>
+          <Button onClick={request} disabled={busy}>
             <Mail size={15} className="inline mr-1.5" />
             {tr("Request")}
           </Button>
         </div>
-        {msg && <p className="text-sm text-success">{msg}</p>}
+        {msg && <p className={`text-sm ${msg.ok ? "text-success" : "text-error"}`}>{msg.text}</p>}
       </Panel>
       <Panel title={tr("History")}>
-        {!data ? null : data.events.length === 0 ? (
+        {!data ? (
+          loadFailed ? <EmptyNote>{tr("Something went wrong")}</EmptyNote> : <div className="h-24 rounded-input bg-paper-warm animate-pulse" aria-busy="true" />
+        ) : data.events.length === 0 ? (
           <EmptyNote>{tr("No credits added yet.")}</EmptyNote>
         ) : (
-          <ul className="flex flex-col divide-y divide-rule">
+          <ul className="flex flex-col divide-y divide-rule max-h-[36rem] overflow-y-auto -mx-1 px-1">
             {data.events.map((e, i) => (
               <li key={i} className="py-2 flex items-center justify-between gap-3 text-sm">
                 <span className="min-w-0">
@@ -868,7 +994,7 @@ function CreditsPanel({ overview }: { overview: RecruitmentOverview }) {
                   {e.note && <span className="text-xs text-muted"> · {trServer(e.note)}</span>}
                   <span className="block text-xs text-muted">{dateTime(e.created_at)}</span>
                 </span>
-                <span className={`font-mono text-sm ${e.delta > 0 ? "text-success" : "text-error"}`}>
+                <span className={`font-mono text-sm font-semibold px-2 py-0.5 rounded-pill ${e.delta > 0 ? "text-success bg-success/10" : "text-error bg-error/10"}`}>
                   {e.delta > 0 ? "+" : ""}
                   {e.delta}
                 </span>
@@ -941,6 +1067,7 @@ export function RecruitmentConsole() {
   const [report, setReport] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
+    setError(null);
     getRecruitmentOverview()
       .then(setOverview)
       .catch((err) => setError(err instanceof ApiError && err.message === "product_not_enabled" ? tr("Recruitment isn't part of your organization's plan. Ask your Edstellar contact to add it.") : tr("Could not load recruitment.")));
@@ -953,12 +1080,34 @@ export function RecruitmentConsole() {
   if (error) {
     return (
       <div className="flex flex-col gap-5 w-full">
-        <PageHeader title={tr("Recruitment")} subtitle={tr("Assess candidates' English before you hire.")} />
-        <EmptyNote>{error}</EmptyNote>
+        <PageHeader title={adm ? tr("Admissions") : tr("Recruitment")} subtitle={tr("Assess candidates' English before you hire.")} />
+        <div className="flex items-center justify-between gap-3 bg-paper-warm border border-rule rounded-card px-4 py-3 text-sm text-muted">
+          <span>{error}</span>
+          <button onClick={load} className="font-semibold text-navy-deep underline cursor-pointer shrink-0">
+            {tr("Try again")}
+          </button>
+        </div>
       </div>
     );
   }
-  if (!overview) return null;
+  if (!overview) {
+    return (
+      <div className="flex flex-col gap-5 w-full" aria-busy="true">
+        <PageHeader title={adm ? tr("Admissions") : tr("Recruitment")} subtitle={tr("Assess candidates' English before you hire.")} />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[88px] rounded-card bg-paper-warm border border-rule animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-40 rounded-card bg-paper-warm border border-rule animate-pulse" />
+          ))}
+        </div>
+        <p className="sr-only">{tr("Loading…")}</p>
+      </div>
+    );
+  }
   const tabs: [Tab, string][] = [
     ["jobs", adm ? tr("Intakes") : tr("Job openings")],
     ["team", adm ? tr("Admissions team") : tr("Recruiters")],
@@ -977,7 +1126,13 @@ export function RecruitmentConsole() {
             : tr("Invite candidates to a proctored English test and compare their results before you hire.")
         }
         actions={
-          <Button onClick={() => setCreating(true)}>
+          <Button
+            disabled={creating && tab === "jobs"}
+            onClick={() => {
+              setTab("jobs");
+              setCreating(true);
+            }}
+          >
             <Plus size={15} className="inline mr-1.5" />
             {adm ? tr("New intake") : tr("New job opening")}
           </Button>
@@ -989,7 +1144,19 @@ export function RecruitmentConsole() {
         <StatCard label={tr("Results to decide")} value={overview.counts.to_decide} icon={Users} index={2} />
         <StatCard label={adm ? tr("Admitted") : tr("Hired")} value={overview.counts.hired} icon={UserCheck} index={3} />
       </div>
-      <FilterPills value={tab} onChange={setTab} options={tabs} />
+      <div className="flex items-center gap-1 border-b border-rule overflow-x-auto">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px whitespace-nowrap transition-colors cursor-pointer ${
+              tab === key ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {tab === "jobs" && (
         <div className="flex flex-col gap-4">
@@ -1006,15 +1173,23 @@ export function RecruitmentConsole() {
               />
             </Panel>
           )}
-          <FilterPills
-            value={jobFilter}
-            onChange={setJobFilter}
-            options={[
-              ["open", tr("Open"), (jobs ?? []).filter((j) => j.status === "open").length],
-              ["closed", tr("Closed"), (jobs ?? []).filter((j) => j.status === "closed").length],
-            ]}
-          />
-          {jobs === null ? null : visibleJobs.length === 0 ? (
+          <div className="self-start max-w-full">
+            <FilterPills
+              value={jobFilter}
+              onChange={setJobFilter}
+              options={[
+                ["open", tr("Open"), (jobs ?? []).filter((j) => j.status === "open").length],
+                ["closed", tr("Closed"), (jobs ?? []).filter((j) => j.status === "closed").length],
+              ]}
+            />
+          </div>
+          {jobs === null ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" aria-busy="true">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-40 rounded-card bg-paper-warm border border-rule animate-pulse" />
+              ))}
+            </div>
+          ) : visibleJobs.length === 0 ? (
             <EmptyNote>
               {adm
                 ? jobFilter === "open"
@@ -1027,10 +1202,19 @@ export function RecruitmentConsole() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {visibleJobs.map((j) => (
-                <button key={j.id} onClick={() => setOpenJob(j.id)} className="text-left bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow cursor-pointer">
-                  <div className="min-w-0">
-                    <p className="font-display font-bold text-ink truncate">{j.title}</p>
-                    {(j.department || j.location) && <p className="text-xs text-muted truncate">{[j.department, j.location].filter(Boolean).join(" · ")}</p>}
+                <button
+                  key={j.id}
+                  onClick={() => setOpenJob(j.id)}
+                  className="group text-left bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 hover:shadow-md hover:border-navy/40 hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="h-10 w-10 rounded-xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
+                      <Briefcase size={18} strokeWidth={1.8} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-bold text-ink truncate">{j.title}</p>
+                      <p className="text-xs text-muted truncate">{[j.department, j.location].filter(Boolean).join(" · ") || "—"}</p>
+                    </div>
                   </div>
                   <p className="text-xs text-muted">
                     {TEST_KIND_LABEL[j.test_kind]()}
@@ -1043,11 +1227,17 @@ export function RecruitmentConsole() {
                       [j.shortlisted, adm ? tr("Waitlisted") : tr("Shortlist")],
                       [j.hired, adm ? tr("Admitted") : tr("Hired")],
                     ].map(([n, l]) => (
-                      <div key={String(l)} className="bg-paper-warm rounded-input py-1.5">
-                        <p className="font-display font-bold text-ink">{n}</p>
-                        <p className="text-[10px] text-muted">{l}</p>
+                      <div key={String(l)} className="bg-paper-warm rounded-input py-2">
+                        <p className="font-display font-bold text-lg leading-tight text-ink">{n}</p>
+                        <p className="text-[10px] text-muted truncate px-1">{l}</p>
                       </div>
                     ))}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-rule text-xs text-muted">
+                    <span className="truncate">{tr("Created {{date}}", { date: shortDate(j.created_at) })}</span>
+                    <span className="flex items-center gap-0.5 font-semibold text-navy-deep shrink-0">
+                      {tr("Open")} <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                    </span>
                   </div>
                 </button>
               ))}
@@ -1055,19 +1245,21 @@ export function RecruitmentConsole() {
           )}
           {overview.recent.length > 0 && (
             <Panel title={tr("Recently finished")}>
-              <ul className="divide-y divide-rule">
+              <ul className="divide-y divide-rule -my-1">
                 {overview.recent.map((r) => (
                   <li key={r.id}>
-                    <button onClick={() => setReport(r.id)} className="w-full py-2 flex items-center justify-between gap-3 text-left cursor-pointer">
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink truncate">{personName(r)}</span>
+                    <button onClick={() => setReport(r.id)} className="w-full py-3 flex items-center justify-between gap-3 text-left cursor-pointer group">
+                      <span className="h-9 w-9 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center text-xs font-bold shrink-0">{initialsOf(r)}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-ink truncate group-hover:underline">{personName(r)}</span>
                         <span className="block text-xs text-muted truncate">
                           {r.job_title} · {dateTime(r.completed_at)}
                         </span>
                       </span>
                       <span className="flex items-center gap-2 shrink-0">
                         <ResultBadge result={r.result} />
-                        {r.decision && <StatusPill tone={DECISION_TONE[r.decision]}>{DECISION_TEXT[r.decision]()}</StatusPill>}
+                        {r.decision ? <StatusPill tone={DECISION_TONE[r.decision]}>{DECISION_TEXT[r.decision]()}</StatusPill> : <StatusPill tone="warning">{tr("To decide")}</StatusPill>}
+                        <ChevronRight size={15} className="text-muted hidden sm:block" />
                       </span>
                     </button>
                   </li>

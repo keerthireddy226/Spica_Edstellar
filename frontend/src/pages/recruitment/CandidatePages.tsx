@@ -14,6 +14,20 @@ import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 
+// While the invitation or assessment loads: the same frame, not a blank page.
+function CandidateLoading() {
+  return (
+    <CandidateShell>
+      <div className="w-full max-w-lg bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col items-center gap-4" aria-busy="true">
+        <span className="h-14 w-14 rounded-2xl bg-paper-warm animate-pulse" />
+        <span className="h-5 w-48 rounded bg-paper-warm animate-pulse" />
+        <span className="h-4 w-64 rounded bg-paper-warm animate-pulse" />
+        <p className="sr-only">{tr("Loading…")}</p>
+      </div>
+    </CandidateShell>
+  );
+}
+
 // The emailed link: what the assessment is, then signing the candidate in.
 export function AssessInvite() {
   const { token = "" } = useParams();
@@ -59,7 +73,7 @@ export function AssessInvite() {
       </CandidateShell>
     );
   }
-  if (!info) return null;
+  if (!info) return <CandidateLoading />;
   if (info.status === "completed" || info.status === "expired") {
     return (
       <CandidateShell org={info.organization.name}>
@@ -176,7 +190,7 @@ export function CandidateAssessmentPage() {
       </CandidateShell>
     );
   }
-  if (!a) return null;
+  if (!a) return <CandidateLoading />;
   if (a.status === "completed") return <CandidateFinished />;
   if (a.status === "expired") {
     return (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Layers, Users, MapPin, KeyRound } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Plus, Layers, Users, MapPin, KeyRound, CalendarDays, ChevronRight, X } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { Button } from "@/components/Button";
 import { BatchFormModal } from "@/components/BatchFormModal";
@@ -94,7 +95,7 @@ function NewBatchModal({ poolLeft, onClose, onCreated }: { poolLeft: number | nu
         const r = await managerCreateBatch({ ...d, fixedFromPool: n || undefined, requestFromOrg: ask });
         onCreated(
           [
-            `${d.name} created.`,
+            tr("{{name}} created.", { name: d.name }),
             r.fixedLicenses ? tr("{{fixedLicenses}} licenses set aside from your pool.", { fixedLicenses: r.fixedLicenses }) : "",
             r.requestId ? tr("Request for {{quantity}} more sent to your Org Admin.", { quantity: ask!.quantity }) : "",
             r.requestError ? tr("The license request couldn't be sent — try again from the batch.") : "",
@@ -117,7 +118,10 @@ export function ManagerBatches() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>("active");
-  const [viewing, setViewing] = useState<string | null>(null);
+  // ?batch=<id> opens that batch (the dashboard links here).
+  const [params, setParams] = useSearchParams();
+  const viewing = params.get("batch");
+  const setViewing = (id: string | null) => setParams(id ? { batch: id } : {}, { replace: true });
   const [creating, setCreating] = useState(false);
   const [requestingFor, setRequestingFor] = useState<string | null>(null);
 
@@ -150,25 +154,55 @@ export function ManagerBatches() {
         </div>
       </div>
 
-      <div className="bg-surface border border-rule rounded-card shadow-sm px-5 py-4 flex items-center gap-5 flex-wrap">
-        <span className="h-10 w-10 rounded-2xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
-          <KeyRound size={20} strokeWidth={1.8} />
+      <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex items-center gap-5 flex-wrap">
+        <span className="h-11 w-11 rounded-2xl bg-navy/10 text-navy flex items-center justify-center shrink-0">
+          <KeyRound size={22} strokeWidth={1.8} />
         </span>
         <div className="flex-1 min-w-48">
-          <p className="font-semibold text-ink text-sm">{tr("Your license pool")}</p>
-          <p className="text-xs text-muted">
+          <p className="font-display font-bold text-ink">{tr("Your license pool")}</p>
+          <p className="text-xs text-muted mt-0.5">
             {myPool?.allotment != null
               ? tr("{{v}} left of {{allotment}} · used for learners in batches without fixed licenses, or once those run out.", { v: myPool.remaining ?? 0, allotment: myPool.allotment })
               : tr("None allotted yet — learners can only get licenses from a batch's fixed licenses.")}
           </p>
         </div>
-        <button onClick={() => setRequestingFor("")} className="text-xs font-semibold text-navy hover:underline cursor-pointer">
-          {tr("Request licenses")}</button>
+        <button
+          onClick={() => setRequestingFor("")}
+          className="rounded-pill border border-rule px-4 py-2 text-xs font-semibold text-ink hover:border-rule-strong hover:bg-paper-warm transition-colors cursor-pointer"
+        >
+          {tr("Request licenses")}
+        </button>
       </div>
 
-      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!batches && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {notice && (
+        <div className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3 flex items-center justify-between gap-3">
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} title={tr("Dismiss")} className="text-success/80 hover:text-success cursor-pointer shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      {error && (
+        <div className="bg-error/10 border border-error/25 rounded-card px-4 py-3 text-sm text-error flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <button
+            onClick={() => {
+              setError(null);
+              load();
+            }}
+            className="font-semibold underline cursor-pointer"
+          >
+            {tr("Try again")}
+          </button>
+        </div>
+      )}
+      {!batches && !error && (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-56 rounded-card bg-paper-warm border border-rule animate-pulse" />
+          ))}
+        </div>
+      )}
 
       {batches && batches.length > 0 && (
         <div className="flex items-center gap-1 border-b border-rule">
@@ -177,7 +211,7 @@ export function ManagerBatches() {
               key={st}
               onClick={() => setStatus(st)}
               className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
-                status === st ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
+                status === st ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"
               }`}
             >
               {BATCH_STATUS_LABEL[st]} ({batches.filter((b) => b.status === st).length})
@@ -190,94 +224,114 @@ export function ManagerBatches() {
         <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
           {tr("No batches yet — create one, or ask your Org Admin to assign you one.")}</p>
       )}
-      {batches && batches.length > 0 && shown.length === 0 && <p className="text-sm text-muted">{tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[status].toLowerCase() })}</p>}
+      {batches && batches.length > 0 && shown.length === 0 && (
+        <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">{tr("No {{toLowerCase}} batches.", { toLowerCase: BATCH_STATUS_LABEL[status].toLowerCase() })}</p>
+      )}
 
       {shown.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {shown.map((b, i) => {
             const L = b.licenses;
             const fixedLeft = b.fixedLicenses != null ? Math.max(0, b.fixedLicenses - L.fixedUsed) : null;
+            const full = !!b.capacity && L.learners >= b.capacity;
             return (
               <div
                 key={b.id}
                 role="button"
                 tabIndex={0}
                 onClick={() => setViewing(b.id)}
-                onKeyDown={(e) => e.key === "Enter" && setViewing(b.id)}
+                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), setViewing(b.id))}
                 style={cardGradient(i)}
-                className="rounded-card shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col gap-3 text-left cursor-pointer"
+                className="group relative overflow-hidden rounded-card shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-5 flex flex-col gap-3 text-left text-white cursor-pointer [text-shadow:0_1px_1px_rgba(0,0,0,0.12)] focus:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2"
               >
-                <div className="flex items-center gap-2">
-                  <span className="h-9 w-9 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0">
-                    <Layers size={18} strokeWidth={1.8} />
+                <span className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10" />
+                <div className="relative flex items-start gap-3">
+                  <span className="h-10 w-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Layers size={19} strokeWidth={1.8} />
                   </span>
-                  <div className="min-w-0">
-                    <p className="font-display font-bold text-white truncate">{b.name}</p>
-                    <p className="text-[11px] text-white/70 font-mono">{b.batchCode}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display font-bold text-lg leading-tight line-clamp-2 break-words" title={b.name}>{b.name}</p>
+                    <p className="text-[11px] text-white/75 font-mono mt-0.5">{b.batchCode}</p>
                   </div>
+                  {b.status !== "active" ? (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 uppercase tracking-wide shrink-0">{BATCH_STATUS_LABEL[b.status]}</span>
+                  ) : (
+                    (b.startCefr || b.targetCefr) && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-pill bg-white/20 shrink-0 whitespace-nowrap">
+                        {b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
+                      </span>
+                    )
+                  )}
                 </div>
-                {(b.department || b.location || b.examFocus) && (
-                  <p className="text-xs text-white/80 flex items-center gap-1.5 flex-wrap">
-                    {(b.department || b.location) && <MapPin size={12} />}
-                    {[b.department, b.location, b.examFocus ? EXAM_FOCUS_LABEL[b.examFocus] : null].filter(Boolean).join(" · ")}
+
+                <div className="relative flex flex-col gap-1.5 text-xs text-white/90">
+                  {b.status !== "active" && (b.startCefr || b.targetCefr) && (
+                    <span>
+                      {tr("Goal:")} {b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
+                    </span>
+                  )}
+                  {(b.department || b.location || b.examFocus) && (
+                    <p className="flex items-center gap-1.5 min-w-0">
+                      <MapPin size={13} className="shrink-0 opacity-80" />
+                      <span className="truncate">{[b.department, b.location, b.examFocus ? EXAM_FOCUS_LABEL[b.examFocus] : null].filter(Boolean).join(" · ")}</span>
+                    </p>
+                  )}
+                  <p className="flex items-center gap-1.5">
+                    <Users size={13} className="shrink-0 opacity-80" />
+                    {b.capacity
+                      ? b.capacity === 1
+                        ? tr("{{n}} of 1 learner", { n: L.learners })
+                        : tr("{{n}} of {{capacity}} learners", { n: L.learners, capacity: b.capacity })
+                      : L.learners === 1
+                        ? tr("1 learner")
+                        : tr("{{n}} learners", { n: L.learners })}
+                    {full ? tr(" · full") : ""}
                   </p>
-                )}
-                {(b.startCefr || b.targetCefr) && (
-                  <span className="self-start text-xs font-semibold px-2 py-0.5 rounded-pill bg-white/20 text-white">
-                    {tr("Goal:")}{" "}{b.startCefr ?? "?"} → {b.targetCefr ?? "?"}
-                  </span>
-                )}
-                <div className="flex items-center gap-1.5 text-white/85 text-xs">
-                  <Users size={13} />{" "}
-                  {b.capacity
-                    ? b.capacity === 1
-                      ? tr("{{n}} of 1 learner", { n: L.learners })
-                      : tr("{{n}} of {{capacity}} learners", { n: L.learners, capacity: b.capacity })
-                    : L.learners === 1
-                      ? tr("1 learner")
-                      : tr("{{n}} learners", { n: L.learners })}
-                  {b.capacity && L.learners >= b.capacity ? tr(" · full") : ""}
+                  {(b.startDate || b.endDate) && (
+                    <p className="flex items-center gap-1.5">
+                      <CalendarDays size={13} className="shrink-0 opacity-80" />
+                      {[
+                        b.startDate ? tr("Starts {{date}}", { date: fmt(b.startDate) }) : null,
+                        b.endDate ? (b.status === "active" ? tr("Ends {{date}}", { date: fmt(b.endDate) }) : tr("Ended {{date}}", { date: fmt(b.endDate) })) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  )}
                 </div>
-                {(b.startDate || b.endDate) && (
-                  <p className="text-xs text-white/70">
-                    {b.startDate ? `Starts ${fmt(b.startDate)}` : ""}
-                    {b.startDate && b.endDate ? " · " : ""}
-                    {b.endDate ? `${b.status === "active" ? "ends" : "ended"} ${fmt(b.endDate)}` : ""}
-                  </p>
-                )}
-                <div className="text-xs text-white/90 bg-black/10 rounded-input px-2.5 py-2 flex flex-col gap-0.5">
-                  <span>
+
+                <div className="relative text-xs bg-black/15 rounded-input px-3 py-2.5 flex flex-col gap-1">
+                  <span className="flex items-center gap-1.5 font-semibold">
+                    <KeyRound size={12} className="shrink-0 opacity-80" />
                     {fixedLeft !== null ? tr("Fixed licenses: {{fixedLeft}} left of {{fixedLicenses}}", { fixedLeft: fixedLeft, fixedLicenses: b.fixedLicenses }) : tr("No fixed licenses — uses your pool")}
                     {L.fromPool ? tr(" · {{fromPool}} from your pool", { fromPool: L.fromPool }) : ""}
                   </span>
-                  <span>
-                    {tr("{{licensed}} licensed · {{unlicensed}} without a license", { licensed: L.licensed, unlicensed: L.unlicensed })}{L.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: L.endingSoon }) : ""}
+                  <span className="text-white/90">
+                    {tr("{{licensed}} licensed · {{unlicensed}} without a license", { licensed: L.licensed, unlicensed: L.unlicensed })}
+                    {L.endingSoon ? tr(" · {{endingSoon}} ending soon", { endingSoon: L.endingSoon }) : ""}
                   </span>
                   {b.defaultLicenseMonths != null && (
-                    <span className="text-white/70">
-                      {b.defaultLicenseMonths === 1 ? tr("New learners get 1 month") : tr("New learners get {{n}} months", { n: b.defaultLicenseMonths })}
-                    </span>
+                    <span className="text-white/75">{b.defaultLicenseMonths === 1 ? tr("New learners get 1 month") : tr("New learners get {{n}} months", { n: b.defaultLicenseMonths })}</span>
                   )}
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  {b.status !== "active" ? (
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-pill bg-white/25 text-white uppercase tracking-wide">
-                      {BATCH_STATUS_LABEL[b.status]}
-                    </span>
-                  ) : (
-                    <span />
-                  )}
-                  {b.status === "active" && (
+
+                <div className="relative mt-auto pt-3 border-t border-white/20 flex items-center justify-between gap-2">
+                  {b.status === "active" ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setRequestingFor(b.id);
                       }}
-                      className="text-xs font-semibold text-white underline cursor-pointer"
+                      className="text-xs font-semibold px-3 py-1.5 rounded-pill bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
                     >
                       {b.fixedLicenses != null ? tr("Request more") : tr("Request fixed licenses")}
                     </button>
+                  ) : (
+                    <span />
                   )}
+                  <span className="flex items-center gap-0.5 text-xs font-semibold text-white/90 group-hover:text-white">
+                    {tr("Open")} <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+                  </span>
                 </div>
               </div>
             );

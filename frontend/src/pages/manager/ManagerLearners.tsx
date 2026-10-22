@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
 import { validateBulkEmails } from "@/api/orgAdmin";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
-import { UserPlus, X, Mail, ArrowRightLeft, Ban, RotateCcw } from "lucide-react";
+import { UserPlus, X, Mail, ArrowRightLeft, Ban, RotateCcw, Search, Users, BellRing, Undo2 } from "lucide-react";
 import { LearnerProfileModal } from "@/components/LearnerProfileModal";
 import { MoveLearnerModal } from "@/components/MoveLearnerModal";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
@@ -148,7 +149,7 @@ function OnboardLearnerModal({
           ))}
         </div>
 
-        <div className="px-8 pt-4 grid sm:grid-cols-2 gap-3">
+        <div className="px-6 pt-4 grid sm:grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Batch")}</label>
             <select value={batchId} onChange={(e) => chooseBatch(e.target.value)} className={`${inputClass} cursor-pointer`}>
@@ -192,7 +193,7 @@ function OnboardLearnerModal({
         </div>
 
         {mode === "bulk" ? (
-          <div className="px-8 py-6">
+          <div className="px-6 py-6">
             <BulkLearnerUpload
               maxRows={200}
               checkExisting={(emails) => validateBulkEmails("manager", emails).then((r) => r.existing)}
@@ -203,7 +204,7 @@ function OnboardLearnerModal({
             />
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-8 py-6">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-6">
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First name")}</label>
@@ -261,6 +262,10 @@ export function ManagerLearners() {
   const [budgets, setBudgets] = useState<BatchBudget[]>([]);
   const [myPool, setMyPool] = useState<ManagerPool | undefined>(undefined);
   const [query, setQuery] = useState("");
+  // "All learners" or "Follow up" (the dashboard links straight to follow-up).
+  const [params, setParams] = useSearchParams();
+  const view: "all" | "follow-up" = params.get("view") === "follow-up" ? "follow-up" : "all";
+  const setView = (v: "all" | "follow-up") => setParams(v === "all" ? {} : { view: v }, { replace: true });
   const q = query.trim().toLowerCase();
   const shown = (learners ?? []).filter(
     (l) =>
@@ -270,7 +275,10 @@ export function ManagerLearners() {
 
   function load() {
     getManagerLearners()
-      .then((res) => setLearners(res.learners))
+      .then((res) => {
+        setLearners(res.learners);
+        setError(null);
+      })
       .catch(() => setError(tr("Could not load learners.")));
     // Learners can only be added to, or moved into, active batches.
     getManagerBatches()
@@ -286,6 +294,10 @@ export function ManagerLearners() {
 
   useEffect(load, []);
 
+  const say = (text: string) => {
+    setError(null);
+    setNotice(text);
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -294,144 +306,212 @@ export function ManagerLearners() {
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Learners")}</h1>
           <p className="text-sm text-muted mt-1">{tr("Only learners in your assigned batch(es).")}</p>
         </div>
-        <Button
-          onClick={() => setShowOnboard(true)}
-          disabled={batches.length === 0}
-          className="flex items-center gap-2 shrink-0"
-        >
-          <UserPlus size={18} /> {tr("Invite Learner")}</Button>
+        <div className="flex flex-col items-end gap-1">
+          <Button onClick={() => setShowOnboard(true)} disabled={batches.length === 0} className="flex items-center gap-2 shrink-0">
+            <UserPlus size={18} /> {tr("Invite Learner")}
+          </Button>
+          {learners !== null && batches.length === 0 && <p className="text-[11px] text-muted">{tr("No active batches.")}</p>}
+        </div>
       </div>
 
-      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
-
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!learners && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
-      {learners?.length === 0 && <p className="text-sm text-muted">{tr("No learners yet.")}</p>}
-
-      <FollowUpPanel />
-
-      {learners && learners.length > 0 && (
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tr("Search by name, email, employee ID, department or batch")}
-          className="w-full sm:max-w-md rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
-        />
+      {notice && (
+        <div className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3 flex items-center justify-between gap-3">
+          <span>{notice}</span>
+          <button onClick={() => setNotice(null)} title={tr("Dismiss")} className="text-success/80 hover:text-success cursor-pointer shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      {error && (
+        <div className="text-sm text-error bg-error/10 border border-error/25 rounded-card px-4 py-3 flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} title={tr("Dismiss")} className="text-error/80 hover:text-error cursor-pointer shrink-0">
+            <X size={16} />
+          </button>
+        </div>
       )}
 
-      {learners && learners.length > 0 && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">{tr("Learner")}</th>
-                <th className="px-4 py-3">{tr("Department")}</th>
-                <th className="px-4 py-3">{tr("Batch")}</th>
-                <th className="px-4 py-3">{tr("Certified")}</th>
-                <th className="px-4 py-3">{tr("Sessions completed")}</th>
-                <th className="px-4 py-3">{tr("License")}</th>
-                <th className="px-4 py-3">{tr("Status")}</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((l) => (
-                <tr key={l.id} onClick={() => setViewingLearner(l.id)} className="border-b border-rule last:border-0 hover:bg-paper-warm cursor-pointer">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
-                        {initials(l.firstName, l.lastName, l.email)}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-ink font-medium truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
-                        <p className="text-muted text-xs truncate">
-                          {l.participantId ? `${l.participantId} · ` : ""}
-                          {l.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-muted">
-                    <p>{l.department ?? "—"}</p>
-                    {(l.employeeId || l.jobTitle) && <p className="text-xs">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
-                  </td>
-                  <td className="px-4 py-3 text-muted">{l.batchName ?? "—"}</td>
-                  <td className="px-4 py-3"><CertifiedCell c={l.certified} /></td>
-                  <td className="px-4 py-3 text-muted">{l.sessionCount}</td>
-                  <td className="px-4 py-3">{l.license && <LicenseStatusPill license={l.license} />}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
-                      {l.active ? tr("Active") : tr("Deactivated")}
-                    </span>
-                    {l.active && l.hasLoggedIn === false && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          managerResendInvite(l.id)
-                            .then((r) => setNotice(tr("A new invite link was sent to {{email}}.", { email: r.email })))
-                            .catch(() => setError(tr("Could not resend the invite.")));
-                        }}
-                        className="block mt-1 text-xs font-semibold text-navy hover:underline cursor-pointer"
-                      >
-                        {tr("Invite pending · resend")}</button>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                    {l.license && l.license.queuedMonths > 0 && (
-                      <button
-                        onClick={() => setReturning(l)}
-                        title={tr("Ask your Org Admin to return this learner's unused months to the pool")}
-                        className="text-xs font-semibold text-muted hover:text-error cursor-pointer mr-2"
-                      >
-                        {tr("Request unassign")}</button>
-                    )}
-                    <Button
-                      variant={l.license && (l.license.status === "active" || l.license.status === "grace") ? "secondary" : "primary"}
-                      onClick={() => setAssigning(l)}
-                      disabled={!l.active}
-                      className="!px-3 !py-1.5 !text-xs mr-1"
-                    >
-                      {l.license && (l.license.status === "active" || l.license.status === "grace") ? tr("Extend") : tr("Assign")}
-                    </Button>
-                    <button
-                      onClick={async () => {
-                        try {
-                          if (l.active) {
-                            const r = await managerDeactivateLearner(l.id);
-                            setNotice(
-                              r.returnRequested
-                                ? r.returnRequested === 1
-                                  ? tr("Deactivated. A request to return 1 unused month went to your Org Admin.")
-                                  : tr("Deactivated. A request to return {{n}} unused months went to your Org Admin.", { n: r.returnRequested })
-                                : tr("Deactivated."),
-                            );
-                          } else {
-                            await managerReactivateLearner(l.id);
-                            setNotice(tr("Reactivated."));
-                          }
-                          load();
-                        } catch {
-                          setError(tr("Couldn't change that learner's status."));
-                        }
-                      }}
-                      title={l.active ? tr("Deactivate") : tr("Reactivate")}
-                      className={`p-1.5 rounded-input transition-colors cursor-pointer ${l.active ? "text-muted hover:bg-error/10 hover:text-error" : "text-success hover:bg-success/10"}`}
-                    >
-                      {l.active ? <Ban size={16} /> : <RotateCcw size={16} />}
-                    </button>
-                    <button
-                      onClick={() => setMovingLearner(l)}
-                      disabled={batches.length < 2}
-                      title={batches.length < 2 ? tr("You only manage one batch") : tr("Move to another batch")}
-                      className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <ArrowRightLeft size={16} />
-                    </button>
-                  </td>
-                </tr>
+      <div className="flex items-center gap-1 border-b border-rule">
+        {(
+          [
+            ["all", tr("All learners"), Users, learners?.length],
+            ["follow-up", tr("Follow up with learners"), BellRing, undefined],
+          ] as const
+        ).map(([key, label, Icon, n]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
+              view === key ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"
+            }`}
+          >
+            <Icon size={15} />
+            {label}
+            {n !== undefined && <span className={`text-xs px-1.5 rounded-pill ${view === key ? "bg-navy/10" : "bg-rule"}`}>{n}</span>}
+          </button>
+        ))}
+      </div>
+
+      {view === "follow-up" && <FollowUpPanel />}
+
+      {view === "all" && (
+        <div className="bg-surface border border-rule rounded-card shadow-sm min-w-0">
+          <div className="flex items-center justify-between gap-3 flex-wrap px-5 py-4 border-b border-rule">
+            <div className="relative flex-1 min-w-56 max-w-md">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={!learners?.length}
+                placeholder={tr("Search by name, email, employee ID, department or batch")}
+                className="w-full rounded-input border border-rule bg-paper pl-9 pr-3 py-2 text-sm text-ink focus:border-navy focus:outline-none disabled:opacity-60"
+              />
+            </div>
+            {learners && learners.length > 0 && (
+              <p className="text-xs text-muted">{q ? tr("Showing {{n}} of {{total}}", { n: shown.length, total: learners.length }) : tr("{{n}} learners", { n: learners.length })}</p>
+            )}
+          </div>
+
+          {!learners && !error && (
+            <div className="p-5 flex flex-col gap-3" aria-busy="true">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-10 rounded-input bg-paper-warm animate-pulse" />
               ))}
-            </tbody>
-          </table>
+              <p className="sr-only">{tr("Loading…")}</p>
+            </div>
+          )}
+          {learners?.length === 0 && (
+            <div className="px-5 py-10 text-center text-sm text-muted">
+              <Users size={22} className="mx-auto mb-2 text-muted/70" />
+              {tr("No learners yet.")}
+            </div>
+          )}
+          {learners && learners.length > 0 && shown.length === 0 && <div className="px-5 py-10 text-center text-sm text-muted">{tr("No learners match your search.")}</div>}
+
+          {shown.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[1100px]">
+                <thead>
+                  <tr className="border-b border-rule bg-paper-warm text-left text-[11px] font-semibold uppercase tracking-wide text-muted whitespace-nowrap">
+                    <th className="px-5 py-3">{tr("Learner")}</th>
+                    <th className="px-3 py-3">{tr("Department")}</th>
+                    <th className="px-3 py-3">{tr("Batch")}</th>
+                    <th className="px-3 py-3">{tr("Certified")}</th>
+                    <th className="px-3 py-3 text-center" title={tr("Sessions completed")}>
+                      {tr("Sessions")}
+                    </th>
+                    <th className="px-3 py-3">{tr("License")}</th>
+                    <th className="px-3 py-3">{tr("Status")}</th>
+                    <th className="px-4 py-3 sticky right-0 bg-paper-warm shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.15)]" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((l) => {
+                    const licensed = l.license && (l.license.status === "active" || l.license.status === "grace");
+                    return (
+                      <tr key={l.id} onClick={() => setViewingLearner(l.id)} className="group border-b border-rule last:border-0 hover:bg-paper-warm cursor-pointer transition-colors">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="h-9 w-9 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">{initials(l.firstName, l.lastName, l.email)}</span>
+                            <div className="min-w-0">
+                              <p className="text-ink font-medium truncate max-w-[11rem]">{[l.firstName, l.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
+                              <p className="text-muted text-xs truncate max-w-[11rem]" title={l.email}>
+                                {l.participantId ? `${l.participantId} · ` : ""}
+                                {l.email}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-muted">
+                          <p className="truncate max-w-[7.5rem]" title={l.department ?? undefined}>{l.department ?? "—"}</p>
+                          {(l.employeeId || l.jobTitle) && <p className="text-xs truncate max-w-[7.5rem]">{[l.employeeId, l.jobTitle].filter(Boolean).join(" · ")}</p>}
+                        </td>
+                        <td className="px-3 py-3 text-ink">
+                          <p className="truncate max-w-[11rem]" title={l.batchName ?? undefined}>
+                            {l.batchName ?? "—"}
+                          </p>
+                        </td>
+                        <td className="px-3 py-3">
+                          <CertifiedCell c={l.certified} />
+                        </td>
+                        <td className="px-3 py-3 text-center font-medium text-ink tabular-nums">{l.sessionCount}</td>
+                        <td className="px-3 py-3 whitespace-nowrap">{l.license && <LicenseStatusPill license={l.license} />}</td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>{l.active ? tr("Active") : tr("Deactivated")}</span>
+                          {l.active && l.hasLoggedIn === false && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                managerResendInvite(l.id)
+                                  .then((r) => say(tr("A new invite link was sent to {{email}}.", { email: r.email })))
+                                  .catch(() => setError(tr("Could not resend the invite.")));
+                              }}
+                              className="block mt-1 text-[11px] font-semibold text-navy-deep hover:underline cursor-pointer"
+                            >
+                              {tr("Invite pending · resend")}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap sticky right-0 bg-surface group-hover:bg-paper-warm transition-colors shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.15)]" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-1">
+                            {l.license && l.license.queuedMonths > 0 && (
+                              <button
+                                onClick={() => setReturning(l)}
+                                title={`${tr("Request unassign")}: ${tr("Ask your Org Admin to return this learner's unused months to the pool")}`}
+                                aria-label={tr("Request unassign")}
+                                className="h-8 w-8 flex items-center justify-center rounded-input border border-rule text-muted hover:text-error hover:bg-error/10 hover:border-error/30 transition-colors cursor-pointer"
+                              >
+                                <Undo2 size={15} />
+                              </button>
+                            )}
+                            <Button variant={licensed ? "secondary" : "primary"} onClick={() => setAssigning(l)} disabled={!l.active} className="!px-3 !py-1.5 !text-xs min-w-[4.25rem]">
+                              {licensed ? tr("Extend") : tr("Assign")}
+                            </Button>
+                            <button
+                              onClick={async () => {
+                                const name = [l.firstName, l.lastName].filter(Boolean).join(" ") || l.email;
+                                if (l.active && !window.confirm(tr("Deactivate {{name}}?", { name }))) return;
+                                try {
+                                  if (l.active) {
+                                    const r = await managerDeactivateLearner(l.id);
+                                    say(
+                                      r.returnRequested
+                                        ? r.returnRequested === 1
+                                          ? tr("Deactivated. A request to return 1 unused month went to your Org Admin.")
+                                          : tr("Deactivated. A request to return {{n}} unused months went to your Org Admin.", { n: r.returnRequested })
+                                        : tr("Deactivated."),
+                                    );
+                                  } else {
+                                    await managerReactivateLearner(l.id);
+                                    say(tr("Reactivated."));
+                                  }
+                                  load();
+                                } catch {
+                                  setError(tr("Couldn't change that learner's status."));
+                                }
+                              }}
+                              title={l.active ? tr("Deactivate") : tr("Reactivate")}
+                              className={`h-8 w-8 flex items-center justify-center rounded-input border border-rule transition-colors cursor-pointer ${l.active ? "text-muted hover:bg-error/10 hover:text-error hover:border-error/30" : "text-success hover:bg-success/10"}`}
+                            >
+                              {l.active ? <Ban size={15} /> : <RotateCcw size={15} />}
+                            </button>
+                            <button
+                              onClick={() => setMovingLearner(l)}
+                              disabled={batches.length < 2}
+                              title={batches.length < 2 ? tr("You only manage one batch") : tr("Move to another batch")}
+                              className="h-8 w-8 flex items-center justify-center rounded-input border border-rule text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              <ArrowRightLeft size={15} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -445,7 +525,7 @@ export function ManagerLearners() {
           }}
           onCreated={(message) => {
             setShowOnboard(false);
-            setNotice(message);
+            say(message);
             load();
           }}
         />
@@ -481,7 +561,7 @@ export function ManagerLearners() {
           onClose={() => setReturning(null)}
           onSent={() => {
             setReturning(null);
-            setNotice(tr("Unassign request sent to your Org Admin."));
+            say(tr("Unassign request sent to your Org Admin."));
           }}
         />
       )}
