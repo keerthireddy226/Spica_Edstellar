@@ -3,6 +3,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import bcrypt from "bcrypt";
 import { pool } from "../db.js";
+import { bankExamIds } from "../catalogue/banks.js";
 import type { NextFunction, Request, Response } from "express";
 import { generateToken, hashToken, SESSION_COOKIE } from "../auth/tokens.js";
 import { checkSession } from "../auth/middleware.js";
@@ -145,11 +146,12 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
 
   const cost = await inviteCost(job.test_kind);
 
-  // Practice-test products: each candidate gets one of the product's sets.
+  // Practice-test products: each candidate gets one form of the product's
+  // real-test bank, never a practice set a learner could have rehearsed
+  // (practice sets until that bank is loaded).
   let examIds: string[] = [];
   if (job.test_kind !== "placement") {
-    const ex = await pool.query(`SELECT id FROM exams WHERE is_active AND test_type_id = $1`, [job.test_kind]);
-    examIds = ex.rows.map((r) => r.id);
+    examIds = await bankExamIds(job.test_kind, "assessment");
     if (examIds.length === 0) throw new RecruitmentError("no_exam_available");
   }
 

@@ -64,7 +64,7 @@ export function libraryWhere(f: LibraryFilters, params: unknown[]): string {
 export const LIBRARY_SELECT = `
   SELECT i.id, i.item_type_id, it.name AS type_name, it.skills, i.cefr_level, i.topic, i.domain, i.status, i.mock_approved, i.content,
     i.exam_part_id, ${FAMILY_SQL} AS family, (${SOURCE_SQL}) AS source,
-    e.id AS exam_id, e.test_id, e.name AS exam_name, ep.part_label, i.exam_order, ep.sort_order,
+    e.id AS exam_id, e.test_id, e.name AS exam_name, e.purpose AS exam_purpose, ep.part_label, i.exam_order, ep.sort_order,
     un.name AS unit_name, st.name AS module_set_name,
     (SELECT count(*)::int FROM form_items fi JOIN forms f ON f.id = fi.form_id AND f.status <> 'retired' WHERE fi.item_id = i.id) AS form_count
   FROM items i
@@ -102,6 +102,8 @@ export function libraryRow(r: Record<string, unknown>, stats?: { n: number; mean
     mockApproved: r.mock_approved as boolean,
     source: r.source as Source,
     usedIn: whereUsed(r),
+    // The bank of the set it sits in (practice, mock or real test), else null.
+    bank: (r.exam_purpose as string | null) ?? null,
     formCount: r.form_count as number,
     preview: preview((r.content ?? {}) as Record<string, unknown>),
     answered: stats?.n ?? 0,

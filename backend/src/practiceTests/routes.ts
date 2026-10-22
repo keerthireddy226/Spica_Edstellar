@@ -394,7 +394,7 @@ async function practiceSetLocked(userId: string, examId: string): Promise<boolea
                AND s.completed_at IS NOT NULL AND s.composition->>'examId' = e.id::text
                AND (SELECT count(*) FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
                    >= jsonb_array_length(coalesce(s.composition->'itemIds', '[]'::jsonb))) AS completed
-     FROM exams e WHERE e.is_active AND e.test_type_id = (SELECT test_type_id FROM exams WHERE id = $2) ORDER BY e.code`,
+     FROM exams e WHERE e.is_active AND e.purpose = 'practice' AND e.test_type_id = (SELECT test_type_id FROM exams WHERE id = $2) ORDER BY e.code`,
     [userId, examId],
   );
   const at = r.rows.findIndex((x) => x.id === examId);
@@ -450,7 +450,8 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
              AND s.composition->>'examId' = e.id::text AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
          ) AS finished
        FROM exams e
-       WHERE e.is_active AND e.test_type_id = $1
+       -- Only the practice sets: the mock and real-test banks are never listed.
+       WHERE e.is_active AND e.purpose = 'practice' AND e.test_type_id = $1
        ORDER BY e.code`,
       [testType.id, req.user!.id],
     );
@@ -541,6 +542,12 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       const a = await activeAssessment(req.user!.id);
       if (!a || !body.examId || a.exam_id !== body.examId) return res.status(403).json({ error: "candidate_not_allowed" });
     }
+    // A learner names only practice sets: the mock and real-test banks are
+    // never started by id (a candidate's assigned exam is checked above).
+    if (body.examId && !candidate) {
+      const purpose = (await pool.query(`SELECT purpose FROM exams WHERE id = $1 AND is_active`, [body.examId])).rows[0]?.purpose;
+      if (purpose !== "practice") return res.status(404).json({ error: "unknown_exam" });
+    }
     // A built practice test: published, for practice, and not for candidates.
     const builtForm = body.formId && !candidate
       ? (await pool.query(`SELECT id, test_type_id, code, duration_minutes, short_form FROM forms WHERE id = $1 AND status = 'published' AND purpose = 'practice'`, [body.formId])).rows[0]
@@ -624,8 +631,9 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     // A real test keeps questions used in many real tests out while others remain.
     const exposureCap = mode === "certified" ? (await qualitySettings()).exposureCap : Infinity;
     const levelRows = ownedLevel ? await levelTestRows(ownedLevel, req.user!.id, exposureCap) : null;
-    // Published mock forms are used before the per-learner draw.
-    const mockForm = timed && !candidate && !levelRows ? await pickMockForm(testTypeId, req.user!.id) : null;
+    // Published mock forms are used before the per-learner draw. Not for a
+    // real attempt: it takes only real-test bank questions, never a mock's.
+    const mockForm = (mode === "mock" || mode === "sample") && !candidate && !levelRows ? await pickMockForm(testTypeId, req.user!.id) : null;
     const formToUse: { id: string; code: string; duration_minutes: number; short_form: boolean } | null =
       builtForm ?? (mockForm ? (await pool.query(`SELECT id, code, duration_minutes, short_form FROM forms WHERE id = $1`, [mockForm.id])).rows[0] : null);
     if (levelRows) {
@@ -637,11 +645,15 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       built = { id: formToUse.id, code: formToUse.code, durationMinutes: formToUse.duration_minutes, shortForm: formToUse.short_form, timers: fr.timers };
       examId = null;
     } else if (timed && !candidate) {
-      // A learner's mock: questions they haven't seen, laid out like the first set.
+      // A learner's mock: questions they haven't seen, laid out like the first
+      // set. A real attempt draws from the real-test bank; a mock and the free
+      // sample of a real test from the mock bank, so the sample never shows a
+      // real test's questions.
       const template = await mockTemplateExam(testTypeId);
       if (!template) return res.status(404).json({ error: "no_exam_items_available" });
       examId = template.id;
-      form = await selectFormItems(await mockFormItemIds(testTypeId, req.user!.id, template.id, exposureCap), template.id);
+      const bank = mode === "certified" ? "assessment" : "mock";
+      form = await selectFormItems(await mockFormItemIds(testTypeId, req.user!.id, template.id, exposureCap, bank), template.id);
     } else if (candidate) {
       // Proctored organizations give each candidate their own mix of questions.
       const { policy } = await learnerPolicy(req.user!.id);

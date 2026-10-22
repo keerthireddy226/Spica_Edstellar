@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { ExamBank } from "@/lib/questionBank";
 
 // Staff: question generation, review and set assembly (Content review permission).
 
@@ -70,6 +71,8 @@ export interface ContentItem {
   checks: Record<string, ContentCheck> | null;
   pipeline: string | null;
   placedIn: string | null;
+  // The bank of that set: practice set, mock bank or real-test bank.
+  placedBank: ExamBank | null;
   createdAt: string;
   stats: ItemStats | null;
   audio?: { voice: string; accent: string | null; uri: string; seconds: number }[];
@@ -136,6 +139,8 @@ export interface LibraryItem {
   source: LibrarySource;
   // Where it sits: a set and part, or a module.
   usedIn: string | null;
+  // The bank of the set it sits in, else null.
+  bank: ExamBank | null;
   // Built tests (not retired) that use it.
   formCount: number;
   preview: string;

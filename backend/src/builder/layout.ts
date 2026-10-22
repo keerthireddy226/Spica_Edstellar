@@ -36,7 +36,7 @@ export interface Layout {
 
 export async function testTypeLayout(testTypeId: string): Promise<Layout | null> {
   const tt = (await pool.query(`SELECT id, duration_minutes, cefr_min, cefr_max FROM test_types WHERE id = $1`, [testTypeId])).rows[0];
-  const exam = (await pool.query(`SELECT id, code, test_id FROM exams WHERE is_active AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])).rows[0];
+  const exam = (await pool.query(`SELECT id, code, test_id FROM exams WHERE is_active AND purpose = 'practice' AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])).rows[0];
   if (!tt || !exam) return null;
   const rows = (
     await pool.query(

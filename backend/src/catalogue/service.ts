@@ -24,12 +24,12 @@ export interface CatalogueFamily {
 }
 
 // Every active family with its test types (retired ones left out) and how
-// many active sets each has.
+// many active practice sets each has (the mock and real-test banks aren't sets).
 export async function listCatalogue(): Promise<CatalogueFamily[]> {
   const families = await pool.query(`SELECT id, name, publisher FROM exam_families WHERE active ORDER BY sort_order`);
   const types = await pool.query(
     `SELECT tt.id, tt.family_id, tt.name, tt.skills, tt.cefr_min, tt.cefr_max, tt.duration_minutes, tt.formats, tt.status,
-       (SELECT count(*)::int FROM exams e WHERE e.test_type_id = tt.id AND e.is_active) AS set_count
+       (SELECT count(*)::int FROM exams e WHERE e.test_type_id = tt.id AND e.is_active AND e.purpose = 'practice') AS set_count
      FROM test_types tt WHERE tt.status <> 'retired' ORDER BY tt.sort_order`,
   );
   return families.rows.map((f) => ({

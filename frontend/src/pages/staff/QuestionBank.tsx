@@ -17,6 +17,7 @@ import {
   type QueueState,
 } from "@/api/content";
 import { tr } from "@/i18n/tr";
+import { bankLabel } from "@/lib/questionBank";
 import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { BuilderPanel, LibraryPanel } from "@/pages/staff/AssessmentBuilder";
 
@@ -237,6 +238,7 @@ function ReviewDetail({ id, onDone }: { id: string; onDone: () => void }) {
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
         <span>{item.level}</span>·<span>{item.topic}</span>·<span>{DOMAIN_LABEL[item.domain]?.() ?? item.domain}</span>
         {item.placedIn && <>· {tr("In set {{code}}", { code: item.placedIn })}</>}
+        {item.placedIn && <StatusPill tone="navy">{bankLabel(item.placedBank)}</StatusPill>}
         {item.mockApproved && <StatusPill tone="success">{tr("Approved for mocks")}</StatusPill>}
         {item.status === "approved" && !item.mockApproved && <StatusPill tone="navy">{tr("Practice only")}</StatusPill>}
         {item.status === "draft" && <StatusPill tone="warning">{tr("Not in use")}</StatusPill>}

@@ -11,6 +11,7 @@ import { mockLimits } from "../practiceTests/modes.js";
 import { GENERATABLE_TYPES } from "../generation/specs.js";
 import { SOURCES, libraryWhere, type LibraryFilters } from "./library.js";
 import { levelTargets, planCounts, testTypeLayout, type Layout } from "./layout.js";
+import { resolveBank, type ExamPurpose } from "../catalogue/banks.js";
 
 const level = z.enum(CEFR_LEVELS as [string, ...string[]]);
 
@@ -43,7 +44,7 @@ export const formSchema = z.object({
 
 export class FormError extends Error {
   constructor(
-    public code: "unknown_test_type" | "form_not_found" | "not_draft" | "empty_section" | "wrong_type" | "not_approved" | "not_mock_approved" | "duplicate_item" | "form_in_use",
+    public code: "unknown_test_type" | "form_not_found" | "not_draft" | "empty_section" | "wrong_type" | "not_approved" | "not_mock_approved" | "wrong_bank" | "duplicate_item" | "form_in_use",
     public detail: Record<string, unknown> = {},
   ) {
     super(code);
@@ -64,10 +65,20 @@ interface Candidate extends FormRow {
 // field runs out, before leaving a gap.
 const OTHER_FIELD_COST = 1.5;
 
-// Approved questions that could fill one section.
-async function candidates(itemTypeId: string, f: LibraryFilters, mock: boolean): Promise<Candidate[]> {
+// The exam bank a built test may take placed questions from: a practice
+// test from the practice sets, a mock from the mock bank (the practice sets
+// until that bank is loaded). Never the real-test bank (owner decision 2026-10-22).
+async function formBank(testTypeId: string, purpose: "practice" | "mock"): Promise<ExamPurpose> {
+  return purpose === "mock" ? resolveBank(testTypeId, "mock") : "practice";
+}
+
+// Approved questions that could fill one section: unplaced ones, or ones in
+// a set of the form's own bank.
+async function candidates(itemTypeId: string, f: LibraryFilters, mock: boolean, bank: ExamPurpose): Promise<Candidate[]> {
   const params: unknown[] = [];
-  const where = libraryWhere({ ...f, itemTypeId, status: "approved", mockApproved: mock ? true : undefined }, params);
+  const where =
+    libraryWhere({ ...f, itemTypeId, status: "approved", mockApproved: mock ? true : undefined }, params) +
+    ` AND (ep.exam_id IS NULL OR (SELECT x.purpose FROM exams x WHERE x.id = ep.exam_id) = $${params.push(bank)})`;
   const r = await pool.query(
     `SELECT i.id, i.item_type_id, i.cefr_level, i.domain, i.content, coalesce(ep.exam_id::text, i.set_id::text, 'none') AS exam_id,
        coalesce(i.exam_order, i.set_order, 0) AS exam_order, coalesce(ep.sort_order, 0) AS sort_order, coalesce(ep.part_label, '') AS part_label,
@@ -95,12 +106,13 @@ export async function autofill(input: z.infer<typeof fillSchema>) {
   // Per section: how many chosen questions are from the chosen field.
   const fromField: Record<string, number> = {};
   const used = new Set<string>(Object.values(input.keep ?? {}).flat());
+  const bank = await formBank(input.testTypeId, input.purpose);
   for (const s of layout.sections) {
     const want = plan.sections.find((p) => p.sortOrder === s.sortOrder)!.count;
     const kept = (input.keep?.[String(s.sortOrder)] ?? []).slice(0, want);
     const picks = [...kept];
     const aiOnly = input.aiJobIds && GENERATABLE_TYPES.includes(s.itemTypeId);
-    const pool_ = (await candidates(s.itemTypeId, aiOnly ? { ...filters, sources: undefined, generationJobIds: input.aiJobIds } : filters, input.purpose === "mock")).filter(
+    const pool_ = (await candidates(s.itemTypeId, aiOnly ? { ...filters, sources: undefined, generationJobIds: input.aiJobIds } : filters, input.purpose === "mock", bank)).filter(
       (c) => !used.has(c.id),
     );
     const groups = shuffle(groupItems(pool_)).sort((a, b) => Math.min(...a.map((x) => x.use_count)) - Math.min(...b.map((x) => x.use_count)));
@@ -307,7 +319,16 @@ export async function publishForm(formId: string, userId: string) {
   if (data.form.status !== "draft") throw new FormError("not_draft");
   const layout = (await testTypeLayout(data.form.testTypeId))!;
   const ids = Object.values(data.sections).flat();
-  const items = new Map((await pool.query(`SELECT id, item_type_id, status, mock_approved FROM items WHERE id = ANY($1::uuid[])`, [ids])).rows.map((r) => [r.id, r]));
+  const items = new Map(
+    (
+      await pool.query(
+        `SELECT i.id, i.item_type_id, i.status, i.mock_approved, e.purpose AS bank
+         FROM items i LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN exams e ON e.id = ep.exam_id WHERE i.id = ANY($1::uuid[])`,
+        [ids],
+      )
+    ).rows.map((r) => [r.id, r]),
+  );
+  const bank = await formBank(data.form.testTypeId, data.form.purpose);
   for (const s of layout.sections) {
     const list = data.sections[String(s.sortOrder)] ?? [];
     if (!list.length) throw new FormError("empty_section", { section: s.label });
@@ -316,6 +337,8 @@ export async function publishForm(formId: string, userId: string) {
       if (!it || it.item_type_id !== s.itemTypeId) throw new FormError("wrong_type", { section: s.label, itemId: id });
       if (it.status !== "approved") throw new FormError("not_approved", { section: s.label, itemId: id });
       if (data.form.purpose === "mock" && !it.mock_approved) throw new FormError("not_mock_approved", { section: s.label, itemId: id });
+      // Practice tests, mocks and real tests never share questions.
+      if (it.bank && it.bank !== bank) throw new FormError("wrong_bank", { section: s.label, itemId: id });
     }
   }
   await pool.query(`UPDATE forms SET status = 'published', approved_by = $2, approved_at = now(), updated_at = now() WHERE id = $1`, [formId, userId]);

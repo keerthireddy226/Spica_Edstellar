@@ -17,6 +17,7 @@ import {
   type TechnicalReport,
 } from "@/api/quality";
 import { tr } from "@/i18n/tr";
+import { bankLabel } from "@/lib/questionBank";
 import { EmptyNote, FilterPills, Notice, PageHeader, Panel as KitPanel, Tabs } from "@/components/staff/StaffKit";
 
 // Assessment quality (Spica staff): appeals, pass marks and other settings,
@@ -246,7 +247,7 @@ function Pool() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-paper-warm/60">
-                {[tr("Test"), tr("Part"), tr("Approved"), tr("For mock and real tests"), tr("At the limit"), tr("Average use"), tr("Most used")].map((h) => (
+                {[tr("Test"), tr("Bank"), tr("Part"), tr("Approved"), tr("For mock and real tests"), tr("At the limit"), tr("Average use"), tr("Most used")].map((h) => (
                   <th key={h} className={th}>
                     {h}
                   </th>
@@ -255,8 +256,9 @@ function Pool() {
             </thead>
             <tbody>
               {p.tests.map((r) => (
-                <tr key={`${r.test}-${r.part}`}>
+                <tr key={`${r.test}-${r.bank}-${r.part}`}>
                   <td className={td}>{TESTS.find(([id]) => id === r.test)?.[1] ?? r.test}</td>
+                  <td className={`${td} whitespace-nowrap`}>{bankLabel(r.bank)}</td>
                   <td className={td}>{r.part}</td>
                   <td className={`${td} tabular-nums`}>{r.approved}</td>
                   <td className={`${td} tabular-nums`}>{r.forMocks}</td>

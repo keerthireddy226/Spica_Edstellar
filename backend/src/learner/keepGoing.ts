@@ -26,7 +26,7 @@ export async function practiceSetProgress(userId: string): Promise<{ total: numb
                  >= jsonb_array_length(coalesce(s.composition->'itemIds', '[]'::jsonb))
          ))::int AS done
        FROM exams e JOIN test_types tt ON tt.id = e.test_type_id JOIN exam_families f ON f.id = tt.family_id
-       WHERE e.is_active AND tt.status = 'live' AND f.active`,
+       WHERE e.is_active AND e.purpose = 'practice' AND tt.status = 'live' AND f.active`,
       [userId],
     )
   ).rows[0];

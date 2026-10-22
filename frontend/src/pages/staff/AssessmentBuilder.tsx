@@ -34,6 +34,7 @@ import {
 } from "@/api/content";
 import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { tr } from "@/i18n/tr";
+import { bankLabel } from "@/lib/questionBank";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 const DOMAINS = ["general", "banking", "bpo", "it", "insurance", "healthcare"];
@@ -165,7 +166,10 @@ function LibraryTable({ items, onOpen, action }: { items: LibraryItem[]; onOpen:
               </td>
               <td className="py-2 pr-3 text-xs">{i.typeName}</td>
               <td className="py-2 pr-3 font-mono text-xs">{i.level ?? "—"}</td>
-              <td className="py-2 pr-3 text-xs text-muted">{i.usedIn ?? SOURCE_LABEL[i.source]()}</td>
+              <td className="py-2 pr-3 text-xs text-muted">
+                {i.usedIn ?? SOURCE_LABEL[i.source]()}
+                {i.bank && <span className="block text-navy-deep">{bankLabel(i.bank)}</span>}
+              </td>
               <td className="py-2 pr-3 text-xs">{i.seconds !== null ? `${minutes(i.seconds)} min` : "—"}</td>
               <td className="py-2 pr-3 text-xs">
                 {i.answered}
@@ -546,6 +550,8 @@ function publishError(err: unknown): string {
       return tr("A question isn't approved any more.") + where;
     case "not_mock_approved":
       return tr("A mock can only use questions approved for mocks.") + where;
+    case "wrong_bank":
+      return tr("A question belongs to another question bank (practice, mock or real test).") + where;
     case "duplicate_item":
       return tr("The same question is in the test twice.");
     case "not_draft":

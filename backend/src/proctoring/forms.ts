@@ -1,6 +1,6 @@
 // Randomized exam forms. Every set of a product has the same sections in the
 // same order, so a candidate's form takes each section's questions from all
-// sets of that product. Questions that share one passage or story stay
+// sets of that product's bank (the one the assigned exam belongs to). Questions that share one passage or story stay
 // together and in order.
 import { pool } from "../db.js";
 
@@ -48,17 +48,18 @@ export function shuffle<T>(list: T[]): T[] {
 // section as the chosen exam. Falls back to the exam's own items for any
 // section the pool can't fill exactly.
 export async function randomizedFormItemIds(examId: string): Promise<string[]> {
-  const exam = (await pool.query(`SELECT code FROM exams WHERE id = $1`, [examId])).rows[0];
+  const exam = (await pool.query(`SELECT test_type_id, purpose FROM exams WHERE id = $1`, [examId])).rows[0];
   if (!exam) return [];
-  const prefix = String(exam.code).replace(/-\d+$/, "");
+  // Only the exam's own bank: a candidate's real-test form never mixes in
+  // practice or mock questions (the banks share sections, not questions).
   const r = await pool.query(
     `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content
      FROM exams e
      JOIN exam_parts ep ON ep.exam_id = e.id
      JOIN items i ON i.exam_part_id = ep.id
-     WHERE e.is_active AND e.code LIKE $1 AND i.status = 'approved'
+     WHERE e.is_active AND e.test_type_id = $1 AND e.purpose = $2 AND i.status = 'approved'
      ORDER BY ep.sort_order, e.code, i.exam_order`,
-    [`${prefix}-%`],
+    [exam.test_type_id, exam.purpose],
   );
   const rows: FormRow[] = r.rows;
   const ids: string[] = [];

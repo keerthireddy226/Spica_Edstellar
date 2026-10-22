@@ -170,6 +170,8 @@ function itemJson(i: Record<string, unknown>) {
     checks: i.filters_passed,
     pipeline: i.pipeline_version,
     placedIn: i.exam_code ?? null,
+    // Which bank that set is in: practice set, mock bank or real-test bank.
+    placedBank: i.exam_purpose ?? null,
     createdAt: i.created_at,
   };
 }
@@ -180,7 +182,7 @@ contentRouter.get("/content/queue", requireAuth, async (req: AuthedRequest, res,
     const state = z.enum(Object.keys(QUEUE_FILTERS) as [string, ...string[]]).parse(req.query.state ?? "needs_review");
     const itemTypeId = typeof req.query.itemTypeId === "string" && req.query.itemTypeId ? req.query.itemTypeId : null;
     const r = await pool.query(
-      `SELECT i.*, e.code AS exam_code FROM items i
+      `SELECT i.*, e.code AS exam_code, e.purpose AS exam_purpose FROM items i
        LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN exams e ON e.id = ep.exam_id
        WHERE ${QUEUE_FILTERS[state]} AND ($1::text IS NULL OR i.item_type_id = $1)
        ORDER BY i.created_at DESC LIMIT 100`,
@@ -199,7 +201,7 @@ contentRouter.get("/content/items/:id", requireAuth, async (req: AuthedRequest, 
     if (!uuid.safeParse(req.params.id).success) return res.status(404).json({ error: "item_not_found" });
     const i = (
       await pool.query(
-        `SELECT i.*, e.code AS exam_code FROM items i LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN exams e ON e.id = ep.exam_id WHERE i.id = $1`,
+        `SELECT i.*, e.code AS exam_code, e.purpose AS exam_purpose FROM items i LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id LEFT JOIN exams e ON e.id = ep.exam_id WHERE i.id = $1`,
         [req.params.id],
       )
     ).rows[0];

@@ -9,6 +9,7 @@ import { pool } from "../db.js";
 import { groupItems, shuffle, type FormRow } from "../proctoring/forms.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
+import { resolveBank, type ExamPurpose } from "../catalogue/banks.js";
 
 // certified: the real assessment attempt (strictly proctored, one attempt, a
 // result certificate). sample: its short free version. Both run like a mock.
@@ -25,10 +26,14 @@ const MOCK_SLACK_SECONDS = 10 * 60;
 // Speaking rate used when an item has no generated recording yet.
 const WORDS_PER_SECOND = 2.5;
 
-// A mock's template: the first active set of the test type. It fixes the
-// sections, their order and how many questions each has.
+// A mock's template: the first active practice set of the test type. It fixes
+// the sections, their order and how many questions each has. The mock and
+// real-test banks are laid out the same way (same part labels and sort_order),
+// so their questions slot into the template's sections.
 export async function mockTemplateExam(testTypeId: string): Promise<{ id: string; code: string } | null> {
-  return (await pool.query(`SELECT id, code FROM exams WHERE is_active AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])).rows[0] ?? null;
+  return (
+    await pool.query(`SELECT id, code FROM exams WHERE is_active AND purpose = 'practice' AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])
+  ).rows[0] ?? null;
 }
 
 // Items this learner has answered or been shown, in any test. A question
@@ -44,44 +49,89 @@ async function seenItemIds(userId: string): Promise<Set<string>> {
   return new Set(r.rows.map((x) => x.item_id as string));
 }
 
-// One mock form for this test type, in section order, each section as long
-// as the template's. Questions come from every set of the test type; groups of
-// questions the learner has seen least come first (ties in random order), and
-// questions sharing one passage stay together. Only questions a person
-// approved for mocks are used. A section the pool can't fill exactly uses
-// the template's own questions.
-// exposureCap: for a real test, question groups used in that many real tests or more go last.
-export async function mockFormItemIds(testTypeId: string, userId: string, templateExamId: string, exposureCap = Infinity): Promise<string[]> {
+export type BankRow = FormRow & { mock_approved: boolean; certified_exposures?: number };
+
+// One form from a bank's rows: each section (sort_order) gets exactly as many
+// questions as the template has there. Groups of questions the learner has
+// seen least come first (ties in random order), questions sharing one passage
+// stay together, and only questions a person approved for mocks are used.
+// exposureCap: question groups used in that many real tests or more go last.
+// A section the draw can't fill exactly takes one exam's whole section of the
+// right length (the template's first, then the least seen); failing that, what
+// the draw found.
+export function pickBankForm(
+  rows: BankRow[],
+  targets: Map<number, number>,
+  seen: Set<string>,
+  templateExamId: string,
+  exposureCap = Infinity,
+): string[] {
+  const ids: string[] = [];
+  const seenShare = (g: FormRow[]) => g.filter((x) => seen.has(x.id)).length / g.length;
+  for (const [sortOrder, target] of [...targets.entries()].sort((a, b) => a[0] - b[0])) {
+    if (target <= 0) continue;
+    const section = rows.filter((x) => x.sort_order === sortOrder);
+    const over = (g: BankRow[]) => g.some((x) => (x.certified_exposures ?? 0) >= exposureCap);
+    const groups = shuffle(groupItems(section.filter((x) => x.mock_approved)))
+      .map((g) => ({ g, over: Number(over(g)), seen: seenShare(g) }))
+      .sort((a, b) => a.over - b.over || a.seen - b.seen)
+      .map((x) => x.g);
+    const picked: BankRow[] = [];
+    for (const g of groups) {
+      if (picked.length + g.length <= target) picked.push(...g);
+      if (picked.length === target) break;
+    }
+    if (picked.length !== target) {
+      const byExam = new Map<string, BankRow[]>();
+      for (const x of section) byExam.set(x.exam_id, [...(byExam.get(x.exam_id) ?? []), x]);
+      const whole = shuffle([...byExam.entries()].filter(([, xs]) => xs.length === target)).sort(
+        (a, b) => Number(b[0] === templateExamId) - Number(a[0] === templateExamId) || seenShare(a[1]) - seenShare(b[1]),
+      )[0];
+      if (whole) {
+        ids.push(...whole[1].map((x) => x.id));
+        continue;
+      }
+    }
+    ids.push(...picked.map((x) => x.id));
+  }
+  return ids;
+}
+
+// One mock (or real test) form for this test type, in section order, each
+// section as long as the template's. Questions come only from the given bank's
+// exams of the test type: mocks from the mock bank, real tests from the
+// real-test bank, so a mock never shows a real test's questions and neither
+// repeats a practice set. A test type whose bank isn't loaded yet uses its
+// practice sets (resolveBank).
+export async function mockFormItemIds(
+  testTypeId: string,
+  userId: string,
+  templateExamId: string,
+  exposureCap = Infinity,
+  wanted: Exclude<ExamPurpose, "practice"> = "mock",
+): Promise<string[]> {
+  const bank = await resolveBank(testTypeId, wanted);
   const r = await pool.query(
     `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, i.mock_approved, i.certified_exposures
      FROM exams e
      JOIN exam_parts ep ON ep.exam_id = e.id
      JOIN items i ON i.exam_part_id = ep.id
-     WHERE e.is_active AND e.test_type_id = $1 AND i.status = 'approved'
+     WHERE e.is_active AND e.test_type_id = $1 AND e.purpose = $2 AND i.status = 'approved'
      ORDER BY ep.sort_order, e.code, i.exam_order`,
-    [testTypeId],
+    [testTypeId, bank],
   );
-  const rows: (FormRow & { mock_approved: boolean })[] = r.rows;
-  const seen = await seenItemIds(userId);
-  const ids: string[] = [];
-  for (const sortOrder of [...new Set(rows.map((x) => x.sort_order))]) {
-    const section = rows.filter((x) => x.sort_order === sortOrder);
-    const own = section.filter((x) => x.exam_id === templateExamId);
-    const target = own.length;
-    if (target === 0) continue;
-    const over = (g: FormRow[]) => g.some((x) => ((x as FormRow & { certified_exposures?: number }).certified_exposures ?? 0) >= exposureCap);
-    const groups = shuffle(groupItems(section.filter((x) => x.mock_approved)))
-      .map((g) => ({ g, over: Number(over(g)), seen: g.filter((x) => seen.has(x.id)).length / g.length }))
-      .sort((a, b) => a.over - b.over || a.seen - b.seen)
-      .map((x) => x.g);
-    const picked: FormRow[] = [];
-    for (const g of groups) {
-      if (picked.length + g.length <= target) picked.push(...g);
-      if (picked.length === target) break;
-    }
-    ids.push(...(picked.length === target ? picked : own).map((x) => x.id));
-  }
-  return ids;
+  const targets = await pool.query(
+    `SELECT ep.sort_order, count(*)::int AS n FROM exam_parts ep JOIN items i ON i.exam_part_id = ep.id AND i.status = 'approved'
+     WHERE ep.exam_id = $1 GROUP BY ep.sort_order`,
+    [templateExamId],
+  );
+  return pickBankForm(
+    r.rows,
+    new Map(targets.rows.map((t) => [t.sort_order as number, t.n as number])),
+    await seenItemIds(userId),
+    templateExamId,
+    exposureCap,
+  );
 }
 
 interface TimingRow {

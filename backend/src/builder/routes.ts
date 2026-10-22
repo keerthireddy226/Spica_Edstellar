@@ -26,6 +26,7 @@ const FORM_ERROR_STATUS: Record<FormError["code"], number> = {
   wrong_type: 400,
   not_approved: 400,
   not_mock_approved: 400,
+  wrong_bank: 400,
   duplicate_item: 400,
   form_in_use: 409,
 };

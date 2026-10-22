@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { ExamBank } from "@/lib/questionBank";
 
 // Assessment quality (Spica staff).
 export interface QualitySettings {
@@ -14,7 +15,7 @@ export const saveQualitySettings = (s: Partial<QualitySettings>) => api<QualityS
 
 export interface PoolReport {
   exposureCap: number;
-  tests: { test: string; part: string; approved: number; forMocks: number; overCap: number; meanExposure: number; maxExposure: number }[];
+  tests: { test: string; bank: ExamBank; part: string; approved: number; forMocks: number; overCap: number; meanExposure: number; maxExposure: number }[];
   levelTests: { type: string; level: string; approved: number; overCap: number; maxExposure: number; perTest: number; testsLeft: number | null }[];
 }
 export const getPoolReport = () => api<PoolReport>("/quality/pool");

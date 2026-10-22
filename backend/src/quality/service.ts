@@ -7,6 +7,7 @@ import { accessCache } from "../licenses/accessCache.js";
 import { notify } from "../notifications/service.js";
 import { holdResultCertificate } from "../assessment/service.js";
 import { LEVEL_TEST_BLUEPRINT } from "../practiceTests/modes.js";
+import type { ExamPurpose } from "../catalogue/banks.js";
 import { qualitySettings } from "./settings.js";
 import { settleLevelTests } from "../practiceTests/sessionScore.js";
 
@@ -47,7 +48,7 @@ export function cronbachAlpha(rows: number[][]): number | null {
 export async function poolReport() {
   const { exposureCap } = await qualitySettings();
   const tests = await pool.query(
-    `SELECT e.test_type_id AS test, ep.sort_order, ep.part_label AS part,
+    `SELECT e.test_type_id AS test, e.purpose AS bank, ep.sort_order, ep.part_label AS part,
        count(*) FILTER (WHERE i.status = 'approved')::int AS approved,
        count(*) FILTER (WHERE i.status = 'approved' AND i.mock_approved)::int AS for_mocks,
        count(*) FILTER (WHERE i.status = 'approved' AND i.certified_exposures >= $1)::int AS over_cap,
@@ -55,7 +56,7 @@ export async function poolReport() {
        coalesce(max(i.certified_exposures), 0)::int AS max_exposure
      FROM exams e JOIN exam_parts ep ON ep.exam_id = e.id JOIN items i ON i.exam_part_id = ep.id JOIN test_types tt ON tt.id = e.test_type_id
      WHERE e.is_active AND tt.family_id = 'versant'
-     GROUP BY 1, 2, 3 ORDER BY 1, 2`,
+     GROUP BY 1, 2, 3, 4 ORDER BY 1, array_position(ARRAY['practice', 'mock', 'assessment'], e.purpose), 3`,
     [exposureCap],
   );
   const levels = await pool.query(
@@ -68,7 +69,8 @@ export async function poolReport() {
   );
   return {
     exposureCap,
-    tests: tests.rows.map((r) => ({ test: r.test, part: r.part, approved: r.approved, forMocks: r.for_mocks, overCap: r.over_cap, meanExposure: r.mean_exposure, maxExposure: r.max_exposure })),
+    // Each bank (practice sets, mock bank, real-test bank) on its own rows: they never share questions.
+    tests: tests.rows.map((r) => ({ test: r.test, bank: r.bank as ExamPurpose, part: r.part, approved: r.approved, forMocks: r.for_mocks, overCap: r.over_cap, meanExposure: r.mean_exposure, maxExposure: r.max_exposure })),
     levelTests: levels.rows.map((r) => {
       const need = LEVEL_TEST_BLUEPRINT.find((p) => p.itemTypeId === r.type)?.count ?? 0;
       return { type: r.name, level: r.level, approved: r.approved, overCap: r.over_cap, maxExposure: r.max_exposure, perTest: need, testsLeft: need ? Math.floor((r.approved - r.over_cap) / need) : null };

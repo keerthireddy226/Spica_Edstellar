@@ -25,7 +25,7 @@ export class AssemblyError extends Error {
 }
 
 async function template(testTypeId: string) {
-  const exam = (await pool.query(`SELECT id, code, name FROM exams WHERE is_active AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])).rows[0];
+  const exam = (await pool.query(`SELECT id, code, name FROM exams WHERE is_active AND purpose = 'practice' AND test_type_id = $1 ORDER BY code LIMIT 1`, [testTypeId])).rows[0];
   if (!exam) throw new AssemblyError("no_template");
   const rows: TemplateRow[] = (
     await pool.query(
