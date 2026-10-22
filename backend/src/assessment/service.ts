@@ -304,6 +304,9 @@ export async function readiness(userId: string) {
       `SELECT result->>'cefrLevel' AS level, (result->>'overallPercent')::numeric AS percent, completed_at FROM sessions
        WHERE user_id = $1 AND delivery_mode = 'mock' AND completed_at IS NOT NULL AND result->>'cefrLevel' IS NOT NULL
          AND NOT coalesce((composition->>'abandoned')::boolean, false)
+         -- A mock left mostly blank predicts nothing: at least half answered (and 5 answers).
+         AND (SELECT count(*) FROM attempts a WHERE a.session_id = sessions.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+             >= greatest(5, 0.5 * (SELECT count(*) FROM attempts a WHERE a.session_id = sessions.id))
        ORDER BY completed_at DESC LIMIT $2`,
       [userId, READINESS_MOCKS],
     )

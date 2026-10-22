@@ -181,8 +181,8 @@ export async function nextStep(userId: string): Promise<NextStep | null> {
   const goal = await goalStatus(userId);
   // Ready for the final assessment (it's open and the mocks reach the goal), or its test to choose.
   const r = await readiness(userId).catch(() => null);
-  if (r?.final && !r.certificate) {
-    if (r.final.chooseTest) return { kind: "final", chooseTest: true };
+  // (Choosing its test is in This week and on the final assessment card, not repeated here.)
+  if (r?.final && !r.certificate && !r.final.chooseTest) {
     if (r.final.unlock.state === "open" && (r.ready || (goal.daysLeft !== null && goal.daysLeft <= 7))) return { kind: "final", chooseTest: false };
   }
   const tests = (

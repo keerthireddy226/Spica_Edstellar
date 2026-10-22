@@ -280,7 +280,10 @@ meRouter.get("/progress", requireAuth, async (req: AuthedRequest, res, next) => 
         `SELECT s.id, s.session_type, s.mode, s.delivery_mode, s.composition->>'levelTest' AS level_test, s.started_at, s.completed_at,
            (SELECT count(*)::int FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)) AS answered,
            (SELECT coalesce(sum(a.active_ms), 0) FROM attempts a WHERE a.session_id = s.id) AS active_ms
-         FROM sessions s WHERE s.user_id = $1 AND s.completed_at IS NOT NULL ORDER BY s.completed_at DESC LIMIT 12`,
+         FROM sessions s WHERE s.user_id = $1 AND s.completed_at IS NOT NULL
+           -- Sessions opened and left without an answer aren't listed.
+           AND EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))
+         ORDER BY s.completed_at DESC LIMIT 12`,
         [id],
       ),
       pool.query(

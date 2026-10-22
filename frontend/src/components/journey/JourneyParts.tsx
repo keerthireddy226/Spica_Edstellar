@@ -275,7 +275,8 @@ export function Checkpoints({ j }: { j: Journey }) {
   // Past tests and today always; then the next few, and exam day.
   let upcoming = 0;
   const shown = j.checkpoints.filter((c) => {
-    if (c.done || c.kind === "today" || c.kind === "exam" || full) return true;
+    // The end of the plan always shows: exam day, final assessment, certificate.
+    if (c.done || c.kind === "today" || c.kind === "exam" || c.kind === "final" || c.kind === "certificate" || full) return true;
     upcoming++;
     return upcoming <= UPCOMING_SHOWN;
   });
@@ -386,7 +387,7 @@ export function Checkpoints({ j }: { j: Journey }) {
               })}
         </p>
       )}
-      {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, with a final mock the week before.")}</p>}
+      {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, ending with your final assessment.")}</p>}
       {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
         <p className="text-xs text-warning">{tr("No mock test is left in this month's allowance before your exam. See the Mock Tests page for when new ones arrive.")}</p>
       )}

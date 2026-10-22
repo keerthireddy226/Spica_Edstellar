@@ -71,8 +71,10 @@ export interface LearnerStats {
 
 export async function getLearnerStats(userId: string): Promise<LearnerStats> {
   const sessionsResult = await pool.query(
-    `SELECT started_at, completed_at FROM sessions
-     WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NOT NULL`,
+    // Sessions with at least one answer: one opened and left empty isn't practice.
+    `SELECT started_at, completed_at FROM sessions s
+     WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NOT NULL
+       AND EXISTS (SELECT 1 FROM attempts a WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))`,
     [userId],
   );
   const sessions = sessionsResult.rows.length;
@@ -103,7 +105,9 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
      JOIN scores sc ON sc.attempt_id = a.id
      JOIN items i ON i.id = a.item_id
      JOIN item_types it ON it.id = i.item_type_id
-     WHERE s.user_id = $1 AND s.session_type = 'practice' AND sc.status = 'scored'`,
+     WHERE s.user_id = $1 AND s.session_type = 'practice' AND sc.status = 'scored'
+       -- Answered questions only: a skipped one says nothing about accuracy.
+       AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)`,
     [userId],
   );
   const gradedRows = accuracyResult.rows.map((r) => ({
