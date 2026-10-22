@@ -4,7 +4,7 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags, BadgeCheck } from "lucide-react";
-import { useTestOnly } from "@/components/learner/useTestOnly";
+import { useHasCertificatesPage, useTestOnly } from "@/components/learner/useTestOnly";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -71,6 +71,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
   const [searchParams] = useSearchParams();
   const hasPlacement = useHasPlacement();
   const testOnly = useTestOnly();
+  const certificatesPage = useHasCertificatesPage();
   // The organization may have switched Modules off for its learners.
   const modulesOn = useModulesEnabled();
   const locked = hasPlacement !== true;
@@ -211,6 +212,10 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             locked={locked}
             onClick={go}
           />
+          {/* Full access and preparation include a final assessment, and its certificate is listed here. */}
+          {certificatesPage && (
+            <NavEntry to={ROUTES.MY_CERTIFICATES} icon={BadgeCheck} label={tr("Certificates")} isActive={location.pathname === ROUTES.MY_CERTIFICATES} locked={false} onClick={go} />
+          )}
           <NavEntry
             to={ROUTES.TUTOR}
             icon={MessageCircle}

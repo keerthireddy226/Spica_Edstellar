@@ -1,32 +1,38 @@
 import { useEffect, useState } from "react";
-import { getMyAccess, isTestOnly } from "@/api/access";
+import { getMyAccess, isTestOnly, type MyAccess } from "@/api/access";
 import { useAuth } from "@/hooks/useAuth";
 
-// Read once per signed-in learner and shared by the menu, the page guard and
-// the banners. undefined while it loads.
-let cached: { userId: string; value: Promise<boolean> } | null = null;
+// What the signed-in learner owns, read once and shared by the menu, the page
+// guard and the banners.
+let cached: { userId: string; value: Promise<MyAccess | null> } | null = null;
 
-export function useTestOnly(): boolean | undefined {
+function useAccess(): MyAccess | null | undefined {
   const { user } = useAuth();
-  const [testOnly, setTestOnly] = useState<boolean | undefined>(undefined);
+  const [access, setAccess] = useState<MyAccess | null | undefined>(undefined);
   useEffect(() => {
     if (!user || user.role !== "learner") {
-      setTestOnly(false);
+      setAccess(null);
       return;
     }
-    if (cached?.userId !== user.id) {
-      cached = {
-        userId: user.id,
-        value: getMyAccess()
-          .then(isTestOnly)
-          .catch(() => false),
-      };
-    }
+    if (cached?.userId !== user.id) cached = { userId: user.id, value: getMyAccess().catch(() => null) };
     let alive = true;
-    cached.value.then((v) => alive && setTestOnly(v));
+    cached.value.then((a) => alive && setAccess(a));
     return () => {
       alive = false;
     };
   }, [user]);
-  return testOnly;
+  return access;
+}
+
+// Owns only a real test or level test (see isTestOnly). undefined while it loads.
+export function useTestOnly(): boolean | undefined {
+  const a = useAccess();
+  return a === undefined ? undefined : isTestOnly(a);
+}
+
+// Full access or a preparation: both include a final assessment with a
+// certificate, so the menu has a Certificates page.
+export function useHasCertificatesPage(): boolean {
+  const a = useAccess();
+  return !!a && (!!a.full || a.prepTests.length > 0);
 }
