@@ -67,7 +67,7 @@ export function JourneyHero({ j, firstName }: { j: Journey; firstName: string })
         <div className="h-2.5 rounded-pill bg-white/20 overflow-hidden">
           <div className="h-full rounded-pill bg-white transition-all duration-700" style={{ width: `${j.progressPercent}%` }} />
         </div>
-        <p className="text-[11px] text-white/70">{tr("Counts levels gained since your level test and the sets you've passed, across all four skills.")}</p>
+        <p className="text-[11px] text-white/70">{tr("Counts levels gained since your placement test and the sets you've passed, across all four skills.")}</p>
       </div>
     </section>
   );

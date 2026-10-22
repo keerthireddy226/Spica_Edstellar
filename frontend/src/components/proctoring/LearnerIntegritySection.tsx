@@ -62,7 +62,7 @@ export function LearnerIntegritySection({ learnerId, Section }: { learnerId: str
                 >
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-ink truncate">
-                      {r.exam_name ?? (r.session_type === "placement" ? tr("Level test") : tr("Mock test"))}
+                      {r.exam_name ?? (r.session_type === "placement" ? tr("Placement test") : tr("Mock test"))}
                       <span className="font-mono font-normal text-xs text-muted"> · {r.test_code ?? "—"}</span>
                     </p>
                     <p className="text-xs text-muted truncate">

@@ -155,7 +155,7 @@
           "C2": "C2 – Mycket avancerad",
           "C2Desc": "Nästan modersmålsnivå i precision och flyt",
           "unsure": "Inte säker än",
-          "unsureDesc": "Låt nivåtestet hjälpa dig att bestämma"
+          "unsureDesc": "Ditt inplaceringstest hjälper dig att bestämma"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Allt är klart!",
-    "subtitle": "Introduktionen är klar — nu är det dags för ditt nivåtest.",
+    "subtitle": "Introduktionen är klar — nu är det dags för ditt inplaceringstest.",
     "scheduleLater": "Schemalägg till senare",
     "scheduling": "Skickar…",
     "scheduleSent": "Vi har skickat en länk med en påminnelse till dig.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Laddar din studieplan…",
     "loadError": "Något gick fel när studieplanen skulle laddas. Försök igen.",
-    "pendingReviewBanner": "Ditt nivåtestresultat granskas som en del av identitetskontrollen. Under tiden kan du använda allt nedan.",
+    "pendingReviewBanner": "Ditt inplaceringstestresultat granskas som en del av identitetskontrollen. Under tiden kan du använda allt nedan.",
     "notReadyTitle": "Din studieplan är inte klar än",
-    "notReadyBody": "Gör nivåtestet för att få en personlig plan.",
-    "notReadyBodyScheduled": "Du har schemalagt nivåtestet till {{date}}. Gör det när du är redo — studieplanen skapas direkt efteråt.",
-    "takeTestNow": "Gör nivåtestet",
+    "notReadyBody": "Gör inplaceringstestet för att få en personlig plan.",
+    "notReadyBodyScheduled": "Du har schemalagt inplaceringstestet till {{date}}. Gör det när du är redo — studieplanen skapas direkt efteråt.",
+    "takeTestNow": "Gör inplaceringstestet",
     "greeting": "Hej, {{name}}",
     "currentLevel": "Nuvarande nivå",
     "goalLevel": "Mål",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Ställ in ansiktsverifiering",
       "subtitle": "Det hjälper till att bekräfta att det verkligen är du som gör testet.",
-      "body": "Vi tar ett foto av ditt ansikte för att skapa en referens för identitetsverifiering. Före, och vid slumpmässiga tillfällen (var 30:e till 90:e sekund) under, nivåtest, övningsprov och övningssessioner (moduler) jämförs ett nytt foto med det för att bekräfta att det är du. Fotona används endast för detta ändamål, ses bara av granskare i din organisation eller på Edstellar och sparas tills ditt konto raderas eller tills din organisations lagringstid löper ut.",
+      "body": "Vi tar ett foto av ditt ansikte för att skapa en referens för identitetsverifiering. Före, och vid slumpmässiga tillfällen (var 30:e till 90:e sekund) under, inplaceringstest, övningsprov och övningssessioner (moduler) jämförs ett nytt foto med det för att bekräfta att det är du. Fotona används endast för detta ändamål, ses bara av granskare i din organisation eller på Edstellar och sparas tills ditt konto raderas eller tills din organisations lagringstid löper ut.",
       "checkboxLabel": "Jag förstår och samtycker till identitetsverifiering med ansiktet, inklusive kontroller vid slumpmässiga tillfällen under prov och övningssessioner.",
       "submit": "Fortsätt",
       "decline": "Inte nu"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} per månad"
     },
     "features": {
-      "placementOnce": "Ett nivåtest",
-      "placementUnlimited": "Gör om nivåtestet",
+      "placementOnce": "Ett inplaceringstest",
+      "placementUnlimited": "Gör om inplaceringstestet",
       "practiceLimited": "{{count}} övningssessioner per vecka",
       "practiceUnlimited": "Obegränsad övning i alla moduler",
       "progress": "Framstegsrapporter och studieplan",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Övningsprov ingår i full tillgång.",
       "coach": "AI-handledaren ingår i full tillgång.",
-      "placement": "Du har använt ditt gratis nivåtest. Nya försök ingår i full tillgång.",
+      "placement": "Du har använt ditt gratis inplaceringstest. Nya försök ingår i full tillgång.",
       "practice": "Du har använt dina {{limit}} gratissessioner den här veckan. De förnyas under en rullande 7-dagarsperiod — eller uppgradera för obegränsad övning."
     },
     "lockedTitle": "Uppgradera för att fortsätta"

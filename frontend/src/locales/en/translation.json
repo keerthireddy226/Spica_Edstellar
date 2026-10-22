@@ -169,7 +169,7 @@
           "C2": "C2 - Proficiency",
           "C2Desc": "Near-native precision and fluency",
           "unsure": "Not sure yet",
-          "unsureDesc": "The assessment will help decide"
+          "unsureDesc": "Your placement test will help decide"
         }
       },
       "reasonTimeline": {
@@ -255,7 +255,7 @@
   },
   "placement": {
     "title": "You're all set!",
-    "subtitle": "Onboarding is complete — your level test is next.",
+    "subtitle": "Onboarding is complete — your placement test is next.",
     "scheduleLater": "Schedule for later",
     "scheduling": "Sending…",
     "scheduleSent": "We've emailed you a reminder link.",
@@ -311,11 +311,11 @@
   "roadmap": {
     "loading": "Loading your roadmap…",
     "loadError": "Something went wrong loading your roadmap. Please try again.",
-    "pendingReviewBanner": "Your level test result is being reviewed for identity verification. You can keep using everything below in the meantime.",
+    "pendingReviewBanner": "Your placement test result is being reviewed for identity verification. You can keep using everything below in the meantime.",
     "notReadyTitle": "Your roadmap isn't ready yet",
-    "notReadyBody": "Take your 30-minute level test to find your English level and get a personalized plan.",
-    "notReadyBodyScheduled": "You scheduled your level test for {{date}}. Take it whenever you're ready — your roadmap will build itself right after.",
-    "takeTestNow": "Take the level test",
+    "notReadyBody": "Take your 30-minute placement test to find your English level and get a personalized plan.",
+    "notReadyBodyScheduled": "You scheduled your placement test for {{date}}. Take it whenever you're ready — your roadmap will build itself right after.",
+    "takeTestNow": "Take the placement test",
     "greeting": "Hi {{name}}",
     "currentLevel": "Current level",
     "goalLevel": "Goal",
@@ -770,8 +770,8 @@
       "perMonth": "{{price}} per month"
     },
     "features": {
-      "placementOnce": "One level test",
-      "placementUnlimited": "Level test retakes",
+      "placementOnce": "One placement test",
+      "placementUnlimited": "Placement test retakes",
       "practiceLimited": "{{count}} practice sessions a week",
       "practiceUnlimited": "Unlimited practice in every module",
       "progress": "Progress reports and roadmap",
@@ -794,7 +794,7 @@
     "locked": {
       "mocktest": "Mock tests are part of Full access.",
       "coach": "The AI tutor is part of Full access.",
-      "placement": "You've already taken your free level test. Retakes are part of Full access.",
+      "placement": "You've already taken your free placement test. Retakes are part of Full access.",
       "practice": "You've used your {{limit}} free practice sessions this week. They reset on a rolling 7-day basis, or upgrade for unlimited practice."
     },
     "lockedTitle": "Upgrade to keep going"

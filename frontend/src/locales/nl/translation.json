@@ -155,7 +155,7 @@
           "C2": "C2 - Bijna moedertaal",
           "C2Desc": "Bijna moedertaalniveau in precisie en vloeiendheid",
           "unsure": "Weet ik nog niet",
-          "unsureDesc": "De niveautest helpt bij de keuze"
+          "unsureDesc": "Je instaptoets helpt bij de keuze"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Je bent klaar!",
-    "subtitle": "De onboarding is afgerond — nu volgt je niveautest.",
+    "subtitle": "De onboarding is afgerond — nu volgt je instaptoets.",
     "scheduleLater": "Inplannen voor later",
     "scheduling": "Bezig met versturen…",
     "scheduleSent": "We hebben je een herinneringslink gemaild.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Je leertraject wordt geladen…",
     "loadError": "Er ging iets mis bij het laden van je leertraject. Probeer het opnieuw.",
-    "pendingReviewBanner": "Je niveautestresultaat wordt gecontroleerd voor identiteitsverificatie. Je kunt alles hieronder in de tussentijd gewoon gebruiken.",
+    "pendingReviewBanner": "Je instaptoetsresultaat wordt gecontroleerd voor identiteitsverificatie. Je kunt alles hieronder in de tussentijd gewoon gebruiken.",
     "notReadyTitle": "Je leertraject is nog niet klaar",
-    "notReadyBody": "Doe de niveautest om een persoonlijk plan te krijgen.",
-    "notReadyBodyScheduled": "Je hebt je niveautest ingepland voor {{date}}. Doe hem wanneer je er klaar voor bent — je leertraject wordt direct daarna gemaakt.",
-    "takeTestNow": "Doe de niveautest",
+    "notReadyBody": "Doe de instaptoets om een persoonlijk plan te krijgen.",
+    "notReadyBodyScheduled": "Je hebt je instaptoets ingepland voor {{date}}. Doe hem wanneer je er klaar voor bent — je leertraject wordt direct daarna gemaakt.",
+    "takeTestNow": "Doe de instaptoets",
     "greeting": "Hoi {{name}}",
     "currentLevel": "Huidig niveau",
     "goalLevel": "Doel",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Gezichtsverificatie instellen",
       "subtitle": "Zo bevestigen we dat jij echt degene bent die de toets maakt.",
-      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Vóór en op willekeurige momenten (elke 30 tot 90 seconden) tijdens niveautests, oefentoetsen en oefensessies (Modules) wordt een nieuwe foto daarmee vergeleken om te bevestigen dat jij het bent. Foto's worden alleen hiervoor gebruikt, alleen gezien door beoordelaars van je organisatie of van Edstellar, en bewaard tot je account wordt verwijderd of de bewaartermijn van je organisatie afloopt.",
+      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Vóór en op willekeurige momenten (elke 30 tot 90 seconden) tijdens instaptoetsen, oefentoetsen en oefensessies (Modules) wordt een nieuwe foto daarmee vergeleken om te bevestigen dat jij het bent. Foto's worden alleen hiervoor gebruikt, alleen gezien door beoordelaars van je organisatie of van Edstellar, en bewaard tot je account wordt verwijderd of de bewaartermijn van je organisatie afloopt.",
       "checkboxLabel": "Ik begrijp en ga akkoord met identiteitsverificatie via het gezicht, inclusief controles op willekeurige momenten tijdens toetsen en oefensessies.",
       "submit": "Doorgaan",
       "decline": "Niet nu"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} per maand"
     },
     "features": {
-      "placementOnce": "Eén niveautest",
-      "placementUnlimited": "Niveautest opnieuw doen",
+      "placementOnce": "Eén instaptoets",
+      "placementUnlimited": "Instaptoets opnieuw doen",
       "practiceLimited": "{{count}} oefensessies per week",
       "practiceUnlimited": "Onbeperkt oefenen in alle modules",
       "progress": "Voortgangsrapporten en leertraject",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Proeftoetsen horen bij volledige toegang.",
       "coach": "De AI-tutor hoort bij volledige toegang.",
-      "placement": "Je hebt je gratis niveautest al gedaan. Opnieuw doen hoort bij volledige toegang.",
+      "placement": "Je hebt je gratis instaptoets al gedaan. Opnieuw doen hoort bij volledige toegang.",
       "practice": "Je hebt je {{limit}} gratis oefensessies van deze week gebruikt. Ze worden doorlopend per 7 dagen aangevuld, of upgrade voor onbeperkt oefenen."
     },
     "lockedTitle": "Upgrade om verder te gaan"

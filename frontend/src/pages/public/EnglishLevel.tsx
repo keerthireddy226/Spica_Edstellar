@@ -106,7 +106,7 @@ export function EnglishLevelPage() {
 
         <section className="grid sm:grid-cols-3 gap-3">
           {[
-            { icon: ClipboardCheck, title: tr("1. Find your level"), text: tr("A free 30-minute level test across all four skills.") },
+            { icon: ClipboardCheck, title: tr("1. Find your level"), text: tr("A free 30-minute placement test across all four skills.") },
             { icon: Dumbbell, title: tr("2. Practise to {{level}}", { level }), text: tr("Practice tests, mock tests and Practice Modules, planned around your goal.") },
             { icon: Award, title: tr("3. Prove it"), text: tr("One strictly proctored final assessment gives your certificate, valid for a year and checkable by anyone.") },
           ].map((c) => (

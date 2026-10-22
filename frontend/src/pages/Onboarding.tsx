@@ -391,7 +391,7 @@ export function Onboarding() {
             {isOrgLearner && branding?.organization?.name
               ? tr("Welcome to Spica, set up for you by {{org}}.", { org: branding.organization.name })
               : tr("Welcome to Spica.")}{" "}
-            {tr("A few quick questions (about 2 minutes), then a 30-minute level test to find your English level.")}
+            {tr("A few quick questions (about 2 minutes), then a 30-minute placement test to find your English level.")}
           </p>
           <h2 className="font-display font-bold text-xl text-ink mt-3">{t("onboarding.wizard.basics.title")}</h2>
           <p className="text-sm text-muted mt-1">{t("onboarding.wizard.basics.subtitle")}</p>

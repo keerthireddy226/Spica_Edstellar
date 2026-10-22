@@ -204,7 +204,7 @@ function EnglishLevelCard({
           <p className="text-sm text-muted">{CEFR_MEANING[cefr]?.() ?? ""}</p>
           <p className="text-xs text-muted mt-1">
             {level.testedAt
-              ? tr("Level test on {{date}}: {{level}}. Updated by your practice since.", {
+              ? tr("Placement test on {{date}}: {{level}}. Updated by your practice since.", {
                   date: new Date(level.testedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }),
                   level: level.cefr,
                 })

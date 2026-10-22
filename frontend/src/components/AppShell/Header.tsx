@@ -93,7 +93,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.MANAGER_ACTIVITY]: tr("Activity"),
   [ROUTES.MY_TESTS]: tr("Assessment"),
   [ROUTES.MY_TESTS_TAKE]: tr("Assessment"),
-  [ROUTES.PLACEMENT]: tr("Level test"),
+  [ROUTES.PLACEMENT]: tr("Placement test"),
   [ROUTES.ORG_ADMIN_PROFILE]: tr("Profile"),
 };
 

@@ -155,7 +155,7 @@
           "C2": "C2 – Kompetent",
           "C2Desc": "Næsten modersmålspræcision og flydende sprog",
           "unsure": "Ikke sikker endnu",
-          "unsureDesc": "Lad niveautesten hjælpe dig med at beslutte"
+          "unsureDesc": "Din indplaceringstest hjælper med at afgøre det"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Du er klar!",
-    "subtitle": "Opsætningen er færdig — nu er det tid til din niveautest.",
+    "subtitle": "Opsætningen er færdig — nu er det tid til din indplaceringstest.",
     "scheduleLater": "Planlæg til senere",
     "scheduling": "Sender…",
     "scheduleSent": "Vi har sendt dig et link med en påmindelse.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Indlæser din læringsplan…",
     "loadError": "Noget gik galt under indlæsning af din læringsplan. Prøv igen.",
-    "pendingReviewBanner": "Dit niveautestresultat gennemgås som en del af identitetstjekket. Du kan bruge alt nedenfor imens.",
+    "pendingReviewBanner": "Dit indplaceringsresultat gennemgås som en del af identitetstjekket. Du kan bruge alt nedenfor imens.",
     "notReadyTitle": "Din læringsplan er ikke klar endnu",
-    "notReadyBody": "Tag niveautesten for at få en personlig plan.",
-    "notReadyBodyScheduled": "Du har planlagt niveautesten til {{date}}. Tag den, når du er klar — din læringsplan laves lige bagefter.",
-    "takeTestNow": "Tag niveautesten",
+    "notReadyBody": "Tag indplaceringstesten for at få en personlig plan.",
+    "notReadyBodyScheduled": "Du har planlagt indplaceringstesten til {{date}}. Tag den, når du er klar — din læringsplan laves lige bagefter.",
+    "takeTestNow": "Tag indplaceringstesten",
     "greeting": "Hej, {{name}}",
     "currentLevel": "Nuværende niveau",
     "goalLevel": "Mål",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Konfigurer ansigtsbekræftelse",
       "subtitle": "Det hjælper med at bekræfte, at det virkelig er dig, der tager testen.",
-      "body": "Vi tager et foto af dit ansigt for at oprette en reference til identitetsbekræftelse. Før og på tilfældige tidspunkter (hvert 30. til 90. sekund) under niveautests, prøvetest og øvelsessessioner (Moduler) sammenlignes et nyt foto med det for at bekræfte, at det er dig. Fotos bruges kun til dette, ses kun af bedømmere i din organisation eller hos Edstellar og opbevares, indtil din konto slettes, eller din organisations opbevaringsperiode udløber.",
+      "body": "Vi tager et foto af dit ansigt for at oprette en reference til identitetsbekræftelse. Før og på tilfældige tidspunkter (hvert 30. til 90. sekund) under indplaceringstests, prøvetest og øvelsessessioner (Moduler) sammenlignes et nyt foto med det for at bekræfte, at det er dig. Fotos bruges kun til dette, ses kun af bedømmere i din organisation eller hos Edstellar og opbevares, indtil din konto slettes, eller din organisations opbevaringsperiode udløber.",
       "checkboxLabel": "Jeg forstår og giver samtykke til identitetsbekræftelse med ansigtsgenkendelse, også tjek på tilfældige tidspunkter under test og øvelsessessioner.",
       "submit": "Fortsæt",
       "decline": "Ikke nu"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} pr. måned"
     },
     "features": {
-      "placementOnce": "Én niveautest",
-      "placementUnlimited": "Gentagelse af niveautesten",
+      "placementOnce": "Én indplaceringstest",
+      "placementUnlimited": "Gentagelse af indplaceringstesten",
       "practiceLimited": "{{count}} øvesessioner om ugen",
       "practiceUnlimited": "Ubegrænset træning i alle moduler",
       "progress": "Fremskridtsrapporter og læringsplan",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Prøvetest er en del af fuld adgang.",
       "coach": "AI-tutoren er en del af fuld adgang.",
-      "placement": "Du har brugt din gratis niveautest. Gentagelser er en del af fuld adgang.",
+      "placement": "Du har brugt din gratis indplaceringstest. Gentagelser er en del af fuld adgang.",
       "practice": "Du har brugt dine {{limit}} gratis sessioner i denne uge. De fornyes over en løbende 7-dages periode — eller opgrader for ubegrænset træning."
     },
     "lockedTitle": "Opgrader for at fortsætte"

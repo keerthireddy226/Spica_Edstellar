@@ -12,10 +12,10 @@ export function PhoneBlockNotice({ what }: { what: "tests" | "mock" | "level" })
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const title =
-    what === "level" ? tr("Use a computer for your level test") : what === "mock" ? tr("Use a computer for mock tests") : tr("Use a computer for practice tests");
+    what === "level" ? tr("Use a computer for your placement test") : what === "mock" ? tr("Use a computer for mock tests") : tr("Use a computer for practice tests");
   const body =
     what === "level"
-      ? tr("The level test runs like the real exam, on a computer with a camera and microphone. Open this page on a computer to take it.")
+      ? tr("The placement test runs like the real exam, on a computer with a camera and microphone. Open this page on a computer to take it.")
       : tr("Practice tests and mock tests run like the real exam, on a computer with a camera and microphone. On your phone you can keep practising in Practice Modules.");
   return (
     <section className="rounded-card border border-navy/20 bg-navy/5 p-5 flex flex-col gap-3">

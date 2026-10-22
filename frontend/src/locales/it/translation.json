@@ -155,7 +155,7 @@
           "C2": "C2 - Padronanza",
           "C2Desc": "Precisione e fluidità quasi madrelingua",
           "unsure": "Non ancora sicuro",
-          "unsureDesc": "Il test di valutazione aiuterà a decidere"
+          "unsureDesc": "Il test d'ingresso ti aiuterà a decidere"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Tutto pronto!",
-    "subtitle": "L'onboarding è completo: ora tocca al test di piazzamento.",
+    "subtitle": "L'onboarding è completo: ora tocca al test d'ingresso.",
     "scheduleLater": "Pianifica per dopo",
     "scheduling": "Invio in corso…",
     "scheduleSent": "Ti abbiamo inviato un link promemoria via email.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Caricamento del percorso…",
     "loadError": "Qualcosa è andato storto nel caricamento del percorso. Riprova.",
-    "pendingReviewBanner": "Il risultato del tuo piazzamento è in verifica per il controllo d'identità. Nel frattempo puoi continuare a usare tutto qui sotto.",
+    "pendingReviewBanner": "Il risultato del tuo test d'ingresso è in verifica per il controllo d'identità. Nel frattempo puoi continuare a usare tutto qui sotto.",
     "notReadyTitle": "Il tuo percorso non è ancora pronto",
-    "notReadyBody": "Fai il test di piazzamento per ricevere un piano personalizzato.",
-    "notReadyBodyScheduled": "Hai pianificato il test di piazzamento per il {{date}}. Fallo quando vuoi: il tuo percorso verrà creato subito dopo.",
-    "takeTestNow": "Fai il test di piazzamento",
+    "notReadyBody": "Fai il test d'ingresso per ricevere un piano personalizzato.",
+    "notReadyBodyScheduled": "Hai pianificato il test d'ingresso per il {{date}}. Fallo quando vuoi: il tuo percorso verrà creato subito dopo.",
+    "takeTestNow": "Fai il test d'ingresso",
     "greeting": "Ciao {{name}}",
     "currentLevel": "Livello attuale",
     "goalLevel": "Obiettivo",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Configura la verifica del volto",
       "subtitle": "Ci aiuta a confermare che sei davvero tu a fare il test.",
-      "body": "Scatteremo una foto del tuo volto per creare un riferimento per la verifica dell'identità. Prima e in momenti casuali (ogni 30-90 secondi) durante i test di piazzamento, i test di prova e le sessioni di pratica (Moduli), una nuova foto viene confrontata con essa per confermare che sei tu. Le foto vengono usate solo per questo, viste solo dai revisori della tua organizzazione o di Edstellar e conservate finché il tuo account non viene eliminato o termina il periodo di conservazione della tua organizzazione.",
+      "body": "Scatteremo una foto del tuo volto per creare un riferimento per la verifica dell'identità. Prima e in momenti casuali (ogni 30-90 secondi) durante i test d'ingresso, i test di prova e le sessioni di pratica (Moduli), una nuova foto viene confrontata con essa per confermare che sei tu. Le foto vengono usate solo per questo, viste solo dai revisori della tua organizzazione o di Edstellar e conservate finché il tuo account non viene eliminato o termina il periodo di conservazione della tua organizzazione.",
       "checkboxLabel": "Ho capito e acconsento alla verifica dell'identità tramite il volto, compresi controlli in momenti casuali durante i test e le sessioni di pratica.",
       "submit": "Continua",
       "decline": "Non ora"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} al mese"
     },
     "features": {
-      "placementOnce": "Un test di piazzamento",
-      "placementUnlimited": "Ripetizione del test di piazzamento",
+      "placementOnce": "Un test d'ingresso",
+      "placementUnlimited": "Ripetizione del test d'ingresso",
       "practiceLimited": "{{count}} sessioni di esercizio a settimana",
       "practiceUnlimited": "Esercizio illimitato in tutti i moduli",
       "progress": "Report dei progressi e percorso",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Le simulazioni fanno parte dell'accesso completo.",
       "coach": "Il tutor IA fa parte dell'accesso completo.",
-      "placement": "Hai già fatto il test di piazzamento gratuito. Le ripetizioni fanno parte dell'accesso completo.",
+      "placement": "Hai già fatto il test d'ingresso gratuito. Le ripetizioni fanno parte dell'accesso completo.",
       "practice": "Hai usato le tue {{limit}} sessioni gratuite di questa settimana. Si rinnovano ogni 7 giorni, oppure passa all'accesso completo per esercitarti senza limiti."
     },
     "lockedTitle": "Passa al piano completo per continuare"

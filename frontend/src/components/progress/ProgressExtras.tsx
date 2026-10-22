@@ -45,7 +45,7 @@ const TYPE: Record<string, string> = {
   final: tr("Final assessment"),
   level_test: tr("Level test"),
   sample: tr("Free sample"),
-  placement: tr("Level test"),
+  placement: tr("Placement test"),
   coach: tr("Tutor"),
   diagnostic: tr("Diagnostic"),
   drill: tr("Drill"),
@@ -217,9 +217,9 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
 
         <div className="flex flex-col gap-6">
           <CertificateCard />
-          <Card title={tr("Level test history")} icon={Award} color="#b97a62">
+          <Card title={tr("Placement test history")} icon={Award} color="#b97a62">
             {d.placements.length === 0 ? (
-              <p className="text-sm text-muted">{tr("Take the level test to see your level here.")}</p>
+              <p className="text-sm text-muted">{tr("Take the placement test to see your level here.")}</p>
             ) : (
               <div className="flex items-end gap-3 flex-wrap">
                 {d.placements.map((p, i) => (

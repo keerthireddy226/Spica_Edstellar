@@ -63,7 +63,7 @@ export function MyPath({
           <div className="min-w-0">
             <p className="font-display font-bold text-lg text-ink">{tr("Your {{skill}} path", { skill: t(`skills.${skill}`).toLowerCase() })}</p>
             <p className="text-sm text-muted">
-              {tr("It starts at your level from the level test or a level check. Finish 7 sets of a question type at 70% or more to move it up a level.")}
+              {tr("It starts at your level from the placement test or a level check. Finish 7 sets of a question type at 70% or more to move it up a level.")}
             </p>
             <div className="flex items-center gap-1 mt-2" aria-hidden="true">
               {LEVELS.map((l) => (

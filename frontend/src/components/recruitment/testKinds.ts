@@ -2,7 +2,7 @@ import type { TestKind } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
 
 export const TEST_KIND_LABEL: Record<TestKind, () => string> = {
-  placement: () => tr("English level test (adaptive)"),
+  placement: () => tr("English placement test (adaptive)"),
   fourSkills: () => tr("Four skills test"),
   speakingListening: () => tr("Speaking and listening test"),
   writing: () => tr("Writing test"),

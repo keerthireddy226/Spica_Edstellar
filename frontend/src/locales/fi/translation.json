@@ -155,7 +155,7 @@
           "C2": "C2 – Taitava",
           "C2Desc": "Lähes äidinkielinen tarkkuus ja sujuvuus",
           "unsure": "En ole vielä varma",
-          "unsureDesc": "Anna tasotestin auttaa päättämään"
+          "unsureDesc": "Lähtötasotestisi auttaa päättämään"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Kaikki valmista!",
-    "subtitle": "Käyttöönotto on valmis — nyt on tasotestin vuoro.",
+    "subtitle": "Käyttöönotto on valmis — nyt on lähtötasotestin vuoro.",
     "scheduleLater": "Ajoita myöhemmäksi",
     "scheduling": "Lähetetään…",
     "scheduleSent": "Lähetimme sinulle muistutuslinkin sähköpostiin.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Ladataan opintosuunnitelmaa…",
     "loadError": "Opintosuunnitelman lataamisessa tapahtui virhe. Yritä uudelleen.",
-    "pendingReviewBanner": "Tasotestisi tulosta tarkistetaan osana henkilöllisyyden varmistusta. Voit käyttää kaikkea alla olevaa sillä välin.",
+    "pendingReviewBanner": "Lähtötasotestisi tulosta tarkistetaan osana henkilöllisyyden varmistusta. Voit käyttää kaikkea alla olevaa sillä välin.",
     "notReadyTitle": "Opintosuunnitelmasi ei ole vielä valmis",
-    "notReadyBody": "Tee tasotesti saadaksesi henkilökohtaisen suunnitelman.",
-    "notReadyBodyScheduled": "Ajoitit tasotestin päivälle {{date}}. Tee se, kun olet valmis — opintosuunnitelma luodaan heti sen jälkeen.",
-    "takeTestNow": "Tee tasotesti",
+    "notReadyBody": "Tee lähtötasotesti saadaksesi henkilökohtaisen suunnitelman.",
+    "notReadyBodyScheduled": "Ajoitit lähtötasotestin päivälle {{date}}. Tee se, kun olet valmis — opintosuunnitelma luodaan heti sen jälkeen.",
+    "takeTestNow": "Tee lähtötasotesti",
     "greeting": "Hei, {{name}}",
     "currentLevel": "Nykyinen taso",
     "goalLevel": "Tavoite",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Ota kasvojen tunnistus käyttöön",
       "subtitle": "Näin varmistetaan, että testin tekee todella sinä.",
-      "body": "Otamme kuvan kasvoistasi henkilöllisyyden varmistamisen vertailukohdaksi. Ennen tasotestejä, harjoituskokeita ja harjoitusistuntoja (moduuleja) sekä niiden aikana satunnaisina hetkinä (30–90 sekunnin välein) uutta kuvaa verrataan siihen henkilöllisyytesi vahvistamiseksi. Kuvia käytetään vain tähän, niitä näkevät vain organisaatiosi tai Edstellarin tarkastajat, ja niitä säilytetään, kunnes tilisi poistetaan tai organisaatiosi säilytysaika päättyy.",
+      "body": "Otamme kuvan kasvoistasi henkilöllisyyden varmistamisen vertailukohdaksi. Ennen lähtötasotestejä, harjoituskokeita ja harjoitusistuntoja (moduuleja) sekä niiden aikana satunnaisina hetkinä (30–90 sekunnin välein) uutta kuvaa verrataan siihen henkilöllisyytesi vahvistamiseksi. Kuvia käytetään vain tähän, niitä näkevät vain organisaatiosi tai Edstellarin tarkastajat, ja niitä säilytetään, kunnes tilisi poistetaan tai organisaatiosi säilytysaika päättyy.",
       "checkboxLabel": "Ymmärrän ja hyväksyn henkilöllisyyden varmistamisen kasvojentunnistuksella, myös tarkistukset satunnaisina hetkinä kokeiden ja harjoitusistuntojen aikana.",
       "submit": "Jatka",
       "decline": "Ei nyt"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} kuukaudessa"
     },
     "features": {
-      "placementOnce": "Yksi tasotesti",
-      "placementUnlimited": "Tasotestin uusiminen",
+      "placementOnce": "Yksi lähtötasotesti",
+      "placementUnlimited": "Lähtötasotestin uusiminen",
       "practiceLimited": "{{count}} harjoituskertaa viikossa",
       "practiceUnlimited": "Rajaton harjoittelu kaikissa moduuleissa",
       "progress": "Edistymisraportit ja opintosuunnitelma",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Harjoituskokeet kuuluvat täyteen käyttöoikeuteen.",
       "coach": "Tekoälytutor kuuluu täyteen käyttöoikeuteen.",
-      "placement": "Olet käyttänyt ilmaisen tasotestisi. Uusinnat kuuluvat täyteen käyttöoikeuteen.",
+      "placement": "Olet käyttänyt ilmaisen lähtötasotestisi. Uusinnat kuuluvat täyteen käyttöoikeuteen.",
       "practice": "Olet käyttänyt tämän viikon {{limit}} ilmaista harjoituskertaa. Ne uusiutuvat liukuvan 7 päivän jakson aikana — tai päivitä rajattomaan harjoitteluun."
     },
     "lockedTitle": "Päivitä jatkaaksesi"

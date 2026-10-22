@@ -155,7 +155,7 @@
           "C2": "C2 – Svært avansert",
           "C2Desc": "Nesten morsmålsnivå i presisjon og flyt",
           "unsure": "Usikker ennå",
-          "unsureDesc": "La nivåtesten hjelpe deg å bestemme"
+          "unsureDesc": "Plasseringstesten din hjelper deg å bestemme"
         }
       },
       "reasonTimeline": {
@@ -241,7 +241,7 @@
   },
   "placement": {
     "title": "Du er klar!",
-    "subtitle": "Oppsettet er ferdig — nå er det tid for nivåtesten.",
+    "subtitle": "Oppsettet er ferdig — nå er det tid for plasseringstesten.",
     "scheduleLater": "Planlegg til senere",
     "scheduling": "Sender…",
     "scheduleSent": "Vi har sendt deg en lenke med en påminnelse.",
@@ -297,11 +297,11 @@
   "roadmap": {
     "loading": "Laster læringsplanen…",
     "loadError": "Noe gikk galt under lasting av læringsplanen. Prøv igjen.",
-    "pendingReviewBanner": "Nivåtestresultatet ditt gjennomgås som del av identitetskontrollen. Du kan bruke alt nedenfor i mellomtiden.",
+    "pendingReviewBanner": "Plasseringsresultatet ditt gjennomgås som del av identitetskontrollen. Du kan bruke alt nedenfor i mellomtiden.",
     "notReadyTitle": "Læringsplanen din er ikke klar ennå",
-    "notReadyBody": "Ta nivåtesten for å få en personlig plan.",
-    "notReadyBodyScheduled": "Du har planlagt nivåtesten til {{date}}. Ta den når du er klar — læringsplanen lages rett etterpå.",
-    "takeTestNow": "Ta nivåtesten",
+    "notReadyBody": "Ta plasseringstesten for å få en personlig plan.",
+    "notReadyBodyScheduled": "Du har planlagt plasseringstesten til {{date}}. Ta den når du er klar — læringsplanen lages rett etterpå.",
+    "takeTestNow": "Ta plasseringstesten",
     "greeting": "Hei, {{name}}",
     "currentLevel": "Nåværende nivå",
     "goalLevel": "Mål",
@@ -705,7 +705,7 @@
     "enrollmentConsent": {
       "title": "Sett opp ansiktsbekreftelse",
       "subtitle": "Det hjelper med å bekrefte at det virkelig er du som tar testen.",
-      "body": "Vi tar et bilde av ansiktet ditt for å lage en referanse for identitetsbekreftelse. Før, og på tilfeldige tidspunkter (hvert 30. til 90. sekund) under, nivåtester, prøvetester og øvingsøkter (Moduler) sammenlignes et nytt bilde med den for å bekrefte at det er deg. Bildene brukes bare til dette, ses bare av kontrollører i organisasjonen din eller hos Edstellar, og oppbevares til kontoen din slettes eller organisasjonens oppbevaringsperiode utløper.",
+      "body": "Vi tar et bilde av ansiktet ditt for å lage en referanse for identitetsbekreftelse. Før, og på tilfeldige tidspunkter (hvert 30. til 90. sekund) under, plasseringstester, prøvetester og øvingsøkter (Moduler) sammenlignes et nytt bilde med den for å bekrefte at det er deg. Bildene brukes bare til dette, ses bare av kontrollører i organisasjonen din eller hos Edstellar, og oppbevares til kontoen din slettes eller organisasjonens oppbevaringsperiode utløper.",
       "checkboxLabel": "Jeg forstår og samtykker til identitetsbekreftelse med ansiktsgjenkjenning, inkludert sjekker på tilfeldige tidspunkter under tester og øvingsøkter.",
       "submit": "Fortsett",
       "decline": "Ikke nå"
@@ -750,8 +750,8 @@
       "perMonth": "{{price}} per måned"
     },
     "features": {
-      "placementOnce": "Én nivåtest",
-      "placementUnlimited": "Ny nivåtest ved behov",
+      "placementOnce": "Én plasseringstest",
+      "placementUnlimited": "Ny plasseringstest ved behov",
       "practiceLimited": "{{count}} øvingsøkter per uke",
       "practiceUnlimited": "Ubegrenset øving i alle moduler",
       "progress": "Fremdriftsrapporter og læringsplan",
@@ -774,7 +774,7 @@
     "locked": {
       "mocktest": "Prøvetester er en del av full tilgang.",
       "coach": "AI-veilederen er en del av full tilgang.",
-      "placement": "Du har brukt den gratis nivåtesten din. Nye forsøk er en del av full tilgang.",
+      "placement": "Du har brukt den gratis plasseringstesten din. Nye forsøk er en del av full tilgang.",
       "practice": "Du har brukt de {{limit}} gratis øktene dine denne uken. De fornyes over en løpende 7-dagersperiode — eller oppgrader for ubegrenset øving."
     },
     "lockedTitle": "Oppgrader for å fortsette"
