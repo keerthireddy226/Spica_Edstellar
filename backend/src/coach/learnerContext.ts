@@ -5,6 +5,7 @@ import { pool } from "../db.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { ALL_SKILLS, computeStreakDays, type SkillTag } from "../gamification/stats.js";
+import { overallFromSkills, pathSummary } from "../learner/path.js";
 
 const RECENT_DAYS = 30;
 // Below this many graded answers a skill/type percentage is noise, not a fact.
@@ -172,7 +173,8 @@ async function loadLearnerFacts(userId: string): Promise<LearnerFacts> {
   const lt = lastTest.rows[0];
   return {
     firstName: p.first_name?.trim() || null,
-    currentLevel: placement.rows[0]?.cefr_level ?? null,
+    // The tutor pitches at the same overall level the learner sees on Overview.
+    currentLevel: overallFromSkills(await pathSummary(userId)) ?? placement.rows[0]?.cefr_level ?? null,
     goalLevel: goal,
     // Only Versant is offered for now (other exams are hidden), so only it is named.
     targetExam: p.exam_preference === "versant" ? (EXAM_LABELS[p.exam_preference] ?? null) : null,

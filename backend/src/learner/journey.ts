@@ -169,7 +169,10 @@ export async function journey(userId: string): Promise<Journey> {
   const lastOf = (mode: string): Date | null => tests.find((t) => t.delivery_mode === mode)?.last ?? null;
   const lastPractice = lastOf("practice");
   const practiceDone = !!lastPractice && Date.now() - new Date(lastPractice).getTime() < 7 * DAY_MS;
-  week.push({ id: "practice_test", kind: "practice_test", done: practiceDone, href: "/practice-tests" });
+  // The final assessment ends the plan: once it's taken (certified, or still
+  // being scored or reviewed) with no new one to take, no practice test is asked for.
+  const planOver = !fa.pending && (!!fa.certificate || fa.taken);
+  if (!planOver) week.push({ id: "practice_test", kind: "practice_test", done: practiceDone, href: "/practice-tests" });
 
   const retry = await retryCounts(userId);
   const retrySkill = SKILLS.reduce((a, b) => (retry[b] > retry[a] ? b : a));
@@ -222,22 +225,25 @@ export async function journey(userId: string): Promise<Journey> {
   // Its day: today when it's open and the mock tests reach the goal; otherwise
   // the end of the plan (the exam day, the program's final assessment day, or
   // the day it opens anyway), or after the last planned test when none of those
-  // is set. Once certified, nothing more is planned.
+  // is set. A new final assessment to take (say Full access was renewed) is
+  // planned the same way, even after an older certificate. Once taken (still
+  // being scored, under review or void) or certified with none left to take,
+  // the plan ends today: nothing more is planned.
   const todayDate = dateOnly(new Date());
   const ready = await readiness(userId).catch(() => null);
   const lastSlot = slots.length ? dateOnly(slots[slots.length - 1].date) : null;
   let finalDate: string | null = null;
-  if (!fa.certificate && fa.pending) {
+  if (fa.pending) {
     if (fa.pending.open && ready?.ready) finalDate = todayDate;
     else {
       const programDay = program?.program.finalAssessment ? (program.program.finalAssessmentOn ?? null) : null;
       const ends = [examDate, programDay, fa.pending.open ? null : fa.pending.opensOn].filter((x): x is string => !!x && x >= todayDate).sort();
       finalDate = ends[0] ?? lastSlot ?? todayDate;
     }
-  } else if (!fa.certificate && !fa.taken) {
+  } else if (!planOver) {
     finalDate = examDate && examDate >= todayDate ? examDate : (lastSlot ?? todayDate);
   }
-  const planEnd = fa.certificate && !fa.pending ? todayDate : finalDate;
+  const planEnd = planOver ? todayDate : finalDate;
   if (planEnd) slots.splice(0, slots.length, ...slots.filter((s) => dateOnly(s.date) <= planEnd));
 
   // This week's mock (when one falls in the next 7 days), or one just done.

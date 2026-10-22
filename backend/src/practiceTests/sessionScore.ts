@@ -4,7 +4,11 @@ import { passThresholdForLevel } from "../placement/cefr.js";
 import { levelSummary } from "../placement/levels.js";
 import { snapshot } from "../reports/batchReport.js";
 import { qualitySettings } from "../quality/settings.js";
-import { levelTestPassed } from "./modes.js";
+import { bandForLevel, familyScoreScale, levelTestPassed } from "./modes.js";
+import { testTypeOfExam } from "../catalogue/service.js";
+
+// Results saved with unscored answers are settled this long after the test.
+const SETTLE_DAYS = 45;
 
 // Every answer of a session with its score, for the result at the end.
 export async function loadScoreRows(sessionId: string) {
@@ -70,30 +74,61 @@ export async function levelTestOutcome(level: string, s: ReturnType<typeof summa
   };
 }
 
-// Level tests left undecided: decided now if their answers have since been
-// scored (the background scoring retries). Returns how many were decided.
-export async function settleLevelTests(): Promise<number> {
-  const r = await pool.query(
-    `SELECT id, composition->>'levelTest' AS level FROM sessions
-     WHERE completed_at IS NOT NULL AND delivery_mode = 'certified' AND composition->>'levelTest' IS NOT NULL
-       AND result ? 'levelTest' AND jsonb_typeof(result->'levelTest'->'passed') = 'null'`,
-  );
-  let decided = 0;
-  for (const { id, level } of r.rows) {
-    const s = summarizeScores(await loadScoreRows(id));
-    const outcome = await levelTestOutcome(level, s);
-    if (outcome.passed === null) continue;
-    await pool.query(`UPDATE sessions SET result = result || $2::jsonb WHERE id = $1`, [
-      id,
-      JSON.stringify({
-        cefrLevel: s.level?.cefrLevel ?? null,
-        skillLevels: s.level?.skillLevels ?? null,
-        skillPercents: s.level?.skillPercents ?? null,
-        overallPercent: s.overall,
-        levelTest: outcome,
-      }),
-    ]);
-    decided++;
-  }
-  return decided;
+// Answers not scored yet: still waiting on the AI, or its scoring failed.
+export function unscoredCount(s: ReturnType<typeof summarizeScores>): number {
+  return s.pendingCount + s.failedCount;
 }
+
+// The result figures to save again once every answer is scored (null while
+// some aren't): the level, each skill's level and share, the overall share
+// and, for a level test, its pass or fail.
+export async function settledResult(levelTest: string | null, s: ReturnType<typeof summarizeScores>, scale: Awaited<ReturnType<typeof familyScoreScale>>) {
+  if (unscoredCount(s) > 0) return null;
+  return {
+    cefrLevel: s.level?.cefrLevel ?? null,
+    skillLevels: s.level?.skillLevels ?? null,
+    skillPercents: s.level?.skillPercents ?? null,
+    overallPercent: s.overall,
+    scoreBand: bandForLevel(scale, s.level?.cefrLevel),
+    ...(levelTest ? { levelTest: await levelTestOutcome(levelTest, s) } : {}),
+  };
+}
+
+// A result saved at /complete while some answers were still unscored (marked
+// with result.unscored) is saved again once the background scoring retries
+// have scored them all, so the level, the skills and the percentage (and a
+// level test's pass or fail) count every answer. Also level tests left
+// undecided (passed: null), e.g. one an appeal re-marked. Returns how many
+// results were settled.
+export async function settleResults(): Promise<number> {
+  const r = await pool.query(
+    `SELECT s.id, s.delivery_mode, s.composition FROM sessions s
+     WHERE s.completed_at IS NOT NULL
+       AND ((s.result ? 'unscored' AND s.completed_at > now() - interval '${SETTLE_DAYS} days')
+         OR (s.delivery_mode = 'certified' AND s.composition->>'levelTest' IS NOT NULL
+             AND s.result ? 'levelTest' AND jsonb_typeof(s.result->'levelTest'->'passed') = 'null'))
+       -- Only once nothing is left to score (as summarizeScores counts it).
+       AND NOT EXISTS (SELECT 1 FROM attempts a JOIN scores sc ON sc.attempt_id = a.id
+                       WHERE a.session_id = s.id
+                         AND (sc.status = 'failed' OR (sc.status = 'pending' AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL))))
+     ORDER BY s.completed_at LIMIT 200`,
+  );
+  let settled = 0;
+  for (const { id, delivery_mode, composition } of r.rows) {
+    const c = (composition ?? {}) as Record<string, unknown>;
+    const s = summarizeScores(await loadScoreRows(id));
+    // The score range as /complete works it out: mocks and real tests in the exam's format.
+    const scale =
+      (delivery_mode === "mock" || delivery_mode === "certified") && !c.shortForm
+        ? await familyScoreScale((c.testTypeId as string | undefined) ?? (c.examId ? await testTypeOfExam(c.examId as string) : null))
+        : null;
+    const result = await settledResult((c.levelTest as string | undefined) ?? null, s, scale);
+    if (!result) continue;
+    await pool.query(`UPDATE sessions SET result = (result || $2::jsonb) - 'unscored' WHERE id = $1`, [id, JSON.stringify(result)]);
+    settled++;
+  }
+  return settled;
+}
+
+// The older name, still used where a level test is waiting on its answers.
+export const settleLevelTests = settleResults;

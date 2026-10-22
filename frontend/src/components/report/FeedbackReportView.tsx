@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbul
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
-import { ScoreReport } from "@/components/report/ScoreReport";
+import { FinalResultWaiting, ScoreReport } from "@/components/report/ScoreReport";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 
 const ERROR_TYPE: Record<string, () => string> = {
@@ -456,7 +456,7 @@ export function FeedbackReportView({ load, upgradeLink = false, viewer = "learne
   }
   // A real assessment attempt has its score report only (its questions stay secret).
   if (!data.report && data.about?.deliveryMode === "certified") {
-    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} /> : <p className="text-sm text-muted">{tr("Your answers are still being scored. Check back soon.")}</p>;
+    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} /> : <FinalResultWaiting status={data.status} waiting={data.waiting} />;
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
   return (
@@ -474,11 +474,19 @@ export function FeedbackReportView({ load, upgradeLink = false, viewer = "learne
 // Which test the report is for: practice test or mock test, the test, set, date and code.
 function AboutLine({ about }: { about: ReportAbout }) {
   const mock = about.deliveryMode === "mock";
+  // A proctored real attempt or a level test isn't a practice test.
+  const kind = about.levelTest
+    ? tr("Level {{level}} test", { level: about.levelTest })
+    : about.deliveryMode === "certified"
+      ? tr("Final assessment")
+      : mock
+        ? tr("Mock test")
+        : tr("Practice test");
   const test = about.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
       <span className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${mock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
-        {mock ? tr("Mock test") : tr("Practice test")}
+        {kind}
       </span>
       {test && <span className="font-display font-bold text-ink">{test}</span>}
       <span className="text-sm text-muted">

@@ -326,6 +326,10 @@ export interface ReportAbout {
   setName: string | null;
   testCode: string | null;
   completedAt: string | null;
+  // A level test (a real attempt at one level): its level, and passed or not
+  // (null while its answers are still being scored). No certificate.
+  levelTest?: string | null;
+  levelPassed?: boolean | null;
 }
 
 export type ScoreSkill = "speaking" | "listening" | "reading" | "writing";
@@ -384,7 +388,11 @@ export interface ScoreReport {
 export type AnswerDetail = Pick<ScoreReport, "speaking" | "writing">;
 
 export interface ReportResponse {
-  status: "pending" | "ready" | "failed";
+  // void: a final assessment found to be a proctoring violation (no score).
+  status: "pending" | "ready" | "failed" | "void";
+  // A final assessment not shown yet: its answers are being scored, or its
+  // proctoring record is under review.
+  waiting?: "scoring" | "review" | null;
   report: FeedbackReport | null;
   about?: ReportAbout | null;
   score?: ScoreReport | null;
@@ -408,6 +416,9 @@ export interface HistoryEntry {
   spicaScore?: number | null;
   certifiedLevel?: string | null;
   levelTest?: string | null;
+  // A final assessment without its certificate yet (no level shown): being
+  // scored, under review, or void. Null otherwise.
+  finalStatus?: "scoring" | "under_review" | "void" | null;
 }
 
 export function getHistory(): Promise<{ sessions: HistoryEntry[] }> {

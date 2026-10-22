@@ -1,7 +1,6 @@
 import { registerHandler } from "./queue.js";
 import { issueDueResultCertificates } from "../assessment/service.js";
 import { refundExpiredTests } from "../orgTests/service.js";
-import { runAutoCertificates } from "../certificates/course.js";
 import { deliverWebhook } from "../webhooks/service.js";
 import { buildExport, eraseLearner, runRetention } from "../governance/service.js";
 import { every } from "./schedule.js";
@@ -16,7 +15,8 @@ import { analyzeSession } from "../proctoring/analyze.js";
 import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
 import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
-import { settleLevelTests } from "../practiceTests/sessionScore.js";
+import { settleResults } from "../practiceTests/sessionScore.js";
+import { finishOverdueTimedTests } from "../practiceTests/complete.js";
 import { runProgramsDaily } from "../programs/service.js";
 import { applyDueDowngrades } from "../plans/service.js";
 import { sendRecertifyReminders } from "../assessment/service.js";
@@ -40,8 +40,8 @@ export function registerJobs() {
   registerHandler("grading.speaking", (p, job) => gradeSpeakingAttempt(p.attemptId, { final: job.attempts >= 4 }));
   registerHandler("grading.speaking.retry", async (p, job) => {
     await gradeSpeakingAttempt(p.attemptId, { final: job.attempts >= 3 });
-    // A level test waiting on this answer can now be decided.
-    await settleLevelTests();
+    // A result (or level test) waiting on this answer can now be saved again.
+    await settleResults();
   });
   // The feedback report after a test; waits (retries) while recorded answers are still being graded.
   registerHandler("report.build", async (p, job) => {
@@ -50,11 +50,6 @@ export function registerJobs() {
   });
   registerHandler("email.notification", (p) => sendQueuedNotificationEmail(p as Parameters<typeof sendQueuedNotificationEmail>[0]));
 
-  // Real assessment attempts: certificates once scored and proctoring is clear.
-  every(60, "certificates.auto", async () => {
-    const r = await runAutoCertificates();
-    if (r.requested > 0) console.log(`course certificates: ${r.requested} requested, ${r.issued} issued`);
-  });
   every(60, "org-tests.refunds", async () => {
     const n = await refundExpiredTests();
     if (n > 0) console.log(`org tests: ${n} unused real tests refunded`);
@@ -66,8 +61,13 @@ export function registerJobs() {
   every(15, "grading.speaking.sweep", async () => {
     const n = await sweepStuckSpeaking();
     if (n > 0) console.log(`speaking grading: ${n} stuck answers queued again`);
-    const decided = await settleLevelTests();
-    if (decided > 0) console.log(`level tests: ${decided} decided after scoring`);
+    const settled = await settleResults();
+    if (settled > 0) console.log(`results: ${settled} saved again once every answer was scored`);
+  });
+  // Mocks and real attempts left open past their deadline, with answers, are finished.
+  every(5, "tests.finish-overdue", async () => {
+    const n = await finishOverdueTimedTests();
+    if (n > 0) console.log(`timed tests: ${n} left open past their deadline finished`);
   });
   every(15, "notifications.run", async () => {
     const r = await runAllJobs();

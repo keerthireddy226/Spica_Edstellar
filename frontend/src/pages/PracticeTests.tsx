@@ -892,7 +892,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   if (summary && isCandidate) return <CandidateFinished sessionId={sessionId} />;
   // A real attempt is scored and checked before its result shows; a sample opens the real test.
   if (summary && (summary.deliveryMode === "certified" || summary.deliveryMode === "sample")) {
-    return <OwnedFinished mode={summary.deliveryMode} onDone={() => navigate(ROUTES.MY_TESTS)} />;
+    return <OwnedFinished mode={summary.deliveryMode} level={owned?.level ?? null} onDone={() => navigate(ROUTES.MY_TESTS)} />;
   }
 
   // Takes priority over the running-session view below — completing a test

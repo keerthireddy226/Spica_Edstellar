@@ -107,7 +107,7 @@ export function FinalAssessmentCard({ compact = false }: { compact?: boolean } =
           </>
         ) : canBuy ? (
           <>
-            <span className="text-sm text-ink">{tr("Every paid plan includes one final assessment with a certificate.")}</span>
+            <span className="text-sm text-ink">{tr("Full access and preparation plans include a final assessment with a certificate.")}</span>
             <Link to={ROUTES.SPICA_PLANS} className={`${linkBtn} bg-navy text-white`}>
               {tr("Get a final assessment")}
             </Link>

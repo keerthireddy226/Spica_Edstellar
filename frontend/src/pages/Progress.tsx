@@ -4,7 +4,6 @@ import { ROUTES } from "@/constants/routes";
 import { Link } from "react-router-dom";
 import { ArrowRight, TrendingUp, TrendingDown, Minus, Trophy, CalendarCheck, LineChart } from "lucide-react";
 import { getDailyProgress, type DailyProgress, type DailyStat } from "@/api/dashboard";
-import { ApiError } from "@/lib/api";
 import { MotivationalBar } from "@/components/MotivationalBar";
 import { ProgressExtras } from "@/components/progress/ProgressExtras";
 import { PageError, PageLoading } from "@/components/learner/PageStates";
@@ -203,8 +202,9 @@ export function Progress() {
     setError(null);
     getDailyProgress()
       .then(setData)
-      .catch((err: unknown) => {
-        setError(err instanceof ApiError ? err.message : t("progressPage.loadError"));
+      // A server error code isn't a sentence: always the plain message.
+      .catch(() => {
+        setError(t("progressPage.loadError"));
       })
       .finally(() => setLoading(false));
   }, [t, attempt]);

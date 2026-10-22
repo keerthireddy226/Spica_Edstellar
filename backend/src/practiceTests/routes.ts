@@ -7,24 +7,19 @@ import { Router } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { submitAttemptSchema } from "../placement/schemas.js";
-import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
+import { gradeAndSaveAttempt } from "../attemptGrading.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
-import { checkAndAwardBadges } from "../gamification/stats.js";
-import { applyTestLevels } from "../learner/path.js";
 import { isPhoneUserAgent } from "../lib/device.js";
-import { rebuildRoadmap } from "../roadmap/save.js";
 import { learnerPolicy } from "../proctoring/policy.js";
 import { randomizedFormItemIds } from "../proctoring/forms.js";
-import { finishProctoredSession, proctoringBlock } from "../proctoring/analyze.js";
-import { activeAssessment, recordCandidateResult } from "../recruitment/service.js";
+import { proctoringBlock } from "../proctoring/analyze.js";
+import { activeAssessment } from "../recruitment/service.js";
 import { examPrefix, newTestCode } from "../lib/testCode.js";
-import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
+import { auditTestStarted } from "../audit/testEvents.js";
 import { listCatalogue, liveTestType, testTypeOfExam } from "../catalogue/service.js";
 import {
   answerTooLate,
-  bandForLevel,
-  familyScoreScale,
   itemViews,
   mockDeadline,
   mockFormItemIds,
@@ -40,13 +35,13 @@ import {
   type MockComposition,
 } from "./modes.js";
 import { QuotaError, assertQuota, listQuotas, quotaUsage } from "../programs/quotas.js";
-import { activeProgramOf, learnerProgram, recordProgramSession } from "../programs/service.js";
+import { activeProgramOf, learnerProgram } from "../programs/service.js";
 import { enqueue } from "../queue/queue.js";
 import { formSessionRows, pickMockForm, practiceForms } from "../builder/forms.js";
 import { learnerQuota } from "../programs/quotas.js";
 import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
 import { qualitySettings } from "../quality/settings.js";
-import { levelTestOutcome, loadScoreRows, summarizeScores } from "./sessionScore.js";
+import { completeSession } from "./complete.js";
 
 export const practiceTestsRouter = Router();
 
@@ -230,6 +225,26 @@ practiceTestsRouter.get("/products", requireAuth, async (req: AuthedRequest, res
   }
 });
 
+// Where a final assessment's (real attempt's) result stands: void (a proctoring
+// violation), being scored (answers still waiting on the AI, or its scoring
+// failed), under review (the proctoring record isn't clear yet), or ready.
+async function finalResultState(sessionId: string): Promise<"void" | "scoring" | "review" | "ready"> {
+  const r = (
+    await pool.query(
+      `SELECT (SELECT status FROM session_integrity WHERE session_id = $1) AS integrity,
+         EXISTS (SELECT 1 FROM certificates WHERE session_id = $1 AND kind = 'result' AND revoked_at IS NULL) AS certified,
+         EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
+                 WHERE a.session_id = $1 AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL)
+                   AND coalesce(sc.status, 'pending') IN ('pending', 'failed')) AS unscored`,
+      [sessionId],
+    )
+  ).rows[0];
+  if (r.integrity === "violation") return "void";
+  if (r.unscored) return "scoring";
+  if (r.certified || r.integrity === "clear" || r.integrity === "cleared") return "ready";
+  return "review";
+}
+
 // The feedback report of one finished test. Built on first request if it
 // wasn't (tests finished before reports existed), and again if the learner's
 // plan now includes the full report.
@@ -243,8 +258,17 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
     // A real assessment attempt shows its score report only: its questions
     // stay secret, so they can be used again.
     if (s.delivery_mode === "certified") {
+      const about = await reportAbout(s.id);
+      // The final assessment's score is shown once it's final: every answer
+      // scored, and the proctoring record clear (or cleared by a reviewer), or
+      // its certificate issued. Before that it's being scored or under review;
+      // an attempt found to be a violation is void, with no score.
+      if (!about?.levelTest) {
+        const st = await finalResultState(s.id);
+        if (st !== "ready") return res.json({ status: st === "void" ? "void" : "pending", waiting: st === "void" ? null : st, report: null, about, score: null });
+      }
       const score = await scoreReport(s.id, null).catch(() => null);
-      return res.json({ status: score?.overall ? "ready" : "pending", report: null, about: await reportAbout(s.id), score });
+      return res.json({ status: score?.overall ? "ready" : "pending", waiting: score?.overall ? null : "scoring", report: null, about, score });
     }
     const r = (await pool.query(`SELECT status, report_level, report, updated_at FROM feedback_reports WHERE session_id = $1`, [s.id])).rows[0];
     // Explanations the AI couldn't write at the time: try again (at most hourly), showing this report meanwhile.
@@ -279,8 +303,9 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
     const r = await pool.query(
       `SELECT s.id, s.test_code, s.delivery_mode, s.completed_at, s.result, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id,
          coalesce(e.name, fo.name) AS exam_name, fr.status AS report_status,
-         c.code AS certificate_code, c.spica_score, c.cefr_level AS certified_level, s.composition->>'levelTest' AS level_test
-       FROM sessions s LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result' AND c.revoked_at IS NULL LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
+         c.code AS certificate_code, c.spica_score, c.cefr_level AS certified_level, s.composition->>'levelTest' AS level_test, si.status AS integrity
+       FROM sessions s LEFT JOIN certificates c ON c.session_id = s.id AND c.kind = 'result' AND c.revoked_at IS NULL
+       LEFT JOIN session_integrity si ON si.session_id = s.id LEFT JOIN exams e ON e.id::text = s.composition->>'examId' LEFT JOIN forms fo ON fo.id::text = s.composition->>'formId'
        LEFT JOIN feedback_reports fr ON fr.session_id = s.id
        WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.completed_at IS NOT NULL
          AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
@@ -306,6 +331,10 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
         spicaScore: x.spica_score ?? null,
         certifiedLevel: x.certified_level ?? null,
         levelTest: x.level_test ?? null,
+        // A final assessment's result shows once it's certified: until then
+        // it's being scored or under review, or void (a proctoring violation).
+        finalStatus:
+          x.delivery_mode === "certified" && !x.level_test && !x.certificate_code ? (x.integrity === "violation" ? "void" : x.integrity === "flagged" ? "under_review" : "scoring") : null,
       })),
     });
   } catch (err) {
@@ -796,163 +825,15 @@ practiceTestsRouter.get("/session/:sessionId/feedback/:itemId", requireAuth, asy
 
 // Unlike Placement, completing a mock-exam session never writes a placements
 // or roadmap row — it's practice, not a certification (same rule as the
-// existing practice router's /session/:id/complete).
+// existing practice router's /session/:id/complete). The work is in
+// completeSession (complete.ts), which also finishes timed tests left open
+// past their deadline.
 practiceTestsRouter.post("/session/:sessionId/complete", requireAuth, async (req: AuthedRequest, res, next) => {
-  // Idempotent: a session already marked complete (e.g. the first /complete
-  // call actually succeeded server-side but the client never saw the
-  // response — the exact "stuck on the last question forever" bug this
-  // fixes) just gets its real score recomputed and returned again, instead
-  // of a 404 that leaves the learner with no way to see their result.
-  let sessionExists;
-  // Only the first /complete finishes the test (and is audited).
-  let justFinished = false;
   try {
-    sessionExists = await pool.query(
-      `SELECT id, test_code, delivery_mode, composition FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest'`,
-      [req.params.sessionId, req.user!.id],
-    );
-    if (sessionExists.rows[0]) {
-      const u = await pool.query(`UPDATE sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`, [req.params.sessionId]);
-      justFinished = (u.rowCount ?? 0) > 0;
-    }
+    const found = await completeSession(req.params.sessionId as string, req.user!.id, req.user!.role, req.ip, (body) => res.json(body));
+    if (!found) res.status(404).json({ error: "session_not_found" });
   } catch (err) {
-    return next(err);
-  }
-  if (!sessionExists.rows[0]) return res.status(404).json({ error: "session_not_found" });
-  const deliveryMode: DeliveryMode = sessionExists.rows[0].delivery_mode ?? "practice";
-  const composition = sessionExists.rows[0].composition ?? {};
-
-  // A mock's questions never reached (time ran out, or the learner ended
-  // early) count as unanswered in the report.
-  if (justFinished && isTimed(deliveryMode)) {
-    try {
-      const done = await pool.query(`SELECT item_id FROM attempts WHERE session_id = $1`, [req.params.sessionId]);
-      const answered = new Set(done.rows.map((r) => r.item_id));
-      for (const itemId of ((composition.itemIds as string[]) ?? []).filter((id) => !answered.has(id))) {
-        await gradeAndSaveAttempt(req.params.sessionId as string, { itemId });
-      }
-    } catch (err) {
-      console.error("practiceTests /complete: recording unanswered mock questions failed:", err);
-    }
-  }
-
-  // Recorded answers graded in the background must count in the result.
-  await finishPendingSpeaking(req.params.sessionId as string).catch((err) => console.error("practiceTests /complete: speaking grading failed:", err));
-
-  // The session is now genuinely done — a crash computing the score
-  // breakdown below must never leave the learner stuck mid-test with an
-  // error and no way forward. Fall back to a minimal "you finished, score
-  // pending" response instead of failing the whole request.
-  try {
-    const scored = summarizeScores(await loadScoreRows(req.params.sessionId as string));
-    const { rows, graded, rowCorrect, correctCount, pendingCount, failedCount, skippedCount, level, overall } = scored;
-
-    const partLabels = [...new Set(rows.map((r) => r.part_label))];
-    const partResults = partLabels.map((label) => {
-      const partRows = graded.filter((r) => r.part_label === label);
-      return { label, gradedCount: partRows.length, correctCount: partRows.filter(rowCorrect).length };
-    });
-
-    // A mock's estimated score range on the exam family's scale, where it publishes one.
-    // A short form isn't the exam's format, so its score range wouldn't mean anything.
-    const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
-    const skillScoreBands = level?.skillLevels
-      ? Object.fromEntries(Object.entries(level.skillLevels as Record<string, string | null>).map(([k, v]) => [k, bandForLevel(scale, v)]))
-      : null;
-    if (justFinished) {
-      // Kept for programs (the learner's latest level) and reports.
-      await pool.query(`UPDATE sessions SET result = $2 WHERE id = $1`, [
-        req.params.sessionId,
-        JSON.stringify({
-          cefrLevel: level?.cefrLevel ?? null,
-          skillLevels: level?.skillLevels ?? null,
-          // Each skill's share right, for its Spica score in batch reports.
-          skillPercents: level?.skillPercents ?? null,
-          overallPercent: overall,
-          scoreBand: bandForLevel(scale, level?.cefrLevel),
-          // A level test: passed at 70% overall and at least 50% in each skill,
-          // decided once every answer is scored.
-          ...(composition.levelTest
-            ? {
-                levelTest: await levelTestOutcome(composition.levelTest as string, scored),
-              }
-            : {}),
-        }),
-      ]);
-      await auditTestCompleted(req.params.sessionId as string, { cefrLevel: level?.cefrLevel, overallPercent: overall, answered: rows.length - skippedCount, skipped: skippedCount }, req.ip).catch(() => {});
-      // Each skill's level against the learner's Practice Modules path: a
-      // higher one lifts the path (and the plan); a lower one is shown with a
-      // nudge to take a level check, never lowering the path by itself.
-      // A sample is too short to say anything about levels.
-      if (req.user!.role === "learner" && deliveryMode !== "sample") {
-        const pathCompare = await applyTestLevels(req.user!.id, (level?.skillLevels as Record<string, unknown> | undefined) ?? null).catch((err) => {
-          console.error("applyTestLevels failed:", err);
-          return {};
-        });
-        await pool.query(`UPDATE sessions SET result = result || $2::jsonb WHERE id = $1`, [req.params.sessionId, JSON.stringify({ pathCompare })]);
-        if (Object.values(pathCompare).some((x) => x?.action === "raised")) await rebuildRoadmap(req.user!.id).catch(() => false);
-      }
-    }
-    const pathCompare = (await pool.query(`SELECT result->'pathCompare' AS pc FROM sessions WHERE id = $1`, [req.params.sessionId])).rows[0]?.pc ?? null;
-    res.json({
-      // Each skill's level here against the learner's Practice Modules path.
-      pathCompare,
-      testCode: sessionExists.rows[0].test_code,
-      gradedCount: graded.length,
-      correctCount,
-      pendingCount,
-      skippedCount,
-      failedCount,
-      overallPercent: graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : 0,
-      partResults,
-      cefrLevel: level?.cefrLevel ?? null,
-      skillLevels: level?.skillLevels ?? null,
-      skillPercents: level?.skillPercents ?? null,
-      deliveryMode,
-      scoreBand: bandForLevel(scale, level?.cefrLevel),
-      skillScoreBands,
-    });
-  } catch (err) {
-    console.error("practiceTests /complete: score summary failed, session still marked complete:", err);
-    res.json({ testCode: sessionExists.rows[0].test_code, deliveryMode, gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
-  }
-
-  // Proctoring analysis is best-effort too: the learner already has their result.
-  try {
-    await finishProctoredSession(req.params.sessionId as string);
-  } catch (err) {
-    console.error("practiceTests /complete: proctoring analysis failed (non-fatal):", err);
-  }
-
-  // The feedback report is built in the background (a real attempt has its score report only).
-  if (justFinished && deliveryMode !== "certified") {
-    await enqueue("report.build", { sessionId: req.params.sessionId }, { dedupeKey: `report.build:${req.params.sessionId}`, maxAttempts: 5 }).catch((err) =>
-      console.error("practiceTests /complete: report not queued:", err),
-    );
-  }
-
-  // A finished test ticks off the learner's program schedule.
-  if (justFinished) {
-    try {
-      await recordProgramSession(req.user!.id, req.params.sessionId as string, deliveryMode);
-    } catch (err) {
-      console.error("practiceTests /complete: program schedule update failed (non-fatal):", err);
-    }
-  }
-
-  // A candidate's result goes to the recruiter.
-  try {
-    await recordCandidateResult(req.user!.id, req.params.sessionId as string);
-  } catch (err) {
-    console.error("practiceTests /complete: candidate result failed (non-fatal):", err);
-  }
-  if (req.user!.role === "candidate") return;
-
-  // Badge-checking is best-effort and must never affect the response above
-  // (already sent) or retroactively fail a completion that already succeeded.
-  try {
-    await checkAndAwardBadges(req.user!.id);
-  } catch (err) {
-    console.error("practiceTests /complete: badge check failed (non-fatal):", err);
+    if (!res.headersSent) return next(err);
+    console.error("practiceTests /complete failed after the result was sent:", err);
   }
 });

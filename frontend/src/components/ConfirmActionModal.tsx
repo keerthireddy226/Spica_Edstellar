@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/Button";
 
@@ -22,12 +23,21 @@ export function ConfirmActionModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  // Escape closes it, like the close button (not while the action runs).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, submitting]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">{title}</h2>
-          <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
+          <button onClick={onClose} aria-label={tr("Close")} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
           </button>
         </div>

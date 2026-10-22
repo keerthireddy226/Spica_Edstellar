@@ -7,6 +7,7 @@ import { learnerAccess } from "../licenses/service.js";
 import { getLearnerStats } from "../gamification/stats.js";
 import { rebuildRoadmap } from "../roadmap/save.js";
 import { learnerBoard } from "../learner/leaderboard.js";
+import { overallFromSkills, pathSummary } from "../learner/path.js";
 
 // The signed-in person's own profile extras: work details, what they've
 // done recently, a summary of their role, and (for learners) their
@@ -186,7 +187,8 @@ meRouter.get("/learning", requireAuth, async (req: AuthedRequest, res, next) => 
         firstLanguage: x.first_language ?? null,
       },
       progress: {
-        level: pl?.cefr_level ?? null,
+        // The same overall level as Overview and My journey (the skill paths), else the placement's.
+        level: overallFromSkills(await pathSummary(id)) ?? pl?.cefr_level ?? null,
         placementPercent: pl?.overall_percent ?? null,
         placedAt: pl?.taken_at ?? null,
         sessions: st.sessions,

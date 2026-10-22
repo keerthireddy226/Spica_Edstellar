@@ -28,6 +28,7 @@ import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import { formatShortDate } from "@/api/licenses";
 import { ROUTES } from "@/constants/routes";
 import { useReadiness } from "@/components/learner/useReadiness";
+import { usePrepPrices } from "@/components/plans/usePrepPrices";
 import { tr } from "@/i18n/tr";
 
 const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, speaking: Mic, reading: BookOpen, writing: PenLine };
@@ -116,6 +117,7 @@ export function SkillProgress({ j }: { j: Journey }) {
 export function PathToGoal({ j }: { j: Journey }) {
   const { t } = useTranslation();
   const cert = useReadiness()?.certificate ?? null;
+  const canBuy = usePrepPrices()?.canBuy ?? false;
   if (!j.steps.length) return null;
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
@@ -182,8 +184,9 @@ export function PathToGoal({ j }: { j: Journey }) {
                   })}
                 </div>
               )}
-              {justDone && (
-                <Link to={ROUTES.SPICA_PLANS} className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-navy-deep hover:underline">
+              {/* A level test is bought on Plans; a learner whose organization gives access can't buy one. */}
+              {justDone && canBuy && (
+                <Link to={ROUTES.PLANS} className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-navy-deep hover:underline">
                   {tr("You finished {{level}} in Practice Modules. Check it with a level test", { level: step.level })} <ArrowRight size={12} />
                 </Link>
               )}
@@ -289,6 +292,8 @@ export function Checkpoints({ j }: { j: Journey }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [full, setFull] = useState(false);
+  // A final assessment not owned yet: bought on Plans, or given by the organization.
+  const canBuy = usePrepPrices()?.canBuy ?? false;
   if (j.checkpoints.length < 2) return null;
   // Past tests and today always; then the next few, and exam day.
   let upcoming = 0;
@@ -315,7 +320,7 @@ export function Checkpoints({ j }: { j: Journey }) {
             ? tr("Mock test")
             : tr("Exam day");
   const href = (c: C) =>
-    c.kind === "final" ? (c.toGet ? ROUTES.SPICA_PLANS : ROUTES.MY_TESTS) : c.kind === "certificate" ? (c.code ? `/certificate/${c.code}` : null) : c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
+    c.kind === "final" ? (c.toGet && canBuy ? ROUTES.SPICA_PLANS : ROUTES.MY_TESTS) : c.kind === "certificate" ? (c.code ? `/certificate/${c.code}` : null) : c.kind === "practice_test" ? "/practice-tests" : c.kind === "mock" ? "/mock-exams" : c.kind === "level_check" && c.skill ? `/modules?skill=${c.skill}&check=1` : null;
   const Icon = (c: C) => (c.kind === "final" || c.kind === "certificate" ? Award : c.kind === "exam" ? Flag : c.kind === "mock" ? Timer : c.kind === "level_check" ? Gauge : c.kind === "practice_test" ? ClipboardList : null);
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
@@ -377,7 +382,7 @@ export function Checkpoints({ j }: { j: Journey }) {
                 {c.onReset && <span className="text-[10px] text-muted text-center leading-tight">{tr("new mocks that day")}</span>}
                 {c.kind === "final" && !c.done && (
                   <span className="text-[10px] text-muted text-center leading-tight">
-                    {c.toGet ? tr("in every paid plan") : c.open ? tr("open now") : c.needsMock ? tr("take a mock test first") : tr("opens after a mock test")}
+                    {c.toGet ? (canBuy ? tr("in Full access and preparation plans") : tr("given by your organization")) : c.open ? tr("open now") : c.needsMock ? tr("take a mock test first") : tr("opens after a mock test")}
                   </span>
                 )}
                 {c.kind === "certificate" && !c.done && <span className="text-[10px] text-muted text-center leading-tight">{tr("after your final assessment")}</span>}
@@ -406,7 +411,12 @@ export function Checkpoints({ j }: { j: Journey }) {
         </p>
       )}
       {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, ending with your final assessment.")}</p>}
-      {j.examDate && !j.checkpoints.some((c) => c.kind === "mock" && !c.done) && (
+      {/* Only when the monthly allowance is the reason: not for a program's own dates, or a plan
+          that ends early on purpose (certified, or the final assessment comes first). */}
+      {j.examDate &&
+        j.planSource?.kind === "allowance" &&
+        j.planSource.mocksPerMonth !== null &&
+        !j.checkpoints.some((c) => (c.kind === "mock" && !c.done) || (c.kind === "certificate" && c.done) || (c.kind === "final" && !c.toGet)) && (
         <p className="text-xs text-warning">{tr("No mock test is left in this month's allowance before your exam. See the Mock Tests page for when new ones arrive.")}</p>
       )}
       {j.checkpoints.some((c) => !c.done && (c.kind === "practice_test" || c.kind === "mock" || c.kind === "exam" || (c.kind === "final" && !c.toGet))) && <CalendarActions />}

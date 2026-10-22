@@ -8,6 +8,7 @@ import { notify } from "../notifications/service.js";
 import { holdResultCertificate } from "../assessment/service.js";
 import { LEVEL_TEST_BLUEPRINT } from "../practiceTests/modes.js";
 import { qualitySettings } from "./settings.js";
+import { settleLevelTests } from "../practiceTests/sessionScore.js";
 
 const round = (x: number | null, d = 1) => (x === null || !Number.isFinite(x) ? null : Math.round(x * 10 ** d) / 10 ** d);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
@@ -302,6 +303,9 @@ export async function decideAppeal(id: string, outcome: "upheld" | "changed" | "
     await holdResultCertificate(a.session_id);
     // The sweep issues a new certificate from the new scores.
     await pool.query(`DELETE FROM certificates WHERE session_id = $1 AND kind = 'result'`, [a.session_id]);
+    // A level test is decided again from the new scores.
+    await pool.query(`UPDATE sessions SET result = jsonb_set(result, '{levelTest,passed}', 'null') WHERE id = $1 AND result ? 'levelTest'`, [a.session_id]);
+    await settleLevelTests();
   }
   if (outcome === "new_attempt" && a.entitlement_id) {
     await pool.query(

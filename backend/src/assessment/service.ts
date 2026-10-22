@@ -15,7 +15,8 @@ import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { batchManagerIds, notify, orgAdminIds } from "../notifications/service.js";
 import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
-import { BANDS, levelOfScore, scoreReport, spicaScore } from "../reports/scoreReport.js";
+import { BANDS, levelOfScore, scoreReport } from "../reports/scoreReport.js";
+import { snapshot } from "../reports/batchReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
 import { qualitySettings } from "../quality/settings.js";
 import { randomBytes } from "node:crypto";
@@ -104,7 +105,9 @@ async function doneFor(userId: string, e: OwnedAttemptRow): Promise<{ mocks: num
     // The latest level test at this level that wasn't passed.
     const f = await pool.query(
       `SELECT max(completed_at) AS at FROM sessions WHERE user_id = $1 AND delivery_mode = 'certified' AND completed_at IS NOT NULL
-         AND composition->>'levelTest' = $2 AND result->'levelTest'->>'passed' = 'false'`,
+         AND composition->>'levelTest' = $2 AND result->'levelTest'->>'passed' = 'false'
+         -- An appeal that granted a new attempt lifts the wait.
+         AND NOT EXISTS (SELECT 1 FROM result_appeals ra WHERE ra.session_id = sessions.id AND ra.status = 'new_attempt')`,
       [userId, e.level],
     );
     return { mocks: 0, samples: 0, lastLevelFail: f.rows[0]?.at ?? null, retakeDays: (await qualitySettings()).levelRetakeDays };
@@ -301,7 +304,7 @@ export async function readiness(userId: string) {
   const goal: string | null = goalRow?.goal_level && goalRow.goal_level !== "unsure" ? goalRow.goal_level : null;
   const mocks = (
     await pool.query(
-      `SELECT result->>'cefrLevel' AS level, (result->>'overallPercent')::numeric AS percent, completed_at FROM sessions
+      `SELECT result->>'cefrLevel' AS level, (result->>'overallPercent')::numeric AS percent, result->'skillLevels' AS skill_levels, result->'skillPercents' AS skill_percents, completed_at FROM sessions
        WHERE user_id = $1 AND delivery_mode = 'mock' AND completed_at IS NOT NULL AND result->>'cefrLevel' IS NOT NULL
          AND NOT coalesce((composition->>'abandoned')::boolean, false)
          -- A mock left mostly blank predicts nothing: at least half answered (and 5 answers).
@@ -311,7 +314,11 @@ export async function readiness(userId: string) {
       [userId, READINESS_MOCKS],
     )
   ).rows;
-  const scores = mocks.map((m) => spicaScore(m.level, m.percent === null ? null : Number(m.percent))).filter((x): x is number => x !== null);
+  // Each mock's Spica score as its score report and the batch report work it
+  // out (the mean of the skills' scores), so the three never disagree.
+  const scores = mocks
+    .map((m) => snapshot(m.skill_levels ?? {}, m.skill_percents ?? null, m.percent === null ? null : Number(m.percent), m.level).score)
+    .filter((x): x is number => x !== null);
   const predictedScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null;
   const goalScore = goal ? (BANDS.find((b) => b.level === goal)?.min ?? null) : null;
   const tests = await myTests(userId);
@@ -415,6 +422,15 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
   if (!s) return null;
   // Only the final assessment gives a certificate: a level test is a check, with none.
   if (s.composition?.levelTest) return null;
+  // Every answer given must be scored first: an answer whose AI scoring failed
+  // or is still waiting would otherwise drop out of the score (a reviewer
+  // clearing the proctoring record calls this directly, not via the sweep).
+  const unscored = await pool.query(
+    `SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
+     WHERE a.session_id = $1 AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') IN ('pending', 'failed') LIMIT 1`,
+    [sessionId],
+  );
+  if (unscored.rowCount) return null;
   // A candidate: their name and email are on the invitation.
   const cand = (
     await pool.query(
@@ -540,7 +556,9 @@ export async function issueDueResultCertificates(): Promise<number> {
          AND s.composition->>'levelTest' IS NULL
          AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id)
          AND NOT EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
-                         WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') = 'pending')
+                         WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') IN ('pending', 'failed'))
+         -- Nothing scored at all (every question left blank): no score, so no certificate.
+         AND EXISTS (SELECT 1 FROM attempts a JOIN scores sc ON sc.attempt_id = a.id WHERE a.session_id = s.id AND sc.status = 'scored')
        ORDER BY s.completed_at LIMIT 50`,
       [SETTLE_MINUTES],
     )

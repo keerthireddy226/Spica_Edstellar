@@ -194,13 +194,16 @@ export async function nextStep(userId: string): Promise<NextStep | null> {
     )
   ).rows;
   const lastOf = (mode: string) => tests.find((t) => t.delivery_mode === mode)?.last as Date | undefined;
+  // Certified with no final assessment waiting: the test plan is over, so no
+  // more mock or practice tests are suggested (Practice Modules still are).
+  const planOver = !!r?.certificate && !r?.final;
   const quota = await quotaUsage(userId).catch(() => null);
   const mocksLeft = !quota || quota.mocksPerMonth === null ? Infinity : quota.mocksPerMonth - quota.mocksUsed;
   const testsLeft = !quota || quota.practicePerMonth === null ? Infinity : quota.practicePerMonth - quota.practiceUsed;
   const daysSince = (d?: Date) => (d ? Math.floor((Date.now() - new Date(d).getTime()) / DAY_MS) : null);
 
   // A full mock in the last two weeks before the exam.
-  if (goal.daysLeft !== null && goal.daysLeft <= 14 && mocksLeft > 0 && (daysSince(lastOf("mock")) ?? Infinity) > 7) {
+  if (!planOver && goal.daysLeft !== null && goal.daysLeft <= 14 && mocksLeft > 0 && (daysSince(lastOf("mock")) ?? Infinity) > 7) {
     return { kind: "mock", daysLeft: goal.daysLeft };
   }
 
@@ -213,7 +216,7 @@ export async function nextStep(userId: string): Promise<NextStep | null> {
     ).rows[0].count,
   );
   // A practice test a week, once there's some practice since the last one.
-  if (testsLeft > 0 && setsSinceTest >= 5 && (daysSince(lastOf("practice")) ?? Infinity) >= 7) {
+  if (!planOver && testsLeft > 0 && setsSinceTest >= 5 && (daysSince(lastOf("practice")) ?? Infinity) >= 7) {
     return { kind: "practice_test", daysSince: daysSince(lastOf("practice")) };
   }
 

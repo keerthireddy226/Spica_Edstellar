@@ -90,12 +90,17 @@ export interface ReportAbout {
   setName: string | null;
   testCode: string | null;
   completedAt: string | null;
+  // A level test (a real attempt at one level, A1-C2): its level. It's a
+  // pass or not-passed check with no certificate, not the final assessment.
+  levelTest: string | null;
+  // A level test's outcome: null while answers are still being scored.
+  levelPassed: boolean | null;
 }
 
 export async function reportAbout(sessionId: string): Promise<ReportAbout | null> {
   const r = (
     await pool.query(
-      `SELECT s.delivery_mode, s.test_code, s.completed_at, tt.name AS test_type_name,
+      `SELECT s.delivery_mode, s.test_code, s.completed_at, tt.name AS test_type_name, s.composition->>'levelTest' AS level_test, s.result->'levelTest'->'passed' AS level_passed,
               -- Spica's own tests (family 'versant') need no "-style" prefix.
               CASE WHEN f.id = 'versant' THEN NULL ELSE f.name END AS family_name, coalesce(e.name, fo.name) AS set_name
        FROM sessions s
@@ -116,6 +121,8 @@ export async function reportAbout(sessionId: string): Promise<ReportAbout | null
     setName: r.delivery_mode === "practice" ? (r.set_name ?? null) : null,
     testCode: r.test_code ?? null,
     completedAt: r.completed_at ? new Date(r.completed_at).toISOString() : null,
+    levelTest: r.delivery_mode === "certified" ? (r.level_test ?? null) : null,
+    levelPassed: r.delivery_mode === "certified" && r.level_test && typeof r.level_passed === "boolean" ? r.level_passed : null,
   };
 }
 

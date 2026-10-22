@@ -136,6 +136,22 @@ function StatusChip({ status, level }: { status: "below" | "meets" | "above" | n
 
 const typeLine = (t: ScoreTypeResult) => tr("{{type}}: {{right}} of {{total}} right", { type: t.typeName, right: t.right, total: t.total });
 
+// A final assessment whose score isn't shown yet, or never will be: its
+// answers are being scored, its proctoring record is under review, or it was
+// found to be a violation (void, no score).
+export function FinalResultWaiting({ status, waiting }: { status: string; waiting?: "scoring" | "review" | null }) {
+  if (status === "void") {
+    return <p className="text-sm text-error">{tr("This attempt was void: its proctoring record showed a violation, so it has no score or certificate.")}</p>;
+  }
+  return (
+    <p className="text-sm text-muted">
+      {waiting === "review"
+        ? tr("Your answers are scored. A reviewer is checking the proctoring record: your score report shows once that's done.")
+        : tr("Your answers are still being scored. Check back soon.")}
+    </p>
+  );
+}
+
 // The score report shown at the top of a practice test or mock report, and
 // printed (Download PDF) as the learner's score report.
 // viewer "org": an Org Admin or Manager reading a learner's report, so it
@@ -145,6 +161,10 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
   if (!score.overall) return null;
   const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
   const test = about?.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
+  // A level test is a real attempt too, but a pass or not-passed check with no
+  // certificate; only the final assessment certifies.
+  const levelTest = about?.deliveryMode === "certified" ? (about.levelTest ?? null) : null;
+  const finalAssessment = about?.deliveryMode === "certified" && !levelTest;
   const best = [...score.skills].sort((a, b) => b.score - a.score)[0];
   const worst = [...score.skills].sort((a, b) => a.score - b.score)[0];
 
@@ -194,7 +214,14 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
             <h2 className="font-display font-bold text-2xl text-ink mt-1">{tr("Score report")}</h2>
             {test && (
               <p className="text-sm text-muted">
-                {test} · {about?.deliveryMode === "certified" ? tr("Real test") : about?.deliveryMode === "mock" ? tr("Mock test") : tr("Practice test")}
+                {test} ·{" "}
+                {levelTest
+                  ? tr("Level {{level}} test", { level: levelTest })
+                  : finalAssessment
+                    ? tr("Real test")
+                    : about?.deliveryMode === "mock"
+                      ? tr("Mock test")
+                      : tr("Practice test")}
               </p>
             )}
           </div>
@@ -244,12 +271,27 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
               {subBandLabel(score.overall.score) ? ` · ${subBandLabel(score.overall.score)}` : ""}
             </span>
             {/* Practice and mock results predict; only the final assessment certifies. */}
-            {about && about.deliveryMode !== "certified" && <span className="text-[11px] font-semibold text-muted text-center">{tr("Predicted level, not a certificate")}</span>}
+            {about && !finalAssessment && !levelTest && <span className="text-[11px] font-semibold text-muted text-center">{tr("Predicted level, not a certificate")}</span>}
+            {levelTest && (
+              <>
+                <span
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-pill ${about?.levelPassed === true ? "bg-success/15 text-success" : about?.levelPassed === false ? "bg-error/10 text-error" : "bg-paper text-muted"}`}
+                >
+                  {about?.levelPassed === true ? tr("Passed") : about?.levelPassed === false ? tr("Not passed") : tr("Being scored")}
+                </span>
+                <span className="text-[11px] font-semibold text-muted text-center">{tr("Level test result, not a certificate")}</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-3 min-w-0">
             {analysis && !org && <p className="text-sm text-ink leading-relaxed">{analysis}</p>}
-            {about && about.deliveryMode !== "certified" && !org && (
+            {about && !finalAssessment && !levelTest && !org && (
               <p className="text-xs text-muted print:hidden">{tr("This is a practice result: it predicts the level your final assessment is likely to show. Only the final assessment gives a certificate.")}</p>
+            )}
+            {levelTest && !org && (
+              <p className="text-xs text-muted print:hidden">
+                {tr("This level test checks whether you're working at level {{level}}: passed or not passed. It gives no certificate: only the final assessment does.", { level: levelTest })}
+              </p>
             )}
             <div>
               <div className="relative grid h-8 rounded-lg overflow-hidden" style={{ gridTemplateColumns: BANDS.map((b) => `${b.max - b.min + 1}fr`).join(" ") }}>
@@ -368,9 +410,11 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
         </p>
       )}
       <p className="text-xs text-muted">
-        {about?.deliveryMode === "certified"
+        {finalAssessment
           ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
-          : tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
+          : levelTest
+            ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a level test result, not a certificate.")
+            : tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
       </p>
       </div>
             </td>
@@ -385,7 +429,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
                   {tr("Score report")} · {score.learner.name}
                   {score.reportId ? ` · ${tr("Report ID")} ${score.reportId}` : ""} · {date}
                   <span className="block">
-                    {about?.deliveryMode === "certified" ? tr("Check the certificate at {{url}}", { url: score.check.url }) : score.check.url}
+                    {finalAssessment ? tr("Check the certificate at {{url}}", { url: score.check.url }) : score.check.url}
                   </span>
                 </span>
                 <img src={score.check.qr} alt="" className="h-[16mm] w-[16mm]" />

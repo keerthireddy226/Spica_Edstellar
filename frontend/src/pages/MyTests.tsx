@@ -232,7 +232,7 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
         </div>
       ) : u.state === "retake_wait" ? (
         <div className="flex items-center gap-2 bg-paper-warm rounded-input px-4 py-3 text-sm text-ink">
-          <Lock size={16} className="text-muted shrink-0" /> {tr("You can take a new level test from {{date}}, 7 days after the last one.", { date: day(u.opensOn) })}
+          <Lock size={16} className="text-muted shrink-0" /> {tr("You can take a new level test from {{date}}.", { date: day(u.opensOn) })}
         </div>
       ) : u.state === "expired" && !t.attempts.length ? (
         <p className="text-sm text-muted">{tr("This purchase ended before the test was taken.")}</p>

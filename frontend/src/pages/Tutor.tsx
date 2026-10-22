@@ -169,7 +169,7 @@ export function Tutor() {
           {turns.length <= 2 && !loading && !startFailed && (
             <div className="flex gap-2 flex-wrap lg:hidden">
               {STARTERS.slice(0, 3).map((q) => (
-                <button key={q} onClick={() => pickStarter(q)} className="text-xs font-medium px-3 py-1.5 rounded-pill bg-navy/10 text-navy-deep hover:bg-navy/20 transition-colors cursor-pointer">
+                <button key={q} onClick={() => pickStarter(q)} title={tr(q)} className="text-xs font-medium px-3 py-1.5 rounded-pill bg-navy/10 text-navy-deep hover:bg-navy/20 transition-colors cursor-pointer">
                   {q}
                 </button>
               ))}
@@ -224,6 +224,7 @@ export function Tutor() {
                 className="text-left text-sm text-ink px-3.5 py-2.5 rounded-input bg-paper/70 hover:bg-navy/10 border border-transparent hover:border-navy/30 transition-colors cursor-pointer"
               >
                 {q}
+                {tr(q) !== q && <span className="block text-xs text-muted mt-0.5">{tr(q)}</span>}
               </button>
             ))}
           </div>
@@ -233,7 +234,7 @@ export function Tutor() {
           <ul className="flex flex-col gap-2.5 text-sm text-ink">
             {TIPS.map((tip) => (
               <li key={tip} className="flex gap-2">
-                <CheckCircle2 size={16} className="text-success shrink-0 mt-0.5" /> {tip}
+                <CheckCircle2 size={16} className="text-success shrink-0 mt-0.5" /> {tr(tip)}
               </li>
             ))}
           </ul>
@@ -243,17 +244,20 @@ export function Tutor() {
   );
 }
 
+// The tutor talks in English, so a starter goes into the chat in English;
+// the learner's language shows under it as a hint. (Translated where shown,
+// not here, so a language switch updates them.)
 const STARTERS = [
-  tr("Can you help me practise a job interview?"),
-  tr("Let's talk about my weekend."),
-  tr("How do I order food politely at a restaurant?"),
-  tr("Ask me questions about my hometown."),
-  tr("Help me describe my daily routine."),
+  "Can you help me practise a job interview?",
+  "Let's talk about my weekend.",
+  "How do I order food politely at a restaurant?",
+  "Ask me questions about my hometown.",
+  "Help me describe my daily routine.",
 ];
 
 const TIPS = [
-  tr("Answer in full sentences, not single words."),
-  tr("Try a new word you learned today."),
-  tr("Ask the tutor to correct your grammar."),
-  tr("Keep going for at least five replies."),
+  "Answer in full sentences, not single words.",
+  "Try a new word you learned today.",
+  "Ask the tutor to correct your grammar.",
+  "Keep going for at least five replies.",
 ];

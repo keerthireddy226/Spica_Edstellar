@@ -100,7 +100,9 @@ export function OwnedList({ access }: { access: MyAccess }) {
               <span className="text-xs text-muted">{opens(o)}</span>
               <span className="text-xs text-ink">
                 {tr("Until {{date}}", { date: formatShortDate(o.endsAt) })}
-                {o.kind !== "full" && o.kind !== "pack" && ` · ${o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
+                {o.kind !== "full" && o.kind !== "pack" &&
+                  // A level test is a check, not a real test.
+                  ` · ${o.kind === "level" ? (o.attemptsLeft === 1 ? tr("1 attempt left") : tr("{{n}} attempts left", { n: o.attemptsLeft })) : o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
               </span>
               <SwitchTest o={o} />
             </div>

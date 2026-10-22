@@ -173,6 +173,12 @@ export function MyReports() {
                     {h.examName && h.deliveryMode === "practice" ? ` · ${h.examName}` : ""}
                   </span>
                 </span>
+                {/* A final assessment shows no level before its certificate (being scored, under review or void). */}
+                {h.finalStatus ? (
+                  <span className={`text-sm shrink-0 text-right ${h.finalStatus === "void" ? "text-error" : "text-warning"}`}>
+                    {h.finalStatus === "void" ? tr("Not valid") : h.finalStatus === "under_review" ? tr("Under review") : tr("Being scored")}
+                  </span>
+                ) : (
                 <span className="text-sm text-ink shrink-0 text-right">
                   {h.certifiedLevel ?? h.cefrLevel ?? "—"}
                   {h.spicaScore != null ? (
@@ -181,6 +187,7 @@ export function MyReports() {
                     <span className="text-muted"> · {h.percent}%</span>
                   ) : null}
                 </span>
+                )}
                 {!h.certificateCode && <ChevronRight size={18} className="text-muted shrink-0 hidden sm:block" />}
               </button>
               {h.certificateCode && (

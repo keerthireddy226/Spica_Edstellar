@@ -309,8 +309,9 @@ export async function finishPendingSpeaking(sessionId: string): Promise<void> {
 }
 
 // An answer can be left ungraded or failed: a recording still waiting after
-// every background try, or an AI grading that timed out. Each one gets one
-// more round of background tries (once per attempt).
+// every background try, or an AI grading that timed out or hit the model's
+// daily limit. Each one gets a round of background tries once a day for 30
+// days, so an outage of a day or two doesn't leave a result undecided.
 export async function sweepStuckSpeaking(): Promise<number> {
   const r = await pool.query(
     `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
@@ -318,9 +319,10 @@ export async function sweepStuckSpeaking(): Promise<number> {
        AND ((sc.status = 'pending' AND a.response_uri IS NOT NULL AND it.input_method = 'mic')
          OR (sc.status = 'failed' AND (a.response_uri IS NOT NULL OR coalesce(a.response_text, '') <> '')))`,
   );
+  const day = new Date().toISOString().slice(0, 10);
   let queued = 0;
   for (const { id } of r.rows) {
-    if (await enqueue("grading.speaking.retry", { attemptId: id }, { dedupeKey: `grading.speaking.retry:${id}`, maxAttempts: 3 })) queued++;
+    if (await enqueue("grading.speaking.retry", { attemptId: id }, { dedupeKey: `grading.speaking.retry:${id}:${day}`, maxAttempts: 3 })) queued++;
   }
   return queued;
 }
