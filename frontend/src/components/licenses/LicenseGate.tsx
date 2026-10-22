@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Lock, AlertTriangle, Sparkles } from "lucide-react";
 import { getMyLicense, formatShortDate, type MyLicense } from "@/api/licenses";
-import { getMyAccess, type MyAccess } from "@/api/access";
+import { getMyAccess, type MyAccess, isTestOnly } from "@/api/access";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
@@ -193,6 +193,8 @@ export function LicenseBanner() {
   const access = useMyAccessForGate();
   const { pathname } = useLocation();
   if (!license) return null;
+  // Bought only a test: no practice, so no practice allowance to show.
+  if (isTestOnly(access)) return null;
   // These pages show the fuller "keep going" card instead.
   if (([ROUTES.DASHBOARD, ROUTES.PRACTICE_TESTS, ROUTES.MOCK_EXAMS] as string[]).includes(pathname) && license.status !== "none") return null;
 

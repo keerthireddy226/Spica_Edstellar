@@ -13,6 +13,7 @@ import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 import { PageError, SectionLoading } from "@/components/learner/PageStates";
+import { useTestOnly } from "@/components/learner/useTestOnly";
 
 // Assessment (once "My tests"): the real assessment attempts the learner owns. Each opens by the
 // unlock rule (after a mock test or in the last 7 days for preparation; after
@@ -302,6 +303,7 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
 }
 
 export function MyTests() {
+  const testOnly = useTestOnly();
   const [tests, setTests] = useState<OwnedTest[] | null>(null);
   const [error, setError] = useState(false);
   // Whether the learner buys their own tests (individuals) or their organization gives them.
@@ -327,7 +329,11 @@ export function MyTests() {
       <LearnerHero
         eyebrow={tr("Your results")}
         title={tr("Assessment")}
-        subtitle={tr("Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.")}
+        subtitle={
+          testOnly
+            ? tr("Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.")
+            : tr("Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.")
+        }
         icon={ClipboardCheck}
       />
       {error ? (

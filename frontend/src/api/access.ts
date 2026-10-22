@@ -38,6 +38,12 @@ export function getMyAccess(): Promise<MyAccess> {
 // free plan's rules apply, as on the server).
 export const isNarrowed = (a: MyAccess | null | undefined): boolean => !!a && !a.full && (a.prepTests.length > 0 || a.practicePack);
 
+// Owns only a real test or level test: no Full access, preparation or practice
+// pack. They see only their test, its report and certificate, Spica plans and
+// Profile (the learning pages are hidden, not shown locked).
+export const isTestOnly = (a: MyAccess | null | undefined): boolean =>
+  !!a && !a.full && a.prepTests.length === 0 && !a.practicePack && a.owned.some((o) => o.kind === "assessment" || o.kind === "level" || o.kind === "final");
+
 export interface Product {
   id: string;
   kind: ProductKind;

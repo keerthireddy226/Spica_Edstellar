@@ -80,6 +80,7 @@ import { ManagerDashboard } from "@/pages/manager/ManagerDashboard";
 import { ManagerLearners } from "@/pages/manager/ManagerLearners";
 import { AppLayout } from "@/components/AppShell/AppLayout";
 import { AdminLayout } from "@/components/AppShell/AdminLayout";
+import { Certificates } from "@/pages/Certificates";
 
 // Unmatched path: logged-in goes to their landing page, logged-out to learner login.
 function DefaultRedirect() {
@@ -246,6 +247,7 @@ function App() {
           <Route path={ROUTES.TEST_REPORT} element={<TestReport />} />
           <Route path={ROUTES.MOCK_EXAMS} element={<LicenseGate feature="mocktest"><PracticeTests section="mock" /></LicenseGate>} />
           <Route path={ROUTES.MY_REPORTS} element={<MyReports />} />
+          <Route path={ROUTES.MY_CERTIFICATES} element={<Certificates />} />
           <Route path={ROUTES.MY_TESTS} element={<MyTests />} />
           <Route path={ROUTES.MY_TESTS_TAKE} element={<TakeOwnedTest />} />
           {/* Earlier links and emails said /my-tests. */}

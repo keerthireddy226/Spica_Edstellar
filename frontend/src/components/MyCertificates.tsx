@@ -6,15 +6,27 @@ import { tr } from "@/i18n/tr";
 
 // The learner's certificates: from their final assessments (and any earlier
 // course certificates); hidden until they have one.
-export function MyCertificates() {
+// showEmpty: on the Certificates page, say so when there's none yet (on
+// Profile the card is simply left out).
+export function MyCertificates({ showEmpty = false }: { showEmpty?: boolean } = {}) {
   const { t, i18n } = useTranslation();
-  const [certs, setCerts] = useState<CertificateSummary[]>([]);
+  const [certs, setCerts] = useState<CertificateSummary[] | null>(null);
   useEffect(() => {
     myCertificates()
       .then((r) => setCerts(r.certificates))
-      .catch(() => {});
+      .catch(() => setCerts([]));
   }, []);
-  if (certs.length === 0) return null;
+  if (certs === null) return null;
+  if (certs.length === 0) {
+    if (!showEmpty) return null;
+    return (
+      <div className="bg-surface border border-dashed border-rule rounded-card p-8 flex flex-col items-center text-center gap-2">
+        <Award size={26} className="text-muted" />
+        <p className="font-display font-bold text-ink">{tr("No certificate yet")}</p>
+        <p className="text-sm text-muted max-w-md">{tr("Your certificate appears here once your test is scored and its checks are done.")}</p>
+      </div>
+    );
+  }
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
       <h2 className="font-display font-bold text-ink flex items-center gap-3">

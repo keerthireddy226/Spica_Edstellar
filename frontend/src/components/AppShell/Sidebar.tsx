@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags, BadgeCheck } from "lucide-react";
+import { useTestOnly } from "@/components/learner/useTestOnly";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -69,6 +70,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
   const myLicense = useMyLicense();
   const [searchParams] = useSearchParams();
   const hasPlacement = useHasPlacement();
+  const testOnly = useTestOnly();
   // The organization may have switched Modules off for its learners.
   const modulesOn = useModulesEnabled();
   const locked = hasPlacement !== true;
@@ -103,6 +105,25 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
+          {testOnly ? (
+            // Bought only a test: just the test, its reports and certificate,
+            // Spica plans and Profile. The learning pages are hidden, not locked.
+            <>
+              <NavEntry to={ROUTES.MY_TESTS} icon={Award} label={tr("Assessment")} isActive={location.pathname.startsWith(ROUTES.MY_TESTS)} locked={false} onClick={go} />
+              <NavEntry
+                to={ROUTES.MY_REPORTS}
+                icon={FileText}
+                label={tr("My reports")}
+                isActive={location.pathname.startsWith(ROUTES.MY_REPORTS) || location.pathname.startsWith("/practice-tests/report/")}
+                locked={false}
+                onClick={go}
+              />
+              <NavEntry to={ROUTES.MY_CERTIFICATES} icon={BadgeCheck} label={tr("Certificates")} isActive={location.pathname === ROUTES.MY_CERTIFICATES} locked={false} onClick={go} />
+              <NavEntry to={ROUTES.SPICA_PLANS} icon={Tags} label={tr("Spica plans")} isActive={location.pathname === ROUTES.SPICA_PLANS} locked={false} onClick={go} />
+              <NavEntry to={ROUTES.PROFILE} icon={User} label={t("nav.profile")} isActive={location.pathname === ROUTES.PROFILE} locked={false} onClick={go} />
+            </>
+          ) : testOnly === undefined ? null : (
+          <>
           <Link to={ROUTES.ROADMAP} onClick={go} className={navClasses(location.pathname === ROUTES.ROADMAP)}>
             <Map size={22} strokeWidth={1.8} />
             {tr("My journey")}
@@ -224,6 +245,8 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             locked={locked}
             onClick={go}
           />
+          </>
+          )}
         </nav>
       </aside>
     </>
