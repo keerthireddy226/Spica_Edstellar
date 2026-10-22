@@ -11,6 +11,10 @@ import { tr } from "@/i18n/tr";
 import { getModuleHistory, type ModuleHistoryEntry } from "@/api/practiceSession";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { EmptyState, PageError, SectionLoading } from "@/components/learner/PageStates";
+import { useTestOnly } from "@/components/learner/useTestOnly";
+
+// Every row's kind label has the same width, so the test names line up.
+const KIND_LABEL = "text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 sm:w-36 text-center truncate";
 
 const linkBtn = "inline-flex items-center gap-1.5 rounded-pill px-4 py-2 text-sm font-semibold";
 
@@ -18,6 +22,7 @@ const linkBtn = "inline-flex items-center gap-1.5 rounded-pill px-4 py-2 text-sm
 // finished, each opening its report.
 export function MyReports() {
   const { t } = useTranslation();
+  const testOnly = useTestOnly();
   const navigate = useNavigate();
   const [rows, setRows] = useState<HistoryEntry[] | null>(null);
   const [types, setTypes] = useState<CatalogueTestType[]>([]);
@@ -58,10 +63,14 @@ export function MyReports() {
       <LearnerHero
         eyebrow={tr("Your results")}
         title={tr("My reports")}
-        subtitle={tr("Every practice test, mock test and Practice Modules set you finished, with what you got wrong or skipped and the right answers.")}
+        subtitle={
+          testOnly
+            ? tr("Your test and its free sample: the score report of each, once it's ready.")
+            : tr("Every practice test, mock test and Practice Modules set you finished, with what you got wrong or skipped and the right answers.")
+        }
         icon={FileText}
         stats={
-          rows
+          rows && !testOnly
             ? [
                 { label: tr("Tests finished"), value: rows.length, icon: FileText },
                 { label: tr("Mock tests"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: Timer },
@@ -71,6 +80,7 @@ export function MyReports() {
             : undefined
         }
       />
+      {!testOnly && (
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
         {(
           [
@@ -89,6 +99,7 @@ export function MyReports() {
           </button>
         ))}
       </div>
+      )}
       {loading ? (
         <SectionLoading />
       ) : failed && shown.length === 0 ? (
@@ -137,7 +148,7 @@ export function MyReports() {
                   onClick={() => navigate(ROUTES.MODULE_REPORT.replace(":sessionId", m.sessionId))}
                   className="w-full px-4 py-3 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-left hover:bg-paper-warm/60 cursor-pointer"
                 >
-                  <span className="text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 bg-warning/15 text-ink">{tr("Module")}</span>
+                  <span className={`${KIND_LABEL} bg-warning/15 text-ink`}>{tr("Module")}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-semibold text-ink truncate">
                       {[m.retry ? tr("Mistakes to retry") : (m.typeName ?? tr("Quick practice")), m.unitName?.split(" ")[0], m.setName].filter(Boolean).join(" · ")}
@@ -163,7 +174,7 @@ export function MyReports() {
                 onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
                 className="flex-1 min-w-0 px-4 py-3 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-left cursor-pointer"
               >
-                <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "practice" ? "bg-accent/15 text-accent" : "bg-navy/10 text-navy-deep"}`}>
+                <span className={`${KIND_LABEL} ${h.deliveryMode === "practice" ? "bg-accent/15 text-accent" : "bg-navy/10 text-navy-deep"}`}>
                   {h.deliveryMode === "certified" ? (h.levelTest ? tr("Level test") : tr("Final assessment")) : h.deliveryMode === "sample" ? tr("Sample test") : h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
                 </span>
                 <span className="flex-1 min-w-0">
