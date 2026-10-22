@@ -24,5 +24,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Unit tests run with the root vitest; the app build (and Vercel, which
+  // installs only the frontend's packages) doesn't type-check them.
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }
