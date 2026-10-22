@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ProductShop } from "@/components/plans/ProductShop";
 import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
-import { Check, X as XIcon, FileText } from "lucide-react";
+import { Check, X as XIcon, FileText, Building2, Sparkles, CheckCircle2 } from "lucide-react";
+import { LearnerHero } from "@/components/learner/LearnerHero";
+import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { formatShortDate } from "@/api/licenses";
@@ -69,7 +71,17 @@ export function Plans() {
   }, [t]);
 
   if (license && !license.individual) {
-    return <p className="text-sm text-muted">{t("plans.orgManaged")}</p>;
+    return (
+      <div className="max-w-xl mx-auto mt-6 bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col items-center text-center gap-3">
+        <span className="h-14 w-14 rounded-2xl bg-navy/10 text-navy-deep flex items-center justify-center">
+          <Building2 size={26} />
+        </span>
+        <p className="text-sm text-ink">{t("plans.orgManaged")}</p>
+        <Link to={ROUTES.SPICA_PLANS} className="text-sm font-semibold text-navy-deep hover:underline">
+          {tr("See every Spica plan")}
+        </Link>
+      </div>
+    );
   }
 
   const active = license && (license.status === "active" || license.status === "grace");
@@ -91,27 +103,36 @@ export function Plans() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("plans.title")}</h1>
-        <p className="text-sm text-muted mt-1">
-          {active ? t("plans.activeUntil", { date: formatShortDate(license!.accessEndsAt) }) : t("plans.onFree")}
-        </p>
-      </div>
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6">
+      <LearnerHero
+        compact
+        icon={Sparkles}
+        eyebrow={tr("Your plan")}
+        title={t("plans.title")}
+        subtitle={active ? t("plans.activeUntil", { date: formatShortDate(license!.accessEndsAt) }) : t("plans.onFree")}
+      />
 
       {/* What else the learner owns: preparation for one test, real tests, level tests. */}
       {access && access.owned.some((o) => o.kind !== "full") && (
-        <div className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3">
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-3">
           <p className="font-display font-bold text-ink">{tr("Your plan")}</p>
           <OwnedList access={access} />
         </div>
       )}
 
       <div className="grid md:grid-cols-2 gap-5">
-        <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
-          <div>
-            <p className="font-display font-bold text-lg text-ink">{t("plans.free.name")}</p>
-            <p className="text-sm text-muted">{t("plans.free.price")}</p>
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-display font-bold text-lg text-ink">{t("plans.free.name")}</p>
+              {/* Zero in the currency the prices below use. */}
+              <p className="text-sm text-muted">{monthly ? formatAmount(0, monthly.currency) : t("plans.free.price")}</p>
+            </div>
+            {!active && (
+              <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success whitespace-nowrap">
+                <CheckCircle2 size={12} /> {tr("Your current plan")}
+              </span>
+            )}
           </div>
           <ul className="flex flex-col gap-2">
             <Feature ok>{t("plans.features.placementOnce")}</Feature>
@@ -135,12 +156,19 @@ export function Plans() {
           )}
         </div>
 
-        <div className="bg-surface border-2 border-navy rounded-card p-6 flex flex-col gap-4">
-          <div>
+        <div className="bg-surface border-2 border-navy rounded-card shadow-md p-6 flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
             <p className="font-display font-bold text-lg text-ink">{t("plans.full.name")}</p>
             <p className="text-sm text-muted">
               {monthly ? t("plans.full.perMonth", { price: formatAmount(monthly.unitAmount, monthly.currency) }) : "…"}
             </p>
+            </div>
+            {active && (
+              <span className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success whitespace-nowrap">
+                <CheckCircle2 size={12} /> {tr("Your current plan")}
+              </span>
+            )}
           </div>
           <ul className="flex flex-col gap-2">
             <Feature ok>{t("plans.features.placementUnlimited")}</Feature>
@@ -215,8 +243,10 @@ export function Plans() {
       <ProductShop />
 
       {invoices.length > 0 && (
-        <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
-          <p className="font-display font-bold text-ink">{t("plans.invoices")}</p>
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
+          <p className="font-display font-bold text-ink flex items-center gap-2">
+            <FileText size={17} className="text-navy-deep" /> {t("plans.invoices")}
+          </p>
           {invoices.map((inv) => (
             <Link
               key={inv.id}

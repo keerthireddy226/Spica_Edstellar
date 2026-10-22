@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { BadgeCheck, Download, Share2, ShieldCheck, ShieldX } from "lucide-react";
+import { BadgeCheck, Download, RotateCcw, Share2, ShieldCheck, ShieldX } from "lucide-react";
 import { linkedInAddUrl } from "@/lib/linkedin";
 import { subBandLabel } from "@/lib/subBand";
 import { Button } from "@/components/Button";
@@ -55,6 +55,9 @@ export function CertificateView() {
   const { code = "" } = useParams();
   const [cert, setCert] = useState<VerifiedCertificate | null>(null);
   const [missing, setMissing] = useState(false);
+  // The check itself failed (network or server), which isn't the same as "no such certificate".
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   // On a narrow screen the whole page shrinks to fit (print is always full size).
   const [scale, setScale] = useState(1);
   useEffect(() => {
@@ -65,24 +68,47 @@ export function CertificateView() {
   }, []);
 
   useEffect(() => {
+    setFailed(false);
     fetch(`/api/certificates/verify/${encodeURIComponent(code)}`)
       .then(async (r) => {
         if (r.status === 404) setMissing(true);
+        else if (!r.ok) setFailed(true);
         else setCert(await r.json());
       })
-      .catch(() => setMissing(true));
-  }, [code]);
+      .catch(() => setFailed(true));
+  }, [code, attempt]);
 
-  if (missing) {
+  if (missing || failed) {
     return (
       <div className="app-surface min-h-screen flex items-center justify-center p-6">
-        <p className="flex items-center gap-2 text-ink">
-          <ShieldX className="text-error" /> {t("certificate.notFound")}
-        </p>
+        <div className="bg-surface border border-rule rounded-card shadow-sm px-8 py-10 max-w-md w-full flex flex-col items-center text-center gap-3">
+          <span className="font-logo font-bold text-2xl text-navy">Spica</span>
+          <span className="h-14 w-14 rounded-2xl bg-error/10 text-error flex items-center justify-center mt-2">
+            <ShieldX size={26} />
+          </span>
+          <p className="text-ink font-semibold">{missing ? t("certificate.notFound") : tr("This certificate couldn't be checked right now.")}</p>
+          {missing ? (
+            <p className="text-sm text-muted">{tr("Check the certificate ID and try the link again.")}</p>
+          ) : (
+            <button
+              onClick={() => setAttempt((n) => n + 1)}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-rule-strong px-4 py-2 text-sm font-semibold text-ink hover:bg-paper-warm cursor-pointer"
+            >
+              <RotateCcw size={14} /> {tr("Try again")}
+            </button>
+          )}
+        </div>
       </div>
     );
   }
-  if (!cert) return null;
+  if (!cert)
+    return (
+      <div className="app-surface min-h-screen flex items-center justify-center p-6" role="status" aria-live="polite">
+        <p className="flex items-center gap-2 text-sm text-muted">
+          <ShieldCheck size={16} className="animate-pulse" /> {tr("Checking the certificate…")}
+        </p>
+      </div>
+    );
 
   const course = !!cert.courseName;
   const result = cert.kind === "result";

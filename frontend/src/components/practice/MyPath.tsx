@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { getSkillPath, type SkillPath } from "@/api/practiceSession";
 import type { SkillTag } from "@/api/testSession";
 import { tr } from "@/i18n/tr";
+import { PageError, SectionLoading } from "@/components/learner/PageStates";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -25,6 +26,7 @@ export function MyPath({
 }) {
   const { t } = useTranslation();
   const [loaded, setLoaded] = useState<{ skill: SkillTag; path: SkillPath | null } | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let live = true;
     getSkillPath(skill)
@@ -33,12 +35,21 @@ export function MyPath({
     return () => {
       live = false;
     };
-  }, [skill]);
+  }, [skill, attempt]);
   const path = loaded?.skill === skill ? loaded.path : null;
   const failed = loaded?.skill === skill && !loaded.path;
 
-  if (failed) return <p className="text-sm text-error">{tr("Your path couldn't be loaded. Try Browse all.")}</p>;
-  if (!path) return <p className="text-sm text-muted">{tr("Loading your path…")}</p>;
+  if (failed)
+    return (
+      <PageError
+        message={tr("Your path couldn't be loaded. Try Browse all.")}
+        onRetry={() => {
+          setLoaded(null);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  if (!path) return <SectionLoading rows={3} />;
   const next = path.next;
 
   return (

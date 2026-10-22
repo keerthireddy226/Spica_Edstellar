@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, TrendingDown, Minus, Trophy } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Trophy, CalendarCheck, LineChart } from "lucide-react";
 import { getDailyProgress, type DailyProgress, type DailyStat } from "@/api/dashboard";
 import { ApiError } from "@/lib/api";
 import { MotivationalBar } from "@/components/MotivationalBar";
 import { ProgressExtras } from "@/components/progress/ProgressExtras";
+import { PageError, PageLoading } from "@/components/learner/PageStates";
 
 import { tr } from "@/i18n/tr";
 function isToday(dateStr: string): boolean {
@@ -47,22 +48,33 @@ function TodayVsYesterday({ today, yesterday }: { today: DailyStat; yesterday: D
   );
 }
 
+function SectionTitle({ icon: Icon, color, title, children }: { icon: typeof Trophy; color: string; title: string; children?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 flex-wrap">
+      <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: color }}>
+        <Icon size={18} />
+      </span>
+      <h2 className="font-display font-bold text-ink">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
 function TodayReport({ days, isBestDay }: { days: DailyStat[]; isBestDay: boolean }) {
   const { t } = useTranslation();
   const today = days[days.length - 1];
   const yesterday = days[days.length - 2];
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-wrap items-center justify-between gap-5">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">{t("progressPage.todaysReport")}</h3>
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-wrap items-center justify-between gap-5">
+      <div className="flex flex-col gap-4">
+        <SectionTitle icon={CalendarCheck} color="var(--color-navy)" title={t("progressPage.todaysReport")}>
           {isBestDay && (
             <span className="flex items-center gap-1 rounded-pill bg-warning/20 px-2.5 py-0.5 text-[11px] font-bold text-navy-deep">
               <Trophy size={11} strokeWidth={2.6} /> {t("progressPage.bestDayBadge")}
             </span>
           )}
-        </div>
+        </SectionTitle>
         <div className="flex items-baseline gap-7 flex-wrap">
           <div>
             <span className="font-display font-extrabold text-4xl text-ink">{today.questionsCompleted}</span>
@@ -104,11 +116,11 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
   const bestIsToday = isToday(bestDay.date);
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h3 className="font-mono text-[11px] font-medium tracking-[.24em] uppercase text-muted">{t("progressPage.dailyChartTitle")}</h3>
-          <p className="text-xs text-muted mt-1">{t("progressPage.questionsThisWeek", { count: totalQuestions })}</p>
+        <div className="flex flex-col gap-1">
+          <SectionTitle icon={LineChart} color="var(--color-accent)" title={t("progressPage.dailyChartTitle")} />
+          <p className="text-xs text-muted ml-[46px]">{t("progressPage.questionsThisWeek", { count: totalQuestions })}</p>
         </div>
         {bestDay.questionsCompleted > 0 && (
           <span className="flex items-center gap-1.5 rounded-pill bg-navy/12 px-3 py-1.5 text-xs font-bold text-navy-deep">
@@ -120,7 +132,13 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
         )}
       </div>
 
-      <svg viewBox={`0 0 ${W} 300`} className="w-full h-[260px]" style={{ overflow: "visible" }}>
+      <div className="relative">
+      {totalQuestions === 0 && (
+        <p className="absolute inset-x-0 top-[22%] text-center pointer-events-none">
+          <span className="inline-block bg-surface px-3 text-sm text-muted">{tr("No questions answered in the last 7 days. Practise a set and it shows here.")}</span>
+        </p>
+      )}
+      <svg viewBox={`0 0 ${W} 300`} className="w-full h-[200px] sm:h-[260px]" style={{ overflow: "visible" }}>
         <defs>
           <linearGradient id="progressLineGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" style={{ stopColor: "var(--color-accent-soft)" }} />
@@ -161,6 +179,7 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
           </g>
         ))}
       </svg>
+      </div>
     </div>
   );
 }
@@ -170,27 +189,26 @@ export function Progress() {
   const [data, setData] = useState<DailyProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     getDailyProgress()
       .then(setData)
       .catch((err: unknown) => {
         setError(err instanceof ApiError ? err.message : t("progressPage.loadError"));
       })
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, attempt]);
 
-  if (loading) return <p className="text-sm text-muted">{t("progressPage.loading")}</p>;
-  if (error || !data) return <p className="text-sm text-error">{error ?? t("progressPage.loadError")}</p>;
+  if (loading) return <PageLoading label={t("progressPage.loading")} />;
+  if (error || !data) return <PageError message={error ?? t("progressPage.loadError")} onRetry={() => setAttempt((n) => n + 1)} />;
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{t("progressPage.title")}</h1>
-        <p className="text-sm text-muted mt-0.5">{t("progressPage.subtitle")}</p>
-      </div>
-
-      <ProgressExtras part="banner" />
+      {/* The page title sits in the clay banner with the all-time totals. */}
+      <ProgressExtras part="banner" title={t("progressPage.title")} subtitle={t("progressPage.subtitle")} />
       <MotivationalBar />
 
       <TodayReport days={data.days} isBestDay={isToday(data.bestDay.date) && data.bestDay.questionsCompleted > 0} />

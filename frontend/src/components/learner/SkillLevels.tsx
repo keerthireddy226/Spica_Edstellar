@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, BookOpen, Headphones, Mic, PenLine, Sparkles } from "lucide-react";
+import { ArrowRight, BarChart3, BookOpen, Headphones, Mic, PenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ROUTES } from "@/constants/routes";
 import { getNextStep } from "@/api/dashboard";
@@ -34,10 +34,17 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
   const view = step ? stepView(step, (s) => t(`skills.${s}`), modulesOn) : null;
 
   return (
-    <section className="bg-surface border border-rule rounded-card shadow-sm p-4 flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display font-bold text-base text-ink">{title ?? tr("Your level in each module")}</h2>
-        {data.currentLevel && <span className="text-sm text-muted">{tr("Overall: {{level}}", { level: data.currentLevel })}</span>}
+    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display font-bold text-base text-ink flex items-center gap-2.5">
+          <span className="h-9 w-9 rounded-xl bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
+            <BarChart3 size={18} />
+          </span>
+          {title ?? tr("Your level in each module")}
+        </h2>
+        {data.currentLevel && (
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-paper-warm border border-rule text-ink">{tr("Overall: {{level}}", { level: data.currentLevel })}</span>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -77,7 +84,7 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
       </div>
 
       {view && (
-        <div className="rounded-input bg-accent/10 border border-accent/30 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="rounded-input bg-accent/10 border border-accent/30 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
           <Sparkles size={18} className="text-accent shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{tr("Recommended next")}</p>

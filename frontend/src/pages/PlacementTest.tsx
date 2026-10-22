@@ -378,12 +378,12 @@ function PlacementTestRun() {
             )}
           </div>
 
-          <div className="grid grid-cols-4 gap-2.5 w-full">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full">
             {(Object.entries(summary.skillPercents) as [string, number | null][]).map(([skill, pct]) => {
               const entry = summary.skillLevels?.[skill as keyof typeof summary.skillLevels];
               return (
                 <div key={skill} className="bg-paper-warm rounded-input p-3">
-                  <div className="text-[10px] font-mono font-semibold uppercase tracking-wider text-muted mb-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted mb-1.5 truncate">
                     {t(`skills.${skill}`)}
                   </div>
                   {pct === null ? (
@@ -432,7 +432,17 @@ function PlacementTestRun() {
   if (error && !current) {
     return (
       <div className="app-surface min-h-screen flex items-center justify-center px-4">
-        <p className="text-sm text-error">{error}</p>
+        <div className="w-full max-w-md bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-4 items-center text-center">
+          <p className="text-sm text-error">{error}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={() => window.location.reload()}>{tr("Try again")}</Button>
+            {!isCandidate && (
+              <Button variant="secondary" onClick={() => navigate(ROUTES.DASHBOARD)}>
+                {tr("Back to Overview")}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

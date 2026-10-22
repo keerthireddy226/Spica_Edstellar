@@ -7,7 +7,7 @@ import { getMyLearning, saveMyGoals, type MyLearning } from "@/api/me";
 import { shortDate } from "@/api/staff";
 
 import { tr } from "@/i18n/tr";
-const card = "bg-surface border border-rule rounded-card p-6 flex flex-col gap-4";
+const card = "bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4";
 const input = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
 function Head({ icon: Icon, tint, title, action }: { icon: typeof Target; tint: string; title: string; action?: React.ReactNode }) {
@@ -169,6 +169,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
     firstLanguage: g.firstLanguage ?? "",
   });
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
   const days = g.examDate ? Math.ceil((new Date(g.examDate).getTime() - Date.now()) / 86400000) : null;
   const f = (k: keyof typeof d) => ({ value: d[k], onChange: (e: { target: { value: string } }) => setD((x) => ({ ...x, [k]: e.target.value })) });
 
@@ -186,7 +187,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
         }
       />
       {!editing ? (
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-sm">
           {(
             [
               [tr("Exam"), EXAMS.find(([k]) => k === g.examPreference)?.[1] ?? "—"],
@@ -198,15 +199,16 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               [tr("First language"), g.firstLanguage || "—"],
             ] as const
           ).map(([l, v]) => (
-            <div key={l}>
-              <p className="text-xs text-muted">{l}</p>
-              <p className="text-ink">{v}</p>
+            <div key={l} className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l}</p>
+              <p className="text-ink font-medium mt-0.5 break-words">{v}</p>
             </div>
           ))}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
           <div className="grid sm:grid-cols-2 gap-3">
+            <Field label={tr("Exam")}>
             <select {...f("examPreference")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Exam")}</option>
               {EXAMS.filter(([k]) => (SHOWN_EXAM_PREFERENCES as readonly string[]).includes(k) || k === g.examPreference).map(([k, l]) => (
@@ -215,6 +217,8 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                 </option>
               ))}
             </select>
+            </Field>
+            <Field label={tr("Goal level")}>
             <select {...f("goalLevel")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Goal level")}</option>
               {LEVELS.map((l) => (
@@ -223,15 +227,25 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                 </option>
               ))}
             </select>
-            <input {...f("scoreTarget")} placeholder={tr("Target score, e.g. 65")} className={input} />
-            <input type="date" {...f("examDate")} className={input} />
-            <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
-            <input {...f("firstLanguage")} list="first-languages" placeholder={tr("First language (helps us check scoring is fair)")} className={input} />
+            </Field>
+            <Field label={tr("Target score")}>
+              <input {...f("scoreTarget")} placeholder={tr("Target score, e.g. 65")} className={input} />
+            </Field>
+            <Field label={tr("Exam date")}>
+              <input type="date" {...f("examDate")} className={input} />
+            </Field>
+            <Field label={tr("Daily practice")}>
+              <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
+            </Field>
+            <Field label={tr("First language")}>
+              <input {...f("firstLanguage")} list="first-languages" placeholder={tr("First language (helps us check scoring is fair)")} className={input} />
+            </Field>
             <datalist id="first-languages">
               {["Hindi", "Telugu", "Tamil", "Kannada", "Malayalam", "Marathi", "Bengali", "Gujarati", "Punjabi", "Urdu", "Arabic", "Chinese", "Japanese", "Spanish", "French", "German", "Portuguese", "Vietnamese", "Tagalog", "Other"].map((l) => (
                 <option key={l} value={l} />
               ))}
             </datalist>
+            <Field label={tr("Why")}>
             <select {...f("examReason")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Why are you preparing?")}</option>
               {REASONS.filter(([k]) => !HIDDEN_EXAM_REASONS.includes(k) || k === g.examReason).map(([k, l]) => (
@@ -240,12 +254,15 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                 </option>
               ))}
             </select>
+            </Field>
           </div>
+          {saveFailed && <p className="text-sm text-error">{tr("Your goals couldn't be saved. Try again.")}</p>}
           <div className="flex gap-3">
             <Button
               disabled={saving}
               onClick={async () => {
                 setSaving(true);
+                setSaveFailed(false);
                 try {
                   await saveMyGoals({
                     examPreference: d.examPreference || undefined,
@@ -258,6 +275,8 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                   });
                   setEditing(false);
                   onSaved();
+                } catch {
+                  setSaveFailed(true);
                 } finally {
                   setSaving(false);
                 }
@@ -271,5 +290,14 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
         </div>
       )}
     </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</span>
+      {children}
+    </label>
   );
 }

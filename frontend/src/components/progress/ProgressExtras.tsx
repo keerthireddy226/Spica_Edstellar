@@ -85,9 +85,9 @@ function CertificateCard() {
 
 function Card({ title, icon: Icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4 min-w-0">
       <h2 className="flex items-center gap-2.5 font-display font-bold text-ink">
-        <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white" style={{ background: color }}>
+        <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white shrink-0" style={{ background: color }}>
           <Icon size={18} />
         </span>
         {title}
@@ -99,14 +99,15 @@ function Card({ title, icon: Icon, color, children }: { title: string; icon: Luc
 
 // The longer view of a learner's progress: lifetime totals, each skill,
 // twelve weeks of practice, recent sessions, placement history and badges.
-export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" | "skills" | "all" }) {
+export function ProgressExtras({ part = "all", title, subtitle }: { part?: "banner" | "details" | "skills" | "all"; title?: string; subtitle?: string }) {
   const [d, setD] = useState<ProgressData | null>(null);
   useEffect(() => {
     api<ProgressData>("/me/progress")
       .then(setD)
       .catch(() => {});
   }, []);
-  if (!d) return null;
+  // The banner carries the page title, so it shows (without numbers) while the totals load.
+  if (!d) return part === "banner" && title ? <Banner title={title} subtitle={subtitle} totals={null} /> : null;
   const t = d.totals;
   const maxMin = Math.max(1, ...d.days.map((x) => x.minutes || x.attempts));
   const weeks: (typeof d.days)[] = [];
@@ -114,33 +115,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
   const activeDays = d.days.filter((x) => x.sessions > 0).length;
   const unlocked = d.achievements.filter((a) => a.unlockedAt);
 
-  const banner = (
-      <div
-        className="relative overflow-hidden rounded-card shadow-sm px-6 py-5"
-        style={{ background: "linear-gradient(120deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 70%, black) 70%, color-mix(in srgb, #c9965c 60%, var(--color-navy)))" }}
-      >
-        <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10" />
-        <p className="relative text-xs font-semibold uppercase tracking-[.18em] text-white/75 mb-3">{tr("All time")}</p>
-        <div className="relative grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-          {(
-            [
-              [tr("Sessions"), t.sessions, Target],
-              [tr("Questions answered"), t.questions, Sparkles],
-              [tr("Minutes practised"), t.minutes, Clock],
-              [tr("Accuracy"), t.accuracy != null ? `${t.accuracy}%` : "—", Award],
-              [tr("Day streak"), t.streak, Flame],
-              [tr("XP earned"), t.xp, Trophy],
-            ] as const
-          ).map(([label, value, Icon]) => (
-            <div key={label} className="bg-white/12 border border-white/20 rounded-input px-4 py-3 text-white" style={{ background: "rgba(255,255,255,0.12)" }}>
-              <Icon size={16} className="text-white/80 mb-1" />
-              <p className="font-display font-bold text-2xl">{value}</p>
-              <p className="text-xs text-white/80">{label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-  );
+  const banner = <Banner title={title} subtitle={subtitle} totals={t} />;
   if (part === "banner") return banner;
 
   const skills = (
@@ -179,7 +154,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
         {skills}
 
         <Card title={tr("Last 12 weeks")} icon={CalendarDays} color="var(--color-accent)">
-          <div className="flex gap-1.5 overflow-x-auto">
+          <div className="grid gap-1.5 w-full max-w-md" style={{ gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))` }}>
             {weeks.map((w, i) => (
               <div key={i} className="flex flex-col gap-1.5">
                 {w.map((day) => {
@@ -189,7 +164,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                     <span
                       key={day.day}
                       title={`${new Date(day.day).toLocaleDateString()}: ${day.sessions === 1 ? tr("1 session, {{m}} min", { m: day.minutes }) : tr("{{n}} sessions, {{m}} min", { n: day.sessions, m: day.minutes })}`}
-                      className="h-4 w-4 rounded-[4px]"
+                      className="block w-full aspect-square rounded-[4px]"
                       style={{ background: level === 0 ? "var(--color-rule)" : `color-mix(in srgb, var(--color-accent) ${25 + level * 18}%, var(--color-surface))` }}
                     />
                   );
@@ -224,7 +199,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                     </p>
                   </div>
                   <span className="text-xs text-muted shrink-0">
-                    {r.answered > 0 ? `${r.answered} answered` : tr("No answers")}{r.minutes ? tr(" · {{minutes}} min", { minutes: r.minutes }) : ""}
+                    {r.answered > 0 ? tr("{{n}} answered", { n: r.answered }) : tr("No answers")}{r.minutes ? tr(" · {{minutes}} min", { minutes: r.minutes }) : ""}
                   </span>
                 </div>
               ))}
@@ -251,12 +226,14 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
               </div>
             )}
           </Card>
+        </div>
+      </div>
 
           <Card title={tr("Badges · {{length}} of {{length2}}", { length: unlocked.length, length2: d.achievements.length })} icon={Trophy} color="var(--color-warning)">
             {d.achievements.length === 0 ? (
               <p className="text-sm text-muted">{tr("Badges appear as you practise.")}</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {d.achievements.map((a, i) => {
                   const Icon = BADGE_ICON[a.icon ?? ""] ?? Award;
                   const color = BADGE_COLORS[i % BADGE_COLORS.length];
@@ -288,7 +265,7 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
                       <p className={`text-sm font-semibold leading-tight ${earned ? "text-ink" : "text-muted"}`}>{trServer(a.title)}</p>
                       <p className="text-[11px] text-muted leading-snug line-clamp-2">
                         {earned
-                          ? `Earned ${new Date(a.unlockedAt!).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`
+                          ? tr("Earned {{date}}", { date: new Date(a.unlockedAt!).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) })
                           : trServer(a.description)}
                       </p>
                     </div>
@@ -297,8 +274,44 @@ export function ProgressExtras({ part = "all" }: { part?: "banner" | "details" |
               </div>
             )}
           </Card>
-        </div>
-      </div>
     </>
+  );
+}
+
+// The clay banner: the page title (when given) and the all-time totals.
+function Banner({ title, subtitle, totals: t }: { title?: string; subtitle?: string; totals: ProgressData["totals"] | null }) {
+  const tiles = [
+    [tr("Sessions"), t?.sessions, Target],
+    [tr("Questions answered"), t?.questions, Sparkles],
+    [tr("Minutes practised"), t?.minutes, Clock],
+    [tr("Accuracy"), t ? (t.accuracy != null ? `${t.accuracy}%` : "—") : undefined, Award],
+    [tr("Day streak"), t?.streak, Flame],
+    [tr("XP earned"), t?.xp, Trophy],
+  ] as const;
+  return (
+    <div
+      className="relative overflow-hidden rounded-card shadow-sm px-6 sm:px-8 py-6 text-white"
+      style={{ background: "linear-gradient(120deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 70%, black) 70%, color-mix(in srgb, #c9965c 60%, var(--color-navy)))" }}
+    >
+      <span className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-white/10" />
+      {title ? (
+        <div className="relative mb-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[.2em] text-white/70 mb-1">{tr("All time")}</p>
+          <h1 className="font-display font-bold text-2xl sm:text-3xl leading-tight">{title}</h1>
+          {subtitle && <p className="text-sm text-white/85 mt-1 max-w-2xl">{subtitle}</p>}
+        </div>
+      ) : (
+        <p className="relative text-xs font-semibold uppercase tracking-[.18em] text-white/75 mb-3">{tr("All time")}</p>
+      )}
+      <div className="relative grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {tiles.map(([label, value, Icon]) => (
+          <div key={label} className="border border-white/20 rounded-input px-4 py-3 min-w-0" style={{ background: "rgba(255,255,255,0.12)" }}>
+            <Icon size={16} className="text-white/80 mb-1" />
+            <p className="font-display font-bold text-2xl truncate">{value ?? <span className="inline-block h-6 w-10 rounded bg-white/20 animate-pulse align-middle" />}</p>
+            <p className="text-xs text-white/80 truncate">{label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

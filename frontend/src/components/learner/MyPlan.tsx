@@ -46,7 +46,15 @@ function SwitchTest({ o }: { o: Owned }) {
       .catch(() => {});
   }, [open, tests.length, o.testTypeId]);
   if (!o.canSwitchUntil) return null;
-  if (state === "done") return <span className="text-xs text-success">{tr("Switched. Reload to see your new test.")}</span>;
+  if (state === "done")
+    return (
+      <span className="text-xs text-success">
+        {tr("Switched. Reload to see your new test.")}{" "}
+        <button onClick={() => window.location.reload()} className="font-semibold text-navy-deep hover:underline cursor-pointer">
+          {tr("Reload")}
+        </button>
+      </span>
+    );
   return open ? (
     <span className="flex flex-wrap items-center gap-2 text-xs">
       <select value={pick} onChange={(e) => setPick(e.target.value)} className="rounded-input border border-rule bg-surface px-2 py-1 text-xs">
@@ -83,8 +91,10 @@ export function OwnedList({ access }: { access: MyAccess }) {
       {items.map((o) => {
         const Icon = o.kind === "prep" ? BookOpen : o.kind === "level" ? ClipboardCheck : Award;
         return (
-          <div key={o.id} className="flex items-start gap-3 border border-rule rounded-xl px-3.5 py-3">
-            <Icon size={18} className="text-navy-deep shrink-0 mt-0.5" />
+          <div key={o.id} className="flex items-start gap-3 border border-rule rounded-xl px-3.5 py-3 bg-paper-warm/40">
+            <span className="h-8 w-8 rounded-lg bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
+              <Icon size={16} />
+            </span>
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="text-sm font-semibold text-ink">{o.kind === "final" ? tr("Final assessment") : o.name}</span>
               <span className="text-xs text-muted">{opens(o)}</span>

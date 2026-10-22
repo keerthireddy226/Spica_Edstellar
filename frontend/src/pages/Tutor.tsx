@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Send, RotateCcw, MessageCircle, Type, Lightbulb, Sparkles, CheckCircle2 } from "lucide-react";
 import { HERO_GRADIENT, LearnerCard } from "@/components/learner/LearnerHero";
-import { StatCard } from "@/components/staff/StaffKit";
 import { Mascot } from "@/components/Mascot";
 import { Button } from "@/components/Button";
 import { startCoachSession, sendCoachMessage, endCoachSession, type CoachTurn } from "@/api/coach";
@@ -18,15 +17,31 @@ export function Tutor() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // The conversation couldn't be opened: say so and offer a retry.
+  const [startFailed, setStartFailed] = useState(false);
 
-  useEffect(() => {
+  function openSession() {
+    setLoading(true);
+    setStartFailed(false);
     startCoachSession()
       .then((res) => {
         setSessionId(res.sessionId);
         setTurns(res.turns);
       })
+      .catch(() => setStartFailed(true))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    openSession();
   }, []);
+
+  // A suggested topic goes into the box, ready to edit or send.
+  function pickStarter(q: string) {
+    setText(q);
+    inputRef.current?.focus();
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -56,11 +71,14 @@ export function Tutor() {
   async function handleNewConversation() {
     if (!sessionId || !window.confirm(t("tutor.newConversationConfirm"))) return;
     setLoading(true);
+    setError(null);
     try {
       await endCoachSession(sessionId);
       const res = await startCoachSession();
       setSessionId(res.sessionId);
       setTurns(res.turns);
+    } catch {
+      setError(tr("Couldn't start a new conversation. Try again."));
     } finally {
       setLoading(false);
     }
@@ -95,7 +113,18 @@ export function Tutor() {
 
         <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto px-5 py-5 flex flex-col gap-4" style={{ background: "color-mix(in srgb, var(--color-paper) 55%, var(--color-surface))" }}>
           {loading ? (
-            <p className="text-sm text-muted m-auto">{t("tutor.loading")}</p>
+            <p className="text-sm text-muted m-auto flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-navy/60 animate-pulse" /> {t("tutor.loading")}
+            </p>
+          ) : startFailed ? (
+            <div className="m-auto flex flex-col items-center gap-3 text-center max-w-xs">
+              <p className="text-sm text-ink">{tr("The tutor couldn't start a conversation right now.")}</p>
+              <Button variant="secondary" onClick={openSession}>
+                <span className="flex items-center gap-1.5">
+                  <RotateCcw size={15} /> {tr("Try again")}
+                </span>
+              </Button>
+            </div>
           ) : (
             <>
               {turns.map((turn, i) => {
@@ -108,7 +137,7 @@ export function Tutor() {
                       </span>
                     )}
                     <div
-                      className={`max-w-[72%] px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                      className={`max-w-[85%] sm:max-w-[72%] px-4 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words ${
                         me ? "text-white rounded-2xl rounded-br-md" : "bg-surface text-ink border border-rule rounded-2xl rounded-bl-md"
                       }`}
                       style={me ? { background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 75%, black))" } : undefined}
@@ -137,10 +166,10 @@ export function Tutor() {
         {error && <p className="text-sm text-error px-5 pt-2">{error}</p>}
 
         <div className="border-t border-rule px-4 py-3 flex flex-col gap-2.5 bg-surface">
-          {turns.length <= 2 && !loading && (
-            <div className="flex gap-2 flex-wrap">
+          {turns.length <= 2 && !loading && !startFailed && (
+            <div className="flex gap-2 flex-wrap lg:hidden">
               {STARTERS.slice(0, 3).map((q) => (
-                <button key={q} onClick={() => setText(q)} className="text-xs font-medium px-3 py-1.5 rounded-pill bg-navy/10 text-navy-deep hover:bg-navy/20 transition-colors cursor-pointer">
+                <button key={q} onClick={() => pickStarter(q)} className="text-xs font-medium px-3 py-1.5 rounded-pill bg-navy/10 text-navy-deep hover:bg-navy/20 transition-colors cursor-pointer">
                   {q}
                 </button>
               ))}
@@ -148,6 +177,7 @@ export function Tutor() {
           )}
           <div className="flex items-center gap-3 rounded-pill border border-rule-strong px-4 py-1.5 focus-within:border-navy transition-colors">
             <input
+              ref={inputRef}
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
@@ -156,11 +186,11 @@ export function Tutor() {
                   handleSend();
                 }
               }}
-              disabled={loading || sending}
+              disabled={loading || sending || !sessionId}
               placeholder={t("tutor.inputPlaceholder")}
               className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none disabled:cursor-not-allowed py-1.5"
             />
-            <Button onClick={handleSend} disabled={loading || sending || !text.trim()} className="shrink-0 !rounded-full !px-3 !py-2">
+            <Button onClick={handleSend} disabled={loading || sending || !sessionId || !text.trim()} aria-label={tr("Send")} className="shrink-0 !rounded-full !px-3 !py-2">
               <Send size={16} strokeWidth={2.2} />
             </Button>
           </div>
@@ -169,8 +199,20 @@ export function Tutor() {
 
       <div className="flex flex-col gap-5">
         <div className="grid grid-cols-2 gap-3">
-          <StatCard index={0} variant="pastel" palette="terracotta" icon={MessageCircle} label={tr("Your messages")} value={mine.length} />
-          <StatCard index={0} variant="pastel" palette="moss" icon={Type} label={tr("Words used")} value={words} />
+          {(
+            [
+              [MessageCircle, tr("Your messages"), mine.length, "var(--color-navy)"],
+              [Type, tr("Words used"), words, "var(--color-accent)"],
+            ] as const
+          ).map(([Icon, label, value, color]) => (
+            <div key={label} className="bg-surface border border-rule rounded-card shadow-sm p-4 flex flex-col gap-2 min-w-0">
+              <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white" style={{ background: color }}>
+                <Icon size={17} />
+              </span>
+              <p className="font-display font-bold text-2xl text-ink leading-none mt-1">{value}</p>
+              <p className="text-xs text-muted truncate">{label}</p>
+            </div>
+          ))}
         </div>
 
         <LearnerCard title={tr("Talk about…")} icon={Lightbulb} color="#c9965c">
@@ -178,7 +220,7 @@ export function Tutor() {
             {STARTERS.map((q) => (
               <button
                 key={q}
-                onClick={() => setText(q)}
+                onClick={() => pickStarter(q)}
                 className="text-left text-sm text-ink px-3.5 py-2.5 rounded-input bg-paper/70 hover:bg-navy/10 border border-transparent hover:border-navy/30 transition-colors cursor-pointer"
               >
                 {q}

@@ -12,6 +12,7 @@ import { NextStepCard } from "@/components/learner/GoalCards";
 import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
 import { FinalAssessmentCard } from "@/components/learner/FinalAssessmentCard";
 import { ApiError } from "@/lib/api";
+import { PageError, PageLoading } from "@/components/learner/PageStates";
 import { WORD_BANK, IDIOM_BANK, WORD_CHALLENGES } from "@/data/dailyContent";
 
 // "My journey" (the Roadmap page): progress to the goal, the levels still to
@@ -102,7 +103,7 @@ function DailyChallenge() {
       <span className="absolute inset-x-0 top-0 h-1.5" style={{ background: "linear-gradient(90deg, var(--color-navy), #c9965c, var(--color-success))" }} />
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <div className="font-mono text-[10px] uppercase tracking-wider text-warning mb-1">{t("dailyChallenge.title")}</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[.18em] text-muted mb-1">{t("dailyChallenge.title")}</div>
           <h3 className="font-display font-bold text-lg text-ink">{t("dailyChallenge.subtitle")}</h3>
         </div>
         <div className="flex gap-1 p-1 rounded-pill bg-paper">
@@ -154,8 +155,11 @@ export function Roadmap() {
   const [notReady, setNotReady] = useState<{ scheduledFor: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     Promise.all([getRoadmap(), getJourney()])
       .then(([r, j]) => {
         setData(r);
@@ -170,10 +174,10 @@ export function Roadmap() {
         }
       })
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, attempt]);
 
-  if (loading) return <p className="text-sm text-muted">{t("roadmap.loading")}</p>;
-  if (error) return <p className="text-sm text-error">{error}</p>;
+  if (loading) return <PageLoading label={t("roadmap.loading")} />;
+  if (error) return <PageError message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   if (notReady || !data || !journeyData) {
     return (

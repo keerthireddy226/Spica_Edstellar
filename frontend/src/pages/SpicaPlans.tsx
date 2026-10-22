@@ -9,6 +9,7 @@ import { formatUsdCents, TIER_LABELS, type PlanTier } from "@/api/plans";
 import { trServer } from "@/i18n/serverText";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { PageError, PageLoading } from "@/components/learner/PageStates";
 
 // Spica plans: every plan in one place, for individuals and for
 // organizations. A read-only overview; buying stays on Plans (individuals),
@@ -36,9 +37,10 @@ function Item({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 
 function Card({ eyebrow, title, price, highlight, children, action }: { eyebrow: string; title: string; price?: React.ReactNode; highlight?: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className={`bg-surface rounded-card p-5 flex flex-col gap-3 min-w-0 ${highlight ? "border-2 border-navy" : "border border-rule"}`}>
-      {highlight && <span className="self-start text-[11px] font-semibold text-white bg-navy rounded-pill px-2.5 py-0.5">{highlight}</span>}
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{eyebrow}</span>
+    <div className={`relative bg-surface rounded-card p-5 flex flex-col gap-3 min-w-0 ${highlight ? "border-2 border-navy shadow-md" : "border border-rule shadow-sm"}`}>
+      {/* The badge sits on the corner so every card's eyebrow and title line up. */}
+      {highlight && <span className="absolute top-4 right-4 text-[11px] font-semibold text-white bg-navy rounded-pill px-2.5 py-0.5">{highlight}</span>}
+      <span className={`text-[11px] font-semibold uppercase tracking-wide text-muted ${highlight ? "pr-28" : ""}`}>{eyebrow}</span>
       <h3 className="font-display font-bold text-lg text-ink">{title}</h3>
       {price && <div className="font-display font-bold text-2xl text-ink tabular-nums">{price}</div>}
       <ul className="flex flex-col gap-1.5">{children}</ul>
@@ -66,18 +68,23 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
   const [currency, setCurrency] = useState<ShopCurrency | undefined>(undefined);
   const [list, setList] = useState<Awaited<ReturnType<typeof getPriceList>> | null>(null);
   const [tiers, setTiers] = useState<QuotaTier[]>([]);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    getPriceList(currency).then((r) => {
-      setList(r);
-      if (!currency) setCurrency(r.currency);
-    });
-  }, [currency]);
+    setFailed(false);
+    getPriceList(currency)
+      .then((r) => {
+        setList(r);
+        if (!currency) setCurrency(r.currency);
+      })
+      .catch(() => setFailed(true));
+  }, [currency, attempt]);
   useEffect(() => {
     getQuota()
       .then((r) => setTiers(r.tiers ?? []))
       .catch(() => {});
   }, []);
-  if (!list) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (!list) return failed ? <PageError message={tr("Prices couldn't be loaded.")} onRetry={() => setAttempt((n) => n + 1)} /> : <PageLoading hero={false} cards={3} />;
   const by = (kind: PricedProduct["kind"]) => list.products.filter((p) => p.kind === kind);
   const price = (p: PricedProduct | undefined) => (p ? formatAmount(p.amount, p.currency) : "—");
   const min = (kind: PricedProduct["kind"]) => {
@@ -159,7 +166,9 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
 function Organizations({ data, isOrgAdmin }: { data: Overview; isOrgAdmin: boolean }) {
   const [credits, setCredits] = useState<PricedProduct[]>([]);
   useEffect(() => {
-    getPriceList("USD").then((r) => setCredits(r.products));
+    getPriceList("USD")
+      .then((r) => setCredits(r.products))
+      .catch(() => {});
   }, []);
   const label = (k: string) => trServer(data.features.find((f) => f.key === k)?.label ?? k);
   const creditOf = (id: string) => credits.find((p) => p.id === id)?.credits ?? null;
@@ -270,9 +279,16 @@ export function SpicaPlans() {
   const isOrgPerson = user?.role === "org_admin" || user?.role === "manager";
   const [tab, setTab] = useState<"individuals" | "organizations">(isOrgPerson ? "organizations" : "individuals");
   const [data, setData] = useState<Overview | null>(null);
+  const [overviewFailed, setOverviewFailed] = useState(false);
   const [canBuy, setCanBuy] = useState(false);
+  function loadOverview() {
+    setOverviewFailed(false);
+    api<Overview>("/plans/overview")
+      .then(setData)
+      .catch(() => setOverviewFailed(true));
+  }
   useEffect(() => {
-    api<Overview>("/plans/overview").then(setData);
+    loadOverview();
     getPriceList()
       .then((r) => setCanBuy(r.canBuy))
       .catch(() => {});
@@ -283,7 +299,7 @@ export function SpicaPlans() {
         <h1 className="font-display font-bold text-2xl text-ink">{tr("Spica plans")}</h1>
         <p className="text-sm text-muted mt-1">{tr("Every Spica plan in one place: practise, prove your level, and get a certificate anyone can check.")}</p>
       </div>
-      <div className="flex gap-1 border-b border-rule">
+      <div className="flex gap-1 border-b border-rule overflow-x-auto">
         {(
           [
             ["individuals", tr("For individuals")],
@@ -293,13 +309,21 @@ export function SpicaPlans() {
           <button
             key={k}
             onClick={() => setTab(k)}
-            className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 cursor-pointer ${tab === k ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"}`}
+            className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 whitespace-nowrap cursor-pointer ${tab === k ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"}`}
           >
             {l}
           </button>
         ))}
       </div>
-      {tab === "individuals" ? <Individuals canBuy={canBuy} /> : data ? <Organizations data={data} isOrgAdmin={user?.role === "org_admin"} /> : <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {tab === "individuals" ? (
+        <Individuals canBuy={canBuy} />
+      ) : data ? (
+        <Organizations data={data} isOrgAdmin={user?.role === "org_admin"} />
+      ) : overviewFailed ? (
+        <PageError message={tr("Plans couldn't be loaded.")} onRetry={loadOverview} />
+      ) : (
+        <PageLoading hero={false} cards={3} />
+      )}
     </div>
   );
 }

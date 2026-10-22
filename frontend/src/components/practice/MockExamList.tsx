@@ -30,7 +30,10 @@ export function MockExamList({
   openMock,
   onStart,
   phone = false,
+  afterHero,
 }: {
+  // Shown right under the banner (for example the "keep going" access card).
+  afterHero?: React.ReactNode;
   // On a phone mocks can't start: rows say so instead of Start/Resume.
   phone?: boolean;
   families: CatalogueFamily[];
@@ -75,9 +78,11 @@ export function MockExamList({
         )}
       </section>
 
+      {afterHero}
+
       <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {RULES.map(([Icon, label]) => (
-          <li key={label()} className="flex items-center gap-2.5 bg-surface border border-rule rounded-card px-4 py-3 text-sm text-ink">
+          <li key={label()} className="flex items-center gap-2.5 bg-surface border border-rule rounded-card px-4 py-3 text-sm text-ink leading-snug min-h-[64px]">
             <span className="h-8 w-8 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
               <Icon size={16} />
             </span>
@@ -201,15 +206,17 @@ function MockRow({
       <div className="md:w-48 shrink-0 flex md:justify-end">
         {!live && tt.status === "live" && tt.inPlan === false && tt.allowed && prepPrices?.canBuy && prepPrices.prep[tt.id] ? (
           // Not bought: the price and one step to get it.
-          <Link to={ROUTES.SPICA_PLANS} className="text-xs font-semibold text-navy-deep hover:underline text-right">
+          <Link to={ROUTES.SPICA_PLANS} className="text-xs font-semibold text-navy-deep hover:underline md:text-right">
             {tr("Not in your plan")} · {tr("Prepare for it from {{price}}", { price: prepPrices.prep[tt.id] })}
           </Link>
         ) : !live ? (
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted bg-paper-warm rounded-pill px-2.5 py-1">
             {tt.status !== "live" ? tr("Coming soon") : tt.inPlan === false && tt.allowed ? tr("Not in your plan") : t("practiceTests.notEnabled")}
           </span>
         ) : blockedBy ? (
-          <span className="text-xs text-muted">{blockedBy}</span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted bg-paper-warm border border-rule rounded-pill px-3 py-1.5">
+            <Lock size={12} className="shrink-0" /> {blockedBy}
+          </span>
         ) : (
           <Button onClick={onStart} className="flex items-center gap-1.5 w-full md:w-auto justify-center">
             <PlayCircle size={16} /> {resume ? tr("Resume mock test") : tr("Start mock test")}

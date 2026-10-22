@@ -46,6 +46,7 @@ import {
   type Badge,
 } from "@/api/dashboard";
 import { ApiError } from "@/lib/api";
+import { PageError, PageLoading } from "@/components/learner/PageStates";
 import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
@@ -262,14 +263,14 @@ function QuickLinks() {
   const modulesOn = useModulesEnabled();
   const all = [
     { to: ROUTES.MODULES, label: t("nav.modules"), hint: tr("Practise one skill at a time"), icon: Layers, color: "#b5653f" },
-    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full timed mock tests"), icon: ClipboardCheck, color: "#c9965c" },
+    { to: ROUTES.PRACTICE_TESTS, label: t("nav.practiceTests"), hint: tr("Full practice tests with a report"), icon: ClipboardCheck, color: "#c9965c" },
     { to: ROUTES.TUTOR, label: t("nav.tutor"), hint: tr("Chat in English with your coach"), icon: MessageCircle, color: "#6e9660" },
     { to: ROUTES.PROGRESS, label: t("nav.progress"), hint: tr("Your skills, streaks and badges"), icon: BarChart3, color: "#a8613f" },
     { to: ROUTES.MY_TESTS, label: tr("Assessment"), hint: tr("Your final assessment and certificate"), icon: Award, color: "#8a5a3c" },
   ];
   const links = modulesOn ? all : all.filter((l) => l.to !== ROUTES.MODULES);
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className={`grid grid-cols-2 sm:grid-cols-3 gap-4 ${links.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
       {links.map((l) => (
         <button
           key={l.to}
@@ -351,8 +352,11 @@ function LearnerDashboard() {
   const [notReady, setNotReady] = useState<{ scheduledFor: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     getDashboard()
       .then(setData)
       .catch((err: unknown) => {
@@ -364,10 +368,10 @@ function LearnerDashboard() {
         }
       })
       .finally(() => setLoading(false));
-  }, [t]);
+  }, [t, attempt]);
 
-  if (loading) return <p className="text-sm text-muted">{t("roadmap.loading")}</p>;
-  if (error) return <p className="text-sm text-error">{error}</p>;
+  if (loading) return <PageLoading label={t("roadmap.loading")} />;
+  if (error) return <PageError message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   if (notReady || !data) {
     return (
@@ -435,13 +439,13 @@ function LearnerDashboard() {
 
       <KeepGoingCard />
 
-      {journey && <JourneySummary j={journey} />}
-
-      <FinalAssessmentCard />
-
       {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 
       <NextStepCard />
+
+      {journey && <JourneySummary j={journey} />}
+
+      <FinalAssessmentCard />
 
       <GroupBoardCard />
 

@@ -24,6 +24,7 @@ import {
   Briefcase,
   KeyRound,
   CheckCircle2,
+  Flame,
 } from "lucide-react";
 import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
@@ -60,11 +61,12 @@ function IconBadge({ icon: Icon, tint, size = 36 }: { icon: typeof GraduationCap
   );
 }
 
+// Same heading as the other learner cards: a 36px tinted chip and the title.
 function SectionHeader({ icon, tint, title }: { icon: typeof GraduationCap; tint: string; title: string }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <IconBadge icon={icon} tint={tint} size={30} />
-      <h3 className="font-display font-bold text-sm text-ink">{title}</h3>
+    <div className="flex items-center gap-3">
+      <IconBadge icon={icon} tint={`${tint} !rounded-xl`} size={36} />
+      <h2 className="font-display font-bold text-ink">{title}</h2>
     </div>
   );
 }
@@ -89,7 +91,7 @@ function AccessSection() {
   const tone =
     license.status === "active" ? "text-success" : license.status === "grace" ? "text-navy-deep" : onFreePlan ? "text-ink" : "text-error";
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
       <SectionHeader icon={KeyRound} tint="bg-navy/15 text-navy" title={t("profile.access.title")} />
       <p className={`text-sm font-semibold ${tone}`}>{status}</p>
       {license.queuedMonths > 0 && (
@@ -151,7 +153,7 @@ function PersonalInformation() {
     user?.role === "learner" ? (learning?.organization ? `${learning.organization.name} learner` : t("profile.account.individual")) : user?.role;
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <SectionHeader icon={User} tint="bg-navy/15 text-navy" title={t("profile.personalInfo.title")} />
         {!editing && (
@@ -276,7 +278,7 @@ function AboutYouSection() {
   const notShared = t("profile.about.notShared");
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <SectionHeader icon={MapPin} tint="bg-accent/15 text-accent" title={t("profile.about.title")} />
         {!editing && (
@@ -472,7 +474,7 @@ function PreferencesSection() {
   }
 
   return (
-    <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-1">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-1">
       <SectionHeader icon={Volume2} tint="bg-writing/15 text-writing" title={t("profile.preferences.title")} />
       <div className="flex flex-col divide-y divide-rule mt-2">
         <ToggleRow
@@ -541,15 +543,17 @@ export function Profile() {
         <span className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/10" />
         <span className="pointer-events-none absolute right-48 -bottom-28 h-56 w-56 rounded-full bg-white/5" />
         <div className="relative flex items-center gap-5 px-6 sm:px-8 pt-7 pb-5 flex-wrap">
-          <span className="h-20 w-20 rounded-3xl bg-white/20 ring-2 ring-white/40 text-white flex items-center justify-center font-display font-bold text-2xl shrink-0">
+          <span className="h-14 w-14 sm:h-20 sm:w-20 rounded-2xl sm:rounded-3xl bg-white/20 ring-2 ring-white/40 text-white flex items-center justify-center font-display font-bold text-xl sm:text-2xl shrink-0">
             {initials}
           </span>
           <div className="flex-1 min-w-0">
-            <h1 className="font-display font-bold text-2xl text-white truncate">{fullName}</h1>
-            <p className="text-sm text-white/80 flex items-center gap-1.5 truncate">
-              <Mail size={13} strokeWidth={1.8} />
-              {user?.email}
-              {user?.participantId ? ` · ${user.participantId}` : ""}
+            <h1 className="font-display font-bold text-xl sm:text-2xl text-white break-words">{fullName}</h1>
+            <p className="text-sm text-white/80 flex items-center gap-1.5 min-w-0">
+              <Mail size={13} strokeWidth={1.8} className="shrink-0" />
+              <span className="truncate">
+                {user?.email}
+                {user?.participantId ? ` · ${user.participantId}` : ""}
+              </span>
             </p>
             <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white text-navy-deep">{accountType}</span>
@@ -568,27 +572,27 @@ export function Profile() {
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 rounded-pill bg-white/15 border border-white/30 text-white text-sm font-semibold hover:bg-white/25 transition-colors cursor-pointer"
+            aria-label={t("onboarding.logout")}
+            className="self-start sm:self-auto flex items-center gap-2 px-3 sm:px-4 py-2 rounded-pill bg-white/15 border border-white/30 text-white text-sm font-semibold hover:bg-white/25 transition-colors cursor-pointer"
           >
             <LogOut size={15} strokeWidth={2} />
-            {t("onboarding.logout")}
+            <span className="hidden sm:inline">{t("onboarding.logout")}</span>
           </button>
         </div>
         {p && (
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 px-6 sm:px-8 pb-6">
             {(
               [
-                [tr("Current level"), p.level ?? tr("Not placed"), "var(--color-navy)"],
-                [tr("Day streak"), p.streak, "var(--color-accent)"],
-                [tr("Sessions"), p.sessions, "#c9965c"],
-                [tr("Minutes practised"), p.minutes, "#b97a62"],
+                [tr("Current level"), p.level ?? tr("Not placed"), GraduationCap],
+                [tr("Day streak"), p.streak, Flame],
+                [tr("Sessions"), p.sessions, CalendarDays],
+                [tr("Minutes practised"), p.minutes, Clock],
               ] as const
-            ).map(([label, value, c]) => (
-              <div key={label} className="bg-surface rounded-input px-4 py-3 shadow-sm border-l-4" style={{ borderLeftColor: c }}>
-                <p className="font-display font-bold text-2xl" style={{ color: `color-mix(in srgb, ${c} 80%, black)` }}>
-                  {value}
-                </p>
-                <p className="text-xs text-muted">{label}</p>
+            ).map(([label, value, Icon]) => (
+              <div key={label} className="rounded-input px-4 py-3 border border-white/20 text-white min-w-0" style={{ background: "rgba(255,255,255,0.13)" }}>
+                <Icon size={16} className="text-white/80 mb-1" />
+                <p className="font-display font-bold text-xl sm:text-2xl leading-tight">{value}</p>
+                <p className="text-xs text-white/80 truncate">{label}</p>
               </div>
             ))}
           </div>
@@ -598,7 +602,7 @@ export function Profile() {
             <button
               key={k}
               onClick={() => setTab(k)}
-              className={`px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${tab === k ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"}`}
+              className={`px-3 sm:px-4 py-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-colors cursor-pointer ${tab === k ? "border-navy text-navy-deep" : "border-transparent text-muted hover:text-ink"}`}
             >
               {l}
             </button>
@@ -609,22 +613,29 @@ export function Profile() {
       {/* Two balanced columns per tab, so cards sit side by side without gaps. */}
       {(() => {
         const cols: Record<string, [React.ReactNode[], React.ReactNode[]]> = {
-          learning: [
-            [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <ProgressExtras key="s" part="skills" />],
-            [<AccessSection key="a" />, learning && <MyOrganization key="o" data={learning} />, <MyCertificates key="c" />],
-          ],
+          // "Your skills" goes under the shorter column: beside goals for an
+          // organization learner (whose organization card is long), else under access.
+          learning: learning?.organization
+            ? [
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <ProgressExtras key="s" part="skills" />],
+                [<AccessSection key="a" />, <MyOrganization key="o" data={learning} />, <MyCertificates key="c" />],
+              ]
+            : [
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <MyCertificates key="c" />],
+                [<AccessSection key="a" />, <ProgressExtras key="s" part="skills" />],
+              ],
           account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />]],
           settings: [
             [
               <DailyReminderCard key="r" />,
-              <div key="l" className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+              <div key="l" className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
                 <SectionHeader icon={Globe} tint="bg-listening/15 text-listening" title={t("profile.language.title")} />
                 <LanguageSwitcher />
               </div>,
             ],
             [
               <PreferencesSection key="pr" />,
-              <div key="v" className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3">
+              <div key="v" className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
                 <SectionHeader icon={Mic} tint="bg-speaking/15 text-speaking" title={t("profile.voice.title")} />
                 <VoiceSection hideTitle />
               </div>,

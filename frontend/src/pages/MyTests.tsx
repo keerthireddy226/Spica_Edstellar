@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { Award, CalendarClock, ClipboardCheck, FileText, Lock, PlayCircle, ShieldCheck } from "lucide-react";
+import { ArrowRight, Award, BookOpen, CalendarClock, ClipboardCheck, FileText, Lock, PlayCircle, ShieldCheck, Target } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { Button } from "@/components/Button";
 import { PracticeTests } from "@/pages/PracticeTests";
@@ -12,6 +12,7 @@ import { linkedInAddUrl } from "@/lib/linkedin";
 import { fileAppeal } from "@/api/quality";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { PageError, SectionLoading } from "@/components/learner/PageStates";
 
 // Assessment (once "My tests"): the real assessment attempts the learner owns. Each opens by the
 // unlock rule (after a mock test or in the last 7 days for preparation; after
@@ -167,7 +168,7 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
   const u = t.unlock;
   const open = t.attempts.find((a) => a.status === "in_progress");
   return (
-    <section className="bg-surface border border-rule rounded-card p-5 sm:p-6 flex flex-col gap-4">
+    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -176,7 +177,9 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
               : t.kind === "level"
                 ? tr("Level test")
                 : t.kind === "final"
-                  ? tr("Final assessment · included with Full access")
+                  ? t.testName
+                    ? tr("Final assessment · included with Full access")
+                    : tr("Included with Full access")
                   : tr("Assessment")}
           </p>
           <h2 className="font-display font-bold text-xl text-ink">
@@ -186,7 +189,7 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
             <CalendarClock size={14} /> {u.state === "expired" ? tr("Ended {{date}}", { date: day(t.endsAt) }) : tr("Available until {{date}}", { date: day(t.endsAt) })}
           </p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-paper-warm text-ink whitespace-nowrap">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-paper-warm border border-rule text-ink whitespace-nowrap">
           {t.attemptsLeft === 1 ? tr("1 attempt left") : tr("{{n}} attempts left", { n: t.attemptsLeft })}
         </span>
       </div>
@@ -297,6 +300,7 @@ export function MyTests() {
   const [canBuy, setCanBuy] = useState(true);
   const [shop, setShop] = useState<Shop>(null);
   function load() {
+    setError(false);
     getMyTests()
       .then((r) => setTests(r.tests))
       .catch(() => setError(true));
@@ -319,24 +323,40 @@ export function MyTests() {
         icon={ClipboardCheck}
       />
       {error ? (
-        <p className="text-sm text-error">{tr("Could not load your tests.")}</p>
+        <PageError message={tr("Could not load your tests.")} onRetry={load} />
       ) : tests === null ? (
-        <p className="text-sm text-muted">{tr("Loading…")}</p>
+        <SectionLoading rows={2} />
       ) : tests.length === 0 ? (
-        <div className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-3 items-start">
-          <h2 className="font-display font-bold text-lg text-ink">{tr("No final assessment yet")}</h2>
-          <p className="text-sm text-muted">
-            {tr("Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.")}
-          </p>
-          <ul className="text-sm text-ink list-disc pl-5 flex flex-col gap-1">
-            <li>{tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")}</li>
-            <li>{tr("Full access includes one: choose its test here, then it opens after a mock test of that test.")}</li>
-            <li>{tr("With Real test + certificate, it opens after a free sample.")}</li>
-            <li>{tr("A level test checks one level (A1 to C2). It gives no certificate.")}</li>
+        <div className="bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-7 flex flex-col gap-5">
+          <div className="flex items-start gap-4">
+            <span className="h-12 w-12 rounded-2xl bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
+              <Award size={24} />
+            </span>
+            <div className="flex flex-col gap-1">
+              <h2 className="font-display font-bold text-lg text-ink">{tr("No final assessment yet")}</h2>
+              <p className="text-sm text-muted">
+                {tr("Your final assessment is a real test: strictly proctored, with a Spica score, a score report and a certificate valid for a year.")}
+              </p>
+            </div>
+          </div>
+          <ul className="grid sm:grid-cols-2 gap-3">
+            {(
+              [
+                [BookOpen, tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")],
+                [Award, tr("Full access includes one: choose its test here, then it opens after a mock test of that test.")],
+                [ShieldCheck, tr("With Real test + certificate, it opens after a free sample.")],
+                [Target, tr("A level test checks one level (A1 to C2). It gives no certificate.")],
+              ] as const
+            ).map(([Icon, text]) => (
+              <li key={text} className="flex items-start gap-3 rounded-input bg-paper-warm/60 border border-rule px-4 py-3 text-sm text-ink">
+                <Icon size={17} className="text-navy-deep shrink-0 mt-0.5" />
+                {text}
+              </li>
+            ))}
           </ul>
           {canBuy ? (
-            <Link to={ROUTES.SPICA_PLANS} className="text-sm font-semibold text-navy-deep hover:underline">
-              {tr("Get a final assessment")}
+            <Link to={ROUTES.SPICA_PLANS} className="self-start inline-flex items-center gap-1.5 rounded-pill bg-navy text-white px-5 py-2.5 text-sm font-semibold hover:opacity-90">
+              {tr("Get a final assessment")} <ArrowRight size={15} />
             </Link>
           ) : (
             <p className="text-sm text-muted">{tr("Your organization gives you your tests. When it does, your final assessment shows here.")}</p>

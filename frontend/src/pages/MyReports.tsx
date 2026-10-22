@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, ChevronRight, Layers } from "lucide-react";
+import { FileText, ChevronRight, Layers, ClipboardCheck, Timer, Award } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { formatShortDate } from "@/api/licenses";
 import { getCatalogue, getHistory, type CatalogueTestType, type HistoryEntry } from "@/api/practiceTests";
@@ -10,6 +10,9 @@ import { testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
 import { getModuleHistory, type ModuleHistoryEntry } from "@/api/practiceSession";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
+import { EmptyState, PageError, SectionLoading } from "@/components/learner/PageStates";
+
+const linkBtn = "inline-flex items-center gap-1.5 rounded-pill px-4 py-2 text-sm font-semibold";
 
 // Every practice test, mock test and Practice Modules set the learner
 // finished, each opening its report.
@@ -21,17 +24,27 @@ export function MyReports() {
   const modulesOn = useModulesEnabled();
   const [modules, setModules] = useState<ModuleHistoryEntry[] | null>(null);
   const [filter, setFilter] = useState<"all" | "mock" | "practice" | "modules">("all");
+  // A list that failed to load says so (with a retry) instead of looking empty.
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
+    setFailed(false);
     getHistory()
       .then((r) => setRows(r.sessions))
-      .catch(() => setRows([]));
+      .catch(() => {
+        setRows([]);
+        setFailed(true);
+      });
     getModuleHistory()
       .then((r) => setModules(r.sessions))
-      .catch(() => setModules([]));
+      .catch(() => {
+        setModules([]);
+        setFailed(true);
+      });
     getCatalogue()
       .then((r) => setTypes(r.families.flatMap((f) => f.testTypes)))
       .catch(() => {});
-  }, []);
+  }, [attempt]);
   const tests = filter === "modules" ? [] : (rows ?? []).filter((r) => filter === "all" || r.deliveryMode === filter);
   const sets = modulesOn && (filter === "all" || filter === "modules") ? (modules ?? []) : [];
   // Tests and sets in one list, newest first.
@@ -51,14 +64,14 @@ export function MyReports() {
           rows
             ? [
                 { label: tr("Tests finished"), value: rows.length, icon: FileText },
-                { label: tr("Mock tests"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: FileText },
-                { label: tr("Practice tests"), value: rows.filter((r) => r.deliveryMode === "practice").length, icon: FileText },
+                { label: tr("Mock tests"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: Timer },
+                { label: tr("Practice tests"), value: rows.filter((r) => r.deliveryMode === "practice").length, icon: ClipboardCheck },
                 ...(modulesOn ? [{ label: tr("Module sets"), value: modules?.length ?? 0, icon: Layers }] : []),
               ]
             : undefined
         }
       />
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
         {(
           [
             ["all", tr("All")],
@@ -70,22 +83,50 @@ export function MyReports() {
           <button
             key={k}
             onClick={() => setFilter(k)}
-            className={`text-sm px-3 py-1.5 rounded-pill border cursor-pointer ${filter === k ? "bg-navy text-white border-navy" : "border-rule text-muted hover:text-ink"}`}
+            className={`text-sm px-3.5 py-1.5 rounded-pill border whitespace-nowrap cursor-pointer transition-colors ${filter === k ? "bg-navy text-white border-navy" : "bg-surface border-rule text-muted hover:text-ink"}`}
           >
             {label}
           </button>
         ))}
       </div>
       {loading ? (
-        <p className="text-sm text-muted">{tr("Loading…")}</p>
+        <SectionLoading />
+      ) : failed && shown.length === 0 ? (
+        <PageError
+          message={tr("Your reports couldn't be loaded.")}
+          onRetry={() => {
+            setRows(null);
+            setModules(null);
+            setAttempt((n) => n + 1);
+          }}
+        />
       ) : shown.length === 0 ? (
-        <p className="text-sm text-muted">
-          {filter === "modules"
-            ? tr("No finished sets yet. Your report for each Practice Modules set appears here.")
-            : tr("No finished tests yet. Your reports appear here after each practice test or mock test.")}
-        </p>
+        <EmptyState
+          icon={filter === "modules" ? Layers : FileText}
+          title={filter === "modules" ? tr("No finished sets yet") : tr("No reports yet")}
+          body={
+            filter === "modules"
+              ? tr("Your report for each Practice Modules set appears here.")
+              : tr("Your reports appear here after each practice test or mock test.")
+          }
+        >
+          {filter === "modules" ? (
+            <Link to={ROUTES.MODULES} className={`${linkBtn} bg-navy text-white`}>
+              <Layers size={15} /> {tr("Go to Practice Modules")}
+            </Link>
+          ) : (
+            <>
+              <Link to={ROUTES.PRACTICE_TESTS} className={`${linkBtn} bg-navy text-white`}>
+                <ClipboardCheck size={15} /> {tr("Go to practice tests")}
+              </Link>
+              <Link to={ROUTES.MOCK_EXAMS} className={`${linkBtn} border border-rule-strong text-ink hover:bg-paper-warm`}>
+                <Timer size={15} /> {tr("Go to mock tests")}
+              </Link>
+            </>
+          )}
+        </EmptyState>
       ) : (
-        <div className="bg-surface border border-rule rounded-card divide-y divide-rule">
+        <div className="bg-surface border border-rule rounded-card shadow-sm divide-y divide-rule overflow-hidden">
           {shown.map((row) => {
             if (row.kind === "set") {
               const m = row.m;
@@ -94,7 +135,7 @@ export function MyReports() {
                 <button
                   key={m.sessionId}
                   onClick={() => navigate(ROUTES.MODULE_REPORT.replace(":sessionId", m.sessionId))}
-                  className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-paper-warm/60 cursor-pointer"
+                  className="w-full px-4 py-3 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-left hover:bg-paper-warm/60 cursor-pointer"
                 >
                   <span className="text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 bg-warning/15 text-ink">{tr("Module")}</span>
                   <span className="flex-1 min-w-0">
@@ -110,17 +151,17 @@ export function MyReports() {
                     {tr("{{right}}/{{total}} right", { right: m.right, total: m.total })}
                     <span className="text-muted"> · {pct}%</span>
                   </span>
-                  <ChevronRight size={18} className="text-muted shrink-0" />
+                  <ChevronRight size={18} className="text-muted shrink-0 hidden sm:block" />
                 </button>
               );
             }
             const h = row.h;
             const tt = types.find((x) => x.id === h.testTypeId);
             return (
+              <div key={h.sessionId} className="relative flex items-center hover:bg-paper-warm/60">
               <button
-                key={h.sessionId}
                 onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
-                className="w-full px-4 py-3 flex items-center gap-4 text-left hover:bg-paper-warm/60 cursor-pointer"
+                className="flex-1 min-w-0 px-4 py-3 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-left cursor-pointer"
               >
                 <span className={`text-[11px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill shrink-0 ${h.deliveryMode === "practice" ? "bg-accent/15 text-accent" : "bg-navy/10 text-navy-deep"}`}>
                   {h.deliveryMode === "certified" ? (h.levelTest ? tr("Level test") : tr("Final assessment")) : h.deliveryMode === "sample" ? tr("Sample test") : h.deliveryMode === "mock" ? tr("Mock test") : tr("Practice")}
@@ -139,18 +180,18 @@ export function MyReports() {
                   ) : h.percent !== null ? (
                     <span className="text-muted"> · {h.percent}%</span>
                   ) : null}
-                  {h.certificateCode && (
-                    <a
-                      href={`/certificate/${h.certificateCode}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="block text-xs font-semibold text-success hover:underline"
-                    >
-                      {tr("Certificate")}
-                    </a>
-                  )}
                 </span>
-                <ChevronRight size={18} className="text-muted shrink-0" />
+                {!h.certificateCode && <ChevronRight size={18} className="text-muted shrink-0 hidden sm:block" />}
               </button>
+              {h.certificateCode && (
+                <Link
+                  to={`/certificate/${h.certificateCode}`}
+                  className="shrink-0 mr-4 inline-flex items-center gap-1 text-xs font-semibold text-success border border-success/40 bg-success/5 rounded-pill px-2.5 py-1 hover:bg-success/10"
+                >
+                  <Award size={13} /> {tr("Certificate")}
+                </Link>
+              )}
+              </div>
             );
           })}
         </div>

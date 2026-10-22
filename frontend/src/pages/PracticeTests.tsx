@@ -21,6 +21,7 @@ import {
   FileText,
   Lock,
   Laptop,
+  CalendarClock,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
@@ -1521,11 +1522,18 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         </div>
         )}
         {isMockSection && quota && (
-          <p className="text-sm text-muted">
-            {quota.mocksPerMonth === null
-              ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
-              : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
-          </p>
+          <div className="flex">
+            <QuotaChip
+              icon={Timer}
+              used={quota.mocksUsed}
+              limit={quota.mocksPerMonth}
+              label={
+                quota.mocksPerMonth === null
+                  ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
+                  : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
+              }
+            />
+          </div>
         )}
 
         {!isMockSection && (
@@ -1533,18 +1541,21 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
 
         {!isMockSection && <SkillLevelsPanel />}
 
-        <div className="flex flex-col gap-1 -mb-2">
-          <div className="flex items-center gap-2">
-            <BookOpenCheck size={18} className="text-accent shrink-0" />
-            <h2 className="font-display font-bold text-base text-ink">{tr("Practice sets")}</h2>
-            <span className="text-sm text-muted">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</span>
+        <div className="flex flex-col gap-1.5 -mb-2">
+          <div className="flex items-center gap-2.5">
+            <span className="h-9 w-9 rounded-xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
+              <BookOpenCheck size={18} />
+            </span>
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Practice sets")}</h2>
           </div>
-          <span className="text-sm text-muted flex items-center gap-1.5 ml-[26px]">
-            <Lock size={13} className="shrink-0" /> {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
-          </span>
+          <p className="text-sm text-muted sm:ml-[46px]">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</p>
+          <p className="text-sm text-muted flex items-start gap-1.5 sm:ml-[46px]">
+            <Lock size={13} className="shrink-0 mt-[3px]" /> {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
+          </p>
         </div>
         {practiceLeft === 0 && (
-          <p className="text-sm text-muted -mt-2">
+          <p className="flex items-start gap-2 text-sm text-ink bg-warning/10 border border-warning/30 rounded-input px-4 py-2.5">
+            <CalendarClock size={15} className="text-warning shrink-0 mt-0.5" />
             {tr("You've used this month's practice tests. More on {{date}}. You can still finish a set you've started.", { date: formatShortDate(quota!.resetsOn) })}
           </p>
         )}
@@ -1703,8 +1714,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     return (
       <div className="w-full flex flex-col gap-6">
         {phone && <PhoneBlockNotice what="mock" />}
-        <KeepGoingCard />
         <MockExamList
+          afterHero={<KeepGoingCard />}
           phone={phone}
           families={families}
           quota={quota}
@@ -1759,19 +1770,31 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       <SkillLevelsPanel />
 
       {quota && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted -mt-2">
-          <span>
-            {quota.practicePerMonth === null
-              ? tr("Practice tests this month: {{used}} (no limit)", { used: quota.practiceUsed })
-              : tr("Practice tests this month: {{used}} of {{limit}}", { used: Math.min(quota.practiceUsed, quota.practicePerMonth), limit: quota.practicePerMonth })}
-          </span>
-          <span>
-            {quota.mocksPerMonth === null
-              ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
-              : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <QuotaChip
+            icon={ClipboardCheck}
+            used={quota.practiceUsed}
+            limit={quota.practicePerMonth}
+            label={
+              quota.practicePerMonth === null
+                ? tr("Practice tests this month: {{used}} (no limit)", { used: quota.practiceUsed })
+                : tr("Practice tests this month: {{used}} of {{limit}}", { used: Math.min(quota.practiceUsed, quota.practicePerMonth), limit: quota.practicePerMonth })
+            }
+          />
+          <QuotaChip
+            icon={Timer}
+            used={quota.mocksUsed}
+            limit={quota.mocksPerMonth}
+            label={
+              quota.mocksPerMonth === null
+                ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
+                : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
+            }
+          />
           {(quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (
-            <span className="text-xs">{tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}</span>
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted px-2">
+              <CalendarClock size={13} /> {tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}
+            </span>
           )}
         </div>
       )}
@@ -1885,5 +1908,22 @@ function ProgramCard({ mine, testTypes, onOpen }: { mine: MyProgram; testTypes: 
         </Button>
       )}
     </div>
+  );
+}
+
+// One monthly allowance as a chip: icon, the count, and a thin bar when it has a limit.
+function QuotaChip({ icon: Icon, used, limit, label }: { icon: typeof Timer; used: number; limit: number | null; label: string }) {
+  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const out = limit !== null && used >= limit;
+  return (
+    <span className="inline-flex items-center gap-2.5 rounded-pill border border-rule bg-surface px-3.5 py-1.5 text-sm text-ink shadow-sm">
+      <Icon size={15} className={out ? "text-warning shrink-0" : "text-navy-deep shrink-0"} />
+      <span>{label}</span>
+      {limit !== null && (
+        <span className="hidden sm:block h-1.5 w-14 rounded-pill bg-rule overflow-hidden" aria-hidden="true">
+          <span className={`block h-full rounded-pill ${out ? "bg-warning" : "bg-navy"}`} style={{ width: `${pct}%` }} />
+        </span>
+      )}
+    </span>
   );
 }
