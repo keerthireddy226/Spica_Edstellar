@@ -9,13 +9,17 @@ const POINTS_PER_SET = 18;
 // "Your group this week": the learner's percentile in their batch on this
 // week's progress points, a top 5, and how to move up. Only when their
 // organization turned the board on for the batch.
-export function GroupBoardCard() {
-  const [b, setB] = useState<GroupBoard | null>(null);
+// board: passed in by a page that already fetched it (to lay itself out);
+// otherwise the card fetches it.
+export function GroupBoardCard({ board }: { board?: GroupBoard | null } = {}) {
+  const [fetched, setB] = useState<GroupBoard | null>(null);
   useEffect(() => {
+    if (board !== undefined) return;
     getGroupBoard()
       .then(setB)
       .catch(() => setB(null));
-  }, []);
+  }, [board]);
+  const b = board !== undefined ? board : fetched;
   if (!b?.enabled) return null;
 
   // The top 5, plus the learner's own row when they're below it.

@@ -221,7 +221,8 @@ export function Roadmap() {
 
       <Checkpoints j={journeyData} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+      {/* Without a group board (individual learners), the skills take the full width. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start lg:[&>*:only-child]:col-span-2">
         <SkillProgress j={journeyData} />
         <GroupBoardCard />
       </div>

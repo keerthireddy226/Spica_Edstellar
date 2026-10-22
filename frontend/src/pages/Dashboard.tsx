@@ -51,6 +51,7 @@ import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 
 import { tr } from "@/i18n/tr";
+import { getGroupBoard, type GroupBoard } from "@/api/me";
 import { CEFR_MEANING, levelsToGo } from "@/lib/cefrMeaning";
 import { trServer } from "@/i18n/serverText";
 const SKILL_ICONS: Record<SkillTag, typeof Headphones> = {
@@ -67,13 +68,14 @@ const MODULE_STATUS_KEY: Record<ModuleStatus, string> = {
 };
 
 // Four tinted skill tiles, each in its own skill color with a progress bar.
-function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
+// wide: a full-width row of four; otherwise two by two.
+function SkillProgressGrid({ modules, wide = false }: { modules: DashboardModule[]; wide?: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const modulesOn = useModulesEnabled();
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className={`grid grid-cols-2 gap-3 ${wide ? "lg:grid-cols-4" : ""}`}>
       {modules.map((m) => {
         const Icon = SKILL_ICONS[m.skill];
         const color = SKILL_COLOR[m.skill];
@@ -181,7 +183,7 @@ function EnglishLevelCard({
   const toGo = level.goal ? levelsToGo(cefr, level.goal) : null;
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-5">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2 shrink-0">
           <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center">
             <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
@@ -197,7 +199,7 @@ function EnglishLevelCard({
             </>
           )}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[220px]">
           <p className="font-display font-bold text-lg text-ink">{tr("Your English level: {{level}}", { level: cefr })}</p>
           <p className="text-sm text-muted">{CEFR_MEANING[cefr]?.() ?? ""}</p>
           <p className="text-xs text-muted mt-1">
@@ -389,6 +391,13 @@ function LearnerDashboard() {
       .then(setJourney)
       .catch(() => setJourney(null));
   }, []);
+  // The group board, when the learner's batch has one: it decides the layout.
+  const [board, setBoard] = useState<GroupBoard | null>(null);
+  useEffect(() => {
+    getGroupBoard()
+      .then(setBoard)
+      .catch(() => setBoard(null));
+  }, []);
   const [notReady, setNotReady] = useState<{ scheduledFor: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -441,6 +450,20 @@ function LearnerDashboard() {
   const showStartNudge = stats.sessions === 0 || remainingToday > 0;
 
   const doneToday = todaysTasks.filter((task) => task.done).length;
+  const hasGroup = !!board?.enabled;
+  const tasksCard = (
+          <LearnerCard
+          title={t(remainingToday === 0 ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
+          icon={CalendarCheck}
+          color="var(--color-accent)"
+          action={
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
+              {tr("{{doneToday}}/{{length}} done", { doneToday: doneToday, length: todaysTasks.length })}</span>
+          }
+        >
+            <TodaysTasksList tasks={todaysTasks} />
+          </LearnerCard>
+  );
   const unlocked = badges.filter((b) => b.unlocked).length;
 
   return (
@@ -479,32 +502,27 @@ function LearnerDashboard() {
 
       <KeepGoingCard />
 
-      {/* Main column: what to do and where you stand; side column: the final
-          assessment, the group and a nudge. */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="xl:col-span-2 flex flex-col gap-6 min-w-0">
-          {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
+      {/* What to do and where you stand, then the final assessment, the group
+          (or today's tasks) and a nudge: two balanced columns, so whichever
+          cards a learner has, neither side ends long before the other. */}
+      <div className="xl:columns-2 gap-6 [&>*]:break-inside-avoid [&>*]:mb-6">
+        {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
+        <NextStepCard />
+        {data.englishLevel?.cefr ? (
+          <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} journey={journey} />
+        ) : (
+          journey && <JourneySummary j={journey} />
+        )}
+        <FinalAssessmentCard compact />
+        {hasGroup ? <GroupBoardCard board={board} /> : tasksCard}
+        <MotivationalBar />
+      </div>
 
-          <NextStepCard />
-
-          {data.englishLevel?.cefr ? (
-            <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} journey={journey} />
-          ) : (
-            journey && <JourneySummary j={journey} />
-          )}
-
-          <LearnerCard
-          title={t(remainingToday === 0 ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
-          icon={CalendarCheck}
-          color="var(--color-accent)"
-          action={
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
-              {tr("{{doneToday}}/{{length}} done", { doneToday: doneToday, length: todaysTasks.length })}</span>
-          }
-        >
-            <TodaysTasksList tasks={todaysTasks} />
-          </LearnerCard>
-
+      {/* Below both columns: today's tasks beside the Practice Modules progress
+          (with a group board), or the progress alone (the tasks sit in the side
+          column instead), so no column runs long beside an empty one. */}
+      <div className={`grid grid-cols-1 gap-6 items-stretch ${hasGroup ? "lg:grid-cols-2" : ""}`}>
+        {hasGroup && tasksCard}
           <LearnerCard
             title={t("dashboardHome.overallProgressTitle")}
             icon={Target}
@@ -515,15 +533,8 @@ function LearnerDashboard() {
             }
           >
             <p className="text-xs text-muted -mt-1">{tr("Practice Modules: sets done at your current level in each skill.")}</p>
-            <SkillProgressGrid modules={modules} />
+            <SkillProgressGrid modules={modules} wide={!hasGroup} />
           </LearnerCard>
-        </div>
-
-        <aside className="flex flex-col gap-6 min-w-0">
-          <FinalAssessmentCard compact />
-          <GroupBoardCard />
-          <MotivationalBar />
-        </aside>
       </div>
 
       <QuickLinks />
