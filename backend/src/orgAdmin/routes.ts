@@ -389,14 +389,14 @@ orgAdminRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, 
     if (batch.rowCount === 0) return res.status(404).json({ error: "batch_not_found" });
     const b = batch.rows[0];
 
+    // Sessions here are completed sessions, counted the same way as the
+    // Manager's batch detail.
     const learners = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.deleted_at, u.created_at, u.participant_id, ${EMPLOYEE_SELECT},
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
-         count(s.id) FILTER (WHERE ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")})::int AS session_count
+         (SELECT count(*)::int FROM sessions s WHERE s.user_id = u.id AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")}) AS session_count
        FROM users u
-       LEFT JOIN sessions s ON s.user_id = u.id
        WHERE u.batch_id = $1 AND u.role = 'learner'
-       GROUP BY u.id
        ORDER BY u.created_at DESC`,
       [req.params.id],
     );

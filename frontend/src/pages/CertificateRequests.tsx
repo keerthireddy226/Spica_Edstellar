@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Award, ExternalLink, FileText } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
@@ -53,17 +53,34 @@ function PrintsToPost() {
   );
 }
 
-// The organization's final assessment certificates, newest first.
+// The list sends these flags so the page counts what the dashboard's Certified tile counts.
+type OrgCertificate = CertificateSummary & { expired?: boolean; learnerRemoved?: boolean };
+
+// The organization's final assessment certificates, newest first. By default
+// each learner's latest valid one (the dashboard's Certified count); expired,
+// earlier and removed learners' ones on request, labelled.
 function OrgCertificates() {
-  const [certs, setCerts] = useState<CertificateSummary[] | null>(null);
+  const [certs, setCerts] = useState<OrgCertificate[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const load = () => {
     setFailed(false);
     orgCertificates()
-      .then((r) => setCerts(r.certificates.filter((c) => c.kind === "result" && !c.revokedAt)))
+      .then((r) => setCerts((r.certificates as OrgCertificate[]).filter((c) => c.kind === "result" && !c.revokedAt)))
       .catch(() => setFailed(true));
   };
   useEffect(load, []);
+  // Newest first, so the first valid one per learner is their current one.
+  const current = useMemo(() => {
+    const seen = new Set<string>();
+    const ids = new Set<string>();
+    for (const c of certs ?? []) {
+      if (c.expired || c.learnerRemoved || !c.userId || seen.has(c.userId)) continue;
+      seen.add(c.userId);
+      ids.add(c.id);
+    }
+    return ids;
+  }, [certs]);
   if (failed) return <OrgLoadError text={tr("Couldn't load the certificates.")} onRetry={load} />;
   if (!certs) return <OrgLoading />;
   if (certs.length === 0) {
@@ -85,12 +102,23 @@ function OrgCertificates() {
       />
     );
   }
+  const shown = showAll ? certs : certs.filter((c) => current.has(c.id));
+  const others = certs.length - current.size;
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm flex flex-col">
-      <h2 className="font-display font-semibold text-lg text-ink px-5 pt-5 pb-3 flex items-center gap-2">
-        {tr("Final assessment certificates")} <span className="text-sm font-sans font-normal text-muted">({certs.length})</span>
-      </h2>
-      {(
+      <div className="px-5 pt-5 pb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display font-semibold text-lg text-ink flex items-center gap-2">
+          {tr("Final assessment certificates")} <span className="text-sm font-sans font-normal text-muted">({current.size})</span>
+        </h2>
+        {others > 0 && (
+          <button onClick={() => setShowAll((v) => !v)} aria-pressed={showAll} className="text-sm font-semibold text-navy hover:underline cursor-pointer">
+            {showAll ? tr("Show valid certificates only") : tr("Show expired and earlier certificates ({{n}})", { n: others })}
+          </button>
+        )}
+      </div>
+      {shown.length === 0 ? (
+        <p className="px-5 pb-5 text-sm text-muted">{tr("No learner holds a valid certificate right now.")}</p>
+      ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-[680px]">
             <thead>
@@ -104,26 +132,38 @@ function OrgCertificates() {
               </tr>
             </thead>
             <tbody>
-              {certs.map((c) => (
-                <tr key={c.id} className="border-t border-rule first:border-t-0 hover:bg-paper-warm/40">
-                  <td className="py-2.5 px-5">
-                    <span className="font-semibold text-ink">{c.learnerName}</span>
-                    {c.participantId && <span className="block text-xs text-muted font-mono">{c.participantId}</span>}
-                  </td>
-                  <td className="py-2 pr-3 text-ink">{c.testName ?? "—"}</td>
-                  <td className="py-2 pr-3 text-ink whitespace-nowrap">
-                    {c.cefrLevel ?? "—"}
-                    {c.spicaScore != null && <span className="text-muted"> · {c.spicaScore}</span>}
-                  </td>
-                  <td className="py-2 pr-3 text-muted whitespace-nowrap">{formatDay(c.issuedAt.slice(0, 10))}</td>
-                  <td className="py-2 pr-3 text-muted whitespace-nowrap">{c.validUntil ? formatDay(c.validUntil) : tr("Valid for life")}</td>
-                  <td className="py-2.5 pr-5 text-right">
-                    <a href={`/certificate/${c.code}`} target="_blank" rel="noopener" className="text-sm font-semibold text-navy-deep hover:underline">
-                      {tr("Open")}
-                    </a>
-                  </td>
-                </tr>
-              ))}
+              {shown.map((c) => {
+                const label = current.has(c.id)
+                  ? null
+                  : c.learnerRemoved
+                    ? tr("Learner removed")
+                    : c.expired
+                      ? tr("Expired")
+                      : tr("Replaced by a newer one");
+                return (
+                  <tr key={c.id} className={`border-t border-rule first:border-t-0 hover:bg-paper-warm/40 ${label ? "text-muted" : ""}`}>
+                    <td className="py-2.5 px-5">
+                      <span className={`font-semibold ${label ? "text-muted" : "text-ink"}`}>{c.learnerName}</span>
+                      {c.participantId && <span className="block text-xs text-muted font-mono">{c.participantId}</span>}
+                    </td>
+                    <td className={`py-2 pr-3 ${label ? "" : "text-ink"}`}>{c.testName ?? "—"}</td>
+                    <td className={`py-2 pr-3 whitespace-nowrap ${label ? "" : "text-ink"}`}>
+                      {c.cefrLevel ?? "—"}
+                      {c.spicaScore != null && <span className="text-muted"> · {c.spicaScore}</span>}
+                    </td>
+                    <td className="py-2 pr-3 text-muted whitespace-nowrap">{formatDay(c.issuedAt.slice(0, 10))}</td>
+                    <td className="py-2 pr-3 text-muted whitespace-nowrap">
+                      {c.validUntil ? formatDay(c.validUntil) : tr("Valid for life")}
+                      {label && <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-pill border border-current whitespace-nowrap">{label}</span>}
+                    </td>
+                    <td className="py-2.5 pr-5 text-right">
+                      <a href={`/certificate/${c.code}`} target="_blank" rel="noopener" className="text-sm font-semibold text-navy-deep hover:underline">
+                        {tr("Open")}
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

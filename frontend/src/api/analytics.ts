@@ -117,7 +117,7 @@ export interface BatchReportLearner {
   certified: CertifiedSummary | null;
   start: LevelSnapshot | null;
   current: LevelSnapshot | null;
-  levelSource: "mock" | "level_test" | null;
+  levelSource: "final_assessment" | "level_test" | "mock" | "placement" | null;
   practiceTests: number;
   mockTests: number;
   minutes: number;
@@ -167,7 +167,6 @@ export interface BatchReport {
     practiceMinutes: number;
     practiceTests: number;
     mockTests: number;
-    certificates: number;
     certified: number;
     scoreNow: number | null;
     scoreStart: number | null;
@@ -183,7 +182,7 @@ export interface BatchReport {
     accessEnding: { id: string; name: string; endsAt: string }[];
     missedMock: { id: string; name: string; count: number; last: string | null }[];
     quiet: { id: string; name: string; days: number }[];
-    noMock: { id: string; name: string; level: string | null }[];
+    noMock: { id: string; name: string; level: string | null; source: BatchReportLearner["levelSource"] }[];
     dropped: { id: string; name: string; from: number; to: number }[];
     accessEndingDays: number;
     quietDays: number;

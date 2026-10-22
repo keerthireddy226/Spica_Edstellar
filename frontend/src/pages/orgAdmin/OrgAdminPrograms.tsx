@@ -292,6 +292,48 @@ const STATUS: Record<ProgramMember["status"], { label: () => string; cls: string
   too_early: { label: () => tr("Too early to tell"), cls: "bg-paper-warm text-muted" },
 };
 
+// Why a member has their status: a code and its numbers from the server.
+type Member = ProgramMember;
+type LevelSource = NonNullable<ProgramMember["levelSource"]>;
+
+function statusReason(m: Member): string {
+  const w = m.statusWhy;
+  switch (w?.code) {
+    case "at_target":
+      return tr("Latest level meets the target");
+    case "trend":
+      return tr("Trend reaches {{level}} by the goal date", { level: w.level });
+    case "missed":
+      return tr("{{n}} planned tests missed", { n: w.n });
+    case "inactive":
+      return tr("No activity for {{n}} days", { n: w.days });
+    case "time_short":
+      return tr("{{gap}} levels to go with {{days}} days left", { gap: w.gap, days: w.days });
+    case "too_early":
+      return tr("Too early to tell: fewer than 2 mock tests");
+    default:
+      return m.statusReason;
+  }
+}
+
+const LEVEL_SOURCE: Partial<Record<LevelSource, () => string>> = {
+  final_assessment: () => tr("final assessment"),
+  level_test: () => tr("level test"),
+  placement: () => tr("placement"),
+};
+
+// A test's integrity status and risk, as on the Integrity reviews page.
+const INTEGRITY_TEXT: Record<string, () => string> = {
+  flagged: () => tr("Needs review"),
+  violation: () => tr("Violation"),
+  cleared: () => tr("Cleared"),
+  clear: () => tr("No issues"),
+  in_progress: () => tr("In progress"),
+};
+const RISK_TEXT: Record<string, () => string> = { low: () => tr("Low risk"), medium: () => tr("Medium risk"), high: () => tr("High risk") };
+const integrityText = (status: string) => INTEGRITY_TEXT[status]?.() ?? status;
+const riskText = (risk: string) => RISK_TEXT[risk]?.() ?? risk;
+
 const ALERT_LABEL: Record<ProgramAlert["kind"], () => string> = {
   at_risk: () => tr("At risk"),
   inactive: () => tr("Inactive for 14 days"),
@@ -305,8 +347,8 @@ function MemberReportModal({ programId, sessionId, viewer, onClose }: { programI
     <ModalShell title={tr("Mock test report")} onClose={onClose}>
       {integrity?.status && (
         <p className="text-sm text-muted mb-3">
-          {tr("Test integrity: {{status}}", { status: integrity.status })}
-          {integrity.risk ? ` · ${tr("risk {{risk}}", { risk: integrity.risk })}` : ""}
+          {tr("Test integrity: {{status}}", { status: integrityText(integrity.status) })}
+          {integrity.risk ? ` · ${riskText(integrity.risk)}` : ""}
         </p>
       )}
       <FeedbackReportView
@@ -322,7 +364,8 @@ function MemberReportModal({ programId, sessionId, viewer, onClose }: { programI
   );
 }
 
-function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; onOpenReport: (sessionId: string) => void }) {
+// onOpenReport is left out when the viewer may not open full reports.
+function MemberRowView({ m, p, onOpenReport }: { m: Member; p: Program; onOpenReport?: (sessionId: string) => void }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const st = STATUS[m.status];
@@ -334,13 +377,13 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
           <div className="text-xs text-muted">{m.email}</div>
         </td>
         <td className="py-2 pr-3">
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill whitespace-nowrap ${st.cls}`} title={m.statusReason}>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill whitespace-nowrap ${st.cls}`} title={statusReason(m)}>
             {st.label()}
           </span>
         </td>
         <td className="py-2 pr-3 font-mono">
           {m.latestLevel ?? "—"}
-          {m.levelSource === "placement" && <span className="text-[10px] text-muted font-sans ml-1">{tr("placement")}</span>}
+          {m.levelSource && LEVEL_SOURCE[m.levelSource] && <span className="text-[10px] text-muted font-sans ml-1">{LEVEL_SOURCE[m.levelSource]!()}</span>}
         </td>
         <td className="py-2 pr-3 text-xs font-mono">{m.mocks.length ? m.mocks.map((x) => x.cefrLevel ?? "?").join(" → ") : "—"}</td>
         <td className="py-2 pr-3 text-xs">{m.projected ?? "—"}</td>
@@ -376,7 +419,7 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
                     </span>
                   ))}
               </div>
-              <p className="text-xs text-muted">{m.statusReason}</p>
+              <p className="text-xs text-muted">{statusReason(m)}</p>
               {m.next && (
                 <p className="text-xs text-muted">
                   {tr("Next:")} {m.next.kind === "mock" ? tr("Mock test") : tr("Practice test")} · {formatShortDate(m.next.dueOn)}
@@ -389,15 +432,17 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
                       <span className="w-24">{formatShortDate(x.date)}</span>
                       <span className="font-mono w-10">{x.cefrLevel ?? "—"}</span>
                       <span className="w-12">{x.percent !== null ? `${x.percent}%` : ""}</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenReport(x.sessionId);
-                        }}
-                        className="font-semibold text-navy-deep hover:underline cursor-pointer"
-                      >
-                        {tr("Open the report")}
-                      </button>
+                      {onOpenReport && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenReport(x.sessionId);
+                          }}
+                          className="font-semibold text-navy-deep hover:underline cursor-pointer"
+                        >
+                          {tr("Open the report")}
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -406,8 +451,8 @@ function MemberRowView({ m, p, onOpenReport }: { m: ProgramMember; p: Program; o
               )}
               {m.integrity?.status && (
                 <p className="text-xs text-muted">
-                  {tr("Latest mock's integrity: {{status}}", { status: m.integrity.status })}
-                  {m.integrity.risk ? ` (${m.integrity.risk})` : ""}
+                  {tr("Latest mock's integrity: {{status}}", { status: integrityText(m.integrity.status) })}
+                  {m.integrity.risk ? ` (${riskText(m.integrity.risk)})` : ""}
                 </p>
               )}
             </div>
@@ -434,7 +479,8 @@ function ProgramDetailModal({
   onChanged: () => void;
 }) {
   const { t } = useTranslation();
-  const [data, setData] = useState<{ program: Program; members: ProgramMember[]; alerts: ProgramAlert[] } | null>(null);
+  // canOpenReports: Managers open full reports only when the organization allows it.
+  const [data, setData] = useState<Awaited<ReturnType<typeof getProgramDetail>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [targetDate, setTargetDate] = useState("");
   const [targetLevel, setTargetLevel] = useState("");
@@ -587,7 +633,7 @@ function ProgramDetailModal({
               </thead>
               <tbody>
                 {shown.map((m) => (
-                  <MemberRowView key={m.userId} m={m} p={p!} onOpenReport={setReport} />
+                  <MemberRowView key={m.userId} m={m} p={p!} onOpenReport={data.canOpenReports === false ? undefined : setReport} />
                 ))}
               </tbody>
             </table>
@@ -602,7 +648,9 @@ function ProgramDetailModal({
             )}
           </div>
           <p className="text-xs text-muted">
-            {tr("Projected: the level the trend across a learner's mock tests reaches by the target date (from 2 mocks). Latest level comes from the latest mock, or the placement test before the first.")}
+            {tr(
+              "Projected: the level the trend across a learner's mock tests reaches by the target date (from 2 mocks). Latest level comes from the final assessment, else the latest passed level test, else the latest mock, else the placement test.",
+            )}
           </p>
         </div>
       )}

@@ -90,7 +90,7 @@ async function batchScope(req: AuthedRequest, res: Response) {
 }
 
 // Org Admins open learners' full score reports; Managers when the organization allows it.
-async function canOpenReports(scope: { role: string; tenantId: string }): Promise<boolean> {
+export async function canOpenReports(scope: { role: string; tenantId: string }): Promise<boolean> {
   if (scope.role !== "manager") return true;
   const r = await pool.query(`SELECT managers_see_reports FROM tenants WHERE id = $1`, [scope.tenantId]);
   return !!r.rows[0]?.managers_see_reports;

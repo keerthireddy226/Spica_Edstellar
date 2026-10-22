@@ -610,14 +610,16 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
         [batchId],
       )
     ).rows[0];
+    // Completed sessions, counted the same way as the Org Admin's batch detail.
     const learners = await pool.query(
       `SELECT u.id, u.email, u.first_name, u.last_name, u.participant_id, u.deleted_at, ${EMPLOYEE_SELECT},
          EXISTS (SELECT 1 FROM login_events le WHERE le.user_id = u.id) AS has_logged_in,
-         (SELECT coalesce(sum(d.sessions), 0)::int FROM learner_activity_daily d WHERE d.user_id = u.id) AS sessions
+         (SELECT count(*)::int FROM sessions s WHERE s.user_id = u.id AND ${GENUINELY_COMPLETED.replace(/sessions\./g, "s.")}) AS session_count
        FROM users u WHERE u.batch_id = $1 AND u.role = 'learner' AND u.erased_at IS NULL ORDER BY u.created_at`,
       [batchId],
     );
     const access = await learnerAccessMap(learners.rows.map((l) => l.id));
+    const certified = await certifiedMap(learners.rows.map((l) => l.id));
     res.json({
       batch: {
         id: b.id,
@@ -646,8 +648,10 @@ managerRouter.get("/batches/:id", requireAuth, async (req: AuthedRequest, res, n
         participantId: l.participant_id,
         active: !l.deleted_at,
         hasLoggedIn: l.has_logged_in,
-        sessionCount: l.sessions,
+        sessionCount: l.session_count,
         license: access.get(l.id),
+        // Their latest valid final assessment certificate.
+        certified: certified.get(l.id) ?? null,
         ...employeeJson(l),
       })),
     });

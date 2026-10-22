@@ -6,6 +6,8 @@ import { CEFR_LEVELS, type CefrLevel } from "../placement/cefr.js";
 export interface ScheduleInput {
   // First day that can hold an item (today, or the program's start).
   from: string;
+  // The plan's end: the final assessment's day when the program ends with
+  // one (nothing is planned on or after it), else the target date.
   targetDate: string;
   // Target minus current level, in CEFR steps; null when the level isn't known yet.
   gap: number | null;
@@ -80,7 +82,7 @@ export function buildSchedule(input: ScheduleInput): PlannedItem[] {
   const { practiceDays, mockDays } = intervals(input.gap);
 
   // Mocks: a first one within 3 days when the level isn't known (a
-  // baseline), then every mockDays, and a final one 3 days before the target.
+  // baseline), then every mockDays, and a final one 3 days before the end.
   const mocks: (PlannedItem & { priority?: boolean })[] = [];
   let first = start + mockDays * DAY;
   if (input.gap === null) {

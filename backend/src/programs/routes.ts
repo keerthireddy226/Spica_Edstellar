@@ -9,6 +9,7 @@ import { pool } from "../db.js";
 import { ProgramError, createProgram, getProgram, listPrograms, programEditSchema, programJson, programSchema, updateProgram } from "./service.js";
 import { monitoringCsv, programMonitoring } from "./monitoring.js";
 import { enqueue } from "../queue/queue.js";
+import { canOpenReports } from "../analytics/routes.js";
 
 // Org Admin: programs for the organization's batches. Mounted under /api/org-admin.
 export const programsAdminRouter = Router();
@@ -94,6 +95,8 @@ programViewRouter.get("/programs/:id", requireAuth, async (req: AuthedRequest, r
     );
     res.json({
       program: programJson(p),
+      // Whether the viewer may open members' full reports (Managers only when the organization allows it).
+      canOpenReports: await canOpenReports({ role: req.user!.role, tenantId: p.tenant_id }),
       members: await programMonitoring(p),
       alerts: alerts.rows.map((a) => ({ userId: a.user_id, name: a.name, kind: a.kind, detail: a.detail, createdAt: a.created_at })),
     });
@@ -120,6 +123,8 @@ programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (re
   try {
     const p = await viewableProgram(req, res);
     if (!p) return;
+    // Org Admins open full reports; Managers only when the organization allows it, as in the Batch report.
+    if (!(await canOpenReports({ role: req.user!.role, tenantId: p.tenant_id }))) return res.status(403).json({ error: "reports_not_shared" });
     if (!z.string().uuid().safeParse(req.params.sessionId).success) return res.status(404).json({ error: "session_not_found" });
     const s = (
       await pool.query(

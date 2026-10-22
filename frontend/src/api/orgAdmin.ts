@@ -94,6 +94,8 @@ export interface OrgBatchDetail extends BatchExtras {
 
 export interface OrgBatchLearner extends LearnerDetails {
   hasLoggedIn?: boolean;
+  // Their latest valid final assessment certificate, wherever it was issued.
+  certified?: CertifiedSummary | null;
   id: string;
   license?: LearnerAccess;
   participantId: string | null;
@@ -385,8 +387,6 @@ export interface OrgSettings {
   modulesEnabled: boolean;
   // Managers may open each learner's full score report from the Batch report.
   managersSeeReports: boolean;
-  // Course certificates issued as soon as a learner is eligible (else approved by an Org Admin).
-  certificatesAuto: boolean;
   allowedTestProducts: string[] | null;
   mfaRequired: boolean;
   ipAllowlist: string[] | null;
@@ -452,7 +452,16 @@ export interface ProgramMember {
   email: string;
   latestLevel: string | null;
   skillLevels: Partial<Record<"listening" | "speaking" | "reading" | "writing", string>>;
-  levelSource: "mock" | "placement" | null;
+  // Where the latest level comes from (backend/src/learner/currentLevel.ts).
+  levelSource: "final_assessment" | "level_test" | "mock" | "placement" | null;
+  // Why the status is what it is, as a code and its numbers (worded on the page).
+  statusWhy?:
+    | { code: "at_target" }
+    | { code: "trend"; level: string }
+    | { code: "missed"; n: number }
+    | { code: "inactive"; days: number }
+    | { code: "time_short"; gap: number; days: number }
+    | { code: "too_early" };
   // CEFR steps still to go; null until the level is known.
   gap: number | null;
   status: MemberStatus;
@@ -491,7 +500,7 @@ export function createProgram(input: ProgramInput): Promise<Program> {
   return api("/org-admin/programs", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function getProgramDetail(id: string, viewer: ProgramViewer = "org-admin"): Promise<{ program: Program; members: ProgramMember[]; alerts: ProgramAlert[] }> {
+export function getProgramDetail(id: string, viewer: ProgramViewer = "org-admin"): Promise<{ program: Program; members: ProgramMember[]; alerts: ProgramAlert[]; canOpenReports?: boolean }> {
   return api(`/${viewer}/programs/${id}`);
 }
 

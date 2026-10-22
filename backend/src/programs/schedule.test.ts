@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSchedule, intervals, levelGap, programGap } from "./schedule.js";
 import { nextMonthStart } from "./quotas.js";
+import { finalDay, planEnd } from "./service.js";
 
 const count = (items: { kind: string }[], kind: string) => items.filter((i) => i.kind === kind).length;
 
@@ -87,5 +88,20 @@ describe("buildSchedule with license months", () => {
     // Counted by calendar month, the same plan could hold 2 in October and 2 in November.
     const byCalendar = buildSchedule({ from: "2026-10-20", targetDate: "2026-11-19", gap: 2, practicePerMonth: null, mocksPerMonth: 2 });
     expect(byCalendar.filter((i) => i.kind === "mock").length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("plan end", () => {
+  const p = { target_date: "2027-01-31", final_assessment: true, final_assessment_days: 7 };
+  it("ends the plan at the final assessment when there is one", () => {
+    expect(finalDay(p)).toBe("2027-01-24");
+    expect(planEnd(p)).toBe("2027-01-24");
+    expect(finalDay({ ...p, final_assessment: false })).toBeNull();
+    expect(planEnd({ ...p, final_assessment: false })).toBe("2027-01-31");
+  });
+  it("plans nothing on or after the final assessment, with the last mock before it", () => {
+    const s = buildSchedule({ from: "2026-11-01", targetDate: planEnd(p), gap: 1, practicePerMonth: null, mocksPerMonth: null });
+    expect(s.every((i) => i.dueOn < "2027-01-24")).toBe(true);
+    expect(s.filter((i) => i.kind === "mock").pop()?.dueOn).toBe("2027-01-21");
   });
 });

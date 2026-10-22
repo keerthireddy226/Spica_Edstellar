@@ -3,14 +3,23 @@
 // at a chosen level, or preparation for one test for a number of 30-day
 // periods. Full access stays on licence-months. A real test or level test
 // that expires unused gives its credits back.
+import type { PoolClient } from "pg";
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { notify } from "../notifications/service.js";
-import { addCredits, creditBalance } from "../recruitment/service.js";
+import { addCredits } from "../recruitment/service.js";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 // Kinds that are one test: unused ones can be withdrawn or expire for a refund.
 const TEST_KINDS = ["assessment", "level"];
+
+// The organization's credit lock, held until the transaction ends. Every
+// spend of the balance (tests given here, recruitment invitations) takes it
+// before checking the balance, so concurrent spends queue up instead of
+// both passing the check.
+export async function lockCredits(client: PoolClient, tenantId: string): Promise<void> {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`credits:${tenantId}`]);
+}
 
 export class OrgTestError extends Error {
   constructor(
@@ -59,36 +68,54 @@ export async function giveTests(args: { tenantId: string; actorId: string; userI
   ).rows;
   if (!learners.length) throw new OrgTestError("no_learners");
   const each = p.credits * periods;
-  const balance = await creditBalance(args.tenantId);
-  if (each * learners.length > balance)
-    throw new OrgTestError("not_enough_credits", 402, {
-      needed: each * learners.length,
-      balance,
-    });
   const org = (await pool.query(`SELECT name FROM tenants WHERE id = $1`, [args.tenantId])).rows[0]?.name ?? "";
   const program = args.programId ? (await pool.query(`SELECT name FROM programs WHERE id = $1`, [args.programId])).rows[0]?.name : null;
   const days = p.kind === "prep" || p.kind === "pack" ? periods * 30 : p.duration_days;
-  for (const l of learners) {
-    const e = await pool.query(
-      `INSERT INTO entitlements (user_id, product_id, test_type_id, level, attempts_total, ends_at, source, tenant_id, granted_by, credits_spent, program_id)
-       VALUES ($1, $2, $3, $4, $5, now() + make_interval(days => $6), 'credit', $7, $8, $9, $10) RETURNING id`,
-      [l.id, p.id, p.test_type_id, level, p.attempts, days, args.tenantId, args.actorId, each, args.programId ?? null],
-    );
-    const name = p.kind === "level" ? `Level ${level} test` : p.name;
-    await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, actor_id, entitlement_id, note) VALUES ($1, $2, $3, $4, $5, $6)`, [
-      args.tenantId,
-      -each,
-      TEST_KINDS.includes(p.kind) ? "assessment" : "access",
-      args.actorId,
-      e.rows[0].id,
-      `${args.programId ? "Final assessment: " : ""}${name} for ${l.name}`,
-    ]);
-    if (p.kind === "pack" && level) {
-      await pool.query(`INSERT INTO participant_profiles (user_id, goal_level) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET goal_level = EXCLUDED.goal_level, updated_at = now()`, [
-        l.id,
-        level,
+  // The balance check and the debits happen under the organization's credit
+  // lock in one transaction, so two gives (or a give and a recruitment
+  // invitation) at the same moment can't both spend the same credits.
+  const client = await pool.connect();
+  let balance: number;
+  try {
+    await client.query("BEGIN");
+    await lockCredits(client, args.tenantId);
+    balance = (await client.query(`SELECT coalesce(sum(delta), 0)::int AS n FROM recruitment_credit_events WHERE tenant_id = $1`, [args.tenantId])).rows[0].n;
+    if (each * learners.length > balance)
+      throw new OrgTestError("not_enough_credits", 402, {
+        needed: each * learners.length,
+        balance,
+      });
+    for (const l of learners) {
+      const e = await client.query(
+        `INSERT INTO entitlements (user_id, product_id, test_type_id, level, attempts_total, ends_at, source, tenant_id, granted_by, credits_spent, program_id)
+         VALUES ($1, $2, $3, $4, $5, now() + make_interval(days => $6), 'credit', $7, $8, $9, $10) RETURNING id`,
+        [l.id, p.id, p.test_type_id, level, p.attempts, days, args.tenantId, args.actorId, each, args.programId ?? null],
+      );
+      const name = p.kind === "level" ? `Level ${level} test` : p.name;
+      await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, actor_id, entitlement_id, note) VALUES ($1, $2, $3, $4, $5, $6)`, [
+        args.tenantId,
+        -each,
+        TEST_KINDS.includes(p.kind) ? "assessment" : "access",
+        args.actorId,
+        e.rows[0].id,
+        `${args.programId ? "Final assessment: " : ""}${name} for ${l.name}`,
       ]);
+      if (p.kind === "pack" && level) {
+        await client.query(`INSERT INTO participant_profiles (user_id, goal_level) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET goal_level = EXCLUDED.goal_level, updated_at = now()`, [
+          l.id,
+          level,
+        ]);
+      }
     }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  // Told only once the tests are really theirs.
+  for (const l of learners) {
     accessCache.delete(l.id);
     await notify({
       userId: l.id,

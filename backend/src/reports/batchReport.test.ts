@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { periodRange, snapshot } from "./batchReport.js";
+import { fromReading, periodRange, snapshot } from "./batchReport.js";
 
 const now = new Date("2026-10-21T10:00:00Z");
 
@@ -41,5 +41,18 @@ describe("snapshot", () => {
     const s = snapshot({}, null, 50, "A2");
     expect(s.score).toBe(35);
     expect(s.level).toBe("A2");
+  });
+});
+
+describe("fromReading", () => {
+  const base = { at: "2026-10-01T00:00:00.000Z", skillPercents: null, overallPercent: null, score: null, skillScores: null, sessionId: null };
+  it("keeps a final assessment certificate's own scores", () => {
+    const s = fromReading({ ...base, source: "final_assessment", level: "B2", skills: { speaking: "B2" }, score: 61, skillScores: { speaking: { level: "B2", score: 61 } } });
+    expect(s).toEqual({ level: "B2", score: 61, skills: { speaking: { level: "B2", score: 61 } } });
+  });
+  it("scores other results from their levels, keeping the current level itself", () => {
+    const s = fromReading({ ...base, source: "mock", level: "B2", skills: { speaking: "B1", listening: "B1" }, skillPercents: { speaking: 50, listening: 50 } });
+    expect(s.score).toBe(47);
+    expect(s.level).toBe("B2");
   });
 });

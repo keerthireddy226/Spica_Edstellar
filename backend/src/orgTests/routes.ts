@@ -96,13 +96,16 @@ orgTestsRouter.post("/credits/request", requireAuth, async (req: AuthedRequest, 
     const t = (await pool.query(`SELECT name, managed_by, account_manager_id FROM tenants WHERE id = $1`, [tenantId])).rows[0];
     const staff = [t.account_manager_id, t.managed_by].filter(Boolean);
     if (!staff.length) staff.push(...(await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows.map((r) => r.id));
-    for (const id of new Set(staff)) {
+    // Super Admins and Admins have separate consoles, so each gets the
+    // Organizations page they can open.
+    const roles = await pool.query(`SELECT id, role FROM users WHERE id = ANY($1::uuid[])`, [[...new Set(staff)]]);
+    for (const r of roles.rows) {
       await notify({
-        userId: id,
+        userId: r.id,
         kind: "credit_request",
         title: `${t.name} asked for credits`,
         body: [`${b.quantity} credits for staff tests.`, b.note || null].filter(Boolean).join(" "),
-        link: "/admin/organizations",
+        link: r.role === "super_admin" ? "/superadmin/organizations" : "/admin/organizations",
         email: true,
         sentBy: req.user!.id,
       });

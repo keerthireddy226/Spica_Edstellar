@@ -11,6 +11,9 @@ import { giveTests } from "../orgTests/service.js";
 import { creditBalance } from "../recruitment/service.js";
 import { FINAL_PRODUCT } from "../assessment/service.js";
 import { accessCache } from "../licenses/accessCache.js";
+import { dateOnly } from "../lib/dateOnly.js";
+import { currentLevel } from "../learner/currentLevel.js";
+import type { Certified } from "../certificates/service.js";
 
 const cefr = z.enum(CEFR_LEVELS as [string, ...string[]]);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -102,22 +105,13 @@ export async function activeProgramOf(userId: string): Promise<ProgramRow | null
   return r.rows[0] ? normalizeRow(r.rows[0]) : null;
 }
 
-// A learner's latest estimated level for a test type: from their latest
-// finished mock of it (practice tests are often partly done), else their
+// A learner's current level for a program (learner/currentLevel.ts): their
+// final assessment, else a passed level test, else their latest finished mock
+// of the program's test (practice tests are often partly done), else their
 // placement test.
 export async function latestLevel(userId: string, testTypeId: string): Promise<{ overall: string | null; skills: Record<string, string> }> {
-  const s = (
-    await pool.query(
-      `SELECT s.result FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
-       WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NOT NULL
-         AND s.result->>'cefrLevel' IS NOT NULL AND coalesce(s.composition->>'testTypeId', e.test_type_id) = $2
-       ORDER BY s.completed_at DESC LIMIT 1`,
-      [userId, testTypeId],
-    )
-  ).rows[0];
-  if (s) return { overall: s.result.cefrLevel, skills: s.result.skillLevels ?? {} };
-  const p = (await pool.query(`SELECT cefr_level, skill_levels FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId])).rows[0];
-  return { overall: p?.cefr_level ?? null, skills: p?.skill_levels ?? {} };
+  const r = await currentLevel(userId, { testTypeId });
+  return { overall: r?.level ?? null, skills: r?.skills ?? {} };
 }
 
 export async function programMemberIds(p: Pick<ProgramRow, "batch_id">): Promise<string[]> {
@@ -128,15 +122,25 @@ export async function programMemberIds(p: Pick<ProgramRow, "batch_id">): Promise
 // Replans one member's open items from today: done and missed items stay as
 // they are; items still due are replaced by a fresh plan.
 export async function planMember(p: ProgramRow, userId: string): Promise<number> {
-  await pool.query(`DELETE FROM schedule_items WHERE program_id = $1 AND user_id = $2 AND status = 'due' AND due_on >= $3`, [p.id, userId, today()]);
+  // Open items from today, and any left after the final assessment (planned
+  // before it was turned on or moved earlier), are replaced.
+  await pool.query(`DELETE FROM schedule_items WHERE program_id = $1 AND user_id = $2 AND status = 'due' AND (due_on >= $3 OR ($4::date IS NOT NULL AND due_on >= $4))`, [
+    p.id,
+    userId,
+    today(),
+    finalDay(p),
+  ]);
   if (p.status !== "active") return 0;
   const quota = await learnerQuota(userId);
   const window = await quotaWindow(userId);
   const from = p.starts_on > today() ? p.starts_on : today();
-  // A learner whose own exam comes before the program's target date stops at it.
+  // The plan ends where the program does: at the final assessment when there
+  // is one (nothing is planned after it), else at the target date.
+  const end = planEnd(p);
+  // A learner whose own exam comes before that stops at it.
   const exam = (await pool.query(`SELECT exam_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0]?.exam_date;
   const examDay = exam ? dateStr(exam) : null;
-  const targetDate = examDay && examDay > from && examDay < p.target_date ? examDay : p.target_date;
+  const targetDate = examDay && examDay > from && examDay < end ? examDay : end;
   const items = buildSchedule({
     from,
     targetDate,
@@ -244,6 +248,56 @@ export function finalAssessmentOn(p: Pick<ProgramRow, "target_date" | "final_ass
   const d = new Date(`${p.target_date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() - p.final_assessment_days);
   return d.toISOString().slice(0, 10);
+}
+
+// The final assessment's day when the program ends with one, else null.
+export function finalDay(p: Pick<ProgramRow, "target_date" | "final_assessment" | "final_assessment_days">): string | null {
+  return p.final_assessment ? finalAssessmentOn(p) : null;
+}
+
+// The last day of a member's plan: the final assessment is the end of it.
+export function planEnd(p: Pick<ProgramRow, "target_date" | "final_assessment" | "final_assessment_days">): string {
+  return finalDay(p) ?? p.target_date;
+}
+
+// Items on or after the final assessment's day aren't part of the plan: one
+// left there (planned before the final assessment was turned on or moved
+// earlier) never counts as missed. SQL over schedule_items `si` joined to programs `p`.
+export const IN_PLAN = `NOT (p.final_assessment AND si.due_on >= p.target_date - p.final_assessment_days)`;
+
+// A member is certified for a program when they hold a valid final
+// assessment certificate (not revoked, not expired) for the program's own
+// test, whether the program gave the test or they had it another way. A
+// certificate from another test doesn't show the program's goal was met.
+// Both the program's card and its member list count this. SQL over
+// certificates `c`; the test type is the given expression.
+export function programCertificate(testType: string): string {
+  return `c.kind = 'result' AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until >= current_date) AND c.test_type_id = ${testType}
+    AND NOT EXISTS (SELECT 1 FROM sessions cs WHERE cs.id = c.session_id AND cs.composition->>'levelTest' IS NOT NULL)`;
+}
+
+// Each member's latest certificate for the program's test.
+export async function programCertifiedMap(userIds: string[], testTypeId: string): Promise<Map<string, Certified>> {
+  if (!userIds.length) return new Map();
+  const r = await pool.query(
+    `SELECT DISTINCT ON (c.user_id) c.user_id, c.code, c.cefr_level, c.spica_score, c.test_name, c.issued_at, c.valid_until FROM certificates c
+     WHERE c.user_id = ANY($1::uuid[]) AND ${programCertificate("$2")}
+     ORDER BY c.user_id, c.issued_at DESC`,
+    [userIds, testTypeId],
+  );
+  return new Map(
+    r.rows.map((x) => [
+      x.user_id as string,
+      {
+        code: x.code,
+        level: x.cefr_level ?? null,
+        score: x.spica_score ?? null,
+        testName: x.test_name ?? null,
+        issuedAt: new Date(x.issued_at).toISOString(),
+        validUntil: x.valid_until ? dateOnly(x.valid_until) : null,
+      },
+    ]),
+  );
 }
 
 // From its day until the target date, each member of an active program with a
@@ -354,6 +408,8 @@ export async function runProgramsDaily(): Promise<{
   planned: number;
   finalAssessments: number;
 }> {
+  // Open items after a program's final assessment are no longer in the plan.
+  await pool.query(`DELETE FROM schedule_items si USING programs p WHERE p.id = si.program_id AND si.status = 'due' AND NOT (${IN_PLAN})`);
   const missed = await pool.query(`UPDATE schedule_items SET status = 'missed' WHERE status = 'due' AND due_on < $1`, [today()]);
   const completed = await pool.query(`UPDATE programs SET status = 'completed', updated_at = now() WHERE status = 'active' AND target_date < $1`, [today()]);
   const newcomers = await pool.query(
@@ -389,11 +445,11 @@ export async function listPrograms(tenantId: string) {
   const r = await pool.query(
     `SELECT p.*, b.name AS batch_name,
        (SELECT count(*)::int FROM users u WHERE u.batch_id = p.batch_id AND u.role = 'learner' AND u.deleted_at IS NULL) AS members,
-       (SELECT json_build_object('done', count(*) FILTER (WHERE si.status = 'done'), 'missed', count(*) FILTER (WHERE si.status = 'missed'),
-          'due', count(*) FILTER (WHERE si.status = 'due')) FROM schedule_items si WHERE si.program_id = p.id) AS items,
+       (SELECT json_build_object('done', count(*) FILTER (WHERE si.status = 'done'), 'missed', count(*) FILTER (WHERE si.status = 'missed' AND ${IN_PLAN}),
+          'due', count(*) FILTER (WHERE si.status = 'due' AND ${IN_PLAN})) FROM schedule_items si WHERE si.program_id = p.id) AS items,
        (SELECT json_build_object('given', count(*) FILTER (WHERE e.revoked_at IS NULL), 'taken', count(*) FILTER (WHERE e.attempts_used > 0),
-          'certified', count(*) FILTER (WHERE EXISTS (SELECT 1 FROM certificates c JOIN sessions s ON s.id = c.session_id
-            WHERE s.entitlement_id = e.id AND c.kind = 'result' AND c.revoked_at IS NULL)))
+          'certified', (SELECT count(DISTINCT c.user_id) FROM certificates c JOIN users cu ON cu.id = c.user_id
+            WHERE cu.batch_id = p.batch_id AND cu.role = 'learner' AND cu.deleted_at IS NULL AND ${programCertificate("p.test_type_id")}))
         FROM entitlements e WHERE e.program_id = p.id) AS final
      FROM programs p JOIN batches b ON b.id = p.batch_id
      WHERE p.tenant_id = $1 AND p.status <> 'archived'
@@ -475,7 +531,8 @@ export async function learnerProgram(userId: string) {
     program: { ...programJson(p), testTypeName },
     latestLevel: level.overall,
     done: all.filter((i) => i.status === "done").length,
-    missed: all.filter((i) => i.status === "missed").length,
-    upcoming: all.filter((i) => i.status === "due").slice(0, 5),
+    // Nothing after the final assessment counts: it's the end of the plan.
+    missed: all.filter((i) => i.status === "missed" && (!finalDay(p) || i.dueOn < finalDay(p)!)).length,
+    upcoming: all.filter((i) => i.status === "due" && (!finalDay(p) || i.dueOn < finalDay(p)!)).slice(0, 5),
   };
 }

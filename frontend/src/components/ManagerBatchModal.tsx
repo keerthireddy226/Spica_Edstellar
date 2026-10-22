@@ -22,6 +22,7 @@ import {
   type ManagerBatchDetail,
 } from "@/api/manager";
 import { certificateByLearner, managerCertificates, managerRevokeCertificate, type CertificateSummary } from "@/api/reports";
+import type { CertifiedSummary } from "@/components/CertifiedCell";
 
 import { tr } from "@/i18n/tr";
 function fmt(d: string) {
@@ -54,8 +55,11 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
         setCloneName(`${d.batch.name} (next)`);
       })
       .catch(() => setMsg({ ok: false, text: tr("Could not load this batch.") }));
+    // Earlier course certificates issued in this batch (still revocable). A
+    // final assessment's comes with each learner (`certified`), so it follows
+    // a learner who moved batches and an expired one doesn't show.
     managerCertificates(batchId)
-      .then((r) => setCerts(certificateByLearner(r.certificates)))
+      .then((r) => setCerts(certificateByLearner(r.certificates.filter((c) => c.kind !== "result"))))
       .catch(() => {});
   }
   useEffect(load, [batchId]);
@@ -233,6 +237,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
           ) : (
             <div className="flex flex-col gap-2">
               {data.learners.map((l) => {
+                const certified = (l as { certified?: CertifiedSummary | null }).certified ?? null;
                 const cert = certs.get(l.id);
                 return (
                   <div
@@ -246,7 +251,7 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-ink truncate">{[l.firstName, l.lastName].filter(Boolean).join(" ") || l.email}</p>
                       <p className="text-xs text-muted truncate">
-                        {[l.employeeId, l.department, l.jobTitle, l.sessionCount === 1 ? tr("1 session") : tr("{{n}} sessions", { n: l.sessionCount })].filter(Boolean).join(" · ")}
+                        {[l.employeeId, l.department, l.jobTitle, l.sessionCount === 1 ? tr("1 session completed") : tr("{{n}} sessions completed", { n: l.sessionCount })].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                     {!l.active ? (
@@ -256,21 +261,22 @@ export function ManagerBatchModal({ batchId, onClose, onChanged }: { batchId: st
                     ) : null}
                     {l.license && <LicenseStatusPill license={l.license} />}
                     <span onClick={(e) => e.stopPropagation()} className="shrink-0">
-                      {cert ? (
+                      {certified ? (
+                        <a href={`/certificate/${certified.code}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
+                          <Award size={14} /> {`${certified.level ?? ""}${certified.score != null ? ` · ${certified.score}` : ""}`}
+                        </a>
+                      ) : cert ? (
                         <span className="flex items-center gap-1">
                           <a href={`/certificate/${cert.code}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline">
-                            <Award size={14} />{" "}
-                            {cert.kind === "result" ? `${cert.cefrLevel ?? ""}${cert.spicaScore != null ? ` · ${cert.spicaScore}` : ""}` : tr("Course certificate")}
+                            <Award size={14} /> {tr("Course certificate")}
                           </a>
-                          {cert.kind !== "result" && (
-                            <button
-                              onClick={() => window.confirm(tr("Revoke this certificate?")) && managerRevokeCertificate(cert.id).then(load)}
-                              title={tr("Revoke")}
-                              className="text-muted hover:text-error px-1 cursor-pointer"
-                            >
-                              ×
-                            </button>
-                          )}
+                          <button
+                            onClick={() => window.confirm(tr("Revoke this certificate?")) && managerRevokeCertificate(cert.id).then(load)}
+                            title={tr("Revoke")}
+                            className="text-muted hover:text-error px-1 cursor-pointer"
+                          >
+                            ×
+                          </button>
                         </span>
                       ) : null}
                     </span>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { memberStatus, projectLevel } from "./monitoring.js";
+import { goalStatus, memberStatus, projectLevel } from "./monitoring.js";
 
 const day = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
@@ -35,5 +35,39 @@ describe("memberStatus", () => {
     expect(memberStatus({ ...base, gap: 1, mocks: [], inactiveDays: 20 }).status).toBe("at_risk");
     expect(memberStatus({ ...base, gap: 2, mocks: [], daysLeft: 10 }).status).toBe("at_risk");
     expect(memberStatus({ ...base, gap: 1, mocks: [] }).status).toBe("too_early");
+  });
+});
+
+describe("goalStatus", () => {
+  const now = Date.parse("2026-10-22T00:00:00Z");
+  const base = {
+    targetLevel: "B2",
+    mocks: [],
+    missed: 0,
+    lastActivity: "2026-10-21T00:00:00Z",
+    startedOn: "2026-09-01",
+    goalDate: "2026-12-31",
+    now,
+  };
+  it("counts a skill's own target in the gap", () => {
+    const level = { overall: "B2", skills: { speaking: "B1" } };
+    expect(goalStatus({ ...base, level }).status).toBe("at_target");
+    const r = goalStatus({ ...base, level, targetSkills: { speaking: "B2" } });
+    expect(r.gap).toBe(1);
+    expect(r.status).toBe("too_early");
+    expect(r.why).toEqual({ code: "too_early" });
+  });
+  it("counts never active as inactive since the goal began", () => {
+    const r = goalStatus({ ...base, level: { overall: "B1", skills: null }, lastActivity: null });
+    expect(r.status).toBe("at_risk");
+    expect(r.inactiveDays).toBeNull();
+    expect(r.why).toEqual({ code: "inactive", days: 51 });
+    expect(r.reason).toBe("no activity for 51 days");
+  });
+  it("gives a year when there's no target date", () => {
+    expect(goalStatus({ ...base, level: { overall: "A2", skills: null }, goalDate: null }).daysLeft).toBe(365);
+    const short = goalStatus({ ...base, level: { overall: "A2", skills: null }, goalDate: "2026-11-01" });
+    expect(short.status).toBe("at_risk");
+    expect(short.why).toEqual({ code: "time_short", gap: 2, days: 10 });
   });
 });

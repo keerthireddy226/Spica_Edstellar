@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, Coins, Send } from "lucide-react";
+import { Award, Coins, History, Send } from "lucide-react";
 import { OrgLoadError, OrgLoading, OrgNotice, OrgSearch } from "@/components/OrgAdminUi";
 import { Button } from "@/components/Button";
+import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { getBatches, getOrgLearners, type OrgBatch, type OrgLearner } from "@/api/orgAdmin";
-import { getOrgTests, giveTests, requestCredits, withdrawTest, type GivenStatus, type OrgTests } from "@/api/orgTests";
+import { getOrgTests, giveTests, requestCredits, withdrawTest, type GivenStatus, type GivenTest, type OrgTests } from "@/api/orgTests";
 import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 
 // Tests & credits: give learners a real test (strictly proctored, with a
 // certificate), a level test, or preparation for one test, paid with the
@@ -24,6 +26,17 @@ const STATUS: Record<GivenStatus, { label: () => string; cls: string }> = {
   expired: { label: () => tr("Expired"), cls: "text-muted" },
   expired_refunded: { label: () => tr("Expired, credits returned"), cls: "text-muted" },
   withdrawn: { label: () => tr("Withdrawn"), cls: "text-muted" },
+};
+
+// What each credit history entry was, when it has no note of its own.
+const REASON: Record<string, () => string> = {
+  grant: () => tr("Added by Edstellar"),
+  purchase: () => tr("Purchased"),
+  invite: () => tr("Invitation"),
+  refund: () => tr("Refund"),
+  adjustment: () => tr("Adjustment"),
+  assessment: () => tr("Test given"),
+  access: () => tr("Preparation given"),
 };
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -50,6 +63,7 @@ export function OrgAdminTests() {
   const [askNote, setAskNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [withdrawing, setWithdrawing] = useState<string | null>(null);
+  const [confirmWithdraw, setConfirmWithdraw] = useState<GivenTest | null>(null);
 
   function load() {
     setLoadError(false);
@@ -67,14 +81,16 @@ export function OrgAdminTests() {
       .catch(() => {});
   }, []);
 
+  // Deactivated learners can't be given a test (the server skips them), so they aren't offered.
+  const active = useMemo(() => learners.filter((l) => l.active), [learners]);
   const product = data?.products.find((p) => p.id === productId) ?? null;
-  const count = who === "batch" ? learners.filter((l) => l.batchId === batchId).length : picked.size;
+  const count = who === "batch" ? active.filter((l) => l.batchId === batchId).length : picked.size;
   const each = product ? product.credits * (oneTest(product.kind) ? 1 : periods) : 0;
   const total = each * count;
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return learners.filter((l) => !q || [l.firstName, l.lastName, l.email, l.participantId].some((x) => x?.toLowerCase().includes(q))).slice(0, 200);
-  }, [learners, search]);
+    return active.filter((l) => !q || [l.firstName, l.lastName, l.email, l.participantId].some((x) => x?.toLowerCase().includes(q))).slice(0, 200);
+  }, [active, search]);
 
   async function give() {
     if (!product) return;
@@ -91,7 +107,15 @@ export function OrgAdminTests() {
       load();
     } catch (err) {
       const b = err instanceof ApiError ? (err.body as { error?: string; needed?: number; balance?: number }) : null;
-      setNote({ ok: false, text: b?.error === "not_enough_credits" ? tr("Not enough credits: this needs {{n}}, you have {{b}}.", { n: b.needed ?? total, b: b.balance ?? 0 }) : tr("Couldn't give the test. Try again.") });
+      setNote({
+        ok: false,
+        text:
+          b?.error === "not_enough_credits"
+            ? tr("Not enough credits: this needs {{n}}, you have {{b}}.", { n: b.needed ?? total, b: b.balance ?? 0 })
+            : b?.error === "no_learners"
+              ? tr("No active learners to give it to. Deactivated learners can't be given a test.")
+              : tr("Couldn't give the test. Try again."),
+      });
     } finally {
       setBusy(false);
     }
@@ -116,6 +140,7 @@ export function OrgAdminTests() {
       setNote({ ok: false, text: tr("Couldn't withdraw the test. Try again.") });
     } finally {
       setWithdrawing(null);
+      setConfirmWithdraw(null);
     }
   }
 
@@ -248,7 +273,7 @@ export function OrgAdminTests() {
             <option value="">{tr("Choose a batch")}</option>
             {batches.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name} · {tr("Learners: {{count}}", { count: learners.filter((l) => l.batchId === b.id).length })}
+                {b.name} · {tr("Learners: {{count}}", { count: active.filter((l) => l.batchId === b.id).length })}
               </option>
             ))}
           </select>
@@ -272,7 +297,7 @@ export function OrgAdminTests() {
               {picked.size > 0 && <span className="text-xs text-muted">{tr("{{n}} selected", { n: picked.size })}</span>}
             </div>
             <div className="max-h-64 overflow-y-auto border border-rule rounded-xl divide-y divide-rule">
-              {shown.length === 0 && <p className="px-3 py-4 text-sm text-muted text-center">{learners.length ? tr("No learners match.") : tr("No learners yet.")}</p>}
+              {shown.length === 0 && <p className="px-3 py-4 text-sm text-muted text-center">{active.length ? tr("No learners match.") : tr("No learners yet.")}</p>}
               {shown.map((l) => (
                 <label key={l.id} className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-paper-warm/50 ${picked.has(l.id) ? "bg-navy/5" : ""}`}>
                   <input
@@ -359,7 +384,7 @@ export function OrgAdminTests() {
                       )}
                       {g.status === "waiting" && (
                         <button
-                          onClick={() => withdraw(g.id)}
+                          onClick={() => setConfirmWithdraw(g)}
                           disabled={withdrawing === g.id}
                           className="text-sm font-semibold text-error hover:underline cursor-pointer disabled:opacity-50"
                         >
@@ -374,6 +399,53 @@ export function OrgAdminTests() {
           </div>
         )}
       </section>
+
+      <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+        <h2 className="font-display font-semibold text-lg text-ink flex items-center gap-2">
+          <History size={18} /> {tr("Credit history")}
+        </h2>
+        {data.history.length === 0 ? (
+          <p className="text-sm text-muted bg-paper-warm/50 border border-dashed border-rule-strong rounded-xl px-4 py-6 text-center">{tr("No credits added or used yet.")}</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-rule border border-rule rounded-xl max-h-96 overflow-y-auto">
+            {data.history.map((h, i) => (
+              <li key={i} className="px-3 py-2 flex items-center justify-between gap-3 text-sm">
+                <span className="min-w-0">
+                  <span className="text-ink">{h.note ? trServer(h.note) : (REASON[h.reason]?.() ?? h.reason)}</span>
+                  <span className="block text-xs text-muted">{day(h.at)}</span>
+                </span>
+                <span className={`font-mono text-sm font-semibold px-2 py-0.5 rounded-pill tabular-nums shrink-0 ${h.delta > 0 ? "text-success bg-success/10" : "text-error bg-error/10"}`}>
+                  {h.delta > 0 ? "+" : ""}
+                  {h.delta}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {confirmWithdraw && (
+        <ConfirmActionModal
+          title={tr("Withdraw the test")}
+          message={
+            oneTest(confirmWithdraw.kind)
+              ? tr("Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.", {
+                  test: confirmWithdraw.kind === "level" && confirmWithdraw.testLevel ? tr("Level {{level}} test", { level: confirmWithdraw.testLevel }) : confirmWithdraw.name,
+                  learner: confirmWithdraw.learner,
+                  n: confirmWithdraw.credits,
+                })
+              : tr("Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.", {
+                  test: confirmWithdraw.name,
+                  learner: confirmWithdraw.learner,
+                })
+          }
+          confirmLabel={tr("Withdraw")}
+          destructive
+          submitting={withdrawing === confirmWithdraw.id}
+          onClose={() => setConfirmWithdraw(null)}
+          onConfirm={() => withdraw(confirmWithdraw.id)}
+        />
+      )}
     </div>
   );
 }

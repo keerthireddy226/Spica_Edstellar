@@ -8,6 +8,7 @@ import { BatchDetailsGrid } from "@/components/BatchDetailsGrid";
 import { BatchLifecycleActions, BATCH_STATUS_LABEL } from "@/components/BatchLifecycleActions";
 import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Award, Layers, Pencil } from "lucide-react";
+import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { certificateByLearner, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
@@ -31,11 +32,17 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
   const [viewingLearnerId, setViewingLearnerId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Earlier course certificates issued in this batch (still revocable). A
+  // final assessment's comes with each learner (`certified`), so it follows a
+  // learner who moved batches and an expired one doesn't show.
   const [certs, setCerts] = useState<Map<string, CertificateSummary>>(new Map());
+  const [revoking, setRevoking] = useState<CertificateSummary | null>(null);
+  const [revokeBusy, setRevokeBusy] = useState(false);
+  const [revokeFailed, setRevokeFailed] = useState(false);
 
   function loadCerts() {
     orgCertificates(batchId)
-      .then((r) => setCerts(certificateByLearner(r.certificates)))
+      .then((r) => setCerts(certificateByLearner(r.certificates.filter((c) => c.kind !== "result"))))
       .catch(() => {});
   }
 
@@ -115,6 +122,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
     >
       <div className="flex flex-col gap-4">
         {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-2.5">{notice}</p>}
+        {revokeFailed && <p className="text-sm text-error bg-error/10 border border-error/25 rounded-card px-4 py-2.5">{tr("Couldn't revoke the certificate. Try again.")}</p>}
         <BatchDetailsGrid
           batch={batch}
           learnerCount={learners.filter((l) => l.active).length}
@@ -155,7 +163,18 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                       {[l.employeeId, l.department, l.jobTitle, l.sessionCount === 1 ? tr("1 session completed") : tr("{{n}} sessions completed", { n: l.sessionCount })].filter(Boolean).join(" · ")}</p>
                   </div>
                   {l.license && <LicenseStatusPill license={l.license} />}
-                  {certs.get(l.id) ? (
+                  {l.certified ? (
+                    <a
+                      href={`/certificate/${l.certified.code}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={tr("View certificate")}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1 shrink-0 text-xs font-semibold text-navy hover:underline"
+                    >
+                      <Award size={14} /> {`${l.certified.level ?? ""}${l.certified.score != null ? ` · ${l.certified.score}` : ""}`}
+                    </a>
+                  ) : certs.get(l.id) ? (
                     <span className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                       <a
                         href={`/certificate/${certs.get(l.id)!.code}`}
@@ -164,21 +183,16 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
                         title={tr("View certificate")}
                         className="flex items-center gap-1 text-xs font-semibold text-navy hover:underline"
                       >
-                        <Award size={14} />{" "}
-                        {certs.get(l.id)!.kind === "result"
-                          ? `${certs.get(l.id)!.cefrLevel ?? ""}${certs.get(l.id)!.spicaScore != null ? ` · ${certs.get(l.id)!.spicaScore}` : ""}`
-                          : tr("Course certificate")}
+                        <Award size={14} /> {tr("Course certificate")}
                       </a>
-                      {certs.get(l.id)!.kind !== "result" && (
-                        <span
-                          role="button"
-                          title={tr("Revoke certificate")}
-                          onClick={() => revokeCertificate(certs.get(l.id)!.id).then(loadCerts)}
-                          className="text-muted hover:text-error cursor-pointer px-1"
-                        >
-                          ×
-                        </span>
-                      )}
+                      <span
+                        role="button"
+                        title={tr("Revoke certificate")}
+                        onClick={() => setRevoking(certs.get(l.id)!)}
+                        className="text-muted hover:text-error cursor-pointer px-1"
+                      >
+                        ×
+                      </span>
                     </span>
                   ) : null}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-pill shrink-0 ${l.active ? "bg-success/15 text-success" : "bg-error/15 text-error"}`}>
@@ -208,6 +222,31 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
       )}
 
       <BatchLeaderboardSection batchId={batchId} scope="org-admin" />
+
+      {revoking && (
+        <ConfirmActionModal
+          title={tr("Revoke certificate")}
+          message={`${revoking.learnerName}: ${tr("Revoke this certificate?")}`}
+          confirmLabel={tr("Revoke")}
+          destructive
+          submitting={revokeBusy}
+          onClose={() => setRevoking(null)}
+          onConfirm={() => {
+            setRevokeBusy(true);
+            setRevokeFailed(false);
+            revokeCertificate(revoking.id)
+              .then(() => {
+                setRevoking(null);
+                loadCerts();
+              })
+              .catch(() => {
+                setRevoking(null);
+                setRevokeFailed(true);
+              })
+              .finally(() => setRevokeBusy(false));
+          }}
+        />
+      )}
 
       {viewingLearnerId && (
         <LearnerProfileModal

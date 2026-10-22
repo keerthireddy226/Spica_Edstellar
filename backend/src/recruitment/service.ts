@@ -138,9 +138,7 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
   const already = new Set(existing.rows.map((r) => r.email));
   const fresh = people.filter((p) => !already.has(p.email.trim().toLowerCase()));
 
-  const balance = await creditBalance(args.tenantId);
   const cost = await inviteCost(job.test_kind);
-  if (fresh.length * cost > balance) throw new RecruitmentError("not_enough_credits", 402, { needed: fresh.length * cost, balance });
 
   // Practice-test products: each candidate gets one of the product's sets.
   let examIds: string[] = [];
@@ -150,29 +148,50 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
     if (examIds.length === 0) throw new RecruitmentError("no_exam_available");
   }
 
+  // The balance check and the debits happen in one transaction under the
+  // organization's credit lock (the same key as lockCredits in
+  // orgTests/service.ts), so invitations and tests given at the same moment
+  // can't both spend the same credits. Emails go out after it commits.
   const invited: { id: string; email: string }[] = [];
-  for (const p of fresh) {
-    const email = p.email.trim();
-    const candidateId = await candidateUser(args.tenantId, email, p.firstName?.trim() || null, p.lastName?.trim() || null);
-    const token = generateToken();
-    const expiresAt = new Date(Date.now() + job.invite_valid_days * 86_400_000);
-    const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
-    const r = await pool.query(
-      `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-      [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt],
-    );
-    const id = r.rows[0].id;
-    await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $4, 'invite', $2, $3)`, [
-      args.tenantId,
-      id,
-      args.actorId,
-      -cost,
-    ]);
-    sendCandidateInviteEmail({ to: email, orgName: org.name, jobTitle: job.title, token, expiresAt, lang }).catch((err) =>
+  const emails: { to: string; token: string; expiresAt: Date }[] = [];
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`credits:${args.tenantId}`]);
+    const balance = (await client.query(`SELECT coalesce(sum(delta), 0)::int AS n FROM recruitment_credit_events WHERE tenant_id = $1`, [args.tenantId])).rows[0].n;
+    if (fresh.length * cost > balance) throw new RecruitmentError("not_enough_credits", 402, { needed: fresh.length * cost, balance });
+    for (const p of fresh) {
+      const email = p.email.trim();
+      const candidateId = await candidateUser(args.tenantId, email, p.firstName?.trim() || null, p.lastName?.trim() || null);
+      const token = generateToken();
+      const expiresAt = new Date(Date.now() + job.invite_valid_days * 86_400_000);
+      const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
+      const r = await client.query(
+        `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt],
+      );
+      const id = r.rows[0].id;
+      await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $4, 'invite', $2, $3)`, [
+        args.tenantId,
+        id,
+        args.actorId,
+        -cost,
+      ]);
+      emails.push({ to: email, token, expiresAt });
+      invited.push({ id, email });
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  for (const m of emails) {
+    sendCandidateInviteEmail({ to: m.to, orgName: org.name, jobTitle: job.title, token: m.token, expiresAt: m.expiresAt, lang }).catch((err) =>
       console.error("failed to send candidate invite:", err),
     );
-    invited.push({ id, email });
   }
   if (invited.length) await warnIfLowCredits(args.tenantId);
   return { invited, skipped: people.length - fresh.length };

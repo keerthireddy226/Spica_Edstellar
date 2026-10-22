@@ -1,14 +1,16 @@
 // The Batch report for Org Admins and Managers: what a batch did in a period,
 // where its learners started and are now, who reached the goal and who needs
-// attention. Levels and Spica scores come from each learner's latest mock test
-// (else their latest level test); the start is their first level test.
+// attention. Each learner's level now is their current level
+// (learner/currentLevel.ts: final assessment, passed level test, latest mock
+// test, placement test); the start is their first placement test.
 import { certifiedMap } from "../certificates/service.js";
+import { currentLevels, type LevelReading, type LevelSource } from "../learner/currentLevel.js";
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { learnerAccessMap } from "../licenses/service.js";
 import { levelSummary } from "../placement/levels.js";
-import { CEFR_LEVELS } from "../placement/cefr.js";
-import { memberStatus, INACTIVE_DAYS, type MockPoint } from "../programs/monitoring.js";
+import { goalStatus, INACTIVE_DAYS, type MockPoint } from "../programs/monitoring.js";
+import { IN_PLAN } from "../programs/service.js";
 import { BANDS, levelOfScore, scoreReport, spicaScore } from "./scoreReport.js";
 
 export const SKILLS = ["speaking", "listening", "reading", "writing"] as const;
@@ -49,7 +51,7 @@ function skillLevelsOf(raw: unknown): Partial<SkillMap<string>> {
   return out;
 }
 
-interface Snapshot {
+export interface Snapshot {
   level: string | null;
   score: number | null;
   skills: Partial<SkillMap<{ level: string; score: number }>>;
@@ -67,6 +69,21 @@ export function snapshot(levels: Partial<SkillMap<string>>, percents: Partial<Sk
   const scores = Object.values(skills).map((x) => x!.score);
   const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : spicaScore(overallLevel, overallPercent);
   return { level: score !== null ? levelOfScore(score) : overallLevel, score, skills };
+}
+
+// A learner's current level as a snapshot: a final assessment certificate
+// keeps its own Spica scores; other results are scored from their levels and
+// shares right. The level is the current level itself, as everywhere else.
+export function fromReading(r: LevelReading): Snapshot {
+  if (r.source === "final_assessment" && r.score !== null) {
+    const skills: Snapshot["skills"] = {};
+    for (const s of SKILLS) {
+      const v = r.skillScores?.[s];
+      if (v?.level && typeof v.score === "number") skills[s] = { level: v.level, score: v.score };
+    }
+    return { level: r.level, score: r.score, skills };
+  }
+  return { ...snapshot(skillLevelsOf(r.skills), r.skillPercents, r.overallPercent, r.level), level: r.level };
 }
 
 // Results of finished mock tests saved before the level (or each skill's share
@@ -170,7 +187,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
 
   const program = (
     await pool.query(
-      `SELECT p.id, p.test_type_id, p.target_level, p.target_date, tt.name AS test_name
+      `SELECT p.id, p.test_type_id, p.target_level, p.target_skills, p.starts_on, p.target_date, tt.name AS test_name
        FROM programs p LEFT JOIN test_types tt ON tt.id = p.test_type_id WHERE p.batch_id = $1 AND p.status = 'active'`,
       [batchId],
     )
@@ -192,23 +209,26 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
   ).rows;
   const ids = members.map((m) => m.id as string);
 
-  const [placements, mocks, counts, minutes, certificates, managers, missed, access] = await Promise.all([
+  const [placements, mocks, counts, minutes, managers, missed, access] = await Promise.all([
     pool.query(
       `SELECT user_id, taken_at, cefr_level, overall_percent, skill_percents, skill_levels FROM placements
        WHERE user_id = ANY($1::uuid[]) AND status <> 'fraud_confirmed' ORDER BY taken_at`,
       [ids],
     ),
-    // Finished mock tests (of the program's test when there is one).
+    // Finished mock tests (of the program's test when there is one), not set aside part way.
     pool.query(
       `SELECT s.id, s.user_id, s.completed_at, s.result FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
        WHERE s.user_id = ANY($1::uuid[]) AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NOT NULL
+         AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND ($2::text IS NULL OR coalesce(s.composition->>'testTypeId', e.test_type_id) = $2)
        ORDER BY s.completed_at`,
       [ids, program?.test_type_id ?? null],
     ),
+    // Tests set aside part way (abandoned) aren't counted as taken.
     pool.query(
       `SELECT user_id, count(*) FILTER (WHERE delivery_mode = 'practice')::int AS practice, count(*) FILTER (WHERE delivery_mode = 'mock')::int AS mock
        FROM sessions WHERE user_id = ANY($1::uuid[]) AND session_type = 'mocktest' AND completed_at >= $2::date AND completed_at < $3::date + 1
+         AND NOT coalesce((composition->>'abandoned')::boolean, false)
        GROUP BY user_id`,
       [ids, from, to],
     ),
@@ -218,19 +238,15 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       [ids, from, to],
     ),
     pool.query(
-      `SELECT count(*)::int AS n FROM certificates c
-       WHERE (c.batch_id = $1 OR c.user_id = ANY($2::uuid[])) AND c.kind = 'result' AND c.revoked_at IS NULL AND c.issued_at >= $3::date AND c.issued_at < $4::date + 1`,
-      [batchId, ids, from, to],
-    ),
-    pool.query(
       `SELECT coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name FROM batch_managers bm JOIN users u ON u.id = bm.user_id WHERE bm.batch_id = $1 ORDER BY 1`,
       [batchId],
     ),
     program
       ? pool.query(
-          `SELECT user_id, count(*) FILTER (WHERE status = 'missed')::int AS missed, count(*) FILTER (WHERE status = 'missed' AND kind = 'mock')::int AS missed_mocks,
-             max(due_on) FILTER (WHERE status = 'missed' AND kind = 'mock') AS last_missed_mock
-           FROM schedule_items WHERE program_id = $1 GROUP BY user_id`,
+          // Items after the final assessment aren't part of the plan, so never missed.
+          `SELECT si.user_id, count(*) FILTER (WHERE si.status = 'missed')::int AS missed, count(*) FILTER (WHERE si.status = 'missed' AND si.kind = 'mock')::int AS missed_mocks,
+             max(si.due_on) FILTER (WHERE si.status = 'missed' AND si.kind = 'mock') AS last_missed_mock
+           FROM schedule_items si JOIN programs p ON p.id = si.program_id WHERE si.program_id = $1 AND ${IN_PLAN} GROUP BY si.user_id`,
           [program.id],
         )
       : Promise.resolve({ rows: [] as Record<string, any>[] }),
@@ -248,19 +264,21 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
   );
 
   const now = Date.now();
-  // Each member's latest final assessment certificate.
+  // Each member's latest final assessment certificate, and their current level
+  // (mocks of the program's test when there is one).
   const certified = await certifiedMap(ids);
+  const levels = await currentLevels(ids, { testTypeId: program?.test_type_id ?? null });
   const learners = members.map((m) => {
     const own = placements.rows.filter((p) => p.user_id === m.id);
     const ownMocks = leveled.filter((x) => x.user_id === m.id);
     const firstPlacement = own[0];
-    const lastPlacement = own[own.length - 1];
     const mock = latestMock.get(m.id);
+    const reading = levels.get(m.id) ?? null;
     const fromPlacement = (p: Record<string, any>) => snapshot(skillLevelsOf(p.skill_levels), p.skill_percents, Number(p.overall_percent), p.cefr_level);
     const fromMock = (x: Record<string, any>) =>
       snapshot(skillLevelsOf(x.result.skillLevels), x.result.skillPercents ?? null, x.result.overallPercent ?? null, x.result.cefrLevel);
     const start = firstPlacement ? fromPlacement(firstPlacement) : ownMocks[0] ? fromMock(ownMocks[0]) : null;
-    const current = mock ? fromMock(mock) : lastPlacement ? fromPlacement(lastPlacement) : null;
+    const current = reading ? fromReading(reading) : null;
 
     const lastActivity = m.last_activity ? new Date(m.last_activity) : null;
     const inactiveDays = lastActivity ? Math.floor((now - lastActivity.getTime()) / DAY) : null;
@@ -268,8 +286,6 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
     let goal: GoalStatus | null = null;
     let projected: string | null = null;
     if (goalLevel) {
-      const target = CEFR_LEVELS.indexOf(goalLevel as never);
-      const at = current?.level ? CEFR_LEVELS.indexOf(current.level as never) : -1;
       const points: MockPoint[] = ownMocks.map((x) => ({
         sessionId: x.id,
         date: new Date(x.completed_at).toISOString(),
@@ -277,14 +293,17 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
         percent: x.result.overallPercent ?? null,
         skillLevels: x.result.skillLevels ?? null,
       }));
-      const st = memberStatus({
+      // The same rules as Programs: the program's targets and dates when there is one.
+      const st = goalStatus({
         targetLevel: goalLevel,
-        gap: at >= 0 ? Math.max(0, target - at) : null,
+        targetSkills: program?.target_skills ?? null,
+        level: { overall: reading?.level ?? null, skills: reading?.skills ?? null },
         mocks: points,
         missed: mi?.missed ?? 0,
-        // Never active counts as inactive since the batch began.
-        inactiveDays: inactiveDays ?? Math.floor((now - new Date(b.begins_on).getTime()) / DAY),
-        daysLeft: daysLeft ?? 365,
+        lastActivity,
+        startedOn: program ? dateOnly(program.starts_on) : beginsOn,
+        goalDate,
+        now,
       });
       goal = st.status === "at_target" ? "reached" : st.status;
       projected = st.projected;
@@ -298,7 +317,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       certified: certified.get(m.id) ?? null,
       start,
       current,
-      levelSource: mock ? ("mock" as const) : lastPlacement ? ("level_test" as const) : null,
+      levelSource: (reading?.source ?? null) as LevelSource | null,
       practiceTests: c?.practice ?? 0,
       mockTests: c?.mock ?? 0,
       minutes: Math.round(Number(minutes.rows.find((x) => x.user_id === m.id)?.ms ?? 0) / 60000),
@@ -359,8 +378,7 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
       practiceMinutes: learners.reduce((x, l) => x + l.minutes, 0),
       practiceTests: learners.reduce((x, l) => x + l.practiceTests, 0),
       mockTests: learners.reduce((x, l) => x + l.mockTests, 0),
-      // Final assessment certificates issued in the period, and members certified now.
-      certificates: certificates.rows[0].n as number,
+      // Members certified now.
       certified: learners.filter((l) => l.certified).length,
       scoreNow: mean(learners.map((l) => l.current?.score).filter((x): x is number => typeof x === "number")),
       scoreStart: mean(learners.map((l) => l.start?.score).filter((x): x is number => typeof x === "number")),
@@ -403,7 +421,9 @@ export async function batchReport(tenantId: string, batchId: string, opts: Batch
         .map((l) => ({ id: l.id, name: l.name, days: l.inactiveDays! }))
         .sort((x, y) => y.days - x.days),
       // Started, but no mock test yet: their progress can't be tracked.
-      noMock: learners.filter((l) => l.inactiveDays !== null && l.mocks.length === 0).map((l) => ({ id: l.id, name: l.name, level: l.current?.level ?? null })),
+      noMock: learners
+        .filter((l) => l.inactiveDays !== null && l.mocks.length === 0)
+        .map((l) => ({ id: l.id, name: l.name, level: l.current?.level ?? null, source: l.levelSource })),
       // Spica score lower now than at the start.
       dropped: learners
         .filter((l) => l.start?.score != null && l.current?.score != null && l.current.score - l.start.score <= -DROP_POINTS)

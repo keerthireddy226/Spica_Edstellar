@@ -56,6 +56,14 @@ function lastActive(l: BatchReportLearner): string {
   return tr("{{n}} days ago", { n: l.inactiveDays });
 }
 
+// Where a learner's level now comes from (the server's current level).
+const LEVEL_SOURCE_TEXT: Record<string, () => string> = {
+  final_assessment: () => tr("From the final assessment"),
+  level_test: () => tr("From the latest level test"),
+  mock: () => tr("From the latest mock test"),
+  placement: () => tr("From the placement test"),
+};
+
 const GOAL_LABEL: Record<GoalStatus, () => string> = {
   reached: () => tr("Reached"),
   on_track: () => tr("On track"),
@@ -363,7 +371,9 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
       )}
 
       <Card title={tr("Levels at the start and now")}>
-        <p className="text-[13.5px] text-muted -mt-2">{tr("Start: each learner's first level test. Now: their latest mock test, or level test if they haven't taken one.")}</p>
+        <p className="text-[13.5px] text-muted -mt-2">{tr(
+            "Start: each learner's first placement test. Now: their final assessment, else their latest passed level test, else their latest mock test, else their placement test.",
+          )}</p>
         <div className="grid grid-cols-[88px_44px_minmax(0,1fr)] gap-x-3 gap-y-1.5 items-center text-[13px]">
           {SKILLS.map((k, i) => (
             <div key={k} className="contents">
@@ -459,7 +469,12 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
             <AttentionList
               title={tr("No mock test yet")}
               tone="warning"
-              items={a.noMock.map((x) => (x.level ? tr("{{name}}: {{level}} from the level test only", { name: x.name, level: x.level }) : x.name))}
+              items={a.noMock.map((x) => {
+                // Where the level comes from (the server sends it with each learner).
+                const source = (x as typeof x & { source?: string | null }).source;
+                if (!x.level) return x.name;
+                return source === "placement" ? tr("{{name}}: {{level}} from the placement test only", { name: x.name, level: x.level }) : `${x.name}: ${x.level}`;
+              })}
             />
           </div>
         )}
@@ -541,8 +556,8 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
         {withLevel < learners.length && (
           <p className="text-[13px] text-muted">
             {learners.length - withLevel === 1
-              ? tr("1 learner has no level yet: they haven't taken a level test or mock test.")
-              : tr("{{n}} learners have no level yet: they haven't taken a level test or mock test.", { n: learners.length - withLevel })}
+              ? tr("1 learner has no level yet: they haven't taken a placement test or mock test.")
+              : tr("{{n}} learners have no level yet: they haven't taken a placement test or mock test.", { n: learners.length - withLevel })}
           </p>
         )}
       </Card>
@@ -904,7 +919,7 @@ export function LearnerDetail({
         </div>
       </Card>
 
-      <Card title={tr("Skills")} aside={<span className="text-[13px] text-muted">{l.levelSource === "mock" ? tr("From the latest mock test") : l.levelSource === "level_test" ? tr("From the latest level test") : ""}</span>}>
+      <Card title={tr("Skills")} aside={<span className="text-[13px] text-muted">{LEVEL_SOURCE_TEXT[l.levelSource ?? ""]?.() ?? ""}</span>}>
         {ins?.skills.length ? (
           <div className={`grid grid-cols-1 ${compact ? "grid-cols-2 sm:grid-cols-4 gap-2" : "sm:grid-cols-2 gap-3"} print:grid-cols-4 print:gap-2`}>
             {ins.skills.map((s) => (
@@ -934,7 +949,7 @@ export function LearnerDetail({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-muted">{tr("No level yet: this learner hasn't taken a level test or mock test.")}</p>
+          <p className="text-sm text-muted">{tr("No level yet: this learner hasn't taken a placement test or mock test.")}</p>
         )}
       </Card>
 

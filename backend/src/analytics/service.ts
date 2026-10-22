@@ -1,6 +1,7 @@
 import { pool } from "../db.js";
 import { certifiedMap } from "../certificates/service.js";
 import { learnerEngagement, type LearnerEngagement } from "../notifications/engagement.js";
+import { currentLevels } from "../learner/currentLevel.js";
 
 // Gender and age are only ever shown in groups this size or larger.
 export const MIN_GROUP_SIZE = 5;
@@ -350,9 +351,8 @@ export async function learnersCsv(scope: Scope): Promise<string> {
   const cte = learnersCte(scope, params);
   const r = await pool.query(
     `${cte}
-     SELECT u.participant_id, u.first_name, u.last_name, u.email, l.tenant_name, b.name AS batch, pp.country, pp.city, pp.job_role,
+     SELECT u.id, u.participant_id, u.first_name, u.last_name, u.email, l.tenant_name, b.name AS batch, pp.country, pp.city, pp.job_role,
        l.preferred_language,
-       (SELECT cefr_level FROM placements pl WHERE pl.user_id = l.id ORDER BY taken_at DESC LIMIT 1) AS cefr,
        (SELECT count(*) FROM sessions s WHERE s.user_id = l.id AND ${GENUINE}) AS sessions,
        (SELECT max(s.completed_at) FROM sessions s WHERE s.user_id = l.id AND ${GENUINE}) AS last_active,
        (SELECT max(a.ends_at) FROM license_assignments a WHERE a.user_id = l.id AND a.reclaimed_at IS NULL) AS access_ends,
@@ -366,6 +366,8 @@ export async function learnersCsv(scope: Scope): Promise<string> {
      ORDER BY l.tenant_name, b.name, u.first_name`,
     params,
   );
+  // The current level, the same as in the Batch report and Programs.
+  const levels = await currentLevels(r.rows.map((x) => x.id as string));
   return toCsv(
     [
       "Participant ID",
@@ -399,7 +401,7 @@ export async function learnersCsv(scope: Scope): Promise<string> {
       x.city,
       x.job_role,
       x.preferred_language,
-      x.cefr,
+      levels.get(x.id)?.level ?? null,
       x.sessions,
       x.last_active ? new Date(x.last_active).toISOString().slice(0, 10) : "",
       x.access_ends ? new Date(x.access_ends).toISOString().slice(0, 10) : "",

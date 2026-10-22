@@ -1,5 +1,6 @@
 import { pool } from "../db.js";
 import { learnerAccessMap, type LearnerAccess } from "../licenses/service.js";
+import { currentLevels } from "../learner/currentLevel.js";
 
 export type EngagementStatus = "not_started" | "inactive" | "slow" | "on_track" | "achieved";
 
@@ -53,7 +54,6 @@ export async function learnerEngagement(scope: { tenantId: string; batchIds?: st
        b.name AS batch_name, b.start_cefr, b.target_cefr, b.start_date, b.duration_months, b.created_at AS batch_created_at,
        (SELECT count(*)::int FROM sessions s WHERE s.user_id = u.id AND ${GENUINE}) AS sessions_completed,
        (SELECT max(s.completed_at) FROM sessions s WHERE s.user_id = u.id AND ${GENUINE}) AS last_active_at,
-       (SELECT p.cefr_level FROM placements p WHERE p.user_id = u.id ORDER BY p.taken_at DESC LIMIT 1) AS current_cefr,
        (SELECT count(*)::int FROM notifications n WHERE n.user_id = u.id AND n.kind IN ('manager_reminder', 'auto_reminder')) AS reminders_sent,
        (SELECT max(n.created_at) FROM notifications n WHERE n.user_id = u.id AND n.kind = 'manager_reminder') AS last_reminded_at
      FROM users u LEFT JOIN batches b ON b.id = u.batch_id
@@ -62,11 +62,14 @@ export async function learnerEngagement(scope: { tenantId: string; batchIds?: st
     params,
   );
   const access = await learnerAccessMap(result.rows.map((r) => r.id));
+  // The current level, the same as in the Batch report and Programs.
+  const levels = await currentLevels(result.rows.map((r) => r.id));
   const now = Date.now();
 
   return result.rows.map((r) => {
+    const currentCefr = levels.get(r.id)?.level ?? null;
     const lastActive = r.last_active_at ? new Date(r.last_active_at).getTime() : null;
-    const cur = CEFR.indexOf(r.current_cefr ?? "");
+    const cur = CEFR.indexOf(currentCefr ?? "");
     const start = CEFR.indexOf(r.start_cefr ?? "");
     const target = CEFR.indexOf(r.target_cefr ?? "");
 
@@ -106,7 +109,7 @@ export async function learnerEngagement(scope: { tenantId: string; batchIds?: st
       status,
       sessionsCompleted: r.sessions_completed,
       lastActiveAt: r.last_active_at,
-      currentCefr: r.current_cefr,
+      currentCefr,
       startCefr: r.start_cefr,
       targetCefr: r.target_cefr,
       progress,

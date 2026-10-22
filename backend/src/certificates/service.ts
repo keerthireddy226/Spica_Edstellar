@@ -171,12 +171,22 @@ export async function listForLearner(userId: string): Promise<Certificate[]> {
   return r.rows.map(toCert);
 }
 
-export async function listForTenant(tenantId: string, batchId?: string | null): Promise<(Certificate & { userId: string | null })[]> {
+// Every certificate the organization issued. `expired` (past its valid-until
+// date) and `learnerRemoved` (the learner was deleted or left the
+// organization) let the page count only what the dashboard's Certified tile
+// counts: learners still here holding a valid one.
+export async function listForTenant(
+  tenantId: string,
+  batchId?: string | null,
+): Promise<(Certificate & { userId: string | null; expired: boolean; learnerRemoved: boolean })[]> {
   const r = await pool.query(
-    `SELECT *, ${IDENTITY_VERIFIED} FROM certificates WHERE tenant_id = $1 AND ($2::uuid IS NULL OR batch_id = $2) ORDER BY issued_at DESC LIMIT 500`,
+    `SELECT *, ${IDENTITY_VERIFIED},
+       (valid_until IS NOT NULL AND valid_until < current_date) AS expired,
+       NOT EXISTS (SELECT 1 FROM users u WHERE u.id = certificates.user_id AND u.tenant_id = certificates.tenant_id AND u.role = 'learner' AND u.deleted_at IS NULL) AS learner_removed
+     FROM certificates WHERE tenant_id = $1 AND ($2::uuid IS NULL OR batch_id = $2) ORDER BY issued_at DESC LIMIT 500`,
     [tenantId, batchId ?? null],
   );
-  return r.rows.map((x) => ({ ...toCert(x), userId: x.user_id }));
+  return r.rows.map((x) => ({ ...toCert(x), userId: x.user_id, expired: !!x.expired, learnerRemoved: !!x.learner_removed }));
 }
 
 // Only an earlier course certificate can be revoked by hand; a final
