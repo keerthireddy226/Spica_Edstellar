@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, FileText } from "lucide-react";
 import { TIER_LABELS } from "@/api/plans";
 import { getStaffBilling, money, shortDate, type BillingContract, type BillingMonth, type BillingOrder } from "@/api/staff";
-import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageError, PageHeader, PageLoading, Panel, SearchBox, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
@@ -15,13 +17,15 @@ export function StaffBilling() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<F>("unpaid");
   const [query, setQuery] = useState("");
-  useEffect(() => {
+  const load = () => {
+    setError(null);
     getStaffBilling()
       .then(setData)
       .catch(() => setError(tr("Could not load billing.")));
-  }, []);
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  };
+  useEffect(load, []);
+  if (error) return <PageError message={error} onRetry={load} />;
+  if (!data) return <PageLoading />;
 
   const { orders, contracts, monthly } = data;
   const cur = orders[0]?.currency ?? "USD";
@@ -64,7 +68,7 @@ export function StaffBilling() {
               <>
                 <div className="flex items-end gap-1.5 h-44">
                   {monthly.map((m) => (
-                    <div key={m.month} className="flex-1 h-full flex flex-col justify-end" title={`${m.month}: ${money(m.orgs, cur)} organizations, ${money(m.individuals, cur)} individuals, ${m.licenses} licenses`}>
+                    <div key={m.month} className="flex-1 h-full flex flex-col justify-end" title={tr("{{month}}: {{orgs}} organizations, {{individuals}} individuals, {{n}} licenses", { month: m.month, orgs: money(m.orgs, cur), individuals: money(m.individuals, cur), n: m.licenses })}>
                       <div style={{ height: `${(m.individuals / max) * 100}%`, background: "#7f9478" }} className="rounded-t-sm" />
                       <div style={{ height: `${(m.orgs / max) * 100}%`, background: "var(--color-navy)", minHeight: m.orgs ? 3 : 0 }} className={m.individuals ? "" : "rounded-t-sm"} />
                     </div>
@@ -135,7 +139,7 @@ export function StaffBilling() {
             ]}
           />
           {shown.length === 0 ? (
-            <EmptyNote>{tr("Nothing here.")}</EmptyNote>
+            <EmptyNote>{q ? tr("No payments match your search.") : tr("No payments in this view.")}</EmptyNote>
           ) : (
             <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
               <table className="w-full text-sm min-w-[720px]">
@@ -157,12 +161,16 @@ export function StaffBilling() {
                         <p className="text-xs text-muted">{o.kind === "individual_plan" ? tr("Individual · {{v}}", { v: o.buyerEmail ?? "" }) : (o.buyerName ?? "")}</p>
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {o.kind === "individual_plan" ? tr("Plan") : `${o.quantity} licenses`}
+                        {o.kind === "individual_plan" ? tr("Plan") : o.quantity === 1 ? tr("1 license") : tr("{{n}} licenses", { n: o.quantity })}
                         {o.poNumber ? tr(" · PO {{poNumber}}", { poNumber: o.poNumber }) : ""}
                       </td>
                       <td className="px-4 py-3 text-ink font-medium">{money(o.total, o.currency)}</td>
-                      <td className="px-4 py-3 text-muted">
-                        {o.status === "paid" ? `Paid ${shortDate(o.paidAt)}` : o.dueDate ? `Due ${shortDate(o.dueDate)}` : `Created ${shortDate(o.createdAt)}`}
+                      <td className="px-4 py-3 text-muted whitespace-nowrap">
+                        {o.status === "paid"
+                          ? tr("Paid {{date}}", { date: shortDate(o.paidAt) })
+                          : o.dueDate
+                            ? tr("Due {{date}}", { date: shortDate(o.dueDate) })
+                            : tr("Created {{date}}", { date: shortDate(o.createdAt) })}
                       </td>
                       <td className="px-4 py-3">
                         {o.status === "paid" ? (
@@ -193,7 +201,12 @@ export function StaffBilling() {
               </table>
             </div>
           )}
-          <p className="text-xs text-muted">{tr("Mark invoices paid, cancel them or issue credit notes from the organization's details on the Organizations page.")}</p>
+          <p className="text-xs text-muted">
+            {tr("Mark invoices paid, cancel them or issue credit notes from the organization's details on the Organizations page.")}{" "}
+            <Link to={perms.isSuper ? ROUTES.SUPER_ORGANIZATIONS : ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} className="font-semibold text-navy hover:underline">
+              {tr("Open Organizations")}
+            </Link>
+          </p>
         </div>
 
         <Panel title={tr("Contracts")}>
@@ -213,7 +226,7 @@ export function StaffBilling() {
                     </p>
                   </div>
                   <StatusPill tone={days < 0 ? "error" : days <= 30 ? "error" : days <= 90 ? "warning" : "muted"}>
-                    {days < 0 ? `Ended ${shortDate(c.contractEnd)}` : `Ends ${shortDate(c.contractEnd)}`}
+                    {days < 0 ? tr("Ended {{date}}", { date: shortDate(c.contractEnd) }) : tr("Ends {{date}}", { date: shortDate(c.contractEnd) })}
                   </StatusPill>
                 </div>
               );

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Gift, Minus, Percent, Tag } from "lucide-react";
 import { api } from "@/lib/api";
 import { money } from "@/api/staff";
-import { PageHeader, Panel, StatCard, paletteColor } from "@/components/staff/StaffKit";
+import { PageError, PageHeader, PageLoading, Panel, StatCard, paletteColor } from "@/components/staff/StaffKit";
 import { TestLimitsPanel } from "@/components/staff/TestLimitsPanel";
 
 import { ProductsPanel } from "@/components/staff/ProductsPanel";
@@ -21,19 +21,23 @@ interface Catalog {
 // each, prices, discounts and pilots.
 export function PlansCatalog() {
   const [c, setC] = useState<Catalog | null>(null);
-  useEffect(() => {
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
     api<Catalog>("/admin/plans-catalog")
       .then(setC)
-      .catch(() => {});
-  }, []);
-  if (!c) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  if (failed) return <PageError message={tr("Could not load plans and pricing.")} onRetry={load} />;
+  if (!c) return <PageLoading />;
   const rank: Record<string, number> = { starter: 0, business: 1, enterprise: 2 };
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader title={tr("Plans & pricing")} subtitle={tr("What each plan includes and costs — for proposals, renewals and upgrade conversations.")} />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="ledger" palette="terracotta" index={0} icon={Tag} value={money(c.volumeBands[0].unitPriceCents, "USD")} label={tr("List price per license-month")} progress={1} />
+        <StatCard variant="ledger" palette="terracotta" index={0} icon={Tag} value={c.volumeBands[0] ? money(c.volumeBands[0].unitPriceCents, "USD") : "—"} label={tr("List price per license-month")} sub={tr("Before volume discounts")} progress={1} />
         <StatCard variant="ledger" palette="terracotta" index={1} icon={Percent} value={`${c.educationDiscountPercent}%`} label={tr("Education discount")} sub={tr("Universities and schools")} progress={c.educationDiscountPercent / 100} />
         <StatCard variant="ledger" palette="terracotta" index={2} icon={Gift} value={tr("{{licenses}} × {{days}} days", { licenses: c.pilot.licenses, days: c.pilot.days })} label={tr("Default pilot")} sub={tr("Free licenses to try Spica")} progress={0.4} />
         <StatCard variant="ledger" palette="terracotta" index={3} icon={Tag} value={c.businessQualifyingQuantity} label={tr("Licenses that unlock Business")} sub={tr("In one purchase")} progress={0.6} />

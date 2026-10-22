@@ -17,6 +17,7 @@ import {
   type TechnicalReport,
 } from "@/api/quality";
 import { tr } from "@/i18n/tr";
+import { EmptyNote, FilterPills, Notice, PageHeader, Panel as KitPanel, Tabs } from "@/components/staff/StaffKit";
 
 // Assessment quality (Spica staff): appeals, pass marks and other settings,
 // the question pool, the speaking fairness study and the technical report.
@@ -37,13 +38,24 @@ const td = "px-3 py-2 border-t border-rule";
 
 function Panel({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 break-inside-avoid">
-      <div>
-        <h2 className="font-display font-semibold text-lg text-ink">{title}</h2>
-        {note && <p className="text-sm text-muted">{note}</p>}
-      </div>
+    <KitPanel title={title} note={note} className="break-inside-avoid">
       {children}
-    </section>
+    </KitPanel>
+  );
+}
+
+const LOAD_FAILED = () => tr("Could not load this. Try again.");
+function Loading() {
+  return <div className="h-40 rounded-card bg-surface border border-rule animate-pulse" aria-busy="true" />;
+}
+function Failed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Notice tone="error">
+      {LOAD_FAILED()}{" "}
+      <button onClick={onRetry} className="font-semibold underline cursor-pointer">
+        {tr("Try again")}
+      </button>
+    </Notice>
   );
 }
 
@@ -51,7 +63,15 @@ function Appeals() {
   const [status, setStatus] = useState<"open" | "all">("open");
   const [rows, setRows] = useState<Appeal[] | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const load = () => getAppeals(status).then((r) => setRows(r.appeals));
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = () => {
+    setFailed(false);
+    getAppeals(status)
+      .then((r) => setRows(r.appeals))
+      .catch(() => setFailed(true));
+  };
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,27 +79,43 @@ function Appeals() {
   async function decide(a: Appeal, outcome: "upheld" | "changed" | "new_attempt") {
     const note = (notes[a.id] ?? "").trim();
     if (!note) return;
-    await decideAppeal(a.id, outcome, note);
-    load();
+    setBusy(a.id);
+    setError(null);
+    try {
+      await decideAppeal(a.id, outcome, note);
+      load();
+    } catch {
+      setError(tr("Could not save the decision. Try again."));
+    } finally {
+      setBusy(null);
+    }
   }
   const LABEL: Record<Appeal["status"], string> = { open: tr("Open"), upheld: tr("Result stands"), changed: tr("Re-marked"), new_attempt: tr("Free retake") };
   return (
     <Panel title={tr("Appeals")} note={tr("A learner can appeal a real test's result once. Read the reason, check the answers and the proctoring record, then decide.")}>
-      <div className="flex gap-2">
-        {(["open", "all"] as const).map((s) => (
-          <button key={s} onClick={() => setStatus(s)} className={`px-3 py-1.5 rounded-pill text-sm font-semibold border cursor-pointer ${status === s ? "bg-navy text-white border-navy" : "border-rule text-ink"}`}>
-            {s === "open" ? tr("Open") : tr("All")}
-          </button>
-        ))}
-      </div>
-      {rows === null ? (
+      <FilterPills
+        value={status}
+        onChange={setStatus}
+        options={[
+          ["open", tr("Open")],
+          ["all", tr("All")],
+        ]}
+      />
+      {error && (
+        <Notice tone="error" onClose={() => setError(null)}>
+          {error}
+        </Notice>
+      )}
+      {failed ? (
+        <Failed onRetry={load} />
+      ) : rows === null ? (
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted">{tr("No appeals.")}</p>
+        <EmptyNote>{status === "open" ? tr("No open appeals. New ones appear here when a learner appeals a real test's result.") : tr("No appeals.")}</EmptyNote>
       ) : (
         <div className="flex flex-col gap-3">
           {rows.map((a) => (
-            <div key={a.id} className="border border-rule rounded-xl p-4 flex flex-col gap-2">
+            <div key={a.id} className="border border-rule rounded-xl p-4 flex flex-col gap-2 bg-paper/40">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-semibold text-ink">
                   {a.learner} <span className="text-xs text-muted font-normal">{[a.email, a.org].filter(Boolean).join(" · ")}</span>
@@ -102,13 +138,13 @@ function Appeals() {
                     className={input}
                   />
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" disabled={!notes[a.id]?.trim()} onClick={() => decide(a, "upheld")} className="!py-1.5 !text-sm">
+                    <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "upheld")} className="!py-1.5 !text-sm">
                       {tr("Result stands")}
                     </Button>
-                    <Button variant="secondary" disabled={!notes[a.id]?.trim()} onClick={() => decide(a, "changed")} className="!py-1.5 !text-sm">
+                    <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "changed")} className="!py-1.5 !text-sm">
                       {tr("Re-marked: issue a new certificate")}
                     </Button>
-                    <Button variant="secondary" disabled={!notes[a.id]?.trim()} onClick={() => decide(a, "new_attempt")} className="!py-1.5 !text-sm">
+                    <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "new_attempt")} className="!py-1.5 !text-sm">
                       {tr("Give a free retake")}
                     </Button>
                   </div>
@@ -127,10 +163,18 @@ function Appeals() {
 function Settings() {
   const [s, setS] = useState<QualitySettings | null>(null);
   const [saved, setSaved] = useState(false);
-  useEffect(() => {
-    getQualitySettings().then(setS);
-  }, []);
-  if (!s) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = () => {
+    setFailed(false);
+    getQualitySettings()
+      .then(setS)
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  if (failed) return <Failed onRetry={load} />;
+  if (!s) return <Loading />;
   const fields: [keyof QualitySettings, string, string][] = [
     ["levelPassOverall", tr("Level test pass mark, overall (%)"), tr("The share of questions right a level test needs overall.")],
     ["levelSkillMin", tr("Level test minimum per skill (%)"), tr("Each skill needs at least this share right.")],
@@ -144,21 +188,40 @@ function Settings() {
         {fields.map(([k, label, note]) => (
           <label key={k} className="flex flex-col gap-1 text-sm text-ink">
             {label}
-            <input type="number" value={s[k]} onChange={(e) => setS({ ...s, [k]: Number(e.target.value) })} className={`${input} w-32`} />
+            <input
+              type="number"
+              min={0}
+              value={s[k]}
+              onChange={(e) => {
+                setSaved(false);
+                setS({ ...s, [k]: Number(e.target.value) });
+              }}
+              className={`${input} w-32`}
+            />
             <span className="text-xs text-muted">{note}</span>
           </label>
         ))}
       </div>
       <div className="flex items-center gap-3">
         <Button
+          disabled={saving}
           onClick={async () => {
-            setS(await saveQualitySettings(s));
-            setSaved(true);
+            setSaving(true);
+            setError(null);
+            try {
+              setS(await saveQualitySettings(s));
+              setSaved(true);
+            } catch {
+              setError(tr("Could not save. Check the numbers and try again."));
+            } finally {
+              setSaving(false);
+            }
           }}
         >
-          {tr("Save")}
+          {saving ? tr("Saving…") : tr("Save")}
         </Button>
         {saved && <span className="text-sm text-success">{tr("Saved.")}</span>}
+        {error && <span className="text-sm text-error">{error}</span>}
       </div>
     </Panel>
   );
@@ -166,10 +229,16 @@ function Settings() {
 
 function Pool() {
   const [p, setP] = useState<PoolReport | null>(null);
-  useEffect(() => {
-    getPoolReport().then(setP);
-  }, []);
-  if (!p) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
+    getPoolReport()
+      .then(setP)
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  if (failed) return <Failed onRetry={load} />;
+  if (!p) return <Loading />;
   return (
     <>
       <Panel title={tr("Tests: questions per part")} note={tr("Approved questions, those cleared for mock and real tests, and how often real tests used them (limit {{n}}).", { n: p.exposureCap })}>
@@ -234,10 +303,16 @@ function Pool() {
 function Fairness() {
   const [days, setDays] = useState(180);
   const [f, setF] = useState<FairnessStudy | null>(null);
-  useEffect(() => {
+  const [failed, setFailed] = useState(false);
+  const load = () => {
     setF(null);
-    getFairness(days).then(setF);
-  }, [days]);
+    setFailed(false);
+    getFairness(days)
+      .then(setF)
+      .catch(() => setFailed(true));
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(load, [days]);
   return (
     <Panel
       title={tr("Speaking fairness study")}
@@ -253,7 +328,9 @@ function Fairness() {
           ))}
         </select>
       </label>
-      {!f ? (
+      {failed ? (
+        <Failed onRetry={load} />
+      ) : !f ? (
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : (
         <>
@@ -295,15 +372,21 @@ function Technical() {
   const { t } = useTranslation();
   const [test, setTest] = useState<string>(TESTS[0][0]);
   const [r, setR] = useState<TechnicalReport | null>(null);
-  useEffect(() => {
+  const [failed, setFailed] = useState(false);
+  const load = () => {
     setR(null);
-    getTechnical(test).then(setR);
-  }, [test]);
+    setFailed(false);
+    getTechnical(test)
+      .then(setR)
+      .catch(() => setFailed(true));
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(load, [test]);
   const FLAG: Record<string, string> = { too_hard: tr("Too hard"), too_easy: tr("Too easy"), low_discrimination: tr("Doesn't separate strong from weak") };
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3 print:hidden">
-        <select value={test} onChange={(e) => setTest(e.target.value)} className={input}>
+        <select value={test} onChange={(e) => setTest(e.target.value)} aria-label={tr("Test")} className={`${input} cursor-pointer`}>
           {TESTS.map(([id, name]) => (
             <option key={id} value={id}>
               {name}
@@ -314,8 +397,10 @@ function Technical() {
           <Printer size={15} /> {tr("Print / PDF")}
         </Button>
       </div>
-      {!r ? (
-        <p className="text-sm text-muted">{tr("Loading…")}</p>
+      {failed ? (
+        <Failed onRetry={load} />
+      ) : !r ? (
+        <Loading />
       ) : (
         <>
           <Panel title={tr("Technical report: {{test}}", { test: TESTS.find(([id]) => id === test)?.[1] ?? test })} note={tr("Generated {{date}} from finished mock tests and real tests.", { date: day(r.generatedAt) })}>
@@ -326,7 +411,7 @@ function Technical() {
                 [tr("Reliability (alpha)"), r.alpha ?? "—"],
                 [tr("Questions flagged"), `${r.flaggedItems} / ${r.itemsAnalysed}`],
               ].map(([l, v]) => (
-                <div key={String(l)} className="border border-rule rounded-xl p-3">
+                <div key={String(l)} className="bg-paper-warm/60 border border-rule rounded-xl p-3">
                   <b className="block font-display text-xl text-ink tabular-nums">{v}</b>
                   <span className="text-xs text-muted">{l}</span>
                 </div>
@@ -434,20 +519,12 @@ export function AssessmentQuality() {
   return (
     <div className="flex flex-col gap-5 w-full">
       <div className="print:hidden">
-        <h1 className="font-display font-bold text-2xl text-ink">{tr("Assessment quality")}</h1>
-        <p className="text-sm text-muted mt-1">{tr("Keeping real tests fair, secure and reliable: appeals, pass marks, question exposure, a fairness check on speaking scores, and the technical report.")}</p>
+        <PageHeader
+          title={tr("Assessment quality")}
+          subtitle={tr("Keeping real tests fair, secure and reliable: appeals, pass marks, question exposure, a fairness check on speaking scores, and the technical report.")}
+        />
       </div>
-      <div className="flex gap-1 border-b border-rule print:hidden flex-wrap">
-        {TABS.map(([k, label]) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`px-4 py-2.5 text-sm font-semibold -mb-px border-b-2 cursor-pointer ${tab === k ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs<Tab> value={tab} onChange={setTab} options={TABS.map(([key, label]) => ({ key, label }))} className="print:hidden" />
       {tab === "appeals" && <Appeals />}
       {tab === "settings" && <Settings />}
       {tab === "pool" && <Pool />}

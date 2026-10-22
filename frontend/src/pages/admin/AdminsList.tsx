@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   UserPlus,
   X,
   Mail,
   Users,
-  CalendarClock,
-  UserCheck,
   UserX,
+  Ban,
+  Building2,
+  AlertTriangle,
   Upload,
   FileText,
   Pencil,
-  Trash2,
   RotateCcw,
 } from "lucide-react";
-import { EmptyNote, FilterPills, PageHeader, Panel, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, Notice, PageError, PageHeader, PageLoading, Panel, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 import { ago, getPortfolio, shortDate } from "@/api/staff";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
@@ -111,7 +112,7 @@ function BulkUploadForm({ onDone }: { onDone: () => void }) {
           className="flex items-center justify-center gap-2 border-2 border-dashed border-rule rounded-card px-4 py-6 text-sm text-muted hover:border-navy hover:text-navy transition-colors cursor-pointer"
         >
           <Upload size={18} />
-          {fileName ? `Selected: ${fileName}` : tr("Choose a CSV file")}
+          {fileName ? tr("Selected: {{name}}", { name: fileName }) : tr("Choose a CSV file")}
         </button>
         <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
       </div>
@@ -219,13 +220,12 @@ function OnboardAdminModal({ onClose, onCreated }: { onClose: () => void; onCrea
     }
   }
 
+  // A long form: only the close button and Cancel close it, so a stray click
+  // outside doesn't throw away what was typed.
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-3xl max-h-[95vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-surface flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">{tr("Onboard Admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
@@ -350,12 +350,9 @@ function EditAdminModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-3xl max-h-[95vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-surface flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">{tr("Edit Admin")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
@@ -481,7 +478,7 @@ function AdminActivityModal({ admin, onClose }: { admin: AdminAccount; onClose: 
               { label: tr("Organizations"), value: organizations.length },
               { label: tr("Learners"), value: organizations.reduce((n, o) => n + (o.learnerCount ?? 0), 0) },
               { label: tr("Managers"), value: organizations.reduce((n, o) => n + (o.managers?.length ?? 0), 0) },
-              { label: tr("Permissions"), value: `${Object.values(admin.permissions).filter(Boolean).length} of ${Object.keys(PERMISSION_LABELS).length}` },
+              { label: tr("Permissions"), value: tr("{{n}} of {{total}}", { n: Object.values(admin.permissions).filter(Boolean).length, total: Object.keys(PERMISSION_LABELS).length }) },
             ]
           : undefined
       }
@@ -617,8 +614,10 @@ function AdminsListPage() {
   const [admins, setAdmins] = useState<AdminAccount[] | null>(null);
   const [portfolio, setPortfolio] = useState<Map<string, { learners: number; atRisk: number; organizations: number }>>(new Map());
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showOnboard, setShowOnboard] = useState(false);
   const [justInvited, setJustInvited] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
   const [editing, setEditing] = useState<AdminAccount | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState<AdminAccount | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -628,7 +627,16 @@ function AdminsListPage() {
   const [filter, setFilter] = useState<AdminFilter>("all");
   const [dept, setDept] = useState("all");
 
+  // The dashboard's "Onboard an Admin" lands here with ?onboard=1.
+  useEffect(() => {
+    if (params.get("onboard")) {
+      setShowOnboard(true);
+      setParams({}, { replace: true });
+    }
+  }, [params, setParams]);
+
   function load() {
+    setError(null);
     getAdmins()
       .then((res) => setAdmins(res.admins))
       .catch(() => setError(tr("Could not load admins.")));
@@ -641,12 +649,14 @@ function AdminsListPage() {
 
   async function handleDelete(admin: AdminAccount) {
     setDeletingId(admin.id);
+    setActionError(null);
     try {
       await deleteAdmin(admin.id);
       setConfirmingDelete(null);
       load();
     } catch {
-      setError(tr("Could not deactivate that admin."));
+      setConfirmingDelete(null);
+      setActionError(tr("Could not deactivate that admin."));
     } finally {
       setDeletingId(null);
     }
@@ -654,11 +664,12 @@ function AdminsListPage() {
 
   async function handleReactivate(admin: AdminAccount) {
     setReactivatingId(admin.id);
+    setActionError(null);
     try {
       await reactivateAdmin(admin.id);
       load();
     } catch {
-      setError(tr("Could not reactivate that admin."));
+      setActionError(tr("Could not reactivate that admin."));
     } finally {
       setReactivatingId(null);
     }
@@ -693,23 +704,29 @@ function AdminsListPage() {
       />
 
       {justInvited && (
-        <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">
-          {tr("Invite sent to {{justInvited}} — they'll receive an email to set their password.", { justInvited: justInvited })}</p>
+        <Notice onClose={() => setJustInvited(null)}>
+          {tr("Invite sent to {{justInvited}} — they'll receive an email to set their password.", { justInvited: justInvited })}
+        </Notice>
       )}
-      {error && <p className="text-sm text-error">{error}</p>}
-      {!admins && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+      {actionError && (
+        <Notice tone="error" onClose={() => setActionError(null)}>
+          {actionError}
+        </Notice>
+      )}
+      {error && !admins && <PageError message={error} onRetry={load} />}
+      {!admins && !error && <PageLoading rows={1} header={false} />}
 
       {admins && (
         <>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard variant="outline" palette="rose" index={0} icon={Users} value={all.filter((a) => adminStatus(a) === "active").length} label={tr("Active Admins")} sub={tr("{{length}} added this week", { length: all.filter((a) => isWithinDays(a.createdAt, 7)).length })} />
             <StatCard variant="outline" palette="rose" index={1} icon={UserX} value={all.filter((a) => adminStatus(a) === "pending").length} label={tr("Invite not accepted")} sub={tr("{{length}} quiet for 14+ days", { length: all.filter(isQuiet).length })} />
-            <StatCard variant="outline" palette="rose" index={2} icon={CalendarClock} value={[...portfolio.values()].reduce((n, p) => n + p.organizations, 0)} label={tr("Organizations owned")} sub={tr("{{length}} Admins own none", { length: all.filter((a) => a.active && a.managedOrgCount === 0).length })} />
-            <StatCard variant="outline" palette="rose" index={3} icon={UserCheck} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label={tr("Accounts at risk")} sub={tr("{{reduce}} learners in their portfolios", { reduce: [...portfolio.values()].reduce((n, p) => n + p.learners, 0) })} />
+            <StatCard variant="outline" palette="rose" index={2} icon={Building2} value={[...portfolio.values()].reduce((n, p) => n + p.organizations, 0)} label={tr("Organizations owned")} sub={tr("{{length}} Admins own none", { length: all.filter((a) => a.active && a.managedOrgCount === 0).length })} />
+            <StatCard variant="outline" palette="rose" index={3} icon={AlertTriangle} value={[...portfolio.values()].reduce((n, p) => n + p.atRisk, 0)} label={tr("Accounts at risk")} sub={tr("{{reduce}} learners in their portfolios", { reduce: [...portfolio.values()].reduce((n, p) => n + p.learners, 0) })} />
           </div>
 
           {all.length > 0 && (
-            <div className="grid lg:grid-cols-3 gap-4 items-start">
+            <div className="grid lg:grid-cols-3 gap-4">
               <Panel className="lg:col-span-2" title={tr("Portfolio comparison")}>
                 {(() => {
                   const rows = all
@@ -881,9 +898,10 @@ function AdminsListPage() {
                             onClick={() => setConfirmingDelete(a)}
                             disabled={deletingId === a.id}
                             title={tr("Deactivate")}
+                            aria-label={tr("Deactivate")}
                             className="p-1.5 rounded-input text-muted hover:bg-error/10 hover:text-error cursor-pointer disabled:opacity-50"
                           >
-                            <Trash2 size={15} />
+                            <Ban size={15} />
                           </button>
                         </>
                       )}
@@ -898,7 +916,11 @@ function AdminsListPage() {
 
       {showOnboard && (
         <OnboardAdminModal
-          onClose={() => setShowOnboard(false)}
+          onClose={() => {
+            // Bulk upload finishes through Close/Done, so refresh the list.
+            setShowOnboard(false);
+            load();
+          }}
           onCreated={(email) => {
             setShowOnboard(false);
             setJustInvited(email);

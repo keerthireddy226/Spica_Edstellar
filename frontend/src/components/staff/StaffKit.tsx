@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Search } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, RotateCcw, Search, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cardGradient } from "@/lib/cardGradients";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,8 +76,12 @@ export function StatCard({
   const text = (
     <div className="min-w-0">
       <p className="text-2xl font-display font-bold truncate">{value}</p>
-      <p className="text-xs opacity-85">{label}</p>
-      {sub && <p className="text-[11px] opacity-70 mt-0.5 truncate">{sub}</p>}
+      <p className="text-xs opacity-85 leading-snug">{label}</p>
+      {sub && (
+        <p className="text-[11px] opacity-75 mt-0.5 truncate" title={typeof sub === "string" ? sub : undefined}>
+          {sub}
+        </p>
+      )}
     </div>
   );
   if (variant === "gradient" || variant === "glass") {
@@ -122,8 +126,12 @@ export function StatCard({
           <p style={{ color: col }} className="text-2xl font-display font-bold truncate">
             {value}
           </p>
-          <p className="text-xs text-ink">{label}</p>
-          {sub && <p className="text-[11px] text-muted mt-0.5 truncate">{sub}</p>}
+          <p className="text-xs text-ink leading-snug">{label}</p>
+          {sub && (
+            <p className="text-[11px] text-muted mt-0.5 truncate" title={typeof sub === "string" ? sub : undefined}>
+              {sub}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -157,25 +165,47 @@ export function StatCard({
   // ledger
   return (
     <div className="bg-surface rounded-card border border-rule shadow-sm p-5 flex flex-col gap-2 min-w-0">
-      <div className="flex items-center gap-2 text-muted">
-        <Icon size={16} style={{ color: col }} />
-        <p className="text-xs font-semibold uppercase tracking-wide">{label}</p>
+      <div className="flex items-center gap-2 text-muted min-w-0">
+        <Icon size={16} style={{ color: col }} className="shrink-0" />
+        <p className="text-xs font-semibold uppercase tracking-wide truncate" title={label}>
+          {label}
+        </p>
       </div>
       <p className="text-3xl font-display font-bold text-ink truncate">{value}</p>
       <div className="h-1.5 rounded-full bg-rule overflow-hidden">
         <div style={{ background: col, width: `${Math.round(Math.min(1, Math.max(0.04, progress ?? 1)) * 100)}%` }} className="h-full rounded-full" />
       </div>
-      {sub && <p className="text-[11px] text-muted truncate">{sub}</p>}
+      {sub && (
+        <p className="text-[11px] text-muted truncate" title={typeof sub === "string" ? sub : undefined}>
+          {sub}
+        </p>
+      )}
     </div>
   );
 }
 
-export function Panel({ title, action, children, className = "" }: { title: string; action?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({
+  title,
+  note,
+  action,
+  children,
+  className = "",
+}: {
+  title: string;
+  // One line under the title explaining the panel.
+  note?: ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={`bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 min-w-0 ${className}`}>
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-display font-bold text-lg text-ink">{title}</h2>
-        {action}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="font-display font-bold text-lg text-ink">{title}</h2>
+          {note && <p className="text-sm text-muted mt-0.5">{note}</p>}
+        </div>
+        {action && <div className="shrink-0 pt-1">{action}</div>}
       </div>
       {children}
     </div>
@@ -210,7 +240,7 @@ export function SearchBox({ value, onChange, placeholder }: { value: string; onC
 
 export function FilterPills<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: [T, string, number?][] }) {
   return (
-    <div className="flex items-center gap-1 bg-surface border border-rule rounded-pill p-1 max-w-full overflow-x-auto">
+    <div className="flex items-center gap-1 bg-surface border border-rule rounded-pill p-1 w-fit max-w-full overflow-x-auto shadow-sm">
       {options.map(([key, label, n]) => (
         <button
           key={key}
@@ -292,5 +322,109 @@ export function WeeklyBars({ data }: { data: { week: string; signups: number; ac
 }
 
 export function EmptyNote({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">{children}</p>;
+  return <p className="text-sm text-muted bg-paper-warm/70 border border-dashed border-rule rounded-input px-3.5 py-2.5">{children}</p>;
 }
+
+// Underlined tabs for switching between the views of one page.
+export function Tabs<T extends string>({
+  value,
+  onChange,
+  options,
+  className = "",
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { key: T; label: string; icon?: LucideIcon; count?: number }[];
+  className?: string;
+}) {
+  return (
+    <div role="tablist" className={`flex items-center gap-1 border-b border-rule overflow-x-auto ${className}`}>
+      {options.map(({ key, label, icon: Icon, count }) => (
+        <button
+          key={key}
+          role="tab"
+          aria-selected={value === key}
+          onClick={() => onChange(key)}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px whitespace-nowrap transition-colors cursor-pointer ${
+            value === key ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
+          }`}
+        >
+          {Icon && <Icon size={15} />}
+          {label}
+          {count !== undefined && count > 0 && (
+            <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-pill ${value === key ? "bg-navy text-white" : "bg-rule text-muted"}`}>{count}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// A short message after an action: green when it worked, red when it didn't.
+export function Notice({ tone = "success", children, onClose }: { tone?: "success" | "error" | "info"; children: ReactNode; onClose?: () => void }) {
+  const cls = {
+    success: "text-success bg-success/10 border-success/25",
+    error: "text-error bg-error/10 border-error/25",
+    info: "text-ink bg-paper-warm border-rule",
+  }[tone];
+  const Icon = tone === "success" ? CheckCircle2 : tone === "error" ? AlertTriangle : Info;
+  return (
+    <div role={tone === "error" ? "alert" : "status"} className={`flex items-start gap-2.5 text-sm border rounded-card px-4 py-3 ${cls}`}>
+      <Icon size={16} className="mt-0.5 shrink-0" />
+      <div className="flex-1 min-w-0">{children}</div>
+      {onClose && (
+        <button onClick={onClose} aria-label={tr("Close")} className="opacity-70 hover:opacity-100 cursor-pointer shrink-0">
+          <X size={15} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Placeholder while a page's data loads, shaped like the page it stands in for.
+export function PageLoading({ tiles = 4, rows = 2, header = true }: { tiles?: number; rows?: number; header?: boolean }) {
+  return (
+    <div className="flex flex-col gap-6 w-full animate-pulse" aria-busy="true" aria-label={tr("Loading…")}>
+      {header && (
+        <div className="flex flex-col gap-2">
+          <div className="h-7 w-56 rounded-input bg-rule" />
+          <div className="h-4 w-96 max-w-full rounded-input bg-rule/70" />
+        </div>
+      )}
+      {tiles > 0 && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: tiles }, (_, i) => (
+            <div key={i} className="h-[104px] rounded-card bg-surface border border-rule" />
+          ))}
+        </div>
+      )}
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="h-48 rounded-card bg-surface border border-rule" />
+      ))}
+    </div>
+  );
+}
+
+// When a page's data couldn't load: say so, and offer to try again.
+export function PageError({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <div className="bg-surface border border-rule rounded-card shadow-sm px-6 py-10 flex flex-col items-center text-center gap-3">
+      <span className="h-11 w-11 rounded-full bg-error/10 text-error flex items-center justify-center">
+        <AlertTriangle size={20} />
+      </span>
+      <p className="text-sm text-ink font-medium">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-pill border border-rule bg-surface text-sm font-semibold text-ink hover:border-rule-strong cursor-pointer"
+        >
+          <RotateCcw size={14} /> {tr("Try again")}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Compact secondary action for page headers (links styled as buttons).
+export const headerLinkClass =
+  "flex items-center gap-1.5 px-3.5 py-2 rounded-pill border border-rule bg-surface text-sm font-semibold text-ink hover:border-navy/50 hover:text-navy transition-colors shadow-sm";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Award, CalendarClock, Moon, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { shortDate } from "@/api/staff";
-import { EmptyNote, PageHeader, Panel, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, PageError, PageHeader, PageLoading, Panel, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 interface Insights {
@@ -23,13 +23,15 @@ export function StaffInsights() {
   const perms = useStaffPermissions();
   const [data, setData] = useState<Insights | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
+  const load = () => {
+    setError(null);
     api<Insights>("/admin/insights")
       .then(setData)
       .catch(() => setError(tr("Could not load insights.")));
-  }, []);
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  };
+  useEffect(load, []);
+  if (error) return <PageError message={error} onRetry={load} />;
+  if (!data) return <PageLoading />;
   const f = data.funnel;
   const steps: [string, number][] = [
     [tr("Invited or signed up"), f.invited],
@@ -48,17 +50,17 @@ export function StaffInsights() {
         subtitle={perms.isSuper ? tr("How learners are doing across Spica.") : tr("How learners are doing in your organizations and among individual learners.")}
       />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="glass" palette="terracotta" index={0} icon={Users} value={`${pct(f.signed_in, f.invited)}%`} label={tr("Accepted their invite")} sub={`${f.signed_in} of ${f.invited}`} />
-        <StatCard variant="glass" palette="terracotta" index={1} icon={Award} value={`${pct(f.placed, f.invited)}%`} label={tr("Took the placement test")} sub={`${f.placed} learners`} />
+        <StatCard variant="glass" palette="terracotta" index={0} icon={Users} value={`${pct(f.signed_in, f.invited)}%`} label={tr("Accepted their invite")} sub={tr("{{n}} of {{total}}", { n: f.signed_in, total: f.invited })} />
+        <StatCard variant="glass" palette="terracotta" index={1} icon={Award} value={`${pct(f.placed, f.invited)}%`} label={tr("Took the placement test")} sub={f.placed === 1 ? tr("1 learner") : tr("{{n}} learners", { n: f.placed })} />
         <StatCard variant="glass" palette="terracotta" index={2} icon={Moon} value={data.inactive.length} label={tr("Licensed but inactive 14+ days")} />
         <StatCard variant="glass" palette="terracotta" index={3} icon={CalendarClock} value={data.exams.length} label={tr("Exams in the next 60 days")} />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 items-start">
+      <div className="grid lg:grid-cols-3 gap-4">
         <Panel className="lg:col-span-2" title={tr("Learner journey")}>
           {steps.map(([label, n], i) => (
             <div key={label} className="flex items-center gap-3">
-              <span className="w-48 text-sm text-ink">{label}</span>
+              <span className="w-44 shrink-0 text-sm text-ink">{label}</span>
               <div className="flex-1 h-6 rounded-input bg-rule overflow-hidden">
                 <div className="h-full rounded-input flex items-center px-2 text-[11px] font-semibold text-white" style={{ width: `${Math.max(pct(n, f.invited), n ? 8 : 0)}%`, background: paletteColor("terracotta", i) }}>
                   {n ? n : ""}
@@ -73,7 +75,7 @@ export function StaffInsights() {
           {data.cefr.length === 0 ? (
             <EmptyNote>{tr("No placement results yet.")}</EmptyNote>
           ) : (
-            <div className="flex items-end gap-2 h-40">
+            <div className="flex items-end gap-2 h-40 mt-auto">
               {LEVELS.map((lv, i) => {
                 const n = data.cefr.find((c) => c.level === lv)?.n ?? 0;
                 return (
@@ -96,7 +98,7 @@ export function StaffInsights() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[760px]">
               <thead>
-                <tr className="text-left text-xs text-muted border-b border-rule">
+                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-b border-rule">
                   <th className="py-2">{tr("Organization")}</th>
                   <th className="py-2">{tr("Learners")}</th>
                   <th className="py-2">{tr("Signed in")}</th>
@@ -143,11 +145,11 @@ export function StaffInsights() {
                   <p className="text-ink truncate">{l.name}</p>
                   <p className="text-xs text-muted truncate">{[l.orgName ?? tr("Individual"), l.batchName].filter(Boolean).join(" · ")}</p>
                 </div>
-                <span className="text-xs text-muted shrink-0">{l.lastActive ? `Last ${shortDate(l.lastActive)}` : tr("Never practised")}</span>
+                <span className="text-xs text-muted shrink-0">{l.lastActive ? tr("Last {{date}}", { date: shortDate(l.lastActive) }) : tr("Never practised")}</span>
               </div>
             ))
           )}
-          {data.inactive.length > 15 && <p className="text-xs text-muted">{tr("and")}{" "}{data.inactive.length - 15} {tr("more")}</p>}
+          {data.inactive.length > 15 && <p className="text-xs text-muted">{tr("and {{n}} more", { n: data.inactive.length - 15 })}</p>}
         </Panel>
         <Panel title={tr("Exams coming up")}>
           {data.exams.length === 0 ? (
@@ -160,7 +162,7 @@ export function StaffInsights() {
                   <div className="min-w-0">
                     <p className="text-ink truncate">{e.name}</p>
                     <p className="text-xs text-muted truncate">
-                      {[e.orgName ?? tr("Individual"), e.exam?.toUpperCase(), e.level ? `now ${e.level}` : null, e.goal ? `goal ${e.goal}` : null].filter(Boolean).join(" · ")}
+                      {[e.orgName ?? tr("Individual"), e.exam?.toUpperCase(), e.level ? tr("now {{level}}", { level: e.level }) : null, e.goal ? tr("goal {{goal}}", { goal: e.goal }) : null].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   <span className={`text-xs font-semibold shrink-0 ${days <= 14 ? "text-error" : "text-muted"}`}>

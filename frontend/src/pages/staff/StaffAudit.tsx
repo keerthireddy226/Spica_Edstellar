@@ -3,7 +3,8 @@ import { Button } from "@/components/Button";
 import { AUDIT_VERBS, auditDetailParts } from "@/lib/auditVerbs";
 import { getAdminConsoleOverview } from "@/api/admin";
 import { getStaffAudit, type StaffAuditEntry, type StaffAuditFilters } from "@/api/staff";
-import { EmptyNote, PageHeader, SelectFilter, useStaffPermissions } from "@/components/staff/StaffKit";
+import { X } from "lucide-react";
+import { EmptyNote, Notice, PageHeader, SelectFilter, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 const GROUPS: [string, string][] = [
@@ -53,7 +54,8 @@ export function StaffAudit() {
   const [filters, setFilters] = useState<StaffAuditFilters>({});
   const [entries, setEntries] = useState<StaffAuditEntry[]>([]);
   const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [orgs, setOrgs] = useState<[string, string][]>([]);
 
   useEffect(() => {
@@ -64,12 +66,13 @@ export function StaffAudit() {
 
   function load(more = false) {
     setLoading(true);
+    setFailed(false);
     getStaffAudit({ ...filters, before: more ? entries[entries.length - 1]?.createdAt : undefined })
       .then((r) => {
         setEntries((p) => (more ? [...p, ...r.entries] : r.entries));
         setHasMore(r.hasMore);
       })
-      .catch(() => {})
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,6 +80,8 @@ export function StaffAudit() {
 
   const set = (k: keyof StaffAuditFilters) => (v: string) => setFilters((f) => ({ ...f, [k]: v || undefined }));
   const dateClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+  const filtered = Object.values(filters).some(Boolean);
+  const roleLabel = (r: string) => ROLES.find(([k]) => k === r)?.[1] ?? r.replace(/_/g, " ");
 
   return (
     <div className="flex flex-col gap-5 w-full">
@@ -90,10 +95,25 @@ export function StaffAudit() {
         <SelectFilter label={tr("Who")} value={filters.actorRole ?? ""} onChange={set("actorRole")} options={ROLES} />
         <input type="date" aria-label={tr("From")} value={filters.from ?? ""} onChange={(e) => set("from")(e.target.value)} className={dateClass} />
         <input type="date" aria-label={tr("To")} value={filters.to ?? ""} onChange={(e) => set("to")(e.target.value)} className={dateClass} />
+        {filtered && (
+          <button onClick={() => setFilters({})} className="flex items-center gap-1 text-sm font-semibold text-navy hover:underline cursor-pointer">
+            <X size={14} /> {tr("Clear filters")}
+          </button>
+        )}
       </div>
-      {entries.length === 0 && !loading ? (
+      {failed && (
+        <Notice tone="error">
+          {tr("Could not load the audit log.")}{" "}
+          <button onClick={() => load(entries.length > 0)} className="font-semibold underline cursor-pointer">
+            {tr("Try again")}
+          </button>
+        </Notice>
+      )}
+      {entries.length === 0 && loading ? (
+        <div className="h-64 rounded-card bg-surface border border-rule animate-pulse" aria-busy="true" />
+      ) : entries.length === 0 && !failed ? (
         <EmptyNote>{tr("Nothing recorded for these filters.")}</EmptyNote>
-      ) : (
+      ) : entries.length === 0 ? null : (
         <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
@@ -110,7 +130,7 @@ export function StaffAudit() {
                   <td className="px-4 py-3 text-muted whitespace-nowrap">{new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</td>
                   <td className="px-4 py-3">
                     <p className="text-ink">{e.actorLabel ?? tr("System")}</p>
-                    {e.actorRole && <p className="text-xs text-muted">{e.actorRole.replace("_", " ")}</p>}
+                    {e.actorRole && <p className="text-xs text-muted">{roleLabel(e.actorRole)}</p>}
                   </td>
                   <td className="px-4 py-3 text-ink">{describe(e)}</td>
                   <td className="px-4 py-3 text-muted">{e.orgName ?? "—"}</td>

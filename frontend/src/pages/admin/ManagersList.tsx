@@ -3,7 +3,7 @@ import { KeyRound, ShieldCheck, Users, UserX } from "lucide-react";
 import { getManagers as getManagerAccounts, type ManagerAccount } from "@/api/admin";
 import { ManagerDetailModal } from "@/components/ManagerDetailModal";
 import { ago, shortDate } from "@/api/staff";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, PageError, PageHeader, PageLoading, SearchBox, SelectFilter, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 type F = "all" | "active" | "pending" | "deactivated";
@@ -20,14 +20,16 @@ export function ManagersList() {
   const [filter, setFilter] = useState<F>("all");
   const [org, setOrg] = useState("all");
 
-  useEffect(() => {
+  const load = () => {
+    setError(null);
     getManagerAccounts()
       .then((r) => setRows(r.managers))
       .catch(() => setError(tr("Could not load Managers.")));
-  }, []);
+  };
+  useEffect(load, []);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error) return <PageError message={error} onRetry={load} />;
+  if (!rows) return <PageLoading />;
   const orgs = [...new Set(rows.map((m) => m.tenantName))].sort().map((n) => [n, n] as [string, string]);
   const q = query.trim().toLowerCase();
   const shown = rows.filter(
@@ -99,8 +101,12 @@ export function ManagersList() {
                       {m.email} · {m.tenantName}
                     </p>
                   </div>
-                  <button onClick={() => setViewing(m.id)} className="text-xs font-semibold text-navy hover:underline cursor-pointer shrink-0">
-                    {tr("View details")}</button>
+                  <button
+                    onClick={() => setViewing(m.id)}
+                    className="px-2.5 py-1 rounded-pill border border-rule text-xs font-semibold text-navy hover:bg-paper-warm transition-colors cursor-pointer shrink-0"
+                  >
+                    {tr("View details")}
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {m.batchNames.length === 0 ? (

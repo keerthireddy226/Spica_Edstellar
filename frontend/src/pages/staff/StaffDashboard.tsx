@@ -5,7 +5,7 @@ import { ROUTES } from "@/constants/routes";
 import { TIER_LABELS } from "@/api/plans";
 import { AUDIT_VERBS } from "@/lib/auditVerbs";
 import { getPortfolio, money, ago, type Portfolio } from "@/api/staff";
-import { EmptyNote, PageHeader, Panel, StatCard, StatusPill, WeeklyBars, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, PageError, PageHeader, PageLoading, Panel, StatCard, StatusPill, WeeklyBars, headerLinkClass, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
@@ -24,14 +24,16 @@ export function StaffDashboard() {
   const [data, setData] = useState<Portfolio | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
+    setError(null);
     getPortfolio()
       .then(setData)
       .catch(() => setError(tr("Could not load the dashboard.")));
-  }, []);
+  };
+  useEffect(load, []);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!data) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error) return <PageError message={error} onRetry={load} />;
+  if (!data) return <PageLoading rows={3} />;
 
   const sup = perms.isSuper;
   const r = {
@@ -51,7 +53,7 @@ export function StaffDashboard() {
     overdue: r.billing,
     review: r.reviews,
     jobs: ROUTES.SUPER_SYSTEM,
-    admin_invite: ROUTES.ADMIN_ADMINS,
+    admin_invite: sup ? ROUTES.ADMIN_ADMINS : ROUTES.ADMIN_CONSOLE_ADMINS,
   };
 
   return (
@@ -66,25 +68,25 @@ export function StaffDashboard() {
         actions={
           sup ? (
             <>
-              <Link to={ROUTES.SUPER_ORGANIZATIONS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+              <Link to={`${ROUTES.SUPER_ORGANIZATIONS}?onboard=1`} className={headerLinkClass}>
                 <Building2 size={15} /> {tr("Onboard an organization")}</Link>
-              <Link to={ROUTES.ADMIN_ADMINS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+              <Link to={ROUTES.ADMIN_ADMINS} className={headerLinkClass}>
                 <ShieldCheck size={15} /> {tr("Manage Admins")}</Link>
-              <Link to={ROUTES.ADMIN_LEARNERS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+              <Link to={`${ROUTES.ADMIN_LEARNERS}?invite=1`} className={headerLinkClass}>
                 <UserPlus size={15} /> {tr("Invite an individual learner")}</Link>
             </>
           ) : (
             <>
               {perms.manageOrganizations && (
-                <Link to={ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <Link to={`${ROUTES.ADMIN_CONSOLE_ORGANIZATIONS}?onboard=1`} className={headerLinkClass}>
                   <Building2 size={15} /> {tr("Onboard an organization")}</Link>
               )}
               {perms.manageAdmins && (
-                <Link to={ROUTES.ADMIN_CONSOLE_ADMINS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <Link to={`${ROUTES.ADMIN_CONSOLE_ADMINS}?onboard=1`} className={headerLinkClass}>
                   <ShieldCheck size={15} /> {tr("Onboard an Admin")}</Link>
               )}
               {perms.inviteLearners && (
-                <Link to={ROUTES.ADMIN_CONSOLE_USERS} className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline">
+                <Link to={`${ROUTES.ADMIN_CONSOLE_USERS}?invite=1`} className={headerLinkClass}>
                   <UserPlus size={15} /> {tr("Invite an individual learner")}</Link>
               )}
             </>
@@ -117,7 +119,7 @@ export function StaffDashboard() {
           icon={KeyRound}
           value={`${data.licenses.assigned} / ${data.licenses.bought}`}
           label={tr("Licenses assigned / bought")}
-          sub={`${pct(data.licenses.utilization)} used${data.licenses.expiringUnused ? tr(" · {{expiringUnused}} expire unused soon", { expiringUnused: data.licenses.expiringUnused }) : ""}`}
+          sub={`${tr("{{pct}} used", { pct: pct(data.licenses.utilization) })}${data.licenses.expiringUnused ? tr(" · {{expiringUnused}} expire unused soon", { expiringUnused: data.licenses.expiringUnused }) : ""}`}
         />
         <StatCard
           index={3}
@@ -136,7 +138,7 @@ export function StaffDashboard() {
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 items-start">
+      <div className="grid lg:grid-cols-3 gap-4">
         <Panel
           className="lg:col-span-2"
           title={tr("Needs attention")}
@@ -167,12 +169,12 @@ export function StaffDashboard() {
             data.renewals.map((c) => {
               const days = Math.ceil((new Date(c.contractEnd).getTime() - Date.now()) / 86400000);
               return (
-                <Link key={c.id} to={r.orgs} className="flex items-center justify-between gap-3 text-sm hover:underline">
+                <Link key={c.id} to={r.orgs} className="flex items-center justify-between gap-3 text-sm hover:bg-paper-warm -mx-2 px-2 py-1.5 rounded-input transition-colors">
                   <span className="min-w-0">
                     <span className="text-ink font-medium truncate block">{c.name}</span>
                     {sup && c.ownerName && <span className="text-xs text-muted">{c.ownerName}</span>}
                   </span>
-                  <StatusPill tone={days <= 14 ? "error" : days <= 30 ? "warning" : "muted"}>{days <= 0 ? tr("Ends today") : `${days} days`}</StatusPill>
+                  <StatusPill tone={days <= 14 ? "error" : days <= 30 ? "warning" : "muted"}>{days <= 0 ? tr("Ends today") : tr("{{n}} days", { n: days })}</StatusPill>
                 </Link>
               );
             })
@@ -187,7 +189,7 @@ export function StaffDashboard() {
         </Panel>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4 items-start">
+      <div className="grid lg:grid-cols-3 gap-4">
         <Panel className="lg:col-span-2" title={tr("Last 8 weeks")}>
           <WeeklyBars data={data.trend} />
         </Panel>
@@ -219,7 +221,7 @@ export function StaffDashboard() {
         </Panel>
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Panel title={tr("Plans")}>
           {data.organizations.byTier.map((t) => (
             <div key={t.tier} className="flex items-center gap-3">
@@ -259,7 +261,7 @@ export function StaffDashboard() {
             <EmptyNote>{tr("Nothing recorded yet.")}</EmptyNote>
           ) : (
             data.recent.slice(0, 8).map((e, i) => (
-              <div key={i} className="text-sm">
+              <div key={i} className="text-sm border-t border-rule pt-2.5 first:border-0 first:pt-0">
                 <p className="text-ink">
                   <span className="font-medium">{e.actorLabel ?? tr("System")}</span> {AUDIT_VERBS[e.action] ?? e.action.replace(/[._]/g, " ")}{" "}
                   {e.targetLabel ?? ""}
@@ -275,7 +277,7 @@ export function StaffDashboard() {
       </div>
 
       {sup && data.admins && (
-        <div className="grid lg:grid-cols-3 gap-4 items-start">
+        <div className="grid lg:grid-cols-3 gap-4">
           <Panel className="lg:col-span-2" title={tr("Admins' portfolios")} action={<Link to={ROUTES.ADMIN_ADMINS} className="text-xs font-semibold text-navy hover:underline">{tr("Manage")}</Link>}>
             {data.admins.length === 0 ? (
               <EmptyNote>{tr("No Admins yet.")}</EmptyNote>
@@ -283,7 +285,7 @@ export function StaffDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[520px]">
                   <thead>
-                    <tr className="text-left text-xs text-muted border-b border-rule">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-b border-rule">
                       <th className="py-2">{tr("Admin")}</th>
                       <th className="py-2">{tr("Organizations")}</th>
                       <th className="py-2">{tr("Learners")}</th>

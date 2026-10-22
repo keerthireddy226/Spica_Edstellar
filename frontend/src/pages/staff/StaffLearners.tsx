@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { useTranslation } from "react-i18next";
 import { JOB_ROLES, sortedCountries } from "@/constants/demographics";
 import type { JobRole } from "@/api/onboarding";
@@ -24,7 +26,7 @@ import {
   type IndividualLearner,
   type OrgLearnerRow,
 } from "@/api/staff";
-import { Avatar, EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
+import { Avatar, EmptyNote, FilterPills, Notice, PageError, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, Tabs, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 import { CertifiedCell } from "@/components/CertifiedCell";
@@ -167,12 +169,16 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
   const [org, setOrg] = useState("all");
   const [status, setStatus] = useState<"all" | "active" | "pending" | "inactive" | "deactivated">("all");
   const [viewing, setViewing] = useState<string | null>(null);
-  useEffect(() => {
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
     getStaffOrgLearners()
       .then((r) => setRows(r.learners))
-      .catch(() => setRows([]));
-  }, []);
-  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+      .catch(() => setFailed(true));
+  };
+  useEffect(load, []);
+  if (failed) return <PageError message={tr("Could not load organization learners.")} onRetry={load} />;
+  if (!rows) return <TableLoading />;
   const orgs = [...new Map(rows.map((r) => [r.tenantId, r.orgName])).entries()];
   const stale = (r: OrgLearnerRow) => !r.lastActiveOn || Date.now() - new Date(r.lastActiveOn).getTime() > 14 * 86400000;
   const st = (r: OrgLearnerRow) => (!r.active ? "deactivated" : !r.hasLoggedIn ? "pending" : stale(r) ? "inactive" : "active");
@@ -185,9 +191,9 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
   );
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm text-muted bg-paper-warm border border-rule rounded-input px-3.5 py-2.5">
+      <Notice tone="info">
         {tr("Organization learners are added and managed by their Org Admin and Managers. Here you can see them")}{canView ? tr(" and open their full profile") : ""}.
-      </p>
+      </Notice>
       <div className="flex items-center gap-3 flex-wrap">
         <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email, batch, department or ID")} />
         <SelectFilter label={tr("Organization")} value={org} onChange={setOrg} options={[["all", tr("All organizations")], ...orgs]} />
@@ -210,14 +216,14 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">{tr("Learner")}</th>
-                <th className="px-4 py-3">{tr("Organization · batch")}</th>
-                <th className="px-4 py-3">{tr("Level")}</th>
-                <th className="px-4 py-3">{tr("Certified")}</th>
-                <th className="px-4 py-3">{tr("Sessions")}</th>
-                <th className="px-4 py-3">{tr("Last practised")}</th>
-                <th className="px-4 py-3">{tr("License")}</th>
-                <th className="px-4 py-3">{tr("Status")}</th>
+                <th className="px-3 py-3">{tr("Learner")}</th>
+                <th className="px-3 py-3">{tr("Organization · batch")}</th>
+                <th className="px-3 py-3">{tr("Level")}</th>
+                <th className="px-3 py-3">{tr("Certified")}</th>
+                <th className="px-3 py-3">{tr("Sessions")}</th>
+                <th className="px-3 py-3">{tr("Last practised")}</th>
+                <th className="px-3 py-3">{tr("License")}</th>
+                <th className="px-3 py-3">{tr("Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -229,7 +235,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                     onClick={() => canView && setViewing(r.id)}
                     className={`border-b border-rule last:border-0 ${canView ? "cursor-pointer hover:bg-paper-warm" : ""}`}
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
                         <div className="min-w-0">
@@ -241,19 +247,19 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <p className="text-ink">{r.orgName}</p>
                       <p className="text-xs text-muted">
                         {r.batchName ?? tr("No batch")}
                         {r.department ? ` · ${r.department}` : ""}
                       </p>
                     </td>
-                    <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
-                    <td className="px-4 py-3"><CertifiedCell c={r.certified} /></td>
-                    <td className="px-4 py-3 text-muted">{r.sessionCount}</td>
-                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
-                    <td className="px-4 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-3 py-3"><CertifiedCell c={r.certified} /></td>
+                    <td className="px-3 py-3 text-muted">{r.sessionCount}</td>
+                    <td className="px-3 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
+                    <td className="px-3 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
+                    <td className="px-3 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : s === "inactive" ? "muted" : "error"}>
                         {s === "active" ? tr("Practising") : s === "pending" ? tr("Invite pending") : s === "inactive" ? tr("Inactive") : tr("Deactivated")}
                       </StatusPill>
@@ -281,14 +287,27 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
   const [viewing, setViewing] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const load = () =>
+  const [failed, setFailed] = useState(false);
+  const [deactivating, setDeactivating] = useState<IndividualLearner | null>(null);
+  const [params, setParams] = useSearchParams();
+  const load = () => {
+    setFailed(false);
     getIndividuals()
       .then((r) => setRows(r.learners))
-      .catch(() => setRows([]));
+      .catch(() => setFailed(true));
+  };
   useEffect(() => {
     load();
   }, []);
-  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  // The dashboard's "Invite an individual learner" lands here with ?invite=1.
+  useEffect(() => {
+    if (params.get("invite") && canInvite) {
+      setInviting(true);
+      setParams({}, { replace: true });
+    }
+  }, [params, canInvite, setParams]);
+  if (failed) return <PageError message={tr("Could not load individual learners.")} onRetry={load} />;
+  if (!rows) return <TableLoading tiles />;
 
   const q = query.trim().toLowerCase();
   const st = (r: IndividualLearner) => (!r.active ? "deactivated" : !r.hasLoggedIn ? "pending" : "active");
@@ -302,6 +321,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
   const currency = rows.find((r) => r.paidCurrency)?.paidCurrency ?? "USD";
   const act = async (fn: () => Promise<unknown>, msg: string) => {
     setError(null);
+    setNotice(null);
     try {
       await fn();
       setNotice(msg);
@@ -319,8 +339,12 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
         <StatCard variant="glass" palette="sage" index={2} icon={Gift} value={rows.filter((r) => r.plan === "complimentary").length} label={tr("Complimentary")} sub={tr("{{length}} on the free plan", { length: rows.filter((r) => r.plan === "free").length })} />
         <StatCard variant="glass" palette="sage" index={3} icon={User} value={rows.filter((r) => r.source === "invited").length} label={tr("Invited by Edstellar")} sub={tr("{{length}} signed up themselves", { length: rows.filter((r) => r.source === "signup").length })} />
       </div>
-      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
-      {error && <p className="text-sm text-error">{error}</p>}
+      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {error && (
+        <Notice tone="error" onClose={() => setError(null)}>
+          {error}
+        </Notice>
+      )}
       <div className="flex items-center gap-3 flex-wrap">
         <SearchBox value={query} onChange={setQuery} placeholder={tr("Search by name, email or ID")} />
         <SelectFilter label={tr("Status")} value={status} onChange={setStatus} options={[["all", tr("Any status")], ["active", tr("Active")], ["pending", tr("Invite pending")], ["deactivated", tr("Deactivated")]]} />
@@ -347,15 +371,15 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-4 py-3">{tr("Learner")}</th>
-                <th className="px-4 py-3">{tr("Plan")}</th>
-                <th className="px-4 py-3">{tr("Level")}</th>
-                <th className="px-4 py-3">{tr("Certified")}</th>
-                <th className="px-4 py-3">{tr("Sessions")}</th>
-                <th className="px-4 py-3">{tr("Last practised")}</th>
-                <th className="px-4 py-3">{tr("Joined")}</th>
-                <th className="px-4 py-3">{tr("Status")}</th>
-                <th className="px-4 py-3" />
+                <th className="px-3 py-3">{tr("Learner")}</th>
+                <th className="px-3 py-3">{tr("Plan")}</th>
+                <th className="px-3 py-3">{tr("Level")}</th>
+                <th className="px-3 py-3">{tr("Certified")}</th>
+                <th className="px-3 py-3">{tr("Sessions")}</th>
+                <th className="px-3 py-3">{tr("Last practised")}</th>
+                <th className="px-3 py-3">{tr("Joined")}</th>
+                <th className="px-3 py-3">{tr("Status")}</th>
+                <th className="px-3 py-3"><span className="sr-only">{tr("Actions")}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -367,7 +391,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                     onClick={() => canView && setViewing(r.id)}
                     className={`border-b border-rule last:border-0 ${canView ? "cursor-pointer hover:bg-paper-warm" : ""}`}
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
                         <div className="min-w-0">
@@ -376,26 +400,28 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <StatusPill tone={r.plan === "paid" ? "success" : r.plan === "complimentary" ? "navy" : "muted"}>
                         {r.plan === "paid" ? tr("Paid") : r.plan === "complimentary" ? tr("Complimentary") : tr("Free")}
                       </StatusPill>
                       {r.license && r.license.status !== "none" && <div className="mt-1"><LicenseStatusPill license={r.license} /></div>}
                     </td>
-                    <td className="px-4 py-3 text-ink">{r.cefr ?? "—"}</td>
-                    <td className="px-4 py-3"><CertifiedCell c={r.certified} /></td>
-                    <td className="px-4 py-3 text-muted">{r.sessions}</td>
-                    <td className="px-4 py-3 text-muted">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
-                    <td className="px-4 py-3 text-muted">
+                    <td className="px-3 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-3 py-3"><CertifiedCell c={r.certified} /></td>
+                    <td className="px-3 py-3 text-muted">{r.sessions}</td>
+                    <td className="px-3 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
+                    <td className="px-3 py-3 text-muted whitespace-nowrap">
                       <p>{shortDate(r.createdAt)}</p>
-                      <p className="text-xs">{r.invitedByName ? tr("Invited by {{invitedByName}}", { invitedByName: r.invitedByName }) : tr("Signed up")}</p>
+                      <p className="text-xs max-w-40 truncate" title={r.invitedByName ?? undefined}>
+                        {r.invitedByName ? tr("Invited by {{invitedByName}}", { invitedByName: r.invitedByName }) : tr("Signed up")}
+                      </p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : "error"}>
                         {s === "active" ? tr("Active · {{ago}}", { ago: ago(r.lastActiveOn) }) : s === "pending" ? tr("Invite pending") : tr("Deactivated")}
                       </StatusPill>
                     </td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1 justify-end">
                         {canView && (
                           <IconBtn title={tr("View profile")} onClick={() => setViewing(r.id)}>
@@ -414,11 +440,11 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                         )}
                         {canInvite &&
                           (r.active ? (
-                            <IconBtn title={tr("Deactivate")} danger onClick={() => act(() => deactivateIndividual(r.id), `${r.email} deactivated.`)}>
+                            <IconBtn title={tr("Deactivate")} danger onClick={() => setDeactivating(r)}>
                               <Ban size={15} />
                             </IconBtn>
                           ) : (
-                            <IconBtn title={tr("Reactivate")} onClick={() => act(() => reactivateIndividual(r.id), `${r.email} reactivated.`)}>
+                            <IconBtn title={tr("Reactivate")} onClick={() => act(() => reactivateIndividual(r.id), tr("{{email}} reactivated.", { email: r.email }))}>
                               <RotateCcw size={15} />
                             </IconBtn>
                           ))}
@@ -472,7 +498,38 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
           </div>
         </div>
       )}
+      {deactivating && (
+        <ConfirmActionModal
+          title={tr("Deactivate learner")}
+          message={tr("Deactivate {{email}}? They can't sign in until you reactivate them.", { email: deactivating.email })}
+          confirmLabel={tr("Deactivate")}
+          destructive
+          submitting={false}
+          onClose={() => setDeactivating(null)}
+          onConfirm={() => {
+            const d = deactivating;
+            setDeactivating(null);
+            act(() => deactivateIndividual(d.id), tr("{{email}} deactivated.", { email: d.email }));
+          }}
+        />
+      )}
       {viewing && <LearnerProfileModal learnerId={viewing} onClose={() => setViewing(null)} />}
+    </div>
+  );
+}
+
+function TableLoading({ tiles }: { tiles?: boolean }) {
+  return (
+    <div className="flex flex-col gap-4 animate-pulse" aria-busy="true">
+      {tiles && (
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[104px] rounded-card bg-surface border border-rule" />
+          ))}
+        </div>
+      )}
+      <div className="h-10 w-full max-w-md rounded-input bg-rule/70" />
+      <div className="h-64 rounded-card bg-surface border border-rule" />
     </div>
   );
 }
@@ -481,6 +538,7 @@ function IconBtn({ children, title, onClick, danger }: { children: React.ReactNo
   return (
     <button
       title={title}
+      aria-label={title}
       onClick={onClick}
       className={`p-1.5 rounded-input text-muted transition-colors cursor-pointer ${danger ? "hover:bg-error/10 hover:text-error" : "hover:bg-paper-warm hover:text-ink"}`}
     >
@@ -500,24 +558,14 @@ export function StaffLearners() {
         title={tr("Learners")}
         subtitle={perms.isSuper ? tr("Every learner on Spica: in organizations, and on their own.") : tr("Learners in your organizations, and individual learners.")}
       />
-      <div className="flex items-center gap-1 border-b border-rule">
-        {(
-          [
-            ["individual", tr("Individual learners"), User],
-            ["org", tr("Organization learners"), Building2],
-          ] as const
-        ).map(([k, label, Icon]) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors cursor-pointer ${
-              tab === k ? "border-navy text-navy" : "border-transparent text-muted hover:text-ink"
-            }`}
-          >
-            <Icon size={15} /> {label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        options={[
+          { key: "individual", label: tr("Individual learners"), icon: User },
+          { key: "org", label: tr("Organization learners"), icon: Building2 },
+        ]}
+      />
       {tab === "individual" ? <IndividualsTab canInvite={perms.inviteLearners} canView={perms.viewLearnerInfo} /> : <OrgLearnersTab canView={perms.viewLearnerInfo} />}
     </div>
   );

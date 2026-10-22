@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { ShieldAlert, Check, X, Clock, CheckCircle2, ShieldX, Timer } from "lucide-react";
-import { EmptyNote, FilterPills, StatCard, StatusPill } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, Notice, PageHeader, StatCard, StatusPill } from "@/components/staff/StaffKit";
+import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { shortDate } from "@/api/staff";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
@@ -18,6 +19,8 @@ export function AdminReview() {
   const [error, setError] = useState<string | null>(null);
   const [hist, setHist] = useState<Awaited<ReturnType<typeof getReviewHistory>> | null>(null);
   const [verdict, setVerdict] = useState<"all" | "certified" | "fraud_confirmed">("all");
+  // "Not them" marks a result as fraud, so it is confirmed first.
+  const [confirmingFraud, setConfirmingFraud] = useState<PendingPlacement | null>(null);
 
   useEffect(() => {
     load();
@@ -34,6 +37,7 @@ export function AdminReview() {
 
   async function handleVerdict(id: string, verdict: "certified" | "fraud_confirmed") {
     setActingOn(id);
+    setError(null);
     try {
       await reviewPlacement(id, verdict);
       setPlacements((prev) => prev?.filter((p) => p.id !== id) ?? null);
@@ -51,11 +55,10 @@ export function AdminReview() {
 
   return (
     <div className="flex flex-col gap-5 w-full">
-      <div>
-        <h1 className="font-display font-bold text-2xl text-ink">{tr("Placement reviews")}</h1>
-        <p className="text-sm text-muted mt-1">
-          {tr("Placements flagged during a face check — not blocked for the learner, just awaiting a verdict here.")}</p>
-      </div>
+      <PageHeader
+        title={tr("Placement reviews")}
+        subtitle={tr("Placements flagged during a face check — not blocked for the learner, just awaiting a verdict here.")}
+      />
 
       {hist && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
@@ -69,53 +72,60 @@ export function AdminReview() {
       <div className="grid lg:grid-cols-3 gap-4 items-start">
         <div className="lg:col-span-2 flex flex-col gap-4">
           <h2 className="font-display font-bold text-lg text-ink">{tr("Waiting for review")}</h2>
-      {error && <p className="text-sm text-error">{error}</p>}
+          {error && (
+            <Notice tone="error" onClose={() => setError(null)}>
+              {error}
+            </Notice>
+          )}
 
-      {placements === null && !error && <p className="text-sm text-muted">{tr("Loading…")}</p>}
+          {placements === null && !error && <div className="h-40 rounded-card bg-surface border border-rule animate-pulse" aria-busy="true" />}
 
-      {placements?.length === 0 && <p className="text-sm text-muted">{tr("Nothing pending review right now.")}</p>}
+          {placements?.length === 0 && <EmptyNote>{tr("Nothing pending review right now.")}</EmptyNote>}
 
-      {placements?.map((p) => (
-        <div key={p.id} className="bg-surface border border-rule rounded-card p-5 flex flex-col gap-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold text-ink">{p.name?.trim() || p.email}</p>
-              <p className="text-xs text-muted">
-                {p.email}
-                {p.org_name ? ` · ${p.org_name}` : tr(" · Individual learner")}
-              </p>
-              <p className="text-xs text-muted mt-0.5">
-                {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
-                {p.test_code && <> &middot; {p.test_code}</>}
-              </p>
-            </div>
-            <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">
-              <ShieldAlert size={14} /> {p.flagged_checks.length === 1 ? tr("1 flagged check") : tr("{{n}} flagged checks", { n: p.flagged_checks.length })}
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {p.flagged_checks.map((c, i) => (
-              <div key={i} className="flex items-center gap-3 text-xs bg-paper-warm rounded-input px-3 py-2">
-                <span className="font-mono uppercase text-error font-semibold">{c.decision}</span>
-                {c.similarityScore !== null && <span className="text-muted">{tr("similarity {{toFixed}}", { toFixed: Number(c.similarityScore).toFixed(2) })}</span>}
-                <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString()}</span>
-                {c.sampleUri && (
-                  <a href={c.sampleUri} target="_blank" rel="noreferrer" className="text-navy-deep hover:underline ml-auto">
-                    {tr("view photo")}</a>
-                )}
+          {placements?.map((p) => (
+            <div key={p.id} className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-ink">{p.name?.trim() || p.email}</p>
+                  <p className="text-xs text-muted">
+                    {p.email}
+                    {p.org_name ? ` · ${p.org_name}` : tr(" · Individual learner")}
+                  </p>
+                  <p className="text-xs text-muted mt-0.5">
+                    {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
+                    {p.test_code && <> &middot; {p.test_code}</>}
+                  </p>
+                </div>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-warning bg-warning/15 rounded-pill px-3 py-1 shrink-0">
+                  <ShieldAlert size={14} /> {p.flagged_checks.length === 1 ? tr("1 flagged check") : tr("{{n}} flagged checks", { n: p.flagged_checks.length })}
+                </span>
               </div>
-            ))}
-          </div>
 
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => handleVerdict(p.id, "certified")} disabled={actingOn === p.id} className="flex-1">
-              <Check size={15} className="inline mr-1.5" /> {tr("Confirm, it's them")}</Button>
-            <Button variant="secondary" onClick={() => handleVerdict(p.id, "fraud_confirmed")} disabled={actingOn === p.id} className="flex-1 text-error">
-              <X size={15} className="inline mr-1.5" /> {tr("Not them")}</Button>
-          </div>
-        </div>
-      ))}
+              <div className="flex flex-col gap-2">
+                {p.flagged_checks.map((c, i) => (
+                  <div key={i} className="flex items-center gap-3 text-xs bg-paper-warm rounded-input px-3 py-2">
+                    <span className="font-mono uppercase text-error font-semibold">{c.decision}</span>
+                    {c.similarityScore !== null && <span className="text-muted">{tr("similarity {{toFixed}}", { toFixed: Number(c.similarityScore).toFixed(2) })}</span>}
+                    <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString()}</span>
+                    {c.sampleUri && (
+                      <a href={c.sampleUri} target="_blank" rel="noreferrer" className="text-navy-deep font-semibold hover:underline ml-auto">
+                        {tr("view photo")}
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="secondary" onClick={() => handleVerdict(p.id, "certified")} disabled={actingOn === p.id} className="flex-1 flex items-center justify-center gap-1.5">
+                  <Check size={15} /> {tr("Confirm, it's them")}
+                </Button>
+                <Button variant="secondary" onClick={() => setConfirmingFraud(p)} disabled={actingOn === p.id} className="flex-1 flex items-center justify-center gap-1.5 !text-error hover:!border-error/50">
+                  <X size={15} /> {tr("Not them")}
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
         <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3 text-sm">
           <h2 className="font-display font-bold text-lg text-ink">{tr("How flagging works")}</h2>
@@ -145,6 +155,8 @@ export function AdminReview() {
           </div>
           {hist.history.length === 0 ? (
             <EmptyNote>{tr("No decisions yet.")}</EmptyNote>
+          ) : hist.history.every((h) => verdict !== "all" && h.status !== verdict) ? (
+            <EmptyNote>{tr("No decisions match.")}</EmptyNote>
           ) : (
             <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
               <table className="w-full text-sm min-w-[720px]">
@@ -174,7 +186,7 @@ export function AdminReview() {
                           {h.review_note && <p className="text-xs text-muted mt-1">{h.review_note}</p>}
                         </td>
                         <td className="px-4 py-3 text-muted">{h.reviewer?.trim() || "—"}</td>
-                        <td className="px-4 py-3 text-muted">{shortDate(h.reviewed_at)}</td>
+                        <td className="px-4 py-3 text-muted whitespace-nowrap">{shortDate(h.reviewed_at)}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -182,6 +194,22 @@ export function AdminReview() {
             </div>
           )}
         </div>
+      )}
+
+      {confirmingFraud && (
+        <ConfirmActionModal
+          title={tr("Not them")}
+          message={tr("Mark {{name}}'s placement result as not the learner? It won't count or appear on certificates.", { name: confirmingFraud.name?.trim() || confirmingFraud.email })}
+          confirmLabel={tr("Not them")}
+          destructive
+          submitting={actingOn === confirmingFraud.id}
+          onClose={() => setConfirmingFraud(null)}
+          onConfirm={() => {
+            const p = confirmingFraud;
+            setConfirmingFraud(null);
+            handleVerdict(p.id, "fraud_confirmed");
+          }}
+        />
       )}
     </div>
   );

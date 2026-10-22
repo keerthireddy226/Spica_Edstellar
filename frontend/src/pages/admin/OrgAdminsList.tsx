@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 import { Building2, ShieldCheck, UserPlus, Users, UserX, X } from "lucide-react";
 import { getAdminConsoleOverview, getOrgAdmins, replaceOrgAdmin, type AdminConsoleOrg, type OrgAdminAccount } from "@/api/admin";
 import { ApiError } from "@/lib/api";
@@ -6,7 +8,7 @@ import { Button } from "@/components/Button";
 import { TIER_LABELS } from "@/api/plans";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
 import { ago, shortDate } from "@/api/staff";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, Notice, PageError, PageHeader, PageLoading, SearchBox, StatCard, StatusPill, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
 type F = "all" | "active" | "pending" | "quiet" | "deactivated";
@@ -137,14 +139,15 @@ export function OrgAdminsList() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(() => {
+    setError(null);
     getOrgAdmins()
       .then((r) => setRows(r.orgAdmins))
       .catch(() => setError(tr("Could not load Org Admins.")));
   }, []);
   useEffect(load, [load]);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!rows) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error) return <PageError message={error} onRetry={load} />;
+  if (!rows) return <PageLoading />;
   const q = query.trim().toLowerCase();
   const shown = rows.filter(
     (a) =>
@@ -168,7 +171,7 @@ export function OrgAdminsList() {
           )
         }
       />
-      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
+      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="split" palette="moss" index={0} icon={ShieldCheck} value={rows.filter((a) => status(a) === "active").length} label={tr("Active Org Admins")} />
         <StatCard variant="split" palette="moss" index={1} icon={UserX} value={rows.filter((a) => status(a) === "pending").length} label={tr("Invite not accepted")} />
@@ -213,8 +216,12 @@ export function OrgAdminsList() {
                     </div>
                     <p className="text-xs text-white/80 truncate">{a.tenantName}</p>
                   </div>
-                  <button onClick={() => setViewing(a.id)} className="text-xs font-semibold hover:underline cursor-pointer shrink-0">
-                    {tr("View details")}</button>
+                  <button
+                    onClick={() => setViewing(a.id)}
+                    className="px-2.5 py-1 rounded-pill border border-white/40 text-xs font-semibold hover:bg-white/20 transition-colors cursor-pointer shrink-0"
+                  >
+                    {tr("View details")}
+                  </button>
                 </div>
                 <div className="px-5 py-4 flex flex-col gap-3">
                   <p className="text-xs text-muted truncate">
@@ -251,7 +258,12 @@ export function OrgAdminsList() {
           })}
         </div>
       )}
-      <p className="text-xs text-muted">{tr("To resend an invite, open the organization on the Organizations page.")}</p>
+      <p className="text-xs text-muted">
+        {tr("To resend an invite, open the organization on the Organizations page.")}{" "}
+        <Link to={perms.isSuper ? ROUTES.SUPER_ORGANIZATIONS : ROUTES.ADMIN_CONSOLE_ORGANIZATIONS} className="font-semibold text-navy hover:underline">
+          {tr("Open Organizations")}
+        </Link>
+      </p>
       {viewing && <OrgAdminDetailModal orgAdminId={viewing} onClose={() => setViewing(null)} />}
       {adding && (
         <AddOrgAdminModal

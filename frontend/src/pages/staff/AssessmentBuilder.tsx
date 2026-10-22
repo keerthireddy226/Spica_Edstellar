@@ -444,8 +444,16 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
         ) : undefined
       }
     >
-      {msg && <p className="text-sm text-ink">{msg}</p>}
-      {shown.length === 0 && <EmptyNote>{tr("No tests yet.")}</EmptyNote>}
+      {msg && <p className="text-sm text-ink bg-paper-warm rounded-input px-3 py-2">{msg}</p>}
+      {shown.length === 0 ? (
+        <EmptyNote>
+          {retired > 0 && !showRetired
+            ? retired === 1
+              ? tr("No tests in use. 1 retired test is hidden.")
+              : tr("No tests in use. {{n}} retired tests are hidden.", { n: retired })
+            : tr("No tests yet.")}
+        </EmptyNote>
+      ) : (
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -485,7 +493,7 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
                 <td className="py-2 text-right whitespace-nowrap">
                   {f.status === "draft" && (
                     <>
-                      <Button variant="secondary" onClick={() => onEdit(f.id)} disabled={busy === f.id} className="!px-2 !py-1 text-xs mr-1">
+                      <Button variant="secondary" onClick={() => onEdit(f.id)} disabled={busy === f.id} title={tr("Edit")} aria-label={tr("Edit")} className="!px-2 !py-1 text-xs mr-1">
                         <Pencil size={13} />
                       </Button>
                       <Button onClick={() => act(f.id, () => publishBuiltForm(f.id), tr("Published."))} disabled={busy === f.id} className="!px-2 !py-1 text-xs mr-1">
@@ -498,6 +506,8 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
                       variant="secondary"
                       onClick={() => window.confirm(tr("Retire {{code}}? Learners won't get it any more.", { code: f.code })) && act(f.id, () => retireBuiltForm(f.id), tr("Retired."))}
                       disabled={busy === f.id}
+                      title={tr("Retire")}
+                      aria-label={tr("Retire")}
                       className="!px-2 !py-1 text-xs"
                     >
                       <Archive size={13} />
@@ -518,6 +528,7 @@ function FormsList({ forms, testTypes, onEdit, onChanged }: { forms: BuiltForm[]
           </tbody>
         </table>
       </div>
+      )}
     </Panel>
   );
 }

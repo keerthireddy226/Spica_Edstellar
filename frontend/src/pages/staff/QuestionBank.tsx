@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, PlusSquare, Library, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
-import { PageHeader, Panel, FilterPills, StatusPill, EmptyNote } from "@/components/staff/StaffKit";
+import { PageError, PageHeader, PageLoading, Panel, FilterPills, StatusPill, EmptyNote, Tabs } from "@/components/staff/StaffKit";
 import {
   decideItem,
   getContentItem,
@@ -344,7 +344,7 @@ function ReviewPanel({ overview, refresh }: { overview: ContentOverview; refresh
       {items === null ? (
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : items.length === 0 ? (
-        <EmptyNote>{tr("Nothing here.")}</EmptyNote>
+        <EmptyNote>{tr("No questions in this list.")}</EmptyNote>
       ) : (
         <div className="grid lg:grid-cols-[300px_1fr] gap-4">
           <ul className="flex flex-col gap-1 max-h-[70vh] overflow-y-auto">
@@ -398,6 +398,7 @@ export function QuestionBank() {
   const [error, setError] = useState<string | null>(null);
 
   function refresh() {
+    setError(null);
     getContentOverview()
       .then(setOverview)
       .catch((err) => setError(apiErrorCode(err) === "permission_required" ? tr("You need the Content review permission.") : tr("Could not load the question bank.")));
@@ -414,32 +415,32 @@ export function QuestionBank() {
     return () => clearInterval(t);
   }, [running]);
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!overview) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error && !overview) return <PageError message={error} onRetry={refresh} />;
+  if (!overview) return <PageLoading tiles={0} />;
   return (
     <div className="flex flex-col gap-5 w-full">
       <PageHeader
         title={tr("Question bank")}
         subtitle={tr("Create tests and manage the questions in them.")}
       />
-      <div className="flex flex-col gap-1.5">
-        <FilterPills<Tab>
+      <div className="flex flex-col gap-2">
+        <Tabs<Tab>
           value={tab}
           onChange={setTab}
           // AI writing only covers LanguageCert-style types, hidden for now
           // (exam_families.active); its tabs come back with them.
           options={[
-            ["create", tr("Create a test")],
-            ["library", tr("All questions")],
+            { key: "create", label: tr("Create a test"), icon: PlusSquare },
+            { key: "library", label: tr("All questions"), icon: Library },
             ...(overview.testTypes.length
-              ? ([
-                  ["generate", tr("Write with AI")],
-                  ["review", tr("Review"), overview.queue.needs_review + overview.queue.for_mock],
-                ] as [Tab, string, number?][])
+              ? [
+                  { key: "generate" as Tab, label: tr("Write with AI"), icon: Sparkles },
+                  { key: "review" as Tab, label: tr("Review"), icon: ClipboardCheck, count: overview.queue.needs_review + overview.queue.for_mock },
+                ]
               : []),
           ]}
         />
-        <p className="text-xs text-muted">{TAB_NOTE[tab]()}</p>
+        <p className="text-sm text-muted">{TAB_NOTE[tab]()}</p>
       </div>
       {tab === "generate" && (
         <>

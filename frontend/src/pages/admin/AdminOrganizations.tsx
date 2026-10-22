@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { SHOW_UNIVERSITIES } from "@/lib/focus";
 import { TIER_LABELS } from "@/api/plans";
 import { Building2, GraduationCap, Users, Mail, UserPlus, X, Briefcase, Pencil, Ban, RotateCcw, KeyRound } from "lucide-react";
-import { EmptyNote, FilterPills, PageHeader, SearchBox, SelectFilter, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
+import { EmptyNote, FilterPills, Notice, PageError, PageHeader, PageLoading, SearchBox, SelectFilter, StatCard, paletteColor, useStaffPermissions } from "@/components/staff/StaffKit";
 import { ago, getOrgMetrics, getStaffAdmins, setOrgOwner, shortDate, type OrgMetrics } from "@/api/staff";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
@@ -102,13 +103,12 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
     }
   }
 
+  // A long form: a stray click outside must not throw it away, so only the
+  // close button and Cancel close it.
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
-      <div
-        className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-rule">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-surface flex items-center justify-between px-6 py-4 border-b border-rule">
           <h2 className="font-display font-bold text-lg text-ink">{tr("Onboard Organization")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink transition-colors cursor-pointer">
             <X size={20} />
@@ -606,6 +606,8 @@ export function AdminOrganizations() {
   const [viewingOrg, setViewingOrg] = useState<AdminConsoleOrg | null>(null);
   const [owning, setOwning] = useState<AdminConsoleOrg | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<OrgFilter>("active");
   const [type, setType] = useState("all");
@@ -613,7 +615,16 @@ export function AdminOrganizations() {
   const [product, setProduct] = useState("all");
   const [owner, setOwner] = useState("all");
 
+  // The dashboard's "Onboard an organization" lands here with ?onboard=1.
+  useEffect(() => {
+    if (params.get("onboard") && canManage) {
+      setShowOnboard(true);
+      setParams({}, { replace: true });
+    }
+  }, [params, canManage, setParams]);
+
   function load() {
+    setError(null);
     getAdminConsoleOverview()
       .then(setOverview)
       .catch(() => setError(tr("Could not load organizations.")));
@@ -625,12 +636,15 @@ export function AdminOrganizations() {
 
   async function handleDeactivate(org: AdminConsoleOrg) {
     setBusyId(org.id);
+    setActionError(null);
     try {
       await deactivateOrganization(org.id);
       setConfirmingDeactivate(null);
+      setNotice(tr("{{name}} deactivated.", { name: org.name }));
       load();
     } catch {
-      setError(tr("Could not deactivate that organization."));
+      setConfirmingDeactivate(null);
+      setActionError(tr("Could not deactivate that organization."));
     } finally {
       setBusyId(null);
     }
@@ -638,18 +652,20 @@ export function AdminOrganizations() {
 
   async function handleReactivate(org: AdminConsoleOrg) {
     setBusyId(org.id);
+    setActionError(null);
     try {
       await reactivateOrganization(org.id);
+      setNotice(tr("{{name}} reactivated.", { name: org.name }));
       load();
     } catch {
-      setError(tr("Could not reactivate that organization."));
+      setActionError(tr("Could not reactivate that organization."));
     } finally {
       setBusyId(null);
     }
   }
 
-  if (error) return <p className="text-sm text-error">{error}</p>;
-  if (!overview) return <p className="text-sm text-muted">{tr("Loading…")}</p>;
+  if (error && !overview) return <PageError message={error} onRetry={load} />;
+  if (!overview) return <PageLoading />;
 
   const orgs = overview.organizations;
   const active = orgs.filter((o) => o.active);
@@ -689,7 +705,12 @@ export function AdminOrganizations() {
         }
       />
 
-      {notice && <p className="text-sm text-success bg-success/10 border border-success/25 rounded-card px-4 py-3">{notice}</p>}
+      {notice && <Notice onClose={() => setNotice(null)}>{notice}</Notice>}
+      {actionError && (
+        <Notice tone="error" onClose={() => setActionError(null)}>
+          {actionError}
+        </Notice>
+      )}
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
@@ -829,6 +850,7 @@ export function AdminOrganizations() {
                   <div className="h-1.5 rounded-full bg-white/25 overflow-hidden mt-1">
                     <div className="h-full bg-white rounded-full" style={{ width: `${util}%` }} />
                   </div>
+                  <p className="text-[11px] text-white/75 mt-1">{tr("Licenses assigned")}</p>
                 </div>
               </div>
 
@@ -878,6 +900,7 @@ export function AdminOrganizations() {
           org={editing}
           onClose={() => setEditing(null)}
           onSaved={() => {
+            setNotice(tr("Changes to {{name}} saved.", { name: editing.name }));
             setEditing(null);
             load();
           }}
