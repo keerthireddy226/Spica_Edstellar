@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { AgeBand, Gender, JobRole } from "@/api/onboarding";
 import { AGE_BANDS, GENDERS, JOB_ROLES, sortedCountries } from "@/constants/demographics";
 import type { LearnerDetails } from "@/api/details";
+import { CitySelect } from "@/components/CitySelect";
 
 import { tr } from "@/i18n/tr";
 const inputClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
@@ -39,7 +40,7 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
       {text("phone", tr("Work phone"), tr("e.g. +91 98765 43210"), 40)}
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>{tr("Country")}</label>
-        <select value={value.country ?? ""} onChange={(e) => set("country", e.target.value || null)} className={`${inputClass} cursor-pointer`}>
+        <select value={value.country ?? ""} onChange={(e) => onChange({ ...value, country: e.target.value || null, city: null })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Not set")}</option>
           {sortedCountries(i18n.language).map((c) => (
             <option key={c.code} value={c.code}>
@@ -48,7 +49,10 @@ export function LearnerDetailsFields({ value, onChange }: { value: LearnerDetail
           ))}
         </select>
       </div>
-      {text("city", tr("City"), tr("e.g. Hyderabad"), 100)}
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>{tr("City")}</label>
+        <CitySelect country={value.country ?? ""} value={value.city ?? ""} onChange={(city) => set("city", city || null)} className={inputClass} />
+      </div>
       <div className="flex flex-col gap-1.5">
         <label className={labelClass}>{tr("Gender")}</label>
         <select value={value.gender ?? ""} onChange={(e) => set("gender", (e.target.value || null) as Gender | null)} className={`${inputClass} cursor-pointer`}>

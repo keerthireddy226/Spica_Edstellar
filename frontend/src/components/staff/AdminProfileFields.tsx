@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { PERMISSION_LABELS, getAdminConsoleOverview, type AdminPermissions } from "@/api/admin";
 import { sortedCountries } from "@/constants/demographics";
 import { useStaffPermissions } from "@/components/staff/StaffKit";
+import { CitySelect } from "@/components/CitySelect";
 
 import { tr } from "@/i18n/tr";
 export interface AdminProfile {
@@ -83,12 +84,8 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
           <input value={value.region} onChange={(e) => set("region", e.target.value)} placeholder={tr("e.g. India South, EMEA")} className={input} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className={label}>{tr("City")}</label>
-          <input value={value.city} onChange={(e) => set("city", e.target.value)} placeholder={tr("e.g. Hyderabad")} className={input} />
-        </div>
-        <div className="flex flex-col gap-1.5">
           <label className={label}>{tr("Country")}</label>
-          <select value={value.country} onChange={(e) => set("country", e.target.value)} className={`${input} cursor-pointer`}>
+          <select value={value.country} onChange={(e) => onChange({ ...value, country: e.target.value, city: "" })} className={`${input} cursor-pointer`}>
             <option value="">{tr("Not set")}</option>
             {sortedCountries(i18n.language).map((c) => (
               <option key={c.code} value={c.code}>
@@ -96,6 +93,10 @@ export function AdminProfileFields({ value, onChange }: { value: AdminProfile; o
               </option>
             ))}
           </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className={label}>{tr("City")}</label>
+          <CitySelect country={value.country} value={value.city} onChange={(city) => set("city", city)} className={input} />
         </div>
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label className={label}>{tr("Notes")}</label>

@@ -15,6 +15,7 @@ import {
 } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { CitySelect } from "@/components/CitySelect";
 type Draft = Omit<OrganizationProfile, "category" | "createdAt" | "expectedLearnerCount"> & {
   expectedLearnerCount: string;
   jobTitle: string;
@@ -267,12 +268,9 @@ export function OrganizationProfileCard() {
 
           <Group title={tr("Address")}>
             <Input label={tr("Street address")} value={draft.addressLine ?? ""} onChange={(v) => patch({ addressLine: v })} wide />
-            <Input label={tr("City")} value={draft.city ?? ""} onChange={(v) => patch({ city: v })} />
-            <Input label={tr("State / province")} value={draft.state ?? ""} onChange={(v) => patch({ state: v })} />
-            <Input label={tr("Postal code")} value={draft.postalCode ?? ""} onChange={(v) => patch({ postalCode: v })} />
             <div className="flex flex-col gap-1">
               <label className="text-xs text-muted">{tr("Country")}</label>
-              <select value={draft.country ?? ""} onChange={(e) => patch({ country: e.target.value })} className={`${inputClass} cursor-pointer`}>
+              <select value={draft.country ?? ""} onChange={(e) => patch({ country: e.target.value, city: "" })} className={`${inputClass} cursor-pointer`}>
                 <option value="">{tr("Select…")}</option>
                 {sortedCountries("en").map((c) => (
                   <option key={c.code} value={c.code}>
@@ -281,6 +279,13 @@ export function OrganizationProfileCard() {
                 ))}
               </select>
             </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-muted">{tr("City")}</label>
+              {/* Picking a listed city also fills its state or province. */}
+              <CitySelect country={draft.country ?? ""} value={draft.city ?? ""} onChange={(city) => patch({ city })} onRegion={(state) => patch({ state })} className={inputClass} />
+            </div>
+            <Input label={tr("State / province")} value={draft.state ?? ""} onChange={(v) => patch({ state: v })} />
+            <Input label={tr("Postal code")} value={draft.postalCode ?? ""} onChange={(v) => patch({ postalCode: v })} />
           </Group>
 
           <Group title={tr("Training")}>

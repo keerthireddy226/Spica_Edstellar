@@ -23,6 +23,7 @@ import {
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { CitySelect } from "@/components/CitySelect";
 function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated: (name: string) => void }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState<"company" | "university">("company");
@@ -237,7 +238,13 @@ function OnboardOrgModal({ onClose, onCreated }: { onClose: () => void; onCreate
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("City")}</label>
-              <input type="text" {...f("city")} placeholder="" className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none" />
+              <CitySelect
+                country={country}
+                value={x.city ?? ""}
+                onChange={(city) => setX((p) => ({ ...p, city }))}
+                onRegion={(state) => setX((p) => ({ ...p, state }))}
+                className="w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none"
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("State / province")}</label>

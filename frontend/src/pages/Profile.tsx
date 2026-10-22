@@ -47,6 +47,7 @@ import { LearningGoals, MyOrganization, useMyLearning } from "@/components/profi
 import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/pages/admin/AdminProfile";
 import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
+import { CitySelect } from "@/components/CitySelect";
 
 import { tr } from "@/i18n/tr";
 // Colored icon-in-squircle badge, reused as the visual anchor for every card header/row here.
@@ -297,7 +298,14 @@ function AboutYouSection() {
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.countryLabel")}</label>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} className={`${profileInputClass} cursor-pointer`}>
+              <select
+                value={country}
+                onChange={(e) => {
+                  setCountry(e.target.value);
+                  setCity("");
+                }}
+                className={`${profileInputClass} cursor-pointer`}
+              >
                 <option value="">{t("onboarding.wizard.about.select")}</option>
                 {sortedCountries(i18n.language).map((c) => (
                   <option key={c.code} value={c.code}>
@@ -308,7 +316,7 @@ function AboutYouSection() {
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.cityLabel")}</label>
-              <input value={city} onChange={(e) => setCity(e.target.value)} className={profileInputClass} />
+              <CitySelect country={country} value={city} onChange={setCity} className={profileInputClass} />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold uppercase tracking-wide text-muted mb-1">{t("onboarding.wizard.about.jobRoleLabel")}</label>

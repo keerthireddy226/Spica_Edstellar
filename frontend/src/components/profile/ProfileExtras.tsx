@@ -9,6 +9,7 @@ import { ago } from "@/api/staff";
 import { StatCard } from "@/components/staff/StaffKit";
 import { LearnerCard } from "@/components/learner/LearnerHero";
 import { BarChart3, Building2, Layers, Users } from "lucide-react";
+import { CitySelect } from "@/components/CitySelect";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
@@ -94,8 +95,7 @@ export function WorkDetailsCard({ showRegion }: { showRegion: boolean }) {
             <input {...f("department")} placeholder={tr("Department")} className={input} />
             <input {...f("phone")} placeholder={tr("Phone")} className={input} />
             {showRegion && <input {...f("region")} placeholder={tr("Region or territory")} className={input} />}
-            <input {...f("city")} placeholder={tr("City")} className={input} />
-            <select {...f("country")} className={`${input} cursor-pointer`}>
+            <select value={draft.country ?? ""} onChange={(e) => setDraft((d) => ({ ...d, country: e.target.value, city: "" }))} className={`${input} cursor-pointer`}>
               <option value="">{tr("Country")}</option>
               {sortedCountries(i18n.language).map((c) => (
                 <option key={c.code} value={c.code}>
@@ -103,6 +103,7 @@ export function WorkDetailsCard({ showRegion }: { showRegion: boolean }) {
                 </option>
               ))}
             </select>
+            <CitySelect country={draft.country ?? ""} value={draft.city ?? ""} onChange={(city) => setDraft((d) => ({ ...d, city }))} className={input} placeholder={tr("City")} />
           </div>
           <div className="flex items-center gap-3">
             <Button

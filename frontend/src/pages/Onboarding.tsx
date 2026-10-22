@@ -6,7 +6,7 @@ import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { getMyAccess } from "@/api/access";
+import { getMyAccess, isTestOnly } from "@/api/access";
 import { useAuth } from "@/hooks/useAuth";
 import {
   getOnboardingProfile,
@@ -26,6 +26,7 @@ import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
 import { getRoadmap } from "@/api/roadmap";
+import { CitySelect } from "@/components/CitySelect";
 
 /* Shared step chrome + small controls, local to this page */
 
@@ -214,10 +215,7 @@ function emptyForm(): FormState {
 // own is a real test or level test (bought on its own): it waits for them on the
 // Assessment page, and so does its result once it's taken (the attempt used).
 async function afterOnboarding(): Promise<string> {
-  const a = await getMyAccess().catch(() => null);
-  const testOnly =
-    !!a && !a.full && a.prepTests.length === 0 && !a.practicePack && a.owned.some((o) => o.kind === "assessment" || o.kind === "level" || o.kind === "final");
-  return testOnly ? ROUTES.MY_TESTS : ROUTES.PLACEMENT;
+  return isTestOnly(await getMyAccess().catch(() => null)) ? ROUTES.MY_TESTS : ROUTES.PLACEMENT;
 }
 
 export function Onboarding() {
@@ -295,7 +293,15 @@ export function Onboarding() {
   // "how long do you want access" step is skipped and set from the licence,
   // and the exam-booking questions (applied? days to prepare?) aren't asked.
   const isOrgLearner = !!branding?.organization;
-  const visibleSteps = [0, 1, 2, 3, 4, 5, 6].filter((i) => !(isOrgLearner && i === 5));
+  // Bought only a test: name, about you, goal and consent. The exam-date,
+  // study-time and access-length steps are about a study plan they don't have.
+  const [testOnly, setTestOnly] = useState(false);
+  useEffect(() => {
+    getMyAccess()
+      .then((a) => setTestOnly(isTestOnly(a)))
+      .catch(() => {});
+  }, []);
+  const visibleSteps = [0, 1, 2, 3, 4, 5, 6].filter((i) => !(isOrgLearner && i === 5) && !(testOnly && (i === 3 || i === 4 || i === 5)));
   const position = Math.max(0, visibleSteps.indexOf(step));
   const shell = { stepIndex: position, total: visibleSteps.length };
   const next = () => setStep((s) => visibleSteps[visibleSteps.indexOf(s) + 1] ?? s);
@@ -311,6 +317,24 @@ export function Onboarding() {
       accessDuration: f.accessDuration ?? (daysLeft <= 45 ? "1month" : daysLeft <= 120 ? "3months" : "6months"),
     }));
   }, [isOrgLearner, license?.accessEndsAt]);
+
+  // The skipped steps' answers, which the profile still needs: neutral defaults.
+  useEffect(() => {
+    if (!testOnly) return;
+    setForm((f) => ({
+      ...f,
+      examReason: f.examReason ?? "personal",
+      hasAppliedForExam: f.hasAppliedForExam ?? false,
+      targetPrepDays: f.targetPrepDays ?? 30,
+      pastAttemptsStatus: f.pastAttemptsStatus ?? "first",
+      dailyMinutesPreference: f.dailyMinutesPreference ?? 15,
+      accessDuration: f.accessDuration ?? "1month",
+    }));
+  }, [testOnly]);
+  // A restored draft left on a skipped step goes back to the goal.
+  useEffect(() => {
+    if (testOnly && step >= 3 && step <= 5) setStep(2);
+  }, [testOnly, step]);
 
   // Answers so far survive a page refresh (kept in this browser until onboarding is finished).
   const draftKey = user ? `spica.onboardingDraft.${user.id}` : null;
@@ -394,7 +418,9 @@ export function Onboarding() {
             {isOrgLearner && branding?.organization?.name
               ? tr("Welcome to Spica, set up for you by {{org}}.", { org: branding.organization.name })
               : tr("Welcome to Spica.")}{" "}
-            {tr("A few quick questions (about 2 minutes), then a 30-minute placement test to find your English level.")}
+            {testOnly
+              ? tr("A few quick questions (about a minute), then your test is ready on the Assessment page.")
+              : tr("A few quick questions (about 2 minutes), then a 30-minute placement test to find your English level.")}
           </p>
           <h2 className="font-display font-bold text-xl text-ink mt-3">{t("onboarding.wizard.basics.title")}</h2>
           <p className="text-sm text-muted mt-1">{t("onboarding.wizard.basics.subtitle")}</p>
@@ -442,7 +468,7 @@ export function Onboarding() {
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <FieldLabel>{t("onboarding.wizard.about.countryLabel")}</FieldLabel>
-            <select className={selectClass} value={form.country} onChange={(e) => patch({ country: e.target.value })}>
+            <select className={selectClass} value={form.country} onChange={(e) => patch({ country: e.target.value, city: "" })}>
               <option value="">{t("onboarding.wizard.about.select")}</option>
               {sortedCountries(i18n.language).map((c) => (
                 <option key={c.code} value={c.code}>
@@ -453,12 +479,7 @@ export function Onboarding() {
           </div>
           <div>
             <FieldLabel>{t("onboarding.wizard.about.cityLabel")}</FieldLabel>
-            <input
-              className={textInputClass}
-              value={form.city}
-              onChange={(e) => patch({ city: e.target.value })}
-              placeholder={t("onboarding.wizard.about.cityPlaceholder")}
-            />
+            <CitySelect country={form.country} value={form.city} onChange={(city) => patch({ city })} className={textInputClass} />
           </div>
           <div className="sm:col-span-2">
             <FieldLabel>{t("onboarding.wizard.about.jobRoleLabel")}</FieldLabel>
@@ -531,7 +552,8 @@ export function Onboarding() {
     const goalOptions = (["A1", "A2", "B1", "B2", "C1", "C2", "unsure"] as const).map((value) => ({
       value,
       label: t(`onboarding.wizard.examGoal.goal.${value}`),
-      desc: t(`onboarding.wizard.examGoal.goal.${value}Desc`),
+      // Bought only a test: no placement test; their result shows their level.
+      desc: testOnly && value === "unsure" ? tr("Your test result will show your level") : t(`onboarding.wizard.examGoal.goal.${value}Desc`),
     }));
     const invalid = form.examPreference === null || form.goalLevel === null;
     return (
@@ -547,6 +569,7 @@ export function Onboarding() {
           <h3 className={`font-display font-bold text-lg text-ink ${examOptions.length > 1 ? "mt-4" : ""}`}>{t("onboarding.wizard.examGoal.goalTitle")}</h3>
           <p className="text-sm text-muted mt-1 mb-3">{t("onboarding.wizard.examGoal.goalSubtitle")}</p>
           <OptionGrid options={goalOptions} selected={form.goalLevel} onSelect={(v) => patch({ goalLevel: v })} />
+          {!testOnly && (
           <div className="mt-4">
             <FieldLabel>{t("onboarding.wizard.examGoal.scoreTargetLabel")}</FieldLabel>
             <input
@@ -556,6 +579,7 @@ export function Onboarding() {
               placeholder={t("onboarding.wizard.examGoal.scoreTargetPlaceholder")}
             />
           </div>
+          )}
         </div>
       </WizardShell>
     );

@@ -27,6 +27,7 @@ import {
   type OrgLearnerRow,
 } from "@/api/staff";
 import { Avatar, EmptyNote, FilterPills, Notice, PageError, PageHeader, SearchBox, SelectFilter, StatCard, StatusPill, Tabs, useStaffPermissions } from "@/components/staff/StaffKit";
+import { CitySelect } from "@/components/CitySelect";
 
 import { tr } from "@/i18n/tr";
 import { CertifiedCell } from "@/components/CertifiedCell";
@@ -126,7 +127,7 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
                   </option>
                 ))}
               </select>
-              <select value={more.country} onChange={(e) => setMore((m) => ({ ...m, country: e.target.value }))} className={`${inputClass} cursor-pointer`}>
+              <select value={more.country} onChange={(e) => setMore((m) => ({ ...m, country: e.target.value, city: "" }))} className={`${inputClass} cursor-pointer`}>
                 <option value="">{tr("Country (optional)")}</option>
                 {sortedCountries(i18n.language).map((c) => (
                   <option key={c.code} value={c.code}>
@@ -134,7 +135,7 @@ function InviteIndividualModal({ onClose, onDone }: { onClose: () => void; onDon
                   </option>
                 ))}
               </select>
-              <input placeholder={tr("City (optional)")} value={more.city} onChange={(e) => setMore((m) => ({ ...m, city: e.target.value }))} className={inputClass} />
+              <CitySelect country={more.country} value={more.city} onChange={(city) => setMore((m) => ({ ...m, city }))} className={inputClass} placeholder={tr("City (optional)")} />
             </div>
             <p className="text-xs text-muted">{tr("These are pre-filled in their onboarding; they can change them.")}</p>
             {error && <p className="text-sm text-error">{error}</p>}
