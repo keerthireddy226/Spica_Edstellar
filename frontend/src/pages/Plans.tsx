@@ -58,7 +58,12 @@ export function Plans() {
   const [error, setError] = useState<string | null>(null);
   const [tiers, setTiers] = useState<QuotaTier[]>([]);
 
+  // Prices only for someone who buys for themselves: an organization's learner
+  // sees who manages their plan (wait for the licence to know which).
+  const orgManaged = !!license && !license.individual;
+  const buysForSelf = !!license?.individual;
   useEffect(() => {
+    if (!buysForSelf) return;
     getQuota()
       .then((r) => setTiers(r.tiers ?? []))
       .catch(() => {});
@@ -68,9 +73,9 @@ export function Plans() {
     getInvoices()
       .then((r) => setInvoices(r.invoices))
       .catch(() => {});
-  }, [t]);
+  }, [t, buysForSelf]);
 
-  if (license && !license.individual) {
+  if (orgManaged) {
     return (
       <div className="max-w-xl mx-auto mt-6 bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col items-center text-center gap-3">
         <span className="h-14 w-14 rounded-2xl bg-navy/10 text-navy-deep flex items-center justify-center">
@@ -84,7 +89,11 @@ export function Plans() {
     );
   }
 
-  const active = license && (license.status === "active" || license.status === "grace");
+  // Full access is a live licence or plan, or Full access given as a product
+  // (by Spica staff, or bought): either way it is the current plan.
+  const live = !!license && (license.status === "active" || license.status === "grace");
+  const active = live || !!access?.full;
+  const activeEnds = live ? license!.accessEndsAt : (access?.full?.endsAt ?? null);
   const freeTests = testLimitLines(tiers.find((x) => x.tier === "free"));
   const plusTests = testLimitLines(tiers.find((x) => x.tier === "plus"));
   const q = quotes[months];
@@ -109,7 +118,7 @@ export function Plans() {
         icon={Sparkles}
         eyebrow={tr("Your plan")}
         title={t("plans.title")}
-        subtitle={active ? t("plans.activeUntil", { date: formatShortDate(license!.accessEndsAt) }) : t("plans.onFree")}
+        subtitle={active ? t("plans.activeUntil", { date: formatShortDate(activeEnds) }) : t("plans.onFree")}
       />
 
       {/* What else the learner owns: preparation for one test, real tests, level tests. */}
@@ -225,7 +234,7 @@ export function Plans() {
                 <span>{formatAmount(q.total, q.currency)}</span>
               </div>
               <p className="text-xs text-muted mt-1">
-                {active
+                {live
                   ? t("plans.extendNote", { date: formatShortDate(license!.accessEndsAt) })
                   : t("plans.startNote")}
               </p>
@@ -235,7 +244,7 @@ export function Plans() {
 
           {error && <p className="text-sm text-error">{error}</p>}
           <Button onClick={pay} disabled={paying || !q}>
-            {paying ? t("plans.redirecting") : active ? t("plans.extend", { count: months }) : t("plans.buy", { count: months })}
+            {paying ? t("plans.redirecting") : live ? t("plans.extend", { count: months }) : t("plans.buy", { count: months })}
           </Button>
         </div>
       </div>

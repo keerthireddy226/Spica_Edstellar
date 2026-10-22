@@ -1,5 +1,5 @@
 import type { NextFunction, Response } from "express";
-import { accessOf, ownsSomething } from "../access/entitlements.js";
+import { accessOf, opensPractice } from "../access/entitlements.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { accessCache } from "./accessCache.js";
 import { freeTierUsage, learnerAccess, learnerKind } from "./service.js";
@@ -14,6 +14,11 @@ export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 //  - Individual learners on the free tier: one placement test, a few practice
 //    sessions a week, no AI tutor. Practice tests and mock tests have monthly
 //    limits for everyone, enforced where they start (programs/quotas.ts).
+//  - Anyone with Full access as a product (bought, or given by Spica staff): everything.
+//  - Anything else owned opens only its part: a preparation or a practice
+//    pack opens practice (the routes narrow it to what it includes), a test
+//    is started from the tests page. The AI tutor needs Full access, and
+//    placement follows the free rules (one test, no retakes).
 export function requireAccess(feature: GatedFeature) {
   return (req: AuthedRequest, res: Response, next: NextFunction) => {
     if (req.method === "GET" || req.method === "HEAD") return next();
@@ -33,18 +38,23 @@ export function requireAccess(feature: GatedFeature) {
         const access = cached.access;
         const live = access.status === "active" || access.status === "grace";
         if (live) return next();
-        // Something bought or sent outside a licence (one test's preparation, a
-        // certified attempt): the routes check exactly what it opens.
-        if (ownsSomething(await accessOf(req.user!.id))) return next();
-        if (kind === "org") {
-          return res.status(403).json({ error: "license_required", status: access.status, accessEndsAt: access.accessEndsAt });
-        }
+        // Something bought or given outside a licence: Full access opens
+        // everything; anything else only its own part (see above).
+        const owned = await accessOf(req.user!.id);
+        if (owned.full) return next();
+        const licenseRequired = () => res.status(403).json({ error: "license_required", status: access.status, accessEndsAt: access.accessEndsAt });
+        if (kind === "org" && !owned.owned.length) return licenseRequired();
 
         const startsSomethingNew = req.path === "/session";
-        if (feature === "mocktest") return next();
         if (feature === "coach") {
-          return res.status(403).json({ error: "plan_required", feature });
+          return kind === "org" ? licenseRequired() : res.status(403).json({ error: "plan_required", feature });
         }
+        // Practice tests and mock tests: the routes check which tests are included.
+        if (feature === "mocktest") return next();
+        // A preparation or a practice pack: the practice routes narrow it to its question types.
+        if (feature === "practice" && opensPractice(owned)) return next();
+        // An organization learner given only a test: no practice without a licence.
+        if (kind === "org" && feature !== "placement") return licenseRequired();
         if (!startsSomethingNew) return next();
         const usage = await freeTierUsage(req.user!.id);
         if (feature === "placement" && usage.placementTaken) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canPrepare, resolveAccess, type EntitlementRow } from "./entitlements.js";
+import { canPrepare, narrows, resolveAccess, type EntitlementRow } from "./entitlements.js";
+import { individualTier } from "../programs/quotas.js";
 
 const now = new Date("2026-10-21T10:00:00Z");
 const row = (over: Partial<EntitlementRow>): EntitlementRow => ({
@@ -44,5 +45,43 @@ describe("resolveAccess", () => {
     expect(a.owned).toHaveLength(1);
     expect(a.owned[0].attemptsLeft).toBe(0);
     expect(a.attempts).toEqual([]);
+  });
+});
+
+describe("narrows (what owning something takes away)", () => {
+  const none = { status: "none" as const, accessEndsAt: null, graceEndsAt: null };
+  const level = row({ product_id: "level_test", kind: "level", test_type_id: null, level: "B1" });
+
+  it("a level test alone leaves an individual on the free plan's rules", () => {
+    const a = resolveAccess(none, [level], now);
+    expect(narrows(a, "individual")).toBe(false);
+  });
+
+  it("an organization learner with no licence gets only what they were given", () => {
+    const a = resolveAccess(none, [level], now);
+    expect(narrows(a, "org")).toBe(true);
+  });
+
+  it("a preparation or a practice pack narrows practice to what it opens", () => {
+    expect(narrows(resolveAccess(none, [row({})], now), "individual")).toBe(true);
+    expect(narrows(resolveAccess(none, [row({ product_id: "practice_pack", kind: "pack", test_type_id: null, level: "B1" })], now), "individual")).toBe(true);
+  });
+
+  it("Full access, as a licence or as a product, narrows nothing", () => {
+    expect(narrows(resolveAccess({ status: "active", accessEndsAt: "2026-12-01T00:00:00Z", graceEndsAt: null }, [row({})], now), "org")).toBe(false);
+    expect(narrows(resolveAccess(none, [row({ product_id: "full_access", kind: "full", test_type_id: null })], now), "individual")).toBe(false);
+  });
+});
+
+describe("individualTier (which monthly limits apply)", () => {
+  const none = { status: "none" as const, accessEndsAt: null, graceEndsAt: null };
+  it("Free with nothing, or with only a level test", () => {
+    expect(individualTier(resolveAccess(none, [], now))).toBe("free");
+    expect(individualTier(resolveAccess(none, [row({ kind: "level", test_type_id: null, level: "B1" })], now))).toBe("free");
+  });
+  it("Plus with a live plan, Full access given by staff, or a preparation", () => {
+    expect(individualTier(resolveAccess({ status: "active", accessEndsAt: "2026-12-01T00:00:00Z", graceEndsAt: null }, [], now))).toBe("plus");
+    expect(individualTier(resolveAccess(none, [row({ product_id: "full_access", kind: "full", test_type_id: null })], now))).toBe("plus");
+    expect(individualTier(resolveAccess(none, [row({})], now))).toBe("plus");
   });
 });

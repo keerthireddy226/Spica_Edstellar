@@ -14,6 +14,7 @@ import {
   type Shipping,
 } from "@/api/payments";
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 
 // Buy just one test: preparation + assessment, an assessment on its own, or a
 // level test. Prices in the learner's currency, which they can change.
@@ -77,12 +78,12 @@ export function Checkout({ product, currency, certificateId, onClose }: { produc
     }
   }
   return (
-    <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={product.name}>
+    <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4" onClick={onClose} role="dialog" aria-modal="true" aria-label={trServer(product.name)}>
       <div className="bg-surface rounded-card shadow-2xl w-full max-w-md p-6 flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Checkout")}</p>
-            <h2 className="font-display font-bold text-lg text-ink">{product.name}</h2>
+            <h2 className="font-display font-bold text-lg text-ink">{trServer(product.name)}</h2>
           </div>
           <button onClick={onClose} aria-label={tr("Close")} className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-paper-warm cursor-pointer">
             <X size={17} />
@@ -223,7 +224,7 @@ export function ProductShop() {
               {items.map((p) => (
                 <div key={p.id} className="flex items-center justify-between gap-3 border border-rule rounded-xl px-4 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-ink">{p.testTypeName ?? (p.kind === "level" || p.kind === "pack" ? tr("Any level, A1 to C2") : p.name)}</p>
+                    <p className="text-sm font-semibold text-ink">{p.testTypeName ?? (p.kind === "level" || p.kind === "pack" ? tr("Any level, A1 to C2") : trServer(p.name))}</p>
                     <p className="text-sm text-ink tabular-nums">{formatAmount(p.amount, p.currency)}</p>
                   </div>
                   {data.canBuy && (

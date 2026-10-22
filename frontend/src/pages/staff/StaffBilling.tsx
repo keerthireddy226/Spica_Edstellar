@@ -7,20 +7,38 @@ import { getStaffBilling, money, shortDate, type BillingContract, type BillingMo
 import { EmptyNote, FilterPills, PageError, PageHeader, PageLoading, Panel, SearchBox, StatCard, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
+import { trServer } from "@/i18n/serverText";
 type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
 
+// Orders also include products individuals bought (Full access, preparation, a test).
+type Order = Omit<BillingOrder, "kind"> & { kind: BillingOrder["kind"] | "product"; productName?: string | null; level?: string | null };
+// Each month's money per currency.
+type Month = BillingMonth & { byCurrency?: { currency: string; orgs: number; individuals: number }[] };
+
+// Amounts in different currencies are never added together: each currency
+// gets its own sum, largest first.
+function sumsByCurrency(xs: Order[]): [string, number][] {
+  const by = new Map<string, number>();
+  for (const o of xs) by.set(o.currency, (by.get(o.currency) ?? 0) + o.total);
+  return [...by.entries()].sort((a, b) => b[1] - a[1]);
+}
+function moneyAll(sums: [string, number][]): string {
+  return sums.length ? sums.map(([c, n]) => money(n, c)).join(" · ") : money(0, "USD");
+}
+
 // Money across the organizations this person looks after, plus individual
-// learners' plan payments: what's paid, what's owed, and contracts ending.
+// learners' plans and products: what's paid, what's owed, and contracts ending.
 export function StaffBilling() {
   const perms = useStaffPermissions();
-  const [data, setData] = useState<{ monthly: BillingMonth[]; orders: BillingOrder[]; contracts: BillingContract[] } | null>(null);
+  const [data, setData] = useState<{ monthly: Month[]; orders: Order[]; contracts: BillingContract[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<F>("unpaid");
   const [query, setQuery] = useState("");
+  const [chartCurrency, setChartCurrency] = useState<string | null>(null);
   const load = () => {
     setError(null);
     getStaffBilling()
-      .then(setData)
+      .then((d) => setData(d as { monthly: Month[]; orders: Order[]; contracts: BillingContract[] }))
       .catch(() => setError(tr("Could not load billing.")));
   };
   useEffect(load, []);
@@ -28,18 +46,24 @@ export function StaffBilling() {
   if (!data) return <PageLoading />;
 
   const { orders, contracts, monthly } = data;
-  const cur = orders[0]?.currency ?? "USD";
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
   const paid = orders.filter((o) => o.status === "paid");
   const unpaid = orders.filter((o) => o.status === "created" && o.provider === "invoice");
-  const total = (xs: BillingOrder[]) => xs.reduce((n, o) => n + o.total, 0);
-  const match: Record<F, (o: BillingOrder) => boolean> = {
+  const total = (xs: Order[]) => moneyAll(sumsByCurrency(xs));
+  const individual = (o: Order) => o.kind === "individual_plan" || o.kind === "product";
+  const match: Record<F, (o: Order) => boolean> = {
     unpaid: (o) => o.status === "created" && o.provider === "invoice",
     overdue: (o) => o.overdue,
     paid: (o) => o.status === "paid",
-    individual: (o) => o.kind === "individual_plan",
+    individual,
     all: () => true,
   };
+  // The chart shows one currency at a time: the one with the most money in by default.
+  const yearByCurrency = new Map<string, number>();
+  for (const m of monthly) for (const c of m.byCurrency ?? []) yearByCurrency.set(c.currency, (yearByCurrency.get(c.currency) ?? 0) + c.orgs + c.individuals);
+  const chartCurrencies = [...yearByCurrency.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  const cur = chartCurrency && chartCurrencies.includes(chartCurrency) ? chartCurrency : (chartCurrencies[0] ?? paid[0]?.currency ?? "USD");
+  const inCur = (m: Month) => m.byCurrency?.find((c) => c.currency === cur) ?? { orgs: 0, individuals: 0 };
   const q = query.trim().toLowerCase();
   const shown = orders.filter(
     (o) => match[filter](o) && (!q || [o.orgName, o.buyerName, o.buyerEmail, o.invoiceNumber, o.quoteNumber, o.poNumber].some((v) => v?.toLowerCase().includes(q))),
@@ -53,26 +77,43 @@ export function StaffBilling() {
         subtitle={perms.isSuper ? tr("Payments, unpaid invoices and contracts across Spica.") : tr("Payments, unpaid invoices and contracts for your organizations, and individual learners' plans.")}
       />
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="ledger" palette="rose" index={0} icon={CreditCard} value={money(total(paid.filter((o) => o.paidAt && new Date(o.paidAt).getTime() >= monthStart)), cur)} label={tr("Paid this month")} sub={tr("{{money}} in total", { money: money(total(paid), cur) })} />
-        <StatCard variant="ledger" palette="rose" index={1} icon={FileText} value={unpaid.length} label={tr("Unpaid invoices")} sub={money(total(unpaid), cur)} progress={orders.length ? unpaid.length / orders.length : 0} />
-        <StatCard variant="ledger" palette="rose" index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label={tr("Overdue")} sub={money(total(unpaid.filter((o) => o.overdue)), cur)} progress={unpaid.length ? unpaid.filter((o) => o.overdue).length / unpaid.length : 0} />
+        <StatCard variant="ledger" palette="rose" index={0} icon={CreditCard} value={total(paid.filter((o) => o.paidAt && new Date(o.paidAt).getTime() >= monthStart))} label={tr("Paid this month")} sub={tr("{{money}} in total", { money: total(paid) })} />
+        <StatCard variant="ledger" palette="rose" index={1} icon={FileText} value={unpaid.length} label={tr("Unpaid invoices")} sub={total(unpaid)} progress={orders.length ? unpaid.length / orders.length : 0} />
+        <StatCard variant="ledger" palette="rose" index={2} icon={AlertTriangle} value={unpaid.filter((o) => o.overdue).length} label={tr("Overdue")} sub={total(unpaid.filter((o) => o.overdue))} progress={unpaid.length ? unpaid.filter((o) => o.overdue).length / unpaid.length : 0} />
         <StatCard variant="ledger" palette="rose" index={3} icon={CalendarClock} value={ending.length} label={tr("Contracts ending in 90 days")} sub={tr("{{length}} contracts in total", { length: contracts.length })} progress={contracts.length ? ending.length / contracts.length : 0} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 items-start">
         <Panel className="lg:col-span-2" title={tr("Money in, last 12 months")}>
           {(() => {
-            const max = Math.max(1, ...monthly.map((m) => m.orgs + m.individuals));
-            const yearTotal = monthly.reduce((n, m) => n + m.orgs + m.individuals, 0);
+            const max = Math.max(1, ...monthly.map((m) => inCur(m).orgs + inCur(m).individuals));
+            const yearTotal = monthly.reduce((n, m) => n + inCur(m).orgs + inCur(m).individuals, 0);
             return (
               <>
+                {chartCurrencies.length > 1 && (
+                  <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label={tr("Currency")}>
+                    {chartCurrencies.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setChartCurrency(c)}
+                        aria-pressed={c === cur}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-pill border cursor-pointer ${c === cur ? "border-navy bg-navy/10 text-navy-deep" : "border-rule text-muted hover:border-rule-strong"}`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-end gap-1.5 h-44">
-                  {monthly.map((m) => (
-                    <div key={m.month} className="flex-1 h-full flex flex-col justify-end" title={tr("{{month}}: {{orgs}} organizations, {{individuals}} individuals, {{n}} licenses", { month: m.month, orgs: money(m.orgs, cur), individuals: money(m.individuals, cur), n: m.licenses })}>
-                      <div style={{ height: `${(m.individuals / max) * 100}%`, background: "#7f9478" }} className="rounded-t-sm" />
-                      <div style={{ height: `${(m.orgs / max) * 100}%`, background: "var(--color-navy)", minHeight: m.orgs ? 3 : 0 }} className={m.individuals ? "" : "rounded-t-sm"} />
-                    </div>
-                  ))}
+                  {monthly.map((m) => {
+                    const v = inCur(m);
+                    return (
+                      <div key={m.month} className="flex-1 h-full flex flex-col justify-end" title={tr("{{month}}: {{orgs}} organizations, {{individuals}} individuals, {{n}} licenses", { month: m.month, orgs: money(v.orgs, cur), individuals: money(v.individuals, cur), n: m.licenses })}>
+                        <div style={{ height: `${(v.individuals / max) * 100}%`, background: "#7f9478" }} className="rounded-t-sm" />
+                        <div style={{ height: `${(v.orgs / max) * 100}%`, background: "var(--color-navy)", minHeight: v.orgs ? 3 : 0 }} className={v.individuals ? "" : "rounded-t-sm"} />
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="flex gap-1.5">
                   {monthly.map((m) => (
@@ -85,7 +126,7 @@ export function StaffBilling() {
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--color-navy)" }} /> {tr("Organizations")}</span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#7f9478" }} /> {tr("Individual plans")}</span>
+                    <span className="h-2.5 w-2.5 rounded-sm" style={{ background: "#7f9478" }} /> {tr("Individuals")}</span>
                   <span className="ml-auto">
                     {tr("12 months:")}{" "}<span className="font-semibold text-ink">{money(yearTotal, cur)}</span> · {monthly.reduce((n, m) => n + m.licenses, 0)} {tr("licenses sold")}</span>
                 </div>
@@ -95,8 +136,9 @@ export function StaffBilling() {
         </Panel>
         <Panel title={tr("Top customers")}>
           {(() => {
+            // Ranked within the chart's currency, so amounts compare like for like.
             const by = new Map<string, number>();
-            for (const o of paid) {
+            for (const o of paid.filter((x) => x.currency === cur)) {
               const k = o.orgName ?? o.buyerName ?? o.buyerEmail ?? tr("Unknown");
               by.set(k, (by.get(k) ?? 0) + o.total);
             }
@@ -118,7 +160,14 @@ export function StaffBilling() {
               ))
             );
           })()}
-          {paid.length > 0 && <p className="text-xs text-muted">{tr("Average payment")}{" "}{money(Math.round(total(paid) / paid.length), cur)}</p>}
+          {paid.length > 0 && (
+            <p className="text-xs text-muted">
+              {tr("Average payment")}{" "}
+              {sumsByCurrency(paid)
+                .map(([c, n]) => money(Math.round(n / paid.filter((o) => o.currency === c).length), c))
+                .join(" · ")}
+            </p>
+          )}
         </Panel>
       </div>
 
@@ -134,7 +183,7 @@ export function StaffBilling() {
               ["unpaid", tr("Unpaid"), unpaid.length],
               ["overdue", tr("Overdue"), orders.filter(match.overdue).length],
               ["paid", tr("Paid"), paid.length],
-              ["individual", tr("Individual plans"), orders.filter(match.individual).length],
+              ["individual", tr("Individuals"), orders.filter(match.individual).length],
               ["all", tr("All"), orders.length],
             ]}
           />
@@ -158,10 +207,16 @@ export function StaffBilling() {
                     <tr key={o.id} className="border-b border-rule last:border-0">
                       <td className="px-4 py-3">
                         <p className="text-ink font-medium">{o.orgName ?? o.buyerName ?? o.buyerEmail ?? "—"}</p>
-                        <p className="text-xs text-muted">{o.kind === "individual_plan" ? tr("Individual · {{v}}", { v: o.buyerEmail ?? "" }) : (o.buyerName ?? "")}</p>
+                        <p className="text-xs text-muted">{individual(o) ? tr("Individual · {{v}}", { v: o.buyerEmail ?? "" }) : (o.buyerName ?? "")}</p>
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {o.kind === "individual_plan" ? tr("Plan") : o.quantity === 1 ? tr("1 license") : tr("{{n}} licenses", { n: o.quantity })}
+                        {o.kind === "product"
+                          ? `${trServer(o.productName ?? tr("Product"))}${o.level ? ` (${o.level})` : ""}`
+                          : o.kind === "individual_plan"
+                            ? tr("Plan")
+                            : o.quantity === 1
+                              ? tr("1 license")
+                              : tr("{{n}} licenses", { n: o.quantity })}
                         {o.poNumber ? tr(" · PO {{poNumber}}", { poNumber: o.poNumber }) : ""}
                       </td>
                       <td className="px-4 py-3 text-ink font-medium">{money(o.total, o.currency)}</td>

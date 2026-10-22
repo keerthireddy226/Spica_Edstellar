@@ -3,7 +3,7 @@
 // test). The server's checks and the app's menus, home page and locks all
 // read this.
 import { pool } from "../db.js";
-import { learnerAccess, type LearnerAccess } from "../licenses/service.js";
+import { learnerAccess, learnerKind, type LearnerAccess } from "../licenses/service.js";
 
 // Preparation can be switched to another test in its first SWITCH_DAYS (see assessment/service.ts).
 const SWITCH_DAYS = 7;
@@ -118,17 +118,37 @@ export async function itemTypesOfTests(testTypeIds: string[]): Promise<string[]>
   return r.rows.map((x) => x.item_type_id as string);
 }
 
+// Whether the learner owns a preparation or a practice pack: what opens
+// practice beyond the free plan.
+export function opensPractice(a: Access): boolean {
+  return a.prepTests.length > 0 || a.practicePack;
+}
+
 // Practice Modules question types the learner may practise: all with Full
-// access, else those of the tests they prepare for (null = no limit).
+// access or a practice pack, those of the tests they prepare for with a
+// preparation, and no narrowing (null) without either: a level test or a
+// real test alone takes nothing away, the free plan's rules apply.
 export async function allowedItemTypes(a: Access): Promise<string[] | null> {
-  if (a.full || a.practicePack) return null;
+  if (a.full || a.practicePack || !a.prepTests.length) return null;
   return itemTypesOfTests(a.prepTests);
 }
 
-// For the server's checks: null when nothing narrows access (Full access, or
-// nothing owned so the licence and free-plan rules apply as before); else the
-// learner's Access, which only opens what they own.
+// Pure: whether what the learner owns narrows what they may start. Full
+// access or nothing owned: no. A preparation or a practice pack: yes, only
+// what it opens. Anything else (a level test, a real test, a final
+// assessment, a certificate extra): an individual is on the free plan's
+// rules like anyone else; an organization learner with no licence gets only
+// what they were given.
+export function narrows(a: Access, kind: "org" | "individual" | "other"): boolean {
+  if (a.full || !ownsSomething(a)) return false;
+  if (opensPractice(a)) return true;
+  return kind === "org";
+}
+
+// For the server's checks: null when nothing narrows access (see narrows);
+// else the learner's Access, which only opens what they own.
 export async function narrowedAccess(userId: string): Promise<Access | null> {
   const a = await accessOf(userId);
-  return a.full || !ownsSomething(a) ? null : a;
+  if (a.full || !ownsSomething(a)) return null;
+  return narrows(a, await learnerKind(userId)) ? a : null;
 }

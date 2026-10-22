@@ -33,8 +33,10 @@ export function getMyAccess(): Promise<MyAccess> {
   return api("/access/me");
 }
 
-// Owns something, but not Full access: only what they bought is open.
-export const isNarrowed = (a: MyAccess | null | undefined): boolean => !!a && !a.full && a.owned.length > 0;
+// Owns a preparation or a practice pack, but not Full access: only what they
+// bought is open. A level test or a real test alone takes nothing away (the
+// free plan's rules apply, as on the server).
+export const isNarrowed = (a: MyAccess | null | undefined): boolean => !!a && !a.full && (a.prepTests.length > 0 || a.practicePack);
 
 export interface Product {
   id: string;

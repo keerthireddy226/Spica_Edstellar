@@ -2,10 +2,10 @@
 // an assessment, or a level test. Each product has a price per currency;
 // India pays in INR (GST added), a few other markets in their own currency,
 // everyone else in USD. Upgrading to Full access credits the unused part of
-// a preparation purchase.
+// a preparation purchase, once.
 import { pool } from "../db.js";
-import { PAYMENT_CONFIG, razorpayEnabled, stripeEnabled, testModeEnabled, type ProviderName } from "./providers.js";
-import { PaymentError, type Buyer } from "./service.js";
+import { PAYMENT_CONFIG, chooseProvider, razorpayEnabled, stripeEnabled, testModeEnabled, type ProviderName } from "./providers.js";
+import { INDIVIDUAL_PLAN_MONTHS, PaymentError, type Buyer, type Quote } from "./service.js";
 
 export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -57,21 +57,135 @@ export interface ProductQuote {
   certificateId: string | null;
 }
 
-// Unused time of the buyer's paid preparation purchases, in this currency, as credit.
-export async function upgradeCredit(userId: string, currency: Currency): Promise<number> {
+// One paid preparation the buyer can still be credited for, valued in the
+// currency being paid: what they paid if it was the same currency, else that
+// preparation's price in this currency. `usedShare` is the part of its value
+// earlier paid orders already took as credit (1 = all of it).
+export interface PrepCredit {
+  entitlementId: string;
+  startsAt: Date | string;
+  endsAt: Date | string;
+  value: number;
+  usedShare: number;
+}
+
+export interface CreditSource {
+  entitlementId: string;
+  // The part of the preparation's value this order takes (0 to 1).
+  share: number;
+}
+
+// Pure: the credit for the unused time of these preparations, at most `cap`,
+// and which preparation each part of it comes from. A preparation's credit
+// is its value times the share of its time left, less what earlier orders
+// already took, so the same credit can't be used twice.
+export function creditFromPreps(rows: PrepCredit[], cap: number, now = Date.now()): { credit: number; sources: CreditSource[] } {
+  let credit = 0;
+  const sources: CreditSource[] = [];
+  for (const r of rows) {
+    if (credit >= cap || r.value <= 0) continue;
+    const span = new Date(r.endsAt).getTime() - new Date(r.startsAt).getTime();
+    if (span <= 0) continue;
+    const left = Math.max(0, Math.min(span, new Date(r.endsAt).getTime() - now));
+    const available = Math.max(0, Math.round(r.value * (left / span - r.usedShare)));
+    const take = Math.min(available, cap - credit);
+    if (take <= 0) continue;
+    credit += take;
+    sources.push({ entitlementId: r.entitlementId, share: take / r.value });
+  }
+  return { credit, sources };
+}
+
+// The buyer's paid preparations still running, valued in this currency (see PrepCredit).
+async function prepCredits(userId: string, currency: Currency): Promise<PrepCredit[]> {
   const rows = (
     await pool.query(
-      `SELECT e.starts_at, e.ends_at, o.subtotal FROM entitlements e JOIN products p ON p.id = e.product_id JOIN payment_orders o ON o.id = e.order_id
-       WHERE e.user_id = $1 AND p.kind = 'prep' AND e.revoked_at IS NULL AND e.ends_at > now() AND o.status = 'paid' AND o.currency = $2`,
+      `SELECT e.id, e.starts_at, e.ends_at, o.currency, o.subtotal, pp.amount AS price_here,
+         coalesce((
+           SELECT sum((s->>'share')::numeric) FROM payment_orders u, jsonb_array_elements(coalesce(u.credit_sources, '[]'::jsonb)) s
+           WHERE u.buyer_id = $1 AND u.status = 'paid' AND s->>'entitlementId' = e.id::text
+         ), 0) AS used_share
+       FROM entitlements e JOIN products p ON p.id = e.product_id JOIN payment_orders o ON o.id = e.order_id
+       LEFT JOIN product_prices pp ON pp.product_id = e.product_id AND pp.currency = $2
+       WHERE e.user_id = $1 AND p.kind = 'prep' AND e.revoked_at IS NULL AND e.ends_at > now() AND o.status = 'paid'
+       ORDER BY e.starts_at`,
       [userId, currency],
     )
   ).rows;
-  const now = Date.now();
-  return rows.reduce((sum, r) => {
-    const span = new Date(r.ends_at).getTime() - new Date(r.starts_at).getTime();
-    const left = Math.max(0, new Date(r.ends_at).getTime() - now);
-    return sum + (span > 0 ? Math.round((Number(r.subtotal) * left) / span) : 0);
-  }, 0);
+  return rows
+    .map((r) => ({
+      entitlementId: r.id as string,
+      startsAt: r.starts_at,
+      endsAt: r.ends_at,
+      // Paid in another currency: its price in this one (nothing when it has none).
+      value: r.currency === currency ? Number(r.subtotal) : Number(r.price_here ?? 0),
+      usedShare: Number(r.used_share),
+    }))
+    .filter((r) => r.value > 0);
+}
+
+// Unused time of the buyer's paid preparation purchases, in this currency, as
+// credit (at most `cap`), less what earlier orders already used.
+export async function upgradeCredit(userId: string, currency: Currency, cap: number): Promise<{ credit: number; sources: CreditSource[] }> {
+  return creditFromPreps(await prepCredits(userId, currency), cap);
+}
+
+// Full access by the month for an individual (the Plans page). Its price is
+// the Full access row in product_prices, the same one the price list and
+// Spica staff's Products page show, in the buyer's currency (or the one they
+// chose); PAYMENT_CONFIG only fills in when a currency has no row. Unused
+// preparation counts towards it.
+export async function planQuote(buyer: Buyer, months: number, opts: { currency?: string } = {}): Promise<Quote> {
+  if (!INDIVIDUAL_PLAN_MONTHS.includes(months as 1 | 3 | 6)) throw new PaymentError("invalid_quantity");
+  let currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
+  let provider = providerFor(currency);
+  if (!provider) {
+    // No provider takes this currency: the older INR/USD choice.
+    const choice = chooseProvider(buyer.billingCountry);
+    if (!choice) throw new PaymentError("no_provider");
+    currency = choice.currency;
+    provider = choice.provider;
+  }
+  const full = async (c: Currency) =>
+    (
+      await pool.query(
+        `SELECT pp.amount FROM products p JOIN product_prices pp ON pp.product_id = p.id AND pp.currency = $1
+         WHERE p.kind = 'full' AND p.active ORDER BY p.sort_order LIMIT 1`,
+        [c],
+      )
+    ).rows[0]?.amount as number | undefined;
+  let unitAmount = await full(currency);
+  if (unitAmount === undefined && (currency === "INR" || currency === "USD")) {
+    unitAmount = currency === "INR" ? Math.round((PAYMENT_CONFIG.priceUsdCents / 100) * PAYMENT_CONFIG.inrPerUsd * 100) : PAYMENT_CONFIG.priceUsdCents;
+  }
+  if (unitAmount === undefined) {
+    // No price in this currency: USD, as for every other product.
+    currency = "USD";
+    provider = providerFor("USD") ?? provider;
+    unitAmount = (await full("USD")) ?? PAYMENT_CONFIG.priceUsdCents;
+  }
+  unitAmount = Number(unitAmount);
+  const gross = unitAmount * months;
+  // GST applies to sales billed in India.
+  const taxRate = buyer.billingCountry === "IN" && currency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
+  const { credit, sources } = await upgradeCredit(buyer.userId, currency, gross);
+  const subtotal = gross - credit;
+  const taxAmount = Math.round((subtotal * taxRate) / 100);
+  return {
+    currency,
+    provider,
+    quantity: months,
+    unitAmount,
+    ...(credit > 0 ? { credit, creditSources: sources } : {}),
+    subtotal,
+    taxLabel: taxRate > 0 ? `GST ${taxRate}%` : null,
+    taxRate,
+    taxAmount,
+    total: subtotal + taxAmount,
+    billingCountry: buyer.billingCountry,
+    listUnitAmount: unitAmount,
+    upgradesTo: null,
+  };
 }
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -101,7 +215,9 @@ async function levelResults(userId: string): Promise<{ level: string; passed: bo
 }
 
 export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string; certificateId?: string } = {}): Promise<ProductQuote> {
-  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind <> 'final'`, [productId])).rows[0];
+  // Full access is bought by the month from the Plans page (planQuote); the
+  // final assessment comes with it.
+  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind NOT IN ('final', 'full')`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
   // A certificate extra is for one of the buyer's own final assessment certificates.
   if (String(p.kind).startsWith("cert_")) {
@@ -120,10 +236,9 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     : Number((await pool.query(`SELECT amount FROM product_prices WHERE product_id = $1 AND currency = 'USD'`, [productId])).rows[0]?.amount ?? 0);
   const provider = providerFor(finalCurrency);
   if (!provider) throw new PaymentError("no_provider");
-  const credit = p.kind === "full" ? Math.min(price, await upgradeCredit(buyer.userId, finalCurrency)) : 0;
   const off = p.kind === "level" ? levelDiscountOf(opts.level!, await levelResults(buyer.userId)) : null;
   const discount = off ? Math.round((price * off.percent) / 100) : 0;
-  const subtotal = price - credit - discount;
+  const subtotal = price - discount;
   // GST applies to sales billed in India.
   const taxRate = buyer.billingCountry === "IN" && finalCurrency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
   const taxAmount = Math.round((subtotal * taxRate) / 100);
@@ -136,7 +251,8 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     currency: finalCurrency,
     provider,
     price,
-    credit,
+    // Only Full access takes upgrade credit, and it isn't sold here.
+    credit: 0,
     discount,
     discountReason: off?.reason ?? null,
     subtotal,

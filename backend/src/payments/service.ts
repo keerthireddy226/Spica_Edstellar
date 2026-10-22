@@ -7,6 +7,7 @@ import { getTenantPlan, orgUnitPriceCents, purchaseUpgradesTo, setTier, type Ten
 import { TIER_LABELS, type PlanTier } from "../plans/config.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { listCreditNotes } from "./invoiceOrders.js";
+import type { CreditSource, Currency } from "./products.js";
 
 // product: one of the products (Full access, preparation, assessment, level test), see products.ts.
 export type OrderKind = "org_licenses" | "individual_plan" | "product";
@@ -19,9 +20,12 @@ export class PaymentError extends Error {
 }
 
 export interface Quote {
-  currency: "INR" | "USD";
-  // Full access months: credit for the unused part of a preparation purchase.
+  // Organizations: INR or USD. Full access months: any currency Full access has a price in.
+  currency: Currency;
+  // Full access months: credit for the unused part of a preparation purchase,
+  // and which preparations it comes from (so it is used once).
   credit?: number;
+  creditSources?: CreditSource[];
   provider: ProviderName;
   quantity: number;
   unitAmount: number;
@@ -134,20 +138,26 @@ export function quote(buyer: Buyer, quantity: number, opts: { byInvoice?: boolea
   };
 }
 
-// Takes an upgrade credit off a quote (never below zero) and works out tax again.
-export function withCredit(q: Quote, credit: number): Quote {
-  const c = Math.min(credit, q.subtotal);
-  if (c <= 0) return q;
-  const subtotal = q.subtotal - c;
-  const taxAmount = Math.round((subtotal * q.taxRate) / 100);
-  return { ...q, credit: c, subtotal, taxAmount, total: subtotal + taxAmount };
-}
-
 export async function createOrder(buyer: Buyer, q: Quote): Promise<string> {
   const result = await pool.query(
-    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, credit_amount)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-    [buyer.tenantId, buyer.userId, buyer.kind, q.quantity, q.currency, q.unitAmount, q.subtotal, q.taxRate, q.taxAmount, q.total, q.provider, JSON.stringify(buyer.billTo), q.credit ?? 0],
+    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, credit_amount, credit_sources)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
+    [
+      buyer.tenantId,
+      buyer.userId,
+      buyer.kind,
+      q.quantity,
+      q.currency,
+      q.unitAmount,
+      q.subtotal,
+      q.taxRate,
+      q.taxAmount,
+      q.total,
+      q.provider,
+      JSON.stringify(buyer.billTo),
+      q.credit ?? 0,
+      q.creditSources?.length ? JSON.stringify(q.creditSources) : null,
+    ],
   );
   return result.rows[0].id;
 }
@@ -227,10 +237,12 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
         : order.kind === "individual_plan"
           ? `Spica learner access — ${order.quantity} month${order.quantity === 1 ? "" : "s"}`
           : `Spica learner licenses (1 license = 1 learner-month)`;
+    // Quantity x unit price is the list price; the credit and the discount are
+    // their own lines, so the lines add up to the subtotal.
     const invoice = await client.query(
       `INSERT INTO invoices (invoice_number, order_id, tenant_id, seller, bill_to, description, quantity, currency, unit_amount,
-         subtotal, tax_label, tax_rate, tax_amount, total, provider, provider_payment_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+         subtotal, tax_label, tax_rate, tax_amount, total, provider, provider_payment_id, credit_amount, discount_amount, discount_reason)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
       [
         invoiceNumber,
         order.id,
@@ -248,6 +260,9 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
         order.total,
         order.provider,
         providerPaymentId,
+        Number(order.credit_amount) || 0,
+        Number(order.discount_amount) || 0,
+        order.discount_reason ?? null,
       ],
     );
     invoiceId = invoice.rows[0].id;
@@ -362,6 +377,9 @@ export async function getInvoice(invoiceId: string, tenantId: string | null, isP
     quantity: r.quantity,
     currency: r.currency,
     unitAmount: r.unit_amount,
+    creditAmount: r.credit_amount,
+    discountAmount: r.discount_amount,
+    discountReason: r.discount_reason as "level_retake" | "next_level" | null,
     subtotal: r.subtotal,
     taxLabel: r.tax_label,
     taxRate: Number(r.tax_rate),

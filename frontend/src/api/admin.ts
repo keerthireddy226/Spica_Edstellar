@@ -1,6 +1,5 @@
 import type { LearnerDetails } from "@/api/details";
 import { api } from "@/lib/api";
-import type { BulkLearnerRow, BulkLearnerResult } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
 export interface AdminStats {
@@ -403,16 +402,6 @@ export function reactivateOrganization(id: string): Promise<{ id: string }> {
   return api(`/admin/organizations/${id}/reactivate`, { method: "POST" });
 }
 
-export interface ConsoleBatch {
-  id: string;
-  name: string;
-  orgName: string;
-}
-
-export function getConsoleBatches(): Promise<{ batches: ConsoleBatch[] }> {
-  return api("/admin/console/batches");
-}
-
 export interface ConsoleLearner {
   id: string;
   participantId: string | null;
@@ -429,21 +418,6 @@ export interface ConsoleLearner {
 
 export function getConsoleLearners(): Promise<{ learners: ConsoleLearner[] }> {
   return api("/admin/console/learners");
-}
-
-export interface OnboardConsoleLearnerPayload {
-  email: string;
-  firstName: string;
-  lastName: string;
-  batchId: string;
-}
-
-export function onboardConsoleLearner(payload: OnboardConsoleLearnerPayload): Promise<{ id: string; email: string }> {
-  return api("/admin/console/learners", { method: "POST", body: JSON.stringify(payload) });
-}
-
-export function onboardConsoleLearnersBulk(batchId: string, rows: BulkLearnerRow[]): Promise<{ results: BulkLearnerResult[] }> {
-  return api("/admin/console/learners/bulk", { method: "POST", body: JSON.stringify({ batchId, rows }) });
 }
 
 export interface LearnerProfile {

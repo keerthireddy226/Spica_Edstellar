@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Button";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { getProducts, type Product } from "@/api/access";
 import { tr } from "@/i18n/tr";
 
@@ -55,22 +55,35 @@ export function ProductsPanel() {
         body: JSON.stringify({
           email: grant.email.trim(),
           productId: grant.productId,
-          ...(product?.kind === "level" ? { level: grant.level } : {}),
+          // A level test and a practice pack are for one level.
+          ...(product?.kind === "level" || product?.kind === "pack" ? { level: grant.level } : {}),
           ...(grant.days ? { days: Number(grant.days) } : {}),
         }),
       });
       setNote(tr("Given to {{email}}.", { email: grant.email.trim() }));
       setGrant({ ...grant, email: "" });
-    } catch {
-      setNote(tr("Couldn't give it. Check the email address."));
+    } catch (err) {
+      // Say what actually went wrong, not always the email.
+      const code = err instanceof ApiError ? err.message : "";
+      setNote(
+        code === "user_not_found"
+          ? tr("Couldn't give it. Check the email address.")
+          : code === "level_required"
+            ? tr("Choose a level first.")
+            : code === "product_not_found"
+              ? tr("That product no longer exists.")
+              : tr("Couldn't give it ({{error}}).", { error: code || tr("network error") }),
+      );
     } finally {
       setGranting(false);
     }
   }
 
   const chosen = products.find((x) => x.id === grant.productId);
+  // Certificate extras change a certificate; they aren't something a learner owns.
+  const givable = products.filter((p) => !String(p.kind).startsWith("cert_"));
   return (
-    <section className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4">
+    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
       <div>
         <h2 className="font-display font-bold text-lg text-ink">{tr("Products and prices")}</h2>
         <p className="text-sm text-muted">{tr("What individuals can buy on their Plans page, in each currency (whole amounts, e.g. 4999 = ₹4,999). Learners outside these currencies pay in USD.")}</p>
@@ -133,13 +146,13 @@ export function ProductsPanel() {
           <input type="email" placeholder={tr("Learner's email")} value={grant.email} onChange={(e) => setGrant({ ...grant, email: e.target.value })} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm w-64" />
           <select value={grant.productId} onChange={(e) => setGrant({ ...grant, productId: e.target.value })} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm">
             <option value="">{tr("Choose a product")}</option>
-            {products.map((p) => (
+            {givable.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
           </select>
-          {chosen?.kind === "level" && (
+          {(chosen?.kind === "level" || chosen?.kind === "pack") && (
             <select value={grant.level} onChange={(e) => setGrant({ ...grant, level: e.target.value })} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm">
               {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => (
                 <option key={l}>{l}</option>

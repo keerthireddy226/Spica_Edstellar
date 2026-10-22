@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { useTranslation } from "react-i18next";
+import { lockedByServer } from "@/components/licenses/LicenseGate";
 import {
   Volume2,
   Mic,
@@ -1058,7 +1059,9 @@ function ModulesPage() {
       setFeedback(null);
       // The device check and guide on a fresh start; smart resume otherwise.
       void introFor(res.sessionId, res.items);
-    } catch {
+    } catch (err) {
+      // Not in the learner's plan: the page shows the standard locked card instead.
+      if (lockedByServer(err)) return;
       setError(t("modules.startError"));
     } finally {
       setStarting(false);

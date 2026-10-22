@@ -67,14 +67,14 @@ staffConsoleRouter.get("/portfolio", requireAuth, async (req: AuthedRequest, res
          FROM license_purchases p WHERE p.tenant_id = ANY($1::uuid[]) AND p.pool_expires_at > now()`,
         [ids],
       ),
-      // Money in: organizations' license orders and individuals' plans.
+      // Money in: organizations' license orders, individuals' plans and products they bought.
       pool.query(
         `SELECT o.currency,
            coalesce(sum(o.total) FILTER (WHERE o.paid_at >= date_trunc('month', now())), 0)::bigint AS this_month,
            coalesce(sum(o.total) FILTER (WHERE o.paid_at >= date_trunc('month', now()) - interval '1 month' AND o.paid_at < date_trunc('month', now())), 0)::bigint AS last_month,
            coalesce(sum(o.total) FILTER (WHERE o.paid_at >= date_trunc('year', now())), 0)::bigint AS this_year
          FROM payment_orders o JOIN tenants t ON t.id = o.tenant_id
-         WHERE o.status = 'paid' AND (o.kind = 'individual_plan' OR o.tenant_id = ANY($1::uuid[]))
+         WHERE o.status = 'paid' AND (o.kind IN ('individual_plan', 'product') OR o.tenant_id = ANY($1::uuid[]))
          GROUP BY o.currency`,
         [ids],
       ),
@@ -294,7 +294,7 @@ staffConsoleRouter.patch("/organizations/:id/owner", requireAuth, async (req: Au
   }
 });
 
-// ---- Billing across organizations (and individuals' plan payments) ----
+// ---- Billing across organizations (and individuals' plans and products) ----
 
 staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireStaff(req, res)) return;
@@ -306,28 +306,42 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name,
          ${name("b")} AS buyer_name, b.email AS buyer_email,
          (SELECT i.id FROM invoices i WHERE i.order_id = o.id LIMIT 1) AS invoice_id,
-         (SELECT i.invoice_number FROM invoices i WHERE i.order_id = o.id LIMIT 1) AS invoice_number
+         (SELECT i.invoice_number FROM invoices i WHERE i.order_id = o.id LIMIT 1) AS invoice_number,
+         pr.name AS product_name, o.level
        FROM payment_orders o
        JOIN tenants t ON t.id = o.tenant_id
        LEFT JOIN users b ON b.id = o.buyer_id
-       WHERE o.status IN ('created', 'paid') AND (o.kind = 'individual_plan' OR (t.type = 'cohort' ${scope.sql}))
+       LEFT JOIN products pr ON pr.id = o.product_id
+       WHERE o.status IN ('created', 'paid') AND (o.kind IN ('individual_plan', 'product') OR (t.type = 'cohort' ${scope.sql}))
        ORDER BY coalesce(o.paid_at, o.created_at) DESC
        LIMIT 300`,
       scope.params,
     );
-    // Twelve months of money in, split by organizations and individuals.
+    // Twelve months of money in, split by organizations and individuals
+    // (plans and products), per currency: amounts in different currencies
+    // are never added together.
     const monthly = await pool.query(
-      `SELECT to_char(m, 'YYYY-MM') AS month,
-         coalesce((SELECT sum(o.total) FROM payment_orders o JOIN tenants t ON t.id = o.tenant_id
-            WHERE o.status = 'paid' AND o.kind = 'org_licenses' AND o.paid_at >= m AND o.paid_at < m + interval '1 month' AND t.type = 'cohort' ${scope.sql}), 0)::bigint AS orgs,
-         coalesce((SELECT sum(o.total) FROM payment_orders o
-            WHERE o.status = 'paid' AND o.kind = 'individual_plan' AND o.paid_at >= m AND o.paid_at < m + interval '1 month'), 0)::bigint AS individuals,
-         coalesce((SELECT sum(o.quantity) FROM payment_orders o JOIN tenants t ON t.id = o.tenant_id
-            WHERE o.status = 'paid' AND o.kind = 'org_licenses' AND o.paid_at >= m AND o.paid_at < m + interval '1 month' AND t.type = 'cohort' ${scope.sql}), 0)::int AS licenses
+      `SELECT to_char(m, 'YYYY-MM') AS month, o.currency,
+         coalesce(sum(o.total) FILTER (WHERE o.kind = 'org_licenses'), 0)::bigint AS orgs,
+         coalesce(sum(o.total) FILTER (WHERE o.kind IN ('individual_plan', 'product')), 0)::bigint AS individuals,
+         coalesce(sum(o.quantity) FILTER (WHERE o.kind = 'org_licenses'), 0)::int AS licenses
        FROM generate_series(date_trunc('month', now()) - interval '11 months', date_trunc('month', now()), interval '1 month') m
+       LEFT JOIN (payment_orders o JOIN tenants t ON t.id = o.tenant_id)
+         ON o.status = 'paid' AND o.paid_at >= m AND o.paid_at < m + interval '1 month'
+           AND (o.kind IN ('individual_plan', 'product') OR (o.kind = 'org_licenses' AND t.type = 'cohort' ${scope.sql}))
+       GROUP BY m, o.currency
        ORDER BY m`,
       scope.params,
     );
+    type Month = { month: string; orgs: number; individuals: number; licenses: number; byCurrency: { currency: string; orgs: number; individuals: number }[] };
+    const months = new Map<string, Month>();
+    for (const r of monthly.rows) {
+      const m: Month = months.get(r.month) ?? { month: r.month, orgs: 0, individuals: 0, licenses: 0, byCurrency: [] };
+      months.set(r.month, m);
+      if (!r.currency) continue;
+      m.licenses += r.licenses;
+      m.byCurrency.push({ currency: r.currency, orgs: Number(r.orgs), individuals: Number(r.individuals) });
+    }
     const contracts = await pool.query(
       `SELECT t.id, t.name, t.contract_start, t.contract_end, t.contract_value_cents, t.contract_currency, t.plan_tier,
          (SELECT ${name("m")} FROM users m WHERE m.id = coalesce(t.account_manager_id, t.managed_by)) AS owner_name
@@ -336,7 +350,13 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
       scope.params,
     );
     res.json({
-      monthly: monthly.rows.map((m) => ({ month: m.month, orgs: Number(m.orgs), individuals: Number(m.individuals), licenses: m.licenses })),
+      // byCurrency has each currency's money; orgs and individuals stay for
+      // older callers, filled only when the month has a single currency.
+      monthly: [...months.values()].map((m) => ({
+        ...m,
+        orgs: m.byCurrency.length === 1 ? m.byCurrency[0].orgs : 0,
+        individuals: m.byCurrency.length === 1 ? m.byCurrency[0].individuals : 0,
+      })),
       orders: orders.rows.map((o) => ({
         id: o.id,
         kind: o.kind,
@@ -358,6 +378,9 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
         paymentReference: o.payment_reference,
         invoiceId: o.invoice_id,
         invoiceNumber: o.invoice_number,
+        // A product an individual bought: what it was.
+        productName: o.product_name ?? null,
+        level: o.level ?? null,
       })),
       contracts: contracts.rows.map((c) => ({
         id: c.id,
@@ -439,8 +462,9 @@ staffConsoleRouter.get("/individuals", requireAuth, async (req: AuthedRequest, r
          (SELECT ${name("ib")} FROM users ib WHERE ib.id = u.invited_by) AS invited_by_name,
          EXISTS (SELECT 1 FROM license_assignments a JOIN license_purchases p ON p.id = a.purchase_id
                  WHERE a.user_id = u.id AND a.reclaimed_at IS NULL AND p.source = 'comp') AS has_comp,
-         (SELECT coalesce(sum(o.total), 0)::bigint FROM payment_orders o WHERE o.tenant_id = u.tenant_id AND o.status = 'paid') AS paid_total,
-         (SELECT min(o.currency) FROM payment_orders o WHERE o.tenant_id = u.tenant_id AND o.status = 'paid') AS paid_currency
+         -- What they paid, per currency (never added across currencies).
+         (SELECT coalesce(jsonb_agg(jsonb_build_object('currency', x.currency, 'total', x.total) ORDER BY x.total DESC), '[]'::jsonb)
+            FROM (SELECT o.currency, sum(o.total)::bigint AS total FROM payment_orders o WHERE o.tenant_id = u.tenant_id AND o.status = 'paid' GROUP BY o.currency) x) AS paid
        FROM users u JOIN tenants t ON t.id = u.tenant_id
        WHERE u.role = 'learner' AND t.type IN ('individual_free', 'individual_paid') AND u.erased_at IS NULL
        ORDER BY u.created_at DESC
@@ -464,8 +488,10 @@ staffConsoleRouter.get("/individuals", requireAuth, async (req: AuthedRequest, r
         cefr: x.cefr,
         source: x.invited_by_name ? "invited" : "signup",
         invitedByName: x.invited_by_name,
-        paidTotal: Number(x.paid_total),
-        paidCurrency: x.paid_currency,
+        // paidTotal/paidCurrency: the currency they paid most in; paidByCurrency: every currency.
+        paidTotal: Number(x.paid[0]?.total ?? 0),
+        paidCurrency: (x.paid[0]?.currency as string | undefined) ?? null,
+        paidByCurrency: (x.paid as { currency: string; total: number }[]).map((p) => ({ currency: p.currency, total: Number(p.total) })),
         license: access.get(x.id),
         createdAt: x.created_at,
       })),

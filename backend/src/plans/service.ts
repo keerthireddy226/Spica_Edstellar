@@ -102,6 +102,14 @@ export function purchaseUpgradesTo(plan: Pick<TenantPlan, "tier">, quantity: num
 
 // ---- Changing tiers ----
 
+const TIER_RANK: Record<PlanTier, number> = { starter: 0, business: 1, enterprise: 2 };
+
+// Pure: whether a scheduled move to `pending` still moves an organization on
+// `current` down (a later upgrade, or a direct change, can make it moot).
+export function downgradeStillLower(pending: PlanTier, current: PlanTier): boolean {
+  return TIER_RANK[pending] < TIER_RANK[current];
+}
+
 export async function setTier(args: {
   tenantId: string;
   tier: PlanTier;
@@ -110,11 +118,17 @@ export async function setTier(args: {
   executor?: Executor;
 }): Promise<boolean> {
   const ex = args.executor ?? pool;
-  const current = await ex.query(`SELECT plan_tier FROM tenants WHERE id = $1 AND type = 'cohort' FOR UPDATE`, [args.tenantId]);
+  const current = await ex.query(`SELECT plan_tier, pending_tier FROM tenants WHERE id = $1 AND type = 'cohort' FOR UPDATE`, [args.tenantId]);
   if (current.rowCount === 0) return false;
   const from = current.rows[0].plan_tier as PlanTier;
   if (from === args.tier) return true;
   await ex.query(`UPDATE tenants SET plan_tier = $2, plan_changed_at = now() WHERE id = $1`, [args.tenantId, args.tier]);
+  // A move to a lower plan scheduled earlier no longer applies once it
+  // wouldn't move the organization down (it bought its way up since).
+  const pending = current.rows[0].pending_tier as PlanTier | null;
+  if (pending && !downgradeStillLower(pending, args.tier)) {
+    await ex.query(`UPDATE tenants SET pending_tier = NULL, pending_tier_on = NULL, pending_tier_by = NULL WHERE id = $1`, [args.tenantId]);
+  }
   await ex.query(
     `INSERT INTO tenant_plan_events (tenant_id, kind, from_tier, to_tier, note, actor_id) VALUES ($1, 'tier_change', $2, $3, $4, $5)`,
     [args.tenantId, from, args.tier, args.note ?? null, args.actorId],
@@ -123,8 +137,6 @@ export async function setTier(args: {
 }
 
 // ---- Moving to a lower plan at the end of the period ----
-
-const TIER_RANK: Record<PlanTier, number> = { starter: 0, business: 1, enterprise: 2 };
 
 // Pure: when a downgrade asked for on `today` takes effect: the contract's end
 // when it's still ahead, otherwise the first day of next month.
@@ -156,12 +168,19 @@ export async function cancelDowngrade(tenantId: string): Promise<void> {
 
 // Daily: scheduled downgrades whose day has come.
 export async function applyDueDowngrades(): Promise<number> {
-  const due = (await pool.query(`SELECT id, pending_tier, pending_tier_by FROM tenants WHERE pending_tier IS NOT NULL AND pending_tier_on <= current_date`)).rows;
+  const due = (
+    await pool.query(`SELECT id, plan_tier, pending_tier, pending_tier_by FROM tenants WHERE pending_tier IS NOT NULL AND pending_tier_on <= current_date`)
+  ).rows;
+  let applied = 0;
   for (const t of due) {
-    await setTier({ tenantId: t.id, tier: t.pending_tier, actorId: t.pending_tier_by, note: "Scheduled move to a lower plan" });
+    // Upgraded since it was asked for: the move is no longer down, so it's dropped.
+    if (downgradeStillLower(t.pending_tier, t.plan_tier)) {
+      await setTier({ tenantId: t.id, tier: t.pending_tier, actorId: t.pending_tier_by, note: "Scheduled move to a lower plan" });
+      applied++;
+    }
     await cancelDowngrade(t.id);
   }
-  return due.length;
+  return applied;
 }
 
 export async function setCustomPrice(args: { tenantId: string; customPriceCents: number | null; actorId: string; note?: string | null }) {

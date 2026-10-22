@@ -21,10 +21,9 @@ import {
   listInvoices,
   quote,
   resolveBuyer,
-  withCredit,
 } from "./service.js";
 import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
-import { CURRENCIES, createProductOrder, currencyFor, priceList, productQuote, upgradeCredit, type Currency } from "./products.js";
+import { CURRENCIES, createProductOrder, currencyFor, planQuote, priceList, productQuote, type Currency } from "./products.js";
 
 export const paymentsRouter = Router();
 
@@ -41,9 +40,9 @@ paymentsRouter.get("/quote", requireAuth, async (req: AuthedRequest, res, next) 
     const buyer = await resolveBuyer(req.user!);
     if (!buyer) return res.status(403).json({ error: "forbidden" });
     const quantity = z.coerce.number().int().parse(req.query.quantity);
-    const base = quote(buyer, quantity);
-    // Full access months for an individual: unused preparation counts towards them.
-    const q = buyer.kind === "individual_plan" ? withCredit(base, await upgradeCredit(buyer.userId, base.currency)) : base;
+    const currency = typeof req.query.currency === "string" ? req.query.currency : undefined;
+    // Full access months for an individual: its price list row, and unused preparation counts towards them.
+    const { creditSources: _sources, ...q } = buyer.kind === "individual_plan" ? await planQuote(buyer, quantity, { currency }) : quote(buyer, quantity);
     res.json({
       ...q,
       kind: buyer.kind,
@@ -105,6 +104,9 @@ paymentsRouter.post("/product-orders", requireAuth, async (req: AuthedRequest, r
     const buyer = await resolveBuyer(req.user!);
     if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
     const body = productOrderSchema.parse(req.body);
+    // Full access is bought by the month on the Plans page (POST /orders), at its price list row.
+    const kind = (await pool.query(`SELECT kind FROM products WHERE id = $1`, [body.productId])).rows[0]?.kind;
+    if (kind === "full") return res.status(400).json({ error: "use_plan_checkout" });
     const q = await productQuote(buyer, body.productId, body);
     if (body.productId === "cert_print" && !body.shipping) return res.status(400).json({ error: "shipping_required" });
     const orderId = await createProductOrder(buyer, q, body.productId === "cert_print" ? body.shipping : null);
@@ -154,9 +156,8 @@ paymentsRouter.post("/orders", requireAuth, async (req: AuthedRequest, res, next
   try {
     const buyer = await resolveBuyer(req.user!);
     if (!buyer) return res.status(403).json({ error: "forbidden" });
-    const body = z.object({ quantity: z.coerce.number().int() }).parse(req.body);
-    const base = quote(buyer, body.quantity);
-    const q = buyer.kind === "individual_plan" ? withCredit(base, await upgradeCredit(buyer.userId, base.currency)) : base;
+    const body = z.object({ quantity: z.coerce.number().int(), currency: z.string().length(3).optional() }).parse(req.body);
+    const q = buyer.kind === "individual_plan" ? await planQuote(buyer, body.quantity, { currency: body.currency }) : quote(buyer, body.quantity);
     const orderId = await createOrder(buyer, q);
     const returnPath = "/checkout/return";
     const productName = buyer.kind === "individual_plan" ? "Spica learner access (1 month)" : "Spica learner license (1 learner-month)";

@@ -2,7 +2,7 @@
 // section 8), read from plan_quotas. A month is the learner's current license
 // month, or the calendar month (UTC) without one (see quotaWindow).
 import { pool } from "../db.js";
-import { learnerAccess } from "../licenses/service.js";
+import { accessOf, type Access } from "../access/entitlements.js";
 import type { DeliveryMode } from "../practiceTests/modes.js";
 
 export type Segment = "individual" | "company" | "university";
@@ -31,6 +31,15 @@ export class QuotaError extends Error {
   }
 }
 
+// Pure: an individual's row of plan_quotas. Plus with Full access (a live
+// licence or plan, or Full access as a product, bought or given by Spica
+// staff) and with a preparation: its practice tests and mock tests are the
+// only ones it can start (practiceTests/routes.ts), so Plus limits on them
+// are Plus for that test. Free otherwise.
+export function individualTier(a: Pick<Access, "full" | "prepTests">): "plus" | "free" {
+  return a.full || a.prepTests.length > 0 ? "plus" : "free";
+}
+
 // Which row of plan_quotas applies to a learner. null: no limits (staff,
 // candidates, whose assessment is the test itself).
 export async function learnerSegment(userId: string): Promise<{ segment: Segment; tier: string } | null> {
@@ -44,9 +53,8 @@ export async function learnerSegment(userId: string): Promise<{ segment: Segment
     if (r.category === "university") return { segment: "university", tier: "campus" };
     return { segment: "company", tier: r.plan_tier };
   }
-  // Individuals: Plus while a paid plan is running, Free otherwise.
-  const access = await learnerAccess(userId);
-  return { segment: "individual", tier: access && (access.status === "active" || access.status === "grace") ? "plus" : "free" };
+  // Individuals: Plus with Full access or a preparation, Free otherwise.
+  return { segment: "individual", tier: individualTier(await accessOf(userId)) };
 }
 
 export async function learnerQuota(userId: string): Promise<Quota | null> {
