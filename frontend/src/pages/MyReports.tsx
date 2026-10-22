@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FileText, ChevronRight, Layers, ClipboardCheck, Timer, Award } from "lucide-react";
+import { FileText, ChevronRight, Layers, ClipboardCheck, Timer, Award, Gauge, BadgeCheck } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
 import { formatShortDate } from "@/api/licenses";
 import { getCatalogue, getHistory, type CatalogueTestType, type HistoryEntry } from "@/api/practiceTests";
@@ -70,7 +70,16 @@ export function MyReports() {
         }
         icon={FileText}
         stats={
-          rows && !testOnly
+          rows && testOnly
+            ? // Bought only a test: the counts of what they have.
+              [
+                { label: tr("Tests finished"), value: rows.length, icon: FileText },
+                { label: tr("Real tests"), value: rows.filter((r) => r.deliveryMode === "certified" && !r.levelTest).length, icon: Award },
+                ...(rows.some((r) => r.levelTest) ? [{ label: tr("Level tests"), value: rows.filter((r) => r.levelTest).length, icon: Gauge }] : []),
+                { label: tr("Free samples"), value: rows.filter((r) => r.deliveryMode === "sample").length, icon: ClipboardCheck },
+                { label: tr("Certificates"), value: rows.filter((r) => r.certificateCode).length, icon: BadgeCheck },
+              ].slice(0, 4)
+            : rows
             ? [
                 { label: tr("Tests finished"), value: rows.length, icon: FileText },
                 { label: tr("Mock tests"), value: rows.filter((r) => r.deliveryMode === "mock").length, icon: Timer },
