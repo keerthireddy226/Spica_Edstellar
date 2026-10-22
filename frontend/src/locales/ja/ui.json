@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "クレジットの追加や使用はまだありません。",
  "Withdraw the test": "テストを取り消す",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "{{learner}}の{{test}}を取り消しますか？まだ開始されていないため、{{n}}クレジットは残高に戻ります。",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}}の{{test}}を取り消しますか？すぐに利用できなくなり、準備や練習パックのクレジットは、未使用の日数分も含めて戻りません。"
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}}の{{test}}を取り消しますか？すぐに利用できなくなり、準備や練習パックのクレジットは、未使用の日数分も含めて戻りません。",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "次の最終アセスメントは{{date}}に受けられます。目標に届かなかった前回から30日後です。それまで練習しましょう。",
+ "Your organization chose this test. Ask your admin to change it.": "このテストは組織が選んだものです。変更は管理者に依頼してください。",
+ "Switching to {{test}} costs {{amount}} more.": "{{test}}への切り替えには{{amount}}の追加料金がかかります。",
+ "Pay and switch": "支払って切り替える",
+ "Free switch": "無料で切り替え",
+ "Switch to another test (once, until {{date}})": "別のテストに切り替える（1回のみ、{{date}}まで）",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "次の本番テストは{{date}}に受けられます。目標に届かなかった前回から30日後です。それまで練習しましょう。",
+ "A test of all four skills also gives the candidate a certificate.": "4技能すべてのテストでは、受験者に証明書も発行されます。"
 }

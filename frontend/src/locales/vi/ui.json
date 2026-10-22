@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Chưa có lượt nào được thêm hoặc sử dụng.",
  "Withdraw the test": "Thu hồi bài thi",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Thu hồi {{test}} của {{learner}}? Bài thi chưa bắt đầu nên {{n}} lượt sẽ được hoàn vào số dư của bạn.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Thu hồi {{test}} của {{learner}}? Học viên sẽ mất quyền ngay lập tức, và lượt đã dùng cho gói ôn luyện và gói luyện tập sẽ không được hoàn, kể cả những ngày chưa dùng."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Thu hồi {{test}} của {{learner}}? Học viên sẽ mất quyền ngay lập tức, và lượt đã dùng cho gói ôn luyện và gói luyện tập sẽ không được hoàn, kể cả những ngày chưa dùng.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Bài đánh giá cuối khóa tiếp theo của bạn mở vào {{date}}, 30 ngày sau lần trước, khi bạn chưa đạt mục tiêu. Hãy luyện tập trong thời gian này.",
+ "Your organization chose this test. Ask your admin to change it.": "Tổ chức của bạn đã chọn bài thi này. Hãy nhờ quản trị viên thay đổi.",
+ "Switching to {{test}} costs {{amount}} more.": "Đổi sang {{test}} tốn thêm {{amount}}.",
+ "Pay and switch": "Thanh toán và đổi",
+ "Free switch": "Đổi miễn phí",
+ "Switch to another test (once, until {{date}})": "Đổi sang bài thi khác (một lần, đến {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Bài thi thật tiếp theo của bạn mở vào {{date}}, 30 ngày sau lần trước, khi bạn chưa đạt mục tiêu. Hãy luyện tập trong thời gian này.",
+ "A test of all four skills also gives the candidate a certificate.": "Bài thi đủ bốn kỹ năng cũng cấp chứng chỉ cho ứng viên."
 }

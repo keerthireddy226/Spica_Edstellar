@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "ఇంకా క్రెడిట్‌లు జోడించలేదు, ఉపయోగించలేదు.",
  "Withdraw the test": "టెస్ట్‌ను ఉపసంహరించండి",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "{{learner}} నుండి {{test}}ను ఉపసంహరించాలా? ఇది ఇంకా ప్రారంభం కాలేదు, కాబట్టి దాని {{n}} క్రెడిట్‌లు మీ బ్యాలెన్స్‌కు తిరిగి వస్తాయి.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}} నుండి {{test}}ను ఉపసంహరించాలా? వారు వెంటనే దాన్ని కోల్పోతారు, సన్నద్ధత, అభ్యాస ప్యాక్‌ల క్రెడిట్‌లు ఉపయోగించని రోజులకు కూడా తిరిగి రావు."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}} నుండి {{test}}ను ఉపసంహరించాలా? వారు వెంటనే దాన్ని కోల్పోతారు, సన్నద్ధత, అభ్యాస ప్యాక్‌ల క్రెడిట్‌లు ఉపయోగించని రోజులకు కూడా తిరిగి రావు.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "మీ తదుపరి తుది అసెస్‌మెంట్ {{date}}న తెరుచుకుంటుంది, మీ లక్ష్యం కంటే తక్కువ వచ్చిన గతసారి తర్వాత 30 రోజులకు. ఈలోగా ప్రాక్టీస్ చేయండి.",
+ "Your organization chose this test. Ask your admin to change it.": "ఈ టెస్ట్‌ను మీ సంస్థ ఎంచుకుంది. మార్చడానికి మీ అడ్మిన్‌ను అడగండి.",
+ "Switching to {{test}} costs {{amount}} more.": "{{test}}కి మారడానికి {{amount}} అదనంగా అవుతుంది.",
+ "Pay and switch": "చెల్లించి మార్చండి",
+ "Free switch": "ఉచిత మార్పు",
+ "Switch to another test (once, until {{date}})": "మరో టెస్ట్‌కి మారండి (ఒక్కసారి, {{date}} వరకు)",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "మీ తదుపరి అసలు టెస్ట్ {{date}}న తెరుచుకుంటుంది, మీ లక్ష్యం కంటే తక్కువ వచ్చిన గతసారి తర్వాత 30 రోజులకు. ఈలోగా ప్రాక్టీస్ చేయండి.",
+ "A test of all four skills also gives the candidate a certificate.": "నాలుగు నైపుణ్యాల టెస్ట్ అభ్యర్థికి సర్టిఫికెట్ కూడా ఇస్తుంది."
 }

@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "还没有添加或使用点数。",
  "Withdraw the test": "撤回测试",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "要从 {{learner}} 撤回 {{test}} 吗？该测试尚未开始，因此 {{n}} 点数会退回你的余额。",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "要从 {{learner}} 撤回 {{test}} 吗？学员会立即失去它，备考和练习包的点数不会退回，未使用的天数也不退。"
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "要从 {{learner}} 撤回 {{test}} 吗？学员会立即失去它，备考和练习包的点数不会退回，未使用的天数也不退。",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "你的下一次结业测评将于 {{date}} 开放，即上一次（未达到目标）的 30 天后。在此期间请继续练习。",
+ "Your organization chose this test. Ask your admin to change it.": "这项测试由你的组织选择。如需更改，请联系管理员。",
+ "Switching to {{test}} costs {{amount}} more.": "切换到 {{test}} 需额外支付 {{amount}}。",
+ "Pay and switch": "付款并切换",
+ "Free switch": "免费切换",
+ "Switch to another test (once, until {{date}})": "切换到其他测试（仅一次，截至 {{date}}）",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "你的下一次正式测试将于 {{date}} 开放，即上一次（未达到目标）的 30 天后。在此期间请继续练习。",
+ "A test of all four skills also gives the candidate a certificate.": "涵盖全部四项技能的测试也会为候选人颁发证书。"
 }

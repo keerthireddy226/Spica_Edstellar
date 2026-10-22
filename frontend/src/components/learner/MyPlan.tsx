@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Award, BookOpen, ClipboardCheck } from "lucide-react";
 import { getMyAccess, type MyAccess, type Owned } from "@/api/access";
-import { switchPrepTest } from "@/api/assessment";
-import { getPriceList } from "@/api/payments";
+import { getSwitchQuote, switchPrepTest, type SwitchQuote } from "@/api/assessment";
+import { createSwitchOrder, formatAmount, getPriceList, startCheckout } from "@/api/payments";
 import { formatShortDate } from "@/api/licenses";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -29,12 +29,23 @@ function opens(o: Owned): string {
   return tr("Every test, mock test and Practice Module.");
 }
 
-// Preparation not started yet can move to another test, once, in its first 7 days.
+// Preparation not started yet can move to another test, once, in its first 7
+// days: free to a test that costs the same or less, else paying the difference.
 function SwitchTest({ o }: { o: Owned }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [tests, setTests] = useState<{ id: string; name: string }[]>([]);
   const [pick, setPick] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  // What the picked test costs; "org" when an organization gave this preparation and the test is dearer.
+  const [q, setQ] = useState<SwitchQuote | "org" | "error" | null>(null);
+  useEffect(() => {
+    if (!pick) return;
+    setQ(null);
+    getSwitchQuote(o.id, pick)
+      .then(setQ)
+      .catch((e: Error) => setQ(e.message === "switch_needs_org" ? "org" : "error"));
+  }, [o.id, pick]);
   useEffect(() => {
     if (!open || tests.length) return;
     getPriceList()
@@ -64,21 +75,48 @@ function SwitchTest({ o }: { o: Owned }) {
           </option>
         ))}
       </select>
-      <button
-        disabled={!pick || state === "busy"}
-        onClick={async () => {
-          setState("busy");
-          setState((await switchPrepTest(o.id, pick).then(() => true).catch(() => false)) ? "done" : "error");
-        }}
-        className="font-semibold text-navy-deep hover:underline cursor-pointer disabled:opacity-50"
-      >
-        {tr("Switch")}
-      </button>
+      {q === "org" ? (
+        <span className="text-muted">{tr("Your organization chose this test. Ask your admin to change it.")}</span>
+      ) : q === "error" ? (
+        <span className="text-error">{tr("Prices couldn't load. Try again.")}</span>
+      ) : q?.free === false ? (
+        <>
+          <span className="text-muted">{tr("Switching to {{test}} costs {{amount}} more.", { test: tests.find((t) => t.id === pick)?.name ?? "", amount: formatAmount(q.total, q.currency) })}</span>
+          <button
+            disabled={state === "busy"}
+            onClick={async () => {
+              setState("busy");
+              try {
+                await startCheckout(await createSwitchOrder(o.id, pick), navigate);
+              } catch {
+                setState("error");
+              }
+            }}
+            className="font-semibold text-navy-deep hover:underline cursor-pointer disabled:opacity-50"
+          >
+            {tr("Pay and switch")}
+          </button>
+        </>
+      ) : (
+        <>
+          {q?.free && <span className="text-muted">{tr("Free switch")}</span>}
+          <button
+            disabled={!pick || !q || state === "busy"}
+            onClick={async () => {
+              setState("busy");
+              setState((await switchPrepTest(o.id, pick).then(() => true).catch(() => false)) ? "done" : "error");
+            }}
+            className="font-semibold text-navy-deep hover:underline cursor-pointer disabled:opacity-50"
+          >
+            {tr("Switch")}
+          </button>
+        </>
+      )}
       {state === "error" && <span className="text-error">{tr("Couldn't switch. Try again.")}</span>}
     </span>
   ) : (
     <button onClick={() => setOpen(true)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
-      {tr("Switch to another test (free, once, until {{date}})", { date: formatShortDate(o.canSwitchUntil) })}
+      {tr("Switch to another test (once, until {{date}})", { date: formatShortDate(o.canSwitchUntil) })}
     </button>
   );
 }

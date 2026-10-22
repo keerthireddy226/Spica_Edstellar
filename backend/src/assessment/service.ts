@@ -19,6 +19,7 @@ import { BANDS, levelOfScore, scoreReport } from "../reports/scoreReport.js";
 import { snapshot } from "../reports/batchReport.js";
 import { LEVEL_RETAKE_DAYS } from "../practiceTests/modes.js";
 import { qualitySettings } from "../quality/settings.js";
+import { PAYMENT_CONFIG } from "../payments/providers.js";
 import { randomBytes } from "node:crypto";
 
 const DAY = 86_400_000;
@@ -274,22 +275,123 @@ async function finalChoices(tenantId: string | null): Promise<{ id: string; name
     .map((x) => ({ id: x.id as string, name: x.name as string }));
 }
 
-// Preparation for one test can be switched to another test once, free, in its first SWITCH_DAYS.
+// Preparation for one test can be switched to another test once, in its first
+// SWITCH_DAYS. To a test that costs the same or less it's free (nothing is
+// refunded); to a dearer one the learner pays the difference (owner decision 2026-10-22).
 export const SWITCH_DAYS = 7;
-export async function switchPrepTest(userId: string, entitlementId: string, testTypeId: string): Promise<void> {
+
+type SwitchRow = {
+  kind: string;
+  attempts_used: number;
+  switched_at: Date | string | null;
+  revoked_at: Date | string | null;
+  starts_at: Date | string;
+  ends_at: Date | string;
+};
+
+// Pure: preparation not started, switched or revoked, still running and in its first SWITCH_DAYS.
+export function switchOpen(e: SwitchRow, now = new Date()): boolean {
+  return (
+    e.kind === "prep" &&
+    e.attempts_used === 0 &&
+    !e.switched_at &&
+    !e.revoked_at &&
+    new Date(e.ends_at).getTime() > now.getTime() &&
+    new Date(e.starts_at).getTime() + SWITCH_DAYS * DAY > now.getTime()
+  );
+}
+
+// Pure: whether a paid switch still goes ahead when its payment lands. The
+// SWITCH_DAYS may have passed meanwhile: they paid, so it does, unless its
+// real test was used, or it was switched or revoked meanwhile (then staff sort it out).
+export function paidSwitchGoesAhead(e: Pick<SwitchRow, "attempts_used" | "switched_at" | "revoked_at"> | undefined): boolean {
+  return !!e && e.attempts_used === 0 && !e.switched_at && !e.revoked_at;
+}
+
+export type SwitchCharge = { outcome: "free" } | { outcome: "pay"; amount: number; currency: string } | { outcome: "org" };
+
+// Pure: what switching costs, from the two preparations' prices by currency.
+// In the currency of the learner's order; when either has no price in it, both
+// in USD (and with no USD price either, it can't be priced, so it's free). Only
+// the learner's own purchase pays the difference: staff grants and Full access
+// stay free, and a preparation an organization gave with credits doesn't move
+// to a dearer test without its admin.
+export function switchChargeOf(source: string, currency: string, from: Record<string, number>, to: Record<string, number>): SwitchCharge {
+  const cur = from[currency] !== undefined && to[currency] !== undefined ? currency : "USD";
+  if (from[cur] === undefined || to[cur] === undefined) return { outcome: "free" };
+  const diff = to[cur] - from[cur];
+  if (diff <= 0) return { outcome: "free" };
+  if (source === "credit") return { outcome: "org" };
+  if (source !== "purchase") return { outcome: "free" };
+  return { outcome: "pay", amount: diff, currency: cur };
+}
+
+// The learner's preparation, the preparation product of the test they pick,
+// and what moving to it costs.
+async function switchPlan(userId: string, entitlementId: string, testTypeId: string) {
   const e = (
     await pool.query(
-      `SELECT e.id, e.test_type_id FROM entitlements e JOIN products p ON p.id = e.product_id
-       WHERE e.id = $1 AND e.user_id = $2 AND p.kind = 'prep' AND e.revoked_at IS NULL AND e.ends_at > now()
-         AND e.starts_at > now() - make_interval(days => $3) AND e.attempts_used = 0 AND e.switched_at IS NULL`,
-      [entitlementId, userId, SWITCH_DAYS],
+      `SELECT e.id, e.product_id, e.test_type_id, e.source, e.attempts_used, e.switched_at, e.revoked_at, e.starts_at, e.ends_at, p.kind,
+         o.currency, pp.country
+       FROM entitlements e JOIN products p ON p.id = e.product_id
+       LEFT JOIN payment_orders o ON o.id = e.order_id
+       LEFT JOIN participant_profiles pp ON pp.user_id = e.user_id
+       WHERE e.id = $1 AND e.user_id = $2`,
+      [entitlementId, userId],
     )
   ).rows[0];
-  if (!e) throw new AttemptError("switch_not_allowed");
+  if (!e || !switchOpen(e)) throw new AttemptError("switch_not_allowed");
   if (e.test_type_id === testTypeId) throw new AttemptError("same_test");
   const p = (await pool.query(`SELECT id FROM products WHERE kind = 'prep' AND active AND test_type_id = $1 ORDER BY sort_order LIMIT 1`, [testTypeId])).rows[0];
   if (!p) throw new AttemptError("unknown_test_type");
-  await pool.query(`UPDATE entitlements SET product_id = $2, test_type_id = $3, switched_from = test_type_id, switched_at = now() WHERE id = $1`, [entitlementId, p.id, testTypeId]);
+  const prices = (await pool.query(`SELECT product_id, currency, amount FROM product_prices WHERE product_id = ANY($1)`, [[e.product_id, p.id]])).rows;
+  const of = (id: string) => Object.fromEntries(prices.filter((r) => r.product_id === id).map((r) => [r.currency as string, Number(r.amount)]));
+  return {
+    productId: p.id as string,
+    charge: switchChargeOf(e.source, e.currency ?? "USD", of(e.product_id), of(p.id)),
+    billingCountry: (e.country as string | null) ?? null,
+  };
+}
+
+export type SwitchQuote =
+  | { free: true }
+  | { free: false; productId: string; amount: number; currency: string; taxLabel: string | null; taxRate: number; taxAmount: number; total: number };
+
+// What switching this preparation to that test costs. GST is added for sales
+// billed in India in INR, as for any product.
+export async function switchQuote(userId: string, entitlementId: string, testTypeId: string): Promise<SwitchQuote> {
+  const s = await switchPlan(userId, entitlementId, testTypeId);
+  if (s.charge.outcome === "org") throw new AttemptError("switch_needs_org");
+  if (s.charge.outcome === "free") return { free: true };
+  const taxRate = s.billingCountry === "IN" && s.charge.currency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
+  const taxAmount = Math.round((s.charge.amount * taxRate) / 100);
+  return {
+    free: false,
+    productId: s.productId,
+    amount: s.charge.amount,
+    currency: s.charge.currency,
+    taxLabel: taxRate > 0 ? `GST ${taxRate}%` : null,
+    taxRate,
+    taxAmount,
+    total: s.charge.amount + taxAmount,
+  };
+}
+
+// Moves the preparation to the other test (a free switch now, or a paid one once its payment lands).
+export async function applySwitch(executor: Pick<PoolClient, "query">, entitlementId: string, productId: string, testTypeId: string): Promise<void> {
+  await executor.query(`UPDATE entitlements SET product_id = $2, test_type_id = $3, switched_from = test_type_id, switched_at = now() WHERE id = $1`, [
+    entitlementId,
+    productId,
+    testTypeId,
+  ]);
+}
+
+// A free switch. A dearer test is paid for first (POST /payments/switch-orders).
+export async function switchPrepTest(userId: string, entitlementId: string, testTypeId: string): Promise<void> {
+  const s = await switchPlan(userId, entitlementId, testTypeId);
+  if (s.charge.outcome === "org") throw new AttemptError("switch_needs_org");
+  if (s.charge.outcome === "pay") throw new AttemptError("payment_required", { quote: await switchQuote(userId, entitlementId, testTypeId) });
+  await applySwitch(pool, entitlementId, s.productId, testTypeId);
   accessCache.delete(userId);
 }
 

@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Ingen kreditter lagt til eller brukt ennå.",
  "Withdraw the test": "Trekk tilbake testen",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Trekke tilbake {{test}} fra {{learner}}? Den er ikke startet, så de {{n}} kredittene går tilbake til saldoen din.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Trekke tilbake {{test}} fra {{learner}}? Eleven mister den med en gang, og kredittene for forberedelse og øvingspakker kommer ikke tilbake, heller ikke for ubrukte dager."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Trekke tilbake {{test}} fra {{learner}}? Eleven mister den med en gang, og kredittene for forberedelse og øvingspakker kommer ikke tilbake, heller ikke for ubrukte dager.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din neste avsluttende test åpner {{date}}, 30 dager etter den forrige, som var under målet ditt. Øv i mellomtiden.",
+ "Your organization chose this test. Ask your admin to change it.": "Organisasjonen din valgte denne testen. Be administratoren din om å endre den.",
+ "Switching to {{test}} costs {{amount}} more.": "Bytte til {{test}} koster {{amount}} mer.",
+ "Pay and switch": "Betal og bytt",
+ "Free switch": "Gratis bytte",
+ "Switch to another test (once, until {{date}})": "Bytt til en annen test (én gang, til {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din neste ekte test åpner {{date}}, 30 dager etter den forrige, som var under målet ditt. Øv i mellomtiden.",
+ "A test of all four skills also gives the candidate a certificate.": "En test i alle fire ferdigheter gir også kandidaten et sertifikat."
 }

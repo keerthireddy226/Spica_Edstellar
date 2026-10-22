@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Aún no se han añadido ni usado créditos.",
  "Withdraw the test": "Retirar el examen",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "¿Retirar {{test}} a {{learner}}? No se ha empezado, así que sus {{n}} créditos vuelven a tu saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "¿Retirar {{test}} a {{learner}}? Lo pierde de inmediato, y los créditos de la preparación y de los packs de práctica no se devuelven, ni siquiera por los días sin usar."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "¿Retirar {{test}} a {{learner}}? Lo pierde de inmediato, y los créditos de la preparación y de los packs de práctica no se devuelven, ni siquiera por los días sin usar.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Tu próxima evaluación final se abre el {{date}}, 30 días después de la última, que quedó por debajo de tu objetivo. Mientras tanto, practica.",
+ "Your organization chose this test. Ask your admin to change it.": "Tu organización eligió este examen. Pide a tu administrador que lo cambie.",
+ "Switching to {{test}} costs {{amount}} more.": "Cambiar a {{test}} cuesta {{amount}} más.",
+ "Pay and switch": "Pagar y cambiar",
+ "Free switch": "Cambio gratuito",
+ "Switch to another test (once, until {{date}})": "Cambiar a otro examen (una vez, hasta el {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Tu próximo examen real se abre el {{date}}, 30 días después del último, que quedó por debajo de tu objetivo. Mientras tanto, practica.",
+ "A test of all four skills also gives the candidate a certificate.": "Un examen de las cuatro destrezas también da al candidato un certificado."
 }

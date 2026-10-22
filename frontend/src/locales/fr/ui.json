@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Aucun crédit ajouté ou utilisé pour l'instant.",
  "Withdraw the test": "Retirer le test",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Retirer {{test}} à {{learner}} ? Il n'a pas été commencé, ses {{n}} crédits reviennent donc sur votre solde.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Retirer {{test}} à {{learner}} ? L'apprenant le perd immédiatement, et les crédits de la préparation et des packs d'entraînement ne sont pas restitués, même pour les jours non utilisés."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Retirer {{test}} à {{learner}} ? L'apprenant le perd immédiatement, et les crédits de la préparation et des packs d'entraînement ne sont pas restitués, même pour les jours non utilisés.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Votre prochaine évaluation finale ouvre le {{date}}, 30 jours après la dernière, qui était en dessous de votre objectif. Entraînez-vous d'ici là.",
+ "Your organization chose this test. Ask your admin to change it.": "Votre organisation a choisi ce test. Demandez à votre administrateur de le changer.",
+ "Switching to {{test}} costs {{amount}} more.": "Passer à {{test}} coûte {{amount}} de plus.",
+ "Pay and switch": "Payer et changer",
+ "Free switch": "Changement gratuit",
+ "Switch to another test (once, until {{date}})": "Passer à un autre test (une fois, jusqu'au {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Votre prochain vrai test ouvre le {{date}}, 30 jours après le dernier, qui était en dessous de votre objectif. Entraînez-vous d'ici là.",
+ "A test of all four skills also gives the candidate a certificate.": "Un test des quatre compétences donne aussi un certificat au candidat."
 }

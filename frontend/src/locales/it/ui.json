@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Nessun credito aggiunto o usato finora.",
  "Withdraw the test": "Ritira il test",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Ritirare {{test}} a {{learner}}? Non è stato iniziato, quindi i suoi {{n}} crediti tornano al tuo saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Ritirare {{test}} a {{learner}}? Lo perde subito e i crediti per preparazione e pacchetti di esercizio non vengono restituiti, nemmeno per i giorni non usati."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Ritirare {{test}} a {{learner}}? Lo perde subito e i crediti per preparazione e pacchetti di esercizio non vengono restituiti, nemmeno per i giorni non usati.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "La tua prossima valutazione finale si apre il {{date}}, 30 giorni dopo l'ultima, che era sotto il tuo obiettivo. Nel frattempo esercitati.",
+ "Your organization chose this test. Ask your admin to change it.": "La tua organizzazione ha scelto questo test. Chiedi al tuo amministratore di cambiarlo.",
+ "Switching to {{test}} costs {{amount}} more.": "Passare a {{test}} costa {{amount}} in più.",
+ "Pay and switch": "Paga e cambia",
+ "Free switch": "Cambio gratuito",
+ "Switch to another test (once, until {{date}})": "Passa a un altro test (una volta, fino al {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Il tuo prossimo test ufficiale si apre il {{date}}, 30 giorni dopo l'ultimo, che era sotto il tuo obiettivo. Nel frattempo esercitati.",
+ "A test of all four skills also gives the candidate a certificate.": "Un test di tutte e quattro le abilità dà al candidato anche un certificato."
 }

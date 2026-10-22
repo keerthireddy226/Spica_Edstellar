@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Krediittejä ei ole vielä lisätty eikä käytetty.",
  "Withdraw the test": "Peru koe",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Perutaanko {{test}} opiskelijalta {{learner}}? Sitä ei ole aloitettu, joten sen {{n}} krediittiä palautuu saldoosi.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Perutaanko {{test}} opiskelijalta {{learner}}? Hän menettää sen heti, eikä valmistautumisen ja harjoituspakettien krediittejä palauteta, ei edes käyttämättömistä päivistä."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Perutaanko {{test}} opiskelijalta {{learner}}? Hän menettää sen heti, eikä valmistautumisen ja harjoituspakettien krediittejä palauteta, ei edes käyttämättömistä päivistä.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Seuraava loppukokeesi avautuu {{date}}, 30 päivää edellisen jälkeen, joka jäi alle tavoitteesi. Harjoittele sillä välin.",
+ "Your organization chose this test. Ask your admin to change it.": "Organisaatiosi valitsi tämän kokeen. Pyydä ylläpitäjää vaihtamaan se.",
+ "Switching to {{test}} costs {{amount}} more.": "Vaihto kokeeseen {{test}} maksaa {{amount}} enemmän.",
+ "Pay and switch": "Maksa ja vaihda",
+ "Free switch": "Maksuton vaihto",
+ "Switch to another test (once, until {{date}})": "Vaihda toiseen kokeeseen (kerran, {{date}} asti)",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Seuraava oikea kokeesi avautuu {{date}}, 30 päivää edellisen jälkeen, joka jäi alle tavoitteesi. Harjoittele sillä välin.",
+ "A test of all four skills also gives the candidate a certificate.": "Kaikkien neljän taidon koe antaa myös hakijalle todistuksen."
 }

@@ -67,7 +67,16 @@ export function getReadiness(): Promise<Readiness> {
   return api("/assessment/readiness");
 }
 
-// Preparation moves to another test (once, free, in its first 7 days).
+// What switching preparation to that test costs: free for the same price or
+// less, else the difference (with GST in India). The server answers
+// "switch_needs_org" when an organization gave it and the test is dearer.
+export type SwitchQuote = { free: true } | { free: false; amount: number; currency: string; taxLabel: string | null; taxAmount: number; total: number };
+
+export function getSwitchQuote(id: string, testTypeId: string): Promise<SwitchQuote> {
+  return api(`/assessment/${id}/switch-quote?testTypeId=${encodeURIComponent(testTypeId)}`);
+}
+
+// Preparation moves to another test (once, in its first 7 days) when it's free.
 export function switchPrepTest(id: string, testTypeId: string): Promise<{ ok: true }> {
   return api(`/assessment/${id}/switch`, { method: "POST", body: JSON.stringify({ testTypeId }) });
 }

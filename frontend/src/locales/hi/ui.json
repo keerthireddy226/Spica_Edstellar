@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "अभी तक कोई क्रेडिट जोड़ा या इस्तेमाल नहीं हुआ।",
  "Withdraw the test": "टेस्ट वापस लें",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "{{learner}} से {{test}} वापस लें? यह शुरू नहीं हुआ है, इसलिए इसके {{n}} क्रेडिट आपके बैलेंस में वापस आ जाएँगे।",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}} से {{test}} वापस लें? यह उनसे तुरंत हट जाएगा, और तैयारी और अभ्यास पैक के क्रेडिट वापस नहीं आएँगे, बिना इस्तेमाल हुए दिनों के भी नहीं।"
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{learner}} से {{test}} वापस लें? यह उनसे तुरंत हट जाएगा, और तैयारी और अभ्यास पैक के क्रेडिट वापस नहीं आएँगे, बिना इस्तेमाल हुए दिनों के भी नहीं।",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "आपका अगला अंतिम आकलन {{date}} को खुलेगा, पिछले वाले के 30 दिन बाद, जो आपके लक्ष्य से कम था। तब तक अभ्यास करें।",
+ "Your organization chose this test. Ask your admin to change it.": "आपके संगठन ने यह टेस्ट चुना है। इसे बदलने के लिए अपने एडमिन से कहें।",
+ "Switching to {{test}} costs {{amount}} more.": "{{test}} पर बदलने में {{amount}} अधिक लगेंगे।",
+ "Pay and switch": "भुगतान करें और बदलें",
+ "Free switch": "मुफ़्त बदलाव",
+ "Switch to another test (once, until {{date}})": "दूसरे टेस्ट पर बदलें (एक बार, {{date}} तक)",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "आपका अगला असली टेस्ट {{date}} को खुलेगा, पिछले वाले के 30 दिन बाद, जो आपके लक्ष्य से कम था। तब तक अभ्यास करें।",
+ "A test of all four skills also gives the candidate a certificate.": "चारों कौशलों का टेस्ट उम्मीदवार को सर्टिफ़िकेट भी देता है।"
 }

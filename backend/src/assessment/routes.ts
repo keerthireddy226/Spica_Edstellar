@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { z } from "zod";
-import { AttemptError, chooseFinalTest, myTests, readiness, switchPrepTest } from "./service.js";
+import { AttemptError, chooseFinalTest, myTests, readiness, switchPrepTest, switchQuote } from "./service.js";
 import { AppealError, fileAppeal } from "../quality/service.js";
 
 // Assessment (once "My tests"): the learner's real assessment attempts. Starting one goes through
@@ -37,14 +37,27 @@ assessmentRouter.post("/:id/choose", requireAuth, async (req: AuthedRequest, res
   }
 });
 
-// Switches preparation to another test (once, in the first 7 days).
+// What switching preparation to another test costs: free for the same price
+// or less, else the difference (paid through POST /payments/switch-orders).
+assessmentRouter.get("/:id/switch-quote", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const q = z.object({ testTypeId: z.string().min(1).max(60) }).parse(req.query);
+    res.json(await switchQuote(req.user!.id, String(req.params.id), q.testTypeId));
+  } catch (err) {
+    if (err instanceof AttemptError) return res.status(400).json({ error: err.code });
+    next(err);
+  }
+});
+
+// Switches preparation to another test (once, in the first 7 days) when it's
+// free; a dearer test answers 402 with what it costs.
 assessmentRouter.post("/:id/switch", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = z.object({ testTypeId: z.string().min(1).max(60) }).parse(req.body);
     await switchPrepTest(req.user!.id, String(req.params.id), body.testTypeId);
     res.json({ ok: true });
   } catch (err) {
-    if (err instanceof AttemptError) return res.status(400).json({ error: err.code });
+    if (err instanceof AttemptError) return res.status(err.code === "payment_required" ? 402 : 400).json({ error: err.code, ...err.detail });
     next(err);
   }
 });

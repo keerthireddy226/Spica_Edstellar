@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Ingen kreditter tilføjet eller brugt endnu.",
  "Withdraw the test": "Træk testen tilbage",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Træk {{test}} tilbage fra {{learner}}? Den er ikke påbegyndt, så de {{n}} kreditter går tilbage til din saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Træk {{test}} tilbage fra {{learner}}? Kursisten mister den med det samme, og kreditterne for forberedelse og øvepakker kommer ikke tilbage, heller ikke for ubrugte dage."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Træk {{test}} tilbage fra {{learner}}? Kursisten mister den med det samme, og kreditterne for forberedelse og øvepakker kommer ikke tilbage, heller ikke for ubrugte dage.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din næste afsluttende test åbner {{date}}, 30 dage efter din sidste, som lå under dit mål. Øv dig i mellemtiden.",
+ "Your organization chose this test. Ask your admin to change it.": "Din organisation har valgt denne test. Bed din administrator om at ændre den.",
+ "Switching to {{test}} costs {{amount}} more.": "Skift til {{test}} koster {{amount}} mere.",
+ "Pay and switch": "Betal og skift",
+ "Free switch": "Gratis skift",
+ "Switch to another test (once, until {{date}})": "Skift til en anden test (én gang, indtil {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Din næste rigtige test åbner {{date}}, 30 dage efter din sidste, som lå under dit mål. Øv dig i mellemtiden.",
+ "A test of all four skills also gives the candidate a certificate.": "En test i alle fire færdigheder giver også kandidaten et certifikat."
 }

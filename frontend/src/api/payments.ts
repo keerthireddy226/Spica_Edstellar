@@ -251,6 +251,11 @@ export function getProductQuote(productId: string, currency: ShopCurrency, level
   return api(`/payments/product-quote?${p}`);
 }
 
+// Pays the difference to switch preparation to a dearer test; the switch is made once paid.
+export function createSwitchOrder(entitlementId: string, testTypeId: string): Promise<CreatedOrder> {
+  return api("/payments/switch-orders", { method: "POST", body: JSON.stringify({ entitlementId, testTypeId }) });
+}
+
 export function createProductOrder(productId: string, currency: ShopCurrency, level?: string, extra?: { certificateId?: string; shipping?: Shipping }): Promise<CreatedOrder> {
   return api("/payments/product-orders", { method: "POST", body: JSON.stringify({ productId, currency, level, ...extra }) });
 }

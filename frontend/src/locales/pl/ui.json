@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Nie dodano ani nie wykorzystano jeszcze kredytów.",
  "Withdraw the test": "Wycofaj test",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Wycofać {{test}} od kursanta {{learner}}? Test nie został rozpoczęty, więc {{n}} kredytów wróci na Twoje saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Wycofać {{test}} od kursanta {{learner}}? Kursant od razu traci dostęp, a kredyty za przygotowanie i pakiety ćwiczeń nie wracają, nawet za niewykorzystane dni."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Wycofać {{test}} od kursanta {{learner}}? Kursant od razu traci dostęp, a kredyty za przygotowanie i pakiety ćwiczeń nie wracają, nawet za niewykorzystane dni.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Twój następny test końcowy otworzy się {{date}}, 30 dni po poprzednim, który był poniżej Twojego celu. Ćwicz w międzyczasie.",
+ "Your organization chose this test. Ask your admin to change it.": "Twoja organizacja wybrała ten test. Poproś administratora o zmianę.",
+ "Switching to {{test}} costs {{amount}} more.": "Zmiana na {{test}} kosztuje {{amount}} więcej.",
+ "Pay and switch": "Zapłać i zmień",
+ "Free switch": "Zmiana bezpłatna",
+ "Switch to another test (once, until {{date}})": "Zmień na inny test (raz, do {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Twój następny prawdziwy test otworzy się {{date}}, 30 dni po poprzednim, który był poniżej Twojego celu. Ćwicz w międzyczasie.",
+ "A test of all four skills also gives the candidate a certificate.": "Test wszystkich czterech umiejętności daje kandydatowi także certyfikat."
 }

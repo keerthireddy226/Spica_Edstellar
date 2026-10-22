@@ -21,9 +21,11 @@ import {
   listInvoices,
   quote,
   resolveBuyer,
+  type Buyer,
 } from "./service.js";
+import { AttemptError } from "../assessment/service.js";
 import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
-import { CURRENCIES, createProductOrder, currencyFor, planQuote, priceList, productQuote, type Currency } from "./products.js";
+import { CURRENCIES, createProductOrder, createSwitchOrder, currencyFor, planQuote, priceList, productQuote, type Currency } from "./products.js";
 
 export const paymentsRouter = Router();
 
@@ -110,42 +112,68 @@ paymentsRouter.post("/product-orders", requireAuth, async (req: AuthedRequest, r
     const q = await productQuote(buyer, body.productId, body);
     if (body.productId === "cert_print" && !body.shipping) return res.status(400).json({ error: "shipping_required" });
     const orderId = await createProductOrder(buyer, q, body.productId === "cert_print" ? body.shipping : null);
-    const returnPath = "/checkout/return";
-    const name = `${q.productName}${q.level ? ` (${q.level})` : ""}`;
-    if (q.provider === "stripe") {
-      const session = await stripeCreateCheckout({
-        orderId,
-        currency: q.currency,
-        productName: name,
-        unitAmount: q.subtotal,
-        quantity: 1,
-        taxLabel: q.taxLabel,
-        taxAmount: q.taxAmount,
-        customerEmail: buyer.email,
-        returnPath,
-      });
-      await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, session.sessionId]);
-      return res.status(201).json({ orderId, provider: "stripe", redirectUrl: session.url });
-    }
-    if (q.provider === "razorpay") {
-      const rzpOrderId = await razorpayCreateOrder({ orderId, amount: q.total, currency: q.currency });
-      await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, rzpOrderId]);
-      return res.status(201).json({
-        orderId,
-        provider: "razorpay",
-        razorpay: {
-          key: PAYMENT_CONFIG.razorpayKeyId,
-          orderId: rzpOrderId,
-          amount: q.total,
-          currency: q.currency,
-          name: PAYMENT_CONFIG.seller.name,
-          description: name,
-          prefill: { email: buyer.email ?? undefined, name: buyer.billTo.name ?? undefined },
-        },
-      });
-    }
-    return res.status(201).json({ orderId, provider: "test" });
+    await productCheckout(res, buyer, { orderId, provider: q.provider, currency: q.currency, subtotal: q.subtotal, taxLabel: q.taxLabel, taxAmount: q.taxAmount, total: q.total, name: `${q.productName}${q.level ? ` (${q.level})` : ""}` });
   } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+// Whatever the browser needs to pay a product order: a Stripe Checkout URL,
+// Razorpay checkout options, or (dev only) test mode.
+async function productCheckout(
+  res: Response,
+  buyer: Buyer,
+  o: { orderId: string; provider: string; currency: Currency; subtotal: number; taxLabel: string | null; taxAmount: number; total: number; name: string },
+) {
+  const { orderId, name } = o;
+  const returnPath = "/checkout/return";
+  if (o.provider === "stripe") {
+    const session = await stripeCreateCheckout({
+      orderId,
+      currency: o.currency,
+      productName: name,
+      unitAmount: o.subtotal,
+      quantity: 1,
+      taxLabel: o.taxLabel,
+      taxAmount: o.taxAmount,
+      customerEmail: buyer.email,
+      returnPath,
+    });
+    await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, session.sessionId]);
+    return res.status(201).json({ orderId, provider: "stripe", redirectUrl: session.url });
+  }
+  if (o.provider === "razorpay") {
+    const rzpOrderId = await razorpayCreateOrder({ orderId, amount: o.total, currency: o.currency });
+    await pool.query(`UPDATE payment_orders SET provider_order_id = $2 WHERE id = $1`, [orderId, rzpOrderId]);
+    return res.status(201).json({
+      orderId,
+      provider: "razorpay",
+      razorpay: {
+        key: PAYMENT_CONFIG.razorpayKeyId,
+        orderId: rzpOrderId,
+        amount: o.total,
+        currency: o.currency,
+        name: PAYMENT_CONFIG.seller.name,
+        description: name,
+        prefill: { email: buyer.email ?? undefined, name: buyer.billTo.name ?? undefined },
+      },
+    });
+  }
+  return res.status(201).json({ orderId, provider: "test" });
+}
+
+// An individual pays the difference to switch their preparation to a dearer
+// test; once paid, the switch is made. A free switch goes through POST /assessment/:id/switch.
+paymentsRouter.post("/switch-orders", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
+    const body = z.object({ entitlementId: z.string().uuid(), testTypeId: z.string().min(1).max(60) }).parse(req.body);
+    const o = await createSwitchOrder(buyer, body.entitlementId, body.testTypeId);
+    if (!o) return res.status(400).json({ error: "switch_is_free" });
+    await productCheckout(res, buyer, o);
+  } catch (err) {
+    if (err instanceof AttemptError) return res.status(400).json({ error: err.code });
     handle(err, res, next);
   }
 });

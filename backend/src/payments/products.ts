@@ -6,6 +6,7 @@
 import { pool } from "../db.js";
 import { PAYMENT_CONFIG, chooseProvider, razorpayEnabled, stripeEnabled, testModeEnabled, type ProviderName } from "./providers.js";
 import { INDIVIDUAL_PLAN_MONTHS, PaymentError, type Buyer, type Quote } from "./service.js";
+import { switchQuote } from "../assessment/service.js";
 
 export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD"] as const;
 export type Currency = (typeof CURRENCIES)[number];
@@ -100,7 +101,11 @@ export function creditFromPreps(rows: PrepCredit[], cap: number, now = Date.now(
 async function prepCredits(userId: string, currency: Currency): Promise<PrepCredit[]> {
   const rows = (
     await pool.query(
-      `SELECT e.id, e.starts_at, e.ends_at, o.currency, o.subtotal, pp.amount AS price_here,
+      `SELECT e.id, e.starts_at, e.ends_at, o.currency, pp.amount AS price_here,
+         -- What was paid for it: the purchase plus any paid switch to a dearer test (same currency).
+         o.subtotal + coalesce((
+           SELECT sum(w.subtotal) FROM payment_orders w WHERE w.switch_entitlement_id = e.id AND w.status = 'paid' AND w.currency = o.currency
+         ), 0) AS subtotal,
          coalesce((
            SELECT sum((s->>'share')::numeric) FROM payment_orders u, jsonb_array_elements(coalesce(u.credit_sources, '[]'::jsonb)) s
            WHERE u.buyer_id = $1 AND u.status = 'paid' AND s->>'entitlementId' = e.id::text
@@ -291,6 +296,29 @@ export async function createProductOrder(buyer: Buyer, q: ProductQuote, shipping
     ],
   );
   return r.rows[0].id;
+}
+
+// An order for the difference when a learner switches their preparation to a
+// dearer test. Like a certificate extra it acts on something they own: once
+// paid, fulfillOrder moves that preparation to the test (nothing new is owned).
+// Null when the switch is free (it's done with POST /assessment/:id/switch).
+export async function createSwitchOrder(
+  buyer: Buyer,
+  entitlementId: string,
+  testTypeId: string,
+): Promise<{ orderId: string; provider: ProviderName; currency: Currency; subtotal: number; taxLabel: string | null; taxAmount: number; total: number; name: string } | null> {
+  const q = await switchQuote(buyer.userId, entitlementId, testTypeId);
+  if (q.free) return null;
+  const currency = q.currency as Currency;
+  const provider = providerFor(currency);
+  if (!provider) throw new PaymentError("no_provider");
+  const r = await pool.query(
+    `INSERT INTO payment_orders (tenant_id, buyer_id, kind, quantity, currency, unit_amount, subtotal, tax_rate, tax_amount, total, provider, bill_to, product_id, switch_entitlement_id, switch_to_test_type_id)
+     VALUES ($1, $2, 'product', 1, $3, $4, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+    [buyer.tenantId, buyer.userId, currency, q.amount, q.taxRate, q.taxAmount, q.total, provider, JSON.stringify(buyer.billTo), q.productId, entitlementId, testTypeId],
+  );
+  const name = (await pool.query(`SELECT name FROM test_types WHERE id = $1`, [testTypeId])).rows[0]?.name ?? testTypeId;
+  return { orderId: r.rows[0].id, provider, currency, subtotal: q.amount, taxLabel: q.taxLabel, taxAmount: q.taxAmount, total: q.total, name: `Switch preparation to ${name}` };
 }
 
 // Every active product on sale with its price in one currency (USD where it

@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Noch keine Credits hinzugefügt oder verbraucht.",
  "Withdraw the test": "Test zurückziehen",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "{{test}} von {{learner}} zurückziehen? Der Test wurde noch nicht begonnen, daher gehen die {{n}} Credits zurück auf deinen Saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{test}} von {{learner}} zurückziehen? Die Person verliert den Zugang sofort, und die Credits für Vorbereitung und Übungspakete werden nicht erstattet, auch nicht für ungenutzte Tage."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{test}} von {{learner}} zurückziehen? Die Person verliert den Zugang sofort, und die Credits für Vorbereitung und Übungspakete werden nicht erstattet, auch nicht für ungenutzte Tage.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Dein nächster Abschlusstest öffnet am {{date}}, 30 Tage nach deinem letzten, der unter deinem Ziel lag. Übe in der Zwischenzeit.",
+ "Your organization chose this test. Ask your admin to change it.": "Deine Organisation hat diesen Test gewählt. Bitte deinen Admin, ihn zu ändern.",
+ "Switching to {{test}} costs {{amount}} more.": "Der Wechsel zu {{test}} kostet {{amount}} mehr.",
+ "Pay and switch": "Bezahlen und wechseln",
+ "Free switch": "Kostenloser Wechsel",
+ "Switch to another test (once, until {{date}})": "Zu einem anderen Test wechseln (einmal, bis {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Dein nächster echter Test öffnet am {{date}}, 30 Tage nach deinem letzten, der unter deinem Ziel lag. Übe in der Zwischenzeit.",
+ "A test of all four skills also gives the candidate a certificate.": "Ein Test aller vier Fertigkeiten gibt dem Kandidaten auch ein Zertifikat."
 }

@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Nog geen credits toegevoegd of gebruikt.",
  "Withdraw the test": "Toets intrekken",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "{{test}} intrekken bij {{learner}}? Hij is nog niet gestart, dus de {{n}} credits gaan terug naar je saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{test}} intrekken bij {{learner}}? De cursist verliest hem meteen, en de credits voor voorbereiding en oefenpakketten komen niet terug, ook niet voor ongebruikte dagen."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "{{test}} intrekken bij {{learner}}? De cursist verliest hem meteen, en de credits voor voorbereiding en oefenpakketten komen niet terug, ook niet voor ongebruikte dagen.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Je volgende eindtoets opent op {{date}}, 30 dagen na je vorige, die onder je doel lag. Oefen in de tussentijd.",
+ "Your organization chose this test. Ask your admin to change it.": "Je organisatie heeft deze toets gekozen. Vraag je beheerder om hem te wijzigen.",
+ "Switching to {{test}} costs {{amount}} more.": "Overstappen naar {{test}} kost {{amount}} meer.",
+ "Pay and switch": "Betalen en wisselen",
+ "Free switch": "Gratis wisselen",
+ "Switch to another test (once, until {{date}})": "Wisselen naar een andere toets (eenmalig, tot {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Je volgende echte toets opent op {{date}}, 30 dagen na je vorige, die onder je doel lag. Oefen in de tussentijd.",
+ "A test of all four skills also gives the candidate a certificate.": "Een toets van alle vier vaardigheden geeft de kandidaat ook een certificaat."
 }

@@ -5092,5 +5092,13 @@
  "No credits added or used yet.": "Inga krediter har lagts till eller använts ännu.",
  "Withdraw the test": "Återkalla testet",
  "Withdraw {{test}} from {{learner}}? It hasn't been started, so its {{n}} credits come back to your balance.": "Återkalla {{test}} från {{learner}}? Testet har inte påbörjats, så dess {{n}} krediter går tillbaka till ditt saldo.",
- "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Återkalla {{test}} från {{learner}}? Deltagaren förlorar det direkt, och krediterna för förberedelse och övningspaket kommer inte tillbaka, inte ens för oanvända dagar."
+ "Withdraw {{test}} from {{learner}}? They lose it right away, and the credits for preparation and practice packs don't come back, even for unused days.": "Återkalla {{test}} från {{learner}}? Deltagaren förlorar det direkt, och krediterna för förberedelse och övningspaket kommer inte tillbaka, inte ens för oanvända dagar.",
+ "Your next final assessment opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Ditt nästa sluttest öppnar {{date}}, 30 dagar efter det förra, som låg under ditt mål. Öva under tiden.",
+ "Your organization chose this test. Ask your admin to change it.": "Din organisation valde det här testet. Be din administratör att ändra det.",
+ "Switching to {{test}} costs {{amount}} more.": "Att byta till {{test}} kostar {{amount}} mer.",
+ "Pay and switch": "Betala och byt",
+ "Free switch": "Kostnadsfritt byte",
+ "Switch to another test (once, until {{date}})": "Byt till ett annat test (en gång, till {{date}})",
+ "Your next real test opens on {{date}}, 30 days after your last one, which was below your goal. Practise in the meantime.": "Ditt nästa riktiga test öppnar {{date}}, 30 dagar efter det förra, som låg under ditt mål. Öva under tiden.",
+ "A test of all four skills also gives the candidate a certificate.": "Ett test av alla fyra färdigheter ger också kandidaten ett certifikat."
 }

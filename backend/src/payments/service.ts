@@ -1,6 +1,6 @@
 import { pool } from "../db.js";
 import { accessCache } from "../licenses/accessCache.js";
-import { includeFinalAssessment } from "../assessment/service.js";
+import { applySwitch, includeFinalAssessment, paidSwitchGoesAhead } from "../assessment/service.js";
 import { POOL_VALIDITY_MONTHS, assignMonths } from "../licenses/service.js";
 import { PAYMENT_CONFIG, chooseProvider, type ProviderName } from "./providers.js";
 import { getTenantPlan, orgUnitPriceCents, purchaseUpgradesTo, setTier, type TenantPlan } from "../plans/service.js";
@@ -176,6 +176,9 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
   let invoiceId: string;
   let upgradedTo: PlanTier | null = null;
   let product: Record<string, any> | null = null;
+  // A paid switch of preparation: its invoice line, and whether staff must sort it out.
+  let switchLine: string | null = null;
+  let switchLeft = false;
   try {
     await client.query("BEGIN");
     order = (await client.query(`SELECT * FROM payment_orders WHERE id = $1 FOR UPDATE`, [orderId])).rows[0];
@@ -192,7 +195,28 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
 
     // A product becomes the learner's own (an entitlement); months and licences go to the licence pool.
     let purchase: { rows: { id: string }[] } = { rows: [{ id: null as unknown as string }] };
-    if (order.kind === "product" && String(order.product_id).startsWith("cert_")) {
+    if (order.kind === "product" && order.switch_to_test_type_id) {
+      // A switch to a dearer test: the preparation moves to that test; nothing new is owned.
+      // Its 7 days may have passed while paying: they paid, so it still goes
+      // ahead, unless its real test was used, or it was switched or revoked meanwhile.
+      product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
+      const e = order.switch_entitlement_id
+        ? (
+            await client.query(
+              `SELECT e.attempts_used, e.switched_at, e.revoked_at, tt.name AS test_name FROM entitlements e LEFT JOIN test_types tt ON tt.id = e.test_type_id WHERE e.id = $1 FOR UPDATE OF e`,
+              [order.switch_entitlement_id],
+            )
+          ).rows[0]
+        : undefined;
+      const to = (await client.query(`SELECT name FROM test_types WHERE id = $1`, [order.switch_to_test_type_id])).rows[0]?.name ?? order.switch_to_test_type_id;
+      switchLine = `Switch preparation: ${e?.test_name ?? "—"} → ${to}`;
+      if (paidSwitchGoesAhead(e)) {
+        await applySwitch(client, order.switch_entitlement_id, order.product_id, order.switch_to_test_type_id);
+      } else {
+        switchLeft = true;
+        console.error(`paid switch not made, left for staff: order ${order.id}, entitlement ${order.switch_entitlement_id}`);
+      }
+    } else if (order.kind === "product" && String(order.product_id).startsWith("cert_")) {
       // A certificate extra changes the certificate (or queues a printed copy); nothing is owned.
       product = (await client.query(`SELECT * FROM products WHERE id = $1`, [order.product_id])).rows[0];
       if (product!.kind === "cert_extend") {
@@ -229,8 +253,9 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
       );
     }
 
-    const description =
-      order.kind === "product"
+    const description = switchLine
+      ? switchLine
+      : order.kind === "product"
         ? `${product!.name}${order.level ? ` (${order.level})` : ""}${Number(order.credit_amount) > 0 ? " — less credit for unused preparation" : ""}${
             order.discount_reason === "level_retake" ? " — retake at half price" : order.discount_reason === "next_level" ? " — 25% off the next level" : ""
           }`
@@ -325,6 +350,19 @@ export async function fulfillOrder(orderId: string, providerPaymentId: string | 
         title: "A printed certificate to post",
         body: `Print certificate ${code ?? ""} and post it. The address is on the order.`,
         link: "/superadmin/certificates",
+        email: true,
+      }).catch(() => {});
+    }
+  }
+  // A paid switch that couldn't be made: Spica staff move the preparation or refund.
+  if (switchLeft) {
+    for (const s of (await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows) {
+      await notify({
+        userId: s.id,
+        kind: "invoice_paid",
+        title: "A paid test switch to sort out",
+        body: `${switchLine}: paid, but the preparation was already used, switched or revoked. Switch it by hand or refund. Order ${order.id}.`,
+        link: "/superadmin/billing",
         email: true,
       }).catch(() => {});
     }
