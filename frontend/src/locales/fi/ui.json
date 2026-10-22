@@ -5125,5 +5125,16 @@
  "Level tests": "Tasotestit",
  "Free samples": "Maksuttomat näytteet",
  "A question belongs to another question bank (practice, mock or real test).": "Kysymys kuuluu toiseen kysymyspankkiin (harjoittelu, mallikoe tai oikea koe).",
- "Bank": "Pankki"
+ "Bank": "Pankki",
+ "Finish test": "Lopeta koe",
+ "Finish the test now?": "Lopetetaanko koe nyt?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "Näytöllä oleva vastauksesi lähetetään, ja vastaamattomat kysymykset lasketaan vääriksi. Et voi palata tähän kokeeseen, ja se käyttää suorituskertasi.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "Näytöllä oleva vastauksesi lähetetään, ja vastaamattomat kysymykset lasketaan vääriksi. Et voi palata tähän kokeeseen.",
+ "Your test": "Kokeesi",
+ "Test not chosen yet": "Koetta ei ole vielä valittu",
+ "Your score report appears here after your test, and after its free sample.": "Tulosraporttisi näkyy täällä kokeesi ja sen maksuttoman näytteen jälkeen.",
+ "You bought a test, without a study plan.": "Ostit kokeen ilman opiskelusuunnitelmaa.",
+ "Yours": "Omasi",
+ "Your test: {{test}}": "Kokeesi: {{test}}",
+ "your final assessment": "loppukoe"
 }

@@ -5125,5 +5125,16 @@
  "Level tests": "స్థాయి టెస్ట్‌లు",
  "Free samples": "ఉచిత నమూనా టెస్ట్‌లు",
  "A question belongs to another question bank (practice, mock or real test).": "ఒక ప్రశ్న వేరే ప్రశ్నల బ్యాంక్‌కు (సాధన, మాక్ లేదా అసలు టెస్ట్) చెందినది.",
- "Bank": "బ్యాంక్"
+ "Bank": "బ్యాంక్",
+ "Finish test": "టెస్ట్ ముగించండి",
+ "Finish the test now?": "ఇప్పుడే టెస్ట్ ముగించాలా?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "స్క్రీన్‌పై ఉన్న మీ సమాధానం సమర్పించబడుతుంది, సమాధానం ఇవ్వని ప్రశ్నలు తప్పుగా లెక్కించబడతాయి. మీరు ఈ టెస్ట్‌కు తిరిగి రాలేరు, ఇది మీ ప్రయత్నాన్ని ఉపయోగిస్తుంది.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "స్క్రీన్‌పై ఉన్న మీ సమాధానం సమర్పించబడుతుంది, సమాధానం ఇవ్వని ప్రశ్నలు తప్పుగా లెక్కించబడతాయి. మీరు ఈ టెస్ట్‌కు తిరిగి రాలేరు.",
+ "Your test": "మీ టెస్ట్",
+ "Test not chosen yet": "టెస్ట్ ఇంకా ఎంచుకోలేదు",
+ "Your score report appears here after your test, and after its free sample.": "మీ టెస్ట్ మరియు దాని ఉచిత నమూనా టెస్ట్ తర్వాత మీ స్కోర్ నివేదిక ఇక్కడ కనిపిస్తుంది.",
+ "You bought a test, without a study plan.": "మీరు స్టడీ ప్లాన్ లేకుండా ఒక టెస్ట్ కొన్నారు.",
+ "Yours": "మీవి",
+ "Your test: {{test}}": "మీ టెస్ట్: {{test}}",
+ "your final assessment": "మీ తుది అసెస్‌మెంట్"
 }

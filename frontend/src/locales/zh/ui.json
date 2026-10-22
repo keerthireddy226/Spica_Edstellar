@@ -5125,5 +5125,16 @@
  "Level tests": "水平测试",
  "Free samples": "免费体验测试",
  "A question belongs to another question bank (practice, mock or real test).": "有题目属于其他题库（练习、模拟考试或正式测试）。",
- "Bank": "题库"
+ "Bank": "题库",
+ "Finish test": "结束测试",
+ "Finish the test now?": "现在结束测试吗？",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "屏幕上的答案会被提交，未作答的题目计为错误。你将无法返回此测试，并且会用掉你的作答机会。",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "屏幕上的答案会被提交，未作答的题目计为错误。你将无法返回此测试。",
+ "Your test": "你的测试",
+ "Test not chosen yet": "尚未选择测试",
+ "Your score report appears here after your test, and after its free sample.": "完成测试及其免费体验测试后，你的成绩单会显示在这里。",
+ "You bought a test, without a study plan.": "你购买了一项测试，不含学习计划。",
+ "Yours": "你的",
+ "Your test: {{test}}": "你的测试：{{test}}",
+ "your final assessment": "你的结业测评"
 }

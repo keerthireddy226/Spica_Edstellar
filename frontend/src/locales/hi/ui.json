@@ -5125,5 +5125,16 @@
  "Level tests": "स्तर टेस्ट",
  "Free samples": "मुफ़्त नमूना टेस्ट",
  "A question belongs to another question bank (practice, mock or real test).": "एक सवाल किसी दूसरे प्रश्न बैंक (अभ्यास, मॉक या असली टेस्ट) का है।",
- "Bank": "बैंक"
+ "Bank": "बैंक",
+ "Finish test": "टेस्ट खत्म करें",
+ "Finish the test now?": "क्या अभी टेस्ट खत्म करना है?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "स्क्रीन पर मौजूद आपका जवाब जमा हो जाएगा, और जिन सवालों के जवाब नहीं दिए, वे गलत माने जाएँगे। आप इस टेस्ट पर वापस नहीं आ सकेंगे, और इससे आपका प्रयास इस्तेमाल हो जाएगा।",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "स्क्रीन पर मौजूद आपका जवाब जमा हो जाएगा, और जिन सवालों के जवाब नहीं दिए, वे गलत माने जाएँगे। आप इस टेस्ट पर वापस नहीं आ सकेंगे।",
+ "Your test": "आपका टेस्ट",
+ "Test not chosen yet": "टेस्ट अभी चुना नहीं गया",
+ "Your score report appears here after your test, and after its free sample.": "आपकी स्कोर रिपोर्ट आपके टेस्ट और उसके मुफ़्त नमूना टेस्ट के बाद यहाँ दिखेगी।",
+ "You bought a test, without a study plan.": "आपने स्टडी प्लान के बिना एक टेस्ट खरीदा है।",
+ "Yours": "आपके",
+ "Your test: {{test}}": "आपका टेस्ट: {{test}}",
+ "your final assessment": "आपके अंतिम आकलन"
 }

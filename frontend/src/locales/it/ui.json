@@ -5125,5 +5125,16 @@
  "Level tests": "Test di livello",
  "Free samples": "Prove gratuite",
  "A question belongs to another question bank (practice, mock or real test).": "Una domanda appartiene a un'altra banca domande (pratica, simulazione o test ufficiale).",
- "Bank": "Banca"
+ "Bank": "Banca",
+ "Finish test": "Termina il test",
+ "Finish the test now?": "Terminare il test adesso?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "La risposta sullo schermo viene consegnata e le domande senza risposta contano come sbagliate. Non potrai tornare a questo test, e usa il tuo tentativo.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "La risposta sullo schermo viene consegnata e le domande senza risposta contano come sbagliate. Non potrai tornare a questo test.",
+ "Your test": "Il tuo test",
+ "Test not chosen yet": "Test non ancora scelto",
+ "Your score report appears here after your test, and after its free sample.": "Il tuo report dei punteggi compare qui dopo il test e dopo la sua prova gratuita.",
+ "You bought a test, without a study plan.": "Hai acquistato un test, senza piano di studio.",
+ "Yours": "I tuoi",
+ "Your test: {{test}}": "Il tuo test: {{test}}",
+ "your final assessment": "la tua valutazione finale"
 }

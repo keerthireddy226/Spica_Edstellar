@@ -5125,5 +5125,16 @@
  "Level tests": "レベルテスト",
  "Free samples": "無料サンプル",
  "A question belongs to another question bank (practice, mock or real test).": "別の問題バンク（練習・模擬試験・本番テスト）に属する問題があります。",
- "Bank": "バンク"
+ "Bank": "バンク",
+ "Finish test": "テストを終了",
+ "Finish the test now?": "今すぐテストを終了しますか？",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "画面上の解答は提出され、未解答の問題は不正解として扱われます。このテストには戻れず、受験回数を1回使います。",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "画面上の解答は提出され、未解答の問題は不正解として扱われます。このテストには戻れません。",
+ "Your test": "あなたのテスト",
+ "Test not chosen yet": "テスト未選択",
+ "Your score report appears here after your test, and after its free sample.": "スコアレポートは、テストとその無料サンプルの受験後にここに表示されます。",
+ "You bought a test, without a study plan.": "学習プランなしでテストを購入しました。",
+ "Yours": "購入済み",
+ "Your test: {{test}}": "あなたのテスト: {{test}}",
+ "your final assessment": "最終アセスメント"
 }

@@ -5125,5 +5125,16 @@
  "Level tests": "Niveautests",
  "Free samples": "Gratis voorbeeldtoetsen",
  "A question belongs to another question bank (practice, mock or real test).": "Een vraag hoort bij een andere vragenbank (oefenen, proefexamen of echte toets).",
- "Bank": "Bank"
+ "Bank": "Bank",
+ "Finish test": "Toets afronden",
+ "Finish the test now?": "De toets nu afronden?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "Je antwoord op het scherm wordt ingeleverd, en vragen die je niet hebt beantwoord tellen als fout. Je kunt niet terug naar deze toets, en hij gebruikt je poging.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "Je antwoord op het scherm wordt ingeleverd, en vragen die je niet hebt beantwoord tellen als fout. Je kunt niet terug naar deze toets.",
+ "Your test": "Je toets",
+ "Test not chosen yet": "Toets nog niet gekozen",
+ "Your score report appears here after your test, and after its free sample.": "Je scorerapport verschijnt hier na je toets, en na de gratis voorbeeldtoets.",
+ "You bought a test, without a study plan.": "Je hebt een toets gekocht, zonder studieplan.",
+ "Yours": "Van jou",
+ "Your test: {{test}}": "Je toets: {{test}}",
+ "your final assessment": "je eindtoets"
 }

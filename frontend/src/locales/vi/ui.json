@@ -5125,5 +5125,16 @@
  "Level tests": "Bài kiểm tra trình độ",
  "Free samples": "Bài thi mẫu miễn phí",
  "A question belongs to another question bank (practice, mock or real test).": "Có câu hỏi thuộc ngân hàng câu hỏi khác (luyện tập, thi thử hoặc bài thi thật).",
- "Bank": "Ngân hàng"
+ "Bank": "Ngân hàng",
+ "Finish test": "Kết thúc bài thi",
+ "Finish the test now?": "Kết thúc bài thi ngay bây giờ?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "Câu trả lời trên màn hình sẽ được nộp, và các câu chưa trả lời bị tính là sai. Bạn không thể quay lại bài thi này, và bài thi sẽ dùng lượt làm bài của bạn.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "Câu trả lời trên màn hình sẽ được nộp, và các câu chưa trả lời bị tính là sai. Bạn không thể quay lại bài thi này.",
+ "Your test": "Bài thi của bạn",
+ "Test not chosen yet": "Chưa chọn bài thi",
+ "Your score report appears here after your test, and after its free sample.": "Phiếu điểm của bạn sẽ hiện ở đây sau bài thi và sau bài thi mẫu miễn phí của nó.",
+ "You bought a test, without a study plan.": "Bạn đã mua một bài thi, không kèm kế hoạch học tập.",
+ "Yours": "Của bạn",
+ "Your test: {{test}}": "Bài thi của bạn: {{test}}",
+ "your final assessment": "bài đánh giá cuối khóa của bạn"
 }

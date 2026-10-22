@@ -5125,5 +5125,16 @@
  "Level tests": "Niveautest",
  "Free samples": "Gratis prøver",
  "A question belongs to another question bank (practice, mock or real test).": "Et spørgsmål hører til en anden spørgsmålsbank (øvelse, prøveeksamen eller rigtig test).",
- "Bank": "Bank"
+ "Bank": "Bank",
+ "Finish test": "Afslut testen",
+ "Finish the test now?": "Vil du afslutte testen nu?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "Dit svar på skærmen afleveres, og spørgsmål, du ikke har besvaret, tæller som forkerte. Du kan ikke vende tilbage til testen, og den bruger dit forsøg.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "Dit svar på skærmen afleveres, og spørgsmål, du ikke har besvaret, tæller som forkerte. Du kan ikke vende tilbage til testen.",
+ "Your test": "Din test",
+ "Test not chosen yet": "Test ikke valgt endnu",
+ "Your score report appears here after your test, and after its free sample.": "Din scorerapport vises her efter din test og efter den gratis prøve.",
+ "You bought a test, without a study plan.": "Du har købt en test uden studieplan.",
+ "Yours": "Dine",
+ "Your test: {{test}}": "Din test: {{test}}",
+ "your final assessment": "din afsluttende test"
 }

@@ -5125,5 +5125,16 @@
  "Level tests": "Nivåtester",
  "Free samples": "Gratis smakprov",
  "A question belongs to another question bank (practice, mock or real test).": "En fråga hör till en annan frågebank (övning, provprov eller riktigt test).",
- "Bank": "Bank"
+ "Bank": "Bank",
+ "Finish test": "Avsluta testet",
+ "Finish the test now?": "Avsluta testet nu?",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test, and it uses your attempt.": "Ditt svar på skärmen lämnas in, och frågor du inte har svarat på räknas som fel. Du kan inte gå tillbaka till testet, och det använder ditt försök.",
+ "Your answer on screen is handed in, and questions you haven't answered count as wrong. You can't come back to this test.": "Ditt svar på skärmen lämnas in, och frågor du inte har svarat på räknas som fel. Du kan inte gå tillbaka till testet.",
+ "Your test": "Ditt test",
+ "Test not chosen yet": "Test inte valt än",
+ "Your score report appears here after your test, and after its free sample.": "Din resultatrapport visas här efter ditt test och efter dess gratis smakprov.",
+ "You bought a test, without a study plan.": "Du har köpt ett test, utan studieplan.",
+ "Yours": "Dina",
+ "Your test: {{test}}": "Ditt test: {{test}}",
+ "your final assessment": "ditt sluttest"
 }
