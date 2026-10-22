@@ -266,6 +266,12 @@ practiceTestsRouter.get("/session/:sessionId/report", requireAuth, async (req: A
       if (!about?.levelTest) {
         const st = await finalResultState(s.id);
         if (st !== "ready") return res.json({ status: st === "void" ? "void" : "pending", waiting: st === "void" ? null : st, report: null, about, score: null });
+      } else {
+        // A level test: no score while it's undecided (some answers still being
+        // scored), so a part score never reads as the result; void if it was a violation.
+        const st = await finalResultState(s.id);
+        if (st === "void") return res.json({ status: "void", waiting: null, report: null, about, score: null });
+        if (about.levelPassed === null) return res.json({ status: "pending", waiting: "scoring", report: null, about, score: null });
       }
       const score = await scoreReport(s.id, null).catch(() => null);
       return res.json({ status: score?.overall ? "ready" : "pending", waiting: score?.overall ? null : "scoring", report: null, about, score });
@@ -333,8 +339,21 @@ practiceTestsRouter.get("/history", requireAuth, async (req: AuthedRequest, res,
         levelTest: x.level_test ?? null,
         // A final assessment's result shows once it's certified: until then
         // it's being scored or under review, or void (a proctoring violation).
+        // A level test shows its level once decided; until then it's being scored.
         finalStatus:
-          x.delivery_mode === "certified" && !x.level_test && !x.certificate_code ? (x.integrity === "violation" ? "void" : x.integrity === "flagged" ? "under_review" : "scoring") : null,
+          x.delivery_mode !== "certified"
+            ? null
+            : x.integrity === "violation"
+              ? "void"
+              : x.level_test
+                ? x.result?.levelTest?.passed === null || x.result?.levelTest?.passed === undefined
+                  ? "scoring"
+                  : null
+                : x.certificate_code
+                  ? null
+                  : x.integrity === "flagged"
+                    ? "under_review"
+                    : "scoring",
       })),
     });
   } catch (err) {
