@@ -4300,7 +4300,7 @@
  "Real test": "Bài thi thật",
  "This certificate expired on {{date}}.": "Chứng chỉ này đã hết hạn vào {{date}}.",
  "of English Proficiency": "năng lực tiếng Anh",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "đã tham gia bài thi Spica {{test}} dưới sự giám sát nghiêm ngặt, với kết quả sau",
+ "has taken the {{test}} test, strictly proctored, with this result": "đã tham gia bài thi {{test}} dưới sự giám sát nghiêm ngặt, với kết quả sau",
  "Valid until": "Có hiệu lực đến",
  "Sample test": "Bài thi mẫu",
  "Under review": "Đang xem xét",

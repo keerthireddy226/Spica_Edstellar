@@ -223,7 +223,7 @@ export function CertificateView() {
                   {result && cert.spicaScore == null && cert.cefrLevel
                     ? tr("has passed the Spica level test at {{level}}, strictly proctored", { level: cert.cefrLevel })
                     : result
-                    ? tr("has taken the Spica {{test}} test, strictly proctored, with this result", { test: cert.testName ?? "" })
+                    ? tr("has taken the {{test}} test, strictly proctored, with this result", { test: cert.testName ?? "" })
                     : course
                     ? tr("has completed the {{course}} course", { course: cert.courseName })
                     : `${t("certificate.completed")}${cert.batchName ? ` — ${cert.batchName}` : ""}`}

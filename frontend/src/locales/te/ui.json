@@ -4300,7 +4300,7 @@
  "Real test": "అసలు టెస్ట్",
  "This certificate expired on {{date}}.": "ఈ సర్టిఫికెట్ గడువు {{date}}న ముగిసింది.",
  "of English Proficiency": "ఆంగ్ల భాషా ప్రావీణ్యం",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "కఠినమైన ప్రాక్టరింగ్‌లో Spica {{test}} టెస్ట్ రాసి, ఈ ఫలితం సాధించారు",
+ "has taken the {{test}} test, strictly proctored, with this result": "కఠినమైన ప్రాక్టరింగ్‌లో {{test}} టెస్ట్ రాసి, ఈ ఫలితం సాధించారు",
  "Valid until": "చెల్లుబాటు గడువు",
  "Sample test": "నమూనా టెస్ట్",
  "Under review": "సమీక్షలో ఉంది",

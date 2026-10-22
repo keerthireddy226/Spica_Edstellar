@@ -4300,7 +4300,7 @@
  "Real test": "Examen real",
  "This certificate expired on {{date}}.": "Este certificado caducó el {{date}}.",
  "of English Proficiency": "de dominio del inglés",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "ha realizado el examen Spica {{test}}, con supervisión estricta, con este resultado",
+ "has taken the {{test}} test, strictly proctored, with this result": "ha realizado el examen {{test}}, con supervisión estricta, con este resultado",
  "Valid until": "Válido hasta",
  "Sample test": "Examen de muestra",
  "Under review": "En revisión",

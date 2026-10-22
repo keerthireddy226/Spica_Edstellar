@@ -4300,7 +4300,7 @@
  "Real test": "本番テスト",
  "This certificate expired on {{date}}.": "この修了証は{{date}}に有効期限が切れました。",
  "of English Proficiency": "英語能力",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "は、厳格な試験監督のもとでSpica {{test}}テストを受験し、次の結果を取得しました",
+ "has taken the {{test}} test, strictly proctored, with this result": "は、厳格な試験監督のもとで{{test}}テストを受験し、次の結果を取得しました",
  "Valid until": "有効期限",
  "Sample test": "サンプルテスト",
  "Under review": "審査中",

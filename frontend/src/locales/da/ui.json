@@ -4300,7 +4300,7 @@
  "Real test": "Rigtig test",
  "This certificate expired on {{date}}.": "Dette certifikat udløb den {{date}}.",
  "of English Proficiency": "i engelskfærdigheder",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "har taget Spica-testen {{test}} under streng tilsyn med dette resultat",
+ "has taken the {{test}} test, strictly proctored, with this result": "har taget testen {{test}} under streng tilsyn med dette resultat",
  "Valid until": "Gyldigt til",
  "Sample test": "Prøvetest",
  "Under review": "Under gennemgang",

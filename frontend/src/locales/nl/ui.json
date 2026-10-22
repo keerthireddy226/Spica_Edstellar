@@ -4300,7 +4300,7 @@
  "Real test": "Echte toets",
  "This certificate expired on {{date}}.": "Dit certificaat is verlopen op {{date}}.",
  "of English Proficiency": "van Engelse taalvaardigheid",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "heeft de toets Spica {{test}} onder streng toezicht afgelegd, met dit resultaat",
+ "has taken the {{test}} test, strictly proctored, with this result": "heeft de toets {{test}} onder streng toezicht afgelegd, met dit resultaat",
  "Valid until": "Geldig tot",
  "Sample test": "Voorbeeldtoets",
  "Under review": "Wordt beoordeeld",

@@ -4300,7 +4300,7 @@
  "Real test": "असली टेस्ट",
  "This certificate expired on {{date}}.": "यह सर्टिफ़िकेट {{date}} को समाप्त हो गया।",
  "of English Proficiency": "अंग्रेज़ी दक्षता",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "ने सख़्त प्रॉक्टरिंग में Spica {{test}} टेस्ट दिया है, इस परिणाम के साथ",
+ "has taken the {{test}} test, strictly proctored, with this result": "ने सख़्त प्रॉक्टरिंग में {{test}} टेस्ट दिया है, इस परिणाम के साथ",
  "Valid until": "इस तारीख तक मान्य",
  "Sample test": "नमूना टेस्ट",
  "Under review": "समीक्षा में",

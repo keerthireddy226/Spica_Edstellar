@@ -4300,7 +4300,7 @@
  "Real test": "正式测试",
  "This certificate expired on {{date}}.": "此证书已于 {{date}} 到期。",
  "of English Proficiency": "英语能力",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "已在严格监考下参加 Spica {{test}} 测试，成绩如下",
+ "has taken the {{test}} test, strictly proctored, with this result": "已在严格监考下参加 {{test}} 测试，成绩如下",
  "Valid until": "有效期至",
  "Sample test": "体验测试",
  "Under review": "审核中",

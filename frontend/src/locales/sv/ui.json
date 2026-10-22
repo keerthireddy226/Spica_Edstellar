@@ -4300,7 +4300,7 @@
  "Real test": "Riktigt test",
  "This certificate expired on {{date}}.": "Det här certifikatet gick ut den {{date}}.",
  "of English Proficiency": "över kunskaper i engelska",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "har genomfört Spica-testet {{test}} under strikt provövervakning, med följande resultat",
+ "has taken the {{test}} test, strictly proctored, with this result": "har genomfört testet {{test}} under strikt provövervakning, med följande resultat",
  "Valid until": "Giltigt till",
  "Sample test": "Smakprov",
  "Under review": "Granskas",

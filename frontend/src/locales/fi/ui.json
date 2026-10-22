@@ -4300,7 +4300,7 @@
  "Real test": "Oikea koe",
  "This certificate expired on {{date}}.": "Tämä todistus vanheni {{date}}.",
  "of English Proficiency": "englannin kielen taidosta",
- "has taken the Spica {{test}} test, strictly proctored, with this result": "on suorittanut Spica-kokeen {{test}} tiukasti valvottuna tällä tuloksella",
+ "has taken the {{test}} test, strictly proctored, with this result": "on suorittanut kokeen {{test}} tiukasti valvottuna tällä tuloksella",
  "Valid until": "Voimassa",
  "Sample test": "Näytekoe",
  "Under review": "Tarkistettavana",
