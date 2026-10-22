@@ -216,14 +216,14 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-3 py-3">{tr("Learner")}</th>
-                <th className="px-3 py-3">{tr("Organization · batch")}</th>
-                <th className="px-3 py-3">{tr("Level")}</th>
-                <th className="px-3 py-3">{tr("Certified")}</th>
-                <th className="px-3 py-3">{tr("Sessions")}</th>
-                <th className="px-3 py-3">{tr("Last practised")}</th>
-                <th className="px-3 py-3">{tr("License")}</th>
-                <th className="px-3 py-3">{tr("Status")}</th>
+                <th className="px-2.5 py-3">{tr("Learner")}</th>
+                <th className="px-2.5 py-3">{tr("Organization · batch")}</th>
+                <th className="px-2.5 py-3">{tr("Level")}</th>
+                <th className="px-2.5 py-3">{tr("Certified")}</th>
+                <th className="px-2.5 py-3">{tr("Sessions")}</th>
+                <th className="px-2.5 py-3">{tr("Last practised")}</th>
+                <th className="px-2.5 py-3">{tr("License")}</th>
+                <th className="px-2.5 py-3">{tr("Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -235,7 +235,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                     onClick={() => canView && setViewing(r.id)}
                     className={`border-b border-rule last:border-0 ${canView ? "cursor-pointer hover:bg-paper-warm" : ""}`}
                   >
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
                         <div className="min-w-0">
@@ -247,19 +247,19 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       <p className="text-ink">{r.orgName}</p>
                       <p className="text-xs text-muted">
                         {r.batchName ?? tr("No batch")}
                         {r.department ? ` · ${r.department}` : ""}
                       </p>
                     </td>
-                    <td className="px-3 py-3 text-ink">{r.cefr ?? "—"}</td>
-                    <td className="px-3 py-3"><CertifiedCell c={r.certified} /></td>
-                    <td className="px-3 py-3 text-muted">{r.sessionCount}</td>
-                    <td className="px-3 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
-                    <td className="px-3 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-2.5 py-3"><CertifiedCell c={r.certified} /></td>
+                    <td className="px-2.5 py-3 text-muted">{r.sessionCount}</td>
+                    <td className="px-2.5 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
+                    <td className="px-2.5 py-3">{r.license && <LicenseStatusPill license={r.license} />}</td>
+                    <td className="px-2.5 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : s === "inactive" ? "muted" : "error"}>
                         {s === "active" ? tr("Practising") : s === "pending" ? tr("Invite pending") : s === "inactive" ? tr("Inactive") : tr("Deactivated")}
                       </StatusPill>
@@ -371,15 +371,15 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
-                <th className="px-3 py-3">{tr("Learner")}</th>
-                <th className="px-3 py-3">{tr("Plan")}</th>
-                <th className="px-3 py-3">{tr("Level")}</th>
-                <th className="px-3 py-3">{tr("Certified")}</th>
-                <th className="px-3 py-3">{tr("Sessions")}</th>
-                <th className="px-3 py-3">{tr("Last practised")}</th>
-                <th className="px-3 py-3">{tr("Joined")}</th>
-                <th className="px-3 py-3">{tr("Status")}</th>
-                <th className="px-3 py-3"><span className="sr-only">{tr("Actions")}</span></th>
+                <th className="px-2.5 py-3">{tr("Learner")}</th>
+                <th className="px-2.5 py-3">{tr("Plan")}</th>
+                <th className="px-2.5 py-3">{tr("Level")}</th>
+                <th className="px-2.5 py-3">{tr("Certified")}</th>
+                <th className="px-2.5 py-3">{tr("Sessions")}</th>
+                <th className="px-2.5 py-3">{tr("Last practised")}</th>
+                <th className="px-2.5 py-3">{tr("Joined")}</th>
+                <th className="px-2.5 py-3">{tr("Status")}</th>
+                <th className="px-2.5 py-3"><span className="sr-only">{tr("Actions")}</span></th>
               </tr>
             </thead>
             <tbody>
@@ -391,38 +391,38 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                     onClick={() => canView && setViewing(r.id)}
                     className={`border-b border-rule last:border-0 ${canView ? "cursor-pointer hover:bg-paper-warm" : ""}`}
                   >
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar first={r.firstName} last={r.lastName} email={r.email} />
-                        <div className="min-w-0">
+                        <div className="min-w-0 max-w-48">
                           <p className="text-ink font-medium truncate">{[r.firstName, r.lastName].filter(Boolean).join(" ") || tr("Not named yet")}</p>
-                          <p className="text-xs text-muted truncate">{r.email}</p>
+                          <p className="text-xs text-muted truncate" title={r.email}>{r.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       <StatusPill tone={r.plan === "paid" ? "success" : r.plan === "complimentary" ? "navy" : "muted"}>
                         {r.plan === "paid" ? tr("Paid") : r.plan === "complimentary" ? tr("Complimentary") : tr("Free")}
                       </StatusPill>
                       {r.license && r.license.status !== "none" && <div className="mt-1"><LicenseStatusPill license={r.license} /></div>}
                     </td>
-                    <td className="px-3 py-3 text-ink">{r.cefr ?? "—"}</td>
-                    <td className="px-3 py-3"><CertifiedCell c={r.certified} /></td>
-                    <td className="px-3 py-3 text-muted">{r.sessions}</td>
-                    <td className="px-3 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
-                    <td className="px-3 py-3 text-muted whitespace-nowrap">
+                    <td className="px-2.5 py-3 text-ink">{r.cefr ?? "—"}</td>
+                    <td className="px-2.5 py-3"><CertifiedCell c={r.certified} /></td>
+                    <td className="px-2.5 py-3 text-muted">{r.sessions}</td>
+                    <td className="px-2.5 py-3 text-muted whitespace-nowrap">{r.lastActiveOn ? shortDate(r.lastActiveOn) : tr("Never")}</td>
+                    <td className="px-2.5 py-3 text-muted whitespace-nowrap">
                       <p>{shortDate(r.createdAt)}</p>
                       <p className="text-xs max-w-40 truncate" title={r.invitedByName ?? undefined}>
                         {r.invitedByName ? tr("Invited by {{invitedByName}}", { invitedByName: r.invitedByName }) : tr("Signed up")}
                       </p>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-2.5 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : "error"}>
                         {s === "active" ? tr("Active · {{ago}}", { ago: ago(r.lastActiveOn) }) : s === "pending" ? tr("Invite pending") : tr("Deactivated")}
                       </StatusPill>
                     </td>
-                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-1 justify-end">
+                    <td className="px-2.5 py-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-0.5 justify-end whitespace-nowrap">
                         {canView && (
                           <IconBtn title={tr("View profile")} onClick={() => setViewing(r.id)}>
                             <Eye size={15} />
@@ -540,7 +540,7 @@ function IconBtn({ children, title, onClick, danger }: { children: React.ReactNo
       title={title}
       aria-label={title}
       onClick={onClick}
-      className={`p-1.5 rounded-input text-muted transition-colors cursor-pointer ${danger ? "hover:bg-error/10 hover:text-error" : "hover:bg-paper-warm hover:text-ink"}`}
+      className={`p-1 rounded-input text-muted transition-colors cursor-pointer ${danger ? "hover:bg-error/10 hover:text-error" : "hover:bg-paper-warm hover:text-ink"}`}
     >
       {children}
     </button>

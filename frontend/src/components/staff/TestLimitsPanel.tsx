@@ -25,7 +25,7 @@ const TIER_LABEL: Record<string, () => string> = {
 const toBox = (n: number | null) => (n === null ? "" : String(n));
 const fromBox = (s: string) => (s.trim() === "" ? null : Math.max(0, Math.round(Number(s))));
 
-const inputClass = "w-24 rounded-input border border-rule bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-navy focus:outline-none";
+const inputClass = "w-28 rounded-input border border-rule bg-paper px-2.5 py-1.5 text-sm text-ink focus:border-navy focus:outline-none";
 
 // How many practice tests and mock tests each plan allows a learner per
 // month. Super Admins change them; changes apply from the next test started.

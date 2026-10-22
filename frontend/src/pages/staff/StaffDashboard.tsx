@@ -221,7 +221,7 @@ export function StaffDashboard() {
         </Panel>
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
         <Panel title={tr("Plans")}>
           {data.organizations.byTier.map((t) => (
             <div key={t.tier} className="flex items-center gap-3">
