@@ -156,7 +156,9 @@ const REASONS: [string, string][] = [
 ];
 
 // What they're working towards; editable so the roadmap can follow.
-export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: () => void }) {
+// testOnly: bought only a test, so just the test and goal (no exam date or
+// study plan). testName: that test, or for a plan the final assessment's test.
+export function LearningGoals({ data, onSaved, testOnly = false, testName = null }: { data: MyLearning; onSaved: () => void; testOnly?: boolean; testName?: string | null }) {
   const g = data.goals;
   const [editing, setEditing] = useState(false);
   const [d, setD] = useState({
@@ -190,14 +192,25 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
         <div className="grid grid-cols-2 gap-x-4 gap-y-3.5 text-sm">
           {(
             [
-              [tr("Exam"), EXAMS.find(([k]) => k === g.examPreference)?.[1] ?? "—"],
-              [tr("Goal level"), g.goalLevel === "unsure" ? tr("Not sure yet") : (g.goalLevel ?? "—")],
-              [tr("Target score"), g.scoreTarget || "—"],
-              [tr("Exam date"), g.examDate ? `${shortDate(g.examDate)}${days != null && days >= 0 ? tr(" · in {{days}} days", { days: days }) : ""}` : tr("Not booked")],
-              [tr("Daily practice"), g.dailyMinutes ? tr("{{n}} minutes", { n: g.dailyMinutes }) : "—"],
-              [tr("Why"), REASONS.find(([k]) => k === g.examReason)?.[1] ?? "—"],
-              [tr("First language"), g.firstLanguage || "—"],
-            ] as const
+              ...(testOnly
+                ? ([
+                    [tr("Your test"), testName ?? "—"],
+                    [tr("Goal level"), g.goalLevel === "unsure" ? tr("Not sure yet") : (g.goalLevel ?? "—")],
+                    [tr("First language"), g.firstLanguage || "—"],
+                  ] as const)
+                : ([
+                    // Spica's own final assessment: name the test it's on, once chosen.
+                    g.examPreference === "versant"
+                      ? [tr("Final assessment"), testName ?? tr("Test not chosen yet")]
+                      : [tr("Exam"), EXAMS.find(([k]) => k === g.examPreference)?.[1] ?? "—"],
+                    [tr("Goal level"), g.goalLevel === "unsure" ? tr("Not sure yet") : (g.goalLevel ?? "—")],
+                    [tr("Target score"), g.scoreTarget || "—"],
+                    [tr("Exam date"), g.examDate ? `${shortDate(g.examDate)}${days != null && days >= 0 ? tr(" · in {{days}} days", { days: days }) : ""}` : tr("Not booked")],
+                    [tr("Daily practice"), g.dailyMinutes ? tr("{{n}} minutes", { n: g.dailyMinutes }) : "—"],
+                    [tr("Why"), REASONS.find(([k]) => k === g.examReason)?.[1] ?? "—"],
+                    [tr("First language"), g.firstLanguage || "—"],
+                  ] as const)),
+            ]
           ).map(([l, v]) => (
             <div key={l} className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{l}</p>
@@ -208,6 +221,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
       ) : (
         <div className="flex flex-col gap-3">
           <div className="grid sm:grid-cols-2 gap-3">
+            {!testOnly && (
             <Field label={tr("Exam")}>
             <select {...f("examPreference")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Exam")}</option>
@@ -218,6 +232,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               ))}
             </select>
             </Field>
+            )}
             <Field label={tr("Goal level")}>
             <select {...f("goalLevel")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Goal level")}</option>
@@ -228,15 +243,19 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               ))}
             </select>
             </Field>
-            <Field label={tr("Target score")}>
-              <input {...f("scoreTarget")} placeholder={tr("Target score, e.g. 65")} className={input} />
-            </Field>
-            <Field label={tr("Exam date")}>
-              <input type="date" {...f("examDate")} className={input} />
-            </Field>
-            <Field label={tr("Daily practice")}>
-              <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
-            </Field>
+            {!testOnly && (
+              <>
+                <Field label={tr("Target score")}>
+                  <input {...f("scoreTarget")} placeholder={tr("Target score, e.g. 65")} className={input} />
+                </Field>
+                <Field label={tr("Exam date")}>
+                  <input type="date" {...f("examDate")} className={input} />
+                </Field>
+                <Field label={tr("Daily practice")}>
+                  <input type="number" min={5} max={240} {...f("dailyMinutes")} placeholder={tr("Minutes a day")} className={input} />
+                </Field>
+              </>
+            )}
             <Field label={tr("First language")}>
               <input {...f("firstLanguage")} list="first-languages" placeholder={tr("First language (helps us check scoring is fair)")} className={input} />
             </Field>
@@ -245,6 +264,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
                 <option key={l} value={l} />
               ))}
             </datalist>
+            {!testOnly && (
             <Field label={tr("Why")}>
             <select {...f("examReason")} className={`${input} cursor-pointer`}>
               <option value="">{tr("Why are you preparing?")}</option>
@@ -255,6 +275,7 @@ export function LearningGoals({ data, onSaved }: { data: MyLearning; onSaved: ()
               ))}
             </select>
             </Field>
+            )}
           </div>
           {saveFailed && <p className="text-sm text-error">{tr("Your goals couldn't be saved. Try again.")}</p>}
           <div className="flex gap-3">

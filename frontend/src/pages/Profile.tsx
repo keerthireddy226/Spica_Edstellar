@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   LogOut,
   GraduationCap,
+  Award,
+  BadgeCheck,
   CalendarDays,
   Pencil,
   X,
@@ -48,6 +50,9 @@ import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/p
 import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
 import { CitySelect } from "@/components/CitySelect";
+import { useTestOnly } from "@/components/learner/useTestOnly";
+import { getMyTests, type OwnedTest } from "@/api/assessment";
+import { getHistory, type HistoryEntry } from "@/api/practiceTests";
 
 import { tr } from "@/i18n/tr";
 // Colored icon-in-squircle badge, reused as the visual anchor for every card header/row here.
@@ -72,15 +77,17 @@ function SectionHeader({ icon, tint, title }: { icon: typeof GraduationCap; tint
   );
 }
 
-function AccessSection() {
+function AccessSection({ testOnly = false }: { testOnly?: boolean }) {
   const { t } = useTranslation();
   const license = useMyLicense();
   const access = useMyAccess();
   const ownsMore = !!access && access.owned.some((o) => o.kind !== "full");
   if (!license || (!license.required && !license.individual && !ownsMore)) return null;
   const onFreePlan = license.individual && license.status !== "active" && license.status !== "grace";
-  const status =
-    license.status === "active"
+  // Bought only a test: no plan to describe, just what they bought.
+  const status = testOnly
+    ? tr("You bought a test, without a study plan.")
+    : license.status === "active"
       ? t("profile.access.activeUntil", { date: formatShortDate(license.accessEndsAt) })
       : license.status === "grace"
         ? t("profile.access.grace", { date: formatShortDate(license.graceEndsAt) })
@@ -101,7 +108,7 @@ function AccessSection() {
       {/* Preparation for one test, real tests and level tests the learner bought or was given. */}
       {access && ownsMore && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Also yours")}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">{testOnly ? tr("Yours") : tr("Also yours")}</span>
           <OwnedList access={access} />
         </div>
       )}
@@ -115,7 +122,7 @@ function AccessSection() {
         </div>
       ) : license.individual ? (
         <Link to={ROUTES.PLANS} className="self-start">
-          <Button variant={onFreePlan ? "primary" : "secondary"}>{onFreePlan ? t("plans.upgrade") : t("plans.title")}</Button>
+          <Button variant={onFreePlan && !testOnly ? "primary" : "secondary"}>{onFreePlan && !testOnly ? t("plans.upgrade") : t("plans.title")}</Button>
         </Link>
       ) : (
         <p className="text-xs text-muted">{t("profile.access.help")}</p>
@@ -523,6 +530,24 @@ export function Profile() {
   const navigate = useNavigate();
   const { data: learning, reload } = useMyLearning();
   const [tab, setTab] = useState("learning");
+  // A test-only buyer's profile shows their test and its result, not a study plan.
+  const testOnly = useTestOnly() === true;
+  const [myTests, setMyTests] = useState<OwnedTest[] | null>(null);
+  const [history, setHistory] = useState<HistoryEntry[] | null>(null);
+  useEffect(() => {
+    getMyTests()
+      .then((r) => setMyTests(r.tests))
+      .catch(() => setMyTests([]));
+    getHistory()
+      .then((r) => setHistory(r.sessions))
+      .catch(() => setHistory([]));
+  }, []);
+  // The test bought (test-only), or the test chosen for the final assessment (a plan).
+  const testName = testOnly
+    ? (myTests?.find((x) => x.kind === "assessment" || x.kind === "level")?.testName ?? myTests?.[0]?.testName ?? null)
+    : (myTests?.find((x) => x.kind === "final" && x.testName)?.testName ?? null);
+  const realTests = (history ?? []).filter((h) => h.deliveryMode === "certified" && !h.levelTest);
+  const latestReal = realTests.find((h) => h.certificateCode) ?? realTests[0] ?? null;
 
   const initials = `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() || "?";
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || t("profile.account.unnamed");
@@ -568,10 +593,19 @@ export function Profile() {
               {learning?.access && (learning.access.status === "active" || learning.access.status === "grace") && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">{tr("Full access")}</span>
               )}
-              {learning?.goals.examPreference && (
+              {testOnly ? (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
+                  {tr("Your test: {{test}}", { test: testName ?? "—" })}
+                  {learning?.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
+                </span>
+              ) : learning?.goals.examPreference && (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
                   {tr("Preparing for {{toUpperCase}}", {
-                    toUpperCase: t(`onboarding.wizard.examGoal.exam.${learning.goals.examPreference}`, { defaultValue: learning.goals.examPreference.toUpperCase() }),
+                    // Spica's own final assessment: the test it's on, once chosen.
+                    toUpperCase:
+                      learning.goals.examPreference === "versant"
+                        ? (testName ?? tr("your final assessment"))
+                        : t(`onboarding.wizard.examGoal.exam.${learning.goals.examPreference}`, { defaultValue: learning.goals.examPreference.toUpperCase() }),
                   })}
                   {learning.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
                 </span>
@@ -589,13 +623,19 @@ export function Profile() {
         </div>
         {p && (
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-3 px-6 sm:px-8 pb-6">
-            {(
-              [
-                [tr("Current level"), p.level ?? tr("Not placed"), GraduationCap],
-                [tr("Day streak"), p.streak, Flame],
-                [tr("Sessions"), p.sessions, CalendarDays],
-                [tr("Minutes practised"), p.minutes, Clock],
-              ] as const
+            {(testOnly
+              ? ([
+                  [tr("Level"), latestReal?.certifiedLevel ?? latestReal?.cefrLevel ?? "—", GraduationCap],
+                  [tr("Spica score"), latestReal?.spicaScore ?? "—", Award],
+                  [tr("Tests finished"), (history ?? []).length, CalendarDays],
+                  [tr("Certificates"), realTests.filter((h) => h.certificateCode).length, BadgeCheck],
+                ] as const)
+              : ([
+                  [tr("Current level"), p.level ?? tr("Not placed"), GraduationCap],
+                  [tr("Day streak"), p.streak, Flame],
+                  [tr("Sessions"), p.sessions, CalendarDays],
+                  [tr("Minutes practised"), p.minutes, Clock],
+                ] as const)
             ).map(([label, value, Icon]) => (
               <div key={label} className="rounded-input px-4 py-3 border border-white/20 text-white min-w-0" style={{ background: "rgba(255,255,255,0.13)" }}>
                 <Icon size={16} className="text-white/80 mb-1" />
@@ -623,13 +663,19 @@ export function Profile() {
         const cols: Record<string, [React.ReactNode[], React.ReactNode[]]> = {
           // "Your skills" goes under the shorter column: beside goals for an
           // organization learner (whose organization card is long), else under access.
-          learning: learning?.organization
+          // Bought only a test: the test, its certificate and what they bought; no practice skills.
+          learning: testOnly
             ? [
-                [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <ProgressExtras key="s" part="skills" />],
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testOnly testName={testName} />, <MyCertificates key="c" />],
+                [<AccessSection key="a" testOnly />],
+              ]
+            : learning?.organization
+            ? [
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <ProgressExtras key="s" part="skills" />],
                 [<AccessSection key="a" />, <MyOrganization key="o" data={learning} />, <MyCertificates key="c" />],
               ]
             : [
-                [learning && <LearningGoals key="g" data={learning} onSaved={reload} />, <MyCertificates key="c" />],
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <MyCertificates key="c" />],
                 [<AccessSection key="a" />, <ProgressExtras key="s" part="skills" />],
               ],
           account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />]],

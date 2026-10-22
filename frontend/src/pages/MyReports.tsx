@@ -28,7 +28,7 @@ export function MyReports() {
   const [types, setTypes] = useState<CatalogueTestType[]>([]);
   const modulesOn = useModulesEnabled();
   const [modules, setModules] = useState<ModuleHistoryEntry[] | null>(null);
-  const [filter, setFilter] = useState<"all" | "mock" | "practice" | "modules">("all");
+  const [filter, setFilter] = useState<"all" | "mock" | "practice" | "modules" | "real" | "sample" | "level">("all");
   // A list that failed to load says so (with a retry) instead of looking empty.
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -50,7 +50,11 @@ export function MyReports() {
       .then((r) => setTypes(r.families.flatMap((f) => f.testTypes)))
       .catch(() => {});
   }, [attempt]);
-  const tests = filter === "modules" ? [] : (rows ?? []).filter((r) => filter === "all" || r.deliveryMode === filter);
+  // Real tests, samples and level tests (the tabs someone who bought only a test sees).
+  const matches = (r: HistoryEntry) =>
+    filter === "all" ||
+    (filter === "real" ? r.deliveryMode === "certified" && !r.levelTest : filter === "level" ? !!r.levelTest : r.deliveryMode === filter);
+  const tests = filter === "modules" ? [] : (rows ?? []).filter(matches);
   const sets = modulesOn && (filter === "all" || filter === "modules") ? (modules ?? []) : [];
   // Tests and sets in one list, newest first.
   const shown: ({ kind: "test"; at: string; h: HistoryEntry } | { kind: "set"; at: string; m: ModuleHistoryEntry })[] = [
@@ -89,15 +93,20 @@ export function MyReports() {
             : undefined
         }
       />
-      {!testOnly && (
       <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
-        {(
-          [
-            ["all", tr("All")],
-            ["mock", tr("Mock tests")],
-            ["practice", tr("Practice tests")],
-            ...(modulesOn ? ([["modules", tr("Practice Modules")]] as const) : []),
-          ] as const
+        {(testOnly
+          ? ([
+              ["all", tr("All")],
+              ["real", tr("Real tests")],
+              ["sample", tr("Free samples")],
+              ...((rows ?? []).some((r) => r.levelTest) ? ([["level", tr("Level tests")]] as const) : []),
+            ] as const)
+          : ([
+              ["all", tr("All")],
+              ["mock", tr("Mock tests")],
+              ["practice", tr("Practice tests")],
+              ...(modulesOn ? ([["modules", tr("Practice Modules")]] as const) : []),
+            ] as const)
         ).map(([k, label]) => (
           <button
             key={k}
@@ -108,7 +117,6 @@ export function MyReports() {
           </button>
         ))}
       </div>
-      )}
       {loading ? (
         <SectionLoading />
       ) : failed && shown.length === 0 ? (
@@ -127,12 +135,18 @@ export function MyReports() {
           body={
             filter === "modules"
               ? tr("Your report for each Practice Modules set appears here.")
-              : tr("Your reports appear here after each practice test or mock test.")
+              : testOnly
+                ? tr("Your score report appears here after your test, and after its free sample.")
+                : tr("Your reports appear here after each practice test or mock test.")
           }
         >
           {filter === "modules" ? (
             <Link to={ROUTES.MODULES} className={`${linkBtn} bg-navy text-white`}>
               <Layers size={15} /> {tr("Go to Practice Modules")}
+            </Link>
+          ) : testOnly ? (
+            <Link to={ROUTES.MY_TESTS} className={`${linkBtn} bg-navy text-white`}>
+              <Award size={15} /> {tr("Go to Assessment")}
             </Link>
           ) : (
             <>
