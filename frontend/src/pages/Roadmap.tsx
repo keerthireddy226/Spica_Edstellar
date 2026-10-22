@@ -207,6 +207,9 @@ export function Roadmap() {
 
       <JourneyHero j={journeyData} firstName={data.firstName ?? ""} />
 
+      {/* The day's encouragement, right under the banner. */}
+      <MotivationalBar />
+
       <NextStepCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
@@ -226,8 +229,6 @@ export function Roadmap() {
         <SkillProgress j={journeyData} />
         <GroupBoardCard />
       </div>
-
-      <MotivationalBar />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
         <DailyChallenge />

@@ -500,6 +500,9 @@ function LearnerDashboard() {
         ]}
       />
 
+      {/* The day's encouragement, right under the banner. */}
+      <MotivationalBar />
+
       <KeepGoingCard />
 
       {/* What to do and where you stand, then the final assessment, the group
@@ -515,7 +518,6 @@ function LearnerDashboard() {
         )}
         <FinalAssessmentCard compact />
         {hasGroup ? <GroupBoardCard board={board} /> : tasksCard}
-        <MotivationalBar />
       </div>
 
       {/* Below both columns: today's tasks beside the Practice Modules progress
