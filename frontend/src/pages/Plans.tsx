@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ProductShop } from "@/components/plans/ProductShop";
 import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
@@ -45,6 +45,10 @@ function Feature({ ok, children }: { ok: boolean; children: string }) {
 export function Plans() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Opened from another page (Spica plans, a card or a banner): Back returns
+  // there; opened directly, it goes to Spica plans.
+  const { key: locationKey } = useLocation();
+  const goBack = () => (locationKey !== "default" ? navigate(-1) : navigate(ROUTES.SPICA_PLANS));
   const license = useMyLicense();
   const access = useMyAccess();
   // ?months=1 or 3 pre-selects the length (from the "keep going" card).
@@ -119,6 +123,8 @@ export function Plans() {
         eyebrow={tr("Your plan")}
         title={t("plans.title")}
         subtitle={active ? t("plans.activeUntil", { date: formatShortDate(activeEnds) }) : t("plans.onFree")}
+        onBack={goBack}
+        backLabel={tr("Back")}
       />
 
       {/* What else the learner owns: preparation for one test, real tests, level tests. */}

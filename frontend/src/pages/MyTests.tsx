@@ -14,6 +14,7 @@ import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 import { PageError, SectionLoading } from "@/components/learner/PageStates";
 import { useTestOnly } from "@/components/learner/useTestOnly";
+import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 
 // Assessment (once "My tests"): the real assessment attempts the learner owns. Each opens by the
 // unlock rule (after a mock test or in the last 7 days for preparation; after
@@ -164,6 +165,10 @@ function ChooseTest({ t, onChosen }: { t: OwnedTest; onChosen: () => void }) {
 }
 
 function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void; shop: Shop }) {
+  // A real test bought on its own: the free sample is optional, so starting
+  // without it asks once.
+  const [confirmNoSample, setConfirmNoSample] = useState(false);
+  const sampleOffered = t.kind === "assessment" && t.samplesDone === 0;
   const { t: tx } = useTranslation();
   const navigate = useNavigate();
   const u = t.unlock;
@@ -203,6 +208,31 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
           <Button onClick={() => navigate(takeLink(t, "certified", open.sessionId))} className="flex items-center gap-2 !py-2">
             <PlayCircle size={16} /> {tr("Resume")}
           </Button>
+        </div>
+      ) : u.state === "open" && sampleOffered ? (
+        <div className="flex flex-col gap-3 bg-success/10 border border-success/30 rounded-input px-4 py-3">
+          <span className="text-sm text-ink flex items-start gap-2">
+            <ShieldCheck size={16} className="text-navy-deep shrink-0 mt-0.5" />
+            {tr("Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.")}
+          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button onClick={() => navigate(takeLink(t, "sample"))} className="!py-2">
+              {tr("Start the free sample")}
+            </Button>
+            <Button variant="secondary" onClick={() => setConfirmNoSample(true)} className="flex items-center gap-2 !py-2">
+              <PlayCircle size={16} /> {tr("Skip the sample and start my real test")}
+            </Button>
+          </div>
+          {confirmNoSample && (
+            <ConfirmActionModal
+              title={tr("Start without the sample?")}
+              message={tr("You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?")}
+              confirmLabel={tr("Start my real test")}
+              submitting={false}
+              onClose={() => setConfirmNoSample(false)}
+              onConfirm={() => navigate(takeLink(t, "certified"))}
+            />
+          )}
         </div>
       ) : u.state === "open" ? (
         <div className="flex items-center justify-between gap-3 flex-wrap bg-success/10 border border-success/30 rounded-input px-4 py-3">
@@ -331,7 +361,7 @@ export function MyTests() {
         title={tr("Assessment")}
         subtitle={
           testOnly
-            ? tr("Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.")
+            ? tr("Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.")
             : tr("Your final assessments: real tests that end your preparation. Take each one when it opens, then find your score report and certificate here.")
         }
         icon={ClipboardCheck}

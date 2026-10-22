@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Sertifikatene dine fra den avsluttende testen. Hvert sertifikat har en kontrollside som alle kan åpne via lenken eller QR-koden.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Testen din: ta den gratis eksempeltesten, og deretter den ekte testen når den åpner. Resultatrapporten og sertifikatet ditt vises her.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Noen raske spørsmål (omtrent ett minutt), så er testen din klar på Vurdering-siden.",
- "Your test result will show your level": "Testresultatet ditt viser nivået ditt"
+ "Your test result will show your level": "Testresultatet ditt viser nivået ditt",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Den ekte testen din er åpen. Vi anbefaler den gratis eksempeltesten først: en kort versjon med de samme kontrollene, slik at et problem med kamera eller mikrofon dukker opp før testen som teller. Du kan også hoppe over den.",
+ "Skip the sample and start my real test": "Hopp over eksempeltesten og start den ekte testen min",
+ "Start without the sample?": "Starte uten eksempeltesten?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ett forsøk på den ekte testen, og tidtakeren kan ikke settes på pause. Eksempeltesten er gratis og sjekker kameraet, mikrofonen og forbindelsen din med de samme trinnene. Starte den ekte testen nå?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Testen din: Ta gjerne den gratis eksempeltesten først, og ta deretter den ekte testen. Resultatrapporten og sertifikatet ditt vises her."
 }

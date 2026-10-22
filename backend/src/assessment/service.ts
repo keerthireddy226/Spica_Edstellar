@@ -68,7 +68,9 @@ export function unlockOf(
     const opens = done.lastLevelFail ? new Date(done.lastLevelFail).getTime() + (done.retakeDays ?? LEVEL_RETAKE_DAYS) * DAY : 0;
     return now.getTime() >= opens ? { state: "open" } : { state: "retake_wait", opensOn: new Date(opens).toISOString() };
   }
-  if (e.kind === "assessment") return done.samples > 0 ? { state: "open" } : { state: "sample_needed" };
+  // A real test bought on its own opens at once: the free sample is
+  // recommended, not required (owner decision 2026-10-22).
+  if (e.kind === "assessment") return { state: "open" };
   const opens = ends - (UNLOCK_DAYS_BEFORE_END + (e.kind === "final" ? FINAL_GRACE_DAYS : 0)) * DAY;
   if (done.mocks > 0 || now.getTime() >= opens) return { state: "open" };
   return { state: "mock_needed", opensOn: new Date(opens).toISOString() };

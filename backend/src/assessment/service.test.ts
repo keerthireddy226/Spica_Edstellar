@@ -14,8 +14,9 @@ describe("unlockOf", () => {
   it("preparation: opens anyway in the last 7 days", () => {
     expect(unlockOf({ kind: "prep", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 0 }, new Date("2026-11-14T00:00:00Z"))).toEqual({ state: "open" });
   });
-  it("assessment only: opens after the free sample", () => {
-    expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 3, samples: 0 }, now)).toEqual({ state: "sample_needed" });
+  it("assessment only: opens at once; the free sample is optional", () => {
+    // The free sample is optional: open with or without it.
+    expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 3, samples: 0 }, now)).toEqual({ state: "open" });
     expect(unlockOf({ kind: "assessment", attemptsLeft: 1, endsAt }, { mocks: 0, samples: 1 }, now)).toEqual({ state: "open" });
   });
   it("final assessment with Full access: opens after a mock test, or 7 days before access ends (14 days before it expires)", () => {

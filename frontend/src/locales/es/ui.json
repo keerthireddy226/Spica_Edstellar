@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Tus certificados de la evaluación final. Cada uno tiene una página de verificación que cualquiera puede abrir desde su enlace o código QR.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Tu examen: haz la muestra gratuita y luego el examen real cuando se abra. Tu informe de puntuación y tu certificado aparecen aquí.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Unas preguntas rápidas (cerca de un minuto) y tu examen estará listo en la página Evaluación.",
- "Your test result will show your level": "El resultado de tu examen mostrará tu nivel"
+ "Your test result will show your level": "El resultado de tu examen mostrará tu nivel",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Tu examen real está disponible. Te recomendamos hacer primero la muestra gratuita: una versión corta con las mismas comprobaciones, para que cualquier problema con la cámara o el micrófono aparezca antes del examen que cuenta. También puedes saltártela.",
+ "Skip the sample and start my real test": "Saltar la muestra y empezar mi examen real",
+ "Start without the sample?": "¿Empezar sin la muestra?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Tienes un solo intento para el examen real y su temporizador no se puede pausar. La muestra es gratuita y comprueba tu cámara, micrófono y conexión con los mismos pasos. ¿Empezar el examen real ahora?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Tu examen: si quieres, prueba primero la muestra gratuita y después haz el examen real. Tu informe de puntuación y tu certificado aparecen aquí."
 }

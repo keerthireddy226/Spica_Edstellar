@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Dine certifikater fra den afsluttende test. Hvert certifikat har en kontrolside, som alle kan åbne via linket eller QR-koden.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Din test: tag den gratis prøve og derefter den rigtige test, når den åbner. Din scorerapport og dit certifikat vises her.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Et par hurtige spørgsmål (cirka et minut), så er din test klar på siden Vurdering.",
- "Your test result will show your level": "Dit testresultat viser dit niveau"
+ "Your test result will show your level": "Dit testresultat viser dit niveau",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Din rigtige test er åben. Vi anbefaler den gratis prøve først: en kort udgave med de samme kontroller, så et problem med kamera eller mikrofon viser sig før den test, der tæller. Du kan også springe den over.",
+ "Skip the sample and start my real test": "Spring prøven over og start min rigtige test",
+ "Start without the sample?": "Start uden prøven?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ét forsøg til den rigtige test, og dens timer kan ikke sættes på pause. Prøven er gratis og tjekker dit kamera, din mikrofon og din forbindelse med de samme trin. Start den rigtige test nu?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Din test: Tag gerne den gratis prøve først, og tag derefter den rigtige test. Din scorerapport og dit certifikat vises her."
 }

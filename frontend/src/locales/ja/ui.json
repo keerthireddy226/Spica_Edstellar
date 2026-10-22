@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "最終アセスメントの修了証です。各修了証には確認ページがあり、リンクまたは QR コードから誰でも開けます。",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "あなたのテスト：まず無料サンプルを受け、本番テストが開いたら受験してください。スコアレポートと修了証はここに表示されます。",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "いくつかの簡単な質問（約1分）に答えると、アセスメントページでテストを受けられるようになります。",
- "Your test result will show your level": "テスト結果でレベルがわかります"
+ "Your test result will show your level": "テスト結果でレベルがわかります",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "本番テストを受験できるようになりました。まずは無料サンプルをおすすめします。同じチェックを行う短いバージョンなので、カメラやマイクの問題を本番テストの前に見つけられます。スキップすることもできます。",
+ "Skip the sample and start my real test": "サンプルをスキップして本番テストを開始",
+ "Start without the sample?": "サンプルなしで開始しますか？",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "本番テストの受験は1回のみで、タイマーは一時停止できません。サンプルは無料で、同じ手順でカメラ、マイク、接続を確認できます。今すぐ本番テストを開始しますか？",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "あなたのテスト：必要に応じてまず無料サンプルを受けてから、本番テストを受験してください。スコアレポートと修了証はここに表示されます。"
 }

@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Deine Zertifikate aus dem Abschlusstest. Jedes hat eine Prüfseite, die jeder über den Link oder QR-Code öffnen kann.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Dein Test: Mach die kostenlose Probe und dann den echten Test, sobald er freigeschaltet ist. Dein Ergebnisbericht und dein Zertifikat erscheinen hier.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Ein paar kurze Fragen (etwa eine Minute), dann ist dein Test auf der Seite „Assessment“ bereit.",
- "Your test result will show your level": "Dein Testergebnis zeigt dein Niveau"
+ "Your test result will show your level": "Dein Testergebnis zeigt dein Niveau",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Dein echter Test ist freigeschaltet. Wir empfehlen zuerst die kostenlose Probe: eine kurze Version mit denselben Prüfungen, damit ein Kamera- oder Mikrofonproblem vor dem Test auffällt, der zählt. Du kannst sie auch überspringen.",
+ "Skip the sample and start my real test": "Probe überspringen und meinen echten Test starten",
+ "Start without the sample?": "Ohne die Probe starten?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du hast einen Versuch für den echten Test, und sein Timer lässt sich nicht pausieren. Die Probe ist kostenlos und prüft Kamera, Mikrofon und Verbindung mit denselben Schritten. Echten Test jetzt starten?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Dein Test: Mach gern zuerst die kostenlose Probe und dann den echten Test. Dein Ergebnisbericht und dein Zertifikat erscheinen hier."
 }

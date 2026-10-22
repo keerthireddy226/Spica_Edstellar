@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Dina certifikat från sluttestet. Varje certifikat har en kontrollsida som vem som helst kan öppna via länken eller QR-koden.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Ditt test: gör det gratis smakprovet och sedan det riktiga testet när det öppnar. Din resultatrapport och ditt certifikat visas här.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Några snabba frågor (ungefär en minut), sedan är ditt test klart på sidan Test.",
- "Your test result will show your level": "Ditt testresultat visar din nivå"
+ "Your test result will show your level": "Ditt testresultat visar din nivå",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Ditt riktiga test är öppet. Vi rekommenderar det kostnadsfria smakprovet först: en kort version med samma kontroller, så att ett problem med kamera eller mikrofon visar sig före testet som räknas. Du kan också hoppa över det.",
+ "Skip the sample and start my real test": "Hoppa över smakprovet och starta mitt riktiga test",
+ "Start without the sample?": "Starta utan smakprovet?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ett försök på det riktiga testet, och dess timer kan inte pausas. Smakprovet är kostnadsfritt och kontrollerar din kamera, mikrofon och anslutning med samma steg. Starta det riktiga testet nu?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Ditt test: gör gärna det kostnadsfria smakprovet först och ta sedan det riktiga testet. Din resultatrapport och ditt certifikat visas här."
 }

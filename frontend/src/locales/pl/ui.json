@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Twoje certyfikaty z testu końcowego. Każdy ma stronę weryfikacji, którą każdy może otworzyć przez link lub kod QR.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Twój test: zrób bezpłatny test przykładowy, a potem prawdziwy test, gdy zostanie udostępniony. Raport wyników i certyfikat pojawią się tutaj.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Kilka szybkich pytań (około minuty), a potem Twój test będzie gotowy na stronie Test.",
- "Your test result will show your level": "Wynik testu pokaże Twój poziom"
+ "Your test result will show your level": "Wynik testu pokaże Twój poziom",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Twój prawdziwy test jest dostępny. Zalecamy najpierw bezpłatny test przykładowy: krótką wersję z tymi samymi sprawdzeniami, dzięki której problem z kamerą lub mikrofonem wyjdzie na jaw przed testem, który się liczy. Możesz go też pominąć.",
+ "Skip the sample and start my real test": "Pomiń test przykładowy i rozpocznij prawdziwy test",
+ "Start without the sample?": "Rozpocząć bez testu przykładowego?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Masz jedno podejście do prawdziwego testu, a jego licznika czasu nie można wstrzymać. Test przykładowy jest bezpłatny i sprawdza kamerę, mikrofon oraz połączenie w tych samych krokach. Rozpocząć prawdziwy test teraz?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Twój test: jeśli chcesz, najpierw zrób bezpłatny test przykładowy, a potem prawdziwy test. Twój raport wyników i certyfikat pojawią się tutaj."
 }

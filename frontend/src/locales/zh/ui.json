@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "你的结业测评证书。每张证书都有一个验证页面，任何人都可以通过链接或二维码打开。",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "你的测试：先做免费体验测试，正式测试开放后再参加。你的成绩单和证书会显示在这里。",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "回答几个简单问题（约一分钟），你的测试就会在测评页面准备就绪。",
- "Your test result will show your level": "你的测试结果将显示你的等级"
+ "Your test result will show your level": "你的测试结果将显示你的等级",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "你的正式测试已开放。建议你先做免费体验测试：这是一个简短版本，检查项目完全相同，这样摄像头或麦克风的问题会在正式计分的测试之前暴露出来。你也可以跳过。",
+ "Skip the sample and start my real test": "跳过体验测试，开始我的正式测试",
+ "Start without the sample?": "不做体验测试直接开始？",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "正式测试只有一次作答机会，且计时器无法暂停。体验测试免费，会用相同的步骤检查你的摄像头、麦克风和网络连接。现在开始正式测试吗？",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "你的测试：如果愿意，可以先做免费体验测试，再参加正式测试。你的成绩单和证书会显示在这里。"
 }

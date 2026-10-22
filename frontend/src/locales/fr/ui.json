@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Vos certificats d'évaluation finale. Chacun dispose d'une page de vérification que tout le monde peut ouvrir via son lien ou son QR code.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Votre test : passez l'échantillon gratuit, puis le vrai test dès qu'il s'ouvre. Votre relevé de score et votre certificat s'affichent ici.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Quelques questions rapides (environ une minute), puis votre test est prêt sur la page Évaluation.",
- "Your test result will show your level": "Le résultat de votre test indiquera votre niveau"
+ "Your test result will show your level": "Le résultat de votre test indiquera votre niveau",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Votre vrai test est ouvert. Nous vous recommandons d'abord l'échantillon gratuit : une version courte avec les mêmes vérifications, pour qu'un problème de caméra ou de micro apparaisse avant le test qui compte. Vous pouvez aussi le passer.",
+ "Skip the sample and start my real test": "Passer l'échantillon et commencer mon vrai test",
+ "Start without the sample?": "Commencer sans l'échantillon ?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Vous n'avez qu'une seule tentative pour le vrai test, et son chronomètre ne peut pas être mis en pause. L'échantillon est gratuit et vérifie votre caméra, votre microphone et votre connexion avec les mêmes étapes. Commencer le vrai test maintenant ?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Votre test : faites d'abord l'échantillon gratuit si vous le souhaitez, puis passez le vrai test. Votre relevé de score et votre certificat s'affichent ici."
 }

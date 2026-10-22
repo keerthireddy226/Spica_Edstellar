@@ -5112,5 +5112,10 @@
  "Your final assessment certificates. Each has a check page anyone can open from its link or QR code.": "Loppukokeen todistuksesi. Jokaisella on tarkistussivu, jonka kuka tahansa voi avata linkistä tai QR-koodista.",
  "Your test: take the free sample, then the real test when it opens. Your score report and certificate show here.": "Kokeesi: tee maksuton näyte ja sitten oikea koe, kun se avautuu. Tulosraporttisi ja todistuksesi näkyvät tässä.",
  "A few quick questions (about a minute), then your test is ready on the Assessment page.": "Muutama nopea kysymys (noin minuutti), ja kokeesi on valmiina Arviointi-sivulla.",
- "Your test result will show your level": "Koetuloksesi näyttää tasosi"
+ "Your test result will show your level": "Koetuloksesi näyttää tasosi",
+ "Your real test is open. We recommend the free sample first: a short version with the same checks, so a camera or microphone problem shows up before the test that counts. You can also skip it.": "Oikea kokeesi on avoinna. Suosittelemme ensin maksutonta näytettä: lyhyt versio samoilla tarkistuksilla, jotta kameran tai mikrofonin ongelma tulee esiin ennen koetta, joka ratkaisee. Voit myös ohittaa sen.",
+ "Skip the sample and start my real test": "Ohita näyte ja aloita oikea koe",
+ "Start without the sample?": "Aloitetaanko ilman näytettä?",
+ "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Sinulla on yksi yritys oikeassa kokeessa, eikä sen ajastinta voi keskeyttää. Näyte on maksuton ja tarkistaa kamerasi, mikrofonisi ja yhteytesi samoilla vaiheilla. Aloitetaanko oikea koe nyt?",
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Kokeesi: tee halutessasi ensin maksuton näyte ja sitten oikea koe. Tulosraporttisi ja todistuksesi näkyvät täällä."
 }
