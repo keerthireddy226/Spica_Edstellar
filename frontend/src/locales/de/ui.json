@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Probe überspringen und meinen echten Test starten",
  "Start without the sample?": "Ohne die Probe starten?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du hast einen Versuch für den echten Test, und sein Timer lässt sich nicht pausieren. Die Probe ist kostenlos und prüft Kamera, Mikrofon und Verbindung mit denselben Schritten. Echten Test jetzt starten?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Dein Test: Mach gern zuerst die kostenlose Probe und dann den echten Test. Dein Ergebnisbericht und dein Zertifikat erscheinen hier."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Dein Test: Mach gern zuerst die kostenlose Probe und dann den echten Test. Dein Ergebnisbericht und dein Zertifikat erscheinen hier.",
+ "Mock bank": "Pool für Probeprüfungen",
+ "Real-test bank": "Pool für echte Tests",
+ "Practice set": "Übungssatz",
+ "Your test and its free sample: the score report of each, once it's ready.": "Dein Test und seine kostenlose Probe: der Ergebnisbericht zu jedem, sobald er fertig ist.",
+ "Level tests": "Niveautests",
+ "Free samples": "Kostenlose Proben",
+ "A question belongs to another question bank (practice, mock or real test).": "Eine Frage gehört zu einem anderen Fragenpool (Üben, Probeprüfung oder echter Test).",
+ "Bank": "Pool"
 }

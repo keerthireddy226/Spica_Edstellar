@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "跳过体验测试，开始我的正式测试",
  "Start without the sample?": "不做体验测试直接开始？",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "正式测试只有一次作答机会，且计时器无法暂停。体验测试免费，会用相同的步骤检查你的摄像头、麦克风和网络连接。现在开始正式测试吗？",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "你的测试：如果愿意，可以先做免费体验测试，再参加正式测试。你的成绩单和证书会显示在这里。"
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "你的测试：如果愿意，可以先做免费体验测试，再参加正式测试。你的成绩单和证书会显示在这里。",
+ "Mock bank": "模拟考试题库",
+ "Real-test bank": "正式测试题库",
+ "Practice set": "练习套题",
+ "Your test and its free sample: the score report of each, once it's ready.": "你的测试及其免费体验测试：各自的成绩单，准备好后即可查看。",
+ "Level tests": "水平测试",
+ "Free samples": "免费体验测试",
+ "A question belongs to another question bank (practice, mock or real test).": "有题目属于其他题库（练习、模拟考试或正式测试）。",
+ "Bank": "题库"
 }

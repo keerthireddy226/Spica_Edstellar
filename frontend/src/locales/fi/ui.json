@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Ohita näyte ja aloita oikea koe",
  "Start without the sample?": "Aloitetaanko ilman näytettä?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Sinulla on yksi yritys oikeassa kokeessa, eikä sen ajastinta voi keskeyttää. Näyte on maksuton ja tarkistaa kamerasi, mikrofonisi ja yhteytesi samoilla vaiheilla. Aloitetaanko oikea koe nyt?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Kokeesi: tee halutessasi ensin maksuton näyte ja sitten oikea koe. Tulosraporttisi ja todistuksesi näkyvät täällä."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Kokeesi: tee halutessasi ensin maksuton näyte ja sitten oikea koe. Tulosraporttisi ja todistuksesi näkyvät täällä.",
+ "Mock bank": "Mallikoepankki",
+ "Real-test bank": "Oikeiden kokeiden pankki",
+ "Practice set": "Harjoitussarja",
+ "Your test and its free sample: the score report of each, once it's ready.": "Kokeesi ja sen maksuton näyte: kummankin tulosraportti, kun se on valmis.",
+ "Level tests": "Tasotestit",
+ "Free samples": "Maksuttomat näytteet",
+ "A question belongs to another question bank (practice, mock or real test).": "Kysymys kuuluu toiseen kysymyspankkiin (harjoittelu, mallikoe tai oikea koe).",
+ "Bank": "Pankki"
 }

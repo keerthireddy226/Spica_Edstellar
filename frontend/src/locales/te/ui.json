@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "నమూనాను దాటవేసి నా అసలు టెస్ట్ ప్రారంభించండి",
  "Start without the sample?": "నమూనా టెస్ట్ లేకుండా ప్రారంభించాలా?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "అసలు టెస్ట్‌కు మీకు ఒక్క ప్రయత్నం మాత్రమే ఉంది, దాని టైమర్‌ను ఆపలేరు. నమూనా టెస్ట్ ఉచితం, అదే దశలతో మీ కెమెరా, మైక్రోఫోన్ మరియు కనెక్షన్‌ను తనిఖీ చేస్తుంది. ఇప్పుడే అసలు టెస్ట్ ప్రారంభించాలా?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "మీ టెస్ట్: మీకు కావాలంటే ముందుగా ఉచిత నమూనా టెస్ట్ ప్రయత్నించి, ఆ తర్వాత అసలు టెస్ట్ రాయండి. మీ స్కోర్ నివేదిక మరియు సర్టిఫికెట్ ఇక్కడ కనిపిస్తాయి."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "మీ టెస్ట్: మీకు కావాలంటే ముందుగా ఉచిత నమూనా టెస్ట్ ప్రయత్నించి, ఆ తర్వాత అసలు టెస్ట్ రాయండి. మీ స్కోర్ నివేదిక మరియు సర్టిఫికెట్ ఇక్కడ కనిపిస్తాయి.",
+ "Mock bank": "మాక్ టెస్ట్ బ్యాంక్",
+ "Real-test bank": "అసలు టెస్ట్ బ్యాంక్",
+ "Practice set": "అభ్యాస సెట్",
+ "Your test and its free sample: the score report of each, once it's ready.": "మీ టెస్ట్ మరియు దాని ఉచిత నమూనా టెస్ట్: ప్రతిదాని స్కోర్ నివేదిక, సిద్ధమైన వెంటనే.",
+ "Level tests": "స్థాయి టెస్ట్‌లు",
+ "Free samples": "ఉచిత నమూనా టెస్ట్‌లు",
+ "A question belongs to another question bank (practice, mock or real test).": "ఒక ప్రశ్న వేరే ప్రశ్నల బ్యాంక్‌కు (సాధన, మాక్ లేదా అసలు టెస్ట్) చెందినది.",
+ "Bank": "బ్యాంక్"
 }

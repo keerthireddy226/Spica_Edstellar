@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Hoppa över smakprovet och starta mitt riktiga test",
  "Start without the sample?": "Starta utan smakprovet?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ett försök på det riktiga testet, och dess timer kan inte pausas. Smakprovet är kostnadsfritt och kontrollerar din kamera, mikrofon och anslutning med samma steg. Starta det riktiga testet nu?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Ditt test: gör gärna det kostnadsfria smakprovet först och ta sedan det riktiga testet. Din resultatrapport och ditt certifikat visas här."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Ditt test: gör gärna det kostnadsfria smakprovet först och ta sedan det riktiga testet. Din resultatrapport och ditt certifikat visas här.",
+ "Mock bank": "Bank för provprov",
+ "Real-test bank": "Bank för riktiga test",
+ "Practice set": "Övningsuppsättning",
+ "Your test and its free sample: the score report of each, once it's ready.": "Ditt test och dess gratis smakprov: resultatrapporten för vart och ett, när den är klar.",
+ "Level tests": "Nivåtester",
+ "Free samples": "Gratis smakprov",
+ "A question belongs to another question bank (practice, mock or real test).": "En fråga hör till en annan frågebank (övning, provprov eller riktigt test).",
+ "Bank": "Bank"
 }

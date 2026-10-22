@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Hopp over eksempeltesten og start den ekte testen min",
  "Start without the sample?": "Starte uten eksempeltesten?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ett forsøk på den ekte testen, og tidtakeren kan ikke settes på pause. Eksempeltesten er gratis og sjekker kameraet, mikrofonen og forbindelsen din med de samme trinnene. Starte den ekte testen nå?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Testen din: Ta gjerne den gratis eksempeltesten først, og ta deretter den ekte testen. Resultatrapporten og sertifikatet ditt vises her."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Testen din: Ta gjerne den gratis eksempeltesten først, og ta deretter den ekte testen. Resultatrapporten og sertifikatet ditt vises her.",
+ "Mock bank": "Bank for prøveeksamener",
+ "Real-test bank": "Bank for ekte tester",
+ "Practice set": "Øvingssett",
+ "Your test and its free sample: the score report of each, once it's ready.": "Testen din og eksempeltesten: resultatrapporten for hver, når den er klar.",
+ "Level tests": "Nivåtester",
+ "Free samples": "Gratis eksempeltester",
+ "A question belongs to another question bank (practice, mock or real test).": "Et spørsmål hører til en annen spørsmålsbank (øving, prøveeksamen eller ekte test).",
+ "Bank": "Bank"
 }

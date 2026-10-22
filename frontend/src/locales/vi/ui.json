@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Bỏ qua bài mẫu và bắt đầu bài thi thật",
  "Start without the sample?": "Bắt đầu mà không làm bài mẫu?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Bạn chỉ có một lượt làm bài thi thật và không thể tạm dừng đồng hồ. Bài thi mẫu miễn phí và kiểm tra camera, micrô và kết nối của bạn theo đúng các bước đó. Bắt đầu bài thi thật ngay bây giờ?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Bài thi của bạn: nếu muốn, hãy làm bài thi mẫu miễn phí trước, rồi làm bài thi thật. Phiếu điểm và chứng chỉ của bạn hiển thị tại đây."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Bài thi của bạn: nếu muốn, hãy làm bài thi mẫu miễn phí trước, rồi làm bài thi thật. Phiếu điểm và chứng chỉ của bạn hiển thị tại đây.",
+ "Mock bank": "Ngân hàng thi thử",
+ "Real-test bank": "Ngân hàng bài thi thật",
+ "Practice set": "Bộ bài luyện tập",
+ "Your test and its free sample: the score report of each, once it's ready.": "Bài thi của bạn và bài thi mẫu miễn phí: phiếu điểm của từng bài, ngay khi sẵn sàng.",
+ "Level tests": "Bài kiểm tra trình độ",
+ "Free samples": "Bài thi mẫu miễn phí",
+ "A question belongs to another question bank (practice, mock or real test).": "Có câu hỏi thuộc ngân hàng câu hỏi khác (luyện tập, thi thử hoặc bài thi thật).",
+ "Bank": "Ngân hàng"
 }

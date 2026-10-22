@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Spring prøven over og start min rigtige test",
  "Start without the sample?": "Start uden prøven?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Du har ét forsøg til den rigtige test, og dens timer kan ikke sættes på pause. Prøven er gratis og tjekker dit kamera, din mikrofon og din forbindelse med de samme trin. Start den rigtige test nu?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Din test: Tag gerne den gratis prøve først, og tag derefter den rigtige test. Din scorerapport og dit certifikat vises her."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Din test: Tag gerne den gratis prøve først, og tag derefter den rigtige test. Din scorerapport og dit certifikat vises her.",
+ "Mock bank": "Bank til prøveeksamener",
+ "Real-test bank": "Bank til rigtige test",
+ "Practice set": "Øvesæt",
+ "Your test and its free sample: the score report of each, once it's ready.": "Din test og dens gratis prøve: scorerapporten for hver, når den er klar.",
+ "Level tests": "Niveautest",
+ "Free samples": "Gratis prøver",
+ "A question belongs to another question bank (practice, mock or real test).": "Et spørgsmål hører til en anden spørgsmålsbank (øvelse, prøveeksamen eller rigtig test).",
+ "Bank": "Bank"
 }

@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Voorbeeldtoets overslaan en mijn echte toets starten",
  "Start without the sample?": "Starten zonder de voorbeeldtoets?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Je hebt één poging voor de echte toets, en de timer kan niet worden gepauzeerd. De voorbeeldtoets is gratis en controleert je camera, microfoon en verbinding met dezelfde stappen. Nu de echte toets starten?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Je toets: doe eerst de gratis voorbeeldtoets als je wilt, en maak daarna de echte toets. Je scorerapport en certificaat verschijnen hier."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Je toets: doe eerst de gratis voorbeeldtoets als je wilt, en maak daarna de echte toets. Je scorerapport en certificaat verschijnen hier.",
+ "Mock bank": "Bank voor proefexamens",
+ "Real-test bank": "Bank voor echte toetsen",
+ "Practice set": "Oefenset",
+ "Your test and its free sample: the score report of each, once it's ready.": "Je toets en de gratis voorbeeldtoets: het scorerapport van elk, zodra het klaar is.",
+ "Level tests": "Niveautests",
+ "Free samples": "Gratis voorbeeldtoetsen",
+ "A question belongs to another question bank (practice, mock or real test).": "Een vraag hoort bij een andere vragenbank (oefenen, proefexamen of echte toets).",
+ "Bank": "Bank"
 }

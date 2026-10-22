@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "サンプルをスキップして本番テストを開始",
  "Start without the sample?": "サンプルなしで開始しますか？",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "本番テストの受験は1回のみで、タイマーは一時停止できません。サンプルは無料で、同じ手順でカメラ、マイク、接続を確認できます。今すぐ本番テストを開始しますか？",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "あなたのテスト：必要に応じてまず無料サンプルを受けてから、本番テストを受験してください。スコアレポートと修了証はここに表示されます。"
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "あなたのテスト：必要に応じてまず無料サンプルを受けてから、本番テストを受験してください。スコアレポートと修了証はここに表示されます。",
+ "Mock bank": "模擬試験バンク",
+ "Real-test bank": "本番テストバンク",
+ "Practice set": "練習セット",
+ "Your test and its free sample: the score report of each, once it's ready.": "テストとその無料サンプル：それぞれのスコアレポート（準備ができ次第）。",
+ "Level tests": "レベルテスト",
+ "Free samples": "無料サンプル",
+ "A question belongs to another question bank (practice, mock or real test).": "別の問題バンク（練習・模擬試験・本番テスト）に属する問題があります。",
+ "Bank": "バンク"
 }

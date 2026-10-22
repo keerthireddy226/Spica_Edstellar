@@ -5117,5 +5117,13 @@
  "Skip the sample and start my real test": "Saltar la muestra y empezar mi examen real",
  "Start without the sample?": "¿Empezar sin la muestra?",
  "You have one attempt at the real test, and its timer can't be paused. The sample is free and checks your camera, microphone and connection with the same steps. Start the real test now?": "Tienes un solo intento para el examen real y su temporizador no se puede pausar. La muestra es gratuita y comprueba tu cámara, micrófono y conexión con los mismos pasos. ¿Empezar el examen real ahora?",
- "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Tu examen: si quieres, prueba primero la muestra gratuita y después haz el examen real. Tu informe de puntuación y tu certificado aparecen aquí."
+ "Your test: try the free sample first if you like, then take the real test. Your score report and certificate show here.": "Tu examen: si quieres, prueba primero la muestra gratuita y después haz el examen real. Tu informe de puntuación y tu certificado aparecen aquí.",
+ "Mock bank": "Banco de simulacros",
+ "Real-test bank": "Banco de exámenes reales",
+ "Practice set": "Serie de práctica",
+ "Your test and its free sample: the score report of each, once it's ready.": "Tu examen y su muestra gratuita: el informe de puntuación de cada uno, cuando esté listo.",
+ "Level tests": "Pruebas de nivel",
+ "Free samples": "Muestras gratuitas",
+ "A question belongs to another question bank (practice, mock or real test).": "Una pregunta pertenece a otro banco de preguntas (práctica, simulacro o examen real).",
+ "Bank": "Banco"
 }
