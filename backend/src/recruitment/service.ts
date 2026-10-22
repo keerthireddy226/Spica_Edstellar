@@ -61,9 +61,14 @@ export async function inviteCost(testKind: string): Promise<number> {
 }
 
 // The credits an invitation took, for its refund.
+// What the invitation's latest charge was (a resent invitation is charged
+// again, so the refund returns that charge, not every charge added up).
 async function chargedFor(assessmentId: string): Promise<number> {
-  const r = await pool.query(`SELECT coalesce(-sum(delta), 1)::int AS n FROM recruitment_credit_events WHERE assessment_id = $1 AND reason = 'invite'`, [assessmentId]);
-  return Math.max(1, r.rows[0].n);
+  const r = await pool.query(
+    `SELECT -delta AS n FROM recruitment_credit_events WHERE assessment_id = $1 AND reason = 'invite' ORDER BY created_at DESC LIMIT 1`,
+    [assessmentId],
+  );
+  return Math.max(1, r.rows[0]?.n ?? 1);
 }
 
 export async function creditBalance(tenantId: string): Promise<number> {
@@ -225,10 +230,24 @@ export async function resendInvite(tenantId: string, assessmentId: string): Prom
   ).rows[0];
   if (!a) throw new RecruitmentError("assessment_not_found", 404);
   if (!["invited", "started", "expired"].includes(a.status)) throw new RecruitmentError("cannot_resend");
-  // An expired invitation was refunded; resending charges again.
+  // An expired invitation was refunded; resending charges its price again,
+  // under the organization's credit lock like new invitations.
   if (a.status === "expired" && a.credit_refunded) {
-    if ((await creditBalance(tenantId)) < 1) throw new RecruitmentError("not_enough_credits", 402, { needed: 1, balance: 0 });
-    await pool.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id) VALUES ($1, -1, 'invite', $2)`, [tenantId, assessmentId]);
+    const cost = await chargedFor(assessmentId);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`credits:${tenantId}`]);
+      const balance = (await client.query(`SELECT coalesce(sum(delta), 0)::int AS n FROM recruitment_credit_events WHERE tenant_id = $1`, [tenantId])).rows[0].n;
+      if (balance < cost) throw new RecruitmentError("not_enough_credits", 402, { needed: cost, balance });
+      await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id) VALUES ($1, $3, 'invite', $2)`, [tenantId, assessmentId, -cost]);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
   const token = generateToken();
   const expiresAt = new Date(Date.now() + a.invite_valid_days * 86_400_000);
