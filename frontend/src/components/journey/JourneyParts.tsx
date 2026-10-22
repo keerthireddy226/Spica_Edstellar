@@ -9,7 +9,6 @@ import {
   CalendarPlus,
   Check,
   CheckCircle2,
-  Circle,
   ClipboardList,
   Flag,
   Gauge,
@@ -33,7 +32,7 @@ import { tr } from "@/i18n/tr";
 
 const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, speaking: Mic, reading: BookOpen, writing: PenLine };
 
-const PACE: Record<Journey["pace"], { label: () => string; cls: string }> = {
+export const PACE: Record<Journey["pace"], { label: () => string; cls: string }> = {
   new: { label: () => tr("Just started"), cls: "bg-white/20 text-white" },
   on_track: { label: () => tr("On track"), cls: "bg-success text-white" },
   slightly_behind: { label: () => tr("Slightly behind"), cls: "bg-warning text-white" },
@@ -82,7 +81,7 @@ export function SkillProgress({ j }: { j: Journey }) {
       <h2 className="font-display font-bold text-base text-ink flex items-center gap-2">
         <Target size={17} className="text-accent" /> {tr("Your skills")}
       </h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {j.skills.map((s) => {
           const Icon = ICONS[s.skill];
           return (
@@ -139,31 +138,50 @@ export function PathToGoal({ j }: { j: Journey }) {
               >
                 {done ? <Check size={12} /> : null}
               </span>
-              <p className={`text-sm font-semibold ${done ? "text-muted" : "text-ink"}`}>
-                {tr("Reach {{level}}", { level: step.level })}
-                {step.level === j.goal ? <span className="ml-1.5 text-[10px] font-bold uppercase text-accent">{tr("Goal")}</span> : null}
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mt-1.5">
-                {step.skills.map((s) => {
-                  const Icon = ICONS[s.skill];
-                  return (
-                    <div key={s.skill} className={`rounded-input px-2 py-1.5 text-[11px] flex flex-col gap-1 ${s.state === "done" ? "bg-success/10" : s.state === "now" ? "bg-navy/5 border border-navy/20" : "bg-paper-warm/40"}`}>
-                      <span className="flex items-center gap-1 text-ink">
-                        <Icon size={12} className={SKILL_RING_COLOR[s.skill]} /> {t(`skills.${s.skill}`)}
-                        <span className="ml-auto">{s.state === "done" ? <CheckCircle2 size={12} className="text-success" /> : s.state === "later" ? <Circle size={10} className="text-muted" /> : null}</span>
-                      </span>
-                      {s.state === "now" && (
-                        <span className="flex items-center gap-1">
-                          <span className="flex-1 h-1 rounded-full bg-rule overflow-hidden">
-                            <span className="block h-full bg-navy rounded-full" style={{ width: `${Math.round(s.partWay * 100)}%` }} />
-                          </span>
-                          <span className="text-muted">{Math.round(s.partWay * 100)}%</span>
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between gap-2">
+                <p className={`text-sm font-semibold ${done ? "text-muted" : "text-ink"}`}>
+                  {tr("Reach {{level}}", { level: step.level })}
+                  {step.level === j.goal ? <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wide text-accent">{tr("Goal")}</span> : null}
+                </p>
+                <span className={`text-xs ${done ? "text-success font-semibold" : "text-muted"}`}>
+                  {done
+                    ? tr("All four skills done")
+                    : tr("{{n}} of 4 skills done", { n: step.skills.filter((s) => s.state === "done").length })}
+                </span>
               </div>
+              {/* A finished level is one line; the others show each skill. */}
+              {!done && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                  {step.skills.map((s) => {
+                    const Icon = ICONS[s.skill];
+                    return (
+                      <div
+                        key={s.skill}
+                        className={`rounded-lg px-2.5 py-2 text-xs flex flex-col gap-1.5 border ${
+                          s.state === "done"
+                            ? "bg-success/10 border-success/20"
+                            : s.state === "now"
+                              ? "bg-surface border-navy/40 shadow-sm"
+                              : "bg-paper-warm/50 border-transparent text-muted"
+                        }`}
+                      >
+                        <span className={`flex items-center gap-1.5 font-medium ${s.state === "later" ? "text-muted" : "text-ink"}`}>
+                          <Icon size={13} className={s.state === "later" ? "text-muted" : SKILL_RING_COLOR[s.skill]} /> {t(`skills.${s.skill}`)}
+                          {s.state === "done" && <CheckCircle2 size={13} className="text-success ml-auto" />}
+                        </span>
+                        {s.state === "now" && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="flex-1 h-1.5 rounded-full bg-rule overflow-hidden">
+                              <span className="block h-full bg-navy rounded-full" style={{ width: `${Math.max(3, Math.round(s.partWay * 100))}%` }} />
+                            </span>
+                            <span className="text-muted tabular-nums">{Math.round(s.partWay * 100)}%</span>
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               {justDone && (
                 <Link to={ROUTES.SPICA_PLANS} className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-navy-deep hover:underline">
                   {tr("You finished {{level}} in Practice Modules. Check it with a level test", { level: step.level })} <ArrowRight size={12} />
@@ -425,7 +443,7 @@ function CalendarActions() {
   );
 }
 
-const PACE_LIGHT: Record<Journey["pace"], string> = {
+export const PACE_LIGHT: Record<Journey["pace"], string> = {
   new: "bg-navy/10 text-navy-deep",
   on_track: "bg-success/15 text-success",
   slightly_behind: "bg-warning/15 text-warning",

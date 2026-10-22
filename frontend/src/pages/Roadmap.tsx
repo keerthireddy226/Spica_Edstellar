@@ -210,27 +210,28 @@ export function Roadmap() {
       <NextStepCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
-        <div className="lg:col-span-3 flex flex-col gap-5">
+        <div className="lg:col-span-3 flex flex-col gap-5 min-w-0">
           <PathToGoal j={journeyData} />
         </div>
-        <div className="lg:col-span-2 flex flex-col gap-5">
+        <div className="lg:col-span-2 flex flex-col gap-5 min-w-0">
           <ThisWeek j={journeyData} />
+          <FinalAssessmentCard compact />
         </div>
       </div>
 
       <Checkpoints j={journeyData} />
 
-      <FinalAssessmentCard />
-
-      <GroupBoardCard />
-
-      <SkillProgress j={journeyData} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+        <SkillProgress j={journeyData} />
+        <GroupBoardCard />
+      </div>
 
       <MotivationalBar />
 
-      <DailyChallenge />
-
-      <CoachModePromo />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+        <DailyChallenge />
+        <CoachModePromo />
+      </div>
     </div>
   );
 }

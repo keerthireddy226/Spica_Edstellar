@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TrendingUp, TrendingDown, Minus, Trophy, CalendarCheck, LineChart } from "lucide-react";
+import { ROUTES } from "@/constants/routes";
+import { Link } from "react-router-dom";
+import { ArrowRight, TrendingUp, TrendingDown, Minus, Trophy, CalendarCheck, LineChart } from "lucide-react";
 import { getDailyProgress, type DailyProgress, type DailyStat } from "@/api/dashboard";
 import { ApiError } from "@/lib/api";
 import { MotivationalBar } from "@/components/MotivationalBar";
@@ -66,7 +68,7 @@ function TodayReport({ days, isBestDay }: { days: DailyStat[]; isBestDay: boolea
   const yesterday = days[days.length - 2];
 
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-wrap items-center justify-between gap-5">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col justify-between gap-5 h-full">
       <div className="flex flex-col gap-4">
         <SectionTitle icon={CalendarCheck} color="var(--color-navy)" title={t("progressPage.todaysReport")}>
           {isBestDay && (
@@ -75,24 +77,29 @@ function TodayReport({ days, isBestDay }: { days: DailyStat[]; isBestDay: boolea
             </span>
           )}
         </SectionTitle>
-        <div className="flex items-baseline gap-7 flex-wrap">
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <span className="font-display font-extrabold text-4xl text-ink">{today.questionsCompleted}</span>
-            <span className="text-xs text-muted ml-2">{t("progressPage.questions")}</span>
+            <span className="block text-xs text-muted">{t("progressPage.questions")}</span>
           </div>
           <div>
             <span className="font-display font-extrabold text-4xl text-success">
               {today.accuracyPercent === null ? "—" : `${today.accuracyPercent}%`}
             </span>
-            <span className="text-xs text-muted ml-2">{t("progressPage.accuracy")}</span>
+            <span className="block text-xs text-muted">{t("progressPage.accuracy")}</span>
           </div>
           <div>
             <span className="font-display font-extrabold text-4xl text-navy">{today.practiceMinutes}</span>
-            <span className="text-xs text-muted ml-2">{t("progressPage.minutes")}</span>
+            <span className="block text-xs text-muted">{t("progressPage.minutes")}</span>
           </div>
         </div>
       </div>
       <TodayVsYesterday today={today} yesterday={yesterday} />
+      {today.questionsCompleted === 0 && (
+        <Link to={ROUTES.MODULES} className="self-start inline-flex items-center gap-1.5 rounded-pill bg-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
+          {tr("Start today's practice")} <ArrowRight size={15} />
+        </Link>
+      )}
     </div>
   );
 }
@@ -138,7 +145,7 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
           <span className="inline-block bg-surface px-3 text-sm text-muted">{tr("No questions answered in the last 7 days. Practise a set and it shows here.")}</span>
         </p>
       )}
-      <svg viewBox={`0 0 ${W} 300`} className="w-full h-[200px] sm:h-[260px]" style={{ overflow: "visible" }}>
+      <svg viewBox={`0 0 ${W} 300`} className="w-full h-auto" style={{ overflow: "visible" }}>
         <defs>
           <linearGradient id="progressLineGrad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" style={{ stopColor: "var(--color-accent-soft)" }} />
@@ -211,8 +218,13 @@ export function Progress() {
       <ProgressExtras part="banner" title={t("progressPage.title")} subtitle={t("progressPage.subtitle")} />
       <MotivationalBar />
 
-      <TodayReport days={data.days} isBestDay={isToday(data.bestDay.date) && data.bestDay.questionsCompleted > 0} />
-      <DailyLineChart days={data.days} bestDay={data.bestDay} totalQuestions={data.totalQuestions} />
+      {/* Today beside the week, so the chart isn't stretched across the page. */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+        <TodayReport days={data.days} isBestDay={isToday(data.bestDay.date) && data.bestDay.questionsCompleted > 0} />
+        <div className="xl:col-span-2 min-w-0">
+          <DailyLineChart days={data.days} bestDay={data.bestDay} totalQuestions={data.totalQuestions} />
+        </div>
+      </div>
       <ProgressExtras part="details" />
     </div>
   );

@@ -55,10 +55,10 @@ export function GroupBoardCard() {
           </caption>
           <thead>
             <tr className="text-left text-xs text-muted border-b border-rule">
-              <th className="py-2 pr-3 pl-2 w-20 font-semibold">{tr("Position")}</th>
+              <th className="py-2 pr-3 pl-2 w-10 font-semibold">#</th>
               <th className="py-2 pr-3 font-semibold">{tr("Learner ID")}</th>
-              <th className="py-2 pr-3 w-24 font-semibold">{tr("Level")}</th>
-              <th className="py-2 pr-2 w-24 text-right font-semibold">{tr("Points")}</th>
+              <th className="py-2 pr-3 w-14 font-semibold">{tr("Level")}</th>
+              <th className="py-2 pr-2 w-16 text-right font-semibold">{tr("Points")}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,9 +91,9 @@ function BoardRow({ rank, name, points, me, level }: { rank: number; name: strin
   return (
     <tr className={`border-b border-rule last:border-0 ${me ? "bg-accent/10 font-semibold" : ""}`}>
       <td className="py-2 pr-3 pl-2 font-display font-bold text-ink">{rank}</td>
-      <td className={`py-2 pr-3 text-ink ${me ? "" : "font-mono text-xs"}`}>{name}</td>
+      <td className={`py-2 pr-3 text-ink whitespace-nowrap ${me ? "font-semibold" : "font-mono text-xs"}`}>{name}</td>
       <td className="py-2 pr-3 text-ink">{me && level ? level : <span className="text-muted">—</span>}</td>
-      <td className="py-2 pr-2 text-right text-ink">{points}</td>
+      <td className="py-2 pr-2 text-right text-ink tabular-nums">{points}</td>
     </tr>
   );
 }

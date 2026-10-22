@@ -12,7 +12,8 @@ const linkBtn = "inline-flex items-center gap-2 px-4 py-2 rounded-pill text-sm f
 // My journey's last step: practice leads to the final assessment, the only
 // test that gives a certificate. Mock tests predict the level it will show;
 // readiness is advice, the final assessment opens by its own rule.
-export function FinalAssessmentCard() {
+// compact: in a side column, without the explanation line.
+export function FinalAssessmentCard({ compact = false }: { compact?: boolean } = {}) {
   const r = useReadiness();
   const [canBuy, setCanBuy] = useState(true);
   useEffect(() => {
@@ -33,7 +34,7 @@ export function FinalAssessmentCard() {
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Last step")}</p>
           <h2 className="font-display font-bold text-lg text-ink">{tr("Final assessment: certify your level")}</h2>
-          <p className="text-sm text-muted">{tr("Practice and mock tests prepare you. Your final assessment, one strictly proctored real test, gives your certificate.")}</p>
+          {!compact && <p className="text-sm text-muted">{tr("Practice and mock tests prepare you. Your final assessment, one strictly proctored real test, gives your certificate.")}</p>}
         </div>
       </div>
 

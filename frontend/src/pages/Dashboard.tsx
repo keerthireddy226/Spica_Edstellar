@@ -32,7 +32,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import { useAuth } from "@/hooks/useAuth";
 import { LearnerHero, LearnerCard, SKILL_COLOR } from "@/components/learner/LearnerHero";
 import { NextStepCard } from "@/components/learner/GoalCards";
-import { JourneySummary } from "@/components/journey/JourneyParts";
+import { JourneySummary, PACE, PACE_LIGHT } from "@/components/journey/JourneyParts";
 import { getJourney, type Journey } from "@/api/roadmap";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
 import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
@@ -73,7 +73,7 @@ function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
   const modulesOn = useModulesEnabled();
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {modules.map((m) => {
         const Icon = SKILL_ICONS[m.skill];
         const color = SKILL_COLOR[m.skill];
@@ -81,12 +81,12 @@ function SkillProgressGrid({ modules }: { modules: DashboardModule[] }) {
           <button
             key={m.skill}
             onClick={() => navigate(modulesOn ? `${ROUTES.MODULES}?skill=${m.skill}` : ROUTES.PRACTICE_TESTS)}
-            className="group text-left rounded-card p-4 flex flex-col gap-3 border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+            className="group text-left rounded-card p-3.5 flex flex-col gap-2.5 border transition-all cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
             style={{ background: `color-mix(in srgb, ${color} 10%, var(--color-surface))`, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
           >
             <div className="flex items-center justify-between">
-              <span className="h-10 w-10 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: color }}>
-                <Icon size={20} strokeWidth={1.8} />
+              <span className="h-9 w-9 rounded-xl flex items-center justify-center text-white shadow-sm" style={{ background: color }}>
+                <Icon size={18} strokeWidth={1.8} />
               </span>
               <span className="font-display font-bold text-xl" style={{ color: `color-mix(in srgb, ${color} 80%, black)` }}>
                 {m.progressPercent}%
@@ -161,14 +161,18 @@ function TodaysTasksList({ tasks }: { tasks: TodaysTask[] }) {
 // Surfaces an unfinished practice session so the learner doesn't have to remember which skill they left off on.
 // The learner's English level from their level test, what it means, and the
 // distance to their goal: always visible, so "which level am I?" has an answer.
+// With the journey: the progress to the goal, the pace and this week's tasks
+// sit in the same card (they used to be a second card saying the same levels).
 function EnglishLevelCard({
   level,
   currentLevel,
   pathLevels,
+  journey,
 }: {
   level: NonNullable<DashboardData["englishLevel"]>;
   currentLevel: string | null;
   pathLevels?: Record<SkillTag, string>;
+  journey?: Journey | null;
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -176,11 +180,22 @@ function EnglishLevelCard({
   const cefr = currentLevel ?? level.cefr!;
   const toGo = level.goal ? levelsToGo(cefr, level.goal) : null;
   return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 sm:p-6 flex flex-col gap-5">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center shrink-0">
-          <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
-          <span className="text-[9px] uppercase tracking-wide mt-1">CEFR</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="h-16 w-16 rounded-2xl bg-navy/10 text-navy-deep flex flex-col items-center justify-center">
+            <span className="font-display font-bold text-2xl leading-none">{cefr}</span>
+            <span className="text-[9px] uppercase tracking-wide mt-1">CEFR</span>
+          </div>
+          {level.goal && (
+            <>
+              <ArrowRight size={18} className="text-muted" />
+              <div className="h-16 w-16 rounded-2xl border-2 border-dashed border-accent/50 text-accent flex flex-col items-center justify-center">
+                <span className="font-display font-bold text-2xl leading-none">{level.goal}</span>
+                <span className="text-[9px] uppercase tracking-wide mt-1">{tr("Goal")}</span>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-bold text-lg text-ink">{tr("Your English level: {{level}}", { level: cefr })}</p>
@@ -203,6 +218,31 @@ function EnglishLevelCard({
           {tr("Your plan to the next level")}
         </Button>
       </div>
+      {journey && (
+        <div className="flex flex-col gap-2 rounded-input bg-paper-warm/60 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="font-semibold text-ink">{tr("{{n}}% of the way to your goal", { n: journey.progressPercent })}</span>
+            {journey.daysLeft !== null && <span className="text-muted">· {tr("{{n}} days to your exam", { n: journey.daysLeft })}</span>}
+            {!journey.goalReached && (
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${PACE_LIGHT[journey.pace]}`}>{PACE[journey.pace].label()}</span>
+            )}
+          </div>
+          <div className="h-2 rounded-pill bg-rule overflow-hidden">
+            <div className="h-full rounded-pill bg-navy" style={{ width: `${journey.progressPercent}%` }} />
+          </div>
+          <span className="text-xs text-muted">
+            {tr("This week: {{done}} of {{total}} tasks done", { done: journey.week.filter((x) => x.done).length, total: journey.week.length })}
+            {!journey.examDate && (
+              <>
+                {" · "}
+                <button onClick={() => navigate("/profile")} className="text-navy-deep font-semibold hover:underline cursor-pointer">
+                  {tr("Add your exam date")}
+                </button>
+              </>
+            )}
+          </span>
+        </div>
+      )}
       {pathLevels && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {(["listening", "speaking", "reading", "writing"] as SkillTag[]).map((skill) => {
@@ -308,7 +348,7 @@ const BADGE_ICONS: Record<Badge["icon"], typeof Trophy> = {
 // every page load, so a badge's earned date is genuine.
 function AchievementBadges({ badges }: { badges: Badge[] }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {badges.map((b, i) => {
         const Icon = BADGE_ICONS[b.icon];
         const color = ["#b5653f", "#c9965c", "#6e9660", "#a8613f"][i % 4];
@@ -439,22 +479,21 @@ function LearnerDashboard() {
 
       <KeepGoingCard />
 
-      {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
+      {/* Main column: what to do and where you stand; side column: the final
+          assessment, the group and a nudge. */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div className="xl:col-span-2 flex flex-col gap-6 min-w-0">
+          {inProgressPractice && <ContinuePracticeCard practice={inProgressPractice} />}
 
-      <NextStepCard />
+          <NextStepCard />
 
-      {journey && <JourneySummary j={journey} />}
+          {data.englishLevel?.cefr ? (
+            <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} journey={journey} />
+          ) : (
+            journey && <JourneySummary j={journey} />
+          )}
 
-      <FinalAssessmentCard />
-
-      <GroupBoardCard />
-
-      {data.englishLevel?.cefr && <EnglishLevelCard level={data.englishLevel} currentLevel={data.currentLevel ?? null} pathLevels={data.pathLevels} />}
-
-      <MotivationalBar />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <LearnerCard
+          <LearnerCard
           title={t(remainingToday === 0 ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
           icon={CalendarCheck}
           color="var(--color-accent)"
@@ -463,20 +502,28 @@ function LearnerDashboard() {
               {tr("{{doneToday}}/{{length}} done", { doneToday: doneToday, length: todaysTasks.length })}</span>
           }
         >
-          <TodaysTasksList tasks={todaysTasks} />
-        </LearnerCard>
+            <TodaysTasksList tasks={todaysTasks} />
+          </LearnerCard>
 
-        <LearnerCard
-          title={t("dashboardHome.overallProgressTitle")}
-          icon={Target}
-          action={
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-navy/10 text-navy-deep">
-              {t("dashboardHome.statsLevelValue", { level: stats.level, xp: stats.totalXp })}
-            </span>
-          }
-        >
-          <SkillProgressGrid modules={modules} />
-        </LearnerCard>
+          <LearnerCard
+            title={t("dashboardHome.overallProgressTitle")}
+            icon={Target}
+            action={
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-navy/10 text-navy-deep">
+                {t("dashboardHome.statsLevelValue", { level: stats.level, xp: stats.totalXp })}
+              </span>
+            }
+          >
+            <p className="text-xs text-muted -mt-1">{tr("Practice Modules: sets done at your current level in each skill.")}</p>
+            <SkillProgressGrid modules={modules} />
+          </LearnerCard>
+        </div>
+
+        <aside className="flex flex-col gap-6 min-w-0">
+          <FinalAssessmentCard compact />
+          <GroupBoardCard />
+          <MotivationalBar />
+        </aside>
       </div>
 
       <QuickLinks />

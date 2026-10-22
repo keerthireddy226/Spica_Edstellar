@@ -35,6 +35,8 @@ const BADGE_ICON: Record<string, LucideIcon> = {
   trophy: Trophy,
   star: Star,
 };
+// Recent sessions shown before "Show all".
+const RECENT_SHOWN = 6;
 const BADGE_COLORS = ["#b5653f", "#c9965c", "#6e9660", "#a8613f", "#8a8f4f", "#b97a62"];
 const TYPE: Record<string, string> = {
   practice: tr("Practice"),
@@ -101,6 +103,7 @@ function Card({ title, icon: Icon, color, children }: { title: string; icon: Luc
 // twelve weeks of practice, recent sessions, placement history and badges.
 export function ProgressExtras({ part = "all", title, subtitle }: { part?: "banner" | "details" | "skills" | "all"; title?: string; subtitle?: string }) {
   const [d, setD] = useState<ProgressData | null>(null);
+  const [allRecent, setAllRecent] = useState(false);
   useEffect(() => {
     api<ProgressData>("/me/progress")
       .then(setD)
@@ -150,11 +153,11 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
   return (
     <>
       {part === "all" && banner}
-      <div className="grid lg:grid-cols-2 gap-6 items-start">
+      <div className="grid lg:grid-cols-2 gap-6 items-stretch">
         {skills}
 
         <Card title={tr("Last 12 weeks")} icon={CalendarDays} color="var(--color-accent)">
-          <div className="grid gap-1.5 w-full max-w-md" style={{ gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))` }}>
+          <div className="grid gap-1.5 w-full" style={{ gridTemplateColumns: `repeat(${Math.max(1, weeks.length)}, minmax(0, 1fr))` }}>
             {weeks.map((w, i) => (
               <div key={i} className="flex flex-col gap-1.5">
                 {w.map((day) => {
@@ -190,7 +193,7 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
             <p className="text-sm text-muted">{tr("Finish a practice session and it shows up here.")}</p>
           ) : (
             <div className="flex flex-col divide-y divide-rule">
-              {d.recent.map((r) => (
+              {(allRecent ? d.recent : d.recent.slice(0, RECENT_SHOWN)).map((r) => (
                 <div key={r.id} className="py-2.5 flex items-center justify-between gap-3 text-sm">
                   <div className="min-w-0">
                     <p className="text-ink font-medium">{TYPE[r.type] ?? r.type}</p>
@@ -204,6 +207,11 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
                 </div>
               ))}
             </div>
+          )}
+          {d.recent.length > RECENT_SHOWN && (
+            <button onClick={() => setAllRecent((v) => !v)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
+              {allRecent ? tr("Show less") : tr("Show all ({{n}})", { n: d.recent.length })}
+            </button>
           )}
         </Card>
 
