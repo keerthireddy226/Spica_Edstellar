@@ -124,7 +124,8 @@ function ReminderModal({ learners, onClose, onSent }: { learners: LearnerEngagem
 // Who needs a nudge, and the tools to send one. Shared by the Org Admin
 // (whole organization) and Manager (their batches) Learners pages — the
 // server scopes the data by role.
-export function FollowUpPanel() {
+// hideTitle: shown under a tab that already says "Follow up".
+export function FollowUpPanel({ hideTitle = false }: { hideTitle?: boolean } = {}) {
   const [data, setData] = useState<EngagementOverview | null>(null);
   const [filter, setFilter] = useState<EngagementStatus | "follow_up">("follow_up");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -169,7 +170,7 @@ export function FollowUpPanel() {
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="font-display font-bold text-ink">{tr("Follow up with learners")}</h2>
+          {!hideTitle && <h2 className="font-display font-bold text-ink">{tr("Follow up with learners")}</h2>}
           <p className="text-xs text-muted mt-0.5">
             {tr("{{followUpCount}} need a nudge", { followUpCount: followUpCount })}{needsAttention ? tr(" · {{needsAttention}} still stuck after 2+ reminders", { needsAttention: needsAttention }) : ""}
           </p>

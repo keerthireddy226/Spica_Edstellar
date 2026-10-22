@@ -7,7 +7,8 @@
 export const CARD_GRADIENTS: { background: string }[] = [
   { background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 100%, black 35%))" },
   { background: "linear-gradient(135deg, var(--color-accent), color-mix(in srgb, var(--color-accent) 100%, black 35%))" },
-  { background: "linear-gradient(135deg, var(--color-warning), color-mix(in srgb, var(--color-warning) 100%, black 30%))" },
+  // Amber is light: darkened at both ends so white text stays readable, also in dark mode.
+  { background: "linear-gradient(135deg, color-mix(in srgb, var(--color-warning) 80%, black), color-mix(in srgb, var(--color-warning) 55%, black))" },
   { background: "linear-gradient(135deg, var(--color-error), color-mix(in srgb, var(--color-error) 100%, black 30%))" },
 ];
 

@@ -157,7 +157,7 @@ export function OrgAdminLearners() {
         />
       )}
 
-      {view === "follow_up" && <FollowUpPanel />}
+      {view === "follow_up" && <FollowUpPanel hideTitle />}
 
       {view === "all" && learners && learners.length > 0 && (
         <div className="flex items-center gap-3 flex-wrap">

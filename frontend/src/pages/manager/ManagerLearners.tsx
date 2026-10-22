@@ -352,7 +352,7 @@ export function ManagerLearners() {
         ))}
       </div>
 
-      {view === "follow-up" && <FollowUpPanel />}
+      {view === "follow-up" && <FollowUpPanel hideTitle />}
 
       {view === "all" && (
         <div className="bg-surface border border-rule rounded-card shadow-sm min-w-0">
