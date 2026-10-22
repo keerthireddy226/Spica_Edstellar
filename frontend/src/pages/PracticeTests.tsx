@@ -73,6 +73,7 @@ import { showFaceCheckOutcome } from "@/hooks/faceCheckWarning";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
+import { useTestFocus } from "@/components/AppShell/testFocus";
 import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
@@ -265,6 +266,15 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const questionEndsAtRef = useRef<number | null>(null);
   const [mockSecondsLeft, setMockSecondsLeft] = useState<number | null>(null);
   const timeUpFiredRef = useRef(false);
+  // Finish test was pressed: the next hand-in finishes instead of moving on.
+  const endingRef = useRef(false);
+  // finishTest already ran for this session.
+  const completedRef = useRef(false);
+  const finishEarlyRef = useRef<() => Promise<void>>(async () => {});
+  useEffect(() => {
+    endingRef.current = false;
+    completedRef.current = false;
+  }, [sessionId]);
   // Practice: feedback on the answer just submitted.
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
   const [partBoundaries, setPartBoundaries] = useState<PartBoundary[]>([]);
@@ -636,7 +646,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
 
   async function finishOrAdvance() {
-    if (index + 1 < items.length) {
+    if (index + 1 < items.length && !endingRef.current) {
       setIndex(index + 1);
       return;
     }
@@ -644,7 +654,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
 
   async function finishTest() {
-    if (!sessionId) return;
+    if (!sessionId || completedRef.current) return;
+    completedRef.current = true;
     // Every item was already submitted successfully by this point (this
     // only runs after handleSubmit's own submitExamAttempt succeeded) — a
     // network hiccup calling /complete shouldn't strand the learner on the
@@ -764,6 +775,21 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     return handleSkip();
   }
   timeUpRef.current = () => void handleTimeUp();
+
+  // Finish test (the bar above a timed test): the answer on screen is handed
+  // in as at 0:00, then the test finishes; questions not reached count as
+  // unanswered on the server. If that answer can't be sent, it finishes anyway.
+  async function finishEarly() {
+    endingRef.current = true;
+    stopSpokenAudio();
+    setPlaying(false);
+    // An answer already on its way finishes the test when it lands.
+    if (submitting) return;
+    if (questionVisible) await handleTimeUp();
+    await finishTest();
+  }
+  finishEarlyRef.current = finishEarly;
+  useTestFocus(isMock && !!sessionId && !summary, deliveryMode, isMock && !!sessionId && !summary && !finishing && proctor.ready, finishEarlyRef);
 
   function handleBack() {
     stopSpokenAudio();
