@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Send, RotateCcw, MessageCircle, Type, Lightbulb, Sparkles, CheckCircle2 } from "lucide-react";
+import { Send, RotateCcw, MessageCircle, Type, Lightbulb, Sparkles, CheckCircle2, PenLine } from "lucide-react";
 import { HERO_GRADIENT, LearnerCard } from "@/components/learner/LearnerHero";
 import { Mascot } from "@/components/Mascot";
 import { Button } from "@/components/Button";
@@ -142,7 +142,7 @@ export function Tutor() {
                       }`}
                       style={me ? { background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 75%, black))" } : undefined}
                     >
-                      {turn.text}
+                      {me ? turn.text : <CoachText text={turn.text} />}
                     </div>
                   </div>
                 );
@@ -241,6 +241,26 @@ export function Tutor() {
         </LearnerCard>
       </div>
     </div>
+  );
+}
+
+// A reply that starts "Correction: …" (the tutor corrects a learner's message
+// with mistakes, see backend coachGemini.ts) shows the corrected sentence on
+// its own, highlighted, above the answer.
+function CoachText({ text }: { text: string }) {
+  const m = text.match(/^\s*Correction:\s*(.+?)\s*(?:\n+([\s\S]*))?$/);
+  if (!m) return <>{text}</>;
+  const corrected = m[1].replace(/^["“]|["”]$/g, "");
+  return (
+    <>
+      <span className="block mb-2 -mx-1 px-3 py-2 rounded-xl bg-success/10 border border-success/30 not-italic">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-success">
+          <PenLine size={12} /> {tr("Correction")}
+        </span>
+        <span className="block text-ink mt-0.5">{corrected}</span>
+      </span>
+      {m[2]?.trim() ?? ""}
+    </>
   );
 }
 

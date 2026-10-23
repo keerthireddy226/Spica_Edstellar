@@ -134,4 +134,10 @@ describe("tutor stays on Spica", () => {
     expect(sys).toContain("only way to earn a certificate");
     expect(sys).toContain("placement test");
   });
+
+  it("asks for a Correction line when the learner's message has mistakes", () => {
+    const sys = buildSystemInstruction("");
+    expect(sys).toContain('"Correction: <their message, corrected>"');
+    expect(sys).toContain("If the message has no mistakes, don't add a Correction line");
+  });
 });
