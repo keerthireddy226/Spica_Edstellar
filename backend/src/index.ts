@@ -24,6 +24,7 @@ import { orgAdminRouter } from "./orgAdmin/routes.js";
 import { managerRouter } from "./manager/routes.js";
 import { coachRouter } from "./coach/routes.js";
 import { faceRouter } from "./face/routes.js";
+import { guardFacePhotos } from "./face/photoAccess.js";
 import { proctoringRouter } from "./proctoring/routes.js";
 import { recruitmentRouter } from "./recruitment/routes.js";
 import { RecruitmentError, requireSkillsProduct } from "./recruitment/service.js";
@@ -87,7 +88,8 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 // Voice enrollment samples and attempt recordings live here — requiring a
 // real session (not just an unguessable filename) before serving any of it.
-app.use("/uploads", requireAuth, mirrorMissingUploads, express.static("uploads"));
+// Face photos also need to be the viewer's own, or someone they may review.
+app.use("/uploads", requireAuth, guardFacePhotos, mirrorMissingUploads, express.static("uploads"));
 
 app.get("/api/health", async (_req, res, next) => {
   try {

@@ -779,7 +779,7 @@ async function reviewerScope(req: AuthedRequest, res: Response): Promise<Scope |
   return { sql: `(t.type <> 'cohort' OR t.managed_by = $1 OR t.account_manager_id = $1)`, params: [req.user!.id] };
 }
 
-async function canReviewUser(req: AuthedRequest, userId: string): Promise<boolean> {
+export async function canReviewUser(req: AuthedRequest, userId: string): Promise<boolean> {
   if (req.user?.role === "org_admin") {
     const r = await pool.query(`SELECT 1 FROM users WHERE id = $1 AND tenant_id = $2`, [userId, req.user.tenantId]);
     return (r.rowCount ?? 0) > 0;
