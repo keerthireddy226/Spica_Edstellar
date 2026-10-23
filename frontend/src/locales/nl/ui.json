@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "Vraag naar je niveau, je doel of je volgende stap.",
  "Ask how to improve a skill or a question type.": "Vraag hoe je een vaardigheid of vraagtype verbetert.",
  "Ask what a test or your results mean.": "Vraag wat een toets of je resultaten betekenen.",
- "Practise a short answer for your goal, then ask for tips.": "Oefen een kort antwoord voor je doel en vraag dan om tips."
+ "Practise a short answer for your goal, then ask for tips.": "Oefen een kort antwoord voor je doel en vraag dan om tips.",
+ "Too much background noise": "Te veel achtergrondgeluid",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "Ga naar een rustigere plek, of sluit de ramen en zet ventilatoren, muziek of de tv uit. De toets staat op pauze en gaat vanzelf verder zodra het 3 seconden stil is geweest.",
+ "Still too noisy": "Nog steeds te veel geluid",
+ "Getting quieter…": "Het wordt rustiger…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "Je tijd staat stil. Een toets kan voor geluid in totaal maximaal 5 minuten gepauzeerd worden (nog {{left}}).",
+ "Your time is paused.": "Je tijd staat stil.",
+ "Test held while the room was too noisy": "Toets gepauzeerd terwijl het te lawaaierig was in de ruimte",
+ "Held for background noise": "Gepauzeerd voor achtergrondgeluid",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "Het is lawaaierig in de ruimte. Deze toets heeft zijn 5 minuten pauze voor geluid gebruikt, dus de tijd loopt door. Ga naar een rustigere plek als dat kan."
 }

@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "Fråga om din nivå, ditt mål eller ditt nästa steg.",
  "Ask how to improve a skill or a question type.": "Fråga hur du förbättrar en färdighet eller en uppgiftstyp.",
  "Ask what a test or your results mean.": "Fråga vad ett test eller dina resultat betyder.",
- "Practise a short answer for your goal, then ask for tips.": "Öva ett kort svar för ditt mål och be sedan om tips."
+ "Practise a short answer for your goal, then ask for tips.": "Öva ett kort svar för ditt mål och be sedan om tips.",
+ "Too much background noise": "För mycket bakgrundsljud",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "Gå till en lugnare plats, eller stäng fönster och stäng av fläktar, musik eller tv. Provet är pausat och fortsätter av sig självt när det har varit tyst i 3 sekunder.",
+ "Still too noisy": "Fortfarande för mycket ljud",
+ "Getting quieter…": "Det blir tystare…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "Din tid är pausad. Ett prov kan pausas för ljud i högst 5 minuter totalt ({{left}} kvar).",
+ "Your time is paused.": "Din tid är pausad.",
+ "Test held while the room was too noisy": "Provet pausades medan det var för mycket ljud i rummet",
+ "Held for background noise": "Pausat för bakgrundsljud",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "Det är bullrigt i rummet. Det här provet har använt sina 5 minuter paus för ljud, så tiden fortsätter. Gå till en lugnare plats om du kan."
 }

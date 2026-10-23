@@ -29,6 +29,8 @@ import {
   recordView,
   secondsLeft,
   isTimed,
+  ongoingPauseSeconds,
+  MAX_NOISE_PAUSE_SECONDS,
   LEVEL_TEST_BLUEPRINT,
   levelTestItemIds,
   type DeliveryMode,
@@ -794,6 +796,85 @@ practiceTestsRouter.post("/session/:sessionId/view", requireAuth, async (req: Au
     res.json({ secondsLeft: secondsLeft(session.composition as MockComposition, itemId, shownAt), ...mockTiming(session.composition as MockComposition) });
   } catch (err) {
     next(err);
+  }
+});
+
+// Loud background noise during a question: the test is held until the room is
+// quiet. A timed test's clock (the question's and the whole test's) stops
+// while it's held, for at most MAX_NOISE_PAUSE_SECONDS per test in total;
+// each pause goes on the integrity timeline. A practice test's timer is only
+// a guide, so it's held in the browser alone.
+practiceTestsRouter.post("/session/:sessionId/noise-pause", requireAuth, async (req: AuthedRequest, res, next) => {
+  const client = await pool.connect();
+  try {
+    const { itemId, action } = z.object({ itemId: z.string().uuid(), action: z.enum(["start", "end"]) }).parse(req.body);
+    await client.query("BEGIN");
+    const row = (
+      await client.query(
+        `SELECT id, completed_at, composition, delivery_mode FROM sessions WHERE id = $1 AND user_id = $2 AND session_type = 'mocktest' FOR UPDATE`,
+        [req.params.sessionId, req.user!.id],
+      )
+    ).rows[0] as { id: string; completed_at: string | null; composition: MockComposition & { itemIds?: string[] }; delivery_mode: DeliveryMode | null } | undefined;
+    if (!row) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "session_not_found" });
+    }
+    if (row.completed_at) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "session_already_completed" });
+    }
+    if (!(row.composition.itemIds ?? []).includes(itemId)) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "item_not_found" });
+    }
+    if (!isTimed(row.delivery_mode)) {
+      await client.query("ROLLBACK");
+      return res.json({ held: action === "start", pausedSeconds: 0, capSeconds: null });
+    }
+    const c: MockComposition = { ...row.composition };
+    const now = new Date();
+    let detail: Record<string, unknown> | null = null;
+    if (action === "start") {
+      if (!c.noisePause && (c.pausedSeconds ?? 0) < MAX_NOISE_PAUSE_SECONDS) {
+        c.noisePause = { itemId, startedAt: now.toISOString() };
+        detail = { itemId, event: "start" };
+      }
+    } else if (c.noisePause) {
+      const held = Math.round(ongoingPauseSeconds(c, now));
+      const pausedItem = c.noisePause.itemId;
+      c.extraSeconds = { ...(c.extraSeconds ?? {}), [pausedItem]: (c.extraSeconds?.[pausedItem] ?? 0) + held };
+      if (c.deadlineAt) c.deadlineAt = new Date(new Date(c.deadlineAt).getTime() + held * 1000).toISOString();
+      c.pausedSeconds = (c.pausedSeconds ?? 0) + held;
+      c.noisePause = null;
+      detail = { itemId: pausedItem, event: "end", seconds: held };
+    }
+    await client.query(`UPDATE sessions SET composition = $2 WHERE id = $1`, [row.id, JSON.stringify(c)]);
+    if (detail?.event === "end") {
+      const si = (await client.query(`SELECT user_id FROM session_integrity WHERE session_id = $1`, [row.id])).rows[0];
+      if (si) {
+        await client.query(`INSERT INTO proctoring_events (session_id, user_id, type, severity, detail) VALUES ($1, $2, 'noise_pause', 'info', $3)`, [
+          row.id,
+          si.user_id,
+          JSON.stringify({ ...detail, reason: `Test held ${detail.seconds} s for background noise` }),
+        ]);
+      }
+    }
+    await client.query("COMMIT");
+    const shownAt = (await itemViews(row.id)).get(itemId);
+    res.json({
+      held: !!c.noisePause,
+      // Whether more holding is allowed (the cap isn't used up).
+      capReached: (c.pausedSeconds ?? 0) >= MAX_NOISE_PAUSE_SECONDS,
+      pausedSeconds: Math.round((c.pausedSeconds ?? 0) + ongoingPauseSeconds(c, now)),
+      capSeconds: MAX_NOISE_PAUSE_SECONDS,
+      secondsLeft: secondsLeft(c, itemId, shownAt, now),
+      ...mockTiming(c),
+    });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    next(err);
+  } finally {
+    client.release();
   }
 });
 

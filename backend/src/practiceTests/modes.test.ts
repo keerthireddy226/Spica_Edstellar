@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowedSeconds, answerKey, answerTooLate, bandForLevel, mockDeadline, secondsLeft, MOCK_GRACE_SECONDS } from "./modes.js";
+import { allowedSeconds, answerKey, answerTooLate, bandForLevel, mockDeadline, secondsLeft, MOCK_GRACE_SECONDS, MAX_NOISE_PAUSE_SECONDS, ongoingPauseSeconds, type MockComposition } from "./modes.js";
 
 const LANGUAGECERT = {
   min: 0,
@@ -96,5 +96,33 @@ describe("answerKey", () => {
     expect(answerKey({ acceptable_answers: ["arrive", "come"] })).toEqual({ text: "arrive" });
     expect(answerKey({ key_points: ["late train", "missed meeting"] })).toEqual({ points: ["late train", "missed meeting"] });
     expect(answerKey(null)).toBeNull();
+  });
+});
+
+describe("noise pauses", () => {
+  const shownAt = new Date("2026-10-23T10:00:00Z");
+  const at = (s: number) => new Date(shownAt.getTime() + s * 1000);
+  const base: MockComposition = { limits: { a: 60, b: 60 }, deadlineAt: at(600).toISOString() };
+
+  it("a pause in progress holds the question's clock and the test's deadline", () => {
+    const c: MockComposition = { ...base, noisePause: { itemId: "a", startedAt: at(20).toISOString() } };
+    // 20 s used before the pause; 30 s into the pause, still 40 s left.
+    expect(secondsLeft(c, "a", shownAt, at(50))).toBe(40);
+    expect(answerTooLate(c, "a", shownAt, at(60 + MOCK_GRACE_SECONDS + 10))).toBe(false);
+    // Another question isn't held.
+    expect(secondsLeft(c, "b", shownAt, at(50))).toBe(10);
+  });
+
+  it("time held by a finished pause is added to the question", () => {
+    const c: MockComposition = { ...base, extraSeconds: { a: 45 }, pausedSeconds: 45 };
+    expect(secondsLeft(c, "a", shownAt, at(60))).toBe(45);
+    expect(answerTooLate(c, "a", shownAt, at(60 + 45 + MOCK_GRACE_SECONDS))).toBe(false);
+    expect(answerTooLate(c, "a", shownAt, at(60 + 45 + MOCK_GRACE_SECONDS + 1))).toBe(true);
+  });
+
+  it("holding stops once the test's pause allowance is used up", () => {
+    const c: MockComposition = { ...base, pausedSeconds: MAX_NOISE_PAUSE_SECONDS - 10, noisePause: { itemId: "a", startedAt: at(0).toISOString() } };
+    expect(ongoingPauseSeconds(c, at(100))).toBe(10);
+    expect(secondsLeft(c, "a", shownAt, at(100))).toBe(0);
   });
 });

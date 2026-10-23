@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "Kysy tasostasi, tavoitteestasi tai seuraavasta askeleestasi.",
  "Ask how to improve a skill or a question type.": "Kysy, miten parannat taitoa tai tehtävätyyppiä.",
  "Ask what a test or your results mean.": "Kysy, mitä koe tai tuloksesi tarkoittavat.",
- "Practise a short answer for your goal, then ask for tips.": "Harjoittele lyhyt vastaus tavoitettasi varten ja pyydä sitten vinkkejä."
+ "Practise a short answer for your goal, then ask for tips.": "Harjoittele lyhyt vastaus tavoitettasi varten ja pyydä sitten vinkkejä.",
+ "Too much background noise": "Liikaa taustamelua",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "Siirry hiljaisempaan paikkaan tai sulje ikkunat ja sammuta tuulettimet, musiikki tai televisio. Koe on tauolla ja jatkuu itsestään, kun on ollut hiljaista 3 sekuntia.",
+ "Still too noisy": "Edelleen liian meluisaa",
+ "Getting quieter…": "Hiljenee…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "Aikasi on pysäytetty. Koe voidaan pysäyttää melun takia yhteensä enintään 5 minuutiksi ({{left}} jäljellä).",
+ "Your time is paused.": "Aikasi on pysäytetty.",
+ "Test held while the room was too noisy": "Koe pysäytettiin, kun huoneessa oli liian meluisaa",
+ "Held for background noise": "Pysäytetty taustamelun takia",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "Huoneessa on melua. Tämä koe on käyttänyt 5 minuutin melutaukonsa, joten aika kuluu. Siirry hiljaisempaan paikkaan, jos voit."
 }

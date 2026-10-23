@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "अपने स्तर, अपने लक्ष्य या अपने अगले कदम के बारे में पूछें।",
  "Ask how to improve a skill or a question type.": "पूछें कि किसी स्किल या प्रश्न प्रकार को कैसे सुधारें।",
  "Ask what a test or your results mean.": "पूछें कि किसी टेस्ट या आपके नतीजों का क्या मतलब है।",
- "Practise a short answer for your goal, then ask for tips.": "अपने लक्ष्य के लिए एक छोटा जवाब अभ्यास करें, फिर सुझाव माँगें।"
+ "Practise a short answer for your goal, then ask for tips.": "अपने लक्ष्य के लिए एक छोटा जवाब अभ्यास करें, फिर सुझाव माँगें।",
+ "Too much background noise": "बहुत ज़्यादा पृष्ठभूमि शोर",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "किसी शांत जगह पर जाएँ, या खिड़कियाँ बंद करें और पंखा, संगीत या टीवी बंद करें। टेस्ट रुका हुआ है और 3 सेकंड तक शांति रहने पर अपने आप फिर शुरू हो जाएगा।",
+ "Still too noisy": "अब भी बहुत शोर है",
+ "Getting quieter…": "शोर कम हो रहा है…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "आपका समय रुका हुआ है। शोर के कारण एक टेस्ट कुल मिलाकर 5 मिनट तक रोका जा सकता है ({{left}} बाकी)।",
+ "Your time is paused.": "आपका समय रुका हुआ है।",
+ "Test held while the room was too noisy": "कमरे में बहुत शोर होने पर टेस्ट रोका गया",
+ "Held for background noise": "पृष्ठभूमि शोर के कारण रोका गया",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "कमरे में शोर है। यह टेस्ट शोर के लिए अपने 5 मिनट के ठहराव इस्तेमाल कर चुका है, इसलिए समय चलता रहेगा। हो सके तो किसी शांत जगह पर जाएँ।"
 }

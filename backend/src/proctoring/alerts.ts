@@ -55,6 +55,7 @@ const REASON_LABEL: Record<string, string> = {
   camera_covered: "camera covered",
   camera_frozen: "camera picture froze",
   noisy_answer: "noisy spoken answers",
+  noise_pause: "test held for background noise",
   away_from_camera: "no face in many snapshots",
   multiple_faces: "more than one face on camera",
   extra_person: "another person on camera",

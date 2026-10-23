@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "自分のレベル、目標、次のステップについて質問しましょう。",
  "Ask how to improve a skill or a question type.": "スキルや問題タイプの伸ばし方を質問しましょう。",
  "Ask what a test or your results mean.": "テストや結果の意味を質問しましょう。",
- "Practise a short answer for your goal, then ask for tips.": "目標に合わせた短い回答を練習して、アドバイスをもらいましょう。"
+ "Practise a short answer for your goal, then ask for tips.": "目標に合わせた短い回答を練習して、アドバイスをもらいましょう。",
+ "Too much background noise": "周囲の雑音が大きすぎます",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "静かな場所に移動するか、窓を閉めて扇風機・音楽・テレビを止めてください。テストは一時停止中で、3秒間静かになると自動で再開します。",
+ "Still too noisy": "まだ雑音が大きいです",
+ "Getting quieter…": "静かになってきました…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "時間は止まっています。雑音による一時停止は1回のテストで合計5分までです（残り{{left}}）。",
+ "Your time is paused.": "時間は止まっています。",
+ "Test held while the room was too noisy": "部屋が騒がしい間、テストを一時停止",
+ "Held for background noise": "周囲の雑音で一時停止",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "部屋が騒がしいです。このテストは雑音による一時停止の5分を使い切ったため、時間は進みます。できれば静かな場所に移動してください。"
 }

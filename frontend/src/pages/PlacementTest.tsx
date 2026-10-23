@@ -24,6 +24,8 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
+import { NoiseHoldOverlay } from "@/components/NoiseHoldOverlay";
+import { useNoiseHold } from "@/hooks/useNoiseHold";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { deviceNeedsFor } from "@/lib/systemCheck";
@@ -184,10 +186,26 @@ function PlacementTestRun() {
     }
     setRemainingSeconds(current.timerSeconds);
     const interval = setInterval(() => {
-      setRemainingSeconds((prev) => (prev === null ? null : Math.max(0, prev - 1)));
+      // Held for background noise: the countdown waits too.
+      setRemainingSeconds((prev) => (prev === null ? null : noiseHeldRef.current ? prev : Math.max(0, prev - 1)));
     }, 1000);
     return () => clearInterval(interval);
   }, [current?.id, current?.timerSeconds]);
+
+  // Loud background noise: the test waits until the room is quiet (useNoiseHold).
+  const noiseHeldRef = useRef(false);
+  const noise = useNoiseHold({
+    enabled: Boolean(sessionId && current && proctor.ready && !summary && !finishing),
+    sessionId,
+    itemId: current?.id ?? null,
+    timed: false,
+    onHold: () => {
+      noiseHeldRef.current = true;
+    },
+    onRelease: () => {
+      noiseHeldRef.current = false;
+    },
+  });
 
   function handleExit() {
     if (window.confirm(t("placementTest.exitConfirm"))) {
@@ -485,6 +503,7 @@ function PlacementTestRun() {
     <>
       <ProctoringOverlay proctor={proctor} onFinish={finishTerminated} />
       <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
+      {noise.held && <NoiseHoldOverlay level={noise.level} timed={false} allowanceLeft={null} />}
     </>
   );
 

@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "Hỏi về trình độ, mục tiêu hoặc bước tiếp theo của bạn.",
  "Ask how to improve a skill or a question type.": "Hỏi cách cải thiện một kỹ năng hoặc một dạng câu hỏi.",
  "Ask what a test or your results mean.": "Hỏi một bài thi hoặc kết quả của bạn có nghĩa là gì.",
- "Practise a short answer for your goal, then ask for tips.": "Luyện một câu trả lời ngắn cho mục tiêu của bạn, rồi xin góp ý."
+ "Practise a short answer for your goal, then ask for tips.": "Luyện một câu trả lời ngắn cho mục tiêu của bạn, rồi xin góp ý.",
+ "Too much background noise": "Quá nhiều tiếng ồn xung quanh",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "Hãy chuyển đến nơi yên tĩnh hơn, hoặc đóng cửa sổ và tắt quạt, nhạc hay TV. Bài thi đang tạm dừng và sẽ tự tiếp tục khi yên tĩnh trong 3 giây.",
+ "Still too noisy": "Vẫn còn quá ồn",
+ "Getting quieter…": "Đang yên tĩnh dần…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "Thời gian của bạn đang tạm dừng. Một bài thi chỉ được tạm dừng vì tiếng ồn tối đa 5 phút tổng cộng (còn {{left}}).",
+ "Your time is paused.": "Thời gian của bạn đang tạm dừng.",
+ "Test held while the room was too noisy": "Bài thi được tạm dừng khi phòng quá ồn",
+ "Held for background noise": "Tạm dừng vì tiếng ồn xung quanh",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "Phòng đang ồn. Bài thi này đã dùng hết 5 phút tạm dừng vì tiếng ồn, nên thời gian vẫn tiếp tục chạy. Hãy chuyển đến nơi yên tĩnh hơn nếu có thể."
 }

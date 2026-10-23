@@ -150,6 +150,21 @@ export function markItemShown(sessionId: string, itemId: string): Promise<{ seco
   return api(`/practice-tests/session/${sessionId}/view`, { method: "POST", body: JSON.stringify({ itemId }) });
 }
 
+// Loud background noise: holds the test ("start") until the room is quiet
+// ("end"). A timed test's clock stops while held, up to capSeconds in total.
+export interface NoisePauseResult {
+  held: boolean;
+  capReached?: boolean;
+  pausedSeconds: number;
+  capSeconds: number | null;
+  secondsLeft?: number | null;
+  deadlineAt?: string | null;
+  serverNow?: string;
+}
+export function noisePause(sessionId: string, itemId: string, action: "start" | "end"): Promise<NoisePauseResult> {
+  return api(`/practice-tests/session/${sessionId}/noise-pause`, { method: "POST", body: JSON.stringify({ itemId, action }) });
+}
+
 // The answer key shown after a practice question: an option index, one per
 // question of a group, a model text, or the points a good answer covers.
 export interface AnswerKey {

@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "Pregunta por tu nivel, tu meta o tu siguiente paso.",
  "Ask how to improve a skill or a question type.": "Pregunta cómo mejorar una habilidad o un tipo de pregunta.",
  "Ask what a test or your results mean.": "Pregunta qué significa un examen o tus resultados.",
- "Practise a short answer for your goal, then ask for tips.": "Practica una respuesta corta para tu meta y luego pide consejos."
+ "Practise a short answer for your goal, then ask for tips.": "Practica una respuesta corta para tu meta y luego pide consejos.",
+ "Too much background noise": "Demasiado ruido de fondo",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "Ve a un lugar más tranquilo, o cierra las ventanas y apaga ventiladores, música o la televisión. El examen está en pausa y continuará solo cuando haya silencio durante 3 segundos.",
+ "Still too noisy": "Todavía hay demasiado ruido",
+ "Getting quieter…": "Está bajando el ruido…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "Tu tiempo está en pausa. Un examen puede pausarse por ruido hasta 5 minutos en total (quedan {{left}}).",
+ "Your time is paused.": "Tu tiempo está en pausa.",
+ "Test held while the room was too noisy": "Examen en pausa mientras había demasiado ruido en la sala",
+ "Held for background noise": "En pausa por ruido de fondo",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "Hay ruido en la sala. Este examen ya usó sus 5 minutos de pausa por ruido, así que el tiempo sigue corriendo. Ve a un lugar más tranquilo si puedes."
 }

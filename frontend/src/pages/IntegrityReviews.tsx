@@ -58,6 +58,7 @@ const EVENT_TEXT: Record<string, () => string> = {
   camera_frozen: () => tr("Camera froze"),
   background_speech: () => tr("Talking heard"),
   noisy_answer: () => tr("Noisy spoken answer"),
+  noise_pause: () => tr("Held for background noise"),
   screen_share_stopped: () => tr("Screen sharing stopped"),
   screen_not_entire: () => tr("Shared a window, not the screen"),
   system_check: () => tr("Device check passed"),

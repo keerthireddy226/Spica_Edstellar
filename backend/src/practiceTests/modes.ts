@@ -189,6 +189,33 @@ export function mockDeadline(limits: Record<string, number>, partCount: number, 
 export interface MockComposition {
   limits?: Record<string, number>;
   deadlineAt?: string;
+  // Noise pauses: seconds added to a question's time (and to deadlineAt) after
+  // the test was paused for loud background noise, the pause in progress, and
+  // the total paused so far (capped at MAX_NOISE_PAUSE_SECONDS).
+  extraSeconds?: Record<string, number>;
+  noisePause?: { itemId: string; startedAt: string } | null;
+  pausedSeconds?: number;
+}
+
+// A test can be held for background noise this long in total; after that the
+// clock runs again, so a pause can't become extra time without limit.
+export const MAX_NOISE_PAUSE_SECONDS = 300;
+
+// Seconds a noise pause in progress has held the clock so far (within the cap).
+export function ongoingPauseSeconds(c: MockComposition, now = new Date()): number {
+  if (!c.noisePause) return 0;
+  const held = Math.max(0, (now.getTime() - new Date(c.noisePause.startedAt).getTime()) / 1000);
+  return Math.min(held, Math.max(0, MAX_NOISE_PAUSE_SECONDS - (c.pausedSeconds ?? 0)));
+}
+
+// Extra seconds a question has, from finished pauses and one in progress.
+function extraFor(c: MockComposition, itemId: string, now: Date): number {
+  return (c.extraSeconds?.[itemId] ?? 0) + (c.noisePause?.itemId === itemId ? ongoingPauseSeconds(c, now) : 0);
+}
+
+// The whole test's deadline, held while a pause is in progress.
+function deadlineOf(c: MockComposition, now: Date): number | null {
+  return c.deadlineAt ? new Date(c.deadlineAt).getTime() + ongoingPauseSeconds(c, now) * 1000 : null;
 }
 
 // When each question was first shown, by item id.
@@ -208,8 +235,9 @@ export async function recordView(sessionId: string, itemId: string): Promise<Dat
 export function secondsLeft(composition: MockComposition, itemId: string, shownAt: Date | undefined, now = new Date()): number | null {
   const limit = composition.limits?.[itemId];
   if (limit == null || !shownAt) return null;
-  let end = shownAt.getTime() + limit * 1000;
-  if (composition.deadlineAt) end = Math.min(end, new Date(composition.deadlineAt).getTime());
+  let end = shownAt.getTime() + (limit + extraFor(composition, itemId, now)) * 1000;
+  const deadline = deadlineOf(composition, now);
+  if (deadline !== null) end = Math.min(end, deadline);
   return Math.max(0, Math.round((end - now.getTime()) / 1000));
 }
 
@@ -218,8 +246,9 @@ export function secondsLeft(composition: MockComposition, itemId: string, shownA
 export function answerTooLate(composition: MockComposition, itemId: string, shownAt: Date, now = new Date()): boolean {
   const limit = composition.limits?.[itemId];
   const graceMs = MOCK_GRACE_SECONDS * 1000;
-  if (limit != null && now.getTime() > shownAt.getTime() + limit * 1000 + graceMs) return true;
-  return !!composition.deadlineAt && now.getTime() > new Date(composition.deadlineAt).getTime() + graceMs;
+  if (limit != null && now.getTime() > shownAt.getTime() + (limit + extraFor(composition, itemId, now)) * 1000 + graceMs) return true;
+  const deadline = deadlineOf(composition, now);
+  return deadline !== null && now.getTime() > deadline + graceMs;
 }
 
 export interface ScoreBand {

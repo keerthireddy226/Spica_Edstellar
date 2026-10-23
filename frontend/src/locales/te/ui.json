@@ -5146,5 +5146,14 @@
  "Ask about your level, your goal or your next step.": "మీ స్థాయి, మీ లక్ష్యం లేదా మీ తదుపరి అడుగు గురించి అడగండి.",
  "Ask how to improve a skill or a question type.": "ఒక స్కిల్ లేదా ప్రశ్న రకాన్ని ఎలా మెరుగుపరచాలో అడగండి.",
  "Ask what a test or your results mean.": "ఒక టెస్ట్ లేదా మీ ఫలితాల అర్థం ఏమిటో అడగండి.",
- "Practise a short answer for your goal, then ask for tips.": "మీ లక్ష్యానికి ఒక చిన్న జవాబును సాధన చేసి, తర్వాత సూచనలు అడగండి."
+ "Practise a short answer for your goal, then ask for tips.": "మీ లక్ష్యానికి ఒక చిన్న జవాబును సాధన చేసి, తర్వాత సూచనలు అడగండి.",
+ "Too much background noise": "నేపథ్య శబ్దం చాలా ఎక్కువగా ఉంది",
+ "Move somewhere quieter, or close windows and turn off fans, music or the TV. The test is paused and continues by itself once it has been quiet for 3 seconds.": "నిశ్శబ్దమైన చోటుకు వెళ్లండి, లేదా కిటికీలు మూసి ఫ్యాన్, సంగీతం లేదా టీవీ ఆపండి. టెస్ట్ ఆగి ఉంది, 3 సెకన్ల పాటు నిశ్శబ్దంగా ఉంటే తనంతట తానే కొనసాగుతుంది.",
+ "Still too noisy": "ఇంకా శబ్దం ఎక్కువగా ఉంది",
+ "Getting quieter…": "శబ్దం తగ్గుతోంది…",
+ "Your time is paused. A test can be paused for noise for up to 5 minutes in total ({{left}} left).": "మీ సమయం ఆగి ఉంది. శబ్దం కారణంగా ఒక టెస్ట్‌ను మొత్తం 5 నిమిషాల వరకు ఆపవచ్చు ({{left}} మిగిలి ఉంది).",
+ "Your time is paused.": "మీ సమయం ఆగి ఉంది.",
+ "Test held while the room was too noisy": "గదిలో శబ్దం ఎక్కువగా ఉన్నప్పుడు టెస్ట్ ఆపబడింది",
+ "Held for background noise": "నేపథ్య శబ్దం కారణంగా ఆపబడింది",
+ "The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.": "గదిలో శబ్దం ఉంది. ఈ టెస్ట్ శబ్దం కోసం తన 5 నిమిషాల విరామాన్ని ఉపయోగించుకుంది, కాబట్టి సమయం కొనసాగుతుంది. వీలైతే నిశ్శబ్దమైన చోటుకు వెళ్లండి."
 }
