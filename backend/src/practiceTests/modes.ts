@@ -189,16 +189,16 @@ export function mockDeadline(limits: Record<string, number>, partCount: number, 
 export interface MockComposition {
   limits?: Record<string, number>;
   deadlineAt?: string;
-  // Noise pauses: seconds added to a question's time (and to deadlineAt) after
-  // the test was paused for loud background noise, the pause in progress, and
-  // the total paused so far (capped at MAX_NOISE_PAUSE_SECONDS).
+  // Pauses for a problem in the room (noise, another person, no face, a covered
+  // camera): seconds added to a question's time (and to deadlineAt), the pause
+  // in progress, and the total paused so far (capped at MAX_NOISE_PAUSE_SECONDS).
   extraSeconds?: Record<string, number>;
-  noisePause?: { itemId: string; startedAt: string } | null;
+  noisePause?: { itemId: string; startedAt: string; reason?: string } | null;
   pausedSeconds?: number;
 }
 
-// A test can be held for background noise this long in total; after that the
-// clock runs again, so a pause can't become extra time without limit.
+// A test can be paused for problems in the room this long in total; after
+// that the clock runs again, so a pause can't become extra time without limit.
 export const MAX_NOISE_PAUSE_SECONDS = 300;
 
 // Seconds a noise pause in progress has held the clock so far (within the cap).

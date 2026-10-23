@@ -10,6 +10,7 @@ import { recordCandidateResult } from "../recruitment/service.js";
 import { auditTestCompleted } from "../audit/testEvents.js";
 import { testTypeOfExam } from "../catalogue/service.js";
 import { recordProgramSession } from "../programs/service.js";
+import { ongoingPauseSeconds, type MockComposition } from "./modes.js";
 import { enqueue } from "../queue/queue.js";
 import { bandForLevel, familyScoreScale, isTimed, type DeliveryMode } from "./modes.js";
 import { levelTestOutcome, loadScoreRows, summarizeScores, unscoredCount } from "./sessionScore.js";
@@ -24,6 +25,19 @@ import { levelTestOutcome, loadScoreRows, summarizeScores, unscoredCount } from 
 // response — the exact "stuck on the last question forever" bug this
 // fixes) just gets its real score recomputed and returned again, instead
 // of a 404 that leaves the learner with no way to see their result.
+async function recordUnfinishedHold(sessionId: string, c: MockComposition): Promise<void> {
+  const si = (await pool.query(`SELECT user_id FROM session_integrity WHERE session_id = $1`, [sessionId])).rows[0];
+  if (!si || !c.noisePause) return;
+  const seconds = Math.round(ongoingPauseSeconds(c));
+  const reason = c.noisePause.reason ?? "noise";
+  await pool.query(`INSERT INTO proctoring_events (session_id, user_id, type, severity, detail) VALUES ($1, $2, 'test_hold', 'info', $3)`, [
+    sessionId,
+    si.user_id,
+    JSON.stringify({ itemId: c.noisePause.itemId, event: "end", seconds, holdReason: reason, reason: `Test paused ${seconds} s for ${reason.replace("_", " ")}; the test ended while paused` }),
+  ]);
+  await pool.query(`UPDATE sessions SET composition = composition - 'noisePause' WHERE id = $1`, [sessionId]);
+}
+
 export async function completeSession(
   sessionId: string,
   userId: string,
@@ -41,6 +55,10 @@ export async function completeSession(
   if (sessionExists.rows[0]) {
     const u = await pool.query(`UPDATE sessions SET completed_at = now() WHERE id = $1 AND completed_at IS NULL`, [sessionId]);
     justFinished = (u.rowCount ?? 0) > 0;
+    // Finished while paused for a problem in the room: the pause is recorded
+    // for the reviewer now (it would otherwise only be recorded when it ended).
+    const held = sessionExists.rows[0].composition as MockComposition | null;
+    if (justFinished && held?.noisePause) await recordUnfinishedHold(sessionId, held).catch((err) => console.error("practiceTests /complete: hold record failed:", err));
   }
   if (!sessionExists.rows[0]) return false;
   const deliveryMode: DeliveryMode = sessionExists.rows[0].delivery_mode ?? "practice";

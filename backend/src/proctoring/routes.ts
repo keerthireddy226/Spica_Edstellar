@@ -75,6 +75,8 @@ const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   screen_not_entire: "warn",
   typing_profile: "info",
   system_check: "info",
+  // "Warning n of 3" about a problem in the room (see the test page's hold).
+  hold_warning: "info",
   // From the face check during the test (written by the server).
   face_missing: "high",
   extra_face: "high",

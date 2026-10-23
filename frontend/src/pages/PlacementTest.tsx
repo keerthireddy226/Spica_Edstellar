@@ -24,8 +24,8 @@ import { TestIdTag } from "@/components/TestIdTag";
 import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
-import { NoiseHoldOverlay } from "@/components/NoiseHoldOverlay";
-import { useNoiseHold } from "@/hooks/useNoiseHold";
+import { TestHoldOverlay, TestHoldWarning } from "@/components/TestHoldOverlay";
+import { useTestHold } from "@/hooks/useTestHold";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { deviceNeedsFor } from "@/lib/systemCheck";
@@ -192,13 +192,17 @@ function PlacementTestRun() {
     return () => clearInterval(interval);
   }, [current?.id, current?.timerSeconds]);
 
-  // Loud background noise: the test waits until the room is quiet (useNoiseHold).
+  // Problems in the room: three warnings, then the test waits until fixed (useTestHold).
   const noiseHeldRef = useRef(false);
-  const noise = useNoiseHold({
+  const noise = useTestHold({
     enabled: Boolean(sessionId && current && proctor.ready && !summary && !finishing),
     sessionId,
     itemId: current?.id ?? null,
     timed: false,
+    watchNoise: true,
+    room: proctor.room,
+    setFastChecks: proctor.setFastChecks,
+    logEvent: proctor.logEvent,
     onHold: () => {
       noiseHeldRef.current = true;
     },
@@ -503,7 +507,8 @@ function PlacementTestRun() {
     <>
       <ProctoringOverlay proctor={proctor} onFinish={finishTerminated} />
       <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
-      {noise.held && <NoiseHoldOverlay level={noise.level} timed={false} allowanceLeft={null} />}
+      {noise.held && <TestHoldOverlay kind={noise.held} level={noise.level} timed={false} allowanceLeft={null} />}
+      {noise.warning && !noise.held && <TestHoldWarning warning={noise.warning} capReached={noise.capReached} onDismiss={noise.dismissWarning} />}
     </>
   );
 

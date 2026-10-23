@@ -150,9 +150,11 @@ export function markItemShown(sessionId: string, itemId: string): Promise<{ seco
   return api(`/practice-tests/session/${sessionId}/view`, { method: "POST", body: JSON.stringify({ itemId }) });
 }
 
-// Loud background noise: holds the test ("start") until the room is quiet
-// ("end"). A timed test's clock stops while held, up to capSeconds in total.
-export interface NoisePauseResult {
+// A problem in the room that went on after three warnings: holds the test
+// ("start") until it's fixed ("end"). A timed test's clock stops while held,
+// up to capSeconds in total.
+export type HoldReason = "noise" | "extra_person" | "no_face" | "camera_covered";
+export interface HoldResult {
   held: boolean;
   capReached?: boolean;
   pausedSeconds: number;
@@ -161,8 +163,8 @@ export interface NoisePauseResult {
   deadlineAt?: string | null;
   serverNow?: string;
 }
-export function noisePause(sessionId: string, itemId: string, action: "start" | "end"): Promise<NoisePauseResult> {
-  return api(`/practice-tests/session/${sessionId}/noise-pause`, { method: "POST", body: JSON.stringify({ itemId, action }) });
+export function holdTest(sessionId: string, itemId: string, action: "start" | "end", reason: HoldReason): Promise<HoldResult> {
+  return api(`/practice-tests/session/${sessionId}/hold`, { method: "POST", body: JSON.stringify({ itemId, action, reason }) });
 }
 
 // The answer key shown after a practice question: an option index, one per

@@ -65,7 +65,23 @@ export interface ProctoringState {
   // Shows a warning raised outside this hook (the face check during the
   // test), recording it as an event too when eventType is given.
   report: (warning: ProctorWarning, eventType?: string) => void;
+  // What the camera shows now: another person, no face, a covered lens.
+  // The test page warns about these and pauses if they go on (useTestHold).
+  room: RoomState;
+  // Camera photos every few seconds instead of every 15–30, while a problem
+  // in the room is being watched or the test is paused for one.
+  setFastChecks: (fast: boolean) => void;
+  // Records an event on the integrity timeline.
+  logEvent: (type: string, detail?: ProctoringEvent["detail"]) => void;
 }
+
+export interface RoomState {
+  extraPerson: boolean;
+  noFace: boolean;
+  covered: boolean;
+}
+
+const FAST_SNAPSHOT_MS = 3000;
 
 function usesCamera(s: ProctoringSetup | null): boolean {
   if (!s) return false;
@@ -94,6 +110,9 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const queueRef = useRef<ProctoringEvent[]>([]);
   const lastLoggedRef = useRef<Record<string, number>>({});
+  const [room, setRoom] = useState<RoomState>({ extraPerson: false, noFace: false, covered: false });
+  const fastRef = useRef(false);
+  const rescheduleRef = useRef<(() => void) | null>(null);
 
   const refreshSetup = useCallback(async () => {
     if (!sessionId) return null;
@@ -271,14 +290,24 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
       canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
       const image = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
       const r = await sendSnapshot(sessionId, image).catch(() => null);
-      if (r?.warning && !stopped) setWarning(r.warning);
+      if (!r || stopped) return;
+      // Another person and no face are warned about, then paused for, by the
+      // test page. A face that may not match isn't shown to the learner: a
+      // reviewer looks at it (the check can be wrong).
+      setRoom((x) => ({ ...x, extraPerson: r.warning === "multiple_people", noFace: r.warning === "no_face" }));
+      if (r.warning && r.warning !== "multiple_people" && r.warning !== "no_face" && r.warning !== "face_mismatch") setWarning(r.warning);
     };
     const schedule = (first = false) => {
-      const delay = first ? 4000 : base * (0.6 + Math.random() * 0.8);
+      const delay = first ? 4000 : fastRef.current ? FAST_SNAPSHOT_MS : base * (0.6 + Math.random() * 0.8);
       timer = setTimeout(async () => {
         await capture();
         if (!stopped) schedule();
       }, delay);
+    };
+    rescheduleRef.current = () => {
+      if (stopped || !snapshotsWanted(setup)) return;
+      if (timer) clearTimeout(timer);
+      schedule();
     };
     // The video recording carries sound too when the microphone is monitored.
     const withAudio = p.videoRecording && p.audioMonitoring;
@@ -298,8 +327,12 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
         stops.push(
           watchCamera(
             s,
-            () => log("camera_covered", undefined, "camera_covered"),
+            () => {
+              log("camera_covered");
+              setRoom((x) => ({ ...x, covered: true }));
+            },
             () => log("camera_frozen", undefined, "camera_frozen"),
+            () => setRoom((x) => ({ ...x, covered: false })),
           ),
         );
         if (p.videoRecording) {
@@ -454,5 +487,13 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     screenStream,
     startScreenShare,
     report: (warning: ProctorWarning, eventType?: string) => (eventType ? log(eventType, undefined, warning) : setWarning(warning)),
+    room,
+    setFastChecks: (fast: boolean) => {
+      if (fastRef.current === fast) return;
+      fastRef.current = fast;
+      // Switching to fast: the next photo now, not up to 30 s later.
+      if (fast) rescheduleRef.current?.();
+    },
+    logEvent: (type: string, detail?: ProctoringEvent["detail"]) => log(type, detail),
   };
 }

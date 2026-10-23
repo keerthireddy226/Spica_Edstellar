@@ -101,8 +101,8 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
-import { useNoiseHold } from "@/hooks/useNoiseHold";
-import { NoiseHoldOverlay } from "@/components/NoiseHoldOverlay";
+import { useTestHold } from "@/hooks/useTestHold";
+import { TestHoldOverlay, TestHoldWarning } from "@/components/TestHoldOverlay";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -549,16 +549,20 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMock, questionVisible, sessionId, current?.id]);
 
-  // Loud background noise during a test with spoken answers: the test is held
-  // (its clock stopped) until the room is quiet again. See useNoiseHold.
+  // Problems in the room (noise, another person, no face, a covered camera):
+  // three warnings, then the test pauses (its clock stopped) until fixed. See useTestHold.
   const noiseHeldRef = useRef(false);
   const heldSecondsRef = useRef<number | null>(null);
   const hasSpokenItems = items.some((it) => it.inputMethod === "mic");
-  const noise = useNoiseHold({
-    enabled: questionVisible && hasSpokenItems,
+  const noise = useTestHold({
+    enabled: questionVisible,
     sessionId,
     itemId: current?.id ?? null,
     timed: isMock,
+    watchNoise: hasSpokenItems,
+    room: proctor.room,
+    setFastChecks: proctor.setFastChecks,
+    logEvent: proctor.logEvent,
     onHold: () => {
       noiseHeldRef.current = true;
       stopSpokenAudio();
@@ -1099,12 +1103,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     <>
       <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />
       <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
-      {noise.held && <NoiseHoldOverlay level={noise.level} timed={isMock} allowanceLeft={noise.allowanceLeft} />}
-      {noise.noisyUnheld && !noise.held && (
-        <div role="alert" className="fixed top-16 inset-x-3 z-[54] mx-auto max-w-xl bg-warning/95 text-navy-deep rounded-card shadow-md px-4 py-3 text-sm font-medium">
-          {tr("The room is noisy. This test has used its 5 minutes of pausing for noise, so the time keeps running. Move somewhere quieter if you can.")}
-        </div>
-      )}
+      {noise.held && <TestHoldOverlay kind={noise.held} level={noise.level} timed={isMock} allowanceLeft={noise.allowanceLeft} />}
+      {noise.warning && !noise.held && <TestHoldWarning warning={noise.warning} capReached={noise.capReached} onDismiss={noise.dismissWarning} />}
     </>
   );
 

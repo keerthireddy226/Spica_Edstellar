@@ -799,15 +799,19 @@ practiceTestsRouter.post("/session/:sessionId/view", requireAuth, async (req: Au
   }
 });
 
-// Loud background noise during a question: the test is held until the room is
-// quiet. A timed test's clock (the question's and the whole test's) stops
-// while it's held, for at most MAX_NOISE_PAUSE_SECONDS per test in total;
-// each pause goes on the integrity timeline. A practice test's timer is only
-// a guide, so it's held in the browser alone.
-practiceTestsRouter.post("/session/:sessionId/noise-pause", requireAuth, async (req: AuthedRequest, res, next) => {
+// A problem in the room that went on after three warnings (loud background
+// noise, another person on camera, no face, a covered camera): the test is
+// held until it's fixed. A timed test's clock (the question's and the whole
+// test's) stops while it's held, for at most MAX_NOISE_PAUSE_SECONDS per test
+// in total; each hold goes on the integrity timeline. A practice test's timer
+// is only a guide, so it's held in the browser alone.
+const HOLD_REASONS = ["noise", "extra_person", "no_face", "camera_covered"] as const;
+practiceTestsRouter.post("/session/:sessionId/hold", requireAuth, async (req: AuthedRequest, res, next) => {
   const client = await pool.connect();
   try {
-    const { itemId, action } = z.object({ itemId: z.string().uuid(), action: z.enum(["start", "end"]) }).parse(req.body);
+    const { itemId, action, reason } = z
+      .object({ itemId: z.string().uuid(), action: z.enum(["start", "end"]), reason: z.enum(HOLD_REASONS).default("noise") })
+      .parse(req.body);
     await client.query("BEGIN");
     const row = (
       await client.query(
@@ -836,26 +840,33 @@ practiceTestsRouter.post("/session/:sessionId/noise-pause", requireAuth, async (
     let detail: Record<string, unknown> | null = null;
     if (action === "start") {
       if (!c.noisePause && (c.pausedSeconds ?? 0) < MAX_NOISE_PAUSE_SECONDS) {
-        c.noisePause = { itemId, startedAt: now.toISOString() };
-        detail = { itemId, event: "start" };
+        c.noisePause = { itemId, startedAt: now.toISOString(), reason };
+        detail = { itemId, event: "start", reason };
       }
     } else if (c.noisePause) {
       const held = Math.round(ongoingPauseSeconds(c, now));
       const pausedItem = c.noisePause.itemId;
+      const heldFor = c.noisePause.reason ?? "noise";
       c.extraSeconds = { ...(c.extraSeconds ?? {}), [pausedItem]: (c.extraSeconds?.[pausedItem] ?? 0) + held };
       if (c.deadlineAt) c.deadlineAt = new Date(new Date(c.deadlineAt).getTime() + held * 1000).toISOString();
       c.pausedSeconds = (c.pausedSeconds ?? 0) + held;
       c.noisePause = null;
-      detail = { itemId: pausedItem, event: "end", seconds: held };
+      detail = { itemId: pausedItem, event: "end", seconds: held, reason: heldFor };
     }
     await client.query(`UPDATE sessions SET composition = $2 WHERE id = $1`, [row.id, JSON.stringify(c)]);
     if (detail?.event === "end") {
       const si = (await client.query(`SELECT user_id FROM session_integrity WHERE session_id = $1`, [row.id])).rows[0];
       if (si) {
-        await client.query(`INSERT INTO proctoring_events (session_id, user_id, type, severity, detail) VALUES ($1, $2, 'noise_pause', 'info', $3)`, [
+        const why: Record<string, string> = {
+          noise: "background noise",
+          extra_person: "another person on camera",
+          no_face: "no face on camera",
+          camera_covered: "a covered or dark camera",
+        };
+        await client.query(`INSERT INTO proctoring_events (session_id, user_id, type, severity, detail) VALUES ($1, $2, 'test_hold', 'info', $3)`, [
           row.id,
           si.user_id,
-          JSON.stringify({ ...detail, reason: `Test held ${detail.seconds} s for background noise` }),
+          JSON.stringify({ ...detail, holdReason: detail.reason, reason: `Test paused ${detail.seconds} s for ${why[String(detail.reason)] ?? "a problem in the room"}` }),
         ]);
       }
     }

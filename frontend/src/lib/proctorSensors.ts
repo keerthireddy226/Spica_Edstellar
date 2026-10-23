@@ -68,7 +68,8 @@ export function recordSegments(
 
 // Watches the camera picture between snapshots: a covered lens (almost
 // black) or a picture that stops changing at all (a frozen or fake feed).
-export function watchCamera(stream: MediaStream, onCovered: () => void, onFrozen: () => void): () => void {
+// onUncovered: the picture is lit again after being covered.
+export function watchCamera(stream: MediaStream, onCovered: () => void, onFrozen: () => void, onUncovered?: () => void): () => void {
   const video = document.createElement("video");
   video.muted = true;
   video.playsInline = true;
@@ -94,6 +95,7 @@ export function watchCamera(stream: MediaStream, onCovered: () => void, onFrozen
     lum /= px.length / 4;
     diff /= px.length / 4;
     prev = new Uint8ClampedArray(px);
+    if (lum >= 14 && dark >= 3) onUncovered?.();
     dark = lum < 14 ? dark + 1 : 0;
     // A live camera always has some sensor noise between frames.
     still = lum >= 14 && diff < 0.4 ? still + 1 : 0;
