@@ -215,7 +215,7 @@ export function Tutor() {
           ))}
         </div>
 
-        <LearnerCard title={tr("Talk about…")} icon={Lightbulb} color="#c9965c">
+        <LearnerCard title={tr("Ask about…")} icon={Lightbulb} color="#c9965c">
           <div className="flex flex-col gap-2">
             {STARTERS.map((q) => (
               <button
@@ -247,17 +247,18 @@ export function Tutor() {
 // The tutor talks in English, so a starter goes into the chat in English;
 // the learner's language shows under it as a hint. (Translated where shown,
 // not here, so a language switch updates them.)
+// All about the learner's journey in Spica: the tutor answers nothing else.
 const STARTERS = [
-  "Can you help me practise a job interview?",
-  "Let's talk about my weekend.",
-  "How do I order food politely at a restaurant?",
-  "Ask me questions about my hometown.",
-  "Help me describe my daily routine.",
+  "What is my English level now?",
+  "How close am I to my goal?",
+  "What should I practise next?",
+  "How can I improve my weakest skill?",
+  "When can I take my final assessment?",
 ];
 
 const TIPS = [
-  "Answer in full sentences, not single words.",
-  "Try a new word you learned today.",
-  "Ask the tutor to correct your grammar.",
-  "Keep going for at least five replies.",
+  "Ask about your level, your goal or your next step.",
+  "Ask how to improve a skill or a question type.",
+  "Ask what a test or your results mean.",
+  "Practise a short answer for your goal, then ask for tips.",
 ];

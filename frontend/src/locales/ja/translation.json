@@ -394,7 +394,7 @@
     "notEnabled": "所属組織では提供されていません"
   },
   "tutor": {
-    "subtitle": "AIコーチと気軽に会話練習。",
+    "subtitle": "Spicaの学習コーチ：今のレベル、進み具合、次に練習することを聞いてみましょう。",
     "inputPlaceholder": "返信を入力…",
     "loading": "会話を開始中…",
     "typing": "入力中…",

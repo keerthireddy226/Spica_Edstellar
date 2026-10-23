@@ -5136,5 +5136,15 @@
  "You bought a test, without a study plan.": "Kupiono test, bez planu nauki.",
  "Yours": "Twoje",
  "Your test: {{test}}": "Twój test: {{test}}",
- "your final assessment": "twojego testu końcowego"
+ "your final assessment": "twojego testu końcowego",
+ "Ask about…": "Zapytaj o…",
+ "What is my English level now?": "Jaki mam teraz poziom angielskiego?",
+ "How close am I to my goal?": "Jak blisko jestem celu?",
+ "What should I practise next?": "Co powinienem teraz ćwiczyć?",
+ "How can I improve my weakest skill?": "Jak poprawić moją najsłabszą umiejętność?",
+ "When can I take my final assessment?": "Kiedy mogę przystąpić do testu końcowego?",
+ "Ask about your level, your goal or your next step.": "Zapytaj o swój poziom, cel lub następny krok.",
+ "Ask how to improve a skill or a question type.": "Zapytaj, jak poprawić umiejętność lub typ zadania.",
+ "Ask what a test or your results mean.": "Zapytaj, co oznacza test lub twoje wyniki.",
+ "Practise a short answer for your goal, then ask for tips.": "Przećwicz krótką odpowiedź do swojego celu, a potem poproś o wskazówki."
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLearnerContext, type LearnerFacts } from "./learnerContext.js";
+import { describeNextStep, formatLearnerContext, type LearnerFacts } from "./learnerContext.js";
 import { buildSystemInstruction } from "./coachGemini.js";
 
 const empty: LearnerFacts = {
@@ -95,5 +95,43 @@ describe("buildSystemInstruction", () => {
     expect(withCtx).toContain("What you know about this learner");
     expect(withCtx).toContain("Current CEFR level: B1");
     expect(withCtx).toContain("never invent");
+  });
+});
+
+describe("journey facts for the tutor", () => {
+  const base = { firstName: null, currentLevel: "B1", goalLevel: "B2", targetExam: null, examReason: null, examDate: null, examDaysLeft: null, dailyMinutes: null, streakDays: 0, skillAccuracy: {}, weakTypes: [], lastTest: null };
+
+  it("lists skill levels, the mock prediction, the final assessment, the certificate and the next step", () => {
+    const text = formatLearnerContext({
+      ...base,
+      skillLevels: { listening: "B2", speaking: "B1", reading: "B1", writing: "A2" },
+      predicted: { score: 51, level: "B1", mocks: 2 },
+      goalScore: 55,
+      finalAssessment: { testName: "English 4 Skills Essentials", chooseTest: false, state: "mock_needed", opensOn: "2026-11-20" },
+      certificate: null,
+      nextStep: describeNextStep({ kind: "retry", skill: "writing", count: 6, types: ["Dictation"] }),
+    });
+    expect(text).toContain("listening B2, speaking B1, reading B1, writing A2");
+    expect(text).toContain("predict Spica score 51, level B1; the goal level needs 55 (4 points to go)");
+    expect(text).toContain("English 4 Skills Essentials");
+    expect(text).toContain("opens after one mock test");
+    expect(text).toContain("Recommended next step in Spica: Retry 6 earlier mistakes in writing (Dictation) in Practice Modules.");
+  });
+
+  it("describes every kind of next step, and none when there is nothing", () => {
+    expect(describeNextStep(null)).toBeNull();
+    expect(describeNextStep({ kind: "final", chooseTest: true })).toContain("Choose the test");
+    expect(describeNextStep({ kind: "mock", daysLeft: 1 })).toContain("in 1 day.");
+    expect(describeNextStep({ kind: "practice_test", daysSince: 9 })).toContain("practice test");
+  });
+});
+
+describe("tutor stays on Spica", () => {
+  it("tells the model to decline unrelated topics and to use Spica's own facts", () => {
+    const sys = buildSystemInstruction("");
+    expect(sys).toContain("only help with their English learning in Spica");
+    expect(sys).toContain("Do not answer the unrelated question");
+    expect(sys).toContain("only way to earn a certificate");
+    expect(sys).toContain("placement test");
   });
 });

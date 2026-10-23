@@ -5136,5 +5136,15 @@
  "You bought a test, without a study plan.": "Ostit kokeen ilman opiskelusuunnitelmaa.",
  "Yours": "Omasi",
  "Your test: {{test}}": "Kokeesi: {{test}}",
- "your final assessment": "loppukoe"
+ "your final assessment": "loppukoe",
+ "Ask about…": "Kysy aiheesta…",
+ "What is my English level now?": "Mikä on englannin tasoni nyt?",
+ "How close am I to my goal?": "Kuinka lähellä olen tavoitettani?",
+ "What should I practise next?": "Mitä minun pitäisi harjoitella seuraavaksi?",
+ "How can I improve my weakest skill?": "Miten parannan heikointa taitoani?",
+ "When can I take my final assessment?": "Milloin voin tehdä loppukokeeni?",
+ "Ask about your level, your goal or your next step.": "Kysy tasostasi, tavoitteestasi tai seuraavasta askeleestasi.",
+ "Ask how to improve a skill or a question type.": "Kysy, miten parannat taitoa tai tehtävätyyppiä.",
+ "Ask what a test or your results mean.": "Kysy, mitä koe tai tuloksesi tarkoittavat.",
+ "Practise a short answer for your goal, then ask for tips.": "Harjoittele lyhyt vastaus tavoitettasi varten ja pyydä sitten vinkkejä."
 }

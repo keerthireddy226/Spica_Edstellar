@@ -5136,5 +5136,15 @@
  "You bought a test, without a study plan.": "Du har köpt ett test, utan studieplan.",
  "Yours": "Dina",
  "Your test: {{test}}": "Ditt test: {{test}}",
- "your final assessment": "ditt sluttest"
+ "your final assessment": "ditt sluttest",
+ "Ask about…": "Fråga om…",
+ "What is my English level now?": "Vilken engelsknivå har jag nu?",
+ "How close am I to my goal?": "Hur nära är jag mitt mål?",
+ "What should I practise next?": "Vad ska jag öva på härnäst?",
+ "How can I improve my weakest skill?": "Hur förbättrar jag min svagaste färdighet?",
+ "When can I take my final assessment?": "När kan jag göra mitt sluttest?",
+ "Ask about your level, your goal or your next step.": "Fråga om din nivå, ditt mål eller ditt nästa steg.",
+ "Ask how to improve a skill or a question type.": "Fråga hur du förbättrar en färdighet eller en uppgiftstyp.",
+ "Ask what a test or your results mean.": "Fråga vad ett test eller dina resultat betyder.",
+ "Practise a short answer for your goal, then ask for tips.": "Öva ett kort svar för ditt mål och be sedan om tips."
 }

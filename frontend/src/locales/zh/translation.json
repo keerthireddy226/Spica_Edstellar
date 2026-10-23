@@ -394,7 +394,7 @@
     "notEnabled": "你的组织未提供此项"
   },
   "tutor": {
-    "subtitle": "与你的 AI 教练轻松进行对话练习。",
+    "subtitle": "你的 Spica 学习教练：可以问你的水平、进度以及接下来该练习什么。",
     "inputPlaceholder": "输入你的回复…",
     "loading": "正在开始对话…",
     "typing": "正在输入…",

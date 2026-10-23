@@ -6,6 +6,8 @@ import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { ALL_SKILLS, computeStreakDays, type SkillTag } from "../gamification/stats.js";
 import { overallFromSkills, pathSummary } from "../learner/path.js";
+import { nextStep, type NextStep } from "../learner/insights.js";
+import { readiness } from "../assessment/service.js";
 
 const RECENT_DAYS = 30;
 // Below this many graded answers a skill/type percentage is noise, not a fact.
@@ -34,7 +36,46 @@ export interface LearnerFacts {
     level: string | null;
     percent: number | null;
   } | null;
+  // Each skill's level on the learner's Practice Modules path.
+  skillLevels?: Partial<Record<SkillTag, string>>;
+  // From the latest mock tests: the Spica score and level they predict.
+  predicted?: { score: number; level: string; mocks: number } | null;
+  // The Spica score the goal level needs.
+  goalScore?: number | null;
+  // The final assessment still to take, and whether it can be taken now.
+  finalAssessment?: { testName: string | null; chooseTest: boolean; state: string; opensOn: string | null } | null;
+  certificate?: { level: string; score: number | null; validUntil: string | null } | null;
+  // The single next step Spica recommends (the same one shown on Overview).
+  nextStep?: string | null;
 }
+
+const SKILL_NAMES: Record<string, string> = { listening: "listening", speaking: "speaking", reading: "reading", writing: "writing" };
+
+// The recommended next step, in words the tutor can repeat.
+export function describeNextStep(n: NextStep | null): string | null {
+  if (!n) return null;
+  switch (n.kind) {
+    case "final":
+      return n.chooseTest ? "Choose the test for the final assessment on the Assessment page." : "Take the final assessment on the Assessment page: it is open and the mock tests reach the goal.";
+    case "mock":
+      return `Take a full mock test (Mock Tests page): the exam is in ${n.daysLeft} day${n.daysLeft === 1 ? "" : "s"}.`;
+    case "practice_test":
+      return "Take a practice test (Practice Tests page) to check progress.";
+    case "retry":
+      return `Retry ${n.count} earlier mistakes in ${SKILL_NAMES[n.skill] ?? n.skill}${n.types.length ? ` (${n.types.join(", ")})` : ""} in Practice Modules.`;
+    case "set":
+      return `Practise ${n.typeName} (${SKILL_NAMES[n.skill] ?? n.skill}) at ${n.level} in Practice Modules${n.retake ? ", repeating the weakest set" : ""}.`;
+  }
+}
+
+const FINAL_STATE: Record<string, string> = {
+  open: "open now",
+  mock_needed: "opens after one mock test of that test",
+  sample_needed: "opens after the free sample",
+  retake_wait: "waiting period after a result below the goal",
+  used: "already taken",
+  expired: "expired",
+};
 
 const EXAM_LABELS: Record<string, string> = {
   versant: "Spica English certificate",
@@ -86,6 +127,11 @@ export function formatLearnerContext(f: LearnerFacts): string {
     lines.push(`Weakest question types recently: ${weak}.`);
   }
 
+  if (f.skillLevels) {
+    const lv = ALL_SKILLS.flatMap((s) => (f.skillLevels?.[s] ? [`${s} ${f.skillLevels[s]}`] : []));
+    if (lv.length) lines.push(`Level of each skill in Practice Modules: ${lv.join(", ")}.`);
+  }
+
   if (f.lastTest) {
     const t = f.lastTest;
     const what = `Last ${t.kind}${t.testName ? ` (${t.testName})` : ""} on ${t.date}`;
@@ -94,6 +140,25 @@ export function formatLearnerContext(f: LearnerFacts): string {
     if (t.percent != null) result.push(`${t.percent}% overall`);
     lines.push(result.length ? `${what}: ${result.join(", ")}.` : `${what}.`);
   }
+
+  if (f.predicted) {
+    lines.push(
+      `Mock tests (latest ${f.predicted.mocks}) predict Spica score ${f.predicted.score}, level ${f.predicted.level}` +
+        (f.goalScore != null ? `; the goal level needs ${f.goalScore} (${f.predicted.score >= f.goalScore ? "reached" : `${f.goalScore - f.predicted.score} points to go`}).` : "."),
+    );
+  }
+  if (f.finalAssessment) {
+    const fa = f.finalAssessment;
+    lines.push(
+      fa.chooseTest
+        ? "Final assessment: included, but its test is not chosen yet (chosen on the Assessment page)."
+        : `Final assessment${fa.testName ? ` (${fa.testName})` : ""}: ${FINAL_STATE[fa.state] ?? fa.state}${fa.opensOn ? `, opens on ${fa.opensOn}` : ""}.`,
+    );
+  }
+  if (f.certificate) {
+    lines.push(`Certificate earned: level ${f.certificate.level}${f.certificate.score != null ? `, Spica score ${f.certificate.score}` : ""}${f.certificate.validUntil ? `, valid until ${f.certificate.validUntil}` : ""}.`);
+  }
+  if (f.nextStep) lines.push(`Recommended next step in Spica: ${f.nextStep}`);
 
   return lines.join("\n");
 }
@@ -171,10 +236,16 @@ async function loadLearnerFacts(userId: string): Promise<LearnerFacts> {
     .slice(0, MAX_WEAK_TYPES);
 
   const lt = lastTest.rows[0];
+  // The journey: skill levels, what the mocks predict, the final assessment and the next step.
+  const [skillLevels, ready, next] = await Promise.all([
+    pathSummary(userId).catch(() => null),
+    readiness(userId).catch(() => null),
+    nextStep(userId).catch(() => null),
+  ]);
   return {
     firstName: p.first_name?.trim() || null,
     // The tutor pitches at the same overall level the learner sees on Overview.
-    currentLevel: overallFromSkills(await pathSummary(userId)) ?? placement.rows[0]?.cefr_level ?? null,
+    currentLevel: (skillLevels ? overallFromSkills(skillLevels) : null) ?? placement.rows[0]?.cefr_level ?? null,
     goalLevel: goal,
     // Only Versant is offered for now (other exams are hidden), so only it is named.
     targetExam: p.exam_preference === "versant" ? (EXAM_LABELS[p.exam_preference] ?? null) : null,
@@ -194,6 +265,19 @@ async function loadLearnerFacts(userId: string): Promise<LearnerFacts> {
           percent: lt.result?.overallPercent ?? null,
         }
       : null,
+    skillLevels: skillLevels ?? undefined,
+    predicted: ready?.predicted ? { score: ready.predicted.score, level: ready.predicted.level, mocks: ready.mocks } : null,
+    goalScore: ready?.goalScore ?? null,
+    finalAssessment: ready?.final
+      ? {
+          testName: ready.final.testName ?? null,
+          chooseTest: !!ready.final.chooseTest,
+          state: ready.final.unlock.state,
+          opensOn: "opensOn" in ready.final.unlock ? String(ready.final.unlock.opensOn).slice(0, 10) : null,
+        }
+      : null,
+    certificate: ready?.certificate ? { level: ready.certificate.level, score: ready.certificate.score, validUntil: ready.certificate.validUntil } : null,
+    nextStep: describeNextStep(next),
   };
 }
 

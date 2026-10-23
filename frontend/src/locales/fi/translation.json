@@ -395,7 +395,7 @@
     "notEnabled": "Organisaatiosi ei tarjoa tätä"
   },
   "tutor": {
-    "subtitle": "Rento harjoituskeskustelu tekoälyvalmentajasi kanssa.",
+    "subtitle": "Spica-oppimisvalmentajasi: kysy tasostasi, edistymisestäsi ja mitä harjoitella seuraavaksi.",
     "inputPlaceholder": "Kirjoita vastauksesi…",
     "loading": "Aloitetaan keskustelua…",
     "typing": "Kirjoittaa…",

@@ -395,7 +395,7 @@
     "notEnabled": "Tilbys ikke av organisasjonen din"
   },
   "tutor": {
-    "subtitle": "En uformell øvingssamtale med AI-coachen din.",
+    "subtitle": "Spica-læringscoachen din: spør om nivået ditt, fremgangen din og hva du bør øve på nå.",
     "inputPlaceholder": "Skriv svaret ditt…",
     "loading": "Starter samtale…",
     "typing": "Skriver…",

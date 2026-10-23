@@ -5136,5 +5136,15 @@
  "You bought a test, without a study plan.": "学習プランなしでテストを購入しました。",
  "Yours": "購入済み",
  "Your test: {{test}}": "あなたのテスト: {{test}}",
- "your final assessment": "最終アセスメント"
+ "your final assessment": "最終アセスメント",
+ "Ask about…": "質問してみよう…",
+ "What is my English level now?": "今の私の英語レベルは？",
+ "How close am I to my goal?": "目標までどのくらい？",
+ "What should I practise next?": "次は何を練習すればいい？",
+ "How can I improve my weakest skill?": "一番苦手なスキルをどう伸ばす？",
+ "When can I take my final assessment?": "最終アセスメントはいつ受けられる？",
+ "Ask about your level, your goal or your next step.": "自分のレベル、目標、次のステップについて質問しましょう。",
+ "Ask how to improve a skill or a question type.": "スキルや問題タイプの伸ばし方を質問しましょう。",
+ "Ask what a test or your results mean.": "テストや結果の意味を質問しましょう。",
+ "Practise a short answer for your goal, then ask for tips.": "目標に合わせた短い回答を練習して、アドバイスをもらいましょう。"
 }

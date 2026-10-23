@@ -411,7 +411,7 @@
     "notEnabled": "Tu organización no lo ofrece"
   },
   "tutor": {
-    "subtitle": "Una conversación de práctica sin presión con tu coach de IA.",
+    "subtitle": "Tu coach de aprendizaje de Spica: pregunta por tu nivel, tu progreso y qué practicar a continuación.",
     "inputPlaceholder": "Escribe tu respuesta…",
     "loading": "Iniciando tu conversación…",
     "typing": "Escribiendo…",

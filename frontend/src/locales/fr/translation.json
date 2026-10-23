@@ -411,7 +411,7 @@
     "notEnabled": "Non proposé par votre organisation"
   },
   "tutor": {
-    "subtitle": "Une conversation d'entraînement sans pression avec votre coach IA.",
+    "subtitle": "Votre coach d'apprentissage Spica : posez des questions sur votre niveau, vos progrès et ce qu'il faut travailler ensuite.",
     "inputPlaceholder": "Tapez votre réponse…",
     "loading": "Démarrage de votre conversation…",
     "typing": "En train d'écrire…",
