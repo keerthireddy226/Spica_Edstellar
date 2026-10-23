@@ -88,7 +88,7 @@ export async function addCredits(args: { tenantId: string; delta: number; reason
 // password. The real email lives on the assessment; the account email is
 // a private placeholder, so a candidate who is also someone's employee or a
 // learner elsewhere doesn't clash with that account.
-async function candidateUser(tenantId: string, email: string, firstName: string | null, lastName: string | null): Promise<string> {
+export async function candidateUser(tenantId: string, email: string, firstName: string | null, lastName: string | null): Promise<string> {
   const key = createHash("sha256").update(`${tenantId}:${email.toLowerCase()}`).digest("hex").slice(0, 24);
   const placeholder = `cand-${key}@${CANDIDATE_EMAIL_DOMAIN}`;
   const found = await pool.query(`SELECT id FROM users WHERE email = $1`, [placeholder]);

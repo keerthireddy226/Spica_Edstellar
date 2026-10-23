@@ -91,6 +91,12 @@ export interface Job {
   pending: number;
   shortlisted: number;
   hired: number;
+  // How many joined through the public link.
+  joined_by_link?: number;
+  public_slug?: string | null;
+  public_link_enabled?: boolean;
+  public_link_max?: number | null;
+  public_link_closes_at?: string | null;
 }
 
 export interface JobInput {
@@ -140,10 +146,47 @@ export interface CandidateRow {
   risk_level: "low" | "medium" | "high" | null;
   risk_score: number | null;
   invited_by_name: string | null;
+  // "public_link": joined through the job's public link, not an emailed invitation.
+  source?: "invite" | "public_link";
 }
 
 export function getJob(id: string): Promise<{ job: Job; candidates: CandidateRow[] }> {
   return api(`/recruitment/jobs/${id}`);
+}
+
+// A job's public link, to post on job websites.
+export interface PublicLink {
+  slug: string | null;
+  enabled: boolean;
+  max: number | null;
+  closesAt: string | null;
+  uses: number;
+}
+export function setPublicLink(jobId: string, v: { enabled: boolean; max: number | null; closesAt: string | null }): Promise<PublicLink> {
+  return api(`/recruitment/jobs/${jobId}/public-link`, { method: "PATCH", body: JSON.stringify(v) });
+}
+export function renewPublicLink(jobId: string): Promise<PublicLink> {
+  return api(`/recruitment/jobs/${jobId}/public-link/new`, { method: "POST" });
+}
+export const publicLinkUrl = (slug: string) => `${window.location.origin}/apply/${slug}`;
+
+// The applicant's side of a public link.
+export interface ApplyInfo {
+  state: "open" | "closed" | "full";
+  organization: { name: string };
+  admissions: boolean;
+  job: { title: string; description: string | null };
+  testKind: TestKind;
+  proctoring: { camera: boolean; microphone: boolean; screen: boolean; idDocument: boolean; secureBrowser: boolean };
+}
+export function getApplyInfo(slug: string): Promise<ApplyInfo> {
+  return api(`/recruitment/apply/${encodeURIComponent(slug)}`);
+}
+export function sendApplyCode(slug: string, v: { email: string; firstName: string; lastName: string }): Promise<{ ok: boolean }> {
+  return api(`/recruitment/apply/${encodeURIComponent(slug)}/code`, { method: "POST", body: JSON.stringify(v) });
+}
+export function verifyApplyCode(slug: string, v: { email: string; code: string }): Promise<{ ok: boolean }> {
+  return api(`/recruitment/apply/${encodeURIComponent(slug)}/verify`, { method: "POST", body: JSON.stringify(v) });
 }
 
 export function inviteCandidates(jobId: string, people: { email: string; firstName?: string; lastName?: string }[]): Promise<{ invited: { id: string; email: string }[]; skipped: number }> {

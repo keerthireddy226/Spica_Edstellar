@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Briefcase, Check, ChevronRight, Coins, Download, Mail, Plus, Printer, RotateCw, Send, ShieldAlert, Trash2, UserCheck, UserPlus, Users, XCircle } from "lucide-react";
+import { Briefcase, Check, ChevronRight, Coins, Copy, Download, FileSpreadsheet, Link2, Mail, Plus, Printer, RotateCw, Send, ShieldAlert, Trash2, Upload, UserCheck, UserPlus, Users, XCircle } from "lucide-react";
+import { downloadText, parseCsv, toCsv } from "@/lib/csv";
+import { readXlsx } from "@/lib/xlsx";
+import { peopleFromRows, type SheetResult } from "@/lib/peopleSheet";
 import { Badge, DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
 import { EmptyNote, FilterPills, PageHeader, Panel, StatCard, StatusPill } from "@/components/staff/StaffKit";
@@ -27,7 +30,10 @@ import {
   inviteCandidates,
   jobExportUrl,
   removeRecruiter,
+  renewPublicLink,
   requestCredits,
+  publicLinkUrl,
+  setPublicLink,
   resendInvite,
   saveRecruitmentSettings,
   updateJob,
@@ -445,7 +451,11 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
         )}
         <Panel title={tr("Timeline")}>
           <ul className="text-sm text-ink flex flex-col gap-1">
-            <li>{tr("Invited on {{date}} by {{who}}", { date: dateTime(a.invited_at), who: a.invited_by_name || tr("a colleague") })}</li>
+            <li>
+              {a.source === "public_link"
+                ? tr("Joined through the job's public link on {{date}}", { date: dateTime(a.invited_at) })
+                : tr("Invited on {{date}} by {{who}}", { date: dateTime(a.invited_at), who: a.invited_by_name || tr("a colleague") })}
+            </li>
             {a.started_at && <li>{tr("Started on {{date}}", { date: dateTime(a.started_at) })}</li>}
             {a.completed_at && (
               <li>
@@ -484,11 +494,42 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  // People read from an uploaded spreadsheet, and what couldn't be used.
+  const [sheet, setSheet] = useState<(SheetResult & { fileName: string }) | null>(null);
+  const [sheetError, setSheetError] = useState<string | null>(null);
   const people = useMemo(() => {
-    const list = parsePeople(bulk);
+    const list = [...parsePeople(bulk), ...(sheet?.people ?? [])];
     if (email.trim()) list.unshift({ email: email.trim(), firstName: first.trim() || undefined, lastName: last.trim() || undefined });
-    return list;
-  }, [bulk, email, first, last]);
+    // The same address twice (typed and in the file) is invited once.
+    const seen = new Set<string>();
+    return list.filter((p) => {
+      const k = p.email.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }, [bulk, email, first, last, sheet]);
+  async function readSheet(file: File) {
+    setSheetError(null);
+    try {
+      const rows = /\.xlsx$/i.test(file.name) ? await readXlsx(file) : parseCsv(await file.text());
+      const r = peopleFromRows(rows);
+      if (!r.people.length) {
+        setSheet(null);
+        setSheetError(tr("No email addresses found in this file. Use the template: Email, First name, Last name."));
+        return;
+      }
+      if (r.people.length > 200) {
+        setSheet(null);
+        setSheetError(tr("This file has {{n}} people. Upload at most 200 at a time.", { n: r.people.length }));
+        return;
+      }
+      setSheet({ ...r, fileName: file.name });
+    } catch {
+      setSheet(null);
+      setSheetError(tr("Could not read this file. Save it as .xlsx or .csv and try again."));
+    }
+  }
   async function send() {
     setBusy(true);
     setNote(null);
@@ -504,6 +545,7 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
       setFirst("");
       setLast("");
       setBulk("");
+      setSheet(null);
       onInvited();
     } catch (err) {
       const body = err instanceof ApiError ? (err.body as { error?: string; needed?: number; balance?: number }) : null;
@@ -526,6 +568,7 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
   const total = people.length * cost;
   return (
     <div className="flex flex-col gap-4 max-w-3xl">
+      <PublicLinkPanel job={job} cost={cost} onChanged={onInvited} />
       <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
         <p className="font-display font-bold text-ink">{tr("Invite one person")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -545,6 +588,51 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
       </div>
       <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
         <p className="font-display font-bold text-ink">{tr("Invite many at once")}</p>
+        <div className="flex flex-col gap-2 rounded-input border border-dashed border-rule-strong bg-paper-warm/60 p-4">
+          <p className="text-sm font-semibold text-ink flex items-center gap-2">
+            <FileSpreadsheet size={16} className="text-navy-deep" /> {tr("Upload a spreadsheet")}
+          </p>
+          <p className="text-xs text-muted">{tr("Excel (.xlsx) or CSV, up to 200 people. Columns: Email, First name, Last name (or one Name column). Other columns are ignored.")}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <label className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-pill bg-navy text-lime cursor-pointer hover:bg-navy-soft">
+              <Upload size={15} /> {tr("Choose a file")}
+              <input
+                type="file"
+                accept=".xlsx,.csv,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void readSheet(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => downloadText(toCsv([["Email", "First name", "Last name"], ["asha.rao@example.com", "Asha", "Rao"]]), "candidates-template.csv")}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-pill border border-rule bg-surface text-ink hover:border-rule-strong cursor-pointer"
+            >
+              <Download size={15} /> {tr("Download a template")}
+            </button>
+          </div>
+          {sheet && (
+            <div className="text-sm text-ink flex items-start justify-between gap-3 bg-surface border border-rule rounded-input px-3 py-2">
+              <span>
+                {tr("{{file}}: {{n}} people ready.", { file: sheet.fileName, n: sheet.people.length })}
+                {sheet.badRows.length > 0 && (
+                  <span className="block text-xs text-warning">
+                    {tr("Skipped rows without a valid email: {{rows}}", { rows: sheet.badRows.slice(0, 15).join(", ") + (sheet.badRows.length > 15 ? "…" : "") })}
+                  </span>
+                )}
+                {sheet.duplicates > 0 && <span className="block text-xs text-muted">{tr("{{n}} repeated email addresses kept once.", { n: sheet.duplicates })}</span>}
+              </span>
+              <button type="button" onClick={() => setSheet(null)} className="text-muted hover:text-error cursor-pointer" aria-label={tr("Remove the file")}>
+                <XCircle size={16} />
+              </button>
+            </div>
+          )}
+          {sheetError && <p className="text-sm text-error">{sheetError}</p>}
+        </div>
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-muted">{tr("Or paste many, one per line: email, first name, last name")}</span>
           <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} rows={5} placeholder="name@example.com, Asha, Rao" className={`${field} font-mono`} />
@@ -585,6 +673,111 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
       {note && (
         <p className={`text-sm rounded-input px-3.5 py-2.5 border ${note.ok ? "text-success bg-success/10 border-success/25" : "text-error bg-error/10 border-error/25"}`}>{note.text}</p>
       )}
+    </div>
+  );
+}
+
+// One link for job websites or a careers page: anyone with it confirms their
+// email and takes the test; each person who starts uses the test's credits.
+function PublicLinkPanel({ job, cost, onChanged }: { job: Job; cost: number; onChanged: () => void }) {
+  const [enabled, setEnabled] = useState(!!job.public_link_enabled);
+  const [slug, setSlug] = useState(job.public_slug ?? null);
+  const [max, setMax] = useState(job.public_link_max ? String(job.public_link_max) : "");
+  const [closes, setCloses] = useState(job.public_link_closes_at ? job.public_link_closes_at.slice(0, 10) : "");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const url = slug ? publicLinkUrl(slug) : "";
+  async function save(on: boolean) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await setPublicLink(job.id, {
+        enabled: on,
+        max: max.trim() ? Math.max(1, Math.round(Number(max))) : null,
+        // The link closes at the end of the chosen day.
+        closesAt: closes ? new Date(`${closes}T23:59:59`).toISOString() : null,
+      });
+      setEnabled(r.enabled);
+      setSlug(r.slug);
+      setMsg({ ok: true, text: on ? tr("The link is on. Share it wherever you post this job.") : tr("The link is off. People who open it are told it's closed.") });
+      onChanged();
+    } catch {
+      setMsg({ ok: false, text: tr("Could not save the link settings.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function renew() {
+    if (!window.confirm(tr("Make a new link? The current link stops working straight away."))) return;
+    setBusy(true);
+    try {
+      const r = await renewPublicLink(job.id);
+      setSlug(r.slug);
+      setMsg({ ok: true, text: tr("New link made. The old one no longer works.") });
+    } finally {
+      setBusy(false);
+    }
+  }
+  const field = "rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
+  return (
+    <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="font-display font-bold text-ink flex items-center gap-2">
+          <Link2 size={17} className="text-navy-deep" /> {tr("Public link for job websites")}
+        </p>
+        <StatusPill tone={enabled ? "success" : "muted"}>{enabled ? tr("On") : tr("Off")}</StatusPill>
+      </div>
+      <p className="text-xs text-muted">
+        {tr("Post one link on job websites or your careers page. Anyone with it confirms their email with a code and takes the test; they appear here like invited candidates. Each person who starts uses {{k}} credits.", { k: cost })}
+      </p>
+      {enabled && url && (
+        <div className="flex items-center gap-2">
+          <input readOnly value={url} onFocus={(e) => e.target.select()} className={`${field} flex-1 font-mono text-xs`} />
+          <Button
+            variant="secondary"
+            className="!py-2 flex items-center gap-1.5"
+            onClick={() => {
+              void navigator.clipboard?.writeText(url);
+              setMsg({ ok: true, text: tr("Link copied.") });
+            }}
+          >
+            <Copy size={14} /> {tr("Copy")}
+          </Button>
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("At most this many people (optional)")}</span>
+          <input type="number" min={1} value={max} onChange={(e) => setMax(e.target.value)} placeholder={tr("No limit")} className={field} />
+        </label>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Closes on (optional)")}</span>
+          <input type="date" value={closes} onChange={(e) => setCloses(e.target.value)} className={field} />
+        </label>
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        {enabled ? (
+          <>
+            <Button onClick={() => save(true)} disabled={busy} className="!py-2">
+              {tr("Save")}
+            </Button>
+            <Button variant="secondary" onClick={() => save(false)} disabled={busy} className="!py-2">
+              {tr("Turn off")}
+            </Button>
+            <button type="button" onClick={renew} disabled={busy} className="text-sm text-muted hover:text-ink underline cursor-pointer ml-auto">
+              {tr("Make a new link")}
+            </button>
+          </>
+        ) : (
+          <Button onClick={() => save(true)} disabled={busy} className="!py-2 flex items-center gap-1.5">
+            <Link2 size={14} /> {tr("Turn on the link")}
+          </Button>
+        )}
+      </div>
+      {(job.joined_by_link ?? 0) > 0 && (
+        <p className="text-xs text-muted">{job.joined_by_link === 1 ? tr("1 person joined through the link.") : tr("{{n}} people joined through the link.", { n: job.joined_by_link })}</p>
+      )}
+      {msg && <p className={`text-sm ${msg.ok ? "text-success" : "text-error"}`}>{msg.text}</p>}
     </div>
   );
 }
@@ -799,7 +992,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                     <span className="min-w-0">
                     <p className="text-sm font-semibold text-ink truncate">{personName(c)}</p>
                     <p className="text-xs text-muted truncate">
-                      {c.email} · {c.completed_at ? tr("finished {{d}}", { d: dateTime(c.completed_at) }) : tr("invited {{d}}", { d: dateTime(c.invited_at) })}
+                      {c.email} · {c.completed_at ? tr("finished {{d}}", { d: dateTime(c.completed_at) }) : c.source === "public_link" ? tr("joined through the link {{d}}", { d: dateTime(c.invited_at) }) : tr("invited {{d}}", { d: dateTime(c.invited_at) })}
                       {c.test_code ? ` · ${c.test_code}` : ""}
                     </p>
                     </span>

@@ -374,5 +374,7 @@
  "Your certificate is on hold": "మీ సర్టిఫికెట్ నిలిపివేయబడింది",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "ఒక సమీక్షకుడు మీ టెస్ట్ ప్రాక్టరింగ్ రికార్డ్‌ను తనిఖీ చేస్తున్నారు, కాబట్టి సర్టిఫికెట్ {{code}} నిలిపివేయబడింది. అది పూర్తయ్యాక మేము మీకు ఈమెయిల్ పంపుతాము.",
  "Spica: final assessment": "Spica: తుది అసెస్‌మెంట్",
- "Final assessment": "తుది అసెస్‌మెంట్"
+ "Final assessment": "తుది అసెస్‌మెంట్",
+ "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}} కోసం ఇంగ్లీష్ అసెస్‌మెంట్ కోడ్",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}లో {{jobTitle}} కోసం ఇంగ్లీష్ అసెస్‌మెంట్ ప్రారంభించడానికి మీ కోడ్:\n\n{{code}}\n\nఇది {{minutes}} నిమిషాల పాటు పనిచేస్తుంది. మీరు దీన్ని అడగకపోతే, ఈ సందేశాన్ని పట్టించుకోకండి."
 }

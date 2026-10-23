@@ -374,5 +374,7 @@
  "Your certificate is on hold": "Dit certifikat er sat i bero",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En bedømmer gennemgår tilsynsoptagelsen fra din test, så certifikat {{code}} er sat i bero. Vi sender dig en e-mail, når det er gjort.",
  "Spica: final assessment": "Spica: afsluttende test",
- "Final assessment": "Afsluttende test"
+ "Final assessment": "Afsluttende test",
+ "Your code for the English assessment for {{jobTitle}}": "Din kode til engelsktesten til {{jobTitle}}",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Din kode til at starte engelsktesten til {{jobTitle}} hos {{orgName}} er:\n\n{{code}}\n\nDen gælder i {{minutes}} minutter. Hvis du ikke har bedt om den, kan du ignorere denne besked."
 }

@@ -106,6 +106,8 @@ export const ROUTES = {
   RECRUITMENT: "/recruitment",
   // A candidate: the emailed link, then the assessment itself.
   ASSESS: "/assess/:token",
+  // A job's public link, posted on job websites.
+  APPLY: "/apply/:slug",
   CANDIDATE: "/candidate",
   // Manager's own console — only the batch(es) they were assigned, never
   // the whole organization.

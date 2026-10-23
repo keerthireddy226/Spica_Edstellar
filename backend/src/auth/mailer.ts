@@ -72,6 +72,16 @@ export async function sendPlacementReminderEmail(email: string, token: string) {
 }
 
 // A recruitment assessment: the link signs the candidate straight in, no password.
+// The code that confirms an applicant's email before they start a test
+// through a job's public link.
+export async function sendApplyCodeEmail(args: { to: string; code: string; orgName: string; jobTitle: string; minutes: number }) {
+  await sendMail(
+    args.to,
+    `Your code for the English assessment for ${args.jobTitle}`,
+    `Your code to start the English assessment for ${args.jobTitle} at ${args.orgName} is:\n\n${args.code}\n\nIt works for ${args.minutes} minutes. If you didn't ask for it, you can ignore this message.`,
+  );
+}
+
 export async function sendCandidateInviteEmail(args: { to: string; orgName: string; jobTitle: string; token: string; expiresAt: Date; lang?: string; reminder?: boolean }) {
   const link = `${FRONTEND_URL}/assess/${args.token}`;
   const until = args.expiresAt.toISOString().slice(0, 10);

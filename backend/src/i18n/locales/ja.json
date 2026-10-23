@@ -374,5 +374,7 @@
  "Your certificate is on hold": "修了証は保留中です",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "担当者があなたのテストの試験監督記録を確認しているため、修了証 {{code}} は保留中です。完了したらメールでお知らせします。",
  "Spica: final assessment": "Spica：最終アセスメント",
- "Final assessment": "最終アセスメント"
+ "Final assessment": "最終アセスメント",
+ "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}}の英語アセスメントのコード",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}の{{jobTitle}}の英語アセスメントを開始するためのコードは次のとおりです。\n\n{{code}}\n\nこのコードは{{minutes}}分間有効です。心当たりがない場合は、このメッセージを無視してください。"
 }

@@ -17,7 +17,9 @@ import { APP_URL } from "../auth/mailer.js";
 import { notify } from "../notifications/service.js";
 import { emitEvent } from "../webhooks/service.js";
 import { requirePermission, staffOwnsTenant } from "../admin/staff.js";
-import { learnerPolicy } from "../proctoring/policy.js";
+import { learnerPolicy, normalizeCandidatePolicy } from "../proctoring/policy.js";
+import rateLimit from "express-rate-limit";
+import { checkApplyCode, jobBySlug, joinByLink, linkState, linkUses, newSlug, sendApplyCode } from "./publicLink.js";
 import {
   ASSESSMENT_BANDS,
   PRODUCTS,
@@ -131,6 +133,98 @@ recruitmentRouter.get("/invite/:token", async (req, res, next) => {
   }
 });
 
+// Marks the assessment started and signs the candidate in for it (one device
+// at a time, for CANDIDATE_SESSION_MS at most).
+async function signInCandidate(res: Response, assessmentId: string, candidateId: string) {
+  await pool.query(`UPDATE recruitment_assessments SET status = 'started', started_at = coalesce(started_at, now()) WHERE id = $1`, [assessmentId]);
+  await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [candidateId]);
+  const { token } = await createSession(pool, candidateId);
+  await pool.query(`UPDATE auth_sessions SET expires_at = least(expires_at, now() + make_interval(secs => $2)) WHERE session_token_hash = $1`, [
+    hashToken(token),
+    CANDIDATE_SESSION_MS / 1000,
+  ]);
+  setSessionCookie(res, token);
+}
+
+// ---------- Applicants: a job's public link ----------
+
+// Codes are 6 digits: asking for and checking them is rate-limited per address.
+const applyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV !== "production",
+  handler: (_req, res) => {
+    res.status(429).json({ error: "too_many_attempts" });
+  },
+});
+
+const applicantSchema = z.object({
+  email: z.string().trim().email().max(200),
+  firstName: z.string().trim().max(80).optional().nullable(),
+  lastName: z.string().trim().max(80).optional().nullable(),
+});
+
+// Public: the job behind the link, and whether it takes people now.
+recruitmentRouter.get("/apply/:slug", async (req, res, next) => {
+  try {
+    const job = await jobBySlug(String(req.params.slug));
+    if (!job) return res.status(404).json({ error: "link_not_found" });
+    const t = (await pool.query(`SELECT recruitment_proctoring FROM tenants WHERE id = $1`, [job.tenant_id])).rows[0];
+    const policy = normalizeCandidatePolicy(t?.recruitment_proctoring);
+    res.json({
+      state: await linkState(job),
+      organization: { name: job.org_name },
+      admissions: await isUniversity(job.tenant_id),
+      job: { title: job.title, description: job.description },
+      testKind: job.test_kind,
+      proctoring: {
+        camera: policy.webcamMonitoring || policy.videoRecording || policy.faceMatch,
+        microphone: policy.audioMonitoring || policy.voiceMatch,
+        screen: policy.screenRecording,
+        idDocument: policy.idVerification,
+        secureBrowser: policy.secureBrowser,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Emails a code to the applicant's address.
+recruitmentRouter.post("/apply/:slug/code", applyLimiter, async (req, res, next) => {
+  try {
+    const b = applicantSchema.parse(req.body);
+    const job = await jobBySlug(String(req.params.slug));
+    if (!job) return res.status(404).json({ error: "link_not_found" });
+    const state = await linkState(job);
+    if (state !== "open") return res.status(410).json({ error: state === "full" ? "link_full" : "link_closed" });
+    await sendApplyCode(job, b.email, b.firstName?.trim() || null, b.lastName?.trim() || null);
+    res.json({ ok: true });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// The code is right: the applicant joins the job and is signed in for its test.
+recruitmentRouter.post("/apply/:slug/verify", applyLimiter, async (req, res, next) => {
+  try {
+    const b = z.object({ email: z.string().trim().email().max(200), code: z.string().trim().regex(/^\d{6}$/) }).parse(req.body);
+    const job = await jobBySlug(String(req.params.slug));
+    if (!job) return res.status(404).json({ error: "link_not_found" });
+    const state = await linkState(job);
+    if (state !== "open") return res.status(410).json({ error: state === "full" ? "link_full" : "link_closed" });
+    const ok = await checkApplyCode(job, b.email, b.code);
+    if (!ok) return res.status(400).json({ error: "wrong_code" });
+    const joined = await joinByLink(job, b.email, ok.firstName, ok.lastName);
+    await signInCandidate(res, joined.assessmentId, joined.candidateId);
+    res.json({ ok: true });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
 // Signs the candidate in for this one assessment.
 recruitmentRouter.post("/invite/:token/start", async (req, res, next) => {
   try {
@@ -139,15 +233,7 @@ recruitmentRouter.post("/invite/:token/start", async (req, res, next) => {
     if (a.status === "completed") return res.status(409).json({ error: "already_completed" });
     if (!["invited", "started"].includes(a.status) || new Date(a.expires_at) <= new Date()) return res.status(410).json({ error: "invite_expired" });
     if (a.job_status !== "open") return res.status(410).json({ error: "job_closed" });
-    await pool.query(`UPDATE recruitment_assessments SET status = 'started', started_at = coalesce(started_at, now()) WHERE id = $1`, [a.id]);
-    // One device at a time: earlier candidate sessions end.
-    await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [a.candidate_id]);
-    const { token } = await createSession(pool, a.candidate_id);
-    await pool.query(`UPDATE auth_sessions SET expires_at = least(expires_at, now() + make_interval(secs => $2)) WHERE session_token_hash = $1`, [
-      hashToken(token),
-      CANDIDATE_SESSION_MS / 1000,
-    ]);
-    setSessionCookie(res, token);
+    await signInCandidate(res, a.id, a.candidate_id);
     res.json({ ok: true });
   } catch (err) {
     next(err);
@@ -242,6 +328,7 @@ const JOB_SELECT = `
     count(a.id) FILTER (WHERE a.status <> 'cancelled')::int AS invited,
     count(a.id) FILTER (WHERE a.status = 'completed')::int AS completed,
     count(a.id) FILTER (WHERE a.status IN ('invited', 'started'))::int AS pending,
+    count(a.id) FILTER (WHERE a.source = 'public_link')::int AS joined_by_link,
     -- Admissions: waitlisted and admitted count as shortlisted and hired.
     count(a.id) FILTER (WHERE a.decision IN ('shortlisted', 'waitlisted'))::int AS shortlisted,
     count(a.id) FILTER (WHERE a.decision IN ('hired', 'admitted'))::int AS hired
@@ -326,7 +413,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
          a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
-         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name
+         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source
        FROM recruitment_assessments a
        LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
@@ -353,6 +440,51 @@ const inviteSchema = z.object({
     .min(1)
     .max(200),
 });
+
+// The job's public link: turned on or off, a limit on how many can start
+// through it and a closing time. Turning it on the first time makes the link.
+recruitmentRouter.patch("/jobs/:id/public-link", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const b = z
+      .object({
+        enabled: z.boolean(),
+        max: z.number().int().min(1).max(10000).nullable().optional(),
+        closesAt: z.string().datetime().nullable().optional(),
+      })
+      .parse(req.body);
+    const job = (await pool.query(`SELECT id, public_slug FROM recruitment_jobs WHERE id = $1 AND tenant_id = $2`, [req.params.id, tenantId])).rows[0];
+    if (!job) return res.status(404).json({ error: "job_not_found" });
+    await pool.query(
+      `UPDATE recruitment_jobs SET public_link_enabled = $2, public_slug = coalesce(public_slug, $3), public_link_max = $4, public_link_closes_at = $5 WHERE id = $1`,
+      [job.id, b.enabled, newSlug(), b.max ?? null, b.closesAt ?? null],
+    );
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: b.enabled ? "recruitment.public_link_on" : "recruitment.public_link_off", targetType: "job", targetId: job.id, ip: req.ip });
+    res.json(await publicLinkOf(job.id));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// A new address for the link: the old one stops working (if it was shared too widely).
+recruitmentRouter.post("/jobs/:id/public-link/new", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const r = await pool.query(`UPDATE recruitment_jobs SET public_slug = $3 WHERE id = $1 AND tenant_id = $2 RETURNING id`, [req.params.id, tenantId, newSlug()]);
+    if (!r.rowCount) return res.status(404).json({ error: "job_not_found" });
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "recruitment.public_link_renewed", targetType: "job", targetId: String(req.params.id), ip: req.ip });
+    res.json(await publicLinkOf(String(req.params.id)));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+async function publicLinkOf(jobId: string) {
+  const j = (await pool.query(`SELECT public_slug, public_link_enabled, public_link_max, public_link_closes_at FROM recruitment_jobs WHERE id = $1`, [jobId])).rows[0];
+  return { slug: j.public_slug, enabled: j.public_link_enabled, max: j.public_link_max, closesAt: j.public_link_closes_at, uses: await linkUses(jobId) };
+}
 
 recruitmentRouter.post("/jobs/:id/invites", requireAuth, async (req: AuthedRequest, res, next) => {
   const tenantId = await recruiterTenant(req, res);

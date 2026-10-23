@@ -374,5 +374,7 @@
  "Your certificate is on hold": "Tu certificado está en espera",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Un revisor está comprobando el registro de supervisión de tu examen, así que el certificado {{code}} está en espera. Te enviaremos un correo cuando termine.",
  "Spica: final assessment": "Spica: evaluación final",
- "Final assessment": "Evaluación final"
+ "Final assessment": "Evaluación final",
+ "Your code for the English assessment for {{jobTitle}}": "Tu código para la evaluación de inglés para {{jobTitle}}",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Tu código para empezar la evaluación de inglés para {{jobTitle}} en {{orgName}} es:\n\n{{code}}\n\nEs válido durante {{minutes}} minutos. Si no lo pediste, puedes ignorar este mensaje."
 }

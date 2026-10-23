@@ -38,7 +38,7 @@ import { Tutor } from "@/pages/Tutor";
 import { Profile } from "@/pages/Profile";
 import { AdminReview } from "@/pages/AdminReview";
 import { IntegrityReviews } from "@/pages/IntegrityReviews";
-import { AssessInvite, CandidateAssessmentPage } from "@/pages/recruitment/CandidatePages";
+import { ApplyByLink, AssessInvite, CandidateAssessmentPage } from "@/pages/recruitment/CandidatePages";
 import { RecruitmentConsole } from "@/pages/recruitment/RecruitmentConsole";
 import { CandidateReportPrint, OrgAdminHome, RecruitmentRedirect } from "@/pages/recruitment/RecruitmentRoutes";
 import { BatchLearnerReportPage, BatchReportPage } from "@/pages/BatchReport";
@@ -155,6 +155,7 @@ function App() {
         <Route path={ROUTES.VERIFY_EMAIL} element={<VerifyEmail />} />
         {/* Recruitment: the candidate's emailed link and assessment, and the printable report. */}
         <Route path={ROUTES.ASSESS} element={<AssessInvite />} />
+        <Route path={ROUTES.APPLY} element={<ApplyByLink />} />
         <Route
           path={ROUTES.CANDIDATE}
           element={

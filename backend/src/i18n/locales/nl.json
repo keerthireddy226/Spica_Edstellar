@@ -374,5 +374,7 @@
  "Your certificate is on hold": "Je certificaat staat in de wacht",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Een beoordelaar controleert de toezichtgegevens van je toets, dus certificaat {{code}} staat in de wacht. We sturen je een e-mail als dat klaar is.",
  "Spica: final assessment": "Spica: eindtoets",
- "Final assessment": "Eindtoets"
+ "Final assessment": "Eindtoets",
+ "Your code for the English assessment for {{jobTitle}}": "Je code voor het Engelse assessment voor {{jobTitle}}",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Je code om het Engelse assessment voor {{jobTitle}} bij {{orgName}} te starten is:\n\n{{code}}\n\nHij is {{minutes}} minuten geldig. Heb je hem niet aangevraagd, dan kun je dit bericht negeren."
 }

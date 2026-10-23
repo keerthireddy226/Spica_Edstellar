@@ -374,5 +374,7 @@
  "Your certificate is on hold": "Sertifikatet ditt er satt på vent",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "En kontrollør sjekker tilsynsregistreringen fra testen din, så sertifikat {{code}} er satt på vent. Vi sender deg en e-post når det er gjort.",
  "Spica: final assessment": "Spica: avsluttende test",
- "Final assessment": "Avsluttende test"
+ "Final assessment": "Avsluttende test",
+ "Your code for the English assessment for {{jobTitle}}": "Koden din for engelskvurderingen for {{jobTitle}}",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koden din for å starte engelskvurderingen for {{jobTitle}} hos {{orgName}} er:\n\n{{code}}\n\nDen gjelder i {{minutes}} minutter. Hvis du ikke ba om den, kan du se bort fra denne meldingen."
 }

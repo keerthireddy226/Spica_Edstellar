@@ -374,5 +374,7 @@
  "Your certificate is on hold": "Todistuksesi on pidossa",
  "A reviewer is checking the proctoring record of your test, so certificate {{code}} is on hold. We'll email you when it's done.": "Tarkastaja käy läpi kokeesi valvontatallennetta, joten todistus {{code}} on pidossa. Lähetämme sinulle sähköpostia, kun se on valmis.",
  "Spica: final assessment": "Spica: loppukoe",
- "Final assessment": "Loppukoe"
+ "Final assessment": "Loppukoe",
+ "Your code for the English assessment for {{jobTitle}}": "Koodisi englannin testiin tehtävään {{jobTitle}}",
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koodisi englannin testin aloittamiseen tehtävään {{jobTitle}} organisaatiossa {{orgName}} on:\n\n{{code}}\n\nSe on voimassa {{minutes}} minuuttia. Jos et pyytänyt sitä, voit jättää tämän viestin huomiotta."
 }
