@@ -40,8 +40,8 @@ const SYSTEM_INSTRUCTION =
   "Base every answer on the learner facts below and on how Spica works. Recommend specific next steps, naming the Spica page to use and the question type or skill to practise. " +
   "If the learner asks about anything else (general knowledge, news, other subjects, coding, personal chat, other apps or tests), politely say you can only help with their English learning in Spica, and suggest a related question they could ask instead. Do not answer the unrelated question. " +
   "If the learner wants to practise English with you, keep the practice short and tied to their goal or test (for example a workplace conversation or an interview answer), then give one or two specific tips and point to the matching Practice Modules question type. " +
-  "Grammar check, every turn: if the learner's latest message has a grammar, word-choice or spelling mistake, begin your reply with one line exactly in this form: \"Correction: <their message, corrected>\", then a blank line, then your answer. " +
-  "Correct only real mistakes (not style, a missing full stop at the end, or capital letters at the start), keep their meaning and words where possible, and correct the whole message if it is short or its sentence with mistakes if it is long. " +
+  "Grammar check, every turn: if the learner's latest message has a grammar or word-choice mistake (for example a wrong verb tense, a missing or wrong word, wrong word order, a wrong word form), begin your reply with one line exactly in this form: \"Correction: <their message, corrected>\", then a blank line, then your answer. " +
+  "Never correct capital letters, lowercase letters, punctuation, spacing or greetings and chat phrases (\"hi\", \"whats up\", \"ok\"): those are not mistakes here. Keep their meaning and words where possible, and correct the whole message if it is short or its sentence with mistakes if it is long. " +
   "If the message has no mistakes, don't add a Correction line. Never comment on the correction beyond that line unless the learner asks why. " +
   "Use plain, simple English suited to the learner's level. Keep replies short: 2 to 5 sentences, or a short list when listing steps. " +
   "Never invent scores, levels, dates, tests or results; if a fact is missing, say so and suggest how to find out (for example take a mock test). " +
@@ -65,6 +65,20 @@ export function buildSystemInstruction(learnerContext?: string): string {
 // Only the most recent turns are sent — bounds prompt size without capping conversation length.
 const MAX_HISTORY_TURNS = 20;
 
+// Letters and digits only, lowercased: two versions of a message that are
+// the same apart from capitals, punctuation and spacing compare equal.
+const bare = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+
+// A "Correction:" line that only changes capitals, punctuation or spacing is
+// dropped: the learner gets grammar corrections only.
+export function dropCosmeticCorrection(reply: string, learnerMessage: string | undefined): string {
+  const m = reply.match(/^\s*Correction:\s*(.+?)\s*(?:\n+([\s\S]*))?$/);
+  if (!m || learnerMessage === undefined) return reply;
+  const corrected = m[1].replace(/^["“]|["”]$/g, "");
+  if (bare(corrected) !== bare(learnerMessage)) return reply;
+  return (m[2] ?? "").trim() || reply;
+}
+
 export async function getCoachReply(history: CoachTurn[], learnerContext?: string): Promise<string | null> {
   const ai = getClient();
   if (!ai) return null;
@@ -80,7 +94,9 @@ export async function getCoachReply(history: CoachTurn[], learnerContext?: strin
       config: { systemInstruction: buildSystemInstruction(learnerContext) },
     });
     const text = response.text?.trim();
-    return text || null;
+    if (!text) return null;
+    const lastLearner = [...recent].reverse().find((t) => t.speaker === "learner")?.transcript;
+    return dropCosmeticCorrection(text, lastLearner);
   } catch (err) {
     console.error("getCoachReply: request failed:", err);
     return null;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { describeNextStep, formatLearnerContext, type LearnerFacts } from "./learnerContext.js";
-import { buildSystemInstruction } from "./coachGemini.js";
+import { buildSystemInstruction, dropCosmeticCorrection } from "./coachGemini.js";
 
 const empty: LearnerFacts = {
   firstName: null,
@@ -139,5 +139,19 @@ describe("tutor stays on Spica", () => {
     const sys = buildSystemInstruction("");
     expect(sys).toContain('"Correction: <their message, corrected>"');
     expect(sys).toContain("If the message has no mistakes, don't add a Correction line");
+  });
+});
+
+describe("grammar corrections only", () => {
+  it("drops a correction that only changes capitals, punctuation or spacing", () => {
+    expect(dropCosmeticCorrection("Correction: Hi.\n\nHello Keerthi!", "hi")).toBe("Hello Keerthi!");
+    expect(dropCosmeticCorrection("Correction: What's up?\n\nI am doing well.", "what'sup?")).toBe("I am doing well.");
+    expect(dropCosmeticCorrection('Correction: "What should I practise next?"\n\nTry a mock test.', "what should i practise next")).toBe("Try a mock test.");
+  });
+
+  it("keeps a real grammar correction, and replies without one", () => {
+    const real = "Correction: Yesterday I went to the office.\n\nGreat!";
+    expect(dropCosmeticCorrection(real, "Yesterday I go to office.")).toBe(real);
+    expect(dropCosmeticCorrection("Hello!", "hi")).toBe("Hello!");
   });
 });
