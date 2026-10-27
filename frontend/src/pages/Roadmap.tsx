@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ClipboardCheck, ShieldAlert } from "lucide-react";
+import { Check, ClipboardCheck, ShieldAlert } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import { Mascot } from "@/components/Mascot";
@@ -15,17 +15,64 @@ import { FinalAssessmentCard } from "@/components/learner/FinalAssessmentCard";
 import { ApiError } from "@/lib/api";
 import { PageError, PageLoading } from "@/components/learner/PageStates";
 import { WORD_BANK, IDIOM_BANK, WORD_CHALLENGES } from "@/data/dailyContent";
+import { useAuth } from "@/hooks/useAuth";
+import { tr } from "@/i18n/tr";
 
 // "My journey" (the Roadmap page): progress to the goal, the levels still to
 // reach, this week's tasks and the checkpoints up to the exam, plus the
 // daily vocabulary challenge.
-function WordOfDayTab() {
+
+// The daily challenge changes once a day (the learner's own date): the same
+// word, idiom and meaning question all day, the next ones tomorrow. Each bank
+// has at least 60, so nothing repeats for two months.
+function localDate(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function todaysEntry<T>(bank: T[], offset: number): T {
+  const [y, m, d] = localDate().split("-").map(Number);
+  const day = Math.floor(Date.UTC(y, m - 1, d) / 86_400_000);
+  return bank[(day + offset) % bank.length];
+}
+
+// What the learner did with today's challenge, remembered in this browser
+// until the day changes.
+interface DailyState {
+  date: string;
+  wordRevealed?: boolean;
+  meaningPick?: number;
+}
+function useDailyState(userId: string | undefined) {
+  const key = `spica.dailyChallenge.${userId ?? "anon"}`;
+  const [state, setState] = useState<DailyState>(() => {
+    const today = localDate();
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? "null") as DailyState | null;
+      if (saved?.date === today) return saved;
+    } catch {
+      // Storage unavailable: today's state just isn't remembered.
+    }
+    return { date: today };
+  });
+  function update(patch: Partial<DailyState>) {
+    setState((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // Not remembered after a reload; nothing else depends on it.
+      }
+      return next;
+    });
+  }
+  return [state, update] as const;
+}
+
+function WordOfDayTab({ revealed, onToggle }: { revealed: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
-  const [entry] = useState(() => WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)]);
-  const [revealed, setRevealed] = useState(false);
+  const entry = todaysEntry(WORD_BANK, 0);
 
   return (
-    <button onClick={() => setRevealed((v) => !v)} className="text-left w-full cursor-pointer">
+    <button onClick={onToggle} className="text-left w-full cursor-pointer">
       <p className="text-xs text-muted mb-3">{t("dailyChallenge.wordOfDay", { action: t(revealed ? "dailyChallenge.hide" : "dailyChallenge.reveal") })}</p>
       <div className="font-display font-bold text-2xl text-ink mb-1">{entry.word}</div>
       {!revealed ? (
@@ -44,7 +91,7 @@ function WordOfDayTab() {
 
 function IdiomTab() {
   const { t } = useTranslation();
-  const [entry] = useState(() => IDIOM_BANK[Math.floor(Math.random() * IDIOM_BANK.length)]);
+  const entry = todaysEntry(IDIOM_BANK, 20);
   return (
     <div>
       <p className="text-xs text-muted mb-3">{t("dailyChallenge.idiomOfDay")}</p>
@@ -54,10 +101,9 @@ function IdiomTab() {
   );
 }
 
-function MeaningChallengeTab() {
+function MeaningChallengeTab({ picked, onPick }: { picked: number | null; onPick: (i: number) => void }) {
   const { t } = useTranslation();
-  const [challenge] = useState(() => WORD_CHALLENGES[Math.floor(Math.random() * WORD_CHALLENGES.length)]);
-  const [picked, setPicked] = useState<number | null>(null);
+  const challenge = todaysEntry(WORD_CHALLENGES, 40);
   const isCorrectPick = picked !== null && picked === challenge.correctIndex;
 
   return (
@@ -73,7 +119,7 @@ function MeaningChallengeTab() {
             <button
               key={i}
               disabled={showResult}
-              onClick={() => setPicked(i)}
+              onClick={() => onPick(i)}
               className={`text-center rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors ${
                 showResult && isCorrect
                   ? "border-success bg-success/10 text-ink"
@@ -88,9 +134,12 @@ function MeaningChallengeTab() {
         })}
       </div>
       {picked !== null && (
-        <p className={`text-xs font-semibold mt-3 ${isCorrectPick ? "text-success" : "text-error"}`}>
-          {isCorrectPick ? t("dailyChallenge.correctFeedback") : t("dailyChallenge.incorrectFeedback", { answer: challenge.options[challenge.correctIndex] })}
-        </p>
+        <>
+          <p className={`text-xs font-semibold mt-3 ${isCorrectPick ? "text-success" : "text-error"}`}>
+            {isCorrectPick ? t("dailyChallenge.correctFeedback") : t("dailyChallenge.incorrectFeedback", { answer: challenge.options[challenge.correctIndex] })}
+          </p>
+          <p className="text-[11px] text-muted mt-1">{tr("You've answered today's challenge. A new one comes tomorrow.")}</p>
+        </>
       )}
     </div>
   );
@@ -98,6 +147,9 @@ function MeaningChallengeTab() {
 
 function DailyChallenge() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const [daily, updateDaily] = useDailyState(user?.id);
+  const answered = daily.meaningPick !== undefined;
   const [tab, setTab] = useState<"word" | "idiom" | "meaning">("word");
   return (
     <div className="relative overflow-hidden bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-4">
@@ -112,16 +164,23 @@ function DailyChallenge() {
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`px-3 py-1.5 rounded-pill text-xs font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-pill text-xs font-semibold transition-colors cursor-pointer inline-flex items-center gap-1 ${
                 tab === id ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
               }`}
             >
               {t(id === "word" ? "dailyChallenge.wordTab" : id === "idiom" ? "dailyChallenge.idiomTab" : "dailyChallenge.meaningTab")}
+              {id === "meaning" && answered && <Check size={12} className="text-success" aria-label={tr("Answered")} />}
             </button>
           ))}
         </div>
       </div>
-      {tab === "word" ? <WordOfDayTab /> : tab === "idiom" ? <IdiomTab /> : <MeaningChallengeTab />}
+      {tab === "word" ? (
+        <WordOfDayTab revealed={!!daily.wordRevealed} onToggle={() => updateDaily({ wordRevealed: !daily.wordRevealed })} />
+      ) : tab === "idiom" ? (
+        <IdiomTab />
+      ) : (
+        <MeaningChallengeTab picked={daily.meaningPick ?? null} onPick={(i) => updateDaily({ meaningPick: i })} />
+      )}
     </div>
   );
 }
