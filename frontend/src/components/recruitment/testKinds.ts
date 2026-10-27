@@ -9,4 +9,5 @@ export const TEST_KIND_LABEL: Record<TestKind, () => string> = {
   professional: () => tr("Professional English test"),
 };
 
-export const TEST_MINUTES: Record<TestKind, string> = { placement: "30–45", fourSkills: "50", speakingListening: "20", writing: "35", professional: "60" };
+// The test itself (the question timers), without the checks before it.
+export const TEST_MINUTES: Record<TestKind, string> = { placement: "30–45", fourSkills: "30", speakingListening: "17", writing: "35", professional: "60" };

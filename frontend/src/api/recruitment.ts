@@ -21,6 +21,17 @@ export interface AssessmentResult {
 
 // ---- Candidate ----
 
+// What a candidate is asked to do before and during the test (the organization's policy).
+export interface CandidateProctoring {
+  camera: boolean;
+  microphone: boolean;
+  screen: boolean;
+  idDocument: boolean;
+  roomScan?: boolean;
+  voiceSample?: boolean;
+  secureBrowser: boolean;
+}
+
 export interface InviteInfo {
   status: "invited" | "started" | "completed" | "expired";
   organization: { name: string; logoUrl: string | null };
@@ -30,7 +41,7 @@ export interface InviteInfo {
   testKind: TestKind;
   firstName: string | null;
   expiresAt: string;
-  proctoring: { camera: boolean; microphone: boolean; screen: boolean; idDocument: boolean; secureBrowser: boolean };
+  proctoring: CandidateProctoring;
 }
 
 export function getInvite(token: string): Promise<InviteInfo> {
@@ -177,7 +188,7 @@ export interface ApplyInfo {
   admissions: boolean;
   job: { title: string; description: string | null };
   testKind: TestKind;
-  proctoring: { camera: boolean; microphone: boolean; screen: boolean; idDocument: boolean; secureBrowser: boolean };
+  proctoring: CandidateProctoring;
 }
 export function getApplyInfo(slug: string): Promise<ApplyInfo> {
   return api(`/recruitment/apply/${encodeURIComponent(slug)}`);

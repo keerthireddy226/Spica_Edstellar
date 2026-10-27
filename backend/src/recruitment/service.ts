@@ -19,6 +19,9 @@ export type Product = (typeof PRODUCTS)[number];
 export const TEST_KINDS = ["placement", "fourSkills", "speakingListening", "writing", "professional"] as const;
 export type TestKind = (typeof TEST_KINDS)[number];
 
+// How long each test takes, without the checks before it (for emails).
+export const TEST_MINUTES: Record<TestKind, string> = { placement: "30 to 45", fourSkills: "30", speakingListening: "17", writing: "35", professional: "60" };
+
 // Rate card per candidate assessment, by credits bought at once (USD cents).
 export const ASSESSMENT_BANDS = [
   { minQuantity: 1, unitPriceCents: 1500 },
@@ -196,7 +199,7 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
     client.release();
   }
   for (const m of emails) {
-    sendCandidateInviteEmail({ to: m.to, orgName: org.name, jobTitle: job.title, token: m.token, expiresAt: m.expiresAt, lang }).catch((err) =>
+    sendCandidateInviteEmail({ to: m.to, orgName: org.name, jobTitle: job.title, token: m.token, expiresAt: m.expiresAt, minutes: TEST_MINUTES[job.test_kind as TestKind], lang }).catch((err) =>
       console.error("failed to send candidate invite:", err),
     );
   }
@@ -224,7 +227,7 @@ async function warnIfLowCredits(tenantId: string) {
 export async function resendInvite(tenantId: string, assessmentId: string): Promise<{ emailed: boolean }> {
   const a = (
     await pool.query(
-      `SELECT a.*, j.title, j.invite_valid_days, t.name AS org_name FROM recruitment_assessments a
+      `SELECT a.*, j.title, j.test_kind, j.invite_valid_days, t.name AS org_name FROM recruitment_assessments a
        JOIN recruitment_jobs j ON j.id = a.job_id JOIN tenants t ON t.id = a.tenant_id
        WHERE a.id = $1 AND a.tenant_id = $2`,
       [assessmentId, tenantId],
@@ -260,7 +263,7 @@ export async function resendInvite(tenantId: string, assessmentId: string): Prom
     [assessmentId, hashToken(token), expiresAt],
   );
   // The new link is saved either way; the recruiter is told if the email failed.
-  return sendCandidateInviteEmail({ to: a.email, orgName: a.org_name, jobTitle: a.title, token, expiresAt, lang: await orgLanguage(tenantId) })
+  return sendCandidateInviteEmail({ to: a.email, orgName: a.org_name, jobTitle: a.title, token, expiresAt, minutes: TEST_MINUTES[a.test_kind as TestKind], lang: await orgLanguage(tenantId) })
     .then(() => ({ emailed: true }))
     .catch((err) => {
       console.error("candidate invite resend failed:", err);
@@ -416,7 +419,7 @@ export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) =
   }
 
   const due = await pool.query(
-    `SELECT a.id, a.email, a.tenant_id, a.expires_at, j.title, t.name AS org_name, t.default_language
+    `SELECT a.id, a.email, a.tenant_id, a.expires_at, j.title, j.test_kind, t.name AS org_name, t.default_language
      FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id JOIN tenants t ON t.id = a.tenant_id
      WHERE a.status = 'invited' AND a.reminder_sent_at IS NULL AND a.expires_at < now() + interval '2 days'
        AND a.invited_at < now() - interval '1 day' LIMIT 500`,
@@ -426,7 +429,7 @@ export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) =
     // A reminder needs a fresh link: only the token's hash is stored.
     const token = generateToken();
     await pool.query(`UPDATE recruitment_assessments SET token_hash = $2, reminder_sent_at = now() WHERE id = $1`, [a.id, hashToken(token)]);
-    await sendCandidateInviteEmail({ to: a.email, orgName: a.org_name, jobTitle: a.title, token, expiresAt: a.expires_at, lang: a.default_language ?? undefined, reminder: true }).catch(
+    await sendCandidateInviteEmail({ to: a.email, orgName: a.org_name, jobTitle: a.title, token, expiresAt: a.expires_at, minutes: TEST_MINUTES[a.test_kind as TestKind], lang: a.default_language ?? undefined, reminder: true }).catch(
       (err) => console.error("candidate reminder failed:", err),
     );
     reminded++;

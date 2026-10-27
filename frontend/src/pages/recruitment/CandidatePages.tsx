@@ -1,11 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Briefcase, Camera, CheckCircle2, Clock, IdCard, Lock, Mic, MonitorUp, ShieldCheck, TimerOff } from "lucide-react";
+import { Briefcase, CheckCircle2, ShieldCheck, TimerOff } from "lucide-react";
 import { Button } from "@/components/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { refreshBranding } from "@/components/AppShell/useBranding";
 import { CandidateFinished, CandidatePanel, CandidateShell } from "@/components/recruitment/CandidateShell";
 import { TEST_KIND_LABEL, TEST_MINUTES } from "@/components/recruitment/testKinds";
+import { CandidateChecklist } from "@/components/recruitment/CandidateChecklist";
 import { PlacementTest } from "@/pages/PlacementTest";
 import { PracticeTests } from "@/pages/PracticeTests";
 import { startExamSession } from "@/api/practiceTests";
@@ -93,13 +94,6 @@ export function AssessInvite() {
       </CandidateShell>
     );
   }
-  const needs: [boolean, ReactNode, string][] = [
-    [info.proctoring.camera, <Camera key="c" size={16} />, tr("A camera: you're visible during the test")],
-    [info.proctoring.microphone, <Mic key="m" size={16} />, tr("A microphone, in a quiet room")],
-    [info.proctoring.screen, <MonitorUp key="s" size={16} />, tr("A computer: you'll share your entire screen")],
-    [info.proctoring.idDocument, <IdCard key="i" size={16} />, tr("Your passport or national ID card")],
-    [info.proctoring.secureBrowser, <Lock key="l" size={16} />, info.admissions ? tr("Safe Exam Browser, as the admissions office instructed") : tr("Safe Exam Browser, as your recruiter instructed")],
-  ];
   return (
     <CandidateShell org={info.organization.name}>
       <CandidatePanel
@@ -107,32 +101,7 @@ export function AssessInvite() {
         title={info.firstName ? tr("Hello {{name}}", { name: info.firstName }) : tr("Your English assessment")}
         subtitle={tr("{{org}} invited you to an English assessment for {{job}}.", { org: info.organization.name, job: info.job.title })}
       >
-        <div className="bg-paper-warm rounded-input p-4 flex flex-col gap-1.5 text-sm text-ink">
-          <p className="font-semibold">{TEST_KIND_LABEL[info.testKind]()}</p>
-          <p className="flex items-center gap-1.5 text-muted">
-            <Clock size={14} />{" "}
-            {tr("About {{m}} minutes. Do it in one sitting.", {
-              m: TEST_MINUTES[info.testKind],
-            })}
-          </p>
-          <p className="text-xs text-muted">
-            {tr("The link works until {{date}}.", {
-              date: new Date(info.expiresAt).toLocaleDateString(),
-            })}
-          </p>
-        </div>
-        {needs.some(([on]) => on) && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("You'll need")}</p>
-            {needs
-              .filter(([on]) => on)
-              .map(([, icon, text]) => (
-                <p key={text} className="flex items-center gap-2 text-sm text-ink">
-                  <span className="text-navy-deep">{icon}</span> {text}
-                </p>
-              ))}
-          </div>
-        )}
+        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} expiresAt={info.expiresAt} admissions={info.admissions} />
         {error && <p className="text-sm text-error text-center">{error}</p>}
         <Button onClick={start} disabled={busy}>
           {busy ? tr("Starting...") : tr("Start the assessment")}
@@ -230,12 +199,6 @@ export function ApplyByLink() {
   }
   const field = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
   const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const needs: [boolean, ReactNode, string][] = [
-    [info.proctoring.camera, <Camera key="c" size={16} />, tr("A camera: you're visible during the test")],
-    [info.proctoring.microphone, <Mic key="m" size={16} />, tr("A microphone, in a quiet room")],
-    [info.proctoring.screen, <MonitorUp key="s" size={16} />, tr("A computer: you'll share your entire screen")],
-    [info.proctoring.idDocument, <IdCard key="i" size={16} />, tr("Your passport or national ID card")],
-  ];
   return (
     <CandidateShell org={info.organization.name}>
       <CandidatePanel
@@ -243,24 +206,7 @@ export function ApplyByLink() {
         title={tr("English assessment for {{job}}", { job: info.job.title })}
         subtitle={tr("{{org}} asks applicants for {{job}} to take this English assessment.", { org: info.organization.name, job: info.job.title })}
       >
-        <div className="bg-paper-warm rounded-input p-4 flex flex-col gap-1.5 text-sm text-ink">
-          <p className="font-semibold">{TEST_KIND_LABEL[info.testKind]()}</p>
-          <p className="flex items-center gap-1.5 text-muted">
-            <Clock size={14} /> {tr("About {{m}} minutes. Do it in one sitting.", { m: TEST_MINUTES[info.testKind] })}
-          </p>
-        </div>
-        {needs.some(([on]) => on) && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("You'll need")}</p>
-            {needs
-              .filter(([on]) => on)
-              .map(([, icon, text]) => (
-                <p key={text} className="flex items-center gap-2 text-sm text-ink">
-                  <span className="text-navy-deep">{icon}</span> {text}
-                </p>
-              ))}
-          </div>
-        )}
+        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} admissions={info.admissions} />
         {!codeSent ? (
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-3">

@@ -125,6 +125,8 @@ recruitmentRouter.get("/invite/:token", async (req, res, next) => {
         microphone: policy.audioMonitoring || policy.voiceMatch,
         screen: policy.screenRecording,
         idDocument: policy.idVerification,
+        roomScan: policy.roomScan,
+        voiceSample: policy.voiceMatch,
         secureBrowser: policy.secureBrowser,
       },
     });
@@ -184,6 +186,8 @@ recruitmentRouter.get("/apply/:slug", async (req, res, next) => {
         microphone: policy.audioMonitoring || policy.voiceMatch,
         screen: policy.screenRecording,
         idDocument: policy.idVerification,
+        roomScan: policy.roomScan,
+        voiceSample: policy.voiceMatch,
         secureBrowser: policy.secureBrowser,
       },
     });
