@@ -200,6 +200,8 @@ export const validateIndividualEmails = (emails: string[]) =>
   api<{ existing: string[] }>("/admin/individuals/bulk/validate", { method: "POST", body: JSON.stringify({ emails }) });
 export const grantIndividualAccess = (id: string, months: number) =>
   api<{ id: string }>(`/admin/individuals/${id}/access`, { method: "POST", body: JSON.stringify({ months }) });
+export const renameIndividual = (id: string, firstName: string, lastName: string) =>
+  api<{ id: string }>(`/admin/individuals/${id}/name`, { method: "PATCH", body: JSON.stringify({ firstName, lastName }) });
 export const deactivateIndividual = (id: string) => api<{ id: string }>(`/admin/individuals/${id}/deactivate`, { method: "POST" });
 export const reactivateIndividual = (id: string) => api<{ id: string }>(`/admin/individuals/${id}/reactivate`, { method: "POST" });
 export const resendIndividualInvite = (id: string) => api<{ id: string; email: string }>(`/admin/individuals/${id}/resend-invite`, { method: "POST" });

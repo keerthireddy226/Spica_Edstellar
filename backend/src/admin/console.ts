@@ -610,6 +610,20 @@ staffConsoleRouter.post("/individuals/:id/access", requireAuth, async (req: Auth
   }
 });
 
+// Corrects an individual learner's name (it's printed on their certificate).
+staffConsoleRouter.patch("/individuals/:id/name", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "inviteLearners"))) return;
+  try {
+    const body = individualSchema.pick({ firstName: true, lastName: true }).parse(req.body);
+    const u = await individual(String(req.params.id));
+    if (!u) return res.status(404).json({ error: "learner_not_found" });
+    await pool.query(`UPDATE users SET first_name = $2, last_name = $3, updated_at = now() WHERE id = $1`, [u.id, body.firstName, body.lastName]);
+    res.json({ id: u.id, firstName: body.firstName, lastName: body.lastName });
+  } catch (err) {
+    next(err);
+  }
+});
+
 staffConsoleRouter.post("/individuals/:id/deactivate", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "inviteLearners"))) return;
   try {

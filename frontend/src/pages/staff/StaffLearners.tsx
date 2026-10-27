@@ -4,7 +4,7 @@ import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { useTranslation } from "react-i18next";
 import { JOB_ROLES, sortedCountries } from "@/constants/demographics";
 import type { JobRole } from "@/api/onboarding";
-import { Building2, Eye, Gift, Mail, RotateCcw, Ban, UserPlus, Users, User, CreditCard, X } from "lucide-react";
+import { Building2, Eye, Gift, Mail, Pencil, RotateCcw, Ban, UserPlus, Users, User, CreditCard, X } from "lucide-react";
 import { Button } from "@/components/Button";
 import { ApiError } from "@/lib/api";
 import { BulkLearnerUpload } from "@/components/BulkLearnerUpload";
@@ -20,6 +20,7 @@ import {
   inviteIndividualsBulk,
   money,
   reactivateIndividual,
+  renameIndividual,
   resendIndividualInvite,
   shortDate,
   validateIndividualEmails,
@@ -290,6 +291,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
   const [error, setError] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [deactivating, setDeactivating] = useState<IndividualLearner | null>(null);
+  const [renaming, setRenaming] = useState<{ row: IndividualLearner; firstName: string; lastName: string } | null>(null);
   const [params, setParams] = useSearchParams();
   const load = () => {
     setFailed(false);
@@ -429,6 +431,11 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                             <Eye size={15} />
                           </IconBtn>
                         )}
+                        {canInvite && (
+                          <IconBtn title={tr("Edit name")} onClick={() => setRenaming({ row: r, firstName: r.firstName ?? "", lastName: r.lastName ?? "" })}>
+                            <Pencil size={15} />
+                          </IconBtn>
+                        )}
                         {canInvite && r.active && (
                           <IconBtn title={tr("Give free months")} onClick={() => setGranting(r)}>
                             <Gift size={15} />
@@ -497,6 +504,40 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                 {tr("Cancel")}</Button>
             </div>
           </div>
+        </div>
+      )}
+      {renaming && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setRenaming(null)}>
+          <form
+            className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-sm p-6 flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const n = renaming;
+              if (!n.firstName.trim() || !n.lastName.trim()) return;
+              setRenaming(null);
+              act(() => renameIndividual(n.row.id, n.firstName.trim(), n.lastName.trim()), tr("Name changed to {{name}}.", { name: `${n.firstName.trim()} ${n.lastName.trim()}` }));
+            }}
+          >
+            <h2 className="font-display font-bold text-lg text-ink">{tr("Edit name")}</h2>
+            <p className="text-sm text-muted">{tr("{{email}}'s name, as it appears on their certificate.", { email: renaming.row.email })}</p>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
+              {tr("First name")}
+              <input value={renaming.firstName} onChange={(e) => setRenaming({ ...renaming, firstName: e.target.value })} className={inputClass} maxLength={100} required />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
+              {tr("Last name")}
+              <input value={renaming.lastName} onChange={(e) => setRenaming({ ...renaming, lastName: e.target.value })} className={inputClass} maxLength={100} required />
+            </label>
+            <div className="flex gap-3">
+              <Button type="submit" className="flex-1">
+                {tr("Save")}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setRenaming(null)}>
+                {tr("Cancel")}
+              </Button>
+            </div>
+          </form>
         </div>
       )}
       {deactivating && (
