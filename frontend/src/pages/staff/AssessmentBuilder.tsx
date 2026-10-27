@@ -220,8 +220,8 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
   const typesFor = (testTypeId: string | undefined, family: string | undefined): [string, string][] => {
     const tests = testTypes.filter((t) => (testTypeId ? t.id === testTypeId : !family || t.familyId === family));
     const types = new Map(tests.flatMap((t) => (t.itemTypes ?? []).map((x) => [x.id, x.name] as [string, string])));
-    // Before the tests load: the names already known.
-    return types.size || testTypes.length ? [...types] : Object.entries(allTypes);
+    // Before the tests load, or from a server that doesn't list their types yet: the names already known.
+    return testTypes.some((t) => t.itemTypes) ? [...types] : Object.entries(allTypes);
   };
   const pickTest = (testTypeId: string | undefined) => {
     const keep = f.itemTypeId && typesFor(testTypeId, f.family).some(([id]) => id === f.itemTypeId);
