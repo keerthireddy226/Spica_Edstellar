@@ -221,112 +221,119 @@ export function StaffDashboard() {
         </Panel>
       </div>
 
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
-        <Panel title={tr("Plans")}>
-          {data.organizations.byTier.map((t) => (
-            <div key={t.tier} className="flex items-center gap-3">
-              <span className="w-24 text-sm text-ink">{TIER_LABELS[t.tier]}</span>
-              <div className="flex-1 h-2 rounded-full bg-rule overflow-hidden">
-                <div className="h-full bg-navy rounded-full" style={{ width: `${data.organizations.active ? (t.count / data.organizations.active) * 100 : 0}%` }} />
-              </div>
-              <span className="text-sm text-muted w-6 text-right">{t.count}</span>
-            </div>
-          ))}
-          <p className="text-xs text-muted">
-            {tr("{{pilots}} on pilot", { pilots: data.organizations.pilots })}{data.organizations.deactivated ? tr(" · {{deactivated}} deactivated", { deactivated: data.organizations.deactivated }) : ""}
-          </p>
-        </Panel>
+      {/* Two columns, so the long activity list doesn't leave a gap: plans,
+          individual learners, the Admins' portfolios and the system on the
+          left; recent activity on the right. */}
+      <div className="grid xl:grid-cols-3 gap-4 items-start">
+        <div className="xl:col-span-2 flex flex-col gap-4 min-w-0">
+          <div className="grid md:grid-cols-2 gap-4 items-start">
+            <Panel title={tr("Plans")}>
+              {data.organizations.byTier.map((t) => (
+                <div key={t.tier} className="flex items-center gap-3">
+                  <span className="w-24 text-sm text-ink">{TIER_LABELS[t.tier]}</span>
+                  <div className="flex-1 h-2 rounded-full bg-rule overflow-hidden">
+                    <div className="h-full bg-navy rounded-full" style={{ width: `${data.organizations.active ? (t.count / data.organizations.active) * 100 : 0}%` }} />
+                  </div>
+                  <span className="text-sm text-muted w-6 text-right">{t.count}</span>
+                </div>
+              ))}
+              <p className="text-xs text-muted">
+                {tr("{{pilots}} on pilot", { pilots: data.organizations.pilots })}{data.organizations.deactivated ? tr(" · {{deactivated}} deactivated", { deactivated: data.organizations.deactivated }) : ""}
+              </p>
+            </Panel>
 
-        <Panel title={tr("Individual learners")} action={<Link to={r.learners} className="text-xs font-semibold text-navy hover:underline">{tr("Open")}</Link>}>
-          <div className="grid grid-cols-2 gap-3">
-            {(
-              [
-                [tr("Total"), data.individuals.total],
-                [tr("Paid"), data.individuals.paid],
-                [tr("Practised this week"), data.individuals.active7],
-                [tr("New this week"), data.individuals.new7],
-              ] as const
-            ).map(([l, v]) => (
-              <div key={l} className="rounded-input bg-paper-warm px-3 py-2">
-                <p className="font-display font-bold text-xl text-ink">{v}</p>
-                <p className="text-[11px] text-muted">{l}</p>
+            <Panel title={tr("Individual learners")} action={<Link to={r.learners} className="text-xs font-semibold text-navy hover:underline">{tr("Open")}</Link>}>
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    [tr("Total"), data.individuals.total],
+                    [tr("Paid"), data.individuals.paid],
+                    [tr("Practised this week"), data.individuals.active7],
+                    [tr("New this week"), data.individuals.new7],
+                  ] as const
+                ).map(([l, v]) => (
+                  <div key={l} className="rounded-input bg-paper-warm px-3 py-2">
+                    <p className="font-display font-bold text-xl text-ink">{v}</p>
+                    <p className="text-[11px] text-muted">{l}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+              {revenue && <p className="text-xs text-muted">{tr("This year: {{money}} paid across organizations and individuals.", { money: money(revenue.thisYear, revenue.currency) })}</p>}
+            </Panel>
           </div>
-          {revenue && <p className="text-xs text-muted">{tr("This year: {{money}} paid across organizations and individuals.", { money: money(revenue.thisYear, revenue.currency) })}</p>}
-        </Panel>
-
-        <Panel title={tr("Recent activity")} action={<Link to={r.audit} className="text-xs font-semibold text-navy hover:underline">{tr("Audit log")}</Link>}>
-          {data.recent.length === 0 ? (
-            <EmptyNote>{tr("Nothing recorded yet.")}</EmptyNote>
-          ) : (
-            data.recent.slice(0, 8).map((e, i) => (
-              <div key={i} className="text-sm border-t border-rule pt-2.5 first:border-0 first:pt-0">
-                <p className="text-ink">
-                  <span className="font-medium">{e.actorLabel ?? tr("System")}</span> {AUDIT_VERBS[e.action] ?? e.action.replace(/[._]/g, " ")}{" "}
-                  {e.targetLabel ?? ""}
-                </p>
-                <p className="text-[11px] text-muted">
-                  {e.orgName ? `${e.orgName} · ` : ""}
-                  {ago(e.createdAt)}
-                </p>
-              </div>
-            ))
-          )}
-        </Panel>
-      </div>
-
-      {sup && data.admins && (
-        <div className="grid lg:grid-cols-3 gap-4">
-          <Panel className="lg:col-span-2" title={tr("Admins' portfolios")} action={<Link to={ROUTES.ADMIN_ADMINS} className="text-xs font-semibold text-navy hover:underline">{tr("Manage")}</Link>}>
-            {data.admins.length === 0 ? (
-              <EmptyNote>{tr("No Admins yet.")}</EmptyNote>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[520px]">
-                  <thead>
-                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-b border-rule">
-                      <th className="py-2">{tr("Admin")}</th>
-                      <th className="py-2">{tr("Organizations")}</th>
-                      <th className="py-2">{tr("Learners")}</th>
-                      <th className="py-2">{tr("At risk")}</th>
-                      <th className="py-2">{tr("Last signed in")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.admins.map((a) => (
-                      <tr key={a.id} className={`border-b border-rule last:border-0 ${a.active ? "" : "opacity-50"}`}>
-                        <td className="py-2">
-                          <p className="text-ink font-medium">{a.name}</p>
-                          <p className="text-xs text-muted">{a.department ?? a.email}</p>
-                        </td>
-                        <td className="py-2 text-ink">{a.organizations}</td>
-                        <td className="py-2 text-ink">{a.learners}</td>
-                        <td className="py-2">{a.atRisk ? <StatusPill tone="error">{a.atRisk}</StatusPill> : <span className="text-muted">0</span>}</td>
-                        <td className="py-2 text-muted">{ago(a.lastLoginAt)}</td>
+          {sup && data.admins && (
+            <Panel title={tr("Admins' portfolios")} action={<Link to={ROUTES.ADMIN_ADMINS} className="text-xs font-semibold text-navy hover:underline">{tr("Manage")}</Link>}>
+              {data.admins.length === 0 ? (
+                <EmptyNote>{tr("No Admins yet.")}</EmptyNote>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[520px]">
+                    <thead>
+                      <tr className="text-left text-xs font-semibold uppercase tracking-wide text-muted border-b border-rule">
+                        <th className="py-2">{tr("Admin")}</th>
+                        <th className="py-2">{tr("Organizations")}</th>
+                        <th className="py-2">{tr("Learners")}</th>
+                        <th className="py-2">{tr("At risk")}</th>
+                        <th className="py-2">{tr("Last signed in")}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {data.admins.map((a) => (
+                        <tr key={a.id} className={`border-b border-rule last:border-0 ${a.active ? "" : "opacity-50"}`}>
+                          <td className="py-2">
+                            <p className="text-ink font-medium">{a.name}</p>
+                            <p className="text-xs text-muted">{a.department ?? a.email}</p>
+                          </td>
+                          <td className="py-2 text-ink">{a.organizations}</td>
+                          <td className="py-2 text-ink">{a.learners}</td>
+                          <td className="py-2">{a.atRisk ? <StatusPill tone="error">{a.atRisk}</StatusPill> : <span className="text-muted">0</span>}</td>
+                          <td className="py-2 text-muted">{ago(a.lastLoginAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Panel>
+          )}
+          {sup && data.admins && (
+            <Panel title={tr("System")} action={<Link to={ROUTES.SUPER_SYSTEM} className="text-xs font-semibold text-navy hover:underline">{tr("Open")}</Link>}>
+              <div className="flex items-center gap-3">
+                <ServerCog size={20} className={data.system?.failedJobs ? "text-error" : "text-success"} />
+                <div>
+                  <p className="text-sm text-ink font-medium">{data.system?.failedJobs ? data.system.failedJobs === 1 ? tr("1 failed job") : tr("{{n}} failed jobs", { n: data.system.failedJobs }) : tr("All background jobs healthy")}</p>
+                  <p className="text-xs text-muted">{data.system?.readyJobs ?? 0} {tr("waiting to run")}</p>
+                </div>
               </div>
+              <p className="text-xs text-muted">
+                {data.pendingReviews === 1 ? tr("1 placement waiting for identity review ·") : tr("{{n}} placements waiting for identity review ·", { n: data.pendingReviews })}{" "}
+                <Link to={r.reviews} className="text-navy font-semibold hover:underline">
+                  {tr("Review")}</Link>
+              </p>
+            </Panel>
+          )}
+        </div>
+        <div className="flex flex-col gap-4 min-w-0">
+          <Panel title={tr("Recent activity")} action={<Link to={r.audit} className="text-xs font-semibold text-navy hover:underline">{tr("Audit log")}</Link>}>
+            {data.recent.length === 0 ? (
+              <EmptyNote>{tr("Nothing recorded yet.")}</EmptyNote>
+            ) : (
+              data.recent.slice(0, 8).map((e, i) => (
+                <div key={i} className="text-sm border-t border-rule pt-2.5 first:border-0 first:pt-0">
+                  <p className="text-ink">
+                    <span className="font-medium">{e.actorLabel ?? tr("System")}</span> {AUDIT_VERBS[e.action] ?? e.action.replace(/[._]/g, " ")}{" "}
+                    {e.targetLabel ?? ""}
+                  </p>
+                  <p className="text-[11px] text-muted">
+                    {e.orgName ? `${e.orgName} · ` : ""}
+                    {ago(e.createdAt)}
+                  </p>
+                </div>
+              ))
             )}
           </Panel>
-          <Panel title={tr("System")} action={<Link to={ROUTES.SUPER_SYSTEM} className="text-xs font-semibold text-navy hover:underline">{tr("Open")}</Link>}>
-            <div className="flex items-center gap-3">
-              <ServerCog size={20} className={data.system?.failedJobs ? "text-error" : "text-success"} />
-              <div>
-                <p className="text-sm text-ink font-medium">{data.system?.failedJobs ? data.system.failedJobs === 1 ? tr("1 failed job") : tr("{{n}} failed jobs", { n: data.system.failedJobs }) : tr("All background jobs healthy")}</p>
-                <p className="text-xs text-muted">{data.system?.readyJobs ?? 0} {tr("waiting to run")}</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted">
-              {data.pendingReviews === 1 ? tr("1 placement waiting for identity review ·") : tr("{{n}} placements waiting for identity review ·", { n: data.pendingReviews })}{" "}
-              <Link to={r.reviews} className="text-navy font-semibold hover:underline">
-                {tr("Review")}</Link>
-            </p>
-          </Panel>
         </div>
-      )}
+      </div>
     </div>
   );
 }
