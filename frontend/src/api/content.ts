@@ -191,6 +191,8 @@ export interface BuilderTestType {
   cefrMax: string;
   familyId: string;
   familyName: string;
+  // The question types in its sections.
+  itemTypes?: { id: string; name: string }[];
 }
 
 export function getBuilderTestTypes(): Promise<{ testTypes: BuilderTestType[] }> {

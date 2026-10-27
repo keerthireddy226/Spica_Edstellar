@@ -214,6 +214,19 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
     setPage(0);
     setF((x) => ({ ...x, ...patch }));
   };
+  // Only the question types a filter can find: the chosen test's own types
+  // (another test's type always gave "No questions"), else every type in the
+  // live tests (the hidden LanguageCert tests aren't listed).
+  const typesFor = (testTypeId: string | undefined, family: string | undefined): [string, string][] => {
+    const tests = testTypes.filter((t) => (testTypeId ? t.id === testTypeId : !family || t.familyId === family));
+    const types = new Map(tests.flatMap((t) => (t.itemTypes ?? []).map((x) => [x.id, x.name] as [string, string])));
+    // Before the tests load: the names already known.
+    return types.size || testTypes.length ? [...types] : Object.entries(allTypes);
+  };
+  const pickTest = (testTypeId: string | undefined) => {
+    const keep = f.itemTypeId && typesFor(testTypeId, f.family).some(([id]) => id === f.itemTypeId);
+    set({ testTypeId, itemTypeId: keep ? f.itemTypeId : undefined });
+  };
 
   return (
     <Panel title={tr("All questions")}>
@@ -223,13 +236,13 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
           <Search size={14} className="text-muted" />
           <input value={q} onChange={(e) => (setPage(0), setQ(e.target.value))} placeholder={tr("Search text or topic")} className="py-2 text-sm bg-transparent focus:outline-none w-48" />
         </label>
-        <select value={f.testTypeId ?? ""} onChange={(e) => set({ testTypeId: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
+        <select value={f.testTypeId ?? ""} onChange={(e) => pickTest(e.target.value || undefined)} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any test")}</option>
           <TestTypeOptions testTypes={testTypes.filter((t) => !f.family || t.familyId === f.family)} />
         </select>
         <select value={f.itemTypeId ?? ""} onChange={(e) => set({ itemTypeId: e.target.value || undefined })} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any question type")}</option>
-          {Object.entries(allTypes)
+          {typesFor(f.testTypeId, f.family)
             .sort((a, b) => a[1].localeCompare(b[1]))
             .map(([id, name]) => (
               <option key={id} value={id}>

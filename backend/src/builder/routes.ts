@@ -116,13 +116,26 @@ builderRouter.get("/content/builder/test-types", requireAuth, async (req: Authed
   if (!(await requirePermission(req, res, "contentReview"))) return;
   try {
     const r = await pool.query(
-      `SELECT tt.id, tt.name, tt.duration_minutes, tt.cefr_min, tt.cefr_max, f.id AS family_id, f.name AS family_name
+      `SELECT tt.id, tt.name, tt.duration_minutes, tt.cefr_min, tt.cefr_max, f.id AS family_id, f.name AS family_name,
+         -- The question types in the test's sections (the same rule the library's test filter uses).
+         (SELECT coalesce(json_agg(json_build_object('id', x.id, 'name', x.name) ORDER BY x.name), '[]')
+            FROM (SELECT DISTINCT it.id, it.name FROM exam_parts ep JOIN exams e ON e.id = ep.exam_id JOIN item_types it ON it.id = ep.item_type_id
+                  WHERE e.is_active AND e.test_type_id = tt.id) x) AS item_types
        FROM test_types tt JOIN exam_families f ON f.id = tt.family_id
        WHERE tt.status = 'live' AND f.active AND EXISTS (SELECT 1 FROM exams e WHERE e.test_type_id = tt.id AND e.is_active)
        ORDER BY f.sort_order, tt.sort_order`,
     );
     res.json({
-      testTypes: r.rows.map((t) => ({ id: t.id, name: t.name, officialMinutes: t.duration_minutes, cefrMin: t.cefr_min, cefrMax: t.cefr_max, familyId: t.family_id, familyName: t.family_name })),
+      testTypes: r.rows.map((t) => ({
+        id: t.id,
+        name: t.name,
+        officialMinutes: t.duration_minutes,
+        cefrMin: t.cefr_min,
+        cefrMax: t.cefr_max,
+        familyId: t.family_id,
+        familyName: t.family_name,
+        itemTypes: t.item_types,
+      })),
     });
   } catch (err) {
     next(err);
