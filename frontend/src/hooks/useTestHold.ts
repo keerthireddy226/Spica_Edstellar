@@ -4,7 +4,7 @@ import { IssueGuard, type IssueKind } from "@/lib/issueGuard";
 import { holdTest } from "@/api/practiceTests";
 import type { RoomState } from "@/hooks/useProctoring";
 
-// Problems in the room during a test (loud background noise, another person on
+// Problems in the room during a test (someone else talking nearby, another person on
 // camera, no face, a covered camera): three warnings, spaced out, then the test
 // pauses until the problem is fixed (see lib/issueGuard.ts). In a timed test
 // the server stops the clock while paused, up to a total per test; past that
@@ -87,7 +87,7 @@ export function useTestHold({
     setCapReached(false);
   }, [sessionId]);
 
-  // Background noise, from the raw microphone, between answers.
+  // Someone else talking, from the raw microphone, between answers.
   useEffect(() => {
     if (!enabled || !watchNoise) return;
     let stream: MediaStream | null = null;

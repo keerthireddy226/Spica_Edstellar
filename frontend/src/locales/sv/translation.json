@@ -340,7 +340,7 @@
     "progress": "Framsteg",
     "modules": "Moduler",
     "practiceTests": "Övningsprov",
-    "tutor": "Handledare",
+    "tutor": "AI-coach",
     "profile": "Profil"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Obegränsad övning i alla moduler",
       "progress": "Framstegsrapporter och studieplan",
       "mockTests": "Fullständiga övningsprov",
-      "tutor": "AI-handledare för tal"
+      "tutor": "AI-coach för tal"
     },
     "months_one": "{{count}} månad",
     "months_other": "{{count}} månader",
@@ -773,7 +773,7 @@
     "upgrade": "Se planer",
     "locked": {
       "mocktest": "Övningsprov ingår i full tillgång.",
-      "coach": "AI-handledaren ingår i full tillgång.",
+      "coach": "AI-coachen ingår i full tillgång.",
       "placement": "Du har använt ditt gratis inplaceringstest. Nya försök ingår i full tillgång.",
       "practice": "Du har använt dina {{limit}} gratissessioner den här veckan. De förnyas under en rullande 7-dagarsperiod — eller uppgradera för obegränsad övning."
     },

@@ -31,7 +31,10 @@ export function MockExamList({
   onStart,
   phone = false,
   afterHero,
+  reports,
 }: {
+  // The link to this learner's mock test reports, on the line above the list (as on Practice Tests).
+  reports?: React.ReactNode;
   // Shown right under the banner (for example the "keep going" access card).
   afterHero?: React.ReactNode;
   // On a phone mocks can't start: rows say so instead of Start/Resume.
@@ -108,9 +111,12 @@ export function MockExamList({
         </div>
       )}
 
-      {families.map((family) => (
+      {families.map((family, i) => (
         <section key={family.id} className="flex flex-col gap-3">
-          <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family, true)}</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-display font-bold text-lg text-ink">{familyHeading(family, true)}</h2>
+            {i === 0 && reports}
+          </div>
           <div className="flex flex-col gap-3">
             {family.testTypes.map((tt) => (
               <MockRow

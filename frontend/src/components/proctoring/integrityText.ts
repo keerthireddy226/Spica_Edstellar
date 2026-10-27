@@ -42,6 +42,8 @@ export const REASON_TEXT: Record<string, () => string> = {
   noisy_answer: () => tr("Loud background noise in spoken answers"),
   test_hold: () => tr("Test paused until a problem in the room was fixed"),
   hold_warning: () => tr("Warned about a problem in the room"),
+  test_paused: () => tr("Paused the practice test"),
+  test_resumed: () => tr("Continued the practice test"),
   screen_share_stopped: () => tr("Stopped sharing the screen"),
   screen_not_entire: () => tr("Shared a window instead of the entire screen"),
   looking_away: () => tr("Snapshots looking away from the screen"),

@@ -57,6 +57,8 @@ const REASON_LABEL: Record<string, string> = {
   noisy_answer: "noisy spoken answers",
   test_hold: "test paused for a problem in the room",
   hold_warning: "warned about a problem in the room",
+  test_paused: "paused the practice test",
+  test_resumed: "continued the practice test",
   away_from_camera: "no face in many snapshots",
   multiple_faces: "more than one face on camera",
   extra_person: "another person on camera",

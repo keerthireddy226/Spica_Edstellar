@@ -39,6 +39,8 @@ const EVENT_WEIGHTS: Record<string, { each: number; cap: number }> = {
   noisy_answer: { each: 0, cap: 0 },
   test_hold: { each: 0, cap: 0 },
   hold_warning: { each: 0, cap: 0 },
+  test_paused: { each: 0, cap: 0 },
+  test_resumed: { each: 0, cap: 0 },
 };
 
 // A snapshot counts as looking away when the head turns this far from the

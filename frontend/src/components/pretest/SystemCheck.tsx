@@ -13,7 +13,7 @@ import {
   type DeviceNeeds,
   type NoiseLevel,
 } from "@/lib/systemCheck";
-import { roomNoiseFrom } from "@/lib/roomNoise";
+import { speechBandReader, voiceInReadings } from "@/lib/noiseGuard";
 import { tr } from "@/i18n/tr";
 
 // "active" is waiting on the learner; "running" is the check working by itself.
@@ -22,7 +22,7 @@ type RowStatus = "waiting" | "active" | "running" | "pass" | "fail" | "warn";
 const RECORD_SECONDS = 4;
 const NOISE_SECONDS = 3;
 // RMS of the processed mic signal: a test recording that never peaks above
-// this heard nothing. Room noise is judged in lib/roomNoise.ts.
+// this heard nothing. Voices in the room are judged in lib/noiseGuard.ts.
 const SPEECH_PEAK = 0.05;
 
 function StatusChip({ status }: { status: RowStatus }) {
@@ -140,17 +140,14 @@ function useMicCheck() {
   const measureRoom = useCallback(async (): Promise<NoiseLevel> => {
     const analyser = roomAnalyserRef.current;
     if (!analyser) return "quiet";
-    const data = new Float32Array(analyser.fftSize);
+    // "noisy" only when someone can be heard talking (a voice, a TV, a call),
+    // not a steady hiss or fan: the same rule as during the test (noiseGuard).
+    const readBand = speechBandReader(analyser, analyser.context.sampleRate);
     const readings: number[] = [];
-    const timer = setInterval(() => {
-      analyser.getFloatTimeDomainData(data);
-      let sum = 0;
-      for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
-      readings.push(Math.sqrt(sum / data.length));
-    }, 100);
+    const timer = setInterval(() => readings.push(readBand()), 100);
     await new Promise((r) => setTimeout(r, NOISE_SECONDS * 1000));
     clearInterval(timer);
-    return roomNoiseFrom(readings) ?? "quiet";
+    return voiceInReadings(readings) ? "noisy" : "quiet";
   }, []);
 
   useEffect(() => release, [release]);
@@ -285,12 +282,22 @@ export function SystemCheck({
   onPassed,
   onBack,
   phoneOk = false,
+  notice,
+  extra,
+  doneLabel,
+  busy = false,
 }: {
   needs: DeviceNeeds;
   onPassed: (r: DeviceCheckResult) => void;
   onBack?: () => void;
   // Practice Modules work on a phone: no "use a computer" warning.
   phoneOk?: boolean;
+  // Why the check opened (a quick check found a problem), above the rows.
+  notice?: string | null;
+  // Shown under the checks, above the button (the test's agreement).
+  extra?: ReactNode;
+  doneLabel?: string;
+  busy?: boolean;
 }) {
   const [issues] = useState(() => browserIssues(needs, phoneOk));
   const [conn, setConn] = useState<{ status: RowStatus; result?: ConnectionResult }>({ status: "running" });
@@ -337,6 +344,7 @@ export function SystemCheck({
 
   return (
     <Shell onBack={onBack}>
+      {notice && <p className="text-sm text-ink bg-warning/15 rounded-input p-3">{notice}</p>}
       {issues.blocking.map((m) => (
         <p key={m} className="flex items-start gap-2 text-sm text-error bg-error/10 rounded-input p-3">
           <XCircle size={16} className="shrink-0 mt-0.5" /> {m}
@@ -448,14 +456,14 @@ export function SystemCheck({
             mic.noise === "quiet" && !mic.noiseBusy
               ? tr("The room is quiet.")
               : mic.noise === "noisy" && !mic.noiseBusy
-                ? tr("The room sounds noisy.")
+                ? tr("We can hear someone talking.")
                 : tr("Measured when the microphone turns on: stay quiet for 3 seconds.")
           }
         >
           {mic.noise === "noisy" && !mic.noiseBusy && (
             <>
               <p role="alert" className="text-xs text-ink bg-warning/15 rounded-input p-3">
-                {tr("Background noise can lower your speaking score. Move somewhere quieter or close the windows. Even a fan can be noisy.")}
+                {tr("Other voices can cover your answers and lower your speaking score. Ask people nearby to stop talking, or turn off the TV or music.")}
               </p>
               <Button variant="secondary" className="self-start" disabled={mic.stage === "recording"} onClick={mic.remeasureNoise}>
                 <RotateCcw size={15} className="inline mr-1.5" />
@@ -467,8 +475,10 @@ export function SystemCheck({
         </Row>
       )}
 
+      {extra}
+
       <Button
-        disabled={!allOk}
+        disabled={!allOk || busy}
         onClick={() =>
           finish(
             {
@@ -482,7 +492,7 @@ export function SystemCheck({
         }
       >
         {/* A noisy room warns but never blocks: the learner may have nowhere quieter. */}
-        {!allOk ? tr("Finish the checks to continue") : needs.mic && mic.noise === "noisy" ? tr("Continue anyway") : tr("Continue")}
+        {!allOk ? tr("Finish the checks to continue") : (doneLabel ?? (needs.mic && mic.noise === "noisy" ? tr("Continue anyway") : tr("Continue")))}
       </Button>
     </Shell>
   );
@@ -589,7 +599,7 @@ function MicBody({ mic }: { mic: ReturnType<typeof useMicCheck> }) {
 
 function Shell({ children, onBack }: { children: ReactNode; onBack?: () => void }) {
   return (
-    <div className="max-w-2xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+    <div className="max-w-5xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-4">
       {onBack && (
         <button onClick={onBack} className="self-start flex items-center gap-1.5 text-sm text-muted hover:text-ink cursor-pointer">
           <ArrowLeft size={16} /> {tr("Back")}

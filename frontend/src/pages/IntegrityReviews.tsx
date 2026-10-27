@@ -60,6 +60,8 @@ const EVENT_TEXT: Record<string, () => string> = {
   noisy_answer: () => tr("Noisy spoken answer"),
   test_hold: () => tr("Test paused for a problem in the room"),
   hold_warning: () => tr("Warned about a problem in the room"),
+  test_paused: () => tr("Paused the practice test"),
+  test_resumed: () => tr("Continued the practice test"),
   screen_share_stopped: () => tr("Screen sharing stopped"),
   screen_not_entire: () => tr("Shared a window, not the screen"),
   system_check: () => tr("Device check passed"),

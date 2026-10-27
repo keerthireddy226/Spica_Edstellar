@@ -35,8 +35,12 @@ export interface IdentityStatus {
   review_note: string | null;
 }
 
+// Who sees a person's results: an employer (job candidates), their organization, or only them.
+export type Audience = "employer" | "organization" | "self";
+
 export interface ProctoringSetup {
   proctored: boolean;
+  audience?: Audience;
   policy: LearnerPolicy;
   consentNeeded: boolean;
   consentVersion: string;
@@ -84,6 +88,7 @@ export interface PreTestInfo {
   faceCheck: boolean;
   retentionDays: number;
   recordingsMonths: number | null;
+  audience?: Audience;
   version: string;
 }
 

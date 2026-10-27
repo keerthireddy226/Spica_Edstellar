@@ -9,6 +9,7 @@ import { MotivationalBar } from "@/components/MotivationalBar";
 import { getJourney, getRoadmap, type Journey, type RoadmapData } from "@/api/roadmap";
 import { Checkpoints, JourneyHero, PathToGoal, SkillProgress, ThisWeek } from "@/components/journey/JourneyParts";
 import { NextStepCard } from "@/components/learner/GoalCards";
+import { PlanEndingNotice } from "@/components/journey/PlanEndingNotice";
 import { GroupBoardCard } from "@/components/learner/GroupBoardCard";
 import { FinalAssessmentCard } from "@/components/learner/FinalAssessmentCard";
 import { ApiError } from "@/lib/api";
@@ -210,6 +211,8 @@ export function Roadmap() {
       {/* The day's encouragement, then the test plan, right under the goal. */}
       <MotivationalBar />
       <Checkpoints j={journeyData} />
+      {/* The plan ends within 10 days: offer to extend it. */}
+      <PlanEndingNotice />
 
       {/* The next step beside the daily challenge (the challenge takes the full width when there's no next step). */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch lg:[&>*:only-child]:col-span-2">

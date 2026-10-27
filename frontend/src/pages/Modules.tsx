@@ -97,6 +97,7 @@ import { AnswerFeedback } from "@/components/AnswerFeedback";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { useSmallScreen } from "@/lib/device";
 import type { PracticeFeedback } from "@/api/practiceTests";
+import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -954,6 +955,7 @@ function ModulesPage() {
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
   const [summary, setSummary] = useState<PracticeSummary | null>(null);
+  useNoCopyPaste(Boolean(sessionId) && !summary);
   // Feedback on the answer just given: right or wrong and the right answer.
   const [feedback, setFeedback] = useState<PracticeFeedback | null>(null);
   // The set being taken: skill, sub-module, level and set name.

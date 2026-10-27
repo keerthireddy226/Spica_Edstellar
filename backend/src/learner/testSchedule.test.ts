@@ -64,3 +64,21 @@ describe("scheduleTests spacing", () => {
     expect(s.some((x) => x.kind === "mock" && x.date.toISOString().startsWith("2026-11-14"))).toBe(true);
   });
 });
+
+describe("scheduleTests when access ends soon", () => {
+  it("10 days left: a test every 2 days, a practice test before each mock, both mocks used", () => {
+    const s = scheduleTests({
+      today: d("2026-10-27"), examDate: null, lastPractice: null, lastMock: null,
+      mocksPerMonth: 2, mocksLeft: 2, practicePerMonth: null, resetsOn: d("2026-11-14"), accessEnds: d("2026-11-06"),
+    });
+    expect(kinds(s)).toBe("P M P M P");
+    expect(s[s.length - 1].date < d("2026-11-06")).toBe(true);
+  });
+  it("no test after access ends, even with weeks of plan", () => {
+    const s = scheduleTests({
+      today: d("2026-10-19"), examDate: null, lastPractice: null, lastMock: null,
+      mocksPerMonth: 2, mocksLeft: 2, resetsOn: d("2026-11-14"), accessEnds: d("2026-11-20"),
+    });
+    expect(s.every((x) => x.date < d("2026-11-20"))).toBe(true);
+  });
+});

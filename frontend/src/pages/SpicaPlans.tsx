@@ -122,11 +122,11 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
               ? tr("{{p}} practice tests and {{m}} mock tests a month", { p: free.practicePerMonth ?? "∞", m: free.mocksPerMonth ?? "∞" })
               : tr("A few practice tests and mock tests a month")}
           </Item>
-          <Item ok={false}>{tr("AI speaking tutor")}</Item>
+          <Item ok={false}>{tr("AI Coach for speaking")}</Item>
           <Item ok={false}>{tr("No certificate included")}</Item>
         </Card>
         <Card eyebrow={tr("Everything")} title={tr("Full access")} price={<>{price(by("full")[0])} <small className="text-sm font-medium text-muted">{tr("a month")}</small></>} highlight={tr("Most complete")} action={buy}>
-          <Item ok>{tr("Every test: practice tests, Practice Modules, AI tutor")}</Item>
+          <Item ok>{tr("Every test: practice tests, Practice Modules, AI Coach")}</Item>
           <Item ok>{plus?.mocksPerMonth ? tr("{{n}} mock tests a month", { n: plus.mocksPerMonth }) : tr("Mock tests")}</Item>
           <Item ok>{tr("Level test retakes")}</Item>
           <Item ok>{tr("One final assessment on the test you choose")}</Item>

@@ -354,7 +354,7 @@
     "progress": "Progrès",
     "modules": "Modules",
     "practiceTests": "Tests d'entraînement",
-    "tutor": "Tuteur",
+    "tutor": "Coach IA",
     "profile": "Profil"
   },
   "shell": {
@@ -778,7 +778,7 @@
       "practiceUnlimited": "Entraînement illimité dans tous les modules",
       "progress": "Rapports de progression et parcours",
       "mockTests": "Examens blancs complets",
-      "tutor": "Tuteur oral IA"
+      "tutor": "Coach IA pour l'oral"
     },
     "months_one": "{{count}} mois",
     "months_other": "{{count}} mois",
@@ -795,7 +795,7 @@
     "upgrade": "Voir les offres",
     "locked": {
       "mocktest": "Les examens blancs font partie de l'accès complet.",
-      "coach": "Le tuteur IA fait partie de l'accès complet.",
+      "coach": "Le coach IA fait partie de l'accès complet.",
       "placement": "Vous avez déjà passé votre test de positionnement gratuit. Le repasser fait partie de l'accès complet.",
       "practice": "Vous avez utilisé vos {{limit}} séances gratuites cette semaine. Elles se renouvellent sur 7 jours glissants, ou passez à l'accès complet."
     },

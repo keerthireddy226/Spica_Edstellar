@@ -1,10 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Send, RotateCcw, MessageCircle, Type, Lightbulb, Sparkles, CheckCircle2, PenLine } from "lucide-react";
+import { Send, RotateCcw, MessageCircle, Type, Lightbulb, Sparkles, CheckCircle2, PenLine, Dumbbell, ArrowRight } from "lucide-react";
 import { HERO_GRADIENT, LearnerCard } from "@/components/learner/LearnerHero";
 import { Mascot } from "@/components/Mascot";
 import { Button } from "@/components/Button";
-import { startCoachSession, sendCoachMessage, endCoachSession, type CoachTurn } from "@/api/coach";
+import {
+  startCoachSession,
+  sendCoachMessage,
+  endCoachSession,
+  askCoachQuestion,
+  answerCoachQuestion,
+  getCoachResult,
+  type CoachAnswer,
+  type CoachSkill,
+  type CoachTurn,
+} from "@/api/coach";
+import { CoachQuestionCard } from "@/components/coach/CoachQuestionCard";
+import { AnswerFeedback } from "@/components/AnswerFeedback";
+import { ApiError } from "@/lib/api";
 
 import { tr } from "@/i18n/tr";
 // A real, working conversation with Gemini — one ongoing session resumed each visit.
@@ -28,6 +41,10 @@ export function Tutor() {
       .then((res) => {
         setSessionId(res.sessionId);
         setTurns(res.turns);
+        // A spoken answer still being marked when the page was left: wait for it.
+        const marked = new Set(res.turns.flatMap((x) => (x.payload?.kind === "result" ? [x.payload.itemId] : [])));
+        const waiting = res.turns.flatMap((x) => (x.payload?.kind === "answer" && !marked.has(x.payload.itemId) ? [x.payload.itemId] : []));
+        if (waiting.length) setPendingResume({ sessionId: res.sessionId, itemId: waiting[waiting.length - 1] });
       })
       .catch(() => setStartFailed(true))
       .finally(() => setLoading(false));
@@ -67,6 +84,75 @@ export function Tutor() {
       setSending(false);
     }
   }
+
+  // Coached practice: a question from the practice bank, marked by Spica,
+  // explained by the coach.
+  const [asking, setAsking] = useState(false);
+  // The practice choice last picked (shown in clay): the weakest skill, a skill, or retry.
+  const [choice, setChoice] = useState<"weakest" | "retry" | CoachSkill | null>(null);
+  async function askQuestion(opts: { skill?: CoachSkill; retry?: boolean }, picked?: "weakest" | "retry" | CoachSkill) {
+    if (!sessionId || asking) return;
+    if (picked) setChoice(picked);
+    setAsking(true);
+    setError(null);
+    try {
+      const res = await askCoachQuestion(sessionId, opts);
+      setTurns((prev) => [...prev, res.turn]);
+    } catch (err) {
+      const code = err instanceof ApiError ? err.message : "";
+      setError(
+        code === "coach_daily_limit"
+          ? tr("That's all the coached questions for today. Come back tomorrow, or keep going in Practice Modules.")
+          : code === "no_practice_items_available"
+            ? tr("I couldn't find a question for that right now. Try another skill.")
+            : tr("Couldn't get a question. Try again."),
+      );
+    } finally {
+      setAsking(false);
+    }
+  }
+  // A spoken answer is marked in the background: its result is fetched until ready.
+  const [marking, setMarking] = useState(false);
+  const [pendingResume, setPendingResume] = useState<{ sessionId: string; itemId: string } | null>(null);
+  useEffect(() => {
+    if (pendingResume && pendingResume.sessionId === sessionId) {
+      setPendingResume(null);
+      void waitForResult(pendingResume.itemId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingResume, sessionId]);
+  async function waitForResult(itemId: string) {
+    if (!sessionId) return;
+    setMarking(true);
+    try {
+      for (let tries = 0; tries < 40; tries++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const r = await getCoachResult(sessionId, itemId).catch(() => null);
+        if (r?.resultTurn) {
+          setTurns((prev) => [...prev, r.resultTurn!]);
+          return;
+        }
+        if (r?.done) return;
+      }
+      setError(tr("Your answer is taking a while to mark. It will show here when you come back."));
+    } finally {
+      setMarking(false);
+    }
+  }
+  async function answerQuestion(itemId: string, answer: CoachAnswer) {
+    if (!sessionId) return;
+    setError(null);
+    try {
+      const res = await answerCoachQuestion(sessionId, itemId, answer);
+      setTurns((prev) => [...prev, res.answerTurn, ...(res.resultTurn ? [res.resultTurn] : [])]);
+      if (res.pending) void waitForResult(itemId);
+    } catch {
+      setError(tr("Couldn't check your answer. Try again."));
+    }
+  }
+  // Each question's item, and the answers given, by item id.
+  const questionItems = new Map(turns.flatMap((x) => (x.payload?.kind === "question" ? [[x.payload.item.id, x.payload] as const] : [])));
+  const answers = new Map(turns.flatMap((x) => (x.payload?.kind === "answer" ? [[x.payload.itemId, x.payload.responseText] as const] : [])));
 
   async function handleNewConversation() {
     if (!sessionId || !window.confirm(t("tutor.newConversationConfirm"))) return;
@@ -118,7 +204,7 @@ export function Tutor() {
             </p>
           ) : startFailed ? (
             <div className="m-auto flex flex-col items-center gap-3 text-center max-w-xs">
-              <p className="text-sm text-ink">{tr("The tutor couldn't start a conversation right now.")}</p>
+              <p className="text-sm text-ink">{tr("The AI Coach couldn't start a conversation right now.")}</p>
               <Button variant="secondary" onClick={openSession}>
                 <span className="flex items-center gap-1.5">
                   <RotateCcw size={15} /> {tr("Try again")}
@@ -129,6 +215,9 @@ export function Tutor() {
             <>
               {turns.map((turn, i) => {
                 const me = turn.speaker === "learner";
+                const p = turn.payload;
+                const last = i === turns.length - 1;
+                const wide = p?.kind === "question" || p?.kind === "result";
                 return (
                   <div key={i} className={`flex items-end gap-2.5 ${me ? "justify-end" : "justify-start"}`}>
                     {!me && (
@@ -137,17 +226,48 @@ export function Tutor() {
                       </span>
                     )}
                     <div
-                      className={`max-w-[85%] sm:max-w-[72%] px-4 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words ${
+                      className={`${wide ? "w-full max-w-[92%] sm:max-w-[80%]" : "max-w-[85%] sm:max-w-[72%]"} px-4 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap break-words ${
                         me ? "text-white rounded-2xl rounded-br-md" : "bg-surface text-ink border border-rule rounded-2xl rounded-bl-md"
                       }`}
                       style={me ? { background: "linear-gradient(135deg, var(--color-navy), color-mix(in srgb, var(--color-navy) 75%, black))" } : undefined}
                     >
-                      {me ? turn.text : <CoachText text={turn.text} />}
+                      {me ? (
+                        turn.text
+                      ) : p?.kind === "question" ? (
+                        <>
+                          <CoachText text={turn.text} />
+                          <CoachQuestionCard item={p.item} answered={answers.get(p.item.id) ?? null} onSubmit={(answer) => answerQuestion(p.item.id, answer)} />
+                        </>
+                      ) : p?.kind === "result" ? (
+                        <>
+                          {p.feedback && questionItems.get(p.itemId) && (
+                            <div className="mb-2 whitespace-normal">
+                              <AnswerFeedback item={questionItems.get(p.itemId)!.item} feedback={p.feedback} />
+                            </div>
+                          )}
+                          <CoachText text={turn.text} />
+                          {last && (
+                            <div className="flex flex-wrap gap-2 mt-3 whitespace-normal">
+                              <Button onClick={() => askQuestion({ skill: p.skill })} disabled={asking}>
+                                <span className="flex items-center gap-1.5">
+                                  {tr("Another question")} <ArrowRight size={14} />
+                                </span>
+                              </Button>
+                              <Button variant="secondary" onClick={() => askQuestion({ skill: p.skill, retry: true })} disabled={asking}>
+                                {tr("Retry my mistakes")}
+                              </Button>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <CoachText text={turn.text} />
+                      )}
                     </div>
                   </div>
                 );
               })}
-              {sending && (
+              {marking && <p className="text-xs text-muted text-center">{tr("Listening to your answer and marking it…")}</p>}
+              {(sending || asking || marking) && (
                 <div className="flex items-end gap-2.5">
                   <span className="h-8 w-8 rounded-full bg-surface border border-rule flex items-center justify-center shrink-0 overflow-hidden">
                     <Mascot variant="coach" size={26} />
@@ -175,6 +295,11 @@ export function Tutor() {
               ))}
             </div>
           )}
+          <div className="flex gap-2 flex-wrap lg:hidden">
+            <button onClick={() => askQuestion({})} disabled={asking || loading || !sessionId} className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-pill bg-navy text-white cursor-pointer disabled:opacity-50">
+              <Dumbbell size={13} /> {tr("Give me a question")}
+            </button>
+          </div>
           <div className="flex items-center gap-3 rounded-pill border border-rule-strong px-4 py-1.5 focus-within:border-navy transition-colors">
             <input
               ref={inputRef}
@@ -214,6 +339,39 @@ export function Tutor() {
             </div>
           ))}
         </div>
+
+        <LearnerCard title={tr("Practise with your coach")} icon={Dumbbell} color="var(--color-navy)">
+          <p className="text-xs text-muted -mt-1">{tr("Answer a question here. Spica marks it, and your coach explains it and tells you what to do next.")}</p>
+          <div className="flex flex-col gap-2">
+            <Button variant={choice === "weakest" || choice === null ? "primary" : "secondary"} onClick={() => askQuestion({}, "weakest")} disabled={asking || loading || !sessionId}>
+              {tr("A question for my weakest skill")}
+            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["listening", t("skills.listening")],
+                  ["speaking", t("skills.speaking")],
+                  ["reading", t("skills.reading")],
+                  ["writing", t("skills.writing")],
+                ] as const
+              ).map(([skill, label]) => (
+                <Button
+                  key={skill}
+                  variant={choice === skill ? "primary" : "secondary"}
+                  aria-pressed={choice === skill}
+                  onClick={() => askQuestion({ skill }, skill)}
+                  disabled={asking || loading || !sessionId}
+                  className="!px-2"
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <Button variant={choice === "retry" ? "primary" : "secondary"} aria-pressed={choice === "retry"} onClick={() => askQuestion({ retry: true }, "retry")} disabled={asking || loading || !sessionId}>
+              {tr("Retry my mistakes")}
+            </Button>
+          </div>
+        </LearnerCard>
 
         <LearnerCard title={tr("Ask about…")} icon={Lightbulb} color="#c9965c">
           <div className="flex flex-col gap-2">

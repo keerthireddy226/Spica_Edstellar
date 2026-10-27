@@ -18,6 +18,8 @@ export interface ScheduleInput {
   practicePerMonth?: number | null;
   practiceLeft?: number | null;
   resetsOn: Date | null;
+  // When the learner's access ends: no test is planned after it.
+  accessEnds?: Date | null;
 }
 
 export interface Slot {
@@ -35,12 +37,20 @@ const addMonth = (d: Date) => {
   return n;
 };
 
+// With less than this left before access ends, tests come every couple of
+// days instead of weekly, so the time left is used (shortPlan).
+const SHORT_PLAN_DAYS = 14;
+const SHORT_GAP_DAYS = 2;
+
 export function scheduleTests(input: ScheduleInput): Slot[] {
+  const accessLast = input.accessEnds ? new Date(input.accessEnds.getTime() - DAY_MS) : null;
+  if (accessLast && !input.examDate && accessLast.getTime() - input.today.getTime() < SHORT_PLAN_DAYS * DAY_MS) return shortPlan(input, accessLast);
   const perMonth = input.mocksPerMonth;
   // Weeks between mocks: one a month means every fourth week, otherwise
   // every other week, so there's always a practice test in between.
   const gap = perMonth !== null && perMonth <= 1 ? 4 : 2;
-  const end = input.examDate ? new Date(input.examDate.getTime() - 2 * DAY_MS) : new Date(input.today.getTime() + 8 * WEEK_MS);
+  let end = input.examDate ? new Date(input.examDate.getTime() - 2 * DAY_MS) : new Date(input.today.getTime() + 8 * WEEK_MS);
+  if (accessLast && accessLast < end) end = accessLast;
   // This week's test if none in the last 7 days, else a week after the last one.
   const last = [input.lastPractice, input.lastMock].filter((d): d is Date => !!d).sort((a, b) => b.getTime() - a.getTime())[0];
   let at = last && input.today.getTime() - last.getTime() < WEEK_MS ? new Date(last.getTime() + WEEK_MS) : new Date(input.today);
@@ -123,4 +133,37 @@ export function scheduleTests(input: ScheduleInput): Slot[] {
     kept.push(slot);
   }
   return kept;
+}
+
+// Little time left before access ends (no exam date): a test every couple of
+// days up to the last day, a practice test before each mock, within this
+// month's allowance (new mocks and practice tests count from resetsOn).
+function shortPlan(input: ScheduleInput, last: Date): Slot[] {
+  const taken = [input.lastPractice, input.lastMock].filter((d): d is Date => !!d).sort((a, b) => b.getTime() - a.getTime())[0];
+  // Not on a day a test was already taken.
+  let at = taken && input.today.getTime() - taken.getTime() < DAY_MS ? new Date(input.today.getTime() + SHORT_GAP_DAYS * DAY_MS) : new Date(input.today);
+  let mocks = input.mocksPerMonth === null ? Infinity : (input.mocksLeft ?? input.mocksPerMonth);
+  let practice = input.practicePerMonth == null ? Infinity : (input.practiceLeft ?? input.practicePerMonth);
+  let practisedSinceMock = !!input.lastPractice && (!input.lastMock || input.lastPractice > input.lastMock);
+  const slots: Slot[] = [];
+  while (at <= last && slots.length < 10) {
+    if (input.resetsOn && at >= input.resetsOn) {
+      mocks = input.mocksPerMonth === null ? Infinity : input.mocksPerMonth;
+      practice = input.practicePerMonth == null ? Infinity : input.practicePerMonth;
+    }
+    if (practisedSinceMock && mocks > 0) {
+      slots.push({ date: at, kind: "mock", mockAllowed: true });
+      mocks--;
+      practisedSinceMock = false;
+    } else if (practice > 0) {
+      slots.push({ date: at, kind: "practice_test", mockAllowed: mocks > 0 });
+      practice--;
+      practisedSinceMock = true;
+    } else if (mocks > 0) {
+      slots.push({ date: at, kind: "mock", mockAllowed: true });
+      mocks--;
+    }
+    at = new Date(at.getTime() + SHORT_GAP_DAYS * DAY_MS);
+  }
+  return slots;
 }

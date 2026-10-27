@@ -340,7 +340,7 @@
     "progress": "Fremgang",
     "modules": "Moduler",
     "practiceTests": "Prøvetester",
-    "tutor": "Veileder",
+    "tutor": "AI-coach",
     "profile": "Profil"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Ubegrenset øving i alle moduler",
       "progress": "Fremdriftsrapporter og læringsplan",
       "mockTests": "Fullstendige prøvetester",
-      "tutor": "AI-veileder for muntlig"
+      "tutor": "AI-coach for muntlig"
     },
     "months_one": "{{count}} måned",
     "months_other": "{{count}} måneder",
@@ -773,7 +773,7 @@
     "upgrade": "Se planer",
     "locked": {
       "mocktest": "Prøvetester er en del av full tilgang.",
-      "coach": "AI-veilederen er en del av full tilgang.",
+      "coach": "AI-coachen er en del av full tilgang.",
       "placement": "Du har brukt den gratis plasseringstesten din. Nye forsøk er en del av full tilgang.",
       "practice": "Du har brukt de {{limit}} gratis øktene dine denne uken. De fornyes over en løpende 7-dagersperiode — eller oppgrader for ubegrenset øving."
     },

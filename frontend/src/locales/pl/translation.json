@@ -342,7 +342,7 @@
     "progress": "Postępy",
     "modules": "Moduły",
     "practiceTests": "Testy próbne",
-    "tutor": "Tutor",
+    "tutor": "Coach AI",
     "profile": "Profil"
   },
   "shell": {
@@ -782,7 +782,7 @@
       "practiceUnlimited": "Nielimitowane ćwiczenia we wszystkich modułach",
       "progress": "Raporty postępów i plan nauki",
       "mockTests": "Pełne testy próbne",
-      "tutor": "Tutor AI do mówienia"
+      "tutor": "Coach AI do mówienia"
     },
     "months_one": "{{count}} miesiąc",
     "months_few": "{{count}} miesiące",
@@ -805,7 +805,7 @@
     "upgrade": "Zobacz plany",
     "locked": {
       "mocktest": "Testy próbne są częścią pełnego dostępu.",
-      "coach": "Tutor AI jest częścią pełnego dostępu.",
+      "coach": "Coach AI jest częścią pełnego dostępu.",
       "placement": "Wykorzystałeś już darmowy test poziomujący. Ponowne podejścia są częścią pełnego dostępu.",
       "practice": "Wykorzystałeś {{limit}} darmowe sesje w tym tygodniu. Odnawiają się w cyklu 7-dniowym — możesz też przejść na pełny dostęp bez limitów."
     },

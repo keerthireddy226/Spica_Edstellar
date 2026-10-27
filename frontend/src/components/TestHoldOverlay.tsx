@@ -1,6 +1,6 @@
 import { AlertTriangle, CameraOff, ScanFace, Users, VolumeX, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { NOISY_ROOM_DBFS } from "@/lib/roomNoise";
+import { VOICE_ABOVE_ROOM_DB } from "@/lib/noiseGuard";
 import { MAX_WARNINGS, type IssueKind } from "@/lib/issueGuard";
 import type { HoldWarning } from "@/hooks/useTestHold";
 import { tr } from "@/i18n/tr";
@@ -8,9 +8,9 @@ import { tr } from "@/i18n/tr";
 const TEXT: Record<IssueKind, { icon: LucideIcon; title: () => string; warn: () => string; fix: () => string }> = {
   noise: {
     icon: VolumeX,
-    title: () => tr("Too much background noise"),
-    warn: () => tr("There's loud background noise. Move somewhere quieter, or close windows and turn off fans, music or the TV."),
-    fix: () => tr("Move somewhere quieter, or close windows and turn off fans, music or the TV. The test continues by itself once it has been quiet for 3 seconds."),
+    title: () => tr("Someone is talking near you"),
+    warn: () => tr("We can hear someone talking near you. Ask them to stop, move somewhere quiet, or turn off the TV or music."),
+    fix: () => tr("Ask the person to stop talking, move somewhere quiet, or turn off the TV or music. The test continues by itself once it has been quiet for 3 seconds."),
   },
   extra_person: {
     icon: Users,
@@ -37,9 +37,9 @@ const TEXT: Record<IssueKind, { icon: LucideIcon; title: () => string; warn: () 
 export function TestHoldOverlay({ kind, level, timed, allowanceLeft }: { kind: IssueKind; level: number | null; timed: boolean; allowanceLeft: number | null }) {
   const t = TEXT[kind];
   const Icon = t.icon;
-  // -70 dBFS (silent room) to -20 dBFS (very loud), as 0–100%.
-  const pct = (db: number) => Math.min(100, Math.max(0, ((db + 70) / 50) * 100));
-  const loud = level !== null && level >= NOISY_ROOM_DBFS - 3;
+  // Sound above the room's own quiet level: 0 dB (quiet) to 30 dB (a voice close by), as 0–100%.
+  const pct = (db: number) => Math.min(100, Math.max(0, (db / 30) * 100));
+  const loud = level !== null && level >= VOICE_ABOVE_ROOM_DB - 3;
   const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   return (
     <div role="alertdialog" aria-modal="true" aria-labelledby="test-hold-title" className="fixed inset-0 z-[70] bg-paper flex items-center justify-center p-4">
@@ -56,9 +56,9 @@ export function TestHoldOverlay({ kind, level, timed, allowanceLeft }: { kind: I
           <div className="flex flex-col gap-1.5 text-left">
             <div className="h-3 rounded-pill bg-paper-warm overflow-hidden relative" aria-hidden>
               <div className={`h-full transition-all duration-200 ${loud ? "bg-warning" : "bg-success"}`} style={{ width: `${level === null ? 0 : pct(level)}%` }} />
-              <div className="absolute top-0 bottom-0 w-0.5 bg-ink/60" style={{ left: `${pct(NOISY_ROOM_DBFS)}%` }} />
+              <div className="absolute top-0 bottom-0 w-0.5 bg-ink/60" style={{ left: `${pct(VOICE_ABOVE_ROOM_DB)}%` }} />
             </div>
-            <p className="text-xs text-muted">{loud ? tr("Still too noisy") : tr("Getting quieter…")}</p>
+            <p className="text-xs text-muted">{loud ? tr("Still hearing a voice") : tr("Getting quieter…")}</p>
           </div>
         )}
         {timed && (

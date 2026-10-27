@@ -339,7 +339,7 @@
     "progress": "Tiến độ",
     "modules": "Học phần",
     "practiceTests": "Bài thi luyện tập",
-    "tutor": "Gia sư",
+    "tutor": "Huấn luyện viên AI",
     "profile": "Hồ sơ"
   },
   "shell": {
@@ -749,7 +749,7 @@
       "practiceUnlimited": "Luyện tập không giới hạn ở mọi học phần",
       "progress": "Báo cáo tiến độ và lộ trình học",
       "mockTests": "Bài thi thử đầy đủ",
-      "tutor": "Gia sư AI luyện nói"
+      "tutor": "Huấn luyện viên AI luyện nói"
     },
     "months_other": "{{count}} tháng",
     "total": "Tổng cộng",
@@ -763,7 +763,7 @@
     "upgrade": "Xem các gói",
     "locked": {
       "mocktest": "Bài thi thử thuộc gói truy cập đầy đủ.",
-      "coach": "Gia sư AI thuộc gói truy cập đầy đủ.",
+      "coach": "Huấn luyện viên AI thuộc gói truy cập đầy đủ.",
       "placement": "Bạn đã dùng lượt kiểm tra xếp lớp miễn phí. Làm lại thuộc gói truy cập đầy đủ.",
       "practice": "Bạn đã dùng hết {{limit}} buổi miễn phí trong tuần này. Số buổi được khôi phục dần trong chu kỳ 7 ngày — hoặc nâng cấp để luyện tập không giới hạn."
     },

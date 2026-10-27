@@ -1,4 +1,4 @@
-// Problems in the room the learner can fix: loud background noise, another
+// Problems in the room the learner can fix: someone else talking nearby, another
 // person on camera, no face in view, a covered or dark camera. Each is warned
 // about three times, WARN_GAP_MS apart while it lasts; if it's still there
 // after the third warning, the test pauses until it's gone. Once a problem has

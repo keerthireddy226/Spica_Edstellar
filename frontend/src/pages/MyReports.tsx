@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FileText, ChevronRight, Layers, ClipboardCheck, Timer, Award, Gauge, BadgeCheck } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -28,7 +28,10 @@ export function MyReports() {
   const [types, setTypes] = useState<CatalogueTestType[]>([]);
   const modulesOn = useModulesEnabled();
   const [modules, setModules] = useState<ModuleHistoryEntry[] | null>(null);
-  const [filter, setFilter] = useState<"all" | "mock" | "practice" | "modules" | "real" | "sample" | "level">("all");
+  // ?show=mock or ?show=practice (the links on Mock Tests and Practice Tests) opens on that tab.
+  const [searchParams] = useSearchParams();
+  const show = searchParams.get("show");
+  const [filter, setFilter] = useState<"all" | "mock" | "practice" | "modules" | "real" | "sample" | "level">(show === "mock" || show === "practice" ? show : "all");
   // A list that failed to load says so (with a retry) instead of looking empty.
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);

@@ -196,22 +196,33 @@ export async function saveTenantPolicy(tenantId: string, policy: ProctoringPolic
 
 // The policy that applies to one learner: their organization's, or the
 // individual default.
-export async function learnerPolicy(userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
+export async function learnerPolicy(userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null; candidate?: boolean }> {
   const r = await pool.query(
     `SELECT u.role, t.id, t.type, t.proctoring, t.recruitment_proctoring FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`,
     [userId],
   );
   const t = r.rows[0];
-  if (t?.role === "candidate") return { policy: normalizeCandidatePolicy(t.recruitment_proctoring), tenantId: t.id };
+  if (t?.role === "candidate") return { policy: normalizeCandidatePolicy(t.recruitment_proctoring), tenantId: t.id, candidate: true };
   if (!t || t.type !== "cohort") return { policy: INDIVIDUAL_POLICY, tenantId: t?.id ?? null };
   return { policy: normalizePolicy(t.proctoring), tenantId: t.id };
 }
 
-// Practice sessions are for learning: no proctoring, only the face check an
-// organization may ask for before any test. Mock tests and candidates'
-// assessments keep the full policy (ASSESSMENT_ENGINE.md section 5).
+// A practice test runs the same anti-cheating checks in the background as a
+// mock test (copy and paste off, leaving the tab recorded, camera snapshots
+// and listening between answers where the organization uses them), but
+// nothing that adds a screen or a prompt: no full screen, no screen or video
+// recording, no live proctor, no Safe Exam Browser. Pausing stays allowed.
 export function practicePolicy(p: ProctoringPolicy): ProctoringPolicy {
-  return { ...presetPolicy("off", p.region), retentionDays: p.retentionDays };
+  if (p.mode === "off") return { ...presetPolicy("off", p.region), retentionDays: p.retentionDays };
+  return { ...mockPolicy(p), requireFullscreen: false, screenRecording: false, videoRecording: false, liveMonitoring: false, secureBrowser: false };
+}
+
+// A learner's mock test starts with the same screens as a practice test: the
+// organization's monitoring during the test stays, but the ID photo, room scan
+// and voice sample are only asked before the real assessment (and its sample).
+// Candidates keep their recruiter's policy.
+export function mockPolicy(p: ProctoringPolicy): ProctoringPolicy {
+  return { ...p, idVerification: false, roomScan: false, voiceMatch: false };
 }
 
 // The real assessment attempt is always strictly proctored (biometrics follow
@@ -222,12 +233,22 @@ export function certifiedPolicy(p: ProctoringPolicy): ProctoringPolicy {
 }
 
 // The policy for one session: the learner's, made light for a practice
-// session and strict for a real attempt or its sample.
+// session and a mock test, and strict for a real attempt or its sample.
 export async function sessionPolicy(sessionId: string, userId: string): Promise<{ policy: ProctoringPolicy; tenantId: string | null }> {
-  const { policy, tenantId } = await learnerPolicy(userId);
+  const { policy, tenantId, candidate } = await learnerPolicy(userId);
   const s = (await pool.query(`SELECT delivery_mode FROM sessions WHERE id = $1`, [sessionId])).rows[0];
   const mode = s?.delivery_mode;
-  return { policy: mode === "practice" ? practicePolicy(policy) : mode === "certified" || mode === "sample" ? certifiedPolicy(policy) : policy, tenantId };
+  return {
+    policy:
+      mode === "practice"
+        ? practicePolicy(policy)
+        : mode === "certified" || mode === "sample"
+          ? certifiedPolicy(policy)
+          : mode === "mock" && !candidate
+            ? mockPolicy(policy)
+            : policy,
+    tenantId,
+  };
 }
 
 // Consent wording version. Changing the wording means a new version, so

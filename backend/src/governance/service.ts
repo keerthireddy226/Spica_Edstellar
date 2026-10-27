@@ -20,6 +20,50 @@ async function removeUpload(uri: string | null) {
   await unlink(file).catch(() => {});
 }
 
+// ---- Withdrawing face and voice consent ----
+
+// Deletes the enrolled face photo and voice samples and marks the face and
+// voice agreements withdrawn. A later test that needs a face or voice check
+// asks to enrol (and agree) again.
+export async function withdrawBiometrics(userId: string): Promise<{ face: boolean; voice: boolean }> {
+  const client = await pool.connect();
+  const files: string[] = [];
+  let face = false;
+  let voice = false;
+  let tenantId: string | null = null;
+  try {
+    await client.query("BEGIN");
+    tenantId = (await client.query(`SELECT tenant_id FROM users WHERE id = $1`, [userId])).rows[0]?.tenant_id ?? null;
+    const f = await client.query(`DELETE FROM face_enrollments WHERE user_id = $1 RETURNING sample_uri`, [userId]);
+    const v = await client.query(`DELETE FROM voice_enrollments WHERE user_id = $1 RETURNING sample_uri, sample_uri_2`, [userId]);
+    face = (f.rowCount ?? 0) > 0;
+    voice = (v.rowCount ?? 0) > 0;
+    for (const r of [...f.rows, ...v.rows]) files.push(...Object.values(r).filter((x): x is string => typeof x === "string"));
+    await client.query(
+      `UPDATE consent_records SET revoked_at = now()
+       WHERE user_id = $1 AND consent_type IN ('face_identity', 'voice_identity', 'proctoring_biometric') AND revoked_at IS NULL`,
+      [userId],
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+  for (const uri of files) await removeUpload(uri);
+  await recordAudit({
+    tenantId,
+    actorId: userId,
+    actorRole: "learner",
+    action: "biometrics.withdrawn",
+    targetType: "learner",
+    targetId: userId,
+    details: { face, voice },
+  });
+  return { face, voice };
+}
+
 // ---- Erasure (right to be forgotten) ----
 
 // Removes everything that identifies a learner — name, email, phone,

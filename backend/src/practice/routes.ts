@@ -368,7 +368,7 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
       body.retry
         ? `SELECT id, composition FROM sessions
            WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
-             AND composition->>'retry' = 'true' AND composition->>'skill' = $2
+             AND composition->>'retry' = 'true' AND composition->>'skill' = $2 AND composition->>'coach' IS NULL
            ORDER BY started_at DESC LIMIT 1`
         : body.setId
         ? `SELECT id, composition FROM sessions
@@ -378,7 +378,7 @@ practiceRouter.post("/session", requireAuth, async (req: AuthedRequest, res, nex
         : `SELECT id, composition FROM sessions
            WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
              AND composition->>'skill' = $2
-             AND composition->>'itemTypeId' IS NOT DISTINCT FROM $3
+             AND composition->>'itemTypeId' IS NOT DISTINCT FROM $3 AND composition->>'coach' IS NULL
            ORDER BY started_at DESC LIMIT 1`,
       body.retry ? [req.user!.id, body.skill] : body.setId ? [req.user!.id, body.setId] : [req.user!.id, body.skill, body.itemTypeId ?? null],
     );
@@ -434,7 +434,7 @@ practiceRouter.get("/session/current", requireAuth, async (req: AuthedRequest, r
   try {
     const existing = await pool.query(
       `SELECT id, composition FROM sessions
-       WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL
+       WHERE user_id = $1 AND session_type = 'practice' AND completed_at IS NULL AND composition->>'coach' IS NULL
        ORDER BY started_at DESC LIMIT 1`,
       [req.user!.id],
     );
@@ -576,7 +576,7 @@ async function contextOf(userId: string, c: Record<string, unknown>) {
 
 // --- Level check -------------------------------------------------------------
 
-async function itemPayloads(userId: string, ids: string[]) {
+export async function itemPayloads(userId: string, ids: string[]) {
   return withQuestionTimes(await withAudioUrls(userId, (await selectItemsById(ids)).map(toItemPayload)));
 }
 
@@ -706,7 +706,7 @@ practiceRouter.get("/history", requireAuth, async (req: AuthedRequest, res, next
        LEFT JOIN sets st ON st.id::text = se.composition->>'setId'
        LEFT JOIN units u ON u.id = st.unit_id
        LEFT JOIN item_types it ON it.id = coalesce(u.item_type_id, se.composition->>'itemTypeId')
-       WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL
+       WHERE se.user_id = $1 AND se.session_type = 'practice' AND se.completed_at IS NOT NULL AND se.composition->>'coach' IS NULL
          AND jsonb_array_length(coalesce(se.composition->'itemIds', '[]'::jsonb)) > 0
        ORDER BY se.completed_at DESC LIMIT 300`,
       [req.user!.id],

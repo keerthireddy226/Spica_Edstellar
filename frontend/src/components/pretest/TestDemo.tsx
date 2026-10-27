@@ -71,6 +71,88 @@ export function TestDemo({
   minutes,
   onDone,
   doneLabel,
+  onePage,
+  onBack,
+}: {
+  kind: string;
+  needs: DeviceNeeds;
+  minutes?: string | null;
+  onDone: () => void;
+  doneLabel?: string;
+  // Everything on one page (practice and mock tests, shown the first time only),
+  // with the tour of the test screen behind a link.
+  onePage?: boolean;
+  // The one-page guide's Back (the screen before it).
+  onBack?: () => void;
+}) {
+  if (onePage) return <OnePageDemo kind={kind} needs={needs} minutes={minutes} onDone={onDone} onBack={onBack} />;
+  return <StepDemo kind={kind} needs={needs} minutes={minutes} onDone={onDone} doneLabel={doneLabel} />;
+}
+
+function OnePageDemo({ kind, needs, minutes, onDone, onBack }: { kind: string; needs: DeviceNeeds; minutes?: string | null; onDone: () => void; onBack?: () => void }) {
+  const [tour, setTour] = useState(false);
+  function finish() {
+    markDemoSeen(kind);
+    onDone();
+  }
+  // Wider than the step-by-step demo, not the full page.
+  return (
+    <div className="w-full max-w-5xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-6">
+      {onBack && (
+        <button onClick={onBack} className="self-start -mb-2 flex items-center gap-1.5 text-sm text-muted hover:text-ink cursor-pointer">
+          <ArrowLeft size={16} /> {tr("Back")}
+        </button>
+      )}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Your first test")}</p>
+          <h1 className="font-display font-bold text-xl text-ink mt-1">{tr("How the tests work")}</h1>
+          <p className="text-sm text-muted mt-1">{tr("A one-time guide. You won't see it before your next tests.")}</p>
+        </div>
+        <button onClick={finish} className="text-sm font-semibold text-muted hover:text-ink cursor-pointer shrink-0 underline-offset-4 hover:underline">
+          {tr("Skip")}
+        </button>
+      </div>
+      {/* The demo first: seeing the test screen gives the best idea of what's coming. */}
+      {tour ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display font-bold text-base text-ink">{tr("How the test screen works")}</h2>
+          <TourStep speaking={skillsFor(kind).includes("speaking")} total={kind === "placement" ? 29 : undefined} />
+        </section>
+      ) : (
+        <button
+          onClick={() => setTour(true)}
+          className="self-start flex items-center gap-2 rounded-pill border border-navy/40 bg-navy/10 px-4 py-2 text-sm font-semibold text-navy-deep hover:bg-navy/20 cursor-pointer"
+        >
+          <Play size={15} /> {tr("Watch a short demo of the test screen")}
+        </button>
+      )}
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display font-bold text-base text-ink">{tr("What you need")}</h2>
+        <NeedsStep needs={needs} minutes={minutes} />
+      </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display font-bold text-base text-ink">{tr("Do's and don'ts")}</h2>
+        <RulesStep />
+      </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="font-display font-bold text-base text-ink">{tr("Tips for each section")}</h2>
+        <TipsStep skills={skillsFor(kind)} />
+      </section>
+      <Button className="self-end" onClick={finish}>
+        {tr("Got it, continue")}
+        <ArrowRight size={15} className="inline ml-1.5" />
+      </Button>
+    </div>
+  );
+}
+
+function StepDemo({
+  kind,
+  needs,
+  minutes,
+  onDone,
+  doneLabel,
 }: {
   kind: string;
   needs: DeviceNeeds;

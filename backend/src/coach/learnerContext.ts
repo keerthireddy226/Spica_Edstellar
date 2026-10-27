@@ -286,6 +286,11 @@ const CACHE_TTL_MS = 10 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 5000;
 const cache = new Map<string, { text: string; at: number }>();
 
+// After a coached answer: the next reply sees the new result.
+export function clearLearnerContext(userId: string) {
+  cache.delete(userId);
+}
+
 export async function learnerContext(userId: string): Promise<string> {
   const now = Date.now();
   const hit = cache.get(userId);

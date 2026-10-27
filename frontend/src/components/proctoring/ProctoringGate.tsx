@@ -29,6 +29,13 @@ function stepsFor(s: ProctoringSetup, sharing: boolean): Step[] {
   return steps;
 }
 
+// A practice or mock test's first screen can take over the last steps (agree,
+// share the screen, start) when nothing else is left and no full screen is
+// needed (the browser allows full screen only on its own click).
+export function firstScreenCanStart(s: ProctoringSetup, sharing: boolean): boolean {
+  return !s.policy.requireFullscreen && stepsFor(s, sharing).every((x) => x === "consent" || x === "screen" || x === "start");
+}
+
 function Card({ icon, title, subtitle, children }: { icon: ReactNode; title: string; subtitle?: string; children: ReactNode }) {
   return (
     <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-5">
@@ -126,8 +133,10 @@ function ConsentStep({ setup, sessionId, onDone }: { setup: ProctoringSetup; ses
         ))}
       </ul>
       <div className="bg-paper-warm rounded-input p-3 text-xs text-muted leading-relaxed flex flex-col gap-1.5">
-        <p>{tr("Snapshots, recordings and ID images are kept for {{days}} days, then deleted. Only your organization's reviewers can see them. Nothing is sold or shared.", { days: p.retentionDays })}</p>
+        <p>{tr("Snapshots, recordings and ID images are kept for {{days}} days, then deleted. Only reviewers allowed to check your tests can see them. Never sold.", { days: p.retentionDays })}</p>
+        <p>{tr("Your answers are scored by AI (Google Gemini), the only service they're shared with.")}</p>
         <p>{tr("Nothing here fails you automatically. Anything unusual is checked by a person before any decision.")}</p>
+        {setup.audience !== "employer" && <p>{tr("You can appeal a final-assessment result, and a person reviews it.")}</p>}
         {p.region === "us" && setup.biometric && (
           <p>{tr("Face and voice data are biometric identifiers. By choosing face and voice matching you give written consent to their collection for this test, under the retention period above.")}</p>
         )}
@@ -362,11 +371,17 @@ function ScreenStep({ proctor }: { proctor: ProctoringState }) {
 
 // Everything the organization's policy asks for before a proctored test,
 // one step at a time. Steps already done (a resumed session) are skipped.
-export function ProctoringGate({ proctor, sessionId }: { proctor: ProctoringState; sessionId: string }) {
-  const { setup } = proctor;
+// autoStart (practice and mock tests): when only starting is left, the test
+// starts on its own (no "Ready to start" screen); full screen still needs it.
+export function ProctoringGate({ proctor, sessionId, autoStart = false }: { proctor: ProctoringState; sessionId: string; autoStart?: boolean }) {
+  const { setup, markReady } = proctor;
   const [checking, setChecking] = useState(false);
-  if (!setup) return null;
-  const step = stepsFor(setup, !!proctor.screenStream)[0];
+  const step = setup ? stepsFor(setup, !!proctor.screenStream)[0] : null;
+  const startsAlone = autoStart && step === "start" && !setup?.policy.requireFullscreen;
+  useEffect(() => {
+    if (startsAlone) markReady();
+  }, [startsAlone, markReady]);
+  if (!setup || !step || startsAlone) return null;
   const next = async () => {
     setChecking(true);
     await proctor.refreshSetup();

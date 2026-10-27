@@ -27,6 +27,8 @@ import {
   PROCTORING_MODES,
   PROCTORING_REGIONS,
   certifiedPolicy,
+  mockPolicy,
+  practicePolicy,
   consentVersion,
   learnerPolicy,
   sessionPolicy,
@@ -77,6 +79,9 @@ const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   system_check: "info",
   // "Warning n of 3" about a problem in the room (see the test page's hold).
   hold_warning: "info",
+  // A practice test paused by the learner (and continued).
+  test_paused: "info",
+  test_resumed: "info",
   // From the face check during the test (written by the server).
   face_missing: "high",
   extra_face: "high",
@@ -255,6 +260,7 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
     const media = await pool.query(`SELECT kind FROM proctoring_media WHERE session_id = $1 AND kind IN ('room_scan', 'voice_baseline') GROUP BY kind`, [si.session_id]);
     const kinds = new Set(media.rows.map((r) => r.kind));
     const face = (await pool.query(`SELECT status, embedding FROM face_enrollments WHERE user_id = $1`, [req.user!.id])).rows[0];
+    const who = (await pool.query(`SELECT u.role, t.type AS tenant_type FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [req.user!.id])).rows[0];
     const { sebConfigKeys: _keys, ...visible } = p;
     res.json({
       proctored: p.mode !== "off",
@@ -270,6 +276,7 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
       secureBrowser,
       faceEnrolled: face?.status === "enrolled" && face.embedding?.byteLength === FACE_EMBEDDING_BYTES,
       terminated: !!si.terminated_at,
+      audience: resultsAudience(who?.role, who?.tenant_type),
     });
   } catch (err) {
     next(err);
@@ -295,13 +302,19 @@ function testConsentVersion(policyVersion: string | null): string {
 // mode: a practice test's practice or mock mode (candidates always take a mock),
 // or a real attempt or its sample (always strict).
 async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
-  const learner = (await learnerPolicy(userId)).policy;
-  const policy = mode === "certified" || mode === "sample" ? certifiedPolicy(learner) : learner;
+  const { policy: learner, candidate } = await learnerPolicy(userId);
+  const policy =
+    mode === "certified" || mode === "sample"
+      ? certifiedPolicy(learner)
+      : mode === "mock" && !candidate
+        ? mockPolicy(learner)
+        : mode === "practice" && !candidate
+          ? practicePolicy(learner)
+          : learner;
   const org = await learnerOrgPolicy(userId);
-  const t = (await pool.query(`SELECT u.role, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
-  // Modules and practice mode are practice: no proctoring policy applies, only face checks and grading.
-  const practice = kind === "module" || (mode === "practice" && t?.role !== "candidate");
-  const proctored = !practice && policy.mode !== "off";
+  const t = (await pool.query(`SELECT u.role, t.type AS tenant_type, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
+  // Practice Modules aren't proctored; practice tests run the background checks (practicePolicy).
+  const proctored = kind !== "module" && policy.mode !== "off";
   const { sebConfigKeys: _keys, ...visible } = policy;
   return {
     proctored,
@@ -310,8 +323,16 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
     faceCheck: org.faceCheckRequired,
     retentionDays: policy.retentionDays,
     recordingsMonths: (t?.retention_recordings_months as number | null) ?? null,
+    audience: resultsAudience(t?.role, t?.tenant_type),
     version: testConsentVersion(proctored ? consentVersion(policy) : null),
   };
+}
+
+// Who sees a person's results, for the agreement before a test: an employer
+// (job candidates), their organization, or only them.
+function resultsAudience(role: string | undefined, tenantType: string | undefined): "employer" | "organization" | "self" {
+  if (role === "candidate") return "employer";
+  return tenantType === "cohort" ? "organization" : "self";
 }
 
 const kindSchema = preTestKind;

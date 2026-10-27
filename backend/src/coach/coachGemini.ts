@@ -25,6 +25,7 @@ const SPICA_FACTS =
   "How Spica works (only describe these; never invent features):\n" +
   "- Levels use the CEFR scale (A1 to C2). The Spica score runs from 10 to 90: A1 20-29, A2 30-39, B1 40-54, B2 55-69, C1 70-79, C2 80-90.\n" +
   "- My journey: the learner's study plan, with this week's tasks, pace, and the tests planned up to the exam date.\n" +
+  "- Practise with your coach (on this page): the learner presses \"Give me a question\" (or picks Listening, Reading, Writing or Retry my mistakes) to answer a practice question here; Spica marks it and you explain the result. Speaking questions are not here yet. If the learner asks you to quiz them, tell them to use those buttons.\n" +
   "- Practice Modules: short sets of 5 questions per question type, in listening, speaking, reading and writing, at each level. A skill moves up a level after 7 sets at 70% or more.\n" +
   "- Practice tests: full test sets the learner can pause, go back in, and review with the right answers.\n" +
   "- Mock tests: timed like the real test, with new questions and no going back. The latest mock tests predict the learner's Spica score and level.\n" +
@@ -99,6 +100,57 @@ export async function getCoachReply(history: CoachTurn[], learnerContext?: strin
     return dropCosmeticCorrection(text, lastLearner);
   } catch (err) {
     console.error("getCoachReply: request failed:", err);
+    return null;
+  }
+}
+
+export interface CoachedResult {
+  typeName: string;
+  question: string;
+  options: string[];
+  learnerAnswer: string;
+  correct: boolean | null;
+  // As stored: 0-1 (shown as a percentage).
+  score: number | null;
+  rightAnswer: string;
+  // The grader's reason (writing) or the question's stored explanation.
+  reason: string;
+  skill: string;
+  // Mistakes still waiting in this skill, for the next-step suggestion.
+  retryWaiting: number;
+}
+
+// After a coached question: a short, kind explanation of the result and one
+// suggestion for what to do next. The mark comes from Spica's scorer; the
+// coach only explains it.
+export async function getCoachedFeedback(r: CoachedResult, learnerContext?: string): Promise<string | null> {
+  const ai = getClient();
+  if (!ai) return null;
+  const prompt =
+    `The learner just answered a ${r.typeName} question (${r.skill}).\n` +
+    `Question:\n${r.question || "(audio question)"}\n` +
+    (r.options.length ? `Options: ${r.options.map((o, i) => `${i + 1}. ${o}`).join(" | ")}\n` : "") +
+    `Learner's answer: ${r.learnerAnswer || "(no answer)"}\n` +
+    `Spica's mark: ${r.correct === null ? "not marked yet" : r.correct ? "correct" : "not correct"}${r.score !== null ? ` (score ${Math.round((r.score <= 1 ? r.score * 100 : r.score))}%)` : ""}\n` +
+    (r.rightAnswer ? `Right answer: ${r.rightAnswer}\n` : "") +
+    (r.reason ? `Why: ${r.reason}\n` : "") +
+    `Mistakes waiting to retry in ${r.skill}: ${r.retryWaiting}\n\n` +
+    "Reply in 2 to 4 short sentences, plain English the learner understands:\n" +
+    "1. Say if it was right. Never change Spica's mark.\n" +
+    "2. Explain briefly why (the rule, the clue in the text, or what the answer missed). For writing, name the one most useful thing to improve.\n" +
+    "3. End with one suggestion for what to do next: another question like this, a different skill, retrying their mistakes, or a Practice Modules set.\n" +
+    "No 'Correction:' line, no headings, no lists.";
+  try {
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { systemInstruction: buildSystemInstruction(learnerContext) },
+    });
+    // The chat's grammar-correction rule can fire on this prompt: drop such a line.
+    const text = (response.text ?? "").replace(/^\s*Correction:[^\n]*\n+/i, "").trim();
+    return text || null;
+  } catch (err) {
+    console.error("getCoachedFeedback: request failed:", err);
     return null;
   }
 }

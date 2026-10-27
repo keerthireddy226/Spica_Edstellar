@@ -354,7 +354,7 @@
     "progress": "Progress",
     "modules": "Practice Modules",
     "practiceTests": "Practice Tests",
-    "tutor": "Tutor",
+    "tutor": "AI Coach",
     "profile": "Profile"
   },
   "shell": {
@@ -776,7 +776,7 @@
       "practiceUnlimited": "Unlimited practice in every module",
       "progress": "Progress reports and roadmap",
       "mockTests": "Full-length mock tests",
-      "tutor": "AI speaking tutor"
+      "tutor": "AI Coach for speaking"
     },
     "months_one": "{{count}} month",
     "months_other": "{{count}} months",
@@ -793,7 +793,7 @@
     "upgrade": "See plans",
     "locked": {
       "mocktest": "Mock tests are part of Full access.",
-      "coach": "The AI tutor is part of Full access.",
+      "coach": "The AI Coach is part of Full access.",
       "placement": "You've already taken your free placement test. Retakes are part of Full access.",
       "practice": "You've used your {{limit}} free practice sessions this week. They reset on a rolling 7-day basis, or upgrade for unlimited practice."
     },

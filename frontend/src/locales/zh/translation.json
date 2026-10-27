@@ -339,7 +339,7 @@
     "progress": "进度",
     "modules": "模块",
     "practiceTests": "模拟考试",
-    "tutor": "导师",
+    "tutor": "AI 教练",
     "profile": "个人资料"
   },
   "shell": {
@@ -749,7 +749,7 @@
       "practiceUnlimited": "所有模块无限练习",
       "progress": "进度报告和学习计划",
       "mockTests": "完整模拟考试",
-      "tutor": "AI 口语导师"
+      "tutor": "口语 AI 教练"
     },
     "months_other": "{{count}} 个月",
     "total": "合计",
@@ -763,7 +763,7 @@
     "upgrade": "查看方案",
     "locked": {
       "mocktest": "模拟考试属于完整权限。",
-      "coach": "AI 导师属于完整权限。",
+      "coach": "AI 教练属于完整权限。",
       "placement": "你已使用免费的分级测试。重新测试属于完整权限。",
       "practice": "你已用完本周 {{limit}} 次免费练习。次数会在滚动 7 天内恢复——或升级以无限练习。"
     },

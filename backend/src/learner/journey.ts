@@ -12,6 +12,7 @@ import { quotaUsage } from "../programs/quotas.js";
 import { scheduleTests, type Slot } from "./testSchedule.js";
 import { learnerProgram } from "../programs/service.js";
 import { myTests, readiness } from "../assessment/service.js";
+import { learnerAccess } from "../licenses/service.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -207,6 +208,8 @@ export async function journey(userId: string): Promise<Journey> {
   // An organization's program sets the dates itself; otherwise the plan's
   // monthly allowance spaces the tests.
   const program = await learnerProgram(userId).catch(() => null);
+  // No test is planned after access ends.
+  const access = await learnerAccess(userId).catch(() => null);
   const slots: Slot[] = program?.upcoming.length
     ? program.upcoming.map((x) => ({ date: new Date(x.dueOn), kind: x.kind === "mock" ? ("mock" as const) : ("practice_test" as const) }))
     : scheduleTests({
@@ -219,6 +222,7 @@ export async function journey(userId: string): Promise<Journey> {
         practicePerMonth: quota ? quota.practicePerMonth : null,
         practiceLeft: quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null,
         resetsOn: quota ? new Date(quota.resetsOn) : null,
+        accessEnds: access?.accessEndsAt && access.status === "active" ? new Date(access.accessEndsAt) : null,
       });
 
   // --- The plan ends with the final assessment: no practice or mock test after it ---
@@ -237,8 +241,16 @@ export async function journey(userId: string): Promise<Journey> {
     if (fa.pending.open && ready?.ready) finalDate = todayDate;
     else {
       const programDay = program?.program.finalAssessment ? (program.program.finalAssessmentOn ?? null) : null;
-      const ends = [examDate, programDay, fa.pending.open ? null : fa.pending.opensOn].filter((x): x is string => !!x && x >= todayDate).sort();
-      finalDate = ends[0] ?? lastSlot ?? todayDate;
+      const set = [examDate, programDay].filter((x): x is string => !!x && x >= todayDate).sort();
+      const opensOn = fa.pending.open ? null : (fa.pending.opensOn ?? null);
+      if (set.length) {
+        finalDate = [set[0], opensOn].filter((x): x is string => !!x && x >= todayDate).sort()[0];
+      } else {
+        // No exam or program day: after the planned tests (the day after the
+        // last one), and not before the final assessment opens.
+        const afterTests = lastSlot ? dateOnly(new Date(new Date(lastSlot).getTime() + DAY_MS)) : todayDate;
+        finalDate = opensOn && opensOn > afterTests ? opensOn : afterTests;
+      }
     }
   } else if (!planOver) {
     finalDate = examDate && examDate >= todayDate ? examDate : (lastSlot ?? todayDate);

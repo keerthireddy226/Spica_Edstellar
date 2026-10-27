@@ -22,6 +22,7 @@ import {
   Lock,
   Laptop,
   CalendarClock,
+  Pause,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
@@ -75,16 +76,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { useTestFocus } from "@/components/AppShell/testFocus";
 import { TestIdTag } from "@/components/TestIdTag";
-import { ProctoringGate } from "@/components/proctoring/ProctoringGate";
+import { ProctoringGate, firstScreenCanStart } from "@/components/proctoring/ProctoringGate";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { BiometricChoice, CheckAndAgree, QuickPreTest } from "@/components/pretest/QuickPreTest";
+import { ConsentDetails } from "@/components/pretest/ConsentDetails";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { markChecked, quickDeviceCheck, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { deviceNeedsFor, reportHeldCheck } from "@/lib/systemCheck";
-import { isTimedMode, type DeliveryMode, type PreTestKind } from "@/api/proctoring";
+import { getPreTestInfo, giveProctoringConsent, givePreTestConsent, isTimedMode, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
@@ -103,6 +106,7 @@ import {
 import { tr } from "@/i18n/tr";
 import { useTestHold } from "@/hooks/useTestHold";
 import { TestHoldOverlay, TestHoldWarning } from "@/components/TestHoldOverlay";
+import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -173,6 +177,35 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [requireReverify, setRequireReverify] = useState(false);
   // The exam whose device check and demo are done; the face check comes next.
   const [preTestDoneFor, setPreTestDoneFor] = useState<string | null>(null);
+  // A practice or mock test whose agreement wasn't given before it started
+  // (later the same day): the test's first screen asks with a tick box.
+  const [agreedBefore, setAgreedBefore] = useState(true);
+  // Back from a practice or mock test's first screen: the device check again
+  // (the test itself stays as it is, nothing is answered yet).
+  // Back from the first screen: the device check, then (Back again) the guide,
+  // then (Back again) the list of sets; the attempt stays open to resume.
+  const [recheck, setRecheck] = useState<"check" | "guide" | null>(null);
+  // Local testing only: ?first-test opens the next test as a learner's very
+  // first one (the one-time guide shows again).
+  useEffect(() => {
+    if (!import.meta.env.DEV || !new URLSearchParams(window.location.search).has("first-test")) return;
+    const keys = ["spica.testDemoSeen", "spica.testDemoHidden"];
+    try {
+      for (let n = 0; n < localStorage.length; n++) {
+        const k = localStorage.key(n);
+        if (k?.startsWith("spica.testDemoSeen.")) keys.push(k);
+      }
+    } catch {
+      // Storage blocked.
+    }
+    for (const k of keys) {
+      try {
+        localStorage.removeItem(k);
+      } catch {
+        // Storage blocked: nothing remembered anyway.
+      }
+    }
+  }, []);
   // "Watch the test demo" from the exam list, outside any test.
   const [showDemo, setShowDemo] = useState(false);
 
@@ -317,6 +350,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // Monitoring stops as soon as the last answer is in: scoring can take a
   // while, and the learner has finished.
   const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary && !finishing);
+  useNoCopyPaste(Boolean(sessionId) && !summary);
   // Stops once the score report shows — nothing left to verify identity
   // against after the test is already complete.
   usePeriodicFaceCheck(
@@ -338,6 +372,52 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // a "nice to have" explainer rather than a safety-critical gate).
   const shownPartsRef = useRef(new Set<string>());
   const [showSectionIntro, setShowSectionIntro] = useState(false);
+
+  // A learner's practice or mock test: its first screen (the overview) also
+  // shows the first section's instructions, asks for the agreement when it
+  // wasn't given before the test, shares the screen if needed and starts.
+  const quickTest = !isCandidate && !owned && (deliveryMode === "practice" || deliveryMode === "mock");
+  const needAgree = quickTest && showExamOverview && (!agreedBefore || !!proctor.setup?.consentNeeded);
+  const [agreeInfo, setAgreeInfo] = useState<PreTestInfo | null>(null);
+  const [agreeTicked, setAgreeTicked] = useState(false);
+  const [agreeBiometric, setAgreeBiometric] = useState(true);
+  const [startError, setStartError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!needAgree || !selectedProduct) return;
+    getPreTestInfo(selectedProduct as PreTestKind, deliveryMode)
+      .then(setAgreeInfo)
+      .catch(() => setStartError(tr("Could not load what this test collects. Try again.")));
+  }, [needAgree, selectedProduct, deliveryMode]);
+  async function startFromOverview() {
+    setStartError(null);
+    const p = proctor.setup?.policy;
+    // Sharing first: the browser allows it only right after the click.
+    if (quickTest && !proctor.ready && p?.screenRecording && !proctor.screenStream) {
+      const r = await proctor.startScreenShare();
+      if (r !== "ok") {
+        setStartError(r === "not_entire" ? tr("Choose \"Entire screen\" in the sharing window, not a window or tab.") : tr("Screen sharing was cancelled. Share your screen to continue."));
+        return;
+      }
+    }
+    if (needAgree) {
+      setStarting(true);
+      try {
+        const biometric = !!(proctor.setup?.biometric ?? agreeInfo?.biometric) && agreeBiometric;
+        if (sessionId && proctor.setup?.consentNeeded) await giveProctoringConsent(sessionId, biometric);
+        else await givePreTestConsent(selectedProduct as PreTestKind, biometric, deliveryMode);
+      } catch {
+        setStartError(tr("Could not save your choice. Try again."));
+        setStarting(false);
+        return;
+      }
+      setStarting(false);
+      setAgreedBefore(true);
+    }
+    if (!proctor.ready) proctor.markReady();
+    setShowExamOverview(false);
+    // The first section's instructions were on this screen.
+    if (quickTest && currentPartIndex === 0) setShowSectionIntro(false);
+  }
 
   // "two-phase" items (Passage Reconstruction): show the passage, then hide
   // it and switch to a blank textarea — testing recall, not copying.
@@ -512,7 +592,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setRemainingSeconds(current.timerSeconds);
     const interval = setInterval(() => {
       // Held for background noise: the countdown waits too.
-      setRemainingSeconds((prev) => (prev === null ? null : noiseHeldRef.current ? prev : Math.max(0, prev - 1)));
+      setRemainingSeconds((prev) => (prev === null ? null : noiseHeldRef.current || pausedRef.current ? prev : Math.max(0, prev - 1)));
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -552,10 +632,15 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // Problems in the room (noise, another person, no face, a covered camera):
   // three warnings, then the test pauses (its clock stopped) until fixed. See useTestHold.
   const noiseHeldRef = useRef(false);
+  // A practice test can be paused (a mock test can't): the question is hidden
+  // and its countdown waits. The background checks keep running.
+  const [paused, setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  pausedRef.current = paused;
   const heldSecondsRef = useRef<number | null>(null);
   const hasSpokenItems = items.some((it) => it.inputMethod === "mic");
   const noise = useTestHold({
-    enabled: questionVisible,
+    enabled: questionVisible && !paused,
     sessionId,
     itemId: current?.id ?? null,
     timed: isMock,
@@ -926,8 +1011,26 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     );
   }
 
-  // A Start/Retake was clicked: the device check and demo come first, then
-  // the face check (same pattern as Modules/Placement) gates the session start.
+  // A learner's practice or mock test: the demo the first time, the device
+  // check with the agreement once a day, else a quick check on its own.
+  if (pendingStart && preTestDoneFor !== pendingStart.key && selectedProduct && !isCandidate && !owned && (pendingStart.mode === "practice" || pendingStart.mode === "mock")) {
+    return (
+      <QuickPreTest
+        kind={selectedProduct as PreTestKind}
+        mode={pendingStart.mode}
+        minutes={selectedType ? String(selectedType.durationMinutes) : null}
+        onBack={() => setPendingStart(null)}
+        onReady={(agreed) => {
+          setAgreedBefore(agreed);
+          setPreTestDoneFor(pendingStart.key);
+        }}
+      />
+    );
+  }
+
+  // Any other test (a real attempt, its sample, a candidate's): the device
+  // check and demo come first, then the face check (same pattern as
+  // Modules/Placement) gates the session start.
   if (pendingStart && preTestDoneFor !== pendingStart.key && selectedProduct) {
     return (
       <PreTestFlow
@@ -1095,9 +1198,13 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
 
   // Proctoring steps (consent, ID, room scan, voice sample) come before the test.
+  // A practice or mock test's first screen takes over agreeing, sharing the
+  // screen and starting, when nothing else is left.
   if (sessionId && !proctor.ready) {
     if (proctor.loading || !proctor.setup) return null;
-    return <ProctoringGate proctor={proctor} sessionId={sessionId} />;
+    if (!(quickTest && showExamOverview && current && firstScreenCanStart(proctor.setup, !!proctor.screenStream))) {
+      return <ProctoringGate proctor={proctor} sessionId={sessionId} autoStart={quickTest} />;
+    }
   }
   const overlay = (
     <>
@@ -1109,10 +1216,43 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   );
 
   // --- Exam overview (Pearson-style Part/Task/Questions table), fresh starts only ---
+  if (sessionId && current && showExamOverview && recheck === "guide" && quickTest && selectedProduct) {
+    return (
+      <TestDemo
+        onePage
+        kind={selectedProduct}
+        needs={deviceNeedsFor(selectedProduct)}
+        minutes={selectedType ? String(selectedType.durationMinutes) : null}
+        onBack={() => {
+          setRecheck(null);
+          resetToExamList();
+        }}
+        onDone={() => setRecheck("check")}
+      />
+    );
+  }
+  if (sessionId && current && showExamOverview && recheck === "check" && quickTest && selectedProduct) {
+    return (
+      <CheckAndAgree
+        kind={selectedProduct as PreTestKind}
+        mode={deliveryMode}
+        onBack={() => setRecheck("guide")}
+        onDone={() => {
+          setAgreedBefore(true);
+          setRecheck(null);
+        }}
+      />
+    );
+  }
   if (sessionId && current && showExamOverview) {
     return (
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
         {overlay}
+        {quickTest && (
+          <button onClick={() => setRecheck("check")} className="self-start -mb-2 flex items-center gap-1.5 text-sm text-muted hover:text-ink cursor-pointer">
+            <ArrowLeft size={16} /> {tr("Back")}
+          </button>
+        )}
         <span className="h-14 w-14 rounded-2xl bg-accent/15 text-accent flex items-center justify-center">
           <ClipboardCheck size={26} strokeWidth={2} />
         </span>
@@ -1147,8 +1287,36 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             </div>
           ))}
         </div>
-        <Button onClick={() => setShowExamOverview(false)} className="w-full">
-          {t("practiceTests.overview.begin")}
+        {quickTest && currentPart && currentPartIndex === 0 && current.instructionText && (
+          <div className="w-full text-left flex flex-col gap-1 border-t border-rule pt-4">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First: {{label}}", { label: currentPart.label })}</span>
+            <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
+          </div>
+        )}
+        {needAgree && (
+          <div className="w-full text-left flex flex-col gap-3 border-t border-rule pt-4">
+            {agreeInfo && (
+              <details className="text-sm">
+                <summary className="cursor-pointer font-semibold text-navy-deep">{tr("What this test collects")}</summary>
+                <div className="flex flex-col gap-3 mt-3">
+                  <ConsentDetails info={agreeInfo} mode={deliveryMode} />
+                </div>
+              </details>
+            )}
+            {(proctor.setup?.biometric ?? agreeInfo?.biometric) && <BiometricChoice value={agreeBiometric} onChange={setAgreeBiometric} />}
+            <label className="flex items-start gap-2.5 text-sm text-ink cursor-pointer">
+              <input type="checkbox" checked={agreeTicked} onChange={(e) => setAgreeTicked(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-navy)]" />
+              {tr("I agree to what this test collects.")}
+            </label>
+          </div>
+        )}
+        {startError && <p className="text-sm text-error">{startError}</p>}
+        <Button onClick={startFromOverview} disabled={starting || (needAgree && (!agreeTicked || !agreeInfo))} className="w-full">
+          {quickTest && !proctor.ready && proctor.setup?.policy.screenRecording && !proctor.screenStream
+            ? tr("Share screen and start")
+            : quickTest && currentPart && currentPartIndex === 0
+              ? t("practiceTests.overview.startSection", { label: currentPart.label })
+              : t("practiceTests.overview.begin")}
         </Button>
       </div>
     );
@@ -1208,6 +1376,34 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     return (
       <div className="max-w-4xl mx-auto flex flex-col gap-3">
         {overlay}
+        {paused && (
+          <div role="alertdialog" aria-modal="true" aria-labelledby="paused-title" className="fixed inset-0 z-[70] bg-paper flex items-center justify-center p-4">
+            <div className="bg-surface border border-rule rounded-card shadow-xl w-full max-w-md p-6 flex flex-col gap-4 text-center">
+              <span className="mx-auto h-14 w-14 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center">
+                <Pause size={26} />
+              </span>
+              <h2 id="paused-title" className="font-display font-bold text-xl text-ink">{tr("Test paused")}</h2>
+              <p className="text-sm text-ink">{tr("Your answers so far are saved. Continue when you're ready, or leave and continue later from Practice Tests.")}</p>
+              <Button
+                onClick={() => {
+                  setPaused(false);
+                  proctor.logEvent("test_resumed", { item: index + 1 });
+                }}
+              >
+                {tr("Continue the test")}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPaused(false);
+                  resetToExamList();
+                }}
+              >
+                {tr("Leave and continue later")}
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           {currentPart ? (
             <div className="flex items-center gap-2.5">
@@ -1229,6 +1425,20 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               {deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
             </span>
             <span className="text-sm font-semibold text-ink">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
+            {deliveryMode === "practice" && !isCandidate && (
+              <button
+                onClick={() => {
+                  stopSpokenAudio();
+                  setPlaying(false);
+                  setPaused(true);
+                  proctor.logEvent("test_paused", { item: index + 1 });
+                }}
+                disabled={recording}
+                className="flex items-center gap-1.5 rounded-pill border border-rule bg-surface px-3 py-1 text-xs font-semibold text-ink hover:border-navy cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Pause size={13} /> {tr("Pause")}
+              </button>
+            )}
           </div>
         </div>
         <p className="text-[11px] font-mono text-muted px-1 -mt-2">
@@ -1779,15 +1989,19 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       }}
     />
   );
-  const reportsLink = history.length > 0 && (
-    <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer -mt-2">
-      <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
+  // This page's own reports: My reports opens on the mock (or practice) tests tab.
+  const ownReports = history.filter((h) => h.deliveryMode === (isMockSection ? "mock" : "practice")).length;
+  const reportsLabel = isMockSection ? tr("My mock test reports ({{n}})", { n: ownReports }) : tr("My practice test reports ({{n}})", { n: ownReports });
+  const openReports = () => navigate(`${ROUTES.MY_REPORTS}?show=${isMockSection ? "mock" : "practice"}`);
+  const reportsLink = ownReports > 0 && (
+    <button onClick={openReports} className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer -mt-2">
+      <FileText size={15} /> {reportsLabel}
     </button>
   );
   // The same link on the line with this month's counts.
-  const reportsLinkInline = history.length > 0 && (
-    <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="ml-auto flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer">
-      <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
+  const reportsLinkInline = ownReports > 0 && (
+    <button onClick={openReports} className="ml-auto flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer">
+      <FileText size={15} /> {reportsLabel}
     </button>
   );
   if (isMockSection) {
@@ -1796,6 +2010,13 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         {phone && <PhoneBlockNotice what="mock" />}
         <MockExamList
           afterHero={<KeepGoingCard />}
+          reports={
+            ownReports > 0 && (
+              <button onClick={openReports} className="flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer">
+                <FileText size={15} /> {reportsLabel}
+              </button>
+            )
+          }
           phone={phone}
           families={families}
           quota={quota}
@@ -1818,7 +2039,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           }}
         />
         {programCard}
-        {reportsLink}
       </div>
     );
   }

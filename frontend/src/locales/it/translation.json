@@ -340,7 +340,7 @@
     "progress": "Progressi",
     "modules": "Moduli",
     "practiceTests": "Test di prova",
-    "tutor": "Tutor",
+    "tutor": "Coach IA",
     "profile": "Profilo"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Esercizio illimitato in tutti i moduli",
       "progress": "Report dei progressi e percorso",
       "mockTests": "Simulazioni complete",
-      "tutor": "Tutor di conversazione IA"
+      "tutor": "Coach IA per il parlato"
     },
     "months_one": "{{count}} mese",
     "months_other": "{{count}} mesi",
@@ -773,7 +773,7 @@
     "upgrade": "Vedi i piani",
     "locked": {
       "mocktest": "Le simulazioni fanno parte dell'accesso completo.",
-      "coach": "Il tutor IA fa parte dell'accesso completo.",
+      "coach": "Il coach IA fa parte dell'accesso completo.",
       "placement": "Hai già fatto il test d'ingresso gratuito. Le ripetizioni fanno parte dell'accesso completo.",
       "practice": "Hai usato le tue {{limit}} sessioni gratuite di questa settimana. Si rinnovano ogni 7 giorni, oppure passa all'accesso completo per esercitarti senza limiti."
     },

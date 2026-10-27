@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { needsConsent, needsSecureProctoringPlan, normalizePolicy, practicePolicy, presetPolicy, usesBiometrics } from "./policy.js";
+import { mockPolicy, needsConsent, needsSecureProctoringPlan, normalizePolicy, practicePolicy, presetPolicy, usesBiometrics } from "./policy.js";
 
 describe("presetPolicy", () => {
   it("turns everything off in off mode", () => {
@@ -57,11 +57,33 @@ describe("normalizePolicy", () => {
 });
 
 describe("practicePolicy", () => {
-  it("turns proctoring off for practice but keeps the region and retention", () => {
+  it("keeps the background checks but nothing that adds a screen or a prompt", () => {
     const p = practicePolicy(presetPolicy("strict", "eu"));
-    expect(p.mode).toBe("off");
-    expect(p.region).toBe("eu");
-    expect(needsConsent(p)).toBe(false);
+    expect(p.mode).toBe("strict");
+    expect(p.lockdown).toBe(true);
+    expect(p.webcamMonitoring).toBe(true);
+    expect(p.audioMonitoring).toBe(true);
+    expect(p.requireFullscreen || p.screenRecording || p.videoRecording || p.liveMonitoring || p.secureBrowser).toBe(false);
+    expect(p.idVerification || p.roomScan || p.voiceMatch).toBe(false);
     expect(p.retentionDays).toBe(30);
+  });
+
+  it("stays off when the organization turned proctoring off", () => {
+    const p = practicePolicy(presetPolicy("off", "eu"));
+    expect(p.mode).toBe("off");
+    expect(needsConsent(p)).toBe(false);
+  });
+});
+
+describe("mockPolicy", () => {
+  it("drops the ID photo, room scan and voice sample but keeps the monitoring", () => {
+    const strict = presetPolicy("strict", "eu");
+    const p = mockPolicy(strict);
+    expect(p.idVerification).toBe(false);
+    expect(p.roomScan).toBe(false);
+    expect(p.voiceMatch).toBe(false);
+    expect(p.webcamMonitoring).toBe(strict.webcamMonitoring);
+    expect(p.screenRecording).toBe(strict.screenRecording);
+    expect(p.mode).toBe(strict.mode);
   });
 });

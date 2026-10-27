@@ -46,7 +46,7 @@ const TYPE: Record<string, string> = {
   level_test: tr("Level test"),
   sample: tr("Free sample"),
   placement: tr("Placement test"),
-  coach: tr("Tutor"),
+  coach: tr("AI Coach"),
   diagnostic: tr("Diagnostic"),
   drill: tr("Drill"),
 };

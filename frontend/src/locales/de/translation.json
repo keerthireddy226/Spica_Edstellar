@@ -340,7 +340,7 @@
     "progress": "Fortschritt",
     "modules": "Module",
     "practiceTests": "Übungstests",
-    "tutor": "Tutor",
+    "tutor": "KI-Coach",
     "profile": "Profil"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Unbegrenztes Üben in allen Modulen",
       "progress": "Fortschrittsberichte und Lernplan",
       "mockTests": "Vollständige Probetests",
-      "tutor": "KI-Sprechtutor"
+      "tutor": "KI-Coach fürs Sprechen"
     },
     "months_one": "{{count}} Monat",
     "months_other": "{{count}} Monate",
@@ -773,7 +773,7 @@
     "upgrade": "Tarife ansehen",
     "locked": {
       "mocktest": "Probetests sind Teil des Vollzugangs.",
-      "coach": "Der KI-Tutor ist Teil des Vollzugangs.",
+      "coach": "Der KI-Coach ist Teil des Vollzugangs.",
       "placement": "Du hast deinen kostenlosen Einstufungstest bereits gemacht. Wiederholungen sind Teil des Vollzugangs.",
       "practice": "Du hast deine {{limit}} kostenlosen Übungseinheiten für diese Woche genutzt. Sie erneuern sich fortlaufend über 7 Tage – oder wechsle für unbegrenztes Üben."
     },

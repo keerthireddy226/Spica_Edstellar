@@ -340,7 +340,7 @@
     "progress": "Fremskridt",
     "modules": "Moduler",
     "practiceTests": "Prøvetest",
-    "tutor": "Tutor",
+    "tutor": "AI-coach",
     "profile": "Profil"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Ubegrænset træning i alle moduler",
       "progress": "Fremskridtsrapporter og læringsplan",
       "mockTests": "Fulde prøvetest",
-      "tutor": "AI-tutor til tale"
+      "tutor": "AI-coach til tale"
     },
     "months_one": "{{count}} måned",
     "months_other": "{{count}} måneder",
@@ -773,7 +773,7 @@
     "upgrade": "Se planer",
     "locked": {
       "mocktest": "Prøvetest er en del af fuld adgang.",
-      "coach": "AI-tutoren er en del af fuld adgang.",
+      "coach": "AI-coachen er en del af fuld adgang.",
       "placement": "Du har brugt din gratis indplaceringstest. Gentagelser er en del af fuld adgang.",
       "practice": "Du har brugt dine {{limit}} gratis sessioner i denne uge. De fornyes over en løbende 7-dages periode — eller opgrader for ubegrænset træning."
     },

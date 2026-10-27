@@ -45,6 +45,7 @@ import {
 
 import { tr } from "@/i18n/tr";
 import { CEFR_MEANING } from "@/lib/cefrMeaning";
+import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
 const TOTAL_QUESTIONS = 29;
 
@@ -123,6 +124,7 @@ function PlacementTestRun() {
   // against after the test is already complete.
   // Monitoring stops as soon as the last answer is in.
   const proctor = useProctoring(sessionId, Boolean(sessionId) && !summary && !finishing);
+  useNoCopyPaste(Boolean(sessionId) && !summary);
   usePeriodicFaceCheck(
     readyToLoadSession && !summary && !finishing && !requireReverify,
     "placement",

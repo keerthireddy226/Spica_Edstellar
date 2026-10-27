@@ -137,17 +137,21 @@ export function setDemoHidden(hidden: boolean) {
   }
 }
 
-export function demoSeen(): boolean {
+// kind: per test type (each test is different, so its first attempt shows
+// its own guide); without it, any test (the step-by-step demo's "don't show
+// again" option).
+export function demoSeen(kind?: string): boolean {
   try {
-    return localStorage.getItem(DEMO_SEEN_KEY) === "1";
+    return localStorage.getItem(kind ? `${DEMO_SEEN_KEY}.${kind}` : DEMO_SEEN_KEY) === "1";
   } catch {
     return false;
   }
 }
 
-export function markDemoSeen() {
+export function markDemoSeen(kind?: string) {
   try {
     localStorage.setItem(DEMO_SEEN_KEY, "1");
+    if (kind) localStorage.setItem(`${DEMO_SEEN_KEY}.${kind}`, "1");
   } catch {
     // Storage blocked: nothing to remember.
   }

@@ -340,7 +340,7 @@
     "progress": "Voortgang",
     "modules": "Modules",
     "practiceTests": "Oefentoetsen",
-    "tutor": "Tutor",
+    "tutor": "AI-coach",
     "profile": "Profiel"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Onbeperkt oefenen in alle modules",
       "progress": "Voortgangsrapporten en leertraject",
       "mockTests": "Volledige proeftoetsen",
-      "tutor": "AI-spreektutor"
+      "tutor": "AI-coach voor spreken"
     },
     "months_one": "{{count}} maand",
     "months_other": "{{count}} maanden",
@@ -773,7 +773,7 @@
     "upgrade": "Bekijk abonnementen",
     "locked": {
       "mocktest": "Proeftoetsen horen bij volledige toegang.",
-      "coach": "De AI-tutor hoort bij volledige toegang.",
+      "coach": "De AI-coach hoort bij volledige toegang.",
       "placement": "Je hebt je gratis instaptoets al gedaan. Opnieuw doen hoort bij volledige toegang.",
       "practice": "Je hebt je {{limit}} gratis oefensessies van deze week gebruikt. Ze worden doorlopend per 7 dagen aangevuld, of upgrade voor onbeperkt oefenen."
     },

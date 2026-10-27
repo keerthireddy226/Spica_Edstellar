@@ -107,7 +107,7 @@ export async function retryCounts(userId: string): Promise<Record<SkillTag, numb
   return counts;
 }
 
-interface TypeAccuracy {
+export interface TypeAccuracy {
   skill: SkillTag;
   itemTypeId: string;
   typeName: string;
@@ -116,7 +116,7 @@ interface TypeAccuracy {
 }
 
 // Accuracy per skill and question type over the last 30 days of practice.
-async function recentTypeAccuracy(userId: string): Promise<TypeAccuracy[]> {
+export async function recentTypeAccuracy(userId: string): Promise<TypeAccuracy[]> {
   const r = await pool.query(
     `SELECT s.composition->>'skill' AS skill, i.item_type_id, it.name AS type_name, sc.content_score, sc.manner_scores, i.cefr_level, it.input_method
      FROM attempts a
@@ -141,7 +141,7 @@ async function recentTypeAccuracy(userId: string): Promise<TypeAccuracy[]> {
 
 // The weakest skill: the lowest path level; among equals, the lowest recent
 // practice accuracy (or level-test score where there's too little practice).
-async function weakestSkill(userId: string, types: TypeAccuracy[]): Promise<SkillTag> {
+export async function weakestSkill(userId: string, types: TypeAccuracy[], among: SkillTag[] = SKILLS): Promise<SkillTag> {
   const placement = (await pool.query(`SELECT skill_percents FROM placements WHERE user_id = $1 ORDER BY taken_at DESC LIMIT 1`, [userId])).rows[0];
   const levels = await pathSummary(userId);
   const accuracy = (skill: SkillTag) => {
@@ -151,7 +151,7 @@ async function weakestSkill(userId: string, types: TypeAccuracy[]): Promise<Skil
     return (Number(placement?.skill_percents?.[skill] ?? 50) || 0) / 100;
   };
   const rank = (s: SkillTag) => LEVELS.indexOf(levels[s]);
-  return SKILLS.reduce((weakest, s) => (rank(s) < rank(weakest) || (rank(s) === rank(weakest) && accuracy(s) < accuracy(weakest)) ? s : weakest));
+  return among.reduce((weakest, s) => (rank(s) < rank(weakest) || (rank(s) === rank(weakest) && accuracy(s) < accuracy(weakest)) ? s : weakest));
 }
 
 export type NextStep =

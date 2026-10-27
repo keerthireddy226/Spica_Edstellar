@@ -340,7 +340,7 @@
     "progress": "Edistyminen",
     "modules": "Moduulit",
     "practiceTests": "Harjoituskokeet",
-    "tutor": "Tutor",
+    "tutor": "Tekoälyvalmentaja",
     "profile": "Profiili"
   },
   "shell": {
@@ -756,7 +756,7 @@
       "practiceUnlimited": "Rajaton harjoittelu kaikissa moduuleissa",
       "progress": "Edistymisraportit ja opintosuunnitelma",
       "mockTests": "Täysimittaiset harjoituskokeet",
-      "tutor": "Tekoälytutor puhumiseen"
+      "tutor": "Tekoälyvalmentaja puhumiseen"
     },
     "months_one": "{{count}} kuukausi",
     "months_other": "{{count}} kuukautta",
@@ -773,7 +773,7 @@
     "upgrade": "Katso paketit",
     "locked": {
       "mocktest": "Harjoituskokeet kuuluvat täyteen käyttöoikeuteen.",
-      "coach": "Tekoälytutor kuuluu täyteen käyttöoikeuteen.",
+      "coach": "Tekoälyvalmentaja kuuluu täyteen käyttöoikeuteen.",
       "placement": "Olet käyttänyt ilmaisen lähtötasotestisi. Uusinnat kuuluvat täyteen käyttöoikeuteen.",
       "practice": "Olet käyttänyt tämän viikon {{limit}} ilmaista harjoituskertaa. Ne uusiutuvat liukuvan 7 päivän jakson aikana — tai päivitä rajattomaan harjoitteluun."
     },

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { MyCertificates } from "@/components/MyCertificates";
 import { ProgressExtras } from "@/components/progress/ProgressExtras";
 import { DeleteMyAccount } from "@/components/DeleteMyAccount";
+import { DownloadMyData } from "@/components/DownloadMyData";
+import { WithdrawBiometrics } from "@/components/WithdrawBiometrics";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
@@ -678,7 +680,7 @@ export function Profile() {
                 [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <MyCertificates key="c" />, <ProgressExtras key="r" part="recent" />],
                 [<AccessSection key="a" />, <ProgressExtras key="s" part="skills" />],
               ],
-          account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />]],
+          account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />, <DownloadMyData key="dl" />, <WithdrawBiometrics key="wb" />]],
           settings: [
             [
               <DailyReminderCard key="r" />,

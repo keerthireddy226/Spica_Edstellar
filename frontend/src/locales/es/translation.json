@@ -354,7 +354,7 @@
     "progress": "Progreso",
     "modules": "Módulos",
     "practiceTests": "Pruebas de práctica",
-    "tutor": "Tutor",
+    "tutor": "Coach con IA",
     "profile": "Perfil"
   },
   "shell": {
@@ -778,7 +778,7 @@
       "practiceUnlimited": "Práctica ilimitada en todos los módulos",
       "progress": "Informes de progreso y plan de estudio",
       "mockTests": "Simulacros completos",
-      "tutor": "Tutor de conversación con IA"
+      "tutor": "Coach con IA para hablar"
     },
     "months_one": "{{count}} mes",
     "months_other": "{{count}} meses",
@@ -795,7 +795,7 @@
     "upgrade": "Ver planes",
     "locked": {
       "mocktest": "Los simulacros forman parte del acceso completo.",
-      "coach": "El tutor con IA forma parte del acceso completo.",
+      "coach": "El coach con IA forma parte del acceso completo.",
       "placement": "Ya hiciste tu prueba de nivelación gratuita. Repetirla forma parte del acceso completo.",
       "practice": "Has usado tus {{limit}} sesiones gratuitas esta semana. Se renuevan cada 7 días, o mejora tu plan para práctica ilimitada."
     },
