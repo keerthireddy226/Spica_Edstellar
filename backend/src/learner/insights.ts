@@ -6,7 +6,7 @@ import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
-import { quotaUsage } from "../programs/quotas.js";
+import { mockAllowance, quotaUsage, testTypesPreparing } from "../programs/quotas.js";
 import type { SkillTag } from "../gamification/stats.js";
 import { LEVELS, pathSummary, skillPath } from "./path.js";
 
@@ -198,7 +198,7 @@ export async function nextStep(userId: string): Promise<NextStep | null> {
   // more mock or practice tests are suggested (Practice Modules still are).
   const planOver = !!r?.certificate && !r?.final;
   const quota = await quotaUsage(userId).catch(() => null);
-  const mocksLeft = !quota || quota.mocksPerMonth === null ? Infinity : quota.mocksPerMonth - quota.mocksUsed;
+  const mocksLeft = !quota ? Infinity : (mockAllowance(quota, quota.mocksPerTestType ? await testTypesPreparing(userId) : []).left ?? Infinity);
   const testsLeft = !quota || quota.practicePerMonth === null ? Infinity : quota.practicePerMonth - quota.practiceUsed;
   const daysSince = (d?: Date) => (d ? Math.floor((Date.now() - new Date(d).getTime()) / DAY_MS) : null);
 

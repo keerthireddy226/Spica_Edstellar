@@ -103,6 +103,7 @@ export function TestLimitsPanel() {
                     ) : (
                       (q.mocksPerMonth ?? tr("Unlimited"))
                     )}
+                    {q.mocksPerTestType && q.mocksPerMonth !== null && <span className="block text-[11px] text-muted mt-0.5">{tr("In each test")}</span>}
                   </td>
                   <td className="py-2 pr-3">
                     {canEdit ? (

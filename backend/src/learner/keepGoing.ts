@@ -5,7 +5,7 @@
 import { pool } from "../db.js";
 import { learnerAccess, learnerKind } from "../licenses/service.js";
 import { latestLearnerRequest } from "../licenses/requests.js";
-import { quotaUsage } from "../programs/quotas.js";
+import { mockAllowance, quotaUsage, testTypesPreparing } from "../programs/quotas.js";
 import { daysUntilDate } from "./insights.js";
 import { LEVELS, overallFromSkills, pathSummary } from "./path.js";
 
@@ -36,6 +36,7 @@ export async function keepGoingStatus(userId: string) {
   const kind = await learnerKind(userId);
   const access = await learnerAccess(userId);
   const quota = await quotaUsage(userId).catch(() => null);
+  const mocks = mockAllowance(quota, quota?.mocksPerTestType ? await testTypesPreparing(userId).catch(() => []) : []);
   const profile = (await pool.query(`SELECT goal_level, exam_date FROM participant_profiles WHERE user_id = $1`, [userId])).rows[0] ?? {};
   const current = overallFromSkills(await pathSummary(userId));
   const goal: string | null = profile.goal_level && profile.goal_level !== "unsure" ? profile.goal_level : null;
@@ -53,7 +54,7 @@ export async function keepGoingStatus(userId: string) {
   }
   // These only matter while the goal isn't reached.
   if (!goalReached) {
-    if (quota?.mocksPerMonth != null && quota.mocksUsed >= quota.mocksPerMonth) reasons.push("quota_mocks");
+    if (quota && mocks.left === 0) reasons.push("quota_mocks");
     if (quota?.practicePerMonth != null && quota.practiceUsed >= quota.practicePerMonth) reasons.push("quota_practice");
     if (sets.total > 0 && sets.done >= sets.total) reasons.push("tests_done");
     if (examDays !== null && examDays >= 0 && examDays <= 14) reasons.push("exam_near");
@@ -67,7 +68,7 @@ export async function keepGoingStatus(userId: string) {
     quota: quota
       ? {
           practiceLeft: quota.practicePerMonth == null ? null : Math.max(0, quota.practicePerMonth - quota.practiceUsed),
-          mocksLeft: quota.mocksPerMonth == null ? null : Math.max(0, quota.mocksPerMonth - quota.mocksUsed),
+          mocksLeft: mocks.left,
           resetsOn: quota.resetsOn,
         }
       : null,

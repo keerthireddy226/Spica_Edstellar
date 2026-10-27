@@ -613,6 +613,8 @@ export interface PlanQuota {
   practicePerMonth: number | null;
   mocksPerMonth: number | null;
   reportLevel: "summary" | "full";
+  // The mock limit is for each test type (Full access).
+  mocksPerTestType?: boolean;
   updatedAt: string;
 }
 

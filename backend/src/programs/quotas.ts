@@ -16,11 +16,15 @@ export interface Quota {
   reportLevel: "summary" | "full";
   // Campus: at least this many days between two mocks.
   mockEveryDays: number | null;
+  // Plus (Full access): the mock limit is for each test type, not in total.
+  mocksPerTestType: boolean;
 }
 
 export interface QuotaUsage extends Quota {
   practiceUsed: number;
   mocksUsed: number;
+  // Mocks started this month in each test type.
+  mocksUsedByTest: Record<string, number>;
   // The first day of next month (UTC), when the counts start again.
   resetsOn: string;
 }
@@ -69,6 +73,7 @@ export async function learnerQuota(userId: string): Promise<Quota | null> {
     mocksPerMonth: q.mocks_per_month,
     reportLevel: q.report_level,
     mockEveryDays: typeof q.extras?.mockEveryDays === "number" ? q.extras.mockEveryDays : null,
+    mocksPerTestType: q.extras?.mocksPerTestType === true,
   };
 }
 
@@ -91,17 +96,29 @@ export async function quotaWindow(userId: string): Promise<{ from: Date; to: Dat
   return { from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), to: nextMonthStart(now), licensed: false };
 }
 
-// Practice tests and mock tests started in the current window.
-export async function monthUsage(userId: string, from: Date): Promise<{ practice: number; mock: number }> {
+// Practice tests and mock tests started in the current window, and the mocks
+// in each test type.
+export async function monthUsage(userId: string, from: Date): Promise<{ practice: number; mock: number; mockByTest: Record<string, number> }> {
   const r = await pool.query(
-    `SELECT count(*) FILTER (WHERE delivery_mode = 'practice')::int AS practice, count(*) FILTER (WHERE delivery_mode = 'mock')::int AS mock
-     FROM sessions
-     WHERE user_id = $1 AND session_type = 'mocktest' AND started_at >= $2
+    `SELECT s.delivery_mode, coalesce(s.composition->>'testTypeId', e.test_type_id) AS test_type_id, count(*)::int AS n
+     FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
+     WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.started_at >= $2 AND s.delivery_mode IN ('practice', 'mock')
        -- A mock that ran out of time with nothing answered doesn't count.
-       AND coalesce(composition->>'abandoned', 'false') <> 'true'`,
+       AND coalesce(s.composition->>'abandoned', 'false') <> 'true'
+     GROUP BY 1, 2`,
     [userId, from],
   );
-  return { practice: r.rows[0].practice, mock: r.rows[0].mock };
+  const mockByTest: Record<string, number> = {};
+  let practice = 0;
+  let mock = 0;
+  for (const row of r.rows) {
+    if (row.delivery_mode === "practice") practice += row.n;
+    else {
+      mock += row.n;
+      if (row.test_type_id) mockByTest[row.test_type_id] = (mockByTest[row.test_type_id] ?? 0) + row.n;
+    }
+  }
+  return { practice, mock, mockByTest };
 }
 
 export async function quotaUsage(userId: string): Promise<QuotaUsage | null> {
@@ -109,15 +126,46 @@ export async function quotaUsage(userId: string): Promise<QuotaUsage | null> {
   if (!q) return null;
   const window = await quotaWindow(userId);
   const used = await monthUsage(userId, window.from);
-  return { ...q, practiceUsed: used.practice, mocksUsed: used.mock, resetsOn: window.to.toISOString().slice(0, 10) };
+  return { ...q, practiceUsed: used.practice, mocksUsed: used.mock, mocksUsedByTest: used.mockByTest, resetsOn: window.to.toISOString().slice(0, 10) };
+}
+
+// Pure: mocks used in this test type, or in total when the limit is shared.
+export function mocksUsedIn(u: QuotaUsage, testTypeId: string | null | undefined): number {
+  return u.mocksPerTestType ? (testTypeId ? (u.mocksUsedByTest[testTypeId] ?? 0) : 0) : u.mocksUsed;
+}
+
+// Pure: the mocks a learner's test plan can count on this month. With a limit
+// per test type, it's the limit in each test type they're preparing for (the
+// ones with a practice or mock test lately; at least one).
+export function mockAllowance(u: QuotaUsage | null, preparing: string[] = []): { perMonth: number | null; left: number | null } {
+  if (!u || u.mocksPerMonth === null) return { perMonth: u ? null : 2, left: null };
+  if (!u.mocksPerTestType) return { perMonth: u.mocksPerMonth, left: Math.max(0, u.mocksPerMonth - u.mocksUsed) };
+  const limit = u.mocksPerMonth;
+  if (!preparing.length) return { perMonth: limit, left: limit };
+  return { perMonth: limit * preparing.length, left: preparing.reduce((n, t) => n + Math.max(0, limit - (u.mocksUsedByTest[t] ?? 0)), 0) };
+}
+
+// Test types the learner took a practice or mock test in over the last 60 days
+// (not hidden exam families, LanguageCert for now).
+export async function testTypesPreparing(userId: string): Promise<string[]> {
+  const r = await pool.query(
+    `SELECT DISTINCT tt.id AS t
+     FROM sessions s LEFT JOIN exams e ON e.id::text = s.composition->>'examId'
+     JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', e.test_type_id)
+     JOIN exam_families f ON f.id = tt.family_id AND f.active
+     WHERE s.user_id = $1 AND s.session_type = 'mocktest' AND s.delivery_mode IN ('practice', 'mock') AND s.started_at > now() - interval '60 days'`,
+    [userId],
+  );
+  return r.rows.map((x) => x.t as string);
 }
 
 // Throws QuotaError when starting one more test of this kind would go over.
-export async function assertQuota(userId: string, kind: DeliveryMode): Promise<void> {
+// testTypeId: the test being started (mocks may be limited per test type).
+export async function assertQuota(userId: string, kind: DeliveryMode, testTypeId?: string | null): Promise<void> {
   const u = await quotaUsage(userId);
   if (!u) return;
   const limit = kind === "mock" ? u.mocksPerMonth : u.practicePerMonth;
-  const used = kind === "mock" ? u.mocksUsed : u.practiceUsed;
+  const used = kind === "mock" ? mocksUsedIn(u, testTypeId) : u.practiceUsed;
   if (limit !== null && used >= limit) throw new QuotaError({ kind, limit, used, resetsOn: u.resetsOn });
   // Spacing between mocks (Campus: one every two weeks).
   if (kind === "mock" && u.mockEveryDays) {
@@ -139,6 +187,7 @@ export async function listQuotas() {
     practicePerMonth: q.practice_per_month as number | null,
     mocksPerMonth: q.mocks_per_month as number | null,
     reportLevel: q.report_level as "summary" | "full",
+    mocksPerTestType: q.extras?.mocksPerTestType === true,
     updatedAt: q.updated_at,
   }));
 }

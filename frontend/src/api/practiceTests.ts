@@ -226,8 +226,21 @@ export interface QuotaUsage {
   reportLevel: "summary" | "full";
   practiceUsed: number;
   mocksUsed: number;
+  // Full access: the mock limit is for each test type, not in total.
+  mocksPerTestType?: boolean;
+  mocksUsedByTest?: Record<string, number>;
   // When the counts start again (YYYY-MM-DD).
   resetsOn: string;
+}
+
+// Mocks used in this test type, or in total when the limit is shared.
+export function mocksUsedIn(q: QuotaUsage, testTypeId: string | null | undefined): number {
+  return q.mocksPerTestType ? (testTypeId ? (q.mocksUsedByTest?.[testTypeId] ?? 0) : 0) : q.mocksUsed;
+}
+
+// Mocks left this month in this test type (or in total), null when unlimited.
+export function mocksLeftIn(q: QuotaUsage | null, testTypeId: string | null | undefined): number | null {
+  return q && q.mocksPerMonth !== null ? Math.max(0, q.mocksPerMonth - mocksUsedIn(q, testTypeId)) : null;
 }
 
 export interface QuotaTier {
@@ -235,6 +248,7 @@ export interface QuotaTier {
   tier: string;
   practicePerMonth: number | null;
   mocksPerMonth: number | null;
+  mocksPerTestType?: boolean;
   reportLevel: "summary" | "full";
 }
 

@@ -28,7 +28,12 @@ function testLimitLines(q: QuotaTier | undefined): { practice: string; mocks: st
   if (!q) return null;
   return {
     practice: q.practicePerMonth === null ? tr("Unlimited practice tests") : tr("Practice tests per month: {{n}}", { n: q.practicePerMonth }),
-    mocks: q.mocksPerMonth === null ? tr("Unlimited mock tests") : tr("Mock tests per month: {{n}}", { n: q.mocksPerMonth }),
+    mocks:
+      q.mocksPerMonth === null
+        ? tr("Unlimited mock tests")
+        : q.mocksPerTestType
+          ? tr("Mock tests per month in each test: {{n}}", { n: q.mocksPerMonth })
+          : tr("Mock tests per month: {{n}}", { n: q.mocksPerMonth }),
   };
 }
 

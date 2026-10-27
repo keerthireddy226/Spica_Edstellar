@@ -63,6 +63,8 @@ import {
   type ExamSummary,
   type PartBoundary,
   type ExamCompleteResult,
+  mocksLeftIn,
+  mocksUsedIn,
 } from "@/api/practiceTests";
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
@@ -236,7 +238,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       .catch(() => {});
   }
   const practiceLeft = quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null;
-  const mocksLeft = quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null;
+  // In the selected test (Full access counts mocks per test type).
+  const mocksLeft = mocksLeftIn(quota, selectedProduct);
   useEffect(loadProducts, []);
   const testTypes = catalogue?.flatMap((f) => f.testTypes) ?? [];
   const selectedType = testTypes.find((tt) => tt.id === selectedProduct) ?? null;
@@ -1809,12 +1812,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           <div className="flex">
             <QuotaChip
               icon={Timer}
-              used={quota.mocksUsed}
+              used={mocksUsedIn(quota, selectedProduct)}
               limit={quota.mocksPerMonth}
               label={
                 quota.mocksPerMonth === null
                   ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
-                  : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
+                  : quota.mocksPerTestType
+                    ? tr("Mock tests in this test this month: {{used}} of {{limit}}", { used: Math.min(mocksUsedIn(quota, selectedProduct), quota.mocksPerMonth), limit: quota.mocksPerMonth })
+                    : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
               }
             />
           </div>
@@ -2089,12 +2094,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           />
           <QuotaChip
             icon={Timer}
-            used={quota.mocksUsed}
-            limit={quota.mocksPerMonth}
+            used={quota.mocksPerTestType ? 0 : quota.mocksUsed}
+            limit={quota.mocksPerTestType ? null : quota.mocksPerMonth}
             label={
               quota.mocksPerMonth === null
                 ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
-                : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
+                : quota.mocksPerTestType
+                  ? tr("Mock tests: {{n}} a month in each test", { n: quota.mocksPerMonth })
+                  : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
             }
           />
           {(quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (

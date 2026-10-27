@@ -616,7 +616,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     // take their one assessment; real attempts and samples are bought).
     if (!candidate && !owned) {
       try {
-        await assertQuota(req.user!.id, mode);
+        await assertQuota(req.user!.id, mode, testTypeId);
       } catch (err) {
         if (err instanceof QuotaError) return res.status(403).json({ error: "quota_reached", ...err.detail });
         throw err;

@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/Button";
 import { HERO_GRADIENT } from "@/components/learner/LearnerHero";
 import { formatShortDate } from "@/api/licenses";
-import type { CatalogueFamily, CatalogueTestType, HistoryEntry, QuotaUsage } from "@/api/practiceTests";
+import { mocksLeftIn, mocksUsedIn, type CatalogueFamily, type CatalogueTestType, type HistoryEntry, type QuotaUsage } from "@/api/practiceTests";
 import { familyHeading, testTypeColour, testTypeIcon, testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
 import { Link } from "react-router-dom";
@@ -65,11 +65,15 @@ export function MockExamList({
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 lg:w-[420px]">
-            <Fact
-              value={left === null ? "∞" : `${left}`}
-              label={left === null ? tr("Mocks this month") : tr("Mocks left this month", { count: left })}
-              note={quota?.mocksPerMonth != null ? tr("of {{n}}", { n: quota.mocksPerMonth }) : tr("no limit")}
-            />
+            {quota?.mocksPerTestType && quota.mocksPerMonth !== null ? (
+              <Fact value={`${quota.mocksPerMonth}`} label={tr("Mocks a month in each test")} />
+            ) : (
+              <Fact
+                value={left === null ? "∞" : `${left}`}
+                label={left === null ? tr("Mocks this month") : tr("Mocks left this month", { count: left })}
+                note={quota?.mocksPerMonth != null ? tr("of {{n}}", { n: quota.mocksPerMonth }) : tr("no limit")}
+              />
+            )}
             <Fact value={`${mocks.length}`} label={tr("Mocks taken")} />
             <Fact value={best ?? "—"} label={tr("Best predicted level")} />
           </div>
@@ -129,9 +133,14 @@ export function MockExamList({
                     ? tr("Computer only")
                     : openMock?.testTypeId && openMock.testTypeId !== tt.id
                       ? tr("Finish your other mock first")
-                      : left === 0 && openMock?.testTypeId !== tt.id
+                      : mocksLeftIn(quota, tt.id) === 0 && openMock?.testTypeId !== tt.id
                         ? tr("No mocks left this month")
                         : null
+                }
+                usedNote={
+                  quota?.mocksPerTestType && quota.mocksPerMonth !== null
+                    ? tr("{{used}} of {{n}} mocks used this month", { used: Math.min(mocksUsedIn(quota, tt.id), quota.mocksPerMonth), n: quota.mocksPerMonth })
+                    : null
                 }
                 resume={openMock?.testTypeId === tt.id}
                 onStart={() => onStart(tt.id)}
@@ -161,6 +170,7 @@ function MockRow({
   last,
   taken,
   blockedBy,
+  usedNote,
   resume,
   onStart,
 }: {
@@ -168,6 +178,8 @@ function MockRow({
   last: HistoryEntry | null;
   taken: number;
   blockedBy: string | null;
+  // Full access: this test's mocks used this month.
+  usedNote: string | null;
   resume: boolean;
   onStart: () => void;
 }) {
@@ -193,6 +205,12 @@ function MockRow({
           </span>
           <span>·</span>
           <span className="capitalize">{tt.skills.join(", ")}</span>
+          {usedNote && (
+            <>
+              <span>·</span>
+              <span className="font-semibold text-navy-deep">{usedNote}</span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 text-sm md:w-56 shrink-0">

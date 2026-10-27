@@ -405,7 +405,11 @@ export function Checkpoints({ j }: { j: Journey }) {
                     ? tr("practice tests with no monthly limit")
                     : tr("{{n}} practice tests a month", { n: j.planSource.practicePerMonth }),
                 mocks:
-                  j.planSource.mocksPerMonth === null ? tr("mock tests with no monthly limit") : tr("{{n}} mock test(s) a month", { n: j.planSource.mocksPerMonth }),
+                  j.planSource.mocksPerMonth === null
+                    ? tr("mock tests with no monthly limit")
+                    : j.planSource.mocksPerTestType
+                      ? tr("{{n}} mock tests a month in each test", { n: j.planSource.mocksPerMonth })
+                      : tr("{{n}} mock test(s) a month", { n: j.planSource.mocksPerMonth }),
               })}
         </p>
       )}

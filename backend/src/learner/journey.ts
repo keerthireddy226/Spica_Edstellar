@@ -8,7 +8,7 @@ import type { SkillTag } from "../gamification/stats.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { goalStatus, nextStep, retryCounts, type GoalStatus, type NextStep } from "./insights.js";
 import { LEVELS, PASS_SETS, overallFromSkills, skillPath, type Level, type SkillPath } from "./path.js";
-import { quotaUsage } from "../programs/quotas.js";
+import { mockAllowance, quotaUsage, testTypesPreparing } from "../programs/quotas.js";
 import { scheduleTests, type Slot } from "./testSchedule.js";
 import { learnerProgram } from "../programs/service.js";
 import { myTests, readiness } from "../assessment/service.js";
@@ -80,7 +80,7 @@ export interface Journey {
   }[];
   nextStep: NextStep | null;
   // Where the test plan comes from: the organization's program, or the plan's allowance.
-  planSource: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null };
+  planSource: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null; mocksPerTestType?: boolean };
 }
 
 // The final assessment's place in the plan: a certificate already earned, an
@@ -205,6 +205,8 @@ export async function journey(userId: string): Promise<Journey> {
   const lastMock = lastOf("mock");
   const examDate = goal.examDate;
   const quota = await quotaUsage(userId).catch(() => null);
+  // Full access counts mocks per test type: the plan has them for each test the learner prepares for.
+  const mocks = mockAllowance(quota, quota?.mocksPerTestType ? await testTypesPreparing(userId).catch(() => []) : []);
   // An organization's program sets the dates itself; otherwise the plan's
   // monthly allowance spaces the tests.
   const program = await learnerProgram(userId).catch(() => null);
@@ -217,8 +219,8 @@ export async function journey(userId: string): Promise<Journey> {
         examDate: examDate ? new Date(examDate) : null,
         lastPractice: lastPractice ? new Date(lastPractice) : null,
         lastMock: lastMock ? new Date(lastMock) : null,
-        mocksPerMonth: quota ? quota.mocksPerMonth : 2,
-        mocksLeft: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : null,
+        mocksPerMonth: mocks.perMonth,
+        mocksLeft: mocks.left,
         practicePerMonth: quota ? quota.practicePerMonth : null,
         practiceLeft: quota && quota.practicePerMonth !== null ? Math.max(0, quota.practicePerMonth - quota.practiceUsed) : null,
         resetsOn: quota ? new Date(quota.resetsOn) : null,
@@ -267,8 +269,8 @@ export async function journey(userId: string): Promise<Journey> {
       kind: "mock",
       done: mockDoneThisWeek,
       date: nextMock ? dateOnly(nextMock.date) : undefined,
-      count: quota && quota.mocksPerMonth !== null ? Math.max(0, quota.mocksPerMonth - quota.mocksUsed) : undefined,
-      target: quota?.mocksPerMonth ?? undefined,
+      count: mocks.left ?? undefined,
+      target: quota ? (mocks.perMonth ?? undefined) : undefined,
       href: "/mock-exams",
     });
   }
@@ -336,6 +338,6 @@ export async function journey(userId: string): Promise<Journey> {
     nextStep: await nextStep(userId),
     planSource: program?.upcoming.length
       ? { kind: "program", name: program.program.name }
-      : { kind: "allowance", practicePerMonth: quota?.practicePerMonth ?? null, mocksPerMonth: quota?.mocksPerMonth ?? null },
+      : { kind: "allowance", practicePerMonth: quota?.practicePerMonth ?? null, mocksPerMonth: quota?.mocksPerMonth ?? null, mocksPerTestType: quota?.mocksPerTestType ?? false },
   };
 }
