@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} người đã tham gia qua liên kết.",
  "joined through the link {{d}}": "tham gia qua liên kết {{d}}",
  "Your code for the English assessment for {{jobTitle}}": "Mã của bạn cho bài đánh giá tiếng Anh vị trí {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Mã để bắt đầu bài đánh giá tiếng Anh cho vị trí {{jobTitle}} tại {{orgName}} của bạn là:\n\n{{code}}\n\nMã có hiệu lực trong {{minutes}} phút. Nếu bạn không yêu cầu mã này, bạn có thể bỏ qua tin nhắn này."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Mã để bắt đầu bài đánh giá tiếng Anh cho vị trí {{jobTitle}} tại {{orgName}} của bạn là:\n\n{{code}}\n\nMã có hiệu lực trong {{minutes}} phút. Nếu bạn không yêu cầu mã này, bạn có thể bỏ qua tin nhắn này.",
+ "Back to My journey": "Quay lại Hành trình của tôi",
+ "Practice Modules at your level: {{n}}% done": "Học phần luyện tập ở trình độ của bạn: đã làm {{n}}%"
 }

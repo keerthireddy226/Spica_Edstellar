@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} persone si sono iscritte tramite il link.",
  "joined through the link {{d}}": "iscritto tramite il link {{d}}",
  "Your code for the English assessment for {{jobTitle}}": "Il tuo codice per la valutazione di inglese per {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Il tuo codice per iniziare la valutazione di inglese per {{jobTitle}} presso {{orgName}} è:\n\n{{code}}\n\nÈ valido per {{minutes}} minuti. Se non l'hai richiesto, puoi ignorare questo messaggio."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Il tuo codice per iniziare la valutazione di inglese per {{jobTitle}} presso {{orgName}} è:\n\n{{code}}\n\nÈ valido per {{minutes}} minuti. Se non l'hai richiesto, puoi ignorare questo messaggio.",
+ "Back to My journey": "Torna a Il mio percorso",
+ "Practice Modules at your level: {{n}}% done": "Moduli di esercizio al tuo livello: {{n}}% completato"
 }

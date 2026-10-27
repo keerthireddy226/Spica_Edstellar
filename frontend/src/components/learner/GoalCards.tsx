@@ -29,11 +29,11 @@ export function NextStepCard() {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
       {view && (
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <span className="h-12 w-12 rounded-2xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
             <Icon size={22} />
           </span>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 basis-72 min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Your next step")}</p>
             <p className="font-display font-bold text-lg text-ink">{view.title}</p>
             <p className="text-sm text-muted">{view.why}</p>

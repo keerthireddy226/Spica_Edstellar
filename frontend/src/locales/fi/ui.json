@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} henkilöä on liittynyt linkin kautta.",
  "joined through the link {{d}}": "liittyi linkin kautta {{d}}",
  "Your code for the English assessment for {{jobTitle}}": "Koodisi englannin testiin tehtävään {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koodisi englannin testin aloittamiseen tehtävään {{jobTitle}} organisaatiossa {{orgName}} on:\n\n{{code}}\n\nSe on voimassa {{minutes}} minuuttia. Jos et pyytänyt sitä, voit jättää tämän viestin huomiotta."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koodisi englannin testin aloittamiseen tehtävään {{jobTitle}} organisaatiossa {{orgName}} on:\n\n{{code}}\n\nSe on voimassa {{minutes}} minuuttia. Jos et pyytänyt sitä, voit jättää tämän viestin huomiotta.",
+ "Back to My journey": "Takaisin Oma polkuni -sivulle",
+ "Practice Modules at your level: {{n}}% done": "Harjoitusmoduulit tasollasi: {{n}} % tehty"
 }

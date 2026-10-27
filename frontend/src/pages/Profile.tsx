@@ -671,11 +671,11 @@ export function Profile() {
               ]
             : learning?.organization
             ? [
-                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <ProgressExtras key="s" part="skills" />],
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <ProgressExtras key="s" part="skills" />, <ProgressExtras key="r" part="recent" />],
                 [<AccessSection key="a" />, <MyOrganization key="o" data={learning} />, <MyCertificates key="c" />],
               ]
             : [
-                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <MyCertificates key="c" />],
+                [learning && <LearningGoals key="g" data={learning} onSaved={reload} testName={testName} />, <MyCertificates key="c" />, <ProgressExtras key="r" part="recent" />],
                 [<AccessSection key="a" />, <ProgressExtras key="s" part="skills" />],
               ],
           account: [[<PersonalInformation key="p" />, <DeleteMyAccount key="d" />], [<AboutYouSection key="ab" />]],

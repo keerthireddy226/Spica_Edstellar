@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, BarChart3, BookOpen, Headphones, Mic, PenLine, Sparkles } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -20,6 +20,7 @@ const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, spea
 export function SkillLevelsPanel({ title }: { title?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const modulesOn = useModulesEnabled();
   const [data, setData] = useState<Awaited<ReturnType<typeof getNextStep>> | null>(null);
   useEffect(() => {
@@ -31,7 +32,9 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
   const levels = data.pathLevels;
   const step = data.nextStep;
   const nextSkill = step && (step.kind === "set" || step.kind === "retry") ? step.skill : null;
-  const view = step ? stepView(step, (s) => t(`skills.${s}`), modulesOn) : null;
+  const stepShown = step ? stepView(step, (s) => t(`skills.${s}`), modulesOn) : null;
+  // A step that only leads to this page ("Take a practice test" on Practice Tests) isn't shown.
+  const view = stepShown && stepShown.href.split("?")[0] !== pathname ? stepShown : null;
 
   return (
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">

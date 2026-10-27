@@ -101,7 +101,19 @@ function Card({ title, icon: Icon, color, children }: { title: string; icon: Luc
 
 // The longer view of a learner's progress: lifetime totals, each skill,
 // twelve weeks of practice, recent sessions, placement history and badges.
-export function ProgressExtras({ part = "all", title, subtitle }: { part?: "banner" | "details" | "skills" | "all"; title?: string; subtitle?: string }) {
+// modules: each skill's Practice Modules progress at its current level,
+// shown under its accuracy (Progress page).
+export function ProgressExtras({
+  part = "all",
+  title,
+  subtitle,
+  modules,
+}: {
+  part?: "banner" | "details" | "skills" | "recent" | "all";
+  title?: string;
+  subtitle?: string;
+  modules?: { skill: string; progressPercent: number }[];
+}) {
   const [d, setD] = useState<ProgressData | null>(null);
   const [allRecent, setAllRecent] = useState(false);
   useEffect(() => {
@@ -141,6 +153,11 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
                   <div className="h-2.5 rounded-full bg-rule overflow-hidden mt-1.5">
                     <div className="h-full rounded-full transition-all" style={{ width: `${s?.accuracy ?? 0}%`, background: meta.color }} />
                   </div>
+                  {modules?.some((m) => m.skill === k) && (
+                    <p className="text-[11px] text-muted mt-1">
+                      {tr("Practice Modules at your level: {{n}}% done", { n: modules.find((m) => m.skill === k)!.progressPercent })}
+                    </p>
+                  )}
                 </div>
               </div>
             );
@@ -149,6 +166,57 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
         </Card>
   );
   if (part === "skills") return skills;
+
+  // On the Profile page (Learning tab), not on Progress.
+  const recent = (
+    <Card title={tr("Recent sessions")} icon={History} color="#c9965c">
+      {d.recent.length === 0 ? (
+        <p className="text-sm text-muted">{tr("Finish a practice session and it shows up here.")}</p>
+      ) : (
+        <div className="flex flex-col divide-y divide-rule">
+          {(allRecent ? d.recent : d.recent.slice(0, RECENT_SHOWN)).map((r) => (
+            <div key={r.id} className="py-2.5 flex items-center justify-between gap-3 text-sm">
+              <div className="min-w-0">
+                <p className="text-ink font-medium">{TYPE[r.type] ?? r.type}</p>
+                <p className="text-xs text-muted">
+                  {new Date(r.completedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                </p>
+              </div>
+              <span className="text-xs text-muted shrink-0">
+                {r.answered > 0 ? tr("{{n}} answered", { n: r.answered }) : tr("No answers")}{r.minutes ? tr(" · {{minutes}} min", { minutes: r.minutes }) : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+      {d.recent.length > RECENT_SHOWN && (
+        <button onClick={() => setAllRecent((v) => !v)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
+          {allRecent ? tr("Show less") : tr("Show all ({{n}})", { n: d.recent.length })}
+        </button>
+      )}
+    </Card>
+  );
+  if (part === "recent") return recent;
+
+  const placement = (
+    <Card title={tr("Placement test history")} icon={Award} color="#b97a62">
+      {d.placements.length === 0 ? (
+        <p className="text-sm text-muted">{tr("Take the placement test to see your level here.")}</p>
+      ) : (
+        <div className="flex items-end gap-3 flex-wrap">
+          {d.placements.map((p, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <span className="h-12 w-12 rounded-2xl flex items-center justify-center font-display font-bold text-white" style={{ background: "var(--color-navy)" }}>
+                {p.level}
+              </span>
+              <span className="text-[11px] text-muted">{new Date(p.takenAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
+              <span className="text-[11px] text-ink">{p.percent}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
 
   return (
     <>
@@ -187,55 +255,21 @@ export function ProgressExtras({ part = "all", title, subtitle }: { part?: "bann
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 items-start">
-        <Card title={tr("Recent sessions")} icon={History} color="#c9965c">
-          {d.recent.length === 0 ? (
-            <p className="text-sm text-muted">{tr("Finish a practice session and it shows up here.")}</p>
-          ) : (
-            <div className="flex flex-col divide-y divide-rule">
-              {(allRecent ? d.recent : d.recent.slice(0, RECENT_SHOWN)).map((r) => (
-                <div key={r.id} className="py-2.5 flex items-center justify-between gap-3 text-sm">
-                  <div className="min-w-0">
-                    <p className="text-ink font-medium">{TYPE[r.type] ?? r.type}</p>
-                    <p className="text-xs text-muted">
-                      {new Date(r.completedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted shrink-0">
-                    {r.answered > 0 ? tr("{{n}} answered", { n: r.answered }) : tr("No answers")}{r.minutes ? tr(" · {{minutes}} min", { minutes: r.minutes }) : ""}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          {d.recent.length > RECENT_SHOWN && (
-            <button onClick={() => setAllRecent((v) => !v)} className="self-start text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
-              {allRecent ? tr("Show less") : tr("Show all ({{n}})", { n: d.recent.length })}
-            </button>
-          )}
-        </Card>
-
-        <div className="flex flex-col gap-6">
-          <CertificateCard />
-          <Card title={tr("Placement test history")} icon={Award} color="#b97a62">
-            {d.placements.length === 0 ? (
-              <p className="text-sm text-muted">{tr("Take the placement test to see your level here.")}</p>
-            ) : (
-              <div className="flex items-end gap-3 flex-wrap">
-                {d.placements.map((p, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <span className="h-12 w-12 rounded-2xl flex items-center justify-center font-display font-bold text-white" style={{ background: "var(--color-navy)" }}>
-                      {p.level}
-                    </span>
-                    <span className="text-[11px] text-muted">{new Date(p.takenAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
-                    <span className="text-[11px] text-ink">{p.percent}%</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
+      {/* Profile's full view keeps recent sessions beside these; Progress shows the two side by side. */}
+      {part === "all" ? (
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
+          {recent}
+          <div className="flex flex-col gap-6">
+            <CertificateCard />
+            {placement}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch lg:[&>*:only-child]:col-span-2">
+          <CertificateCard />
+          {placement}
+        </div>
+      )}
 
           <Card title={tr("Badges · {{length}} of {{length2}}", { length: unlocked.length, length2: d.achievements.length })} icon={Trophy} color="var(--color-warning)">
             {d.achievements.length === 0 ? (

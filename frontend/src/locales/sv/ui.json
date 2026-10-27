@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} personer har anslutit via länken.",
  "joined through the link {{d}}": "anslöt via länken {{d}}",
  "Your code for the English assessment for {{jobTitle}}": "Din kod till engelskbedömningen för {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Din kod för att starta engelskbedömningen för {{jobTitle}} hos {{orgName}} är:\n\n{{code}}\n\nDen gäller i {{minutes}} minuter. Om du inte har bett om den kan du ignorera det här meddelandet."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Din kod för att starta engelskbedömningen för {{jobTitle}} hos {{orgName}} är:\n\n{{code}}\n\nDen gäller i {{minutes}} minuter. Om du inte har bett om den kan du ignorera det här meddelandet.",
+ "Back to My journey": "Tillbaka till Min resa",
+ "Practice Modules at your level: {{n}}% done": "Övningsmoduler på din nivå: {{n}} % klart"
 }

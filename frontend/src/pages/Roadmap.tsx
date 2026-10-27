@@ -207,10 +207,15 @@ export function Roadmap() {
 
       <JourneyHero j={journeyData} firstName={data.firstName ?? ""} />
 
-      {/* The day's encouragement, right under the banner. */}
+      {/* The day's encouragement, then the test plan, right under the goal. */}
       <MotivationalBar />
+      <Checkpoints j={journeyData} />
 
-      <NextStepCard />
+      {/* The next step beside the daily challenge (the challenge takes the full width when there's no next step). */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch lg:[&>*:only-child]:col-span-2">
+        <NextStepCard />
+        <DailyChallenge />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
         <div className="lg:col-span-3 flex flex-col gap-5 min-w-0">
@@ -222,18 +227,13 @@ export function Roadmap() {
         </div>
       </div>
 
-      <Checkpoints j={journeyData} />
-
       {/* Without a group board (individual learners), the skills take the full width. */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start lg:[&>*:only-child]:col-span-2">
         <SkillProgress j={journeyData} />
         <GroupBoardCard />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-        <DailyChallenge />
-        <CoachModePromo />
-      </div>
+      <CoachModePromo />
     </div>
   );
 }

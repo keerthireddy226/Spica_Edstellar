@@ -463,8 +463,8 @@ function PlacementTestRun() {
           <div className="flex flex-wrap justify-center gap-2">
             <Button onClick={() => window.location.reload()}>{tr("Try again")}</Button>
             {!isCandidate && (
-              <Button variant="secondary" onClick={() => navigate(ROUTES.DASHBOARD)}>
-                {tr("Back to Overview")}
+              <Button variant="secondary" onClick={() => navigate(ROUTES.ROADMAP)}>
+                {tr("Back to My journey")}
               </Button>
             )}
           </div>

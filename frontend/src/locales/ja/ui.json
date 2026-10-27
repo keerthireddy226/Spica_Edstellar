@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "リンクから{{n}}人が参加しました。",
  "joined through the link {{d}}": "{{d}}にリンクから参加",
  "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}}の英語アセスメントのコード",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}の{{jobTitle}}の英語アセスメントを開始するためのコードは次のとおりです。\n\n{{code}}\n\nこのコードは{{minutes}}分間有効です。心当たりがない場合は、このメッセージを無視してください。"
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}の{{jobTitle}}の英語アセスメントを開始するためのコードは次のとおりです。\n\n{{code}}\n\nこのコードは{{minutes}}分間有効です。心当たりがない場合は、このメッセージを無視してください。",
+ "Back to My journey": "学習の歩みに戻る",
+ "Practice Modules at your level: {{n}}% done": "あなたのレベルの練習モジュール：{{n}}% 完了"
 }

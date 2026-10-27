@@ -1068,8 +1068,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           <Button variant="secondary" onClick={resetToExamList} className="flex-1">
             {t("practiceTests.backToExams")}
           </Button>
-          <Button onClick={() => navigate(ROUTES.DASHBOARD)} className="flex-1">
-            {t("modules.backToDashboard")}
+          <Button onClick={() => navigate(ROUTES.ROADMAP)} className="flex-1">
+            {tr("Back to My journey")}
           </Button>
         </div>
       </div>
@@ -1784,6 +1784,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
     </button>
   );
+  // The same link on the line with this month's counts.
+  const reportsLinkInline = history.length > 0 && (
+    <button onClick={() => navigate(ROUTES.MY_REPORTS)} className="ml-auto flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline cursor-pointer">
+      <FileText size={15} /> {tr("Your reports ({{n}})", { n: history.length })}
+    </button>
+  );
   if (isMockSection) {
     return (
       <div className="w-full flex flex-col gap-6">
@@ -1818,7 +1824,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
   return (
     <div className="w-full flex flex-col gap-6">
+      {/* Kept short (stats as chips, cards side by side) so the tests show without scrolling far. */}
       <LearnerHero
+        statsInline
         eyebrow={tr("Practice at your own pace")}
         title={t("nav.practiceTests")}
         subtitle={tr("Full practice tests for each Spica test: pause, go back, and get a report with every right answer at the end.")}
@@ -1837,11 +1845,15 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
 
       {phone && <PhoneBlockNotice what="tests" />}
 
-      <KeepGoingCard />
+      {/* Your plan beside your levels (each takes the full width when alone). */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 xl:has-[>div:empty]:grid-cols-1 gap-5 items-stretch xl:[&>*:only-child]:col-span-3">
+        <KeepGoingCard />
+        <div className="xl:col-span-2 min-w-0 [&>section]:h-full empty:hidden">
+          <SkillLevelsPanel />
+        </div>
+      </div>
 
       {programCard}
-
-      <SkillLevelsPanel />
 
       {quota && (
         <div className="flex flex-wrap items-center gap-2">
@@ -1870,10 +1882,11 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               <CalendarClock size={13} /> {tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}
             </span>
           )}
+          {reportsLinkInline}
         </div>
       )}
 
-      {reportsLink}
+      {!quota && reportsLink}
 
       {families.map((family) => (
         <section key={family.id} className="flex flex-col gap-3">

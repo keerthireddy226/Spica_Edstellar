@@ -1,52 +1,15 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ROUTES } from "@/constants/routes";
-import { Link } from "react-router-dom";
-import { ArrowRight, TrendingUp, TrendingDown, Minus, Trophy, CalendarCheck, LineChart } from "lucide-react";
-import { getDailyProgress, type DailyProgress, type DailyStat } from "@/api/dashboard";
-import { MotivationalBar } from "@/components/MotivationalBar";
+import { Trophy, CalendarCheck, LineChart } from "lucide-react";
+import { getDailyProgress, getDashboard, type DailyProgress, type DashboardData, type DailyStat } from "@/api/dashboard";
+import { ContinuePracticeCard, EnglishLevelCard, TodaysTasksList } from "@/components/learner/TodayParts";
+import { LearnerCard } from "@/components/learner/LearnerHero";
 import { ProgressExtras } from "@/components/progress/ProgressExtras";
 import { PageError, PageLoading } from "@/components/learner/PageStates";
 
 import { tr } from "@/i18n/tr";
 function isToday(dateStr: string): boolean {
   return dateStr === new Date().toISOString().slice(0, 10);
-}
-
-// A rest-day yesterday gets neutral phrasing instead of a misleading "you did more!" trend.
-function TodayVsYesterday({ today, yesterday }: { today: DailyStat; yesterday: DailyStat | undefined }) {
-  const { t } = useTranslation();
-  const prevQuestions = yesterday?.questionsCompleted ?? 0;
-
-  if (prevQuestions === 0) {
-    if (today.questionsCompleted === 0) return null;
-    return (
-      <span className="flex items-center gap-1.5 rounded-pill bg-success/15 px-4 py-2 text-sm font-bold text-success shrink-0">
-        <TrendingUp size={16} strokeWidth={2.4} /> {t("progressPage.firstDayBack")}
-      </span>
-    );
-  }
-
-  const delta = today.questionsCompleted - prevQuestions;
-  if (delta > 0) {
-    return (
-      <span className="flex items-center gap-1.5 rounded-pill bg-success/15 px-4 py-2 text-sm font-bold text-success shrink-0">
-        <TrendingUp size={16} strokeWidth={2.4} /> {t("progressPage.moreThanYesterday", { count: delta })}
-      </span>
-    );
-  }
-  if (delta < 0) {
-    return (
-      <span className="flex items-center gap-1.5 rounded-pill bg-paper-warm px-4 py-2 text-sm font-bold text-muted shrink-0">
-        <TrendingDown size={16} strokeWidth={2.4} /> {t("progressPage.lessThanYesterday", { count: Math.abs(delta) })}
-      </span>
-    );
-  }
-  return (
-    <span className="flex items-center gap-1.5 rounded-pill bg-paper-warm px-4 py-2 text-sm font-bold text-muted shrink-0">
-      <Minus size={16} strokeWidth={2.4} /> {t("progressPage.sameAsYesterday")}
-    </span>
-  );
 }
 
 function SectionTitle({ icon: Icon, color, title, children }: { icon: typeof Trophy; color: string; title: string; children?: React.ReactNode }) {
@@ -57,48 +20,6 @@ function SectionTitle({ icon: Icon, color, title, children }: { icon: typeof Tro
       </span>
       <h2 className="font-display font-bold text-ink">{title}</h2>
       {children}
-    </div>
-  );
-}
-
-function TodayReport({ days, isBestDay }: { days: DailyStat[]; isBestDay: boolean }) {
-  const { t } = useTranslation();
-  const today = days[days.length - 1];
-  const yesterday = days[days.length - 2];
-
-  return (
-    <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col justify-between gap-5 h-full">
-      <div className="flex flex-col gap-4">
-        <SectionTitle icon={CalendarCheck} color="var(--color-navy)" title={t("progressPage.todaysReport")}>
-          {isBestDay && (
-            <span className="flex items-center gap-1 rounded-pill bg-warning/20 px-2.5 py-0.5 text-[11px] font-bold text-navy-deep">
-              <Trophy size={11} strokeWidth={2.6} /> {t("progressPage.bestDayBadge")}
-            </span>
-          )}
-        </SectionTitle>
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <span className="font-display font-extrabold text-4xl text-ink">{today.questionsCompleted}</span>
-            <span className="block text-xs text-muted">{t("progressPage.questions")}</span>
-          </div>
-          <div>
-            <span className="font-display font-extrabold text-4xl text-success">
-              {today.accuracyPercent === null ? "—" : `${today.accuracyPercent}%`}
-            </span>
-            <span className="block text-xs text-muted">{t("progressPage.accuracy")}</span>
-          </div>
-          <div>
-            <span className="font-display font-extrabold text-4xl text-navy">{today.practiceMinutes}</span>
-            <span className="block text-xs text-muted">{t("progressPage.minutes")}</span>
-          </div>
-        </div>
-      </div>
-      <TodayVsYesterday today={today} yesterday={yesterday} />
-      {today.questionsCompleted === 0 && (
-        <Link to={ROUTES.MODULES} className="self-start inline-flex items-center gap-1.5 rounded-pill bg-navy px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-          {tr("Start today's practice")} <ArrowRight size={15} />
-        </Link>
-      )}
     </div>
   );
 }
@@ -193,6 +114,8 @@ function DailyLineChart({ days, bestDay, totalQuestions }: { days: DailyStat[]; 
 export function Progress() {
   const { t } = useTranslation();
   const [data, setData] = useState<DailyProgress | null>(null);
+  // Today's tasks, the level and the unfinished practice set (the old Overview's data).
+  const [today, setToday] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -200,32 +123,64 @@ export function Progress() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getDailyProgress()
-      .then(setData)
-      // A server error code isn't a sentence: always the plain message.
-      .catch(() => {
-        setError(t("progressPage.loadError"));
-      })
-      .finally(() => setLoading(false));
+    // Both before the page shows: otherwise the 7-day graph shows alone at full
+    // width, then shrinks when today's tasks arrive beside it.
+    Promise.all([
+      getDailyProgress()
+        .then(setData)
+        // A server error code isn't a sentence: always the plain message.
+        .catch(() => {
+          setError(t("progressPage.loadError"));
+        }),
+      getDashboard()
+        .then(setToday)
+        .catch(() => setToday(null)),
+    ]).finally(() => setLoading(false));
   }, [t, attempt]);
 
   if (loading) return <PageLoading label={t("progressPage.loading")} />;
   if (error || !data) return <PageError message={error ?? t("progressPage.loadError")} onRetry={() => setAttempt((n) => n + 1)} />;
 
+  const tasks = today?.todaysTasks ?? [];
+  const doneToday = tasks.filter((x) => x.done).length;
+
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* The page title sits in the clay banner with the all-time totals. */}
       <ProgressExtras part="banner" title={t("progressPage.title")} subtitle={t("progressPage.subtitle")} />
-      <MotivationalBar />
 
-      {/* Today beside the week, so the chart isn't stretched across the page. */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
-        <TodayReport days={data.days} isBestDay={isToday(data.bestDay.date) && data.bestDay.questionsCompleted > 0} />
-        <div className="xl:col-span-2 min-w-0">
+      {/* The level now, and the practice set left unfinished (side by side when both show). */}
+      {today && (today.englishLevel?.cefr || today.inProgressPractice) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch lg:[&>*:only-child]:col-span-2">
+          {today.englishLevel?.cefr && <EnglishLevelCard level={today.englishLevel} currentLevel={today.currentLevel ?? null} />}
+          {today.inProgressPractice && <ContinuePracticeCard practice={today.inProgressPractice} />}
+        </div>
+      )}
+
+      {/* Today's practice beside the last 7 days. */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+        {tasks.length > 0 && (
+          <LearnerCard
+            title={t(doneToday === tasks.length ? "dashboardHome.todaysTasksAllDone" : "dashboardHome.todaysTasksTitleGo")}
+            icon={CalendarCheck}
+            color="var(--color-accent)"
+            action={
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-success/15 text-success">
+                {tr("{{doneToday}}/{{length}} done", { doneToday, length: tasks.length })}
+              </span>
+            }
+          >
+            <TodaysTasksList tasks={tasks} />
+          </LearnerCard>
+        )}
+        <div className={`min-w-0 ${tasks.length > 0 ? "" : "xl:col-span-2"}`}>
           <DailyLineChart days={data.days} bestDay={data.bestDay} totalQuestions={data.totalQuestions} />
         </div>
       </div>
-      <ProgressExtras part="details" />
+
+      {/* Each skill (accuracy and Practice Modules at the current level), 12 weeks,
+          recent sessions, certificate, placement history and badges. */}
+      <ProgressExtras part="details" modules={today?.modules} />
     </div>
   );
 }

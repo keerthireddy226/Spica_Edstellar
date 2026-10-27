@@ -24,6 +24,7 @@ export function LearnerHero({
   onBack,
   backLabel,
   compact,
+  statsInline,
 }: {
   eyebrow?: string;
   title: ReactNode;
@@ -36,6 +37,8 @@ export function LearnerHero({
   onBack?: () => void;
   backLabel?: string;
   compact?: boolean;
+  // The stats as small chips beside the title (a shorter banner), not tiles below it.
+  statsInline?: boolean;
 }) {
   return (
     <div className="relative overflow-hidden rounded-card shadow-sm text-white" style={{ background: HERO_GRADIENT }}>
@@ -67,11 +70,25 @@ export function LearnerHero({
             </div>
           )}
           {art && <div className="hidden lg:block shrink-0">{art}</div>}
+          {statsInline && stats && stats.length > 0 && (
+            <div className="hidden lg:flex flex-wrap justify-end gap-2 shrink-0 max-w-[60%]">
+              {stats.map((s) => (
+                <StatChip key={s.label} stat={s} />
+              ))}
+            </div>
+          )}
         </div>
+        {statsInline && stats && stats.length > 0 && (
+          <div className="lg:hidden flex flex-wrap gap-2">
+            {stats.map((s) => (
+              <StatChip key={s.label} stat={s} />
+            ))}
+          </div>
+        )}
         {actions && (
           <div className="md:hidden flex items-center gap-2 flex-wrap [&_button]:bg-white [&_button]:text-navy-deep [&_button]:border-white">{actions}</div>
         )}
-        {stats && stats.length > 0 && (
+        {!statsInline && stats && stats.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {stats.map((s) => (
               <div key={s.label} className="rounded-input px-4 py-3 border border-white/20 min-w-0" style={{ background: "rgba(255,255,255,0.13)" }}>
@@ -84,6 +101,15 @@ export function LearnerHero({
         )}
       </div>
     </div>
+  );
+}
+
+function StatChip({ stat: s }: { stat: HeroStat }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-pill px-3 py-1.5 border border-white/20 text-xs text-white/85 whitespace-nowrap" style={{ background: "rgba(255,255,255,0.13)" }}>
+      {s.icon && <s.icon size={13} className="text-white/80" />}
+      <span className="font-display font-bold text-sm text-white">{s.value}</span> {s.label}
+    </span>
   );
 }
 

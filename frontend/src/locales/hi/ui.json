@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} लोग लिंक से जुड़े।",
  "joined through the link {{d}}": "{{d}} को लिंक से जुड़े",
  "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}} के लिए अंग्रेज़ी आकलन का आपका कोड",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}} में {{jobTitle}} के लिए अंग्रेज़ी आकलन शुरू करने का आपका कोड है:\n\n{{code}}\n\nयह {{minutes}} मिनट तक काम करेगा। अगर आपने इसे नहीं माँगा था, तो इस संदेश को अनदेखा कर सकते हैं।"
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}} में {{jobTitle}} के लिए अंग्रेज़ी आकलन शुरू करने का आपका कोड है:\n\n{{code}}\n\nयह {{minutes}} मिनट तक काम करेगा। अगर आपने इसे नहीं माँगा था, तो इस संदेश को अनदेखा कर सकते हैं।",
+ "Back to My journey": "मेरी यात्रा पर वापस जाएँ",
+ "Practice Modules at your level: {{n}}% done": "आपके स्तर पर अभ्यास मॉड्यूल: {{n}}% पूरा"
 }

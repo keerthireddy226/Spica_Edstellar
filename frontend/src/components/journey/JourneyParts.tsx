@@ -20,7 +20,6 @@ import {
   Target,
   Timer,
 } from "lucide-react";
-import { Button } from "@/components/Button";
 import type { Journey, JourneyTask } from "@/api/roadmap";
 import { CALENDAR_FILE_URL, emailTestDates } from "@/api/certificates";
 import type { SkillTag } from "@/api/testSession";
@@ -450,51 +449,5 @@ function CalendarActions() {
       </a>
       {state === "error" && <span className="text-error">{tr("Couldn't send it. Try again in a minute.")}</span>}
     </div>
-  );
-}
-
-export const PACE_LIGHT: Record<Journey["pace"], string> = {
-  new: "bg-navy/10 text-navy-deep",
-  on_track: "bg-success/15 text-success",
-  slightly_behind: "bg-warning/15 text-warning",
-  behind: "bg-error/10 text-error",
-};
-
-// A short summary for Overview, linking to the full journey.
-export function JourneySummary({ j }: { j: Journey }) {
-  const navigate = useNavigate();
-  const pace = { label: PACE[j.pace].label, cls: PACE_LIGHT[j.pace] };
-  return (
-    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-      <div className="flex items-center gap-3 shrink-0">
-        <span className="font-display font-bold text-2xl text-ink">{j.current ?? "—"}</span>
-        <ArrowRight size={18} className="text-muted" />
-        <span className="font-display font-bold text-2xl text-accent">{j.goal ?? "—"}</span>
-      </div>
-      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="font-semibold text-ink">{tr("{{n}}% of the way to your goal", { n: j.progressPercent })}</span>
-          {j.daysLeft !== null && <span className="text-muted">· {tr("{{n}} days to your exam", { n: j.daysLeft })}</span>}
-          {!j.goalReached && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-pill ${pace.cls}`}>{pace.label()}</span>}
-        </div>
-        <div className="h-2 rounded-pill bg-rule overflow-hidden">
-          <div className="h-full rounded-pill bg-navy" style={{ width: `${j.progressPercent}%` }} />
-        </div>
-        <span className="text-xs text-muted">
-          {tr("This week: {{done}} of {{total}} tasks done", { done: j.week.filter((x) => x.done).length, total: j.week.length })}
-          {!j.examDate && (
-            <>
-              {" · "}
-              <button onClick={() => navigate("/profile")} className="text-navy-deep font-semibold hover:underline cursor-pointer">
-                {tr("Add your exam date")}
-              </button>
-            </>
-          )}
-        </span>
-      </div>
-      <Button variant="secondary" onClick={() => navigate("/roadmap")} className="shrink-0">
-        {tr("Open My journey")}
-      </Button>
-    </section>
   );
 }

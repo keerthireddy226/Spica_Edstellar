@@ -70,11 +70,12 @@ export function KeepGoingCard() {
     <section
       className={`rounded-card border shadow-sm p-5 flex flex-col gap-3 ${expired ? "bg-error/5 border-error/30" : accessIssue ? "bg-warning/10 border-warning/30" : "bg-surface border-rule"}`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+      {/* The button drops below the text when the card is narrow (beside the levels on Practice Tests). */}
+      <div className="flex flex-wrap items-start gap-4">
         <span className={`h-11 w-11 rounded-2xl flex items-center justify-center shrink-0 ${expired ? "bg-error/15 text-error" : "bg-navy/10 text-navy-deep"}`}>
           {accessIssue ? <Hourglass size={22} /> : <Rocket size={22} />}
         </span>
-        <div className="flex-1 min-w-0 flex flex-col gap-1">
+        <div className="flex-1 basis-44 min-w-0 flex flex-col gap-1">
           <p className="font-display font-bold text-lg text-ink">
             {k.goal.current && k.goal.goal && !k.goal.reached
               ? tr("You're at {{level}}. Your goal is {{goal}}.", { level: k.goal.current, goal: k.goal.goal })

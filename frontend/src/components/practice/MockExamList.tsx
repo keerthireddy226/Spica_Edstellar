@@ -51,7 +51,7 @@ export function MockExamList({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="relative overflow-hidden rounded-card text-white p-6 sm:p-8 shadow-sm" style={{ background: HERO_GRADIENT }}>
+      <section className="relative overflow-hidden rounded-card text-white px-6 py-6 sm:px-8 shadow-sm" style={{ background: HERO_GRADIENT }}>
         <Timer size={220} strokeWidth={1} className="absolute -right-10 -bottom-14 text-white/[0.06] pointer-events-none" />
         <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex-1 flex flex-col gap-2">
@@ -78,18 +78,21 @@ export function MockExamList({
         )}
       </section>
 
-      {afterHero}
-
-      <ul className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {RULES.map(([Icon, label]) => (
-          <li key={label()} className="flex items-center gap-2.5 bg-surface border border-rule rounded-card px-4 py-3 text-sm text-ink leading-snug min-h-[64px]">
-            <span className="h-8 w-8 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
-              <Icon size={16} />
-            </span>
-            {label()}
-          </li>
-        ))}
-      </ul>
+      {/* The access card beside the rules (2 by 2), so the list of mocks shows sooner;
+          without the card the rules take one row. */}
+      <div className="flex flex-col xl:flex-row gap-5 items-stretch">
+        <div className="xl:w-1/3 min-w-0 empty:hidden [&>section]:h-full">{afterHero}</div>
+        <ul className="flex-1 grid grid-cols-2 lg:[div:empty+&]:grid-cols-4 gap-3 xl:self-center">
+          {RULES.map(([Icon, label]) => (
+            <li key={label()} className="flex items-center gap-2.5 bg-surface border border-rule rounded-card px-4 py-3 text-sm text-ink leading-snug min-h-[64px]">
+              <span className="h-8 w-8 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
+                <Icon size={16} />
+              </span>
+              {label()}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {inProgress && (
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-warning/10 border border-warning/30 rounded-card px-5 py-4">

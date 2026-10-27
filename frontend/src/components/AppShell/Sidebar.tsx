@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags, BadgeCheck } from "lucide-react";
+import { GraduationCap, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags, BadgeCheck } from "lucide-react";
 import { useHasCertificatesPage, useTestOnly } from "@/components/learner/useTestOnly";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
@@ -131,14 +131,6 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             {tr("My journey")}
           </Link>
 
-          <NavEntry
-            to={ROUTES.DASHBOARD}
-            icon={LayoutDashboard}
-            label={t("nav.overview")}
-            isActive={location.pathname === ROUTES.DASHBOARD}
-            locked={locked}
-            onClick={go}
-          />
           <NavEntry
             to={ROUTES.PROGRESS}
             icon={BarChart3}

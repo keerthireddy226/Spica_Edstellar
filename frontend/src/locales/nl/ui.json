@@ -5220,5 +5220,7 @@
  "{{n}} people joined through the link.": "{{n}} personen hebben zich aangemeld via de link.",
  "joined through the link {{d}}": "aangemeld via de link {{d}}",
  "Your code for the English assessment for {{jobTitle}}": "Je code voor het Engelse assessment voor {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Je code om het Engelse assessment voor {{jobTitle}} bij {{orgName}} te starten is:\n\n{{code}}\n\nHij is {{minutes}} minuten geldig. Heb je hem niet aangevraagd, dan kun je dit bericht negeren."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Je code om het Engelse assessment voor {{jobTitle}} bij {{orgName}} te starten is:\n\n{{code}}\n\nHij is {{minutes}} minuten geldig. Heb je hem niet aangevraagd, dan kun je dit bericht negeren.",
+ "Back to My journey": "Terug naar Mijn traject",
+ "Practice Modules at your level: {{n}}% done": "Oefenmodules op je niveau: {{n}}% klaar"
 }
