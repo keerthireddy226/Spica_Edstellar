@@ -7,6 +7,7 @@ import { getOrgLicenseSummary, formatShortDate, type PoolSummary } from "@/api/l
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { KeyRound } from "lucide-react";
+import { OrgDashboardPanels } from "@/components/OrgDashboardPanels";
 import type { ActivityKind } from "@/api/admin";
 
 import { tr } from "@/i18n/tr";
@@ -224,7 +225,9 @@ export function OrgAdminDashboard() {
         </Link>
       )}
 
-      <RecentActivity data={overview.activityFeed} />
+      <OrgDashboardPanels />
+
+      <RecentActivity data={overview.activityFeed.slice(0, 5)} />
     </div>
   );
 }

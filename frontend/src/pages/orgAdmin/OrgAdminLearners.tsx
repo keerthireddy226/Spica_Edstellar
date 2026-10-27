@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { EraseLearnerModal } from "@/components/EraseLearnerModal";
 import { FollowUpPanel } from "@/components/FollowUpPanel";
 import { Ban, RotateCcw, Trash2, Eraser, ArrowRightLeft, UserPlus, Users } from "lucide-react";
@@ -48,7 +49,9 @@ export function OrgAdminLearners() {
   const [notice, setNotice] = useState<string | null>(null);
   const [erasingLearner, setErasingLearner] = useState<OrgLearner | null>(null);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"all" | "follow_up">("all");
+  // ?view=follow-up opens the Follow up tab (linked from the dashboard).
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState<"all" | "follow_up">(searchParams.get("view") === "follow-up" ? "follow_up" : "all");
   const [followUpCount, setFollowUpCount] = useState<number | null>(null);
   const q = query.trim().toLowerCase();
   const shown = (learners ?? []).filter(
