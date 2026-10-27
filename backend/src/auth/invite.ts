@@ -78,6 +78,7 @@ export async function resendSetPasswordLink(userId: string, roleLabel: string): 
     hashToken(token),
     new Date(Date.now() + (await inviteExpiryMs(u.rows[0].tenant_id))),
   ]);
-  sendAdminInviteEmail(u.rows[0].email, token, roleLabel).catch((err) => console.error("failed to resend invite email:", err));
+  // Awaited, so the person resending learns when the email didn't go out.
+  await sendAdminInviteEmail(u.rows[0].email, token, roleLabel);
   return u.rows[0].email;
 }
