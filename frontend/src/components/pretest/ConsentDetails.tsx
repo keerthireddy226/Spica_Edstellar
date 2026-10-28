@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Camera, CheckCircle2, Ear, Gauge, Mic, ShieldCheck } from "lucide-react";
 import { MONITORED } from "@/components/proctoring/ProctoringGate";
 import type { DeliveryMode, PreTestInfo } from "@/api/proctoring";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
 function Item({ icon, text }: { icon: ReactNode; text: string }) {
@@ -73,16 +75,8 @@ export function ConsentDetails({ info, module = false, mode }: { info: PreTestIn
                 ? tr("Who sees it: you, and Spica reviewers if your test is checked.")
                 : tr("Who sees it: only you.")}
         </p>
-        <p>{tr("How it's scored: the AI gives the score, not a person.")}</p>
         {checked && <p>{tr("Nothing fails you automatically: anything unusual is checked by a person.")}</p>}
         {(mode === "certified" || mode === "sample") && info.audience !== "employer" && <p>{tr("You can appeal a final-assessment result, and a person reviews it.")}</p>}
-        <p>
-          {module
-            ? tr("When: during the session, and when your answers are scored.")
-            : checked
-              ? tr("When: during the test, when your answers are scored, and afterwards if a reviewer checks the test.")
-              : tr("When: during the test, and when your answers are scored.")}
-        </p>
         {info.proctored && monitored.length > 0 && (
           <p>{tr("Test snapshots, recordings and ID images are deleted after {{days}} days.", { days: info.retentionDays })}</p>
         )}
@@ -95,19 +89,19 @@ export function ConsentDetails({ info, module = false, mode }: { info: PreTestIn
               ? tr("Your answers and recordings are deleted after {{n}} months.", { n: info.recordingsMonths })
               : tr("Your answers and recordings are deleted when your account is deleted.")}
         </p>
-        {info.audience !== "employer" && (
-          <p>
-            {info.faceCheck || info.biometric
-              ? tr("In Profile › Account you can download a copy of your data, withdraw face and voice consent, or delete your account and all of this, at any time.")
-              : tr("In Profile › Account you can download a copy of your data, or delete your account and all of this, at any time.")}
-          </p>
-        )}
         {p?.region === "us" && info.biometric && (
           <p>{tr("Face and voice data are biometric identifiers. By choosing face and voice matching you give written consent to their collection for this test, under the retention period above.")}</p>
         )}
         {info.biometric && (
           <p>{tr("You can choose a manual identity check instead of face and voice matching. A reviewer then confirms who you are; it doesn't affect your score.")}</p>
         )}
+        {/* The rest (providers, storage, your rights in each country) is in the Privacy Notice. */}
+        <p>
+          {tr("Full details, including how to download or delete your data:")}{" "}
+          <Link to={ROUTES.PRIVACY} target="_blank" className="underline text-ink">
+            {tr("Privacy Notice")}
+          </Link>
+        </p>
       </div>
     </>
   );

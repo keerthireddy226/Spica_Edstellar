@@ -5379,5 +5379,10 @@
  "Retake face photo": "顔写真を撮り直す",
  "Take face photo": "顔写真を撮る",
  "Submit ID and face": "身分証明書と顔写真を送信",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "接続が遅いため、直前の回答を送信できませんでした。テストは次に進みました。"
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "接続が遅いため、直前の回答を送信できませんでした。テストは次に進みました。",
+ "I have read the": "私は",
+ "Privacy Notice": "プライバシー通知",
+ "and agree to how Spica uses my data.": "を読み、Spica による私のデータの利用に同意します。",
+ "Please read the Privacy Notice and tick the box to continue.": "続行するには、プライバシー通知を読んでチェックボックスにチェックを入れてください。",
+ "Full details, including how to download or delete your data:": "データのダウンロードや削除の方法を含む詳細:"
 }

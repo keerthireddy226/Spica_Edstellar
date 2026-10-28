@@ -7,6 +7,7 @@ export const ROUTES = {
   // Shared portal for both admin and super_admin — see ADMIN_LOGIN_ALLOWED_ROLES.
   ADMIN_LOGIN: "/admin/login",
   SIGNUP: "/signup",
+  PRIVACY: "/privacy",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password",
   VERIFY_EMAIL: "/verify-email",

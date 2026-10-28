@@ -14,6 +14,7 @@ import {
   loginSchema,
   resetPasswordSchema,
   signupSchema,
+  PRIVACY_NOTICE_VERSION,
   updateNameSchema,
   verifyEmailSchema,
 } from "./schemas.js";
@@ -88,6 +89,10 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
       [tenantId, body.email, passwordHash, body.firstName, body.lastName],
     );
     const userId = user.rows[0].id;
+    await client.query(
+      `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'privacy_notice', $3)`,
+      [userId, PRIVACY_NOTICE_VERSION, req.ip],
+    );
 
     const verifyToken = generateToken();
     await client.query(

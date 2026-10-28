@@ -131,7 +131,7 @@ export function useAuthState() {
   const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
     await api<{ email: string }>("/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email, password, firstName, lastName }),
+      body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true }),
     });
   }, []);
 

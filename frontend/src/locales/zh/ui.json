@@ -5379,5 +5379,10 @@
  "Retake face photo": "重拍面部照片",
  "Take face photo": "拍摄面部照片",
  "Submit ID and face": "提交证件和面部照片",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "由于网络较慢，你的上一个答案未能发送。测试已继续进行。"
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "由于网络较慢，你的上一个答案未能发送。测试已继续进行。",
+ "I have read the": "我已阅读",
+ "Privacy Notice": "隐私声明",
+ "and agree to how Spica uses my data.": "并同意 Spica 使用我的数据的方式。",
+ "Please read the Privacy Notice and tick the box to continue.": "请阅读隐私声明并勾选此框以继续。",
+ "Full details, including how to download or delete your data:": "完整详情，包括如何下载或删除你的数据："
 }

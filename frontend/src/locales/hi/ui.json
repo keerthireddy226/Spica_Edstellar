@@ -5379,5 +5379,10 @@
  "Retake face photo": "चेहरे की फ़ोटो दोबारा लें",
  "Take face photo": "चेहरे की फ़ोटो लें",
  "Submit ID and face": "आईडी और चेहरा जमा करें",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "धीमे कनेक्शन की वजह से आपका पिछला जवाब नहीं भेजा जा सका। टेस्ट आगे बढ़ गया है।"
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "धीमे कनेक्शन की वजह से आपका पिछला जवाब नहीं भेजा जा सका। टेस्ट आगे बढ़ गया है।",
+ "I have read the": "मैंने",
+ "Privacy Notice": "गोपनीयता सूचना",
+ "and agree to how Spica uses my data.": "पढ़ ली है और Spica द्वारा मेरे डेटा के उपयोग से सहमत हूँ।",
+ "Please read the Privacy Notice and tick the box to continue.": "जारी रखने के लिए गोपनीयता सूचना पढ़ें और बॉक्स पर टिक करें।",
+ "Full details, including how to download or delete your data:": "पूरी जानकारी, जिसमें अपना डेटा डाउनलोड या हटाने का तरीका भी है:"
 }

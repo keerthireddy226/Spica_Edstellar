@@ -5379,5 +5379,10 @@
  "Retake face photo": "Ta om ansiktsfotot",
  "Take face photo": "Ta ansiktsfoto",
  "Submit ID and face": "Skicka id-handling och ansikte",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Ditt senaste svar kunde inte skickas eftersom anslutningen är långsam. Testet har gått vidare."
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Ditt senaste svar kunde inte skickas eftersom anslutningen är långsam. Testet har gått vidare.",
+ "I have read the": "Jag har läst",
+ "Privacy Notice": "integritetsmeddelandet",
+ "and agree to how Spica uses my data.": "och godkänner hur Spica använder mina uppgifter.",
+ "Please read the Privacy Notice and tick the box to continue.": "Läs integritetsmeddelandet och kryssa i rutan för att fortsätta.",
+ "Full details, including how to download or delete your data:": "Alla detaljer, även hur du laddar ner eller raderar dina uppgifter:"
 }

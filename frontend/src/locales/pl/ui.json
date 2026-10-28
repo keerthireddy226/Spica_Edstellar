@@ -5379,5 +5379,10 @@
  "Retake face photo": "Zrób zdjęcie twarzy ponownie",
  "Take face photo": "Zrób zdjęcie twarzy",
  "Submit ID and face": "Wyślij dokument i twarz",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Twojej ostatniej odpowiedzi nie udało się wysłać z powodu wolnego połączenia. Test przeszedł dalej."
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Twojej ostatniej odpowiedzi nie udało się wysłać z powodu wolnego połączenia. Test przeszedł dalej.",
+ "I have read the": "Przeczytałem(-am)",
+ "Privacy Notice": "informację o prywatności",
+ "and agree to how Spica uses my data.": "i zgadzam się na sposób, w jaki Spica wykorzystuje moje dane.",
+ "Please read the Privacy Notice and tick the box to continue.": "Przeczytaj informację o prywatności i zaznacz pole, aby kontynuować.",
+ "Full details, including how to download or delete your data:": "Wszystkie szczegóły, w tym jak pobrać lub usunąć swoje dane:"
 }

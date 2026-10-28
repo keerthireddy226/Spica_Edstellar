@@ -19,6 +19,7 @@ import {
 } from "@/constants/routes";
 import { Login } from "@/pages/Login";
 import { Signup } from "@/pages/Signup";
+import { PrivacyNotice } from "@/pages/PrivacyNotice";
 import { ForgotPassword } from "@/pages/ForgotPassword";
 import { ResetPassword } from "@/pages/ResetPassword";
 import { VerifyEmail } from "@/pages/VerifyEmail";
@@ -112,6 +113,7 @@ function App() {
         <Route path="/superadmin/login" element={<Navigate to={ROUTES.ADMIN_LOGIN} replace />} />
         <Route path="/login" element={<Navigate to={ROUTES.LOGIN} replace />} />
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
+        <Route path={ROUTES.PRIVACY} element={<PrivacyNotice />} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />

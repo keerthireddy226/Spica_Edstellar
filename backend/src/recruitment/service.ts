@@ -378,9 +378,10 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
       userId: id,
       kind: "assessment_completed",
       title: "A candidate finished their assessment",
-      body: `${name} finished the assessment for ${a.title}.`,
+      body: `${name} finished the assessment for ${a.title}. You can review the result now.`,
       link: "/recruitment",
       dedupeKey: `assessment_completed:${a.id}:${id}`,
+      email: true,
     }).catch(() => {});
   }
   await emitEvent(a.tenant_id, "assessment.completed", {

@@ -159,6 +159,8 @@ async function sessionLabel(sessionId: string): Promise<{ userId: string; who: s
 }
 
 // One alert per kind per session for each reviewer, while the test runs.
+// In-app only, never emailed: a moment away from the camera isn't worth an
+// email; the finished test's review (and its flag, if any) is.
 export async function sendLiveAlert(sessionId: string, kind: LiveAlertKind): Promise<void> {
   const s = await sessionLabel(sessionId);
   if (!s || s.completed) return;
@@ -172,8 +174,6 @@ export async function sendLiveAlert(sessionId: string, kind: LiveAlertKind): Pro
       body,
       link: `${REVIEW_PATH[r.role]}?session=${sessionId}`,
       dedupeKey: `integrity-live:${sessionId}:${kind}:${r.id}`,
-      email: await emailsInstantly(r),
-      emailSubject: title,
     }).catch((err) => console.error("integrity alert failed:", err));
   }
 }

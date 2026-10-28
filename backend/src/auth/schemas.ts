@@ -7,7 +7,12 @@ export const signupSchema = z.object({
   password: z.string().min(8).max(72),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
+  // The Privacy Notice checkbox; sign-up is refused without it.
+  acceptPrivacy: z.literal(true),
 });
+
+// The Privacy Notice version people agree to (its "last updated" date).
+export const PRIVACY_NOTICE_VERSION = "2026-10-28";
 
 export const updateNameSchema = z.object({
   firstName: z.string().min(1),

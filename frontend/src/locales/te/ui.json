@@ -5379,5 +5379,10 @@
  "Retake face photo": "ముఖం ఫోటో మళ్లీ తీయండి",
  "Take face photo": "ముఖం ఫోటో తీయండి",
  "Submit ID and face": "ఐడీ మరియు ముఖం సమర్పించండి",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "కనెక్షన్ నెమ్మదిగా ఉన్నందున మీ చివరి జవాబు పంపలేకపోయాం. టెస్ట్ ముందుకు వెళ్లింది."
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "కనెక్షన్ నెమ్మదిగా ఉన్నందున మీ చివరి జవాబు పంపలేకపోయాం. టెస్ట్ ముందుకు వెళ్లింది.",
+ "I have read the": "నేను",
+ "Privacy Notice": "గోప్యతా నోటీసు",
+ "and agree to how Spica uses my data.": "చదివాను మరియు Spica నా డేటాను ఉపయోగించే విధానానికి అంగీకరిస్తున్నాను.",
+ "Please read the Privacy Notice and tick the box to continue.": "కొనసాగడానికి గోప్యతా నోటీసు చదివి, పెట్టెలో టిక్ చేయండి.",
+ "Full details, including how to download or delete your data:": "మీ డేటాను డౌన్‌లోడ్ చేయడం లేదా తొలగించడం ఎలాగో సహా పూర్తి వివరాలు:"
 }

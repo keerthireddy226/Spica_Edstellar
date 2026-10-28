@@ -5379,5 +5379,10 @@
  "Retake face photo": "Tag ansigtsfoto igen",
  "Take face photo": "Tag ansigtsfoto",
  "Submit ID and face": "Send ID og ansigt",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Dit sidste svar kunne ikke sendes, fordi forbindelsen er langsom. Testen er gået videre."
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Dit sidste svar kunne ikke sendes, fordi forbindelsen er langsom. Testen er gået videre.",
+ "I have read the": "Jeg har læst",
+ "Privacy Notice": "privatlivserklæringen",
+ "and agree to how Spica uses my data.": "og accepterer, hvordan Spica bruger mine data.",
+ "Please read the Privacy Notice and tick the box to continue.": "Læs privatlivserklæringen, og sæt flueben i feltet for at fortsætte.",
+ "Full details, including how to download or delete your data:": "Alle detaljer, også hvordan du downloader eller sletter dine data:"
 }

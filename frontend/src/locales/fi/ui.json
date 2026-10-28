@@ -5379,5 +5379,10 @@
  "Retake face photo": "Ota kasvokuva uudelleen",
  "Take face photo": "Ota kasvokuva",
  "Submit ID and face": "Lähetä henkilöllisyystodistus ja kasvokuva",
- "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Viimeistä vastaustasi ei voitu lähettää hitaan yhteyden vuoksi. Koe on jatkunut."
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Viimeistä vastaustasi ei voitu lähettää hitaan yhteyden vuoksi. Koe on jatkunut.",
+ "I have read the": "Olen lukenut",
+ "Privacy Notice": "tietosuojaselosteen",
+ "and agree to how Spica uses my data.": "ja hyväksyn, miten Spica käyttää tietojani.",
+ "Please read the Privacy Notice and tick the box to continue.": "Lue tietosuojaseloste ja valitse ruutu jatkaaksesi.",
+ "Full details, including how to download or delete your data:": "Kaikki tiedot, myös miten lataat tai poistat tietosi:"
 }

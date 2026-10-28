@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
+import { tr } from "@/i18n/tr";
 
 export function Signup() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -32,6 +34,10 @@ export function Signup() {
     }
     if (password !== confirmPassword) {
       setError(t("auth.signup.passwordMismatch"));
+      return;
+    }
+    if (!agreed) {
+      setError(tr("Please read the Privacy Notice and tick the box to continue."));
       return;
     }
     setSubmitting(true);
@@ -115,6 +121,16 @@ export function Signup() {
           autoComplete="new-password"
           required
         />
+        <label className="flex items-start gap-2 text-sm text-ink">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            {tr("I have read the")}{" "}
+            <Link to={ROUTES.PRIVACY} target="_blank" className="font-medium underline">
+              {tr("Privacy Notice")}
+            </Link>{" "}
+            {tr("and agree to how Spica uses my data.")}
+          </span>
+        </label>
         {error && <p className="text-sm text-error">{error}</p>}
         <Button type="submit" className="mt-1 w-full" disabled={submitting}>
           {submitting ? t("auth.signup.submitting") : t("auth.signup.submit")}
