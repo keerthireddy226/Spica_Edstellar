@@ -719,69 +719,93 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
     if (!policy.idVerification) return res.status(400).json({ error: "not_enabled" });
     const doc = decode(body.documentBase64);
     const selfie = decode(body.selfieBase64);
+    const userId = req.user!.id;
+    const role = req.user!.role;
 
-    // The largest face on the document against the selfie: a hint for the
-    // reviewer, who makes the decision.
-    let similarity: number | null = null;
-    let auto = "no_face_on_document";
-    const docFaces = (await detectFaces(doc, 0.5).catch(() => [])).sort((a, b) => b.w * b.h - a.w * a.h);
-    const selfieFaces = await detectFaces(selfie).catch(() => []);
-    if (selfieFaces.length !== 1) auto = "no_single_face_in_selfie";
-    else if (docFaces[0]) {
-      const [a, b] = await Promise.all([embedFace(doc, docFaces[0]).catch(() => null), embedFace(selfie, selfieFaces[0]).catch(() => null)]);
-      if (a && b) {
-        similarity = Math.round(cosineSimilarity(a, b) * 1000) / 1000;
-        auto = similarity >= UNCERTAIN_FLOOR ? "likely_same_person" : "faces_differ";
-      }
-    }
-    // Liveness on the selfie: a photo of a photo or a screen scores low.
-    let liveness: number | null = null;
-    if (selfieFaces.length === 1) {
-      liveness = await scoreLiveness(await cropFace(selfie, selfieFaces[0]))
-        .then((l) => Math.round(l.live * 1000) / 1000)
-        .catch(() => null);
-    }
-    // The machine-readable zone, compared with the name on the account.
-    const me = (await pool.query(`SELECT concat_ws(' ', first_name, last_name) AS name FROM users WHERE id = $1`, [req.user!.id])).rows[0];
-    const mrz = await readMrz(doc, me?.name ?? "").catch((err) => {
-      console.error("MRZ reading failed:", err);
-      return null;
-    });
+    // The photos are saved and the learner goes on straight away; the checks
+    // on them (faces, liveness, a passport's MRZ) run afterwards: on a small
+    // server they take long enough to make the upload look failed.
     const store = async (kind: "id_document" | "id_selfie", data: Buffer) => {
       const jpg = await sharp(data).rotate().resize(1600, 1600, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
       const uri = await saveMedia(kind, "jpg", jpg);
       return (
         await pool.query(`INSERT INTO proctoring_media (session_id, user_id, kind, uri) VALUES ($1, $2, $3, $4) RETURNING id`, [
           body.sessionId ?? null,
-          req.user!.id,
+          userId,
           kind,
           uri,
         ])
       ).rows[0].id as string;
     };
     if (body.sessionId) {
-      const s = await pool.query(`SELECT 1 FROM sessions WHERE id = $1 AND user_id = $2`, [body.sessionId, req.user!.id]);
+      const s = await pool.query(`SELECT 1 FROM sessions WHERE id = $1 AND user_id = $2`, [body.sessionId, userId]);
       if (!s.rowCount) body.sessionId = undefined;
     }
     const [docId, selfieId] = [await store("id_document", doc), await store("id_selfie", selfie)];
-    // A candidate's ID selfie is their face reference for the test.
-    if (req.user!.role === "candidate" && selfieFaces.length === 1 && (liveness ?? 1) >= 0.5) {
-      await enrollCandidateFace(req.user!.id, selfie, selfieFaces[0], null, true);
-    }
     const consent = await pool.query(
       `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring_biometric', $3) RETURNING id`,
-      [req.user!.id, consentVersion(policy), req.ip],
+      [userId, consentVersion(policy), req.ip],
     );
     const r = await pool.query(
-      `INSERT INTO identity_verifications (user_id, tenant_id, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, consent_record_id, mrz, liveness_score)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, status, created_at`,
-      [req.user!.id, tenantId, body.documentType, docId, selfieId, similarity, auto, consent.rows[0].id, mrz ? JSON.stringify(mrz) : null, liveness],
+      `INSERT INTO identity_verifications (user_id, tenant_id, document_type, document_media_id, selfie_media_id, auto_decision, consent_record_id)
+       VALUES ($1, $2, $3, $4, $5, 'checking', $6) RETURNING id, status, created_at`,
+      [userId, tenantId, body.documentType, docId, selfieId, consent.rows[0].id],
     );
     res.status(201).json({ identity: r.rows[0] });
+
+    void checkIdentityPhotos(r.rows[0].id as string, userId, role, body.documentType, doc, selfie).catch((err) =>
+      console.error("identity photo checks failed:", err),
+    );
+    return;
   } catch (err) {
     next(err);
   }
 });
+
+// The checks on an ID photo and selfie, for the reviewer: the largest face on
+// the document against the selfie, liveness on the selfie (a photo of a photo
+// or a screen scores low) and, on a passport, the machine-readable zone
+// against the account's name.
+async function checkIdentityPhotos(verificationId: string, userId: string, role: string, documentType: string, doc: Buffer, selfie: Buffer) {
+  let similarity: number | null = null;
+  let auto = "no_face_on_document";
+  const docFaces = (await detectFaces(doc, 0.5).catch(() => [])).sort((a, b) => b.w * b.h - a.w * a.h);
+  const selfieFaces = await detectFaces(selfie).catch(() => []);
+  if (selfieFaces.length !== 1) auto = "no_single_face_in_selfie";
+  else if (docFaces[0]) {
+    const [a, b] = await Promise.all([embedFace(doc, docFaces[0]).catch(() => null), embedFace(selfie, selfieFaces[0]).catch(() => null)]);
+    if (a && b) {
+      similarity = Math.round(cosineSimilarity(a, b) * 1000) / 1000;
+      auto = similarity >= UNCERTAIN_FLOOR ? "likely_same_person" : "faces_differ";
+    }
+  }
+  let liveness: number | null = null;
+  if (selfieFaces.length === 1) {
+    liveness = await scoreLiveness(await cropFace(selfie, selfieFaces[0]))
+      .then((l) => Math.round(l.live * 1000) / 1000)
+      .catch(() => null);
+  }
+  // Only passports carry a machine-readable zone.
+  let mrz: Awaited<ReturnType<typeof readMrz>> = null;
+  if (documentType === "passport") {
+    const me = (await pool.query(`SELECT concat_ws(' ', first_name, last_name) AS name FROM users WHERE id = $1`, [userId])).rows[0];
+    mrz = await readMrz(doc, me?.name ?? "").catch((err) => {
+      console.error("MRZ reading failed:", err);
+      return null;
+    });
+  }
+  await pool.query(`UPDATE identity_verifications SET face_similarity = $2, auto_decision = $3, mrz = $4, liveness_score = $5 WHERE id = $1`, [
+    verificationId,
+    similarity,
+    auto,
+    mrz ? JSON.stringify(mrz) : null,
+    liveness,
+  ]);
+  // A candidate's ID selfie is their face reference for the test.
+  if (role === "candidate" && selfieFaces.length === 1 && (liveness ?? 1) >= 0.5) {
+    await enrollCandidateFace(userId, selfie, selfieFaces[0], null, true);
+  }
+}
 
 // ---------- Reviewers ----------
 
