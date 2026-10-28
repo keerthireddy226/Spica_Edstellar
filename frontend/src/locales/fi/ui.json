@@ -5355,5 +5355,18 @@
  "During the test": "Kokeen aikana",
  "It moves on with the timer: no skipping and no going back.": "Koe etenee ajastimen mukaan: kysymyksiä ei voi ohittaa eikä takaisin voi palata.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Puhutut vastaukset: paina mikrofonia, puhu ja lopeta painamalla sitä uudelleen.",
- "Stay on this tab. Copy and paste are turned off.": "Pysy tällä välilehdellä. Kopiointi ja liittäminen on poistettu käytöstä."
+ "Stay on this tab. Copy and paste are turned off.": "Pysy tällä välilehdellä. Kopiointi ja liittäminen on poistettu käytöstä.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Kasvosi: kamerasi ottamat kuvat kokeen aikana, verrattuna henkilöllisyystodistuksesi kuvaan.",
+ "Your face: photos from your camera during the test.": "Kasvosi: kamerasi ottamat kuvat kokeen aikana.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Äänesi: puhutut vastauksesi tallennetaan ja niitä verrataan ääninäytteeseesi.",
+ "Your voice: your spoken answers are recorded.": "Äänesi: puhutut vastauksesi tallennetaan.",
+ "Your screen, while you share it.": "Näyttösi, kun jaat sen.",
+ "What's recorded and how you're scored": "Mitä tallennetaan ja miten sinut pisteytetään",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Tekoäly (Google Gemini) pisteyttää puhutut ja kirjoitetut vastauksesi. Ihminen tarkistaa kaiken epätavallisen; mikään ei hylkää sinua automaattisesti.",
+ "{{org}} receives your results.": "{{org}} saa tuloksesi.",
+ "Not answered": "Vastaamatta",
+ "Current question": "Nykyinen kysymys",
+ "Still to come": "Tulossa",
+ "How the assessment runs": "Näin arviointi etenee",
+ "Monitoring has stopped. Handing in your answers…": "Valvonta on päättynyt. Vastauksiasi lähetetään…"
 }

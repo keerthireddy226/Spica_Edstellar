@@ -78,7 +78,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { useTestFocus } from "@/components/AppShell/testFocus";
 import { TestIdTag } from "@/components/TestIdTag";
-import { ProctoringGate, firstScreenCanStart } from "@/components/proctoring/ProctoringGate";
+import { ProctoringGate, firstScreenCanStart, resumableOnly } from "@/components/proctoring/ProctoringGate";
+import { QuestionNav, type QuestionState } from "@/components/practice/QuestionNav";
+import { stopAllMedia } from "@/lib/mediaTracks";
 import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
@@ -127,6 +129,31 @@ interface PendingStart {
 
 // Mock tests: how long the time-up warning shows red.
 const MOCK_WARNING_SECONDS = 10;
+
+// Where a learner is in a test session, kept in this tab so a refresh comes
+// back to the same place: past the overview, and which sections' instructions
+// were already read.
+interface SessionProgress {
+  started?: boolean;
+  shownParts?: string[];
+}
+const progressKey = (sessionId: string) => `spica.testProgress.${sessionId}`;
+function readProgress(sessionId: string): SessionProgress {
+  try {
+    return JSON.parse(sessionStorage.getItem(progressKey(sessionId)) ?? "{}") as SessionProgress;
+  } catch {
+    return {};
+  }
+}
+function saveProgress(sessionId: string, patch: SessionProgress) {
+  try {
+    const prev = readProgress(sessionId);
+    const shownParts = [...new Set([...(prev.shownParts ?? []), ...(patch.shownParts ?? [])])];
+    sessionStorage.setItem(progressKey(sessionId), JSON.stringify({ ...prev, ...patch, shownParts }));
+  } catch {
+    // Not kept: a refresh shows the overview or a section's instructions again.
+  }
+}
 
 interface CachedAnswer {
   responseText: string;
@@ -369,6 +396,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // Gates question 1 behind a Pearson-style "Overview" of every section —
   // only on a genuinely fresh start, not a resumed session (already seen it).
   const [showExamOverview, setShowExamOverview] = useState(false);
+  // A session that was already under way when this page loaded (a refresh):
+  // it continues where it was, without the start screens again.
+  const [resumed, setResumed] = useState(false);
   // Tracks which parts' one-time instructions interstitial has already been
   // dismissed this page load (in-memory only — a refresh mid-exam re-shows
   // the current section's card once, which is an acceptable rough edge for
@@ -379,7 +409,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // A learner's practice or mock test: its first screen (the overview) also
   // shows the first section's instructions, asks for the agreement when it
   // wasn't given before the test, shares the screen if needed and starts.
-  const quickTest = !isCandidate && !owned && (deliveryMode === "practice" || deliveryMode === "mock");
+  // Job candidates (always a mock) get the same screens; their organization's
+  // extra checks (ID, room scan, voice sample) still come before the test.
+  const quickTest = !owned && (deliveryMode === "practice" || deliveryMode === "mock");
   const needAgree = quickTest && showExamOverview && (!agreedBefore || !!proctor.setup?.consentNeeded);
   const [agreeInfo, setAgreeInfo] = useState<PreTestInfo | null>(null);
   const [agreeTicked, setAgreeTicked] = useState(false);
@@ -391,6 +423,24 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       .then(setAgreeInfo)
       .catch(() => setStartError(tr("Could not load what this test collects. Try again.")));
   }, [needAgree, selectedProduct, deliveryMode]);
+  // A refresh in a test already under way: it carries on at the same question.
+  // The browser drops the shared screen and full screen on a reload, so the
+  // banner over the test asks for them back.
+  useEffect(() => {
+    const s = proctor.setup;
+    if (!sessionId || !resumed || proctor.ready || proctor.loading || !s) return;
+    if (!resumableOnly(s, !!proctor.screenStream)) return;
+    proctor.markReady();
+    if (s.policy.screenRecording && !proctor.screenStream) proctor.report("screen_share_stopped");
+    else if (s.policy.requireFullscreen && !document.fullscreenElement) proctor.report("fullscreen_exit");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, resumed, proctor.ready, proctor.loading, proctor.setup]);
+  // Once the screen is shared again, full screen is asked for next.
+  useEffect(() => {
+    if (resumed && proctor.ready && proctor.screenStream && proctor.setup?.policy.requireFullscreen && !document.fullscreenElement) proctor.report("fullscreen_exit");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumed, proctor.ready, proctor.screenStream]);
+
   async function startFromOverview() {
     setStartError(null);
     const p = proctor.setup?.policy;
@@ -418,8 +468,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     }
     if (!proctor.ready) proctor.markReady();
     setShowExamOverview(false);
-    // The first section's instructions were on this screen.
-    if (quickTest && currentPartIndex === 0) setShowSectionIntro(false);
+    if (sessionId) saveProgress(sessionId, { started: true });
   }
 
   // "two-phase" items (Passage Reconstruction): show the passage, then hide
@@ -444,22 +493,31 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     const startIndex = firstUnattempted === -1 ? 0 : firstUnattempted;
     setIndex(startIndex);
     setAnswers(
-      Object.fromEntries(res.items.flatMap((item, i) => (item.attempted ? [[i, { responseText: item.responseText ?? "" }]] : []))),
+      // Only questions handed in with an answer count as answered (a spoken
+      // answer comes back without its text, so it's marked as given).
+      Object.fromEntries(
+        res.items.flatMap((item, i) => (item.answered ?? item.attempted ? [[i, { responseText: item.responseText ?? "", durationMs: item.answered && !item.responseText ? 1 : undefined }]] : [])),
+      ),
     );
     setSummary(null);
     reportHeldCheck(res.sessionId);
 
-    // A mock question already shown has its clock running: no overview again.
-    const isFreshStart = res.items.every((item) => !item.attempted && (item.secondsLeft ?? null) === null);
+    // A mock question already shown has its clock running: no overview again,
+    // and neither after a refresh once the test was started.
+    const saved = readProgress(res.sessionId);
+    const isFreshStart = !saved.started && res.items.every((item) => !item.attempted && (item.secondsLeft ?? null) === null);
     setShowExamOverview(isFreshStart);
+    setResumed(!isFreshStart);
     // Resuming mid-section shouldn't re-interrupt with that section's
     // intro — mark every part up to and including the resumed one as
     // already seen; a fresh start leaves every part unseen, so the
     // index-tracking effect below shows part 0's intro once the overview
     // (if any) is dismissed.
+    // A section whose first question is the one resuming still shows its
+    // instructions, unless they were already read (a refresh on the question).
     shownPartsRef.current = isFreshStart
-      ? new Set()
-      : new Set(res.partBoundaries.filter((b) => b.startIndex <= startIndex).map((b) => b.partId));
+      ? new Set(saved.shownParts ?? [])
+      : new Set([...res.partBoundaries.filter((b) => b.startIndex < startIndex).map((b) => b.partId), ...(saved.shownParts ?? [])]);
 
     setSearchParams(
       (prev) => {
@@ -781,6 +839,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   async function finishTest() {
     if (!sessionId || completedRef.current) return;
     completedRef.current = true;
+    // The test is over: camera, microphone and screen sharing stop now, not
+    // when the result comes back.
+    stopAllMedia();
     // Every item was already submitted successfully by this point (this
     // only runs after handleSubmit's own submitExamAttempt succeeded) — a
     // network hiccup calling /complete shouldn't strand the learner on the
@@ -840,7 +901,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         activeMs: Date.now() - questionShownAtRef.current,
       });
       if (res.noisy) setNoisyAnswerAt(Date.now());
-      cacheCurrentAnswer();
+      // A recording that just stopped isn't in state yet: keep it as given.
+      if (recorded) setAnswers((prev) => ({ ...prev, [index]: { responseText: recorded.transcript, durationMs: recorded.durationMs } }));
+      else cacheCurrentAnswer();
       markChecked(sessionId);
       // Straight on: right and wrong answers are in the report at the end
       // (feedback after each question is in Practice Modules, not tests).
@@ -914,7 +977,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     await finishTest();
   }
   finishEarlyRef.current = finishEarly;
-  useTestFocus(isMock && !!sessionId && !summary, deliveryMode, owned?.testName ?? (selectedType ? testTypeName(selectedType, t) : null), !!owned?.level, isMock && !!sessionId && !summary && !finishing && proctor.ready, finishEarlyRef);
+  useTestFocus(isMock && !!sessionId && !summary, deliveryMode, owned?.testName ?? (selectedType ? testTypeName(selectedType, t) : null), !!owned?.level, isMock && !!sessionId && !summary && !finishing && proctor.ready, finishEarlyRef, isCandidate);
 
   function handleBack() {
     stopSpokenAudio();
@@ -1195,7 +1258,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-3 items-center text-center">
         <CheckCircle2 size={32} className="text-success" />
         <h1 className="font-display font-bold text-xl text-ink">{tr("Test finished")}</h1>
-        <p className="text-sm text-muted">{tr("Monitoring has stopped. Scoring your answers; this can take up to a minute.")}</p>
+        <p className="text-sm text-muted">{isCandidate ? tr("Monitoring has stopped. Handing in your answers…") : tr("Monitoring has stopped. Scoring your answers; this can take up to a minute.")}</p>
       </div>
     );
   }
@@ -1205,6 +1268,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // screen and starting, when nothing else is left.
   if (sessionId && !proctor.ready) {
     if (proctor.loading || !proctor.setup) return null;
+    // A refresh mid-test: only the screen and starting are left, so the test
+    // continues (see the effect that marks it ready) instead of these pages.
+    if (resumed && resumableOnly(proctor.setup, !!proctor.screenStream)) return null;
     if (!(quickTest && showExamOverview && current && firstScreenCanStart(proctor.setup, !!proctor.screenStream))) {
       return <ProctoringGate proctor={proctor} sessionId={sessionId} autoStart={quickTest} />;
     }
@@ -1249,9 +1315,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
   if (sessionId && current && showExamOverview) {
     return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+      <div className="max-w-4xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
         {overlay}
-        {quickTest && (
+        {quickTest && !isCandidate && (
           <button onClick={() => setRecheck("check")} className="self-start -mb-2 flex items-center gap-1.5 text-sm text-muted hover:text-ink cursor-pointer">
             <ArrowLeft size={16} /> {tr("Back")}
           </button>
@@ -1268,7 +1334,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         {isMock && (
           <div className="w-full flex flex-col gap-2 text-left text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-3">
             <span className="flex items-center gap-2 font-semibold">
-              <Timer size={18} className="text-navy-deep shrink-0" /> {deliveryMode === "mock" ? tr("How a mock test runs") : tr("How the test runs")}
+              <Timer size={18} className="text-navy-deep shrink-0" /> {isCandidate ? tr("How the assessment runs") : deliveryMode === "mock" ? tr("How a mock test runs") : tr("How the test runs")}
             </span>
             <ul className="list-disc pl-5 flex flex-col gap-1">
               <li>{tr("The test moves forward with the timer. There is no Skip and no Back, and spoken answers have no Next button.")}</li>
@@ -1279,7 +1345,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             </ul>
           </div>
         )}
-        <div className="w-full flex flex-col gap-2 text-left">
+        <div className="w-full grid md:grid-cols-2 gap-2 text-left">
           {partBoundaries.map((part, i) => (
             <div key={part.partId} className="flex items-center gap-3 bg-paper-warm rounded-input px-4 py-2.5">
               <span className="h-7 w-7 rounded-full bg-navy/15 text-navy-deep flex items-center justify-center text-xs font-bold shrink-0">
@@ -1290,12 +1356,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             </div>
           ))}
         </div>
-        {quickTest && currentPart && currentPartIndex === 0 && current.instructionText && (
-          <div className="w-full text-left flex flex-col gap-1 border-t border-rule pt-4">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("First: {{label}}", { label: currentPart.label })}</span>
-            <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
-          </div>
-        )}
         {needAgree && (
           <div className="w-full text-left flex flex-col gap-3 border-t border-rule pt-4">
             {agreeInfo && (
@@ -1314,12 +1374,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           </div>
         )}
         {startError && <p className="text-sm text-error">{startError}</p>}
-        <Button onClick={startFromOverview} disabled={starting || (needAgree && (!agreeTicked || !agreeInfo))} className="w-full">
+        <Button onClick={startFromOverview} disabled={starting || (needAgree && (!agreeTicked || !agreeInfo))} className="w-full max-w-md">
           {quickTest && !proctor.ready && proctor.setup?.policy.screenRecording && !proctor.screenStream
             ? tr("Share screen and start")
-            : quickTest && currentPart && currentPartIndex === 0
-              ? t("practiceTests.overview.startSection", { label: currentPart.label })
-              : t("practiceTests.overview.begin")}
+            : t("practiceTests.overview.begin")}
         </Button>
       </div>
     );
@@ -1328,7 +1386,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // --- Per-section instructions, once per part per session ---
   if (sessionId && current && showSectionIntro && currentPart) {
     return (
-      <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
+      <div className="max-w-2xl mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
         {overlay}
         <div className="flex items-center gap-2">
           <span className="h-6 w-6 rounded-full bg-navy text-lime flex items-center justify-center text-xs font-bold shrink-0">
@@ -1343,14 +1401,20 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         </span>
         <div>
           <h1 className="font-display font-bold text-xl text-ink">{currentPart.label}</h1>
-          <p className="text-sm text-muted mt-2 leading-relaxed">{current.instructionText}</p>
+          <p className="text-sm text-ink mt-2 leading-relaxed">{current.instructionText}</p>
           {isMock && (
-            <p className="text-sm text-navy-deep mt-2 flex items-start gap-1.5 justify-center">
+            <p className="text-sm text-muted mt-2 flex items-start gap-1.5 justify-center">
               <Timer size={15} className="shrink-0 mt-0.5" /> {tr("Timed: each question moves on by itself when its timer reaches 0:00.")}
             </p>
           )}
         </div>
-        <Button onClick={() => setShowSectionIntro(false)} className="w-full">
+        <Button
+          onClick={() => {
+            setShowSectionIntro(false);
+            if (sessionId) saveProgress(sessionId, { shownParts: [currentPart.partId] });
+          }}
+          className="w-full"
+        >
           {t("practiceTests.overview.startSection", { label: currentPart.label })}
         </Button>
       </div>
@@ -1376,8 +1440,17 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     const timeUpEmpty = nothingGiven && (isMock ? mockSecondsLeft : remainingSeconds) === 0;
     const progressPct = Math.round((index / items.length) * 100);
     const shownSeconds = isMock ? mockSecondsLeft : feedback ? null : remainingSeconds;
+    // For the question numbers beside the test.
+    const hasAnswer = (i: number) => {
+      const a = answers[i];
+      if (!a) return false;
+      return a.responseText.trim() !== "" || !!a.audioBlobUrl || !!a.audioBase64 || !!a.durationMs;
+    };
+    const stateOf = (i: number): QuestionState => (i === index ? "current" : hasAnswer(i) ? "answered" : i < index ? "missed" : "upcoming");
     return (
-      <div className="max-w-4xl mx-auto flex flex-col gap-3">
+      <div className="w-full flex gap-6 items-start">
+        <QuestionNav parts={partBoundaries} total={items.length} stateOf={stateOf} />
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
         {overlay}
         {paused && (
           <div role="alertdialog" aria-modal="true" aria-labelledby="paused-title" className="fixed inset-0 z-[70] bg-paper flex items-center justify-center p-4">
@@ -1425,7 +1498,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           )}
           <div className="flex items-center gap-2">
             <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
-              {deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
+              {isCandidate ? tr("Assessment") : deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
             </span>
             <span className="text-sm font-semibold text-ink">{t("placementTest.progress", { current: index + 1, total: items.length })}</span>
             {deliveryMode === "practice" && !isCandidate && (
@@ -1697,6 +1770,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               </>
             )}
           </div>
+        </div>
         </div>
       </div>
     );

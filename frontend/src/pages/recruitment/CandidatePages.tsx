@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Briefcase, CheckCircle2, ShieldCheck, TimerOff } from "lucide-react";
+import { Briefcase, CheckCircle2, TimerOff } from "lucide-react";
 import { Button } from "@/components/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { refreshBranding } from "@/components/AppShell/useBranding";
 import { CandidateFinished, CandidatePanel, CandidateShell } from "@/components/recruitment/CandidateShell";
-import { TEST_KIND_LABEL, TEST_MINUTES } from "@/components/recruitment/testKinds";
+import { TEST_MINUTES } from "@/components/recruitment/testKinds";
 import { CandidateChecklist } from "@/components/recruitment/CandidateChecklist";
 import { PlacementTest } from "@/pages/PlacementTest";
 import { PracticeTests } from "@/pages/PracticeTests";
+import { TestFocusBar, TestFocusProvider, type TestFocus } from "@/components/AppShell/testFocus";
 import { startExamSession } from "@/api/practiceTests";
 import { getApplyInfo, getCandidateAssessment, getInvite, sendApplyCode, startInvite, verifyApplyCode, type ApplyInfo, type CandidateAssessment, type InviteInfo } from "@/api/recruitment";
 import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
-import { PreTestFlow } from "@/components/pretest/PreTestFlow";
+import { QuickPreTest } from "@/components/pretest/QuickPreTest";
+import type { PreTestKind } from "@/api/proctoring";
 
 // While the invitation or assessment loads: the same frame, not a blank page.
 function CandidateLoading() {
@@ -97,13 +99,14 @@ export function AssessInvite() {
   return (
     <CandidateShell org={info.organization.name}>
       <CandidatePanel
+        wide
         icon={<Briefcase size={26} />}
         title={info.firstName ? tr("Hello {{name}}", { name: info.firstName }) : tr("Your English assessment")}
         subtitle={tr("{{org}} invited you to an English assessment for {{job}}.", { org: info.organization.name, job: info.job.title })}
       >
-        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} expiresAt={info.expiresAt} admissions={info.admissions} />
+        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} expiresAt={info.expiresAt} admissions={info.admissions} orgName={info.organization.name} />
         {error && <p className="text-sm text-error text-center">{error}</p>}
-        <Button onClick={start} disabled={busy}>
+        <Button onClick={start} disabled={busy} className="w-full max-w-md self-center">
           {busy ? tr("Starting...") : tr("Start the assessment")}
         </Button>
         <p className="text-xs text-muted text-center">{tr("Before the test you'll see exactly what is monitored and agree to it.")}</p>
@@ -202,13 +205,14 @@ export function ApplyByLink() {
   return (
     <CandidateShell org={info.organization.name}>
       <CandidatePanel
+        wide
         icon={<Briefcase size={26} />}
         title={tr("English assessment for {{job}}", { job: info.job.title })}
         subtitle={tr("{{org}} asks applicants for {{job}} to take this English assessment.", { org: info.organization.name, job: info.job.title })}
       >
-        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} admissions={info.admissions} />
+        <CandidateChecklist testKind={info.testKind} proctoring={info.proctoring} admissions={info.admissions} orgName={info.organization.name} />
         {!codeSent ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 w-full max-w-md self-center">
             <div className="grid grid-cols-2 gap-3">
               <input value={first} onChange={(e) => setFirst(e.target.value)} placeholder={tr("First name")} aria-label={tr("First name")} className={field} />
               <input value={last} onChange={(e) => setLast(e.target.value)} placeholder={tr("Last name")} aria-label={tr("Last name")} className={field} />
@@ -221,7 +225,7 @@ export function ApplyByLink() {
             <p className="text-xs text-muted text-center">{tr("We send a 6-digit code to confirm your email. Your result goes to {{org}}.", { org: info.organization.name })}</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 w-full max-w-md self-center">
             <p className="text-sm text-ink text-center">{tr("We sent a 6-digit code to {{email}}. Enter it to start.", { email: email.trim() })}</p>
             <input
               value={code}
@@ -254,8 +258,6 @@ export function CandidateAssessmentPage() {
   const [started, setStarted] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
-  // "I'm ready" opens the device check and demo; the test starts after them.
-  const [preparing, setPreparing] = useState(false);
 
   useEffect(() => {
     getCandidateAssessment()
@@ -303,49 +305,30 @@ export function CandidateAssessmentPage() {
       </CandidateShell>
     );
   }
-  if (preparing && !started) {
-    return (
-      <div className="app-surface min-h-screen px-4 sm:px-6 py-10">
-        <PreTestFlow kind={a.testKind} minutes={TEST_MINUTES[a.testKind]} onBack={() => setPreparing(false)} onReady={() => !busy && begin()} />
-      </div>
-    );
-  }
   if (started && a.testKind === "placement") return <PlacementTest />;
-  if (started && searchParams.get("session")) {
-    return (
-      <div className="app-surface min-h-screen px-4 sm:px-6 py-6">
-        <PracticeTests />
-      </div>
-    );
-  }
+  if (started && searchParams.get("session")) return <CandidateTestPage />;
+  // Not started yet: the guide (the first time), then the device check with
+  // the agreement, as for practice and mock tests; the organization's other
+  // checks (ID, room scan, voice sample, screen) follow inside the test.
   return (
-    <CandidateShell org={a.organization}>
-      <CandidatePanel
-        icon={<ShieldCheck size={26} />}
-        title={tr("Before you start")}
-        subtitle={tr("{{job}} · {{test}}", {
-          job: a.jobTitle,
-          test: TEST_KIND_LABEL[a.testKind](),
-        })}
-      >
-        <ul className="flex flex-col gap-2 text-sm text-ink">
-          {[
-            tr("Sit in a quiet, well-lit room, alone."),
-            a.admissions
-              ? tr("Use headphones only if the admissions office allows them; keep your speakers at a normal volume.")
-              : tr("Use headphones only if your recruiter allows them; keep your speakers at a normal volume."),
-            tr("Keep this tab open until the end. Leaving it is recorded."),
-            tr("You have one attempt. Your answers save as you go, so a dropped connection doesn't lose them."),
-          ].map((t) => (
-            <li key={t} className="flex items-start gap-2">
-              <CheckCircle2 size={16} className="text-success shrink-0 mt-0.5" /> {t}
-            </li>
-          ))}
-        </ul>
-        <Button onClick={() => setPreparing(true)} disabled={busy}>
-          {busy ? tr("Starting...") : tr("I'm ready")}
-        </Button>
-      </CandidatePanel>
-    </CandidateShell>
+    <div className="app-surface min-h-screen px-4 sm:px-6 py-10">
+      <QuickPreTest kind={a.testKind as PreTestKind} mode="mock" minutes={TEST_MINUTES[a.testKind]} onBack={() => window.history.back()} onReady={() => !busy && begin()} />
+    </div>
+  );
+}
+
+// The test itself, with the same top bar as a learner's timed test: the
+// test's name and Finish test (the page has no app header around it).
+function CandidateTestPage() {
+  const [focus, setFocus] = useState<TestFocus | null>(null);
+  return (
+    <div className="app-surface min-h-screen flex flex-col">
+      {focus && <TestFocusBar focus={focus} />}
+      <div className="flex-1 px-4 sm:px-6 py-6">
+        <TestFocusProvider value={setFocus}>
+          <PracticeTests />
+        </TestFocusProvider>
+      </div>
+    </div>
   );
 }

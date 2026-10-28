@@ -5355,5 +5355,18 @@
  "During the test": "Trong khi làm bài",
  "It moves on with the timer: no skipping and no going back.": "Bài thi chạy theo đồng hồ: không thể bỏ qua hay quay lại.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Câu trả lời nói: nhấn vào micrô, nói, rồi nhấn lại để dừng.",
- "Stay on this tab. Copy and paste are turned off.": "Hãy ở lại tab này. Sao chép và dán đã bị tắt."
+ "Stay on this tab. Copy and paste are turned off.": "Hãy ở lại tab này. Sao chép và dán đã bị tắt.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Khuôn mặt của bạn: ảnh chụp từ camera trong khi làm bài, được so sánh với ảnh trên giấy tờ tùy thân của bạn.",
+ "Your face: photos from your camera during the test.": "Khuôn mặt của bạn: ảnh chụp từ camera trong khi làm bài.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Giọng nói của bạn: câu trả lời nói của bạn được ghi âm và so sánh với mẫu giọng nói của bạn.",
+ "Your voice: your spoken answers are recorded.": "Giọng nói của bạn: câu trả lời nói của bạn được ghi âm.",
+ "Your screen, while you share it.": "Màn hình của bạn, trong lúc bạn chia sẻ.",
+ "What's recorded and how you're scored": "Những gì được ghi lại và cách bạn được chấm điểm",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Câu trả lời nói và viết của bạn được chấm điểm bằng AI (Google Gemini). Mọi điều bất thường đều do một người kiểm tra; không có gì khiến bạn tự động trượt.",
+ "{{org}} receives your results.": "{{org}} sẽ nhận kết quả của bạn.",
+ "Not answered": "Chưa trả lời",
+ "Current question": "Câu hiện tại",
+ "Still to come": "Sắp tới",
+ "How the assessment runs": "Cách bài đánh giá diễn ra",
+ "Monitoring has stopped. Handing in your answers…": "Đã dừng giám sát. Đang nộp câu trả lời của bạn…"
 }

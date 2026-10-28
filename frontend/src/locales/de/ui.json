@@ -5355,5 +5355,18 @@
  "During the test": "Während des Tests",
  "It moves on with the timer: no skipping and no going back.": "Der Test läuft mit dem Timer weiter: kein Überspringen und kein Zurückgehen.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Mündliche Antworten: Klicke auf das Mikrofon, sprich und klicke zum Beenden erneut darauf.",
- "Stay on this tab. Copy and paste are turned off.": "Bleib in diesem Tab. Kopieren und Einfügen sind deaktiviert."
+ "Stay on this tab. Copy and paste are turned off.": "Bleib in diesem Tab. Kopieren und Einfügen sind deaktiviert.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Dein Gesicht: Fotos von deiner Kamera während des Tests, verglichen mit dem Foto auf deinem Ausweis.",
+ "Your face: photos from your camera during the test.": "Dein Gesicht: Fotos von deiner Kamera während des Tests.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Deine Stimme: Deine gesprochenen Antworten werden aufgenommen und mit deiner Stimmprobe verglichen.",
+ "Your voice: your spoken answers are recorded.": "Deine Stimme: Deine gesprochenen Antworten werden aufgenommen.",
+ "Your screen, while you share it.": "Dein Bildschirm, solange du ihn freigibst.",
+ "What's recorded and how you're scored": "Was aufgezeichnet wird und wie du bewertet wirst",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Deine gesprochenen und geschriebenen Antworten werden von KI (Google Gemini) bewertet. Alles Ungewöhnliche prüft eine Person; du fällst nie automatisch durch.",
+ "{{org}} receives your results.": "{{org}} erhält deine Ergebnisse.",
+ "Not answered": "Nicht beantwortet",
+ "Current question": "Aktuelle Frage",
+ "Still to come": "Noch offen",
+ "How the assessment runs": "So läuft das Assessment ab",
+ "Monitoring has stopped. Handing in your answers…": "Die Überwachung ist beendet. Deine Antworten werden abgegeben…"
 }

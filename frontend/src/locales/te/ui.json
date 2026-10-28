@@ -5355,5 +5355,18 @@
  "During the test": "టెస్ట్ సమయంలో",
  "It moves on with the timer: no skipping and no going back.": "టైమర్‌తో పాటు టెస్ట్ ముందుకు సాగుతుంది: దాటవేయడం గానీ, వెనక్కి వెళ్లడం గానీ కుదరదు.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "మాట్లాడే సమాధానాలు: మైక్రోఫోన్‌ను నొక్కి, మాట్లాడండి, ఆపడానికి మళ్లీ నొక్కండి.",
- "Stay on this tab. Copy and paste are turned off.": "ఈ ట్యాబ్‌లోనే ఉండండి. కాపీ మరియు పేస్ట్ ఆపివేయబడ్డాయి."
+ "Stay on this tab. Copy and paste are turned off.": "ఈ ట్యాబ్‌లోనే ఉండండి. కాపీ మరియు పేస్ట్ ఆపివేయబడ్డాయి.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "మీ ముఖం: టెస్ట్ సమయంలో మీ కెమెరా నుండి తీసిన ఫోటోలు, మీ ID ఫోటోతో పోల్చబడతాయి.",
+ "Your face: photos from your camera during the test.": "మీ ముఖం: టెస్ట్ సమయంలో మీ కెమెరా నుండి తీసిన ఫోటోలు.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "మీ స్వరం: మీ మాట్లాడిన సమాధానాలు రికార్డ్ చేయబడి, మీ స్వర నమూనాతో పోల్చబడతాయి.",
+ "Your voice: your spoken answers are recorded.": "మీ స్వరం: మీ మాట్లాడిన సమాధానాలు రికార్డ్ చేయబడతాయి.",
+ "Your screen, while you share it.": "మీ స్క్రీన్, మీరు దాన్ని షేర్ చేస్తున్నంత సేపు.",
+ "What's recorded and how you're scored": "ఏమి రికార్డ్ చేయబడుతుంది, మీకు స్కోర్ ఎలా ఇస్తారు",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "మీ మాట్లాడిన, రాసిన సమాధానాలకు AI (Google Gemini) స్కోర్ ఇస్తుంది. అసాధారణంగా ఉన్న ఏదైనా ఒక వ్యక్తి తనిఖీ చేస్తారు; ఏదీ మిమ్మల్ని ఆటోమేటిక్‌గా ఫెయిల్ చేయదు.",
+ "{{org}} receives your results.": "మీ ఫలితాలు {{org}}కు అందుతాయి.",
+ "Not answered": "జవాబు ఇవ్వలేదు",
+ "Current question": "ప్రస్తుత ప్రశ్న",
+ "Still to come": "ఇంకా రావాల్సినవి",
+ "How the assessment runs": "అసెస్‌మెంట్ ఎలా జరుగుతుంది",
+ "Monitoring has stopped. Handing in your answers…": "పర్యవేక్షణ ఆగిపోయింది. మీ జవాబులు సమర్పించబడుతున్నాయి…"
 }

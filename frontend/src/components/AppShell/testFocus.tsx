@@ -18,17 +18,27 @@ export interface TestFocus {
   canFinish: boolean;
   // Hands in the answer on screen and finishes the test.
   finish: RefObject<() => Promise<void>>;
+  // A job candidate's assessment (the bar says so instead of "Mock test").
+  candidate?: boolean;
 }
 
 const SetFocus = createContext<(f: TestFocus | null) => void>(() => {});
 export const TestFocusProvider = SetFocus.Provider;
 
 // The test page calls this on every render; on is false outside a timed test.
-export function useTestFocus(on: boolean, mode: DeliveryMode, testName: string | null, levelTest: boolean, canFinish: boolean, finish: RefObject<() => Promise<void>>) {
+export function useTestFocus(
+  on: boolean,
+  mode: DeliveryMode,
+  testName: string | null,
+  levelTest: boolean,
+  canFinish: boolean,
+  finish: RefObject<() => Promise<void>>,
+  candidate = false,
+) {
   const set = useContext(SetFocus);
   useEffect(() => {
-    set(on ? { mode, testName, levelTest, canFinish, finish } : null);
-  }, [set, on, mode, testName, levelTest, canFinish, finish]);
+    set(on ? { mode, testName, levelTest, canFinish, finish, candidate } : null);
+  }, [set, on, mode, testName, levelTest, canFinish, finish, candidate]);
   useEffect(() => () => set(null), [set]);
 }
 
@@ -55,7 +65,7 @@ export function TestFocusBar({ focus }: { focus: TestFocus }) {
         <span className="flex items-center gap-2 min-w-0 sm:border-l sm:border-rule sm:pl-3 sm:ml-1">
           {focus.testName && <span className="font-display font-bold text-ink truncate">{focus.testName}</span>}
           <span className="text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill bg-navy text-white shrink-0">
-            {focus.levelTest ? tr("Level test") : focus.mode === "certified" ? tr("Real test") : focus.mode === "sample" ? tr("Sample test") : tr("Mock test")}
+            {focus.candidate ? tr("Assessment") : focus.levelTest ? tr("Level test") : focus.mode === "certified" ? tr("Real test") : focus.mode === "sample" ? tr("Sample test") : tr("Mock test")}
           </span>
         </span>
       </span>

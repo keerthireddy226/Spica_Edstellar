@@ -5355,5 +5355,18 @@
  "During the test": "测试期间",
  "It moves on with the timer: no skipping and no going back.": "题目随计时器自动推进：不能跳过，也不能返回。",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "口语回答：点击麦克风开始说话，说完再点击一次停止。",
- "Stay on this tab. Copy and paste are turned off.": "请停留在此标签页。复制和粘贴已关闭。"
+ "Stay on this tab. Copy and paste are turned off.": "请停留在此标签页。复制和粘贴已关闭。",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "你的面部：测试期间摄像头拍摄的照片，会与你的证件照片进行比对。",
+ "Your face: photos from your camera during the test.": "你的面部：测试期间摄像头拍摄的照片。",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "你的声音：你的口语回答会被录音，并与你的语音样本进行比对。",
+ "Your voice: your spoken answers are recorded.": "你的声音：你的口语回答会被录音。",
+ "Your screen, while you share it.": "你的屏幕：在你共享期间。",
+ "What's recorded and how you're scored": "录制内容和评分方式",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "你的口语和书面回答由 AI（Google Gemini）评分。任何异常都会由人工核查；不会因任何情况自动判定不通过。",
+ "{{org}} receives your results.": "{{org}} 会收到你的结果。",
+ "Not answered": "未作答",
+ "Current question": "当前题目",
+ "Still to come": "尚未开始",
+ "How the assessment runs": "测评流程",
+ "Monitoring has stopped. Handing in your answers…": "监考已结束。正在提交你的答案…"
 }

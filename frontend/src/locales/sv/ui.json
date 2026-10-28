@@ -5355,5 +5355,18 @@
  "During the test": "Under provet",
  "It moves on with the timer: no skipping and no going back.": "Provet går vidare med timern: du kan inte hoppa över eller gå tillbaka.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Muntliga svar: tryck på mikrofonen, tala och tryck sedan på den igen för att sluta.",
- "Stay on this tab. Copy and paste are turned off.": "Stanna kvar på den här fliken. Kopiera och klistra in är avstängt."
+ "Stay on this tab. Copy and paste are turned off.": "Stanna kvar på den här fliken. Kopiera och klistra in är avstängt.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Ditt ansikte: foton från din kamera under provet, jämförda med fotot på din id-handling.",
+ "Your face: photos from your camera during the test.": "Ditt ansikte: foton från din kamera under provet.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Din röst: dina muntliga svar spelas in och jämförs med ditt röstprov.",
+ "Your voice: your spoken answers are recorded.": "Din röst: dina muntliga svar spelas in.",
+ "Your screen, while you share it.": "Din skärm, medan du delar den.",
+ "What's recorded and how you're scored": "Vad som spelas in och hur du bedöms",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Dina muntliga och skriftliga svar bedöms av AI (Google Gemini). Allt ovanligt kontrolleras av en person; inget gör att du underkänns automatiskt.",
+ "{{org}} receives your results.": "{{org}} får dina resultat.",
+ "Not answered": "Inte besvarad",
+ "Current question": "Aktuell fråga",
+ "Still to come": "Kommer sedan",
+ "How the assessment runs": "Så går bedömningen till",
+ "Monitoring has stopped. Handing in your answers…": "Övervakningen har stoppats. Dina svar lämnas in…"
 }

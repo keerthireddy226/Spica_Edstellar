@@ -5355,5 +5355,18 @@
  "During the test": "Under testen",
  "It moves on with the timer: no skipping and no going back.": "Testen går videre med timeren: du kan ikke springe over eller gå tilbage.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Mundtlige svar: tryk på mikrofonen, tal, og tryk på den igen for at stoppe.",
- "Stay on this tab. Copy and paste are turned off.": "Bliv på denne fane. Kopiering og indsættelse er slået fra."
+ "Stay on this tab. Copy and paste are turned off.": "Bliv på denne fane. Kopiering og indsættelse er slået fra.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Dit ansigt: billeder fra dit kamera under testen, sammenlignet med billedet på dit id.",
+ "Your face: photos from your camera during the test.": "Dit ansigt: billeder fra dit kamera under testen.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Din stemme: dine mundtlige svar optages og sammenlignes med din stemmeprøve.",
+ "Your voice: your spoken answers are recorded.": "Din stemme: dine mundtlige svar optages.",
+ "Your screen, while you share it.": "Din skærm, mens du deler den.",
+ "What's recorded and how you're scored": "Hvad der optages, og hvordan du bedømmes",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Dine mundtlige og skriftlige svar bedømmes af AI (Google Gemini). Alt usædvanligt tjekkes af en person; intet får dig til at dumpe automatisk.",
+ "{{org}} receives your results.": "{{org}} modtager dine resultater.",
+ "Not answered": "Ikke besvaret",
+ "Current question": "Nuværende spørgsmål",
+ "Still to come": "Kommer senere",
+ "How the assessment runs": "Sådan foregår vurderingen",
+ "Monitoring has stopped. Handing in your answers…": "Overvågningen er stoppet. Dine svar afleveres…"
 }

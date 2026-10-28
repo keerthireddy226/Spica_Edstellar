@@ -5355,5 +5355,18 @@
  "During the test": "Tijdens de toets",
  "It moves on with the timer: no skipping and no going back.": "De toets loopt door met de timer: overslaan of teruggaan kan niet.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Gesproken antwoorden: druk op de microfoon, spreek en druk er nogmaals op om te stoppen.",
- "Stay on this tab. Copy and paste are turned off.": "Blijf op dit tabblad. Kopiëren en plakken zijn uitgeschakeld."
+ "Stay on this tab. Copy and paste are turned off.": "Blijf op dit tabblad. Kopiëren en plakken zijn uitgeschakeld.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Je gezicht: foto's van je camera tijdens de toets, vergeleken met de foto op je identiteitsbewijs.",
+ "Your face: photos from your camera during the test.": "Je gezicht: foto's van je camera tijdens de toets.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Je stem: je gesproken antwoorden worden opgenomen en vergeleken met je stemvoorbeeld.",
+ "Your voice: your spoken answers are recorded.": "Je stem: je gesproken antwoorden worden opgenomen.",
+ "Your screen, while you share it.": "Je scherm, zolang je het deelt.",
+ "What's recorded and how you're scored": "Wat er wordt vastgelegd en hoe je wordt beoordeeld",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Je gesproken en geschreven antwoorden worden gescoord door AI (Google Gemini). Alles wat ongewoon is, wordt door een persoon bekeken; niets laat je automatisch zakken.",
+ "{{org}} receives your results.": "{{org}} ontvangt je resultaten.",
+ "Not answered": "Niet beantwoord",
+ "Current question": "Huidige vraag",
+ "Still to come": "Nog te doen",
+ "How the assessment runs": "Zo verloopt de assessment",
+ "Monitoring has stopped. Handing in your answers…": "Het toezicht is gestopt. Je antwoorden worden ingeleverd…"
 }

@@ -45,7 +45,14 @@ export async function completeSession(
   ip?: string,
   onResult?: (body: Record<string, unknown>) => void,
 ): Promise<boolean> {
-  const respond = onResult ?? (() => {});
+  // The reply goes out once: a candidate gets it as soon as the test is
+  // finished (see below), a learner when their result is worked out.
+  let replied = false;
+  const respond = (body: Record<string, unknown>) => {
+    if (replied) return;
+    replied = true;
+    onResult?.(body);
+  };
   // Only the first /complete finishes the test (and is audited).
   let justFinished = false;
   const sessionExists = await pool.query(
@@ -63,6 +70,11 @@ export async function completeSession(
   if (!sessionExists.rows[0]) return false;
   const deliveryMode: DeliveryMode = sessionExists.rows[0].delivery_mode ?? "practice";
   const composition = sessionExists.rows[0].composition ?? {};
+  // A candidate doesn't see a score on finishing: the test ends at once and
+  // the answers are marked after the reply (the recruiter gets the result).
+  if (role === "candidate") {
+    respond({ testCode: sessionExists.rows[0].test_code, deliveryMode, gradedCount: 0, correctCount: 0, pendingCount: 0, skippedCount: 0, failedCount: 0, overallPercent: 0, partResults: [] });
+  }
 
   // A mock's questions never reached (time ran out, or the learner ended
   // early) count as unanswered in the report.

@@ -29,6 +29,12 @@ function stepsFor(s: ProctoringSetup, sharing: boolean): Step[] {
   return steps;
 }
 
+// After a refresh in a test already under way, only sharing the screen and
+// starting can be left: the test continues and asks for the screen there.
+export function resumableOnly(s: ProctoringSetup, sharing: boolean): boolean {
+  return stepsFor(s, sharing).every((x) => x === "screen" || x === "start");
+}
+
 // A practice or mock test's first screen can take over the last steps (agree,
 // share the screen, start) when nothing else is left and no full screen is
 // needed (the browser allows full screen only on its own click).
@@ -36,9 +42,9 @@ export function firstScreenCanStart(s: ProctoringSetup, sharing: boolean): boole
   return !s.policy.requireFullscreen && stepsFor(s, sharing).every((x) => x === "consent" || x === "screen" || x === "start");
 }
 
-function Card({ icon, title, subtitle, children }: { icon: ReactNode; title: string; subtitle?: string; children: ReactNode }) {
+function Card({ icon, title, subtitle, children, wide }: { icon: ReactNode; title: string; subtitle?: string; children: ReactNode; wide?: boolean }) {
   return (
-    <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-5">
+    <div className={`${wide ? "max-w-3xl" : "max-w-lg"} mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-5`}>
       <div className="flex flex-col items-center text-center gap-2">
         <span className="h-14 w-14 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center">{icon}</span>
         <h1 className="font-display font-bold text-xl text-ink">{title}</h1>

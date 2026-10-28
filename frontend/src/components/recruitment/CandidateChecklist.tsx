@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Camera, Clock, Headphones, IdCard, Lock, MonitorUp, Volume2 } from "lucide-react";
+import { Camera, Clock, Headphones, IdCard, Lock, MonitorUp, ShieldCheck, Volume2 } from "lucide-react";
 import type { CandidateProctoring, TestKind } from "@/api/recruitment";
 import { TEST_KIND_LABEL, TEST_MINUTES } from "@/components/recruitment/testKinds";
 import { tr } from "@/i18n/tr";
@@ -12,11 +12,13 @@ export function CandidateChecklist({
   proctoring,
   expiresAt,
   admissions,
+  orgName,
 }: {
   testKind: TestKind;
   proctoring: CandidateProctoring;
   expiresAt?: string;
   admissions?: boolean;
+  orgName: string;
 }) {
   const p = proctoring;
   const needs: [boolean, ReactNode, string][] = [
@@ -34,6 +36,13 @@ export function CandidateChecklist({
     p.voiceSample && tr("A short voice sample: read a passage aloud"),
     p.screen && tr("Screen sharing: choose \"Entire screen\""),
   ].filter((x): x is string => !!x);
+  // What is recorded and how it is scored, in short (the agreement before
+  // the test has the full details).
+  const recorded = [
+    p.camera && (p.idDocument ? tr("Your face: photos from your camera during the test, compared with your ID photo.") : tr("Your face: photos from your camera during the test.")),
+    p.microphone && (p.voiceSample ? tr("Your voice: your spoken answers are recorded and compared with your voice sample.") : tr("Your voice: your spoken answers are recorded.")),
+    p.screen && tr("Your screen, while you share it."),
+  ].filter((x): x is string => !!x);
 
   return (
     <>
@@ -45,30 +54,48 @@ export function CandidateChecklist({
         </p>
         {expiresAt && <p className="text-xs text-muted">{tr("The link works until {{date}}.", { date: new Date(expiresAt).toLocaleDateString() })}</p>}
       </div>
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("You'll need")}</p>
-        {needs
-          .filter(([on]) => on)
-          .map(([, icon, text]) => (
-            <p key={text} className="flex items-start gap-2 text-sm text-ink">
-              <span className="text-navy-deep mt-0.5 shrink-0">{icon}</span> {text}
-            </p>
-          ))}
+      <div className="grid md:grid-cols-2 gap-x-10 gap-y-5">
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("You'll need")}</p>
+            {needs
+              .filter(([on]) => on)
+              .map(([, icon, text]) => (
+                <p key={text} className="flex items-start gap-2 text-sm text-ink">
+                  <span className="text-navy-deep mt-0.5 shrink-0">{icon}</span> {text}
+                </p>
+              ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Before the test")}</p>
+            <ol className="list-decimal pl-5 text-sm text-ink flex flex-col gap-1">
+              {checks.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ol>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("During the test")}</p>
+            <ul className="list-disc pl-5 text-sm text-ink flex flex-col gap-1">
+              <li>{tr("It moves on with the timer: no skipping and no going back.")}</li>
+              {testKind !== "writing" && <li>{tr("Spoken answers: press the microphone, speak, then press it again to stop.")}</li>}
+              <li>{tr("Stay on this tab. Copy and paste are turned off.")}</li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("Before the test")}</p>
-        <ol className="list-decimal pl-5 text-sm text-ink flex flex-col gap-1">
-          {checks.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ol>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("During the test")}</p>
+      <div className="rounded-input border border-rule p-4 flex flex-col gap-2">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+          <ShieldCheck size={14} className="text-navy-deep" /> {tr("What's recorded and how you're scored")}
+        </p>
         <ul className="list-disc pl-5 text-sm text-ink flex flex-col gap-1">
-          <li>{tr("It moves on with the timer: no skipping and no going back.")}</li>
-          {testKind !== "writing" && <li>{tr("Spoken answers: press the microphone, speak, then press it again to stop.")}</li>}
-          <li>{tr("Stay on this tab. Copy and paste are turned off.")}</li>
+          {recorded.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+          <li>{tr("Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.")}</li>
+          <li>{tr("{{org}} receives your results.", { org: orgName })}</li>
         </ul>
       </div>
     </>

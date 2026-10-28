@@ -5355,5 +5355,18 @@
  "During the test": "Durante el examen",
  "It moves on with the timer: no skipping and no going back.": "Avanza con el temporizador: no se puede saltar ni volver atrás.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Respuestas habladas: pulsa el micrófono, habla y vuelve a pulsarlo para terminar.",
- "Stay on this tab. Copy and paste are turned off.": "Quédate en esta pestaña. Copiar y pegar están desactivados."
+ "Stay on this tab. Copy and paste are turned off.": "Quédate en esta pestaña. Copiar y pegar están desactivados.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Tu cara: fotos de tu cámara durante el examen, comparadas con la foto de tu documento de identidad.",
+ "Your face: photos from your camera during the test.": "Tu cara: fotos de tu cámara durante el examen.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Tu voz: tus respuestas habladas se graban y se comparan con tu muestra de voz.",
+ "Your voice: your spoken answers are recorded.": "Tu voz: tus respuestas habladas se graban.",
+ "Your screen, while you share it.": "Tu pantalla, mientras la compartes.",
+ "What's recorded and how you're scored": "Qué se graba y cómo se te puntúa",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Tus respuestas habladas y escritas las puntúa una IA (Google Gemini). Una persona revisa cualquier cosa inusual; nada te suspende automáticamente.",
+ "{{org}} receives your results.": "{{org}} recibe tus resultados.",
+ "Not answered": "Sin responder",
+ "Current question": "Pregunta actual",
+ "Still to come": "Pendiente",
+ "How the assessment runs": "Cómo funciona la evaluación",
+ "Monitoring has stopped. Handing in your answers…": "La supervisión ha terminado. Entregando tus respuestas…"
 }

@@ -5355,5 +5355,18 @@
  "During the test": "टेस्ट के दौरान",
  "It moves on with the timer: no skipping and no going back.": "टेस्ट टाइमर के साथ आगे बढ़ता है: न कुछ छोड़ सकते हैं, न पीछे जा सकते हैं।",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "बोलकर दिए जाने वाले उत्तर: माइक्रोफ़ोन दबाएँ, बोलें, फिर रोकने के लिए उसे दोबारा दबाएँ।",
- "Stay on this tab. Copy and paste are turned off.": "इसी टैब पर रहें। कॉपी और पेस्ट बंद हैं।"
+ "Stay on this tab. Copy and paste are turned off.": "इसी टैब पर रहें। कॉपी और पेस्ट बंद हैं।",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "आपका चेहरा: टेस्ट के दौरान आपके कैमरे से ली गई फ़ोटो, जिनका मिलान आपकी ID की फ़ोटो से किया जाता है।",
+ "Your face: photos from your camera during the test.": "आपका चेहरा: टेस्ट के दौरान आपके कैमरे से ली गई फ़ोटो।",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "आपकी आवाज़: आपके बोले गए जवाब रिकॉर्ड किए जाते हैं और आपकी आवाज़ के नमूने से मिलाए जाते हैं।",
+ "Your voice: your spoken answers are recorded.": "आपकी आवाज़: आपके बोले गए जवाब रिकॉर्ड किए जाते हैं।",
+ "Your screen, while you share it.": "आपकी स्क्रीन, जब तक आप उसे शेयर करते हैं।",
+ "What's recorded and how you're scored": "क्या रिकॉर्ड होता है और आपको स्कोर कैसे मिलता है",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "आपके बोले और लिखे गए जवाबों को AI (Google Gemini) स्कोर करता है। कुछ भी असामान्य हो तो उसे एक व्यक्ति जाँचता है; कुछ भी आपको अपने आप असफल नहीं करता।",
+ "{{org}} receives your results.": "{{org}} को आपके परिणाम मिलते हैं।",
+ "Not answered": "जवाब नहीं दिया",
+ "Current question": "मौजूदा प्रश्न",
+ "Still to come": "अभी बाकी",
+ "How the assessment runs": "आकलन कैसे चलता है",
+ "Monitoring has stopped. Handing in your answers…": "निगरानी बंद हो गई है। आपके जवाब जमा किए जा रहे हैं…"
 }

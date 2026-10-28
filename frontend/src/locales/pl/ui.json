@@ -5355,5 +5355,18 @@
  "During the test": "Podczas testu",
  "It moves on with the timer: no skipping and no going back.": "Test przechodzi dalej zgodnie z zegarem: nie można pomijać pytań ani wracać.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Odpowiedzi ustne: naciśnij mikrofon, mów, a potem naciśnij go ponownie, aby zakończyć.",
- "Stay on this tab. Copy and paste are turned off.": "Pozostań na tej karcie. Kopiowanie i wklejanie są wyłączone."
+ "Stay on this tab. Copy and paste are turned off.": "Pozostań na tej karcie. Kopiowanie i wklejanie są wyłączone.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Twoja twarz: zdjęcia z kamery podczas testu, porównywane ze zdjęciem z Twojego dokumentu tożsamości.",
+ "Your face: photos from your camera during the test.": "Twoja twarz: zdjęcia z kamery podczas testu.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Twój głos: Twoje odpowiedzi ustne są nagrywane i porównywane z Twoją próbką głosu.",
+ "Your voice: your spoken answers are recorded.": "Twój głos: Twoje odpowiedzi ustne są nagrywane.",
+ "Your screen, while you share it.": "Twój ekran, gdy go udostępniasz.",
+ "What's recorded and how you're scored": "Co jest nagrywane i jak jesteś oceniany(-a)",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Twoje odpowiedzi ustne i pisemne są oceniane przez AI (Google Gemini). Wszystko, co nietypowe, sprawdza człowiek; nic nie powoduje automatycznego niezaliczenia.",
+ "{{org}} receives your results.": "{{org}} otrzymuje Twoje wyniki.",
+ "Not answered": "Bez odpowiedzi",
+ "Current question": "Bieżące pytanie",
+ "Still to come": "Do zrobienia",
+ "How the assessment runs": "Jak przebiega ocena",
+ "Monitoring has stopped. Handing in your answers…": "Monitorowanie zostało zakończone. Przesyłamy Twoje odpowiedzi…"
 }

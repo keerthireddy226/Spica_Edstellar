@@ -147,8 +147,12 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
   // A built test's own time limits.
   const timers = (sessionRow.composition?.timers as Record<string, number> | undefined) ?? {};
   const byId = new Map(itemsResult.rows.map((r) => [r.id, { ...r, timer_seconds: timers[r.id] ?? r.timer_seconds }]));
-  const attemptsResult = await pool.query(`SELECT item_id, response_text FROM attempts WHERE session_id = $1`, [sessionRow.id]);
+  const attemptsResult = await pool.query(`SELECT item_id, response_text, response_uri FROM attempts WHERE session_id = $1`, [sessionRow.id]);
   const attemptByItem = new Map(attemptsResult.rows.map((r) => [r.item_id, r.response_text]));
+  // Handed in with something in it (typed, chosen or recorded), not just let run out.
+  const answeredItems = new Set(
+    attemptsResult.rows.filter((r) => (r.response_text ?? "").trim() !== "" || r.response_uri).map((r) => r.item_id as string),
+  );
   // A mock's questions carry their limit and, once shown, the seconds left.
   const mock = isTimed(sessionRow.delivery_mode) ? (sessionRow.composition as MockComposition) : null;
   const views = mock ? await itemViews(sessionRow.id) : null;
@@ -158,6 +162,7 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
     .map((row) => ({
       ...toItemPayload(row!),
       attempted: attemptByItem.has(row!.id),
+      answered: answeredItems.has(row!.id),
       responseText: attemptByItem.get(row!.id) ?? null,
       ...(mock ? { limitSeconds: mock.limits?.[row!.id] ?? null, secondsLeft: secondsLeft(mock, row!.id, views!.get(row!.id)) } : {}),
     }));

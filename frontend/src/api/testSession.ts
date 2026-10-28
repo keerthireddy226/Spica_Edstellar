@@ -21,6 +21,8 @@ export interface TestItem {
   minWords?: number | null;
   maxWords?: number | null;
   attempted?: boolean;
+  // Handed in with an answer in it (a question left to run out is attempted, not answered).
+  answered?: boolean;
   responseText?: string | null;
   // Mock tests: this question's time limit, and the seconds left once it has
   // been shown (the server's clock).

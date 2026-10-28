@@ -5355,5 +5355,18 @@
  "During the test": "Pendant le test",
  "It moves on with the timer: no skipping and no going back.": "Le test avance avec le minuteur : impossible de passer une question ou de revenir en arrière.",
  "Spoken answers: press the microphone, speak, then press it again to stop.": "Réponses orales : appuyez sur le microphone, parlez, puis appuyez de nouveau pour arrêter.",
- "Stay on this tab. Copy and paste are turned off.": "Restez sur cet onglet. Le copier-coller est désactivé."
+ "Stay on this tab. Copy and paste are turned off.": "Restez sur cet onglet. Le copier-coller est désactivé.",
+ "Your face: photos from your camera during the test, compared with your ID photo.": "Votre visage : des photos prises par votre caméra pendant le test, comparées à la photo de votre pièce d'identité.",
+ "Your face: photos from your camera during the test.": "Votre visage : des photos prises par votre caméra pendant le test.",
+ "Your voice: your spoken answers are recorded and compared with your voice sample.": "Votre voix : vos réponses orales sont enregistrées et comparées à votre échantillon de voix.",
+ "Your voice: your spoken answers are recorded.": "Votre voix : vos réponses orales sont enregistrées.",
+ "Your screen, while you share it.": "Votre écran, pendant que vous le partagez.",
+ "What's recorded and how you're scored": "Ce qui est enregistré et comment vous êtes noté",
+ "Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.": "Vos réponses orales et écrites sont notées par une IA (Google Gemini). Tout ce qui est inhabituel est vérifié par une personne ; rien ne vous fait échouer automatiquement.",
+ "{{org}} receives your results.": "{{org}} reçoit vos résultats.",
+ "Not answered": "Sans réponse",
+ "Current question": "Question en cours",
+ "Still to come": "À venir",
+ "How the assessment runs": "Déroulement de l'évaluation",
+ "Monitoring has stopped. Handing in your answers…": "La surveillance est terminée. Envoi de vos réponses…"
 }

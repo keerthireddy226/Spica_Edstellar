@@ -17,9 +17,9 @@ export function CandidateShell({ org, children }: { org?: string | null; childre
   );
 }
 
-export function CandidatePanel({ icon, title, subtitle, children }: { icon: ReactNode; title: string; subtitle?: string; children?: ReactNode }) {
+export function CandidatePanel({ icon, title, subtitle, children, wide }: { icon: ReactNode; title: string; subtitle?: string; children?: ReactNode; wide?: boolean }) {
   return (
-    <div className="w-full max-w-lg bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-5">
+    <div className={`w-full ${wide ? "max-w-4xl" : "max-w-lg"} bg-surface border border-rule rounded-card shadow-sm p-6 sm:p-8 flex flex-col gap-5`}>
       <div className="flex flex-col items-center text-center gap-2">
         <span className="h-14 w-14 rounded-2xl bg-navy/15 text-navy-deep flex items-center justify-center">{icon}</span>
         <h1 className="font-display font-bold text-xl text-ink">{title}</h1>
