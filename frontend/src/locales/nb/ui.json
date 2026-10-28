@@ -5368,5 +5368,15 @@
  "Current question": "Nåværende spørsmål",
  "Still to come": "Kommer senere",
  "How the assessment runs": "Slik foregår vurderingen",
- "Monitoring has stopped. Handing in your answers…": "Overvåkingen er stoppet. Svarene dine leveres…"
+ "Monitoring has stopped. Handing in your answers…": "Overvåkingen er stoppet. Svarene dine leveres…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "To kontroller med kameraet: et bilde av legitimasjonen din, deretter et bilde av ansiktet ditt.",
+ "Photo ID": "Legitimasjon med bilde",
+ "Choose your ID": "Velg legitimasjon",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Hold legitimasjonen foran kameraet med bildesiden mot det, nær nok til å fylle mesteparten av bildet.",
+ "Face registration": "Ansiktsregistrering",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Legg bort legitimasjonen og se rett inn i kameraet med hele ansiktet synlig og godt lys. Bildet brukes til å bekrefte at det er deg under testen.",
+ "Face photo": "Ansiktsbilde",
+ "Retake face photo": "Ta ansiktsbildet på nytt",
+ "Take face photo": "Ta ansiktsbilde",
+ "Submit ID and face": "Send legitimasjon og ansikt"
 }

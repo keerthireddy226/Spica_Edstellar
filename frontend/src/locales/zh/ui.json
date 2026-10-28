@@ -5368,5 +5368,15 @@
  "Current question": "当前题目",
  "Still to come": "尚未开始",
  "How the assessment runs": "测评流程",
- "Monitoring has stopped. Handing in your answers…": "监考已结束。正在提交你的答案…"
+ "Monitoring has stopped. Handing in your answers…": "监考已结束。正在提交你的答案…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "用摄像头完成两项检查：先拍证件照片，再拍面部照片。",
+ "Photo ID": "带照片的证件",
+ "Choose your ID": "选择证件",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "将证件有照片的一面对准摄像头，靠近到几乎占满画面。",
+ "Face registration": "面部登记",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "收起证件，正对摄像头，露出整张脸并保证光线充足。测试期间会用这张照片确认是你本人。",
+ "Face photo": "面部照片",
+ "Retake face photo": "重拍面部照片",
+ "Take face photo": "拍摄面部照片",
+ "Submit ID and face": "提交证件和面部照片"
 }

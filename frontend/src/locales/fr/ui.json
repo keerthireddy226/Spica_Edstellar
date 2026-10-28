@@ -5368,5 +5368,15 @@
  "Current question": "Question en cours",
  "Still to come": "À venir",
  "How the assessment runs": "Déroulement de l'évaluation",
- "Monitoring has stopped. Handing in your answers…": "La surveillance est terminée. Envoi de vos réponses…"
+ "Monitoring has stopped. Handing in your answers…": "La surveillance est terminée. Envoi de vos réponses…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Deux vérifications avec votre caméra : une photo de votre pièce d'identité, puis une photo de votre visage.",
+ "Photo ID": "Pièce d'identité",
+ "Choose your ID": "Choisissez votre pièce d'identité",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Tenez votre pièce d'identité face à la caméra, côté photo, assez près pour qu'elle remplisse presque toute l'image.",
+ "Face registration": "Enregistrement du visage",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Rangez la pièce d'identité et regardez la caméra de face, le visage entier visible et bien éclairé. Cette photo sert à vérifier que c'est bien vous pendant le test.",
+ "Face photo": "Photo du visage",
+ "Retake face photo": "Reprendre la photo du visage",
+ "Take face photo": "Prendre la photo du visage",
+ "Submit ID and face": "Envoyer la pièce d'identité et le visage"
 }

@@ -5368,5 +5368,15 @@
  "Current question": "Aktuell fråga",
  "Still to come": "Kommer sedan",
  "How the assessment runs": "Så går bedömningen till",
- "Monitoring has stopped. Handing in your answers…": "Övervakningen har stoppats. Dina svar lämnas in…"
+ "Monitoring has stopped. Handing in your answers…": "Övervakningen har stoppats. Dina svar lämnas in…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Två kontroller med kameran: ett foto av din id-handling och sedan ett foto av ditt ansikte.",
+ "Photo ID": "Id-handling med foto",
+ "Choose your ID": "Välj id-handling",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Håll id-handlingen framför kameran med fotosidan mot den, så nära att den fyller större delen av bilden.",
+ "Face registration": "Ansiktsregistrering",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Lägg undan id-handlingen och titta rakt in i kameran med hela ansiktet synligt och väl belyst. Fotot används för att kontrollera att det är du under testet.",
+ "Face photo": "Ansiktsfoto",
+ "Retake face photo": "Ta om ansiktsfotot",
+ "Take face photo": "Ta ansiktsfoto",
+ "Submit ID and face": "Skicka id-handling och ansikte"
 }

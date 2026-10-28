@@ -5368,5 +5368,15 @@
  "Current question": "ప్రస్తుత ప్రశ్న",
  "Still to come": "ఇంకా రావాల్సినవి",
  "How the assessment runs": "అసెస్‌మెంట్ ఎలా జరుగుతుంది",
- "Monitoring has stopped. Handing in your answers…": "పర్యవేక్షణ ఆగిపోయింది. మీ జవాబులు సమర్పించబడుతున్నాయి…"
+ "Monitoring has stopped. Handing in your answers…": "పర్యవేక్షణ ఆగిపోయింది. మీ జవాబులు సమర్పించబడుతున్నాయి…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "కెమెరాతో రెండు తనిఖీలు: ముందుగా మీ ఐడీ ఫోటో, తర్వాత మీ ముఖం ఫోటో.",
+ "Photo ID": "ఫోటో ఐడీ",
+ "Choose your ID": "మీ ఐడీని ఎంచుకోండి",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "మీ ఐడీని ఫోటో వైపు కెమెరా వైపుకు ఉంచి, చిత్రంలో ఎక్కువ భాగం నిండేంత దగ్గరగా పట్టుకోండి.",
+ "Face registration": "ముఖం నమోదు",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "ఐడీని పక్కన పెట్టి, పూర్తి ముఖం మంచి వెలుతురులో కనిపించేలా నేరుగా కెమెరా వైపు చూడండి. టెస్ట్ సమయంలో మీరేనని తనిఖీ చేయడానికి ఈ ఫోటో ఉపయోగపడుతుంది.",
+ "Face photo": "ముఖం ఫోటో",
+ "Retake face photo": "ముఖం ఫోటో మళ్లీ తీయండి",
+ "Take face photo": "ముఖం ఫోటో తీయండి",
+ "Submit ID and face": "ఐడీ మరియు ముఖం సమర్పించండి"
 }

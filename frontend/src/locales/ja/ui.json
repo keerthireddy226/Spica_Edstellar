@@ -5368,5 +5368,15 @@
  "Current question": "現在の問題",
  "Still to come": "これから",
  "How the assessment runs": "アセスメントの進み方",
- "Monitoring has stopped. Handing in your answers…": "監視は終了しました。回答を提出しています…"
+ "Monitoring has stopped. Handing in your answers…": "監視は終了しました。回答を提出しています…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "カメラで2つの確認を行います：身分証明書の写真、次に顔の写真です。",
+ "Photo ID": "写真付き身分証明書",
+ "Choose your ID": "身分証明書を選択",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "写真面をカメラに向けて身分証明書をかざし、画面の大部分に写るくらい近づけてください。",
+ "Face registration": "顔の登録",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "身分証明書をしまい、顔全体が明るく写るようにカメラをまっすぐ見てください。この写真はテスト中に本人確認に使われます。",
+ "Face photo": "顔写真",
+ "Retake face photo": "顔写真を撮り直す",
+ "Take face photo": "顔写真を撮る",
+ "Submit ID and face": "身分証明書と顔写真を送信"
 }

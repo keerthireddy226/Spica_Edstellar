@@ -5368,5 +5368,15 @@
  "Current question": "Pregunta actual",
  "Still to come": "Pendiente",
  "How the assessment runs": "Cómo funciona la evaluación",
- "Monitoring has stopped. Handing in your answers…": "La supervisión ha terminado. Entregando tus respuestas…"
+ "Monitoring has stopped. Handing in your answers…": "La supervisión ha terminado. Entregando tus respuestas…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Dos comprobaciones con tu cámara: una foto de tu documento y luego una foto de tu cara.",
+ "Photo ID": "Documento con foto",
+ "Choose your ID": "Elige tu documento",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Sostén tu documento frente a la cámara, con la foto hacia ella y lo bastante cerca para llenar casi toda la imagen.",
+ "Face registration": "Registro facial",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Guarda el documento y mira directamente a la cámara, con toda la cara visible y buena luz. Esta foto sirve para comprobar que eres tú durante la prueba.",
+ "Face photo": "Foto de la cara",
+ "Retake face photo": "Repetir foto de la cara",
+ "Take face photo": "Tomar foto de la cara",
+ "Submit ID and face": "Enviar documento y cara"
 }

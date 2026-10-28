@@ -5368,5 +5368,15 @@
  "Current question": "मौजूदा प्रश्न",
  "Still to come": "अभी बाकी",
  "How the assessment runs": "आकलन कैसे चलता है",
- "Monitoring has stopped. Handing in your answers…": "निगरानी बंद हो गई है। आपके जवाब जमा किए जा रहे हैं…"
+ "Monitoring has stopped. Handing in your answers…": "निगरानी बंद हो गई है। आपके जवाब जमा किए जा रहे हैं…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "कैमरे से दो जाँचें: पहले आपके आईडी की फ़ोटो, फिर आपके चेहरे की फ़ोटो।",
+ "Photo ID": "फ़ोटो आईडी",
+ "Choose your ID": "अपना आईडी चुनें",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "अपना आईडी कैमरे के सामने रखें, फ़ोटो वाली तरफ़ कैमरे की ओर, इतना पास कि वह तस्वीर का ज़्यादातर हिस्सा भर दे।",
+ "Face registration": "चेहरा पंजीकरण",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "आईडी हटा दें, सीधे कैमरे में देखें, पूरा चेहरा अच्छी रोशनी में दिखे। इस फ़ोटो से टेस्ट के दौरान जाँचा जाता है कि आप ही हैं।",
+ "Face photo": "चेहरे की फ़ोटो",
+ "Retake face photo": "चेहरे की फ़ोटो दोबारा लें",
+ "Take face photo": "चेहरे की फ़ोटो लें",
+ "Submit ID and face": "आईडी और चेहरा जमा करें"
 }

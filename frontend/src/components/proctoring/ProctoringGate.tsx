@@ -174,65 +174,73 @@ const DOC_TYPES: [DocumentType, () => string][] = [
   ["other", () => tr("Other photo ID")],
 ];
 
+// Two separate checks on one screen, with one camera: a photo of the ID, then
+// a photo of the face (the face reference used during the test).
 function IdentityStep({ sessionId, rejected, onDone }: { sessionId: string; rejected: boolean; onDone: () => void }) {
-  const [docType, setDocType] = useState<DocumentType>("passport");
+  const [docType, setDocType] = useState<DocumentType | "">("");
   const [documentImage, setDocumentImage] = useState<string | null>(null);
+  const [faceImage, setFaceImage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { videoRef, stream, error: camError, capture } = useStepCamera(true);
-  async function takeSelfieAndSubmit() {
-    const selfie = capture();
-    if (!selfie || !documentImage) return;
+  async function submit() {
+    if (!documentImage || !faceImage || !docType) return;
     setBusy(true);
     setError(null);
     try {
-      await submitIdentity({ documentType: docType, documentBase64: documentImage, selfieBase64: selfie, sessionId });
+      await submitIdentity({ documentType: docType, documentBase64: documentImage, selfieBase64: faceImage, sessionId });
       onDone();
     } catch {
       setError(tr("Could not upload your ID. Try again."));
       setBusy(false);
     }
   }
+  const box = (done: boolean) => `rounded-card border p-4 flex flex-col gap-3 ${done ? "border-success/40 bg-success/5" : "border-rule"}`;
   return (
-    <Card
-      icon={<IdCard size={26} />}
-      title={tr("Verify your identity")}
-      subtitle={documentImage ? tr("Now look at the camera for a selfie.") : tr("Hold your photo ID up to the camera, photo side facing it, and take a picture.")}
-    >
+    <Card wide icon={<IdCard size={26} />} title={tr("Verify your identity")} subtitle={tr("Two checks with your camera: a photo of your ID, then a photo of your face.")}>
       {rejected && <p className="text-sm text-error text-center">{tr("Your last ID check wasn't accepted. Please try again with a clear photo.")}</p>}
-      {!documentImage && (
-        <label className="flex flex-col gap-1 text-sm text-ink">
-          {tr("Document")}
-          <select value={docType} onChange={(e) => setDocType(e.target.value as DocumentType)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm">
+      <video ref={videoRef} autoPlay playsInline muted className="w-full max-w-xl self-center rounded-card bg-ink aspect-video object-cover" />
+      {camError && <p className="text-sm text-error text-center">{tr("Allow camera access in your browser to continue.")}</p>}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className={box(!!documentImage)}>
+          <p className="flex items-center gap-2 font-semibold text-ink">
+            {documentImage ? <CheckCircle2 size={18} className="text-success" /> : <span className="h-5 w-5 rounded-full bg-navy/15 text-navy-deep text-xs font-bold flex items-center justify-center">1</span>}
+            {tr("Photo ID")}
+          </p>
+          <select value={docType} onChange={(e) => setDocType(e.target.value as DocumentType)} disabled={busy} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm">
+            <option value="" disabled>
+              {tr("Choose your ID")}
+            </option>
             {DOC_TYPES.map(([v, l]) => (
               <option key={v} value={v}>
                 {l()}
               </option>
             ))}
           </select>
-        </label>
-      )}
-      <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-card bg-ink aspect-video object-cover" />
-      {camError && <p className="text-sm text-error text-center">{tr("Allow camera access in your browser to continue.")}</p>}
-      {error && <p className="text-sm text-error text-center">{error}</p>}
-      {!documentImage ? (
-        <Button onClick={() => setDocumentImage(capture())} disabled={!stream}>
-          <Camera size={16} className="inline mr-1.5" />
-          {tr("Take ID photo")}
-        </Button>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <img src={`data:image/jpeg;base64,${documentImage}`} alt={tr("ID photo")} className="h-24 self-center rounded-lg border border-rule" />
-          <Button onClick={takeSelfieAndSubmit} disabled={busy || !stream}>
-            <Camera size={16} className="inline mr-1.5" />
-            {busy ? tr("Uploading...") : tr("Take selfie and submit")}
-          </Button>
-          <Button variant="secondary" onClick={() => setDocumentImage(null)} disabled={busy}>
-            <RotateCcw size={14} className="inline mr-1.5" />
-            {tr("Retake ID photo")}
+          <p className="text-xs text-muted">{tr("Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.")}</p>
+          {documentImage && <img src={`data:image/jpeg;base64,${documentImage}`} alt={tr("ID photo")} className="h-24 self-start rounded-lg border border-rule" />}
+          <Button variant={documentImage ? "secondary" : "primary"} onClick={() => setDocumentImage(capture())} disabled={!stream || !docType || busy}>
+            {documentImage ? <RotateCcw size={14} className="inline mr-1.5" /> : <Camera size={16} className="inline mr-1.5" />}
+            {documentImage ? tr("Retake ID photo") : tr("Take ID photo")}
           </Button>
         </div>
-      )}
+        <div className={box(!!faceImage)}>
+          <p className="flex items-center gap-2 font-semibold text-ink">
+            {faceImage ? <CheckCircle2 size={18} className="text-success" /> : <span className="h-5 w-5 rounded-full bg-navy/15 text-navy-deep text-xs font-bold flex items-center justify-center">2</span>}
+            {tr("Face registration")}
+          </p>
+          <p className="text-xs text-muted">{tr("Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.")}</p>
+          {faceImage && <img src={`data:image/jpeg;base64,${faceImage}`} alt={tr("Face photo")} className="h-24 self-start rounded-lg border border-rule" />}
+          <Button variant={faceImage ? "secondary" : "primary"} onClick={() => setFaceImage(capture())} disabled={!stream || !documentImage || busy}>
+            {faceImage ? <RotateCcw size={14} className="inline mr-1.5" /> : <Camera size={16} className="inline mr-1.5" />}
+            {faceImage ? tr("Retake face photo") : tr("Take face photo")}
+          </Button>
+        </div>
+      </div>
+      {error && <p className="text-sm text-error text-center">{error}</p>}
+      <Button onClick={submit} disabled={busy || !documentImage || !faceImage || !docType} className="w-full max-w-md self-center">
+        {busy ? tr("Uploading...") : tr("Submit ID and face")}
+      </Button>
       <p className="text-xs text-muted text-center">{tr("A reviewer checks your ID. You can start the test while they do.")}</p>
     </Card>
   );

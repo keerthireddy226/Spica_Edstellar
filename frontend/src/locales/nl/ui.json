@@ -5368,5 +5368,15 @@
  "Current question": "Huidige vraag",
  "Still to come": "Nog te doen",
  "How the assessment runs": "Zo verloopt de assessment",
- "Monitoring has stopped. Handing in your answers…": "Het toezicht is gestopt. Je antwoorden worden ingeleverd…"
+ "Monitoring has stopped. Handing in your answers…": "Het toezicht is gestopt. Je antwoorden worden ingeleverd…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Twee controles met je camera: een foto van je identiteitsbewijs en daarna een foto van je gezicht.",
+ "Photo ID": "Identiteitsbewijs",
+ "Choose your ID": "Kies je identiteitsbewijs",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Houd je identiteitsbewijs met de fotokant naar de camera, dichtbij genoeg om het grootste deel van het beeld te vullen.",
+ "Face registration": "Gezichtsregistratie",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Leg het identiteitsbewijs weg en kijk recht in de camera, met je hele gezicht zichtbaar en goed verlicht. Met deze foto wordt tijdens de toets gecontroleerd of jij het bent.",
+ "Face photo": "Gezichtsfoto",
+ "Retake face photo": "Gezichtsfoto opnieuw maken",
+ "Take face photo": "Gezichtsfoto maken",
+ "Submit ID and face": "Identiteitsbewijs en gezicht versturen"
 }

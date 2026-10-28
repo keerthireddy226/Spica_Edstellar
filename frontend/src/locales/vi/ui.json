@@ -5368,5 +5368,15 @@
  "Current question": "Câu hiện tại",
  "Still to come": "Sắp tới",
  "How the assessment runs": "Cách bài đánh giá diễn ra",
- "Monitoring has stopped. Handing in your answers…": "Đã dừng giám sát. Đang nộp câu trả lời của bạn…"
+ "Monitoring has stopped. Handing in your answers…": "Đã dừng giám sát. Đang nộp câu trả lời của bạn…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Hai bước kiểm tra bằng camera: chụp giấy tờ tùy thân, rồi chụp khuôn mặt của bạn.",
+ "Photo ID": "Giấy tờ có ảnh",
+ "Choose your ID": "Chọn giấy tờ",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Giơ giấy tờ trước camera, mặt có ảnh hướng vào camera, đủ gần để chiếm phần lớn khung hình.",
+ "Face registration": "Đăng ký khuôn mặt",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Cất giấy tờ đi, nhìn thẳng vào camera, để thấy toàn bộ khuôn mặt và đủ ánh sáng. Ảnh này dùng để xác nhận đúng là bạn trong khi làm bài.",
+ "Face photo": "Ảnh khuôn mặt",
+ "Retake face photo": "Chụp lại ảnh khuôn mặt",
+ "Take face photo": "Chụp ảnh khuôn mặt",
+ "Submit ID and face": "Gửi giấy tờ và khuôn mặt"
 }

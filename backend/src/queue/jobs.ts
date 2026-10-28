@@ -21,6 +21,7 @@ import { runProgramsDaily } from "../programs/service.js";
 import { applyDueDowngrades } from "../plans/service.js";
 import { sendRecertifyReminders } from "../assessment/service.js";
 import { runProgramAlerts } from "../programs/monitoring.js";
+import { retryIdentityChecks } from "../proctoring/routes.js";
 import { resumeStaleJobs } from "../generation/pipeline.js";
 import { flagByStatistics } from "../generation/stats.js";
 import { continueAutoBuilds } from "../builder/autoBuild.js";
@@ -57,6 +58,10 @@ export function registerJobs() {
   every(5, "assessment.certificates", async () => {
     const n = await issueDueResultCertificates();
     if (n > 0) console.log(`result certificates: ${n} issued`);
+  });
+  every(5, "proctoring.identity-retry", async () => {
+    const n = await retryIdentityChecks();
+    if (n > 0) console.log(`ID checks: ${n} finished on a second try`);
   });
   every(15, "grading.speaking.sweep", async () => {
     const n = await sweepStuckSpeaking();

@@ -5368,5 +5368,15 @@
  "Current question": "Nykyinen kysymys",
  "Still to come": "Tulossa",
  "How the assessment runs": "Näin arviointi etenee",
- "Monitoring has stopped. Handing in your answers…": "Valvonta on päättynyt. Vastauksiasi lähetetään…"
+ "Monitoring has stopped. Handing in your answers…": "Valvonta on päättynyt. Vastauksiasi lähetetään…",
+ "Two checks with your camera: a photo of your ID, then a photo of your face.": "Kaksi tarkistusta kameralla: kuva henkilöllisyystodistuksestasi ja sitten kuva kasvoistasi.",
+ "Photo ID": "Kuvallinen henkilöllisyystodistus",
+ "Choose your ID": "Valitse henkilöllisyystodistus",
+ "Hold your ID up to the camera, photo side facing it, close enough to fill most of the picture.": "Pidä henkilöllisyystodistusta kameraa kohti kuvapuoli edellä, niin lähellä että se täyttää suurimman osan kuvasta.",
+ "Face registration": "Kasvojen rekisteröinti",
+ "Put the ID away, look straight at the camera with your whole face visible, in good light. This photo is used to check it's you during the test.": "Laita henkilöllisyystodistus pois ja katso suoraan kameraan niin, että koko kasvosi näkyvät hyvässä valossa. Kuvalla varmistetaan kokeen aikana, että kyseessä olet sinä.",
+ "Face photo": "Kasvokuva",
+ "Retake face photo": "Ota kasvokuva uudelleen",
+ "Take face photo": "Ota kasvokuva",
+ "Submit ID and face": "Lähetä henkilöllisyystodistus ja kasvokuva"
 }

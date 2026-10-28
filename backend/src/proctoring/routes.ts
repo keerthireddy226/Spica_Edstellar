@@ -762,6 +762,33 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
   }
 });
 
+// ID checks cut off before they finished (the server restarted, say) run once
+// more from the saved photos; a second failure is left for the reviewer.
+export async function retryIdentityChecks(): Promise<number> {
+  const r = await pool.query(
+    `SELECT iv.id, iv.user_id, iv.document_type, u.role, d.uri AS doc_uri, f.uri AS selfie_uri
+     FROM identity_verifications iv JOIN users u ON u.id = iv.user_id
+     JOIN proctoring_media d ON d.id = iv.document_media_id JOIN proctoring_media f ON f.id = iv.selfie_media_id
+     WHERE iv.auto_decision = 'checking' AND iv.created_at < now() - interval '3 minutes' AND iv.created_at > now() - interval '3 days'
+     ORDER BY iv.created_at LIMIT 3`,
+  );
+  let done = 0;
+  for (const v of r.rows) {
+    await pool.query(`UPDATE identity_verifications SET auto_decision = 'checking_again' WHERE id = $1`, [v.id]);
+    const docFile = mediaPath(v.doc_uri);
+    const selfieFile = mediaPath(v.selfie_uri);
+    if (!docFile || !selfieFile) continue;
+    try {
+      const [doc, selfie] = await Promise.all([readFile(docFile), readFile(selfieFile)]);
+      await checkIdentityPhotos(v.id, v.user_id, v.role, v.document_type, doc, selfie);
+      done++;
+    } catch (err) {
+      console.error("identity check retry failed:", v.id, err);
+    }
+  }
+  return done;
+}
+
 // The checks on an ID photo and selfie, for the reviewer: the largest face on
 // the document against the selfie, liveness on the selfie (a photo of a photo
 // or a screen scores low) and, on a passport, the machine-readable zone
