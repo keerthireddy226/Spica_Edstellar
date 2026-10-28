@@ -1,5 +1,6 @@
 // Face detection via YuNet (MIT). Predicts at 3 strides (8/16/32), returns
 // box + 5 landmarks (eyes, nose, mouth corners) used for alignment downstream.
+import { ORT_OPTIONS, oneAtATime } from "../lib/inference.js";
 import path from "node:path";
 import sharp from "sharp";
 import { createRequire } from "node:module";
@@ -34,7 +35,7 @@ export interface FaceBox {
 let session: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSession(): Promise<any> {
-  if (!session) session = await ort.InferenceSession.create(MODEL_PATH);
+  if (!session) session = await ort.InferenceSession.create(MODEL_PATH, ORT_OPTIONS);
   return session;
 }
 
@@ -77,7 +78,8 @@ export async function detectFaces(imageBuffer: Buffer, scoreThreshold = 0.6): Pr
   }
 
   const s = await getSession();
-  const out = await s.run({ input: new ort.Tensor("float32", input, [1, 3, IN_H, IN_W]) });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any = await oneAtATime(() => s.run({ input: new ort.Tensor("float32", input, [1, 3, IN_H, IN_W]) }));
 
   const sx = origW / IN_W;
   const sy = origH / IN_H;

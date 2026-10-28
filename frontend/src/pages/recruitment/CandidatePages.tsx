@@ -15,6 +15,7 @@ import { getApplyInfo, getCandidateAssessment, getInvite, sendApplyCode, startIn
 import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
 import { QuickPreTest } from "@/components/pretest/QuickPreTest";
+import { VoiceSection } from "@/components/VoiceSection";
 import type { PreTestKind } from "@/api/proctoring";
 
 // While the invitation or assessment loads: the same frame, not a blank page.
@@ -312,7 +313,15 @@ export function CandidateAssessmentPage() {
   // checks (ID, room scan, voice sample, screen) follow inside the test.
   return (
     <div className="app-surface min-h-screen px-4 sm:px-6 py-10">
-      <QuickPreTest kind={a.testKind as PreTestKind} mode="mock" minutes={TEST_MINUTES[a.testKind]} onBack={() => window.history.back()} onReady={() => !busy && begin()} />
+      <QuickPreTest
+        kind={a.testKind as PreTestKind}
+        mode="mock"
+        minutes={TEST_MINUTES[a.testKind]}
+        onBack={() => window.history.back()}
+        onReady={() => !busy && begin()}
+        // Listening questions are recorded in two voices: the candidate picks one.
+        extra={a.testKind !== "writing" ? <VoiceSection /> : undefined}
+      />
     </div>
   );
 }

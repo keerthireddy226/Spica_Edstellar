@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { TestDemo } from "@/components/pretest/TestDemo";
 import { ConsentDetails } from "@/components/pretest/ConsentDetails";
@@ -19,6 +19,7 @@ export function QuickPreTest({
   minutes,
   onReady,
   onBack,
+  extra,
 }: {
   kind: PreTestKind;
   mode: DeliveryMode;
@@ -26,13 +27,15 @@ export function QuickPreTest({
   // agreed: the learner agreed here (else the first screen of the test asks).
   onReady: (agreed: boolean) => void;
   onBack: () => void;
+  // Shown on the device check screen, above the agreement (a candidate's voice choice).
+  extra?: ReactNode;
 }) {
   const needs = deviceNeedsFor(kind);
   // Each test type is different: the first attempt at this one starts with its guide.
   const [stage, setStage] = useState<"demo" | "check">(() => (!demoSeen(kind) ? "demo" : "check"));
   // Back always goes one screen back: device check → guide → the list of sets.
   if (stage === "demo") return <TestDemo onePage kind={kind} needs={needs} minutes={minutes} onBack={onBack} onDone={() => setStage("check")} />;
-  return <CheckAndAgree kind={kind} mode={mode} onBack={() => setStage("demo")} onDone={() => onReady(true)} />;
+  return <CheckAndAgree kind={kind} mode={mode} extra={extra} onBack={() => setStage("demo")} onDone={() => onReady(true)} />;
 }
 
 // The device check with the test's agreement under it: one screen, one button.
@@ -41,11 +44,13 @@ export function CheckAndAgree({
   mode,
   onBack,
   onDone,
+  extra,
 }: {
   kind: PreTestKind;
   mode: DeliveryMode;
   onBack: () => void;
   onDone: () => void;
+  extra?: ReactNode;
 }) {
   const needs = deviceNeedsFor(kind);
   const [info, setInfo] = useState<PreTestInfo | null>(null);
@@ -79,12 +84,15 @@ export function CheckAndAgree({
       doneLabel={tr("I agree, continue")}
       onPassed={() => agree()}
       extra={
+        <>
+        {extra && <div className="border-t border-rule pt-4">{extra}</div>}
         <div className="flex flex-col gap-3 border-t border-rule pt-4">
           <h2 className="font-display font-bold text-base text-ink">{tr("What this test collects")}</h2>
           {info && <ConsentDetails info={info} mode={mode} />}
           {info?.biometric && <BiometricChoice value={biometric} onChange={setBiometric} />}
           {error && <p className="text-sm text-error">{error}</p>}
         </div>
+        </>
       }
     />
   );

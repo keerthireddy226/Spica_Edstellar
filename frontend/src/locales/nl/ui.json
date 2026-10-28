@@ -5378,5 +5378,6 @@
  "Face photo": "Gezichtsfoto",
  "Retake face photo": "Gezichtsfoto opnieuw maken",
  "Take face photo": "Gezichtsfoto maken",
- "Submit ID and face": "Identiteitsbewijs en gezicht versturen"
+ "Submit ID and face": "Identiteitsbewijs en gezicht versturen",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Je laatste antwoord kon niet worden verstuurd omdat de verbinding traag is. De toets is doorgegaan."
 }

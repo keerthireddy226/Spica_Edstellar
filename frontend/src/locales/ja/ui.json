@@ -5378,5 +5378,6 @@
  "Face photo": "顔写真",
  "Retake face photo": "顔写真を撮り直す",
  "Take face photo": "顔写真を撮る",
- "Submit ID and face": "身分証明書と顔写真を送信"
+ "Submit ID and face": "身分証明書と顔写真を送信",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "接続が遅いため、直前の回答を送信できませんでした。テストは次に進みました。"
 }

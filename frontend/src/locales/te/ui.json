@@ -5378,5 +5378,6 @@
  "Face photo": "ముఖం ఫోటో",
  "Retake face photo": "ముఖం ఫోటో మళ్లీ తీయండి",
  "Take face photo": "ముఖం ఫోటో తీయండి",
- "Submit ID and face": "ఐడీ మరియు ముఖం సమర్పించండి"
+ "Submit ID and face": "ఐడీ మరియు ముఖం సమర్పించండి",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "కనెక్షన్ నెమ్మదిగా ఉన్నందున మీ చివరి జవాబు పంపలేకపోయాం. టెస్ట్ ముందుకు వెళ్లింది."
 }

@@ -5378,5 +5378,6 @@
  "Face photo": "चेहरे की फ़ोटो",
  "Retake face photo": "चेहरे की फ़ोटो दोबारा लें",
  "Take face photo": "चेहरे की फ़ोटो लें",
- "Submit ID and face": "आईडी और चेहरा जमा करें"
+ "Submit ID and face": "आईडी और चेहरा जमा करें",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "धीमे कनेक्शन की वजह से आपका पिछला जवाब नहीं भेजा जा सका। टेस्ट आगे बढ़ गया है।"
 }

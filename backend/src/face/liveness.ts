@@ -1,4 +1,5 @@
 // MiniFASNet V2 (Apache-2.0). Looks at texture/context, not the face. Verified vs real spoofs: scores 0.001-0.024 vs 0.5 cutoff.
+import { ORT_OPTIONS, oneAtATime } from "../lib/inference.js";
 import path from "node:path";
 import { createRequire } from "node:module";
 import type { RawCrop } from "./detect.js";
@@ -21,7 +22,7 @@ export interface LivenessResult {
 let session: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSession(): Promise<any> {
-  if (!session) session = await ort.InferenceSession.create(MODEL_PATH);
+  if (!session) session = await ort.InferenceSession.create(MODEL_PATH, ORT_OPTIONS);
   return session;
 }
 
@@ -39,7 +40,8 @@ export async function scoreLiveness(rawCrop: RawCrop): Promise<LivenessResult> {
   }
 
   const s = await getSession();
-  const out = await s.run({ input: new ort.Tensor("float32", input, [1, 3, info.height, info.width]) });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any = await oneAtATime(() => s.run({ input: new ort.Tensor("float32", input, [1, 3, info.height, info.width]) }));
   const logits = Array.from(out[s.outputNames[0]].data as Float32Array);
   const max = Math.max(...logits);
   const exp = logits.map((v) => Math.exp(v - max));

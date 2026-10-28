@@ -7,6 +7,27 @@ export class ApiError extends Error {
   }
 }
 
+// A failure worth trying again: no answer from the server (a dropped or
+// timed-out connection) or a server error, never a refusal like
+// "already_answered".
+export function isTransientError(err: unknown): boolean {
+  if (err instanceof ApiError) return err.message === "unknown_error";
+  return err instanceof TypeError;
+}
+
+// Tries a request again after a short wait when the server didn't answer:
+// a busy moment shouldn't lose a test answer or strand a page.
+export async function withRetry<T>(run: () => Promise<T>, waitsMs = [1500, 3000, 6000]): Promise<T> {
+  for (let i = 0; ; i++) {
+    try {
+      return await run();
+    } catch (err) {
+      if (i >= waitsMs.length || !isTransientError(err)) throw err;
+      await new Promise((r) => setTimeout(r, waitsMs[i]));
+    }
+  }
+}
+
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, {
     credentials: "include",

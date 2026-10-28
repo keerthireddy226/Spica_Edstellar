@@ -146,11 +146,12 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
 onboardingRouter.patch("/voice-preference", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = voicePreferenceSchema.parse(req.body);
-    const result = await pool.query(
-      `UPDATE participant_profiles SET preferred_voice = $1, updated_at = now() WHERE user_id = $2 RETURNING user_id`,
+    // A job candidate has no profile yet: their choice starts one.
+    await pool.query(
+      `INSERT INTO participant_profiles (user_id, preferred_voice) VALUES ($2, $1)
+       ON CONFLICT (user_id) DO UPDATE SET preferred_voice = EXCLUDED.preferred_voice, updated_at = now()`,
       [body.preferredVoice, req.user!.id],
     );
-    if (!result.rows[0]) return res.status(404).json({ error: "profile_not_found" });
     res.status(204).send();
   } catch (err) {
     next(err);

@@ -5378,5 +5378,6 @@
  "Face photo": "Kasvokuva",
  "Retake face photo": "Ota kasvokuva uudelleen",
  "Take face photo": "Ota kasvokuva",
- "Submit ID and face": "Lähetä henkilöllisyystodistus ja kasvokuva"
+ "Submit ID and face": "Lähetä henkilöllisyystodistus ja kasvokuva",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Viimeistä vastaustasi ei voitu lähettää hitaan yhteyden vuoksi. Koe on jatkunut."
 }

@@ -5378,5 +5378,6 @@
  "Face photo": "Gesichtsfoto",
  "Retake face photo": "Gesichtsfoto neu aufnehmen",
  "Take face photo": "Gesichtsfoto aufnehmen",
- "Submit ID and face": "Ausweis und Gesicht senden"
+ "Submit ID and face": "Ausweis und Gesicht senden",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Deine letzte Antwort konnte wegen einer langsamen Verbindung nicht gesendet werden. Der Test ist weitergegangen."
 }

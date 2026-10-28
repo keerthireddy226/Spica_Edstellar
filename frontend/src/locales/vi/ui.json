@@ -5378,5 +5378,6 @@
  "Face photo": "Ảnh khuôn mặt",
  "Retake face photo": "Chụp lại ảnh khuôn mặt",
  "Take face photo": "Chụp ảnh khuôn mặt",
- "Submit ID and face": "Gửi giấy tờ và khuôn mặt"
+ "Submit ID and face": "Gửi giấy tờ và khuôn mặt",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Không gửi được câu trả lời vừa rồi vì kết nối chậm. Bài thi đã chuyển sang câu tiếp theo."
 }

@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, withRetry } from "@/lib/api";
 
 export type Product = "skills" | "recruitment";
 export type TestKind = "placement" | "fourSkills" | "speakingListening" | "writing" | "professional";
@@ -67,7 +67,8 @@ export interface CandidateAssessment {
 }
 
 export function getCandidateAssessment(): Promise<CandidateAssessment> {
-  return api(`/recruitment/candidate/me`);
+  // A busy server answers a moment later: the page doesn't give up at once.
+  return withRetry(() => api(`/recruitment/candidate/me`));
 }
 
 // ---- Recruiter console ----

@@ -1,5 +1,6 @@
 // AuraFace-v1 (Apache-2.0): 512-dim face embedding, cosine similarity.
 // Measures geometry, not describable attributes — beat Gemini 0.37 vs 0.89 on a lookalike pair.
+import { ORT_OPTIONS, oneAtATime } from "../lib/inference.js";
 import path from "node:path";
 import { createRequire } from "node:module";
 import sharp from "sharp";
@@ -29,7 +30,7 @@ export const UNCERTAIN_FLOOR = 0.45;
 let session: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSession(): Promise<any> {
-  if (!session) session = await ort.InferenceSession.create(MODEL_PATH);
+  if (!session) session = await ort.InferenceSession.create(MODEL_PATH, ORT_OPTIONS);
   return session;
 }
 
@@ -116,7 +117,8 @@ export async function embedFace(imageBuffer: Buffer, box: FaceBox): Promise<Floa
   }
 
   const s = await getSession();
-  const out = await s.run({ [s.inputNames[0]]: new ort.Tensor("float32", input, [1, 3, SIZE, SIZE]) });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any = await oneAtATime(() => s.run({ [s.inputNames[0]]: new ort.Tensor("float32", input, [1, 3, SIZE, SIZE]) }));
   return Float32Array.from(out[s.outputNames[0]].data as Float32Array);
 }
 

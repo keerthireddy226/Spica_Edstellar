@@ -5378,5 +5378,6 @@
  "Face photo": "Ansigtsfoto",
  "Retake face photo": "Tag ansigtsfoto igen",
  "Take face photo": "Tag ansigtsfoto",
- "Submit ID and face": "Send ID og ansigt"
+ "Submit ID and face": "Send ID og ansigt",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Dit sidste svar kunne ikke sendes, fordi forbindelsen er langsom. Testen er gået videre."
 }

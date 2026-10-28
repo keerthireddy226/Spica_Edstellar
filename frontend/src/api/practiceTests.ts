@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, withRetry } from "@/lib/api";
 import type { TestItem } from "@/api/testSession";
 import type { DeliveryMode } from "@/api/proctoring";
 
@@ -200,10 +200,14 @@ export function submitExamAttempt(
   sessionId: string,
   payload: { itemId: string; responseText?: string; audioBase64?: string; audioMimeType?: string; durationMs?: number; activeMs?: number },
 ): Promise<ExamAttemptResult> {
-  return api(`/practice-tests/session/${sessionId}/attempts`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  // Tried again when the server is briefly busy: an answer handed in is
+  // saved once (a repeat that already arrived comes back "already_answered").
+  return withRetry(() =>
+    api(`/practice-tests/session/${sessionId}/attempts`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  );
 }
 
 // Practice: feedback on a recorded answer that was still being scored.

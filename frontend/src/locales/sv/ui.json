@@ -5378,5 +5378,6 @@
  "Face photo": "Ansiktsfoto",
  "Retake face photo": "Ta om ansiktsfotot",
  "Take face photo": "Ta ansiktsfoto",
- "Submit ID and face": "Skicka id-handling och ansikte"
+ "Submit ID and face": "Skicka id-handling och ansikte",
+ "Your last answer couldn't be sent because the connection is slow. The test has moved on.": "Ditt senaste svar kunde inte skickas eftersom anslutningen är långsam. Testet har gått vidare."
 }

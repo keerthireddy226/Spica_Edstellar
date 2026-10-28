@@ -478,7 +478,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
 
   // Shared by a fresh start and a refresh-resume — both hand it the same
   // { sessionId, partBoundaries, items } shape.
+  // The session this page has set up. The same session arriving again (a
+  // second, slower load) must not reset the screens already passed.
+  const appliedSessionRef = useRef<string | null>(null);
   function applySessionData(res: ExamSessionData) {
+    if (appliedSessionRef.current === res.sessionId) return;
+    appliedSessionRef.current = res.sessionId;
     setSessionId(res.sessionId);
     setTestCode(res.testCode);
     setDeliveryMode(res.deliveryMode ?? "practice");
@@ -913,6 +918,11 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         await recoverAlreadyCompletedSession();
       } else if (isAlreadyAnsweredError(err)) {
         await finishOrAdvance();
+      } else if (isMock) {
+        // Still not sent after a few tries: a timed test moves on rather than
+        // stalling at 0:00, and says so.
+        setError(tr("Your last answer couldn't be sent because the connection is slow. The test has moved on."));
+        await finishOrAdvance();
       } else {
         setError(t("placementTest.submitError"));
       }
@@ -939,6 +949,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       if (isAlreadyCompletedError(err)) {
         await recoverAlreadyCompletedSession();
       } else if (isAlreadyAnsweredError(err)) {
+        await finishOrAdvance();
+      } else if (isMock) {
+        // A timed test never stalls on a question: nothing was given here, and
+        // the server counts it as unanswered when the test finishes.
         await finishOrAdvance();
       } else {
         setError(t("placementTest.submitError"));
@@ -996,6 +1010,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setPendingStart(null);
     setPreTestDoneFor(null);
     setResumeNeedsCheck(false);
+    appliedSessionRef.current = null;
     setSessionId(null);
     setDeliveryMode("practice");
     setFeedback(null);
@@ -1009,6 +1024,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }, [location.key]);
 
   function resetToExamList() {
+    appliedSessionRef.current = null;
     setSessionId(null);
     setDeliveryMode("practice");
     setFeedback(null);

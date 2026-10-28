@@ -1,6 +1,7 @@
 // Object detection on proctoring snapshots: SSD-MobileNet v1 trained on COCO
 // (ONNX model zoo, Apache-2.0). Only the few classes that matter during a
 // test are reported — a phone, a book or a second screen in view.
+import { ORT_OPTIONS, oneAtATime } from "../lib/inference.js";
 import path from "node:path";
 import sharp from "sharp";
 import { createRequire } from "node:module";
@@ -34,7 +35,7 @@ let unavailable = false;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function getSession(): Promise<any> {
-  if (!session) session = await ort.InferenceSession.create(MODEL_PATH);
+  if (!session) session = await ort.InferenceSession.create(MODEL_PATH, ORT_OPTIONS);
   return session;
 }
 
@@ -52,7 +53,8 @@ export async function detectObjects(image: Buffer): Promise<DetectedObject[] | n
   }
   const { data } = await sharp(image).rotate().resize(IN_SIZE, IN_SIZE, { fit: "fill" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const input = new ort.Tensor("uint8", new Uint8Array(data), [1, IN_SIZE, IN_SIZE, 3]);
-  const out = await s.run({ inputs: input });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: any = await oneAtATime(() => s.run({ inputs: input }));
   const n = Math.round(out.num_detections.data[0]);
   const classes = out.detection_classes.data as Float32Array;
   const scores = out.detection_scores.data as Float32Array;
