@@ -7,6 +7,7 @@ import { Router, type Response } from "express";
 import sharp from "sharp";
 import { PRIVACY_NOTICE_VERSION } from "../auth/schemas.js";
 import { UNFLAGGED_MEDIA_DAYS } from "../governance/service.js";
+import { ensurePrivateFile } from "../storage/mirror.js";
 import { z } from "zod";
 import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
 import { pool } from "../db.js";
@@ -1264,7 +1265,8 @@ proctoringRouter.get("/media/:id", requireAuth, async (req: AuthedRequest, res, 
     if (!m?.uri || !(await canReviewUser(req, m.user_id))) return res.status(404).end();
     const file = mediaPath(m.uri);
     if (!file) return res.status(404).end();
-    const data = await readFile(file).catch(() => null);
+    // After a server restart the file may still be in the backup bucket only.
+    const data = (await readFile(file).catch(() => null)) ?? (await ensurePrivateFile(m.uri).then(() => readFile(file)).catch(() => null));
     if (!data) return res.status(404).end();
     const ext = m.uri.split(".").pop() ?? "";
     // Voice samples and clips recorded as webm or mp4 are audio, not video.

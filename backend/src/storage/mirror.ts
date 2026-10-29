@@ -234,6 +234,12 @@ function ensureLocal(key: string): Promise<boolean> {
   return job;
 }
 
+// A private proctoring file (served by its own endpoint, not express.static)
+// that isn't downloaded yet after a restart: fetched now.
+export function ensurePrivateFile(rel: string): Promise<boolean> {
+  return ensureLocal(`private/proctoring/${rel}`);
+}
+
 // Before express.static("uploads"): a file not downloaded yet is fetched now.
 export function mirrorMissingUploads(req: Request, _res: Response, next: NextFunction) {
   if (!active) return next();
