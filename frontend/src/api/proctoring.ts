@@ -147,7 +147,7 @@ export function ackProctorMessage(sessionId: string): Promise<{ ok: boolean }> {
   return api(`/proctoring/sessions/${sessionId}/status/ack`, { method: "POST" });
 }
 
-export type DocumentType = "passport" | "national_id" | "driving_licence" | "other";
+export type DocumentType = "office_id" | "passport" | "national_id" | "driving_licence" | "other";
 
 export function submitIdentity(body: { documentType: DocumentType; documentBase64: string; selfieBase64: string; sessionId?: string }): Promise<{ identity: IdentityStatus }> {
   return api(`/proctoring/identity`, { method: "POST", body: JSON.stringify(body) });

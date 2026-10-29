@@ -168,6 +168,7 @@ function ConsentStep({ setup, sessionId, onDone }: { setup: ProctoringSetup; ses
 }
 
 const DOC_TYPES: [DocumentType, () => string][] = [
+  ["office_id", () => tr("Office ID")],
   ["passport", () => tr("Passport")],
   ["national_id", () => tr("National ID card")],
   ["driving_licence", () => tr("Driving licence")],
@@ -190,8 +191,11 @@ function IdentityStep({ sessionId, rejected, onDone }: { sessionId: string; reje
     try {
       await submitIdentity({ documentType: docType, documentBase64: documentImage, selfieBase64: faceImage, sessionId });
       onDone();
-    } catch {
-      setError(tr("Could not upload your ID. Try again."));
+    } catch (err) {
+      if (err instanceof Error && err.message === "id_looks_like_face") {
+        setDocumentImage(null);
+        setError(tr("That photo shows your face, not an ID. Hold your ID card up to the camera and take the ID photo again."));
+      } else setError(tr("Could not upload your ID. Try again."));
       setBusy(false);
     }
   }

@@ -706,7 +706,7 @@ proctoringRouter.get("/identity", requireAuth, async (req: AuthedRequest, res, n
 });
 
 const identitySchema = z.object({
-  documentType: z.enum(["passport", "national_id", "driving_licence", "other"]),
+  documentType: z.enum(["office_id", "passport", "national_id", "driving_licence", "other"]),
   documentBase64: z.string().min(100).max(4_000_000),
   selfieBase64: z.string().min(100).max(3_000_000),
   sessionId: z.string().uuid().optional(),
@@ -721,6 +721,17 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
     const selfie = decode(body.selfieBase64);
     const userId = req.user!.id;
     const role = req.user!.role;
+
+    // A live face held up instead of an ID: the "ID" photo's biggest face
+    // scores as a real face, where a printed ID photo scores as a photo. This
+    // is quick (one small model), so the learner can retake it at once.
+    const docFace = (await detectFaces(doc, 0.5).catch(() => [])).sort((a, b) => b.w * b.h - a.w * a.h)[0];
+    if (docFace) {
+      const meta = await sharp(doc).metadata();
+      const share = meta.width && meta.height ? (docFace.w * docFace.h) / (meta.width * meta.height) : 0;
+      const live = share >= 0.05 ? await scoreLiveness(await cropFace(doc, docFace)).then((l) => l.live).catch(() => 0) : 0;
+      if (live >= 0.8) return res.status(422).json({ error: "id_looks_like_face" });
+    }
 
     // The photos are saved and the learner goes on straight away; the checks
     // on them (faces, liveness, a passport's MRZ) run afterwards: on a small

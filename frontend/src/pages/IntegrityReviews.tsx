@@ -150,6 +150,7 @@ const RISK_TONE = { low: "success", medium: "warning", high: "error" } as const;
 const RISK_TEXT: Record<string, () => string> = { low: () => tr("Low risk"), medium: () => tr("Medium risk"), high: () => tr("High risk") };
 
 const DOC_TEXT: Record<string, () => string> = {
+  office_id: () => tr("Office ID"),
   passport: () => tr("Passport"),
   national_id: () => tr("National ID card"),
   driving_licence: () => tr("Driving licence"),

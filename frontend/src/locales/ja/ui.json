@@ -5384,5 +5384,7 @@
  "Privacy Notice": "プライバシー通知",
  "and agree to how Spica uses my data.": "を読み、Spica による私のデータの利用に同意します。",
  "Please read the Privacy Notice and tick the box to continue.": "続行するには、プライバシー通知を読んでチェックボックスにチェックを入れてください。",
- "Full details, including how to download or delete your data:": "データのダウンロードや削除の方法を含む詳細:"
+ "Full details, including how to download or delete your data:": "データのダウンロードや削除の方法を含む詳細:",
+ "Office ID": "社員証",
+ "That photo shows your face, not an ID. Hold your ID card up to the camera and take the ID photo again.": "写真に写っているのは顔で、身分証ではありません。身分証をカメラにかざして撮り直してください。"
 }

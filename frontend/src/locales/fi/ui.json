@@ -5384,5 +5384,7 @@
  "Privacy Notice": "tietosuojaselosteen",
  "and agree to how Spica uses my data.": "ja hyväksyn, miten Spica käyttää tietojani.",
  "Please read the Privacy Notice and tick the box to continue.": "Lue tietosuojaseloste ja valitse ruutu jatkaaksesi.",
- "Full details, including how to download or delete your data:": "Kaikki tiedot, myös miten lataat tai poistat tietosi:"
+ "Full details, including how to download or delete your data:": "Kaikki tiedot, myös miten lataat tai poistat tietosi:",
+ "Office ID": "Työpaikan henkilökortti",
+ "That photo shows your face, not an ID. Hold your ID card up to the camera and take the ID photo again.": "Kuvassa on kasvosi, ei henkilökorttia. Pidä korttia kameran edessä ja ota kuva uudelleen."
 }
