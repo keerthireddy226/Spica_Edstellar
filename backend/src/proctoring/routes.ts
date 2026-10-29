@@ -7,7 +7,7 @@ import { Router, type Response } from "express";
 import sharp from "sharp";
 import { PRIVACY_NOTICE_VERSION } from "../auth/schemas.js";
 import { UNFLAGGED_MEDIA_DAYS } from "../governance/service.js";
-import { ensurePrivateFile } from "../storage/mirror.js";
+import { ensureFile, ensurePrivateFile } from "../storage/mirror.js";
 import { z } from "zod";
 import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
 import { pool } from "../db.js";
@@ -554,8 +554,15 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
     // something looks wrong, plus one every few minutes as a sample, so a
     // test leaves a dozen photos instead of a hundred.
     const persons = watched.filter((o) => o.label === "person").length;
+    // The detector also reports the learner as "a person": only a second
+    // person, a phone or a book is worth a photo.
     const noteworthy =
-      faces.length !== 1 || persons > 1 || watched.length > 0 || faceDecision === "mismatch" || faceDecision === "uncertain" || (pose != null && pose.direction !== "center");
+      faces.length !== 1 ||
+      persons > 1 ||
+      watched.some((o) => o.label !== "person") ||
+      faceDecision === "mismatch" ||
+      faceDecision === "uncertain" ||
+      (pose != null && pose.direction !== "center");
     const sampleDue =
       noteworthy ||
       !(
@@ -819,6 +826,7 @@ export async function retryIdentityChecks(): Promise<number> {
     const selfieFile = mediaPath(v.selfie_uri);
     if (!docFile || !selfieFile) continue;
     try {
+      await Promise.all([ensureFile(docFile), ensureFile(selfieFile)]);
       const [doc, selfie] = await Promise.all([readFile(docFile), readFile(selfieFile)]);
       await checkIdentityPhotos(v.id, v.user_id, v.role, v.document_type, doc, selfie);
       done++;

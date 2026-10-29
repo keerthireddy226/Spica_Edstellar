@@ -65,6 +65,10 @@ const CAMERA_ISSUES = new Set([
 ]);
 
 const HIGH_AT = 30;
+// Camera photos with no face, a second face or person, or an unconfirmed face
+// count only from this many in one test.
+const REPEATS_BEFORE_REVIEW = 3;
+const GRACED = new Set(["away_from_camera", "multiple_faces", "extra_person", "face_unconfirmed"]);
 const MEDIUM_AT = 12;
 
 export async function analyzeSession(sessionId: string): Promise<{ riskScore: number; riskLevel: string; status: string } | null> {
@@ -95,11 +99,14 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
       [sessionId],
     )
   ).rows[0];
-  add("away_from_camera", snaps.no_face, Math.min(16, snaps.no_face * 4));
-  add("multiple_faces", snaps.multiple_faces, Math.min(20, snaps.multiple_faces * 10));
-  add("extra_person", snaps.extra_person, Math.min(16, snaps.extra_person * 8));
+  // One or two photos with no face or a second face are usually a glance away
+  // or a poster in view; they count from the third.
+  const beyondGrace = (n: number, each: number, max: number) => (n >= REPEATS_BEFORE_REVIEW ? Math.min(max, (n - REPEATS_BEFORE_REVIEW + 1) * each) : 0);
+  add("away_from_camera", snaps.no_face, beyondGrace(snaps.no_face, 4, 16));
+  add("multiple_faces", snaps.multiple_faces, beyondGrace(snaps.multiple_faces, 10, 20));
+  add("extra_person", snaps.extra_person, beyondGrace(snaps.extra_person, 8, 16));
   add("face_mismatch", snaps.face_mismatch, Math.min(30, snaps.face_mismatch * 15));
-  add("face_unconfirmed", snaps.face_uncertain, Math.min(15, snaps.face_uncertain * 5));
+  add("face_unconfirmed", snaps.face_uncertain, beyondGrace(snaps.face_uncertain, 5, 15));
   add("phone_in_view", snaps.phone, Math.min(20, snaps.phone * 10));
   if (policy.webcamMonitoring && snaps.total === 0) add("no_snapshots", 1, 10);
 
@@ -119,12 +126,13 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
     if (away / poses.length > 0.2) add("looking_away", away, Math.min(15, 3 + away * 2));
   }
 
-  for (const [flag, kind, code] of [
-    ["videoRecording", "video_segment", "video_missing"],
-    ["screenRecording", "screen_segment", "screen_missing"],
+  // The screen arrives as screenshots (older tests: video segments).
+  for (const [flag, kinds, code] of [
+    ["videoRecording", ["video_segment"], "video_missing"],
+    ["screenRecording", ["screen_segment", "screen_shot"], "screen_missing"],
   ] as const) {
     if (!policy[flag]) continue;
-    const n = (await pool.query(`SELECT count(*)::int AS n FROM proctoring_media WHERE session_id = $1 AND kind = $2`, [sessionId, kind])).rows[0].n;
+    const n = (await pool.query(`SELECT count(*)::int AS n FROM proctoring_media WHERE session_id = $1 AND kind = ANY($2::text[])`, [sessionId, kinds])).rows[0].n;
     if (n === 0) add(code, 1, 10);
   }
 
@@ -184,9 +192,10 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
   }
   if (si.terminated_at) add("terminated", 1, 40);
 
-  // No face, another face, an unconfirmed face or an empty, dark or frozen
-  // camera: even once is enough for a person to look at the test.
-  if (reasons.some((r) => CAMERA_ISSUES.has(r.code))) needsHuman = true;
+  // No face, another face or an unconfirmed face in 3 or more photos, a face
+  // that differs in 2 or more, or an empty, dark or frozen camera: a person
+  // looks at the test.
+  if (reasons.some((r) => CAMERA_ISSUES.has(r.code) && r.count >= (GRACED.has(r.code) ? REPEATS_BEFORE_REVIEW : r.code === "face_mismatch" ? 2 : 1))) needsHuman = true;
 
   const riskScore = reasons.reduce((n, r) => n + r.points, 0);
   const riskLevel = riskScore >= HIGH_AT ? "high" : riskScore >= MEDIUM_AT ? "medium" : "low";

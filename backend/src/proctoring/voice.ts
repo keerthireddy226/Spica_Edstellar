@@ -11,6 +11,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
+import { ensureFile } from "../storage/mirror.js";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -41,6 +42,7 @@ export function voiceModelAvailable(): boolean {
 // Decodes any browser recording (webm/ogg/mp4) to 16 kHz mono float samples.
 // ffmpeg writes to a real file: piping WAV left the header unfinished.
 export async function decodeAudio(file: string): Promise<Float32Array> {
+  await ensureFile(file);
   const dir = await mkdtemp(path.join(tmpdir(), "voice-"));
   const out = path.join(dir, "out.f32");
   try {

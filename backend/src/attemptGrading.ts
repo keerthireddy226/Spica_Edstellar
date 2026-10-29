@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ensureFile } from "./storage/mirror.js";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pool } from "./db.js";
@@ -245,6 +246,7 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   if (!r.response_uri) return gradeTypedAnswerAgain(attemptId, r, opts.final, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
 
   const file = path.join(UPLOADS_DIR, path.basename(r.response_uri));
+  await ensureFile(file).catch(() => {});
   const audio = await readFile(file).catch(() => null);
   const mime = file.endsWith(".m4a") ? "audio/mp4" : "audio/webm";
   const geminiScores = audio ? await scoreAudioFluency(audio.toString("base64"), mime, r.cefr_level, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS, questionOf(r.content)) : null;

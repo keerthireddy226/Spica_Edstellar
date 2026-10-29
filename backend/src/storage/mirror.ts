@@ -176,24 +176,21 @@ export async function startFileMirror(): Promise<void> {
   }
   for (const o of remote) remoteKeys.add(o.key);
   const local = await localFiles();
-  const queue = remote.filter((o) => local.get(o.key)?.size !== o.size);
+  // Nothing is downloaded at start-up: every file (listening audio,
+  // recordings, photos) is fetched from the bucket the first time something
+  // needs it, then kept. A restart then costs almost no bandwidth.
   // Files already on disk and in the bucket count as synced.
   synced = new Map([...local].filter(([k]) => remoteKeys.has(k)));
-  console.log(`[file-mirror] ${remote.length} files in ${c.bucket}, ${queue.length} to download`);
+  console.log(`[file-mirror] ${remote.length} files in ${c.bucket}; fetched on demand (${Math.round((Date.now() - started) / 1000)}s to list)`);
   active = c;
   setInterval(() => void scan(c), SCAN_MS).unref();
-  // Download in the background (a few at a time) so the server starts at
-  // once; a file asked for before its turn is fetched on demand.
-  let downloaded = 0;
-  restoring = true;
-  void Promise.all(
-    Array.from({ length: 6 }, async () => {
-      for (let o = queue.shift(); o; o = queue.shift()) if (await ensureLocal(o.key)) downloaded++;
-    }),
-  ).then(() => {
-    restoring = false;
-    console.log(`[file-mirror] ${downloaded} files downloaded in ${Math.round((Date.now() - started) / 1000)}s`);
-  });
+}
+
+// A stored file the server reads itself (a recording to score or check, an ID
+// photo): fetched from the bucket first if it isn't on this disk yet.
+export async function ensureFile(absPath: string): Promise<void> {
+  const key = path.relative(process.cwd(), absPath).split(path.sep).join("/");
+  if (key.startsWith("uploads/") || key.startsWith("private/")) await ensureLocal(key);
 }
 
 // The bucket's files, and the mirror once started.
