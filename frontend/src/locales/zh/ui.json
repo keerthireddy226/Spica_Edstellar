@@ -5411,5 +5411,9 @@
  "I have read the Privacy Notice and agree.": "我已阅读隐私声明并同意。",
  "Open the Privacy Notice first.": "请先打开隐私声明。",
  "Your answers are scored by AI, under terms that keep them private.": "你的回答由 AI 评分，相关条款确保其保密。",
- "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "你的口语和书面回答由 AI 评分。任何异常都由人工核查；不会自动判你不合格。"
+ "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "你的口语和书面回答由 AI 评分。任何异常都由人工核查；不会自动判你不合格。",
+ "I am 18 or older.": "我已年满 18 岁。",
+ "Please confirm you are 18 or older.": "请确认你已年满 18 岁。",
+ "Our Privacy Notice": "我们的隐私声明",
+ "Please read and agree to our Privacy Notice to continue using Spica.": "请阅读并同意我们的隐私声明，以继续使用 Spica。"
 }

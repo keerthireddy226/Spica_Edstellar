@@ -5411,5 +5411,9 @@
  "I have read the Privacy Notice and agree.": "Jag har läst integritetsmeddelandet och godkänner det.",
  "Open the Privacy Notice first.": "Öppna integritetsmeddelandet först.",
  "Your answers are scored by AI, under terms that keep them private.": "Dina svar bedöms av AI enligt villkor som håller dem privata.",
- "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "Dina talade och skrivna svar bedöms av AI. Allt ovanligt kontrolleras av en person; inget underkänner dig automatiskt."
+ "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "Dina talade och skrivna svar bedöms av AI. Allt ovanligt kontrolleras av en person; inget underkänner dig automatiskt.",
+ "I am 18 or older.": "Jag är 18 år eller äldre.",
+ "Please confirm you are 18 or older.": "Bekräfta att du är 18 år eller äldre.",
+ "Our Privacy Notice": "Vårt integritetsmeddelande",
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Läs och godkänn vårt integritetsmeddelande för att fortsätta använda Spica."
 }

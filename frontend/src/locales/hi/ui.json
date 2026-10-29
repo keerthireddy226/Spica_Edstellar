@@ -5411,5 +5411,9 @@
  "I have read the Privacy Notice and agree.": "मैंने गोपनीयता सूचना पढ़ ली है और सहमत हूँ।",
  "Open the Privacy Notice first.": "पहले गोपनीयता सूचना खोलें।",
  "Your answers are scored by AI, under terms that keep them private.": "आपके उत्तरों को AI अंक देता है, ऐसी शर्तों पर जो उन्हें निजी रखती हैं।",
- "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "आपके बोले और लिखे उत्तरों को AI अंक देता है। कुछ भी असामान्य हो तो एक व्यक्ति जाँचता है; कुछ भी आपको अपने-आप फ़ेल नहीं करता।"
+ "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "आपके बोले और लिखे उत्तरों को AI अंक देता है। कुछ भी असामान्य हो तो एक व्यक्ति जाँचता है; कुछ भी आपको अपने-आप फ़ेल नहीं करता।",
+ "I am 18 or older.": "मेरी उम्र 18 वर्ष या उससे अधिक है।",
+ "Please confirm you are 18 or older.": "कृपया पुष्टि करें कि आपकी उम्र 18 वर्ष या अधिक है।",
+ "Our Privacy Notice": "हमारी गोपनीयता सूचना",
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Spica का उपयोग जारी रखने के लिए हमारी गोपनीयता सूचना पढ़ें और सहमति दें।"
 }

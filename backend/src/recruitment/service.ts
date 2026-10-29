@@ -339,9 +339,13 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
       ? { kind: "placement", overallPercent: p.overall_percent, cefrLevel: p.cefr_level, skillPercents: p.skill_percents, skillLevels: p.skill_levels }
       : { kind: "placement", pending: true };
   } else {
+    // A question left blank (skipped, or never reached) counts as 0, as in a
+    // learner's result: it never grades itself, so it isn't "being scored".
     const rows = (
       await pool.query(
-        `SELECT sc.status, sc.content_score, sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label
+        `SELECT CASE WHEN sc.status = 'pending' AND coalesce(at.response_text, '') = '' AND at.response_uri IS NULL THEN 'scored' ELSE sc.status END AS status,
+           CASE WHEN sc.status = 'pending' AND coalesce(at.response_text, '') = '' AND at.response_uri IS NULL THEN 0 ELSE sc.content_score END AS content_score,
+           sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label
          FROM attempts at JOIN scores sc ON sc.attempt_id = at.id JOIN items i ON i.id = at.item_id
          JOIN item_types it ON it.id = i.item_type_id LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id
          WHERE at.session_id = $1`,

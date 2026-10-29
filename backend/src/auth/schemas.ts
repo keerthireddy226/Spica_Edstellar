@@ -9,10 +9,12 @@ export const signupSchema = z.object({
   lastName: z.string().min(1),
   // The Privacy Notice checkbox; sign-up is refused without it.
   acceptPrivacy: z.literal(true),
+  // "I am 18 or older", ticked with it.
+  adultConfirmed: z.literal(true),
 });
 
 // The Privacy Notice version people agree to (its "last updated" date).
-export const PRIVACY_NOTICE_VERSION = "2026-10-28";
+export const PRIVACY_NOTICE_VERSION = "2026-10-29";
 
 export const updateNameSchema = z.object({
   firstName: z.string().min(1),

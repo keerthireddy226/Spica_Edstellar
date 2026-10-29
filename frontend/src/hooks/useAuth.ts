@@ -25,6 +25,8 @@ type AuthUser = {
   mfaSetupRequired?: boolean;
   // Edstellar staff viewing this account read-only.
   viewAs?: { impersonatorName: string } | null;
+  // The current Privacy Notice hasn't been agreed yet.
+  privacyRequired?: boolean;
 };
 
 // With two-step sign-in on, the password step returns a challenge instead of a user.
@@ -131,7 +133,7 @@ export function useAuthState() {
   const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
     await api<{ email: string }>("/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true }),
+      body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true, adultConfirmed: true }),
     });
   }, []);
 

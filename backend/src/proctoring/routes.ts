@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import { Router, type Response } from "express";
 import sharp from "sharp";
 import { PRIVACY_NOTICE_VERSION } from "../auth/schemas.js";
+import { UNFLAGGED_MEDIA_DAYS } from "../governance/service.js";
 import { z } from "zod";
 import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
 import { pool } from "../db.js";
@@ -322,7 +323,7 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
     policy: proctored ? visible : null,
     biometric: proctored && usesBiometrics(policy),
     faceCheck: org.faceCheckRequired,
-    retentionDays: policy.retentionDays,
+    retentionDays: Math.min(policy.retentionDays, UNFLAGGED_MEDIA_DAYS),
     recordingsMonths: (t?.retention_recordings_months as number | null) ?? null,
     audience: resultsAudience(t?.role, t?.tenant_type),
     version: testConsentVersion(proctored ? consentVersion(policy) : null),
@@ -514,6 +515,9 @@ proctoringRouter.get("/sessions/:sessionId/learner-summary", requireAuth, async 
   }
 });
 
+// With nothing wrong in it, a snapshot's photo is kept once in this many minutes.
+const SNAPSHOT_SAMPLE_MINUTES = 5;
+
 const snapshotSchema = z.object({ imageBase64: z.string().min(100).max(3_000_000) });
 
 proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -545,8 +549,23 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
     const objects = (await detectObjects(image).catch(() => null)) ?? [];
     const watched = objects.filter((o) => o.label === "cell_phone" || o.label === "book" || o.label === "person");
 
-    const small = await sharp(image).rotate().resize(640, 640, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer();
-    const uri = await saveMedia("snapshot", "jpg", small);
+    // The checks' results are always kept; the photo itself only when
+    // something looks wrong, plus one every few minutes as a sample, so a
+    // test leaves a dozen photos instead of a hundred.
+    const persons = watched.filter((o) => o.label === "person").length;
+    const noteworthy =
+      faces.length !== 1 || persons > 1 || watched.length > 0 || faceDecision === "mismatch" || faceDecision === "uncertain" || (pose != null && pose.direction !== "center");
+    const sampleDue =
+      noteworthy ||
+      !(
+        await pool.query(
+          `SELECT 1 FROM proctoring_media WHERE session_id = $1 AND kind = 'snapshot' AND uri IS NOT NULL AND created_at > now() - make_interval(mins => $2) LIMIT 1`,
+          [si.session_id, SNAPSHOT_SAMPLE_MINUTES],
+        )
+      ).rowCount;
+    const uri = sampleDue
+      ? await saveMedia("snapshot", "jpg", await sharp(image).rotate().resize(640, 640, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 70 }).toBuffer())
+      : null;
     await pool.query(
       `INSERT INTO proctoring_media (session_id, user_id, kind, uri, face_count, face_decision, face_similarity, objects, head_yaw, head_pitch, head_direction)
        VALUES ($1, $2, 'snapshot', $3, $4, $5, $6, $7, $8, $9, $10)`,
@@ -555,7 +574,6 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
     await pool.query(`UPDATE session_integrity SET last_seen_at = now() WHERE session_id = $1`, [si.session_id]);
 
     // Tell the learner right away, so an honest mistake can be fixed.
-    const persons = watched.filter((o) => o.label === "person").length;
     let warning: string | null = null;
     if (faces.length === 0) warning = "no_face";
     else if (faces.length > 1 || persons > 1) warning = "multiple_people";

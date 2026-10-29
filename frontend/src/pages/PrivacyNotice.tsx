@@ -6,7 +6,7 @@ import { ROUTES } from "@/constants/routes";
 // PRIVACY_NOTICE_VERSION in backend/src/auth/schemas.ts). One page for every
 // country: the same promises everywhere, plus the extra rights some laws give.
 // English only until it has had a legal review; then it can be translated.
-const LAST_UPDATED = "28 October 2026";
+const LAST_UPDATED = "29 October 2026";
 // To be confirmed before publishing.
 const CONTACT_EMAIL = "[privacy contact email]";
 const GRIEVANCE_OFFICER = "[name of the Grievance Officer]";
@@ -37,7 +37,7 @@ export function PrivacyNotice() {
             <li>We collect what we need to run your English practice and tests: your account details, your answers, and, for proctored tests, camera, microphone and screen recordings.</li>
             <li>Your spoken and written answers are marked by AI. Face and voice matching run on our own server.</li>
             <li>We never sell your data or use it for advertising.</li>
-            <li>Test recordings are deleted automatically, after 90 days unless your organization sets a different period.</li>
+            <li>Test recordings are deleted automatically: after 30 days if nothing needed checking, or later if a test was flagged for review.</li>
             <li>You can download or delete your data at any time, and withdraw your agreement to face and voice checks.</li>
           </ul>
         </div>
@@ -55,7 +55,7 @@ export function PrivacyNotice() {
             <li><b>Account details:</b> name, email address, password (stored only in scrambled form), language and voice choices.</li>
             <li><b>Optional details</b>, only if you choose to give them: country, city, job role, gender and age range.</li>
             <li><b>Your learning and test data:</b> answers, spoken answers (audio recordings), written answers, scores, levels, certificates and progress.</li>
-            <li><b>Proctoring data, for proctored tests only:</b> camera photos during the test, a room scan, screen recording, a voice sample, a photo of your ID and a selfie, and events such as leaving the test tab. You are told exactly what a test collects before it starts, and you agree on that screen.</li>
+            <li><b>Proctoring data, for proctored tests only:</b> camera photos during the test (kept only when something looks wrong, plus an occasional sample), a room scan, screen recording, a voice sample, a photo of your ID and a selfie, and events such as leaving the test tab. You are told exactly what a test collects before it starts, and you agree on that screen.</li>
             <li><b>Face and voice "templates"</b> (number patterns made from your face and voice) to check that the same person takes the whole test. These are only made if you agree, and you can withdraw at any time.</li>
             <li><b>Payment details</b>, if you buy something: handled by our payment providers. We do not see or store your card number.</li>
             <li><b>Technical data:</b> IP address, browser type and login times, used for security.</li>
@@ -101,7 +101,7 @@ export function PrivacyNotice() {
 
         <Section title="7. How long we keep it">
           <ul className="list-disc pl-5 flex flex-col gap-1">
-            <li>Proctoring recordings, photos and ID images: 90 days after the test, or the period your organization sets. If a test is still under review, up to 1 year.</li>
+            <li>Proctoring recordings, photos and ID images: 30 days after the test if nothing was flagged. A flagged test keeps them for 90 days or the period your organization sets, and up to 1 year while it is still under review.</li>
             <li>Proctoring event logs: 1 year.</li>
             <li>Job candidates' data: deleted when the recruiter's retention period ends.</li>
             <li>Your account, answers and results: while your account is open. When you delete your account or data, it is erased.</li>
@@ -112,9 +112,9 @@ export function PrivacyNotice() {
         <Section title="8. Your rights">
           <p>Wherever you live, you can:</p>
           <ul className="list-disc pl-5 flex flex-col gap-1">
-            <li>See and download your data (Settings → Download my data).</li>
+            <li>See and download your data (Profile → Download my data).</li>
             <li>Correct your details.</li>
-            <li>Delete your data (Settings → Delete my data).</li>
+            <li>Delete your account and data (Profile → Delete my account).</li>
             <li>Withdraw your agreement to face and voice checks at any time. Withdrawing doesn't affect what was done before.</li>
             <li>Ask us questions or complain, at {CONTACT_EMAIL}. We reply within 30 days.</li>
           </ul>
@@ -138,8 +138,8 @@ export function PrivacyNotice() {
 
         <Section title="9. Children">
           <p>
-            Spica is meant for people aged 18 and over. Anyone younger may use it only with the consent of a parent or guardian, arranged through their school or organization. If
-            you believe a child has given us data without that consent, contact us and we will delete it.
+            Spica is for people aged 18 and over. When you agree to this notice, you confirm that you are 18 or older. If you believe someone younger has given us data, contact
+            us and we will delete it.
           </p>
         </Section>
 
@@ -155,7 +155,7 @@ export function PrivacyNotice() {
         </Section>
 
         <Section title="12. Changes to this notice">
-          <p>If we change this notice in an important way, we will tell you in Spica or by email, and ask you to agree again where the law requires it.</p>
+          <p>If we change this notice, we will ask you to read and agree to the new version the next time you use Spica.</p>
         </Section>
 
         <p className="text-sm text-muted border-t border-rule pt-4">

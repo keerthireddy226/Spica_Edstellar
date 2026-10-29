@@ -224,6 +224,11 @@ export async function buildExport(exportId: string): Promise<void> {
 }
 
 // ---- Retention (periodic) ----
+// A test with nothing flagged keeps its proctoring media this long at most
+// (shorter if the organization sets less); a flagged one keeps the
+// organization's full period.
+export const UNFLAGGED_MEDIA_DAYS = 30;
+
 
 // Proctoring snapshots, scans, voice samples and ID images go after the
 // organization's proctoring retention period. Evidence for a session still
@@ -234,7 +239,9 @@ async function runProctoringRetention(): Promise<number> {
      JOIN users u ON u.id = m.user_id JOIN tenants t ON t.id = u.tenant_id
      LEFT JOIN session_integrity si ON si.session_id = m.session_id
      WHERE m.uri IS NOT NULL
-       AND m.created_at < now() - make_interval(days => coalesce((t.proctoring->>'retentionDays')::int, 90))
+       AND m.created_at < now() - make_interval(days => CASE WHEN coalesce(si.status, '') = 'flagged'
+             THEN coalesce((t.proctoring->>'retentionDays')::int, 90)
+             ELSE least(coalesce((t.proctoring->>'retentionDays')::int, 90), ${UNFLAGGED_MEDIA_DAYS}) END)
        AND (m.created_at < now() - interval '365 days' OR NOT (
          coalesce(si.status, '') = 'flagged'
          OR EXISTS (SELECT 1 FROM identity_verifications iv WHERE iv.status = 'pending' AND m.id IN (iv.document_media_id, iv.selfie_media_id))

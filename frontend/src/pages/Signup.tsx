@@ -19,6 +19,7 @@ export function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -38,6 +39,10 @@ export function Signup() {
     }
     if (!agreed) {
       setError(tr("Please read the Privacy Notice and tick the box to continue."));
+      return;
+    }
+    if (!adult) {
+      setError(tr("Please confirm you are 18 or older."));
       return;
     }
     setSubmitting(true);
@@ -130,6 +135,10 @@ export function Signup() {
             </Link>{" "}
             {tr("and agree to how Spica uses my data.")}
           </span>
+        </label>
+        <label className="flex items-start gap-2 text-sm text-ink">
+          <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{tr("I am 18 or older.")}</span>
         </label>
         {error && <p className="text-sm text-error">{error}</p>}
         <Button type="submit" className="mt-1 w-full" disabled={submitting}>

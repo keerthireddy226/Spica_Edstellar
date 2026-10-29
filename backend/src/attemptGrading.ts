@@ -16,6 +16,9 @@ export const UPLOADS_DIR = path.join(process.cwd(), "uploads", "attempts");
 // for a grade that will never come.
 const NO_SPEECH: GradeResult = { status: "scored", correct: false, score: 0, method: null };
 const NO_SPEECH_VERSION = "no-speech-v1";
+// Nothing given at all (skipped, or the time ran out): scored 0 straight away,
+// not left "being scored" for ever.
+const NO_ANSWER_VERSION = "no-answer-v1";
 
 function heardNoSpeech(gemini: { transcript: string } | null, browserText: string | null | undefined): boolean {
   return !!gemini && !gemini.transcript.trim() && !browserText?.trim();
@@ -113,9 +116,10 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
     item.input_method === "mic" && responseUri ? await measureAnswerNoise(path.join(UPLOADS_DIR, path.basename(responseUri))) : null;
 
   const noSpeech = item.input_method === "mic" && heardNoSpeech(geminiScores, body.responseText);
+  const noAnswer = !responseUri && !body.audioBase64 && !body.responseText?.trim();
   const grade: GradeResult = deferred
     ? { status: "pending", correct: null, score: null, method: null }
-    : noSpeech
+    : noSpeech || noAnswer
       ? NO_SPEECH
       : await gradeWithSecondOpinion(item, effectiveResponseText, item.input_method === "mic" ? body.responseText : undefined);
   const responseText = (grade as GradeResult & { usedText?: string }).usedText ?? effectiveResponseText ?? null;
@@ -148,7 +152,9 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   // model_version is NOT NULL, so a genuinely ungraded (pending/failed, no
   // method) attempt gets an honest "n/a" instead of falsely claiming
   // exact-match-v1 was the method used.
-  const modelVersion = noSpeech
+  const modelVersion = noAnswer
+    ? NO_ANSWER_VERSION
+    : noSpeech
     ? NO_SPEECH_VERSION
     : grade.method === "ai-text"
       ? "gemini-3.5-flash-lite-v1"

@@ -90,7 +90,8 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
     );
     const userId = user.rows[0].id;
     await client.query(
-      `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'privacy_notice', $3)`,
+      `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
+       VALUES ($1, $2, 'privacy_notice', $3), ($1, $2, 'adult_confirmation', $3)`,
       [userId, PRIVACY_NOTICE_VERSION, req.ip],
     );
 
@@ -265,6 +266,19 @@ authRouter.get("/me", async (req, res, next) => {
       [user.id],
     );
 
+    // Everyone who uses the app agrees to the current Privacy Notice once
+    // (again when it changes). Candidates agree on their test screen; staff
+    // viewing an account don't agree for its owner.
+    const privacyRequired =
+      PRIVACY_ROLES.includes(user.role) &&
+      !check.user.viewAs &&
+      !(
+        await pool.query(`SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'privacy_notice' AND consent_version = $2 AND revoked_at IS NULL LIMIT 1`, [
+          user.id,
+          PRIVACY_NOTICE_VERSION,
+        ])
+      ).rowCount;
+
     res.json({
       id: user.id,
       email: user.email,
@@ -284,7 +298,27 @@ authRouter.get("/me", async (req, res, next) => {
       mfaEnabled: check.user.mfaEnabled,
       mfaSetupRequired: check.user.mfaSetupRequired,
       viewAs: check.user.viewAs,
+      privacyRequired,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const PRIVACY_ROLES = ["learner", "manager", "org_admin", "recruiter"];
+
+// The Privacy Notice and "18 or older", agreed after login (people invited by
+// an organization never see the sign-up form, and everyone agrees again when
+// the notice changes).
+authRouter.post("/me/privacy", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    z.object({ acceptPrivacy: z.literal(true), adultConfirmed: z.literal(true) }).parse(req.body);
+    await pool.query(
+      `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
+       VALUES ($1, $2, 'privacy_notice', $3), ($1, $2, 'adult_confirmation', $3)`,
+      [req.user!.id, PRIVACY_NOTICE_VERSION, req.ip],
+    );
+    res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
   }

@@ -5411,5 +5411,9 @@
  "I have read the Privacy Notice and agree.": "プライバシー通知を読み、同意します。",
  "Open the Privacy Notice first.": "先にプライバシー通知を開いてください。",
  "Your answers are scored by AI, under terms that keep them private.": "回答は、非公開を守る条件のもとで AI が採点します。",
- "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "話した回答と書いた回答は AI が採点します。気になる点は人が確認し、自動で不合格になることはありません。"
+ "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "話した回答と書いた回答は AI が採点します。気になる点は人が確認し、自動で不合格になることはありません。",
+ "I am 18 or older.": "18 歳以上です。",
+ "Please confirm you are 18 or older.": "18 歳以上であることを確認してください。",
+ "Our Privacy Notice": "プライバシー通知",
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Spica を引き続き使うには、プライバシー通知を読んで同意してください。"
 }

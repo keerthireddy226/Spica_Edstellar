@@ -5411,5 +5411,9 @@
  "I have read the Privacy Notice and agree.": "Olen lukenut tietosuojaselosteen ja hyväksyn sen.",
  "Open the Privacy Notice first.": "Avaa ensin tietosuojaseloste.",
  "Your answers are scored by AI, under terms that keep them private.": "Tekoäly arvioi vastauksesi ehdoilla, jotka pitävät ne yksityisinä.",
- "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "Tekoäly arvioi puhutut ja kirjoitetut vastauksesi. Ihminen tarkistaa kaiken epätavallisen; mikään ei hylkää sinua automaattisesti."
+ "Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.": "Tekoäly arvioi puhutut ja kirjoitetut vastauksesi. Ihminen tarkistaa kaiken epätavallisen; mikään ei hylkää sinua automaattisesti.",
+ "I am 18 or older.": "Olen vähintään 18-vuotias.",
+ "Please confirm you are 18 or older.": "Vahvista, että olet vähintään 18-vuotias.",
+ "Our Privacy Notice": "Tietosuojaselosteemme",
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Lue ja hyväksy tietosuojaselosteemme jatkaaksesi Spican käyttöä."
 }

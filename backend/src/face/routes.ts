@@ -1,5 +1,6 @@
 // Enroll once, verify before every session. An emailed one-time code is the
 // only path past a failed check.
+import sharp from "sharp";
 import { randomUUID, randomInt } from "node:crypto";
 import { learnerOrgPolicy } from "../orgAdmin/settings.js";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -171,7 +172,9 @@ faceRouter.post("/verify", requireAuth, faceCheckLimiter, async (req: AuthedRequ
     await mkdir(CHECK_UPLOADS_DIR, { recursive: true });
     const fileName = `${randomUUID()}.jpg`;
     const sampleUri = `/uploads/face-check/${fileName}`;
-    await writeFile(path.join(CHECK_UPLOADS_DIR, fileName), image);
+    // Saved small (for a reviewer to look at); the checks below use the original.
+    const sample = await sharp(image).rotate().resize(320, 320, { fit: "inside", withoutEnlargement: true }).jpeg({ quality: 60 }).toBuffer().catch(() => image);
+    await writeFile(path.join(CHECK_UPLOADS_DIR, fileName), sample);
 
     // No usable enrollment — a setup gap, not fixable by retrying here.
     if (!enrollment || enrollment.status !== "enrolled" || !isCompatibleEmbedding(enrollment.embedding)) {
