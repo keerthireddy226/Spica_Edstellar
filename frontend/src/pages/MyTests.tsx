@@ -32,13 +32,20 @@ const STATUS: Record<AttemptStatus, { label: () => string; cls: string }> = {
   void: { label: () => tr("Not valid"), cls: "text-error" },
 };
 
-// Appeal a real test's result (once, within two weeks), and where the appeal is.
+// Request a review of a real test's score (once, within two weeks), and its status.
 function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appeal: OwnedTest["attempts"][number]["appeal"]; canAppeal: boolean }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   if (appeal) {
-    const label = { open: tr("Appeal sent: we'll reply by email."), upheld: tr("Appeal answered: the result stands."), changed: tr("Appeal answered: your result was re-marked."), new_attempt: tr("Appeal answered: you can take the test again.") }[appeal.status];
+    // The same wording as "Request a review" on the test's report.
+    const label =
+      ({
+        open: tr("Sent to the Spica review team. You'll hear back within 5 working days."),
+        upheld: tr("Reviewed: the score stands."),
+        changed: tr("Reviewed: your result was re-marked."),
+        new_attempt: tr("Reviewed: you can take the test again."),
+      } as Record<string, string>)[appeal.status] ?? tr("Reviewed: thank you, your concern was noted.");
     return (
       <span className="basis-full text-xs text-muted">
         {label}
@@ -46,7 +53,7 @@ function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appea
       </span>
     );
   }
-  if (!canAppeal || state === "sent") return state === "sent" ? <span className="basis-full text-xs text-success">{tr("Appeal sent: we'll reply by email.")}</span> : null;
+  if (!canAppeal || state === "sent") return state === "sent" ? <span className="basis-full text-xs text-success">{tr("Sent to the Spica review team. You'll hear back within 5 working days.")}</span> : null;
   return open ? (
     <div className="basis-full flex flex-col gap-2">
       <textarea
@@ -70,17 +77,17 @@ function AppealLine({ sessionId, appeal, canAppeal }: { sessionId: string; appea
           }}
           className="!py-1.5 !text-sm"
         >
-          {tr("Send appeal")}
+          {tr("Send request")}
         </Button>
         <button onClick={() => setOpen(false)} className="text-sm text-muted hover:underline cursor-pointer">
           {tr("Cancel")}
         </button>
-        {state === "error" && <span className="text-xs text-error">{tr("The appeal couldn't be sent.")}</span>}
+        {state === "error" && <span className="text-xs text-error">{tr("Could not send your request. Try again.")}</span>}
       </div>
     </div>
   ) : (
     <button onClick={() => setOpen(true)} className="basis-full text-left text-xs font-semibold text-navy-deep hover:underline cursor-pointer">
-      {tr("Appeal this result")}
+      {tr("Request a review")}
     </button>
   );
 }

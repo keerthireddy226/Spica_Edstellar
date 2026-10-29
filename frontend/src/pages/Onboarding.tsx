@@ -49,6 +49,8 @@ function WizardShell({
   nextLabel?: string;
 }) {
   const { t } = useTranslation();
+  // Onboarding has no app menu, so it carries its own way out.
+  const { logout } = useAuth();
   return (
     <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-4">
@@ -58,6 +60,9 @@ function WizardShell({
           </span>
           <span className="font-logo font-bold text-2xl">Spica</span>
           <span className="font-logo italic text-sm text-muted">{tr("by Edstellar")}</span>
+          <button type="button" onClick={() => void logout()} className="ml-auto text-sm font-medium text-muted hover:text-ink cursor-pointer">
+            {tr("Log out")}
+          </button>
         </div>
         <div className="flex items-center gap-2.5">
           <div className="flex-1 flex gap-1.5">
