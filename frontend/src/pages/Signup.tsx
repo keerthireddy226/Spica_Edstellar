@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { ROUTES } from "@/constants/routes";
+import { PRIVACY_NOTICE_URL, ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
 export function Signup() {
@@ -130,9 +130,9 @@ export function Signup() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             {tr("I have read the")}{" "}
-            <Link to={ROUTES.PRIVACY} target="_blank" className="font-medium underline">
+            <a href={PRIVACY_NOTICE_URL.free} target="_blank" rel="noreferrer" className="font-medium underline">
               {tr("Privacy Notice")}
-            </Link>{" "}
+            </a>{" "}
             {tr("and agree to how Spica uses my data.")}
           </span>
         </label>

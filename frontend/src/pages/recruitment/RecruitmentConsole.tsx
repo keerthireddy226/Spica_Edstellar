@@ -49,7 +49,9 @@ import {
   type Recruiter,
   type RecruitmentOverview,
   type TestKind,
+  requestCandidateReview,
 } from "@/api/recruitment";
+import { getOrgAppeals, type OrgAppeal } from "@/api/quality";
 import { tr } from "@/i18n/tr";
 import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
@@ -187,6 +189,76 @@ function CandidateFeedback({ id }: { id: string }) {
 }
 
 // A read-only link for hiring managers, copied to the clipboard.
+// A person at Edstellar (the Spica review team) reviews the candidate's score
+// on the recruiter's request; the candidate asks the recruiter.
+function HumanReview({ id, sessionId }: { id: string; sessionId: string }) {
+  const [mine, setMine] = useState<OrgAppeal | null | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = () =>
+    getOrgAppeals()
+      .then((r) => setMine(r.appeals.find((x) => x.sessionId === sessionId) ?? null))
+      .catch(() => setMine(null));
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
+  async function send() {
+    setBusy(true);
+    setError(null);
+    try {
+      await requestCandidateReview(id, reason.trim());
+      setOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error && err.message === "too_late" ? tr("The time to ask for a review of this test has passed.") : tr("Could not send your request. Try again."));
+    } finally {
+      setBusy(false);
+    }
+  }
+  const STATUS: Record<string, string> = {
+    pending: tr("Sent to the Spica review team. Expect a reply within 5 working days."),
+    in_review: tr("A reviewer from the Spica review team is looking at this test."),
+    upheld: tr("Reviewed: the score stands."),
+    changed: tr("Reviewed: the result was re-marked."),
+    new_attempt: tr("Reviewed: the candidate can take the test again."),
+    noted: tr("Reviewed: the concern was noted."),
+  };
+  if (mine === undefined) return null;
+  return (
+    <Panel title={tr("Human review of the score")}>
+      {mine ? (
+        <div className="flex flex-col gap-1.5 text-sm">
+          <p className="text-ink">{STATUS[mine.status] ?? mine.status}</p>
+          {mine.note && <p className="text-muted bg-paper-warm rounded-input px-3 py-2">{mine.note}</p>}
+        </div>
+      ) : open ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs text-muted">{tr("If the candidate (or you) thinks the score is wrong, a person from the Spica review team checks the answers and recordings.")}</p>
+          <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={2000} placeholder={tr("What should the reviewer check? (at least 10 characters)")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
+          {error && <p className="text-sm text-error">{error}</p>}
+          <div className="flex gap-2">
+            <Button onClick={send} disabled={busy || reason.trim().length < 10}>
+              {tr("Send request")}
+            </Button>
+            <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>
+              {tr("Cancel")}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <Button variant="secondary" onClick={() => setOpen(true)}>
+            {tr("Request a human review")}
+          </Button>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 function ShareButton({ id }: { id: string }) {
   const [shared, setShared] = useState<{ url: string; until: string } | null>(null);
   const [failed, setFailed] = useState(false);
@@ -354,6 +426,7 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
             </div>
           )}
         </Panel>
+        {a.status === "completed" && a.session_id && <HumanReview id={id} sessionId={a.session_id} />}
         {a.status === "completed" && <CandidateFeedback id={id} />}
         {interview.length > 0 && (
           <Panel title={tr("Questions for the interview")}>

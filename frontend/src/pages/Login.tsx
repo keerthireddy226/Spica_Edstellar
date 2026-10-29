@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LANDING_ROUTE_BY_ROLE, ROUTES } from "@/constants/routes";
+import { tr } from "@/i18n/tr";
 
 export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
   const { t } = useTranslation();
@@ -206,6 +207,9 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
           )}
         </div>
         <LanguageSwitcher />
+      <a href={ROUTES.PRIVACY} target="_blank" rel="noreferrer" className="text-center text-xs text-muted hover:text-ink underline">
+        {tr("Privacy Notice")}
+      </a>
       </div>
     </AuthCard>
   );

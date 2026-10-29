@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Camera, FileText, Keyboard, Mic, MonitorUp, PenLine, Eye } from "lucide-react";
 import type { DeliveryMode, PreTestInfo, ProctoringSetup } from "@/api/proctoring";
-import { ROUTES } from "@/constants/routes";
+import { PRIVACY_NOTICE_URL } from "@/constants/routes";
+import { useAuth } from "@/hooks/useAuth";
 import { tr } from "@/i18n/tr";
 
 type Policy = NonNullable<ProctoringSetup["policy"]>;
@@ -109,6 +110,9 @@ export function ConsentDetails({ info, module = false, mode }: { info: PreTestIn
 // after the notice has been opened.
 export function PrivacyConsent({ agreed, onChange }: { agreed: boolean; onChange: (v: boolean) => void }) {
   const [opened, setOpened] = useState(false);
+  // The notice for this person's kind of account (candidate, organization, individual).
+  const { user } = useAuth();
+  const href = PRIVACY_NOTICE_URL[user?.privacyAudience ?? "free"];
   return (
     <div className="rounded-card border-2 border-navy/40 bg-navy/5 p-4 flex flex-col gap-3">
       <p className="flex items-center gap-2 font-display font-bold text-base text-ink">
@@ -116,7 +120,7 @@ export function PrivacyConsent({ agreed, onChange }: { agreed: boolean; onChange
       </p>
       <p className="text-sm text-ink">{tr("Please read how Spica uses your data before you continue.")}</p>
       <a
-        href={ROUTES.PRIVACY}
+        href={href}
         target="_blank"
         rel="noreferrer"
         onClick={() => setOpened(true)}

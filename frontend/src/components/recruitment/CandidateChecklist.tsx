@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Camera, Clock, Headphones, IdCard, Lock, MonitorUp, ShieldCheck, Volume2 } from "lucide-react";
 import type { CandidateProctoring, TestKind } from "@/api/recruitment";
 import { TEST_KIND_LABEL, TEST_MINUTES } from "@/components/recruitment/testKinds";
+import { PRIVACY_NOTICE_URL } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
 // What a candidate reads before starting: how long it takes, what to have
@@ -96,6 +97,11 @@ export function CandidateChecklist({
           ))}
           <li>{tr("Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.")}</li>
           <li>{tr("{{org}} receives your results.", { org: orgName })}</li>
+          <li>
+            <a href={PRIVACY_NOTICE_URL.assessment} target="_blank" rel="noreferrer" className="underline text-navy-deep">
+              {tr("Read the full Privacy Notice")}
+            </a>
+          </li>
         </ul>
       </div>
     </>

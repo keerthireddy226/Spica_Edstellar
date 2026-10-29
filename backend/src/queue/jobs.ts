@@ -1,4 +1,5 @@
 import { registerHandler } from "./queue.js";
+import { escalateStaleAppeals } from "../quality/service.js";
 import { issueDueResultCertificates } from "../assessment/service.js";
 import { refundExpiredTests } from "../orgTests/service.js";
 import { deliverWebhook } from "../webhooks/service.js";
@@ -58,6 +59,10 @@ export function registerJobs() {
   every(5, "assessment.certificates", async () => {
     const n = await issueDueResultCertificates();
     if (n > 0) console.log(`result certificates: ${n} issued`);
+  });
+  every(60, "quality.appeal-escalation", async () => {
+    const n = await escalateStaleAppeals();
+    if (n > 0) console.log(`score reviews: ${n} waiting too long, Super Admin told`);
   });
   every(5, "proctoring.identity-retry", async () => {
     const n = await retryIdentityChecks();

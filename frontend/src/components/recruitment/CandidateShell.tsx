@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getCandidateAssessment, type CandidateAssessment } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
+import { TestFeedbackCard } from "@/components/report/AfterTest";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 
 export function CandidateShell({ org, children }: { org?: string | null; children: ReactNode }) {
@@ -53,6 +54,7 @@ export function CandidateFinished({ sessionId = null }: { sessionId?: string | n
           </div>
         )}
         <IntegrityResultNote sessionId={sessionId} />
+        {(sessionId ?? a?.sessionId) && <TestFeedbackCard sessionId={(sessionId ?? a?.sessionId)!} />}
         <p className="text-xs text-muted text-center">{tr("You can close this window.")}</p>
       </CandidatePanel>
     </CandidateShell>

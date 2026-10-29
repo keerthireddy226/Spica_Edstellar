@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { AppealError, fileAppeal } from "../quality/service.js";
 // Recruitment API: the candidate's invitation link, the recruiter console
 // (job openings, invitations, results, decisions, team, credits), and the
 // Edstellar staff controls for an organization's products and credits.
@@ -519,6 +520,22 @@ recruitmentRouter.post("/assessments/:id/resend", requireAuth, async (req: Authe
   try {
     res.json({ ok: true, ...(await resendInvite(tenantId, String(req.params.id))) });
   } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// The recruiter asks for a person at Edstellar to review a candidate's score
+// (the candidate asks the recruiter; there is no candidate account to do it).
+recruitmentRouter.post("/assessments/:id/review-request", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z.object({ reason: z.string().trim().min(10).max(2000) }).parse(req.body);
+    const a = (await pool.query(`SELECT candidate_id, session_id FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2 AND status = 'completed'`, [req.params.id, tenantId])).rows[0];
+    if (!a?.session_id) return res.status(404).json({ error: "assessment_not_found" });
+    res.status(201).json({ id: await fileAppeal(a.candidate_id, a.session_id, body.reason, req.user!.id) });
+  } catch (err) {
+    if (err instanceof AppealError) return res.status(err.status).json({ error: err.code });
     fail(err, res, next);
   }
 });

@@ -38,7 +38,7 @@ governanceRouter.get("/data", requireAuth, async (req: AuthedRequest, res, next)
         acceptedBy: t.dpa_by,
         acceptedVersion: t.dpa_version,
         currentVersion: DPA_VERSION,
-        url: process.env.DPA_URL ?? null,
+        url: process.env.DPA_URL ?? "/legal/data-processing-agreement.html",
       },
       retention: { recordingsMonths: t.retention_recordings_months, inactiveLearnerMonths: t.retention_inactive_learner_months },
       exports: exports.rows.map((e) => ({

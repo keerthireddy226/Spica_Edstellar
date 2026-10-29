@@ -2,7 +2,7 @@ import { Router } from "express";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { z } from "zod";
 import { AttemptError, chooseFinalTest, myTests, readiness, switchPrepTest, switchQuote } from "./service.js";
-import { AppealError, fileAppeal } from "../quality/service.js";
+import { AppealError, fileAppeal, myAppeals } from "../quality/service.js";
 
 // Assessment (once "My tests"): the learner's real assessment attempts. Starting one goes through
 // POST /api/practice-tests/session with mode "certified" (or "sample").
@@ -62,7 +62,16 @@ assessmentRouter.post("/:id/switch", requireAuth, async (req: AuthedRequest, res
   }
 });
 
-// Appeals a real test's result (once, within the appeal window).
+// The learner's own score-review requests, for the status on their reports.
+assessmentRouter.get("/appeals/mine", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ appeals: await myAppeals(req.user!.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Asks for a score review of any finished test (once, within the appeal window).
 assessmentRouter.post("/appeals", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = z.object({ sessionId: z.string().uuid(), reason: z.string().trim().min(10).max(2000) }).parse(req.body);

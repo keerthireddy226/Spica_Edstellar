@@ -1263,7 +1263,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       {sessionId && (
         <div className="max-w-4xl w-full mx-auto flex flex-col gap-3">
           <h2 className="font-display font-bold text-xl text-ink">{tr("Your feedback report")}</h2>
-          <FeedbackReportView load={() => getReport(sessionId)} upgradeLink={!!license?.individual} />
+          <FeedbackReportView load={() => getReport(sessionId)} upgradeLink={!!license?.individual} sessionId={sessionId} />
         </div>
       )}
       </div>

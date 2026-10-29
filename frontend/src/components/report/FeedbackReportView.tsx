@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbul
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
+import { ReviewRequest, TestFeedbackCard } from "@/components/report/AfterTest";
 import { FinalResultWaiting, ScoreReport } from "@/components/report/ScoreReport";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 
@@ -420,7 +421,18 @@ function Report({ report, upgradeLink, kind, scored = false }: { report: Feedbac
 
 // Loads a report and waits while it's being built.
 // viewer "org": an Org Admin or Manager reading a learner's report.
-export function FeedbackReportView({ load, upgradeLink = false, viewer = "learner" }: { load: () => Promise<ReportResponse>; upgradeLink?: boolean; viewer?: "learner" | "org" }) {
+export function FeedbackReportView({
+  load,
+  upgradeLink = false,
+  viewer = "learner",
+  sessionId,
+}: {
+  load: () => Promise<ReportResponse>;
+  upgradeLink?: boolean;
+  viewer?: "learner" | "org";
+  // The learner's own test: the feedback form and "Request a review" go under it.
+  sessionId?: string;
+}) {
   const [data, setData] = useState<ReportResponse | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
@@ -455,8 +467,22 @@ export function FeedbackReportView({ load, upgradeLink = false, viewer = "learne
     );
   }
   // A real assessment attempt has its score report only (its questions stay secret).
+  const afterTest =
+    viewer === "learner" && sessionId ? (
+      <div className="flex flex-col gap-4 print:hidden">
+        <ReviewRequest sessionId={sessionId} kind={data.about?.deliveryMode === "certified" ? "review" : "concern"} />
+        <TestFeedbackCard sessionId={sessionId} />
+      </div>
+    ) : null;
   if (!data.report && data.about?.deliveryMode === "certified") {
-    return data.score?.overall ? <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} /> : <FinalResultWaiting status={data.status} waiting={data.waiting} />;
+    return data.score?.overall ? (
+      <div className="flex flex-col gap-4">
+        <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} />
+        {afterTest}
+      </div>
+    ) : (
+      <FinalResultWaiting status={data.status} waiting={data.waiting} />
+    );
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
   return (
@@ -467,6 +493,7 @@ export function FeedbackReportView({ load, upgradeLink = false, viewer = "learne
       <div className={data.score?.overall ? "print:hidden" : ""}>
         <Report report={data.report} upgradeLink={upgradeLink} kind={data.about?.deliveryMode === "mock" ? "mock" : data.about ? "practice" : undefined} scored={!!data.score?.overall} />
       </div>
+      {afterTest}
     </div>
   );
 }

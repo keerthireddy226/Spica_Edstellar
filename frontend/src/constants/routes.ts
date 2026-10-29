@@ -170,3 +170,14 @@ export const PROFILE_ROUTE_BY_ROLE: Record<Role, string> = {
   recruiter: ROUTES.RECRUITER_PROFILE,
   candidate: ROUTES.CANDIDATE,
 };
+
+// The Privacy Notices (static pages in public/legal), one per kind of user,
+// and the organizations' Data Processing Agreement.
+export type PrivacyAudience = "free" | "paid" | "organization" | "assessment";
+export const PRIVACY_NOTICE_URL: Record<PrivacyAudience, string> = {
+  free: "/legal/privacy-individual-free.html",
+  paid: "/legal/privacy-individual-paid.html",
+  organization: "/legal/privacy-organizations.html",
+  assessment: "/legal/privacy-assessment-only.html",
+};
+export const DPA_URL = "/legal/data-processing-agreement.html";

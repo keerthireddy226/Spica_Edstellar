@@ -345,3 +345,8 @@ export function setAssessmentPrice(tenantId: string, customPriceCents: number | 
 export function getCandidateReport(id: string): Promise<import("@/api/practiceTests").ReportResponse> {
   return api(`/recruitment/assessments/${id}/report`);
 }
+
+// Asks the Spica review team to review a candidate's score (the candidate asks the recruiter).
+export function requestCandidateReview(id: string, reason: string): Promise<{ id: string }> {
+  return api(`/recruitment/assessments/${id}/review-request`, { method: "POST", body: JSON.stringify({ reason }) });
+}

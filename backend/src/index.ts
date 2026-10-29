@@ -50,6 +50,7 @@ import { accessRouter } from "./access/routes.js";
 import { assessmentRouter } from "./assessment/routes.js";
 import { orgTestsRouter } from "./orgTests/routes.js";
 import { qualityRouter } from "./quality/routes.js";
+import { feedbackRouter } from "./feedback/routes.js";
 import { certificatesRouter } from "./certificates/routes.js";
 import { systemCheckRouter } from "./systemCheck/routes.js";
 import { catalogueRouter } from "./catalogue/routes.js";
@@ -137,6 +138,7 @@ app.use("/api/access", accessRouter);
 app.use("/api/assessment", assessmentRouter);
 app.use("/api/org-tests", orgTestsRouter);
 app.use("/api/quality", qualityRouter);
+app.use("/api/feedback", feedbackRouter);
 app.use("/api/certificates", auditTrail(CERTIFICATE_AUDIT), certificatesRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {

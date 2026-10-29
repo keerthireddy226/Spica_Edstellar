@@ -229,44 +229,134 @@ export class AppealError extends Error {
   }
 }
 
-// A learner appeals a real test's result, once, within the appeal window.
-export async function fileAppeal(userId: string, sessionId: string, reason: string): Promise<string> {
+// The people who review scores: the Super Admin and Edstellar Admins with
+// the "score review" permission. Requests go to all of them (one shared queue).
+async function scoreReviewers(): Promise<{ id: string; role: string }[]> {
+  return (
+    await pool.query(
+      `SELECT id, role FROM users WHERE deleted_at IS NULL
+         AND (role = 'super_admin' OR (role = 'admin' AND coalesce((permissions->>'scoreReview')::boolean, false)))`,
+    )
+  ).rows;
+}
+const QUEUE_LINK = (role: string) => (role === "super_admin" ? "/superadmin/quality" : "/admin/quality");
+
+// Asks for a person to review a test's score: a "review" for a placement test
+// or a real attempt (the score can change), a "concern" for a practice or mock
+// test (noted and used to improve scoring). Once per test, within the appeal
+// window. filedBy: a recruiter asking for their candidate.
+export async function fileAppeal(userId: string, sessionId: string, reason: string, filedBy?: string): Promise<string> {
   const { appealDays } = await qualitySettings();
   const s = (
     await pool.query(
-      `SELECT s.id, s.completed_at, u.tenant_id, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name
-       FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = $1 AND s.user_id = $2 AND s.delivery_mode = 'certified' AND s.completed_at IS NOT NULL`,
+      `SELECT s.id, s.completed_at, s.session_type, s.delivery_mode, u.tenant_id, u.role,
+         coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name
+       FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id = $1 AND s.user_id = $2 AND s.completed_at IS NOT NULL`,
       [sessionId, userId],
     )
   ).rows[0];
   if (!s) throw new AppealError("not_found", 404);
   if (Date.now() - new Date(s.completed_at).getTime() > appealDays * 86_400_000) throw new AppealError("too_late");
+  const kind = s.session_type === "placement" || s.delivery_mode === "certified" || s.role === "candidate" ? "review" : "concern";
   const r = await pool.query(
-    `INSERT INTO result_appeals (session_id, user_id, tenant_id, reason) VALUES ($1, $2, $3, $4) ON CONFLICT (session_id) DO NOTHING RETURNING id`,
-    [sessionId, userId, s.tenant_id, reason],
+    `INSERT INTO result_appeals (session_id, user_id, tenant_id, reason, kind, filed_by) VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (session_id) DO NOTHING RETURNING id`,
+    [sessionId, userId, s.tenant_id, reason, kind, filedBy ?? null],
   );
   if (!r.rows[0]) throw new AppealError("already_appealed");
-  const staff = (await pool.query(`SELECT id, role FROM users WHERE role IN ('admin', 'super_admin') AND deleted_at IS NULL`)).rows;
-  for (const x of staff) {
+  for (const x of await scoreReviewers()) {
     await notify({
       userId: x.id,
       kind: "result_appeal",
-      title: `${s.name} appealed a real test result`,
+      title: kind === "review" ? `${s.name} asked for a score review` : `${s.name} raised a concern about a score`,
       body: reason.slice(0, 300),
-      link: x.role === "super_admin" ? "/superadmin/quality" : "/admin/quality",
-      email: true,
-      sentBy: userId,
+      link: QUEUE_LINK(x.role),
+      sentBy: filedBy ?? userId,
     });
   }
   return r.rows[0].id;
 }
 
+// One reviewer takes a request, so two people don't review the same test.
+export async function claimAppeal(id: string, actorId: string, force = false): Promise<void> {
+  const r = await pool.query(
+    `UPDATE result_appeals SET assigned_to = $2, assigned_at = now()
+     WHERE id = $1 AND status = 'open' AND ($3::boolean OR assigned_to IS NULL OR assigned_to = $2) RETURNING id`,
+    [id, actorId, force],
+  );
+  if (!r.rows[0]) throw new AppealError("already_taken", 409);
+}
+
+// Requests left too long go to the Super Admin: nobody took one in 2 days, or
+// one taken wasn't decided in 5. Once each.
+export async function escalateStaleAppeals(): Promise<number> {
+  const r = await pool.query(
+    `UPDATE result_appeals SET escalated_at = now()
+     WHERE status = 'open' AND escalated_at IS NULL
+       AND ((assigned_to IS NULL AND created_at < now() - interval '2 days') OR (assigned_to IS NOT NULL AND created_at < now() - interval '5 days'))
+     RETURNING id, assigned_to`,
+  );
+  if (!r.rows.length) return 0;
+  const supers = (await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows;
+  for (const sa of supers) {
+    await notify({
+      userId: sa.id,
+      kind: "result_appeal",
+      title: `${r.rows.length} score review ${r.rows.length === 1 ? "request is" : "requests are"} waiting too long`,
+      body: "Open the score review queue to assign or decide them.",
+      link: "/superadmin/quality",
+      dedupeKey: `appeal-escalation:${r.rows.map((x) => x.id).sort().join(",")}`,
+    });
+  }
+  return r.rows.length;
+}
+
+// A learner's own requests, by test, for the status on their reports.
+export async function myAppeals(userId: string) {
+  const r = await pool.query(
+    `SELECT session_id, kind, status, decision_note, created_at, decided_at, assigned_to IS NOT NULL AS taken FROM result_appeals WHERE user_id = $1`,
+    [userId],
+  );
+  return r.rows.map((x) => ({
+    sessionId: x.session_id as string,
+    kind: x.kind as string,
+    status: x.status === "open" ? (x.taken ? "in_review" : "pending") : (x.status as string),
+    note: (x.decision_note as string | null) ?? null,
+    createdAt: x.created_at,
+    decidedAt: x.decided_at,
+  }));
+}
+
+// An organization sees its people's requests and outcomes (read-only).
+export async function orgAppeals(tenantId: string) {
+  const r = await pool.query(
+    `SELECT ra.id, ra.session_id, ra.kind, ra.status, ra.reason, ra.decision_note, ra.created_at, ra.decided_at, ra.assigned_to IS NOT NULL AS taken,
+       coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS learner, s.test_code
+     FROM result_appeals ra JOIN users u ON u.id = ra.user_id JOIN sessions s ON s.id = ra.session_id
+     WHERE ra.tenant_id = $1 ORDER BY ra.created_at DESC LIMIT 200`,
+    [tenantId],
+  );
+  return r.rows.map((x) => ({
+    id: x.id as string,
+    sessionId: x.session_id as string,
+    learner: x.learner as string,
+    testCode: (x.test_code as string | null) ?? null,
+    kind: x.kind as string,
+    status: x.status === "open" ? (x.taken ? "in_review" : "pending") : (x.status as string),
+    reason: x.reason as string,
+    note: (x.decision_note as string | null) ?? null,
+    createdAt: x.created_at,
+    decidedAt: x.decided_at,
+  }));
+}
+
 export async function listAppeals(status: "open" | "all") {
   const r = await pool.query(
     `SELECT ra.*, coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS learner, u.email, t.name AS org,
+       nullif(concat_ws(' ', rv.first_name, rv.last_name), '') AS reviewer, s.delivery_mode, s.session_type,
        s.completed_at, s.result, s.test_code, si.status AS integrity, c.code AS certificate, c.spica_score, c.cefr_level, c.revoked_at AS certificate_revoked,
        coalesce(c.test_name, tt.name) AS test_name
-     FROM result_appeals ra JOIN users u ON u.id = ra.user_id LEFT JOIN tenants t ON t.id = ra.tenant_id JOIN sessions s ON s.id = ra.session_id
+     FROM result_appeals ra JOIN users u ON u.id = ra.user_id LEFT JOIN users rv ON rv.id = ra.assigned_to LEFT JOIN tenants t ON t.id = ra.tenant_id JOIN sessions s ON s.id = ra.session_id
      LEFT JOIN session_integrity si ON si.session_id = s.id LEFT JOIN certificates c ON c.session_id = s.id
      LEFT JOIN exams x ON x.id::text = s.composition->>'examId' LEFT JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', x.test_type_id)
      WHERE ($1 = 'all' OR ra.status = 'open') ORDER BY ra.created_at DESC LIMIT 300`,
@@ -286,6 +376,11 @@ export async function listAppeals(status: "open" | "all") {
     integrity: (x.integrity as string | null) ?? null,
     certificate: x.certificate && !x.certificate_revoked ? (x.certificate as string) : null,
     reason: x.reason as string,
+    kind: x.kind as string,
+    testKind: x.session_type === "placement" ? "placement" : ((x.delivery_mode as string | null) ?? "practice"),
+    assignedTo: (x.assigned_to as string | null) ?? null,
+    reviewer: (x.reviewer as string | null) ?? null,
+    escalated: !!x.escalated_at,
     status: x.status as string,
     decisionNote: (x.decision_note as string | null) ?? null,
     createdAt: x.created_at,
@@ -296,11 +391,18 @@ export async function listAppeals(status: "open" | "all") {
 // upheld: the result stands. changed: the answers were re-marked, so the
 // certificate is withdrawn and issued again from the new scores. new_attempt:
 // a free retake (one more attempt, two more weeks).
-export async function decideAppeal(id: string, outcome: "upheld" | "changed" | "new_attempt", note: string, actorId: string) {
-  const a = (await pool.query(`SELECT ra.*, s.entitlement_id FROM result_appeals ra JOIN sessions s ON s.id = ra.session_id WHERE ra.id = $1`, [id])).rows[0];
+export async function decideAppeal(id: string, outcome: "upheld" | "changed" | "new_attempt" | "noted", note: string, actorId: string) {
+  const a = (await pool.query(`SELECT ra.*, s.entitlement_id, s.delivery_mode, s.session_type FROM result_appeals ra JOIN sessions s ON s.id = ra.session_id WHERE ra.id = $1`, [id])).rows[0];
   if (!a) throw new AppealError("not_found", 404);
   if (a.status !== "open") throw new AppealError("not_open");
-  await pool.query(`UPDATE result_appeals SET status = $2, decision_note = $3, decided_by = $4, decided_at = now() WHERE id = $1`, [id, outcome, note, actorId]);
+  // A concern (practice, mock) is noted or the score stands; re-marking and a
+  // free retake are for real attempts.
+  if (a.kind === "concern" && outcome !== "noted" && outcome !== "upheld") throw new AppealError("outcome_not_allowed");
+  if (a.delivery_mode !== "certified" && (outcome === "changed" || outcome === "new_attempt")) throw new AppealError("outcome_not_allowed");
+  await pool.query(
+    `UPDATE result_appeals SET status = $2, decision_note = $3, decided_by = $4, decided_at = now(), assigned_to = coalesce(assigned_to, $4), assigned_at = coalesce(assigned_at, now()) WHERE id = $1`,
+    [id, outcome, note, actorId],
+  );
   if (outcome === "changed") {
     await holdResultCertificate(a.session_id);
     // The sweep issues a new certificate from the new scores.
@@ -319,9 +421,16 @@ export async function decideAppeal(id: string, outcome: "upheld" | "changed" | "
   await notify({
     userId: a.user_id,
     kind: "result_appeal",
-    title: outcome === "upheld" ? "Your appeal: the result stands" : outcome === "changed" ? "Your appeal: your result was re-marked" : "Your appeal: you can take the test again",
+    title:
+      outcome === "noted"
+        ? "Your score concern was reviewed"
+        : outcome === "upheld"
+          ? "Your score review: the result stands"
+          : outcome === "changed"
+            ? "Your score review: your result was re-marked"
+            : "Your score review: you can take the test again",
     body: note,
-    link: "/assessment",
+    link: a.delivery_mode === "certified" ? "/assessment" : a.session_type === "placement" ? "/dashboard" : `/practice-tests/report/${a.session_id}`,
     email: true,
     sentBy: actorId,
   });

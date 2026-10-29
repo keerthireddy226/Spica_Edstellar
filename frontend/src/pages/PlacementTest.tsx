@@ -44,6 +44,7 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
+import { ReviewRequest, TestFeedbackCard } from "@/components/report/AfterTest";
 import { CEFR_MEANING } from "@/lib/cefrMeaning";
 import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
@@ -452,6 +453,12 @@ function PlacementTestRun() {
           <Button onClick={() => navigate(ROUTES.ROADMAP)} className="w-full">
             {t("placementTest.goToRoadmap")}
           </Button>
+          {sessionId && (
+            <>
+              <ReviewRequest sessionId={sessionId} kind="review" />
+              <TestFeedbackCard sessionId={sessionId} />
+            </>
+          )}
         </div>
       </div>
     );

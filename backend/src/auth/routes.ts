@@ -8,6 +8,7 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { checkSession, requireAuth, type AuthedRequest } from "./middleware.js";
 import { ORG_CONSOLE_ROLES, ipAllowed, passwordMinLengthFor, passwordProblem } from "./policy.js";
 import { ssoForEmail } from "../sso/service.js";
+import { ownedRows } from "../access/entitlements.js";
 import { checkSecondFactor, confirmMfaSetup, createChallenge, disableMfa, redeemChallenge, regenerateRecoveryCodes, startMfaSetup } from "./mfa.js";
 import {
   forgotPasswordSchema,
@@ -279,6 +280,8 @@ authRouter.get("/me", async (req, res, next) => {
         ])
       ).rowCount;
 
+    const privacyAudience = await privacyAudienceOf(user.id, user.role);
+
     res.json({
       id: user.id,
       email: user.email,
@@ -299,6 +302,7 @@ authRouter.get("/me", async (req, res, next) => {
       mfaSetupRequired: check.user.mfaSetupRequired,
       viewAs: check.user.viewAs,
       privacyRequired,
+      privacyAudience,
     });
   } catch (err) {
     next(err);
@@ -306,6 +310,19 @@ authRouter.get("/me", async (req, res, next) => {
 });
 
 const PRIVACY_ROLES = ["learner", "manager", "org_admin", "recruiter"];
+
+// Which Privacy Notice applies: a job or admissions candidate, someone using
+// Spica through their organization or university, or an individual (free,
+// paid, or one who bought only an assessment).
+async function privacyAudienceOf(userId: string, role: string): Promise<"assessment" | "organization" | "paid" | "free"> {
+  if (role === "candidate") return "assessment";
+  const t = (await pool.query(`SELECT t.type FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
+  if (t?.type === "cohort") return "organization";
+  const kinds = new Set((await ownedRows(userId)).map((r) => r.kind));
+  if (["full", "prep", "pack"].some((k) => kinds.has(k as never))) return "paid";
+  if (kinds.size > 0) return "assessment";
+  return "free";
+}
 
 // The Privacy Notice and "18 or older", agreed after login (people invited by
 // an organization never see the sign-up form, and everyone agrees again when

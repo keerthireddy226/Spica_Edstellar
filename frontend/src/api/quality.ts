@@ -61,14 +61,71 @@ export interface Appeal {
   integrity: string | null;
   certificate: string | null;
   reason: string;
-  status: "open" | "upheld" | "changed" | "new_attempt";
+  // review: placement or real test (the score can change); concern: practice or mock (noted).
+  kind: "review" | "concern";
+  testKind: string;
+  assignedTo: string | null;
+  reviewer: string | null;
+  escalated: boolean;
+  status: "open" | "upheld" | "changed" | "new_attempt" | "noted";
   decisionNote: string | null;
   createdAt: string;
   decidedAt: string | null;
 }
 export const getAppeals = (status: "open" | "all") => api<{ appeals: Appeal[] }>(`/quality/appeals?status=${status}`);
-export const decideAppeal = (id: string, outcome: "upheld" | "changed" | "new_attempt", note: string) =>
+export type AppealOutcome = "upheld" | "changed" | "new_attempt" | "noted";
+export const decideAppeal = (id: string, outcome: AppealOutcome, note: string) =>
   api<{ ok: true }>(`/quality/appeals/${id}/decide`, { method: "POST", body: JSON.stringify({ outcome, note }) });
+export const claimAppeal = (id: string, force = false) => api<{ ok: true }>(`/quality/appeals/${id}/claim`, { method: "POST", body: JSON.stringify({ force }) });
 
-// A learner appeals a real test's result.
+// A learner's own score-review requests (status on their reports).
+export interface MyAppeal {
+  sessionId: string;
+  kind: "review" | "concern";
+  status: "pending" | "in_review" | "upheld" | "changed" | "new_attempt" | "noted";
+  note: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+}
+export const getMyAppeals = () => api<{ appeals: MyAppeal[] }>("/assessment/appeals/mine");
+
+// An organization's people's requests (read-only).
+export interface OrgAppeal {
+  id: string;
+  sessionId: string;
+  learner: string;
+  testCode: string | null;
+  kind: "review" | "concern";
+  status: MyAppeal["status"];
+  reason: string;
+  note: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+}
+export const getOrgAppeals = () => api<{ appeals: OrgAppeal[] }>("/quality/org-appeals");
+
+// The short form after a test.
+export interface TestFeedback {
+  skipped?: boolean;
+  rating?: number | null;
+  smooth?: boolean | null;
+  issues?: string[];
+  recommend?: number | null;
+  suggestion?: string | null;
+}
+export const getFeedbackDue = (sessionId: string) => api<{ due: boolean }>(`/feedback/sessions/${sessionId}`);
+export const sendFeedback = (sessionId: string, f: TestFeedback) => api<{ ok: boolean }>(`/feedback/sessions/${sessionId}`, { method: "POST", body: JSON.stringify(f) });
+export interface FeedbackSummary {
+  answered: number;
+  skipped: number;
+  rating: number | null;
+  notSmoothPercent: number | null;
+  nps: number | null;
+  issues: { issue: string; n: number }[];
+  byTest: { test: string; answered: number; rating: number | null }[];
+  comments: { created_at: string; rating: number | null; recommend: number | null; smooth: boolean | null; issues: string[]; suggestion: string | null; org: string | null; learner: string; test_code: string | null; test: string }[];
+}
+export const getFeedbackSummary = (days: number) => api<FeedbackSummary>(`/feedback/summary?days=${days}`);
+
+// A learner asks for a review of a test's score.
 export const fileAppeal = (sessionId: string, reason: string) => api<{ id: string }>("/assessment/appeals", { method: "POST", body: JSON.stringify({ sessionId, reason }) });

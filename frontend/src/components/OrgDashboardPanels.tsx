@@ -11,6 +11,7 @@ import { getBatches, type OrgBatch } from "@/api/orgAdmin";
 import { BarList, StackedBar, WeeklyBars } from "@/components/analytics/Charts";
 
 import { tr } from "@/i18n/tr";
+import { getOrgAppeals, type OrgAppeal } from "@/api/quality";
 
 const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const linkCls = "inline-flex items-center gap-1 text-xs font-semibold text-navy hover:underline";
@@ -259,6 +260,43 @@ function Batches({ learners }: { learners: LearnerEngagement[] | null }) {
 
 // Everything on the Org Admin dashboard between the license card and the
 // activity feed.
+// Score reviews your people asked for, and their outcomes. The Spica review
+// team (Edstellar) decides; the organization sees them here.
+function ScoreReviews() {
+  const [rows, setRows] = useState<OrgAppeal[] | null>(null);
+  useEffect(() => {
+    getOrgAppeals()
+      .then((r) => setRows(r.appeals))
+      .catch(() => setRows([]));
+  }, []);
+  if (!rows || rows.length === 0) return null;
+  const STATUS: Record<string, string> = {
+    pending: tr("Waiting for a reviewer"),
+    in_review: tr("In review"),
+    upheld: tr("Score stands"),
+    changed: tr("Re-marked"),
+    new_attempt: tr("Free retake"),
+    noted: tr("Concern noted"),
+  };
+  return (
+    <Panel title={tr("Score review requests")} subtitle={tr("Decided by the Spica review team. Shown here so you can follow them.")}>
+      <ul className="flex flex-col divide-y divide-rule text-sm">
+        {rows.slice(0, 8).map((r) => (
+          <li key={r.id} className="py-2 flex flex-col gap-0.5">
+            <span className="flex flex-wrap justify-between gap-2">
+              <span className="font-semibold text-ink">
+                {r.learner} {r.testCode && <span className="text-xs text-muted font-normal">{r.testCode}</span>}
+              </span>
+              <span className="text-xs font-semibold text-navy-deep">{STATUS[r.status] ?? r.status}</span>
+            </span>
+            <span className="text-xs text-muted line-clamp-2">{r.note ?? r.reason}</span>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
 export function OrgDashboardPanels() {
   const [engagement, setEngagement] = useState<EngagementOverview | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
@@ -285,6 +323,7 @@ export function OrgDashboardPanels() {
         <Levels learners={learners} />
       </div>
       <Batches learners={learners} />
+      <ScoreReviews />
     </>
   );
 }

@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import {
   decideAppeal,
+  claimAppeal,
+  getFeedbackSummary,
+  type AppealOutcome,
+  type FeedbackSummary,
   getAppeals,
   getFairness,
   getPoolReport,
@@ -17,13 +21,14 @@ import {
   type TechnicalReport,
 } from "@/api/quality";
 import { tr } from "@/i18n/tr";
+import { useAuth } from "@/hooks/useAuth";
 import { bankLabel } from "@/lib/questionBank";
 import { EmptyNote, FilterPills, Notice, PageHeader, Panel as KitPanel, Tabs } from "@/components/staff/StaffKit";
 
 // Assessment quality (Spica staff): appeals, pass marks and other settings,
 // the question pool, the speaking fairness study and the technical report.
 
-type Tab = "appeals" | "settings" | "pool" | "fairness" | "technical";
+type Tab = "appeals" | "feedback" | "settings" | "pool" | "fairness" | "technical";
 const TESTS = [
   ["fourSkills", "English 4 Skills Essentials"],
   ["speakingListening", "English Speaking & Listening"],
@@ -77,7 +82,20 @@ function Appeals() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
-  async function decide(a: Appeal, outcome: "upheld" | "changed" | "new_attempt") {
+  const { user } = useAuth();
+  async function take(a: Appeal) {
+    setBusy(a.id);
+    setError(null);
+    try {
+      await claimAppeal(a.id, user?.role === "super_admin" && !!a.assignedTo && a.assignedTo !== user.id);
+      load();
+    } catch {
+      setError(tr("Someone else has already taken this review."));
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function decide(a: Appeal, outcome: AppealOutcome) {
     const note = (notes[a.id] ?? "").trim();
     if (!note) return;
     setBusy(a.id);
@@ -91,9 +109,13 @@ function Appeals() {
       setBusy(null);
     }
   }
-  const LABEL: Record<Appeal["status"], string> = { open: tr("Open"), upheld: tr("Result stands"), changed: tr("Re-marked"), new_attempt: tr("Free retake") };
+  const LABEL: Record<Appeal["status"], string> = { open: tr("Open"), upheld: tr("Result stands"), changed: tr("Re-marked"), new_attempt: tr("Free retake"), noted: tr("Concern noted") };
+  const TEST: Record<string, string> = { practice: tr("Practice test"), mock: tr("Mock test"), placement: tr("Placement test"), certified: tr("Final assessment"), sample: tr("Sample test") };
   return (
-    <Panel title={tr("Appeals")} note={tr("A learner can appeal a real test's result once. Read the reason, check the answers and the proctoring record, then decide.")}>
+    <Panel
+      title={tr("Score reviews")}
+      note={tr("One shared queue for every Edstellar reviewer. Take a request so nobody else reviews it, check the answers, recordings and proctoring record, then decide. Requests waiting more than 2 days (or 5 once taken) are sent to the Super Admin.")}
+    >
       <FilterPills
         value={status}
         onChange={setStatus}
@@ -112,7 +134,7 @@ function Appeals() {
       ) : rows === null ? (
         <p className="text-sm text-muted">{tr("Loading…")}</p>
       ) : rows.length === 0 ? (
-        <EmptyNote>{status === "open" ? tr("No open appeals. New ones appear here when a learner appeals a real test's result.") : tr("No appeals.")}</EmptyNote>
+        <EmptyNote>{status === "open" ? tr("No open requests. New ones appear here when someone asks for a review of a score.") : tr("No requests.")}</EmptyNote>
       ) : (
         <div className="flex flex-col gap-3">
           {rows.map((a) => (
@@ -121,15 +143,32 @@ function Appeals() {
                 <span className="font-semibold text-ink">
                   {a.learner} <span className="text-xs text-muted font-normal">{[a.email, a.org].filter(Boolean).join(" · ")}</span>
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-pill border border-current text-navy-deep">{LABEL[a.status]}</span>
+                <span className="flex flex-wrap gap-1.5">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-pill border border-rule text-muted">
+                    {TEST[a.testKind] ?? a.testKind} · {a.kind === "review" ? tr("Score review") : tr("Concern")}
+                  </span>
+                  {a.escalated && a.status === "open" && <span className="text-xs font-semibold px-2 py-0.5 rounded-pill border border-error/50 text-error">{tr("Waiting too long")}</span>}
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-pill border border-current text-navy-deep">{LABEL[a.status]}</span>
+                </span>
               </div>
+              {a.status === "open" && (
+                <p className="text-xs text-muted">
+                  {a.assignedTo ? tr("Taken by {{name}}", { name: a.assignedTo === user?.id ? tr("you") : (a.reviewer ?? tr("a reviewer")) }) : tr("Not taken yet")}
+                </p>
+              )}
               <p className="text-sm text-muted">
                 {[a.testName, a.testCode, tr("taken {{date}}", { date: day(a.completedAt) }), a.spicaScore != null ? tr("Spica score {{n}}", { n: a.spicaScore }) : null, a.level, a.integrity ? tr("proctoring: {{s}}", { s: a.integrity }) : null]
                   .filter(Boolean)
                   .join(" · ")}
               </p>
               <p className="text-sm text-ink bg-paper-warm rounded-lg px-3 py-2">{a.reason}</p>
-              {a.status === "open" ? (
+              {a.status === "open" && a.assignedTo !== user?.id ? (
+                <div>
+                  <Button variant="secondary" disabled={busy === a.id || (!!a.assignedTo && user?.role !== "super_admin")} onClick={() => take(a)} className="!py-1.5 !text-sm">
+                    {a.assignedTo ? tr("Take over this review") : tr("Take this review")}
+                  </Button>
+                </div>
+              ) : a.status === "open" ? (
                 <div className="flex flex-col gap-2">
                   <textarea
                     rows={2}
@@ -139,15 +178,24 @@ function Appeals() {
                     className={input}
                   />
                   <div className="flex flex-wrap gap-2">
+                    {a.kind === "concern" && (
+                      <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "noted")} className="!py-1.5 !text-sm">
+                        {tr("Concern noted")}
+                      </Button>
+                    )}
                     <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "upheld")} className="!py-1.5 !text-sm">
                       {tr("Result stands")}
                     </Button>
-                    <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "changed")} className="!py-1.5 !text-sm">
-                      {tr("Re-marked: issue a new certificate")}
-                    </Button>
-                    <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "new_attempt")} className="!py-1.5 !text-sm">
-                      {tr("Give a free retake")}
-                    </Button>
+                    {a.testKind === "certified" && (
+                      <>
+                        <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "changed")} className="!py-1.5 !text-sm">
+                          {tr("Re-marked: issue a new certificate")}
+                        </Button>
+                        <Button variant="secondary" disabled={!notes[a.id]?.trim() || busy === a.id} onClick={() => decide(a, "new_attempt")} className="!py-1.5 !text-sm">
+                          {tr("Give a free retake")}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -155,6 +203,83 @@ function Appeals() {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+// What learners said after their tests: averages, the recommend score, what
+// went wrong, and the comments worth reading.
+function FeedbackTab() {
+  const [days, setDays] = useState<"30" | "90" | "365">("30");
+  const [data, setData] = useState<FeedbackSummary | null>(null);
+  const [failed, setFailed] = useState(false);
+  const load = () => {
+    setFailed(false);
+    getFeedbackSummary(Number(days))
+      .then(setData)
+      .catch(() => setFailed(true));
+  };
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
+  const ISSUE: Record<string, string> = { audio: tr("Audio"), camera_mic: tr("Camera or microphone"), slow: tr("Slow or freezing"), screen: tr("Screen sharing"), other: tr("Other") };
+  const TEST: Record<string, string> = { practice: tr("Practice test"), mock: tr("Mock test"), placement: tr("Placement test"), certified: tr("Final assessment"), sample: tr("Sample test") };
+  return (
+    <Panel title={tr("Test feedback")} note={tr("The short form learners can fill in after every test. Recommend score: % who answered 9–10 minus % who answered 0–6.")}>
+      <FilterPills
+        value={days}
+        onChange={setDays}
+        options={[
+          ["30", tr("30 days")],
+          ["90", tr("90 days")],
+          ["365", tr("1 year")],
+        ]}
+      />
+      {failed ? (
+        <Failed onRetry={load} />
+      ) : data === null ? (
+        <p className="text-sm text-muted">{tr("Loading…")}</p>
+      ) : data.answered === 0 ? (
+        <EmptyNote>{tr("No feedback yet.")}</EmptyNote>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              [tr("Answers"), String(data.answered)],
+              [tr("Average rating"), data.rating != null ? `${data.rating} / 5` : "—"],
+              [tr("Recommend score"), data.nps != null ? String(data.nps) : "—"],
+              [tr("Didn't run smoothly"), data.notSmoothPercent != null ? `${data.notSmoothPercent}%` : "—"],
+            ].map(([k, v]) => (
+              <div key={k} className="border border-rule rounded-xl p-3">
+                <p className="text-xs text-muted">{k}</p>
+                <p className="font-display font-bold text-xl text-ink">{v}</p>
+              </div>
+            ))}
+          </div>
+          {data.issues.length > 0 && (
+            <p className="text-sm text-ink">
+              <b>{tr("What went wrong")}:</b> {data.issues.map((i) => `${ISSUE[i.issue] ?? i.issue} (${i.n})`).join(" · ")}
+            </p>
+          )}
+          <p className="text-sm text-ink">
+            <b>{tr("By test")}:</b> {data.byTest.map((b) => `${TEST[b.test] ?? b.test}: ${b.rating ?? "—"} / 5 (${b.answered})`).join(" · ")}
+          </p>
+          <div className="flex flex-col gap-2">
+            {data.comments.map((c, i) => (
+              <div key={i} className="border border-rule rounded-xl p-3 text-sm">
+                <p className="text-xs text-muted">
+                  {[c.learner, c.org, TEST[c.test] ?? c.test, c.test_code, day(c.created_at), c.rating ? `${c.rating}/5` : null, c.smooth === false ? tr("didn't run smoothly") : null]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                {c.issues?.length > 0 && <p className="text-xs text-error">{c.issues.map((x) => ISSUE[x] ?? x).join(", ")}</p>}
+                {c.suggestion && <p className="text-ink mt-1">{c.suggestion}</p>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </Panel>
@@ -512,7 +637,8 @@ function Technical() {
 export function AssessmentQuality() {
   const [tab, setTab] = useState<Tab>("appeals");
   const TABS: [Tab, string][] = [
-    ["appeals", tr("Appeals")],
+    ["appeals", tr("Score reviews")],
+    ["feedback", tr("Test feedback")],
     ["settings", tr("Pass marks")],
     ["pool", tr("Question pool")],
     ["fairness", tr("Fairness study")],
@@ -528,6 +654,7 @@ export function AssessmentQuality() {
       </div>
       <Tabs<Tab> value={tab} onChange={setTab} options={TABS.map(([key, label]) => ({ key, label }))} className="print:hidden" />
       {tab === "appeals" && <Appeals />}
+      {tab === "feedback" && <FeedbackTab />}
       {tab === "settings" && <Settings />}
       {tab === "pool" && <Pool />}
       {tab === "fairness" && <Fairness />}

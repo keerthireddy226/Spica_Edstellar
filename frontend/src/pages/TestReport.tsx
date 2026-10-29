@@ -16,7 +16,7 @@ export function TestReport() {
         <ArrowLeft size={16} /> {tr("Back")}
       </button>
       <h1 className="font-display font-bold text-2xl text-ink print:hidden">{tr("Your feedback report")}</h1>
-      <FeedbackReportView key={sessionId} load={() => getReport(sessionId!)} upgradeLink={!!license?.individual} />
+      <FeedbackReportView key={sessionId} load={() => getReport(sessionId!)} upgradeLink={!!license?.individual} sessionId={sessionId} />
     </div>
   );
 }
