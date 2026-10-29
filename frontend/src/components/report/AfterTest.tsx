@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { MessageSquareText, Star } from "lucide-react";
 import { Button } from "@/components/Button";
-import { fileAppeal, getFeedbackDue, getMyAppeals, sendFeedback, type MyAppeal } from "@/api/quality";
+import { fileAppeal, getFeedbackDue, sendFeedback, type MyAppeal } from "@/api/quality";
 import { tr } from "@/i18n/tr";
-import { useAuth } from "@/hooks/useAuth";
 
 // Shown under a learner's result: the short feedback form (once per test) and
 // the request for a person to review the score. Requests go to the Spica
@@ -115,31 +114,20 @@ const STATUS: Record<MyAppeal["status"], () => string> = {
   noted: () => tr("Reviewed: thank you, your concern was noted."),
 };
 
-// "Request a review": a reason, sent to the Spica review team; then its status.
-// kind: "concern" for practice and mock tests, "review" for placement and real tests.
-export function ReviewRequest({ sessionId, kind }: { sessionId: string; kind: "review" | "concern" }) {
-  // A job or admissions candidate asks their recruiter, who requests it for them.
-  const candidate = useAuth().user?.role === "candidate";
-  const [mine, setMine] = useState<MyAppeal | null | undefined>(undefined);
+// "Request a review" on a test's row in My reports: a small link that opens a
+// reason box under the row, or the request's status once sent.
+export function ReviewRequestRow({ sessionId, kind, mine, onSent }: { sessionId: string; kind: "review" | "concern"; mine: MyAppeal | null; onSent: () => void }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const load = () =>
-    getMyAppeals()
-      .then((r) => setMine(r.appeals.find((a) => a.sessionId === sessionId) ?? null))
-      .catch(() => setMine(null));
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
   async function send() {
     setBusy(true);
     setError(null);
     try {
       await fileAppeal(sessionId, reason.trim());
       setOpen(false);
-      await load();
+      onSent();
     } catch (err) {
       const code = err instanceof Error ? err.message : "";
       setError(code === "too_late" ? tr("The time to ask for a review of this test has passed.") : code === "already_appealed" ? tr("You have already asked for a review of this test.") : tr("Could not send your request. Try again."));
@@ -147,47 +135,30 @@ export function ReviewRequest({ sessionId, kind }: { sessionId: string; kind: "r
       setBusy(false);
     }
   }
-  if (mine === undefined || candidate) return null;
+  if (mine) return <p className="basis-full px-4 pb-3 text-xs text-muted">{STATUS[mine.status]()}{mine.note ? ` ${mine.note}` : ""}</p>;
+  if (!open)
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="shrink-0 mr-4 text-xs font-semibold text-navy-deep border border-rule rounded-pill px-2.5 py-1 hover:bg-paper-warm cursor-pointer">
+        {tr("Request a review")}
+      </button>
+    );
   return (
-    <div className="w-full bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 text-left">
-      <p className="font-display font-bold text-base text-ink">{kind === "review" ? tr("Think your score is wrong?") : tr("Does this score not reflect your level?")}</p>
-      {mine ? (
-        <>
-          <p className="text-sm text-ink">{STATUS[mine.status]()}</p>
-          {mine.note && <p className="text-sm text-muted bg-paper-warm rounded-input px-3 py-2">{mine.note}</p>}
-        </>
-      ) : open ? (
-        <>
-          <p className="text-sm text-muted">
-            {kind === "review"
-              ? tr("A reviewer from the Spica review team will check your answers and recordings, and can change your score.")
-              : tr("A reviewer from the Spica review team will look at your answers. Practice and mock scores aren't changed, but your concern helps us improve scoring.")}
-          </p>
-          <textarea
-            rows={3}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            maxLength={2000}
-            placeholder={tr("Tell us what you think is wrong (at least 10 characters)")}
-            className="rounded-input border border-rule bg-surface px-3 py-2 text-sm"
-          />
-          {error && <p className="text-sm text-error">{error}</p>}
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={send} disabled={busy || reason.trim().length < 10}>
-              {tr("Send request")}
-            </Button>
-            <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy}>
-              {tr("Cancel")}
-            </Button>
-          </div>
-        </>
-      ) : (
-        <div>
-          <Button variant="secondary" onClick={() => setOpen(true)}>
-            {tr("Request a review")}
-          </Button>
-        </div>
-      )}
+    <div className="basis-full px-4 pb-3 flex flex-col gap-2">
+      <p className="text-xs text-muted">
+        {kind === "review"
+          ? tr("A reviewer from the Spica review team will check your answers and recordings, and can change your score.")
+          : tr("A reviewer from the Spica review team will look at your answers. Practice and mock scores aren't changed, but your concern helps us improve scoring.")}
+      </p>
+      <textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} maxLength={2000} placeholder={tr("Tell us what you think is wrong (at least 10 characters)")} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm" />
+      {error && <p className="text-xs text-error">{error}</p>}
+      <div className="flex gap-2">
+        <Button onClick={send} disabled={busy || reason.trim().length < 10} className="!py-1.5 !text-sm">
+          {tr("Send request")}
+        </Button>
+        <Button variant="secondary" onClick={() => setOpen(false)} disabled={busy} className="!py-1.5 !text-sm">
+          {tr("Cancel")}
+        </Button>
+      </div>
     </div>
   );
 }

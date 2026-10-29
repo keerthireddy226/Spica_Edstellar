@@ -8,6 +8,8 @@ import { getCatalogue, getHistory, type CatalogueTestType, type HistoryEntry } f
 import { ROUTES } from "@/constants/routes";
 import { testTypeName } from "@/lib/testTypes";
 import { tr } from "@/i18n/tr";
+import { ReviewRequestRow } from "@/components/report/AfterTest";
+import { getMyAppeals, type MyAppeal } from "@/api/quality";
 import { getModuleHistory, type ModuleHistoryEntry } from "@/api/practiceSession";
 import { useModulesEnabled } from "@/components/AppShell/useBranding";
 import { EmptyState, PageError, SectionLoading } from "@/components/learner/PageStates";
@@ -21,6 +23,14 @@ const linkBtn = "inline-flex items-center gap-1.5 rounded-pill px-4 py-2 text-sm
 // Every practice test, mock test and Practice Modules set the learner
 // finished, each opening its report.
 export function MyReports() {
+  // The learner's review requests, for each row's button or status.
+  const [appeals, setAppeals] = useState<MyAppeal[]>([]);
+  const loadAppeals = () => {
+    getMyAppeals()
+      .then((r) => setAppeals(r.appeals))
+      .catch(() => {});
+  };
+  useEffect(loadAppeals, []);
   const { t } = useTranslation();
   const testOnly = useTestOnly();
   const navigate = useNavigate();
@@ -195,7 +205,7 @@ export function MyReports() {
             const h = row.h;
             const tt = types.find((x) => x.id === h.testTypeId);
             return (
-              <div key={h.sessionId} className="relative flex items-center hover:bg-paper-warm/60">
+              <div key={h.sessionId} className="relative flex flex-wrap items-center hover:bg-paper-warm/60">
               <button
                 onClick={() => navigate(ROUTES.TEST_REPORT.replace(":sessionId", h.sessionId))}
                 className="flex-1 min-w-0 px-4 py-3 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-left cursor-pointer"
@@ -235,6 +245,12 @@ export function MyReports() {
                   <Award size={13} /> {tr("Certificate")}
                 </Link>
               )}
+              <ReviewRequestRow
+                sessionId={h.sessionId}
+                kind={h.deliveryMode === "certified" ? "review" : "concern"}
+                mine={appeals.find((a) => a.sessionId === h.sessionId) ?? null}
+                onSent={loadAppeals}
+              />
               </div>
             );
           })}

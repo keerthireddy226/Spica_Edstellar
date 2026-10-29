@@ -5,7 +5,7 @@ import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbul
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
-import { ReviewRequest, TestFeedbackCard } from "@/components/report/AfterTest";
+import { TestFeedbackCard } from "@/components/report/AfterTest";
 import { FinalResultWaiting, ScoreReport } from "@/components/report/ScoreReport";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 
@@ -467,10 +467,11 @@ export function FeedbackReportView({
     );
   }
   // A real assessment attempt has its score report only (its questions stay secret).
+  // The feedback form follows the final assessment only; a review is asked
+  // for from the test's row in My reports.
   const afterTest =
-    viewer === "learner" && sessionId ? (
-      <div className="flex flex-col gap-4 print:hidden">
-        <ReviewRequest sessionId={sessionId} kind={data.about?.deliveryMode === "certified" ? "review" : "concern"} />
+    viewer === "learner" && sessionId && data.about?.deliveryMode === "certified" ? (
+      <div className="print:hidden">
         <TestFeedbackCard sessionId={sessionId} />
       </div>
     ) : null;
@@ -481,7 +482,12 @@ export function FeedbackReportView({
         {afterTest}
       </div>
     ) : (
-      <FinalResultWaiting status={data.status} waiting={data.waiting} />
+      // Right after the final assessment, while it is scored or reviewed: the
+      // feedback form is asked now, not when the result comes.
+      <div className="flex flex-col gap-4">
+        <FinalResultWaiting status={data.status} waiting={data.waiting} />
+        {afterTest}
+      </div>
     );
   }
   if (!data.report) return <p className="text-sm text-error">{tr("The report couldn't be made. Try again later.")}</p>;
