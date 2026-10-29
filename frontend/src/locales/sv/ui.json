@@ -5415,5 +5415,10 @@
  "I am 18 or older.": "Jag är 18 år eller äldre.",
  "Please confirm you are 18 or older.": "Bekräfta att du är 18 år eller äldre.",
  "Our Privacy Notice": "Vårt integritetsmeddelande",
- "Please read and agree to our Privacy Notice to continue using Spica.": "Läs och godkänn vårt integritetsmeddelande för att fortsätta använda Spica."
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Läs och godkänn vårt integritetsmeddelande för att fortsätta använda Spica.",
+ "Screenshots": "Skärmbilder",
+ "No screenshots arrived.": "Inga skärmbilder kom in.",
+ "screenshots when you leave the test, and every few minutes": "skärmbilder när du lämnar testet, och med några minuters mellanrum",
+ "Screenshots of the whole screen when the test is left, and every few minutes": "Skärmbilder av hela skärmen när testet lämnas, och med några minuters mellanrum",
+ "Screenshots of your screen, while you share it.": "Skärmbilder av din skärm medan du delar den."
 }

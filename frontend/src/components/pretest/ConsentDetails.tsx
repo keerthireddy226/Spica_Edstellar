@@ -36,7 +36,7 @@ export function collectedGroups(p: Policy | null, opts: { faceCheck?: boolean; d
       icon: <MonitorUp size={16} />,
       label: tr("Screen"),
       parts: [
-        on("screenRecording") ? tr("your whole screen is recorded") : "",
+        on("screenRecording") ? tr("screenshots when you leave the test, and every few minutes") : "",
         on("requireFullscreen") ? tr("full screen") : "",
         on("lockdown") ? tr("copy and paste are off; leaving the tab is noted") : "",
         on("multiMonitorCheck") ? tr("second screens are detected") : "",

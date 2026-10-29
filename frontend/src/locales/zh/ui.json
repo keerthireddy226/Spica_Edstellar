@@ -5415,5 +5415,10 @@
  "I am 18 or older.": "我已年满 18 岁。",
  "Please confirm you are 18 or older.": "请确认你已年满 18 岁。",
  "Our Privacy Notice": "我们的隐私声明",
- "Please read and agree to our Privacy Notice to continue using Spica.": "请阅读并同意我们的隐私声明，以继续使用 Spica。"
+ "Please read and agree to our Privacy Notice to continue using Spica.": "请阅读并同意我们的隐私声明，以继续使用 Spica。",
+ "Screenshots": "屏幕截图",
+ "No screenshots arrived.": "没有收到屏幕截图。",
+ "screenshots when you leave the test, and every few minutes": "离开测试时以及每隔几分钟的屏幕截图",
+ "Screenshots of the whole screen when the test is left, and every few minutes": "离开测试时以及每隔几分钟的整个屏幕截图",
+ "Screenshots of your screen, while you share it.": "你共享屏幕期间的屏幕截图。"
 }

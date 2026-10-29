@@ -107,7 +107,7 @@ export const MONITORED: { key: keyof ProctoringSetup["policy"]; label: () => str
   { key: "idVerification", label: () => tr("A photo of your ID document and a selfie") },
   { key: "liveMonitoring", label: () => tr("A proctor may watch live and message you") },
   { key: "videoRecording", label: () => tr("Your camera is recorded during the test") },
-  { key: "screenRecording", label: () => tr("Your entire screen is recorded during the test") },
+  { key: "screenRecording", label: () => tr("Screenshots of the whole screen when the test is left, and every few minutes") },
   {
     key: "audioMonitoring",
     label: () => tr("The microphone listens between answers (talking is recorded as short clips), and spoken answers are checked for loud background noise"),

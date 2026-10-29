@@ -55,7 +55,7 @@ export function PrivacyNotice() {
             <li><b>Account details:</b> name, email address, password (stored only in scrambled form), language and voice choices.</li>
             <li><b>Optional details</b>, only if you choose to give them: country, city, job role, gender and age range.</li>
             <li><b>Your learning and test data:</b> answers, spoken answers (audio recordings), written answers, scores, levels, certificates and progress.</li>
-            <li><b>Proctoring data, for proctored tests only:</b> camera photos during the test (kept only when something looks wrong, plus an occasional sample), a room scan, screen recording, a voice sample, a photo of your ID and a selfie, and events such as leaving the test tab. You are told exactly what a test collects before it starts, and you agree on that screen.</li>
+            <li><b>Proctoring data, for proctored tests only:</b> camera photos during the test (kept only when something looks wrong, plus an occasional sample), a room scan, screenshots of your shared screen, a voice sample, a photo of your ID and a selfie, and events such as leaving the test tab. You are told exactly what a test collects before it starts, and you agree on that screen.</li>
             <li><b>Face and voice "templates"</b> (number patterns made from your face and voice) to check that the same person takes the whole test. These are only made if you agree, and you can withdraw at any time.</li>
             <li><b>Payment details</b>, if you buy something: handled by our payment providers. We do not see or store your card number.</li>
             <li><b>Technical data:</b> IP address, browser type and login times, used for security.</li>

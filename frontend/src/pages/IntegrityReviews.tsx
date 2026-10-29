@@ -262,13 +262,14 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
   const baseline = d.media.find((m) => m.kind === "voice_baseline");
   const videoIds = d.media.filter((m) => m.kind === "video_segment").map((m) => m.id);
   const screenIds = d.media.filter((m) => m.kind === "screen_segment").map((m) => m.id);
+  const screenShots = d.media.filter((m) => m.kind === "screen_shot");
   const clips = d.media.filter((m) => m.kind === "audio_clip");
   const events = d.events.filter((e) => e.type !== "typing_profile");
   const typing = si.checks?.typing;
   const tabs = [
     { key: "summary", label: tr("Summary") },
     { key: "snapshots", label: tr("Snapshots"), count: snapshots.length },
-    { key: "recordings", label: tr("Recordings"), count: videoIds.length + screenIds.length + clips.length },
+    { key: "recordings", label: tr("Recordings"), count: videoIds.length + screenIds.length + screenShots.length + clips.length },
     { key: "timeline", label: tr("Timeline"), count: events.length },
     { key: "identity", label: tr("Identity, voice and typing") },
   ];
@@ -389,9 +390,28 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
           <Panel title={tr("Camera recording")}>
             {videoIds.length ? <SegmentPlayer ids={videoIds} kind="video" /> : <EmptyNote>{si.policy.videoRecording ? tr("No camera recording arrived.") : tr("Camera recording is off for this organization.")}</EmptyNote>}
           </Panel>
-          <Panel title={tr("Screen recording")}>
-            {screenIds.length ? <SegmentPlayer ids={screenIds} kind="video" /> : <EmptyNote>{si.policy.screenRecording ? tr("No screen recording arrived.") : tr("Screen recording is off for this organization.")}</EmptyNote>}
-          </Panel>
+          {/* Older tests have a screen video; newer ones screenshots taken when the learner left the test, and every few minutes. */}
+          {screenIds.length > 0 && (
+            <Panel title={tr("Screen recording")}>
+              <SegmentPlayer ids={screenIds} kind="video" />
+            </Panel>
+          )}
+          {(screenShots.length > 0 || screenIds.length === 0) && (
+            <Panel title={tr("Screenshots")}>
+              {screenShots.length ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {screenShots.map((m) => (
+                    <figure key={m.id} className="rounded-card border border-rule bg-surface p-1.5">
+                      <MediaView id={m.id} kind="image" className="w-full aspect-video" />
+                      <figcaption className="text-[11px] text-muted mt-1 px-0.5">{new Date(m.created_at).toLocaleTimeString()}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : (
+                <EmptyNote>{si.policy.screenRecording ? tr("No screenshots arrived.") : tr("Screen recording is off for this organization.")}</EmptyNote>
+              )}
+            </Panel>
+          )}
           <Panel title={tr("Talking heard between answers")}>
             {clips.length === 0 ? (
               <EmptyNote>{si.policy.audioMonitoring ? tr("No talking was picked up.") : tr("Listening for talking is off for this organization.")}</EmptyNote>

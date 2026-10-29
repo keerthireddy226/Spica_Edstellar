@@ -5415,5 +5415,10 @@
  "I am 18 or older.": "18 歳以上です。",
  "Please confirm you are 18 or older.": "18 歳以上であることを確認してください。",
  "Our Privacy Notice": "プライバシー通知",
- "Please read and agree to our Privacy Notice to continue using Spica.": "Spica を引き続き使うには、プライバシー通知を読んで同意してください。"
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Spica を引き続き使うには、プライバシー通知を読んで同意してください。",
+ "Screenshots": "スクリーンショット",
+ "No screenshots arrived.": "スクリーンショットは届いていません。",
+ "screenshots when you leave the test, and every few minutes": "テストから離れたときと、数分ごとのスクリーンショット",
+ "Screenshots of the whole screen when the test is left, and every few minutes": "テストを離れたときと数分ごとの画面全体のスクリーンショット",
+ "Screenshots of your screen, while you share it.": "共有中の画面のスクリーンショット。"
 }

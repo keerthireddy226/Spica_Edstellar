@@ -14,6 +14,10 @@ import { blobToBase64, profileTyping, recordSegments, watchCamera, watchSpeech }
 
 // What the learner is told right away when something is picked up. Each
 // code maps to a sentence in ProctoringOverlay.
+// The events that take a screenshot of the shared screen, and the routine interval.
+const SCREENSHOT_EVENTS = new Set(["tab_hidden", "window_blur", "paste_blocked", "multi_monitor", "print_screen"]);
+const SCREENSHOT_EVERY_MS = 3 * 60_000;
+
 export type ProctorWarning =
   | "tab_hidden"
   | "paste_blocked"
@@ -151,7 +155,11 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     lastLoggedRef.current[type] = now;
     queueRef.current.push({ type, at: new Date(now).toISOString(), detail });
     if (warn) setWarning(warn);
+    if (SCREENSHOT_EVENTS.has(type)) screenshotRef.current?.();
   }, []);
+
+  // Set while the screen is shared: takes a screenshot (see below).
+  const screenshotRef = useRef<(() => void) | null>(null);
 
   // Recorded segments and clips: one retry after a failed upload.
   const sendSegment = useCallback(
@@ -379,8 +387,10 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     };
   }, [running, sessionId, setup?.policy.audioMonitoring, log, sendSegment]);
 
-  // The shared screen, recorded in segments. Stopping the share is recorded
-  // and the learner is asked to share again.
+  // The shared screen: a screenshot whenever the learner leaves the test (or
+  // pastes, or a second screen appears), and one every few minutes; far
+  // lighter than a video, and it shows what they switched to. Stopping the
+  // share is recorded and the learner is asked to share again.
   useEffect(() => {
     if (!running || !screenStream || !setup?.policy.screenRecording) return;
     const track = screenStream.getVideoTracks()[0];
@@ -389,12 +399,31 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
       setScreenStream(null);
     };
     track?.addEventListener("ended", onEnded);
-    const stop = recordSegments(screenStream, { kind: "video", segmentMs: SEGMENT_MS, videoBitsPerSecond: 250_000 }, (blob, mime, seq, ms) =>
-      sendSegment("screen_segment", blob, mime, seq, ms),
-    );
+    const video = document.createElement("video");
+    video.muted = true;
+    video.srcObject = screenStream;
+    void video.play().catch(() => {});
+    let last = 0;
+    const take = () => {
+      if (!video.videoWidth || Date.now() - last < 5000) return;
+      last = Date.now();
+      const scale = Math.min(1, 1280 / video.videoWidth);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((b) => b && void sendSegment("screen_shot", b, "image/jpeg"), "image/jpeg", 0.6);
+    };
+    // A moment after the event, so the shot shows what came to the front.
+    screenshotRef.current = () => setTimeout(take, 1500);
+    const first = setTimeout(take, 5000);
+    const every = setInterval(take, SCREENSHOT_EVERY_MS);
     return () => {
       track?.removeEventListener("ended", onEnded);
-      stop();
+      screenshotRef.current = null;
+      clearTimeout(first);
+      clearInterval(every);
+      video.srcObject = null;
     };
   }, [running, screenStream, setup?.policy.screenRecording, log, sendSegment]);
 

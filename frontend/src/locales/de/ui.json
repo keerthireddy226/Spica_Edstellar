@@ -5415,5 +5415,10 @@
  "I am 18 or older.": "Ich bin 18 Jahre oder älter.",
  "Please confirm you are 18 or older.": "Bitte bestätige, dass du 18 Jahre oder älter bist.",
  "Our Privacy Notice": "Unsere Datenschutzhinweise",
- "Please read and agree to our Privacy Notice to continue using Spica.": "Bitte lies unsere Datenschutzhinweise und stimme zu, um Spica weiter zu nutzen."
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Bitte lies unsere Datenschutzhinweise und stimme zu, um Spica weiter zu nutzen.",
+ "Screenshots": "Screenshots",
+ "No screenshots arrived.": "Es sind keine Screenshots angekommen.",
+ "screenshots when you leave the test, and every few minutes": "Screenshots, wenn du den Test verlässt, und alle paar Minuten",
+ "Screenshots of the whole screen when the test is left, and every few minutes": "Screenshots des ganzen Bildschirms beim Verlassen des Tests und alle paar Minuten",
+ "Screenshots of your screen, while you share it.": "Screenshots deines Bildschirms, während du ihn teilst."
 }

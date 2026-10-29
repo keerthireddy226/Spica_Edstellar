@@ -5415,5 +5415,10 @@
  "I am 18 or older.": "Olen vähintään 18-vuotias.",
  "Please confirm you are 18 or older.": "Vahvista, että olet vähintään 18-vuotias.",
  "Our Privacy Notice": "Tietosuojaselosteemme",
- "Please read and agree to our Privacy Notice to continue using Spica.": "Lue ja hyväksy tietosuojaselosteemme jatkaaksesi Spican käyttöä."
+ "Please read and agree to our Privacy Notice to continue using Spica.": "Lue ja hyväksy tietosuojaselosteemme jatkaaksesi Spican käyttöä.",
+ "Screenshots": "Kuvakaappaukset",
+ "No screenshots arrived.": "Kuvakaappauksia ei saapunut.",
+ "screenshots when you leave the test, and every few minutes": "kuvakaappauksia, kun poistut testistä, ja muutaman minuutin välein",
+ "Screenshots of the whole screen when the test is left, and every few minutes": "Kuvakaappaukset koko näytöstä, kun testistä poistutaan, ja muutaman minuutin välein",
+ "Screenshots of your screen, while you share it.": "Kuvakaappauksia näytöstäsi, kun jaat sen."
 }

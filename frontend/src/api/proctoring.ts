@@ -133,7 +133,7 @@ export function uploadVoiceBaseline(sessionId: string, dataBase64: string, mimeT
   return api(`/proctoring/sessions/${sessionId}/voice-baseline`, { method: "POST", body: JSON.stringify({ dataBase64, mimeType }) });
 }
 
-export type SegmentKind = "video_segment" | "screen_segment" | "audio_clip";
+export type SegmentKind = "video_segment" | "screen_segment" | "audio_clip" | "screen_shot";
 
 export function uploadSegment(sessionId: string, body: { kind: SegmentKind; dataBase64: string; mimeType: string; seq?: number; durationMs?: number }): Promise<{ ok: boolean }> {
   return api(`/proctoring/sessions/${sessionId}/segment`, { method: "POST", body: JSON.stringify(body), keepalive: body.dataBase64.length < 60_000 });
@@ -225,7 +225,7 @@ export function getIntegrityReviews(status: string, q = ""): Promise<{ sessions:
 
 export interface ProctoringMediaRow {
   id: string;
-  kind: "snapshot" | "room_scan" | "voice_baseline" | "id_document" | "id_selfie" | "video_segment" | "screen_segment" | "audio_clip";
+  kind: "snapshot" | "room_scan" | "voice_baseline" | "id_document" | "id_selfie" | "video_segment" | "screen_segment" | "audio_clip" | "screen_shot";
   head_direction: "center" | "left" | "right" | "up" | "down" | null;
   segment_seq: number | null;
   duration_ms: number | null;

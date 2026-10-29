@@ -115,7 +115,9 @@ export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): Pr
     idVerification: true,
     liveMonitoring: true,
     audioMonitoring: true,
-    videoRecording: true,
+    // Camera video is the heaviest record and rarely needed: snapshots, face
+    // matching and screenshots cover the checks. An organization can turn it on.
+    videoRecording: false,
     screenRecording: true,
     typingPattern: bio,
   };

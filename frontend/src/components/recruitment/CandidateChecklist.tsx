@@ -41,7 +41,7 @@ export function CandidateChecklist({
   const recorded = [
     p.camera && (p.idDocument ? tr("Your face: photos from your camera during the test, compared with your ID photo.") : tr("Your face: photos from your camera during the test.")),
     p.microphone && (p.voiceSample ? tr("Your voice: your spoken answers are recorded and compared with your voice sample.") : tr("Your voice: your spoken answers are recorded.")),
-    p.screen && tr("Your screen, while you share it."),
+    p.screen && tr("Screenshots of your screen, while you share it."),
   ].filter((x): x is string => !!x);
 
   return (

@@ -594,7 +594,8 @@ proctoringRouter.post("/sessions/:sessionId/snapshot", requireAuth, async (req: 
 
 const mediaUploadSchema = z.object({ dataBase64: z.string().min(100).max(6_500_000), mimeType: z.string().max(80) });
 
-function extFor(mime: string, kind: "video" | "audio"): string | null {
+function extFor(mime: string, kind: "video" | "audio" | "image"): string | null {
+  if (kind === "image") return mime.startsWith("image/jpeg") ? "jpg" : null;
   if (mime.startsWith(`${kind}/webm`)) return "webm";
   if (mime.startsWith(`${kind}/mp4`)) return "mp4";
   if (kind === "audio" && mime.startsWith("audio/ogg")) return "ogg";
@@ -619,14 +620,14 @@ proctoringRouter.post("/sessions/:sessionId/room-scan", requireAuth, async (req:
 });
 
 const segmentSchema = z.object({
-  kind: z.enum(["video_segment", "screen_segment", "audio_clip"]),
+  kind: z.enum(["video_segment", "screen_segment", "audio_clip", "screen_shot"]),
   dataBase64: z.string().min(100).max(6_500_000),
   mimeType: z.string().max(80),
   seq: z.number().int().min(0).max(100_000).optional(),
   durationMs: z.number().int().min(0).max(600_000).optional(),
 });
-const SEGMENT_FLAG = { video_segment: "videoRecording", screen_segment: "screenRecording", audio_clip: "audioMonitoring" } as const;
-const SEGMENT_MEDIA = { video_segment: "video", screen_segment: "video", audio_clip: "audio" } as const;
+const SEGMENT_FLAG = { video_segment: "videoRecording", screen_segment: "screenRecording", audio_clip: "audioMonitoring", screen_shot: "screenRecording" } as const;
+const SEGMENT_MEDIA = { video_segment: "video", screen_segment: "video", audio_clip: "audio", screen_shot: "image" } as const;
 
 // A piece of the webcam or screen recording, or a short clip of talking
 // picked up between answers. Uploads may arrive just after the test ends.
