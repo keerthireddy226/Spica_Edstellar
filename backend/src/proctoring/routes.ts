@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { Router, type Response } from "express";
 import sharp from "sharp";
+import { PRIVACY_NOTICE_VERSION } from "../auth/schemas.js";
 import { z } from "zod";
 import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
 import { pool } from "../db.js";
@@ -350,7 +351,7 @@ proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, n
 
 proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const body = z.object({ kind: kindSchema, mode: modeSchema, accept: z.literal(true), biometric: z.boolean() }).parse(req.body);
+    const body = z.object({ kind: kindSchema, mode: modeSchema, accept: z.literal(true), biometric: z.boolean(), privacy: z.boolean().optional() }).parse(req.body);
     const info = await preTestInfo(req.user!.id, body.kind, body.mode);
     const biometric = info.biometric && body.biometric;
     const client = await pool.connect();
@@ -365,6 +366,14 @@ proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedReques
         await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring_biometric', $3)`, [
           req.user!.id,
           info.version,
+          req.ip,
+        ]);
+      }
+      // The Privacy Notice box on the same screen.
+      if (body.privacy) {
+        await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'privacy_notice', $3)`, [
+          req.user!.id,
+          PRIVACY_NOTICE_VERSION,
           req.ip,
         ]);
       }

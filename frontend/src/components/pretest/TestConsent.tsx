@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
-import { ConsentDetails } from "@/components/pretest/ConsentDetails";
+import { ConsentDetails, PrivacyConsent } from "@/components/pretest/ConsentDetails";
 import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { holdTestConsent } from "@/lib/testConsent";
 import { tr } from "@/i18n/tr";
@@ -23,6 +23,7 @@ export function TestConsent({
   const [info, setInfo] = useState<PreTestInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
 
   useEffect(() => {
     getPreTestInfo(kind, mode)
@@ -71,6 +72,7 @@ export function TestConsent({
       {info && (
         <>
           <ConsentDetails info={info} module={module} mode={mode} />
+          <PrivacyConsent agreed={privacy} onChange={setPrivacy} />
         </>
       )}
 
@@ -80,15 +82,15 @@ export function TestConsent({
         <div className="flex flex-col gap-2">
           {info.biometric ? (
             <>
-              <Button onClick={() => accept(true)} disabled={busy}>
+              <Button onClick={() => accept(true)} disabled={busy || !privacy}>
                 {tr("I agree, including face and voice matching")}
               </Button>
-              <Button variant="secondary" onClick={() => accept(false)} disabled={busy}>
+              <Button variant="secondary" onClick={() => accept(false)} disabled={busy || !privacy}>
                 {tr("I agree, but check my identity manually")}
               </Button>
             </>
           ) : (
-            <Button onClick={() => accept(false)} disabled={busy}>
+            <Button onClick={() => accept(false)} disabled={busy || !privacy}>
               {module ? tr("I agree, start practising") : tr("I agree, start the test")}
             </Button>
           )}

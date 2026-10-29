@@ -11,6 +11,7 @@ import {
 } from "@/api/proctoring";
 import type { ProctoringState } from "@/hooks/useProctoring";
 import { blobToBase64 } from "@/lib/proctorSensors";
+import { CollectedList, collectedGroups } from "@/components/pretest/ConsentDetails";
 import { tr } from "@/i18n/tr";
 
 type Step = "secure_browser" | "consent" | "identity" | "room" | "voice" | "screen" | "start";
@@ -131,16 +132,10 @@ function ConsentStep({ setup, sessionId, onDone }: { setup: ProctoringSetup; ses
   }
   return (
     <Card icon={<ShieldCheck size={26} />} title={tr("This test is proctored")} subtitle={tr("Your organization uses these checks to make sure results are fair.")}>
-      <ul className="flex flex-col gap-2">
-        {MONITORED.filter((m) => p[m.key]).map((m) => (
-          <li key={m.key} className="flex items-start gap-2 text-sm text-ink">
-            <CheckCircle2 size={16} className="text-success shrink-0 mt-0.5" /> {m.label()}
-          </li>
-        ))}
-      </ul>
+      <CollectedList groups={collectedGroups(p)} />
       <div className="bg-paper-warm rounded-input p-3 text-xs text-muted leading-relaxed flex flex-col gap-1.5">
         <p>{tr("Snapshots, recordings and ID images are kept for {{days}} days, then deleted. Only reviewers allowed to check your tests can see them. Never sold.", { days: p.retentionDays })}</p>
-        <p>{tr("Your answers are scored by AI (Google Gemini), the only service they're shared with.")}</p>
+        <p>{tr("Your answers are scored by AI, under terms that keep them private.")}</p>
         <p>{tr("Nothing here fails you automatically. Anything unusual is checked by a person before any decision.")}</p>
         {setup.audience !== "employer" && <p>{tr("You can appeal a final-assessment result, and a person reviews it.")}</p>}
         {p.region === "us" && setup.biometric && (

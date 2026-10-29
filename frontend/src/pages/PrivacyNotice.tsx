@@ -35,7 +35,7 @@ export function PrivacyNotice() {
           <p className="font-semibold">In short</p>
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li>We collect what we need to run your English practice and tests: your account details, your answers, and, for proctored tests, camera, microphone and screen recordings.</li>
-            <li>Your spoken and written answers are marked by AI (Google Gemini). Face and voice matching run on our own server.</li>
+            <li>Your spoken and written answers are marked by AI. Face and voice matching run on our own server.</li>
             <li>We never sell your data or use it for advertising.</li>
             <li>Test recordings are deleted automatically, after 90 days unless your organization sets a different period.</li>
             <li>You can download or delete your data at any time, and withdraw your agreement to face and voice checks.</li>
@@ -78,15 +78,15 @@ export function PrivacyNotice() {
 
         <Section title="4. AI marking">
           <p>
-            Your spoken and written answers are sent to Google Gemini to be marked. We use Google's paid service, whose terms do not allow Google to use your answers to train its
-            models. Scores can be reviewed by a person, and you can ask for a review by contacting us.
+            Your spoken and written answers are sent to AI platforms to be marked. We use their paid business services, whose terms do not allow them to use your answers to
+            train their models. Scores can be reviewed by a person, and you can ask for a review by contacting us.
           </p>
         </Section>
 
         <Section title="5. Who receives your data">
           <ul className="list-disc pl-5 flex flex-col gap-1">
             <li><b>Your organization</b> (employer, university or recruiter), if it gave you access: your results, reports and, for proctored tests, the review of your test.</li>
-            <li><b>Service providers</b> that work for us under contract and only on our instructions: Supabase (database and file storage), Render (our server), Vercel (the website), Google (AI marking), Brevo (emails), and Razorpay or Stripe (payments).</li>
+            <li><b>Service providers</b> that work for us under contract and only on our instructions: cloud hosting and storage, AI marking, email delivery and payment processing.</li>
             <li><b>Authorities</b>, only when the law requires it.</li>
           </ul>
           <p>We do not sell your data and do not share it for advertising.</p>
@@ -94,8 +94,8 @@ export function PrivacyNotice() {
 
         <Section title="6. Where your data is stored">
           <p>
-            Our database, files and server are in Singapore. Some providers may process data in other countries, including the United States. When data leaves your country, we
-            rely on the safeguards the law requires, such as our providers' standard contractual clauses.
+            Your data is stored on secure cloud servers, which may be outside your country. When data leaves your country, we rely on the safeguards the law requires, such as
+            standard contractual clauses with our providers.
           </p>
         </Section>
 

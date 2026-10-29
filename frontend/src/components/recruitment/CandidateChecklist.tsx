@@ -94,7 +94,7 @@ export function CandidateChecklist({
           {recorded.map((r) => (
             <li key={r}>{r}</li>
           ))}
-          <li>{tr("Your spoken and written answers are scored by AI (Google Gemini). Anything unusual is checked by a person; nothing fails you automatically.")}</li>
+          <li>{tr("Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.")}</li>
           <li>{tr("{{org}} receives your results.", { org: orgName })}</li>
         </ul>
       </div>

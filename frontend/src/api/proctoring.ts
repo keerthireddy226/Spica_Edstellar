@@ -102,7 +102,7 @@ export function getPreTestInfo(kind: PreTestKind, mode?: DeliveryMode): Promise<
 }
 
 export function givePreTestConsent(kind: PreTestKind, biometric: boolean, mode?: DeliveryMode): Promise<{ consentId: string; biometricOptOut: boolean }> {
-  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric }) });
+  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric, privacy: true }) });
 }
 
 export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {
