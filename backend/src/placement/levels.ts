@@ -5,6 +5,9 @@ import { assessSkillLevel, cefrRank, passThresholdForLevel, percentToCefr, type 
 import type { SkillTag } from "./roadmapBuilder.js";
 
 const ALL_SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
+// A skill holds the headline level down only when it had this many scored
+// questions: 2 wrong answers in a short section don't decide a whole level.
+export const MIN_ITEMS_TO_CAP = 6;
 
 export interface ScoredAttemptRow {
   status: string;
@@ -42,7 +45,7 @@ export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent
   return { skillPercents, skillLevels, roadmapSkillPercents };
 }
 
-// Headline level: assessed across all skills from every question shown. A skip counts as wrong; grading failures are excluded. Can't outrank the weakest tested skill (avoids a strong skill masking a failed one).
+// Headline level: assessed across all skills from every question shown. A skip counts as wrong; grading failures are excluded. Can't outrank the weakest skill tested with at least MIN_ITEMS_TO_CAP questions (avoids a strong skill masking a failed one).
 export function computeHeadlineLevel(
   graded: ScoredAttemptRow[],
   allRows: ScoredAttemptRow[],
@@ -60,9 +63,9 @@ export function computeHeadlineLevel(
   const overallPercentForLevel = Math.round((correctCount / (graded.length + pendingCount)) * 100);
   const pooledCefrLevel: CefrLevel = overallAssessment.level ?? percentToCefr(overallPercentForLevel);
 
-  const testedSkillLevels = ALL_SKILLS.map((skill) => skillLevels[skill]?.level).filter(
-    (level): level is CefrLevel => level != null,
-  );
+  const testedSkillLevels = ALL_SKILLS.filter((skill) => graded.filter((r) => r.skills.includes(skill)).length >= MIN_ITEMS_TO_CAP)
+    .map((skill) => skillLevels[skill]?.level)
+    .filter((level): level is CefrLevel => level != null);
   const weakestTestedSkillLevel =
     testedSkillLevels.length > 0
       ? testedSkillLevels.reduce((weakest, level) => (cefrRank(level) < cefrRank(weakest) ? level : weakest))

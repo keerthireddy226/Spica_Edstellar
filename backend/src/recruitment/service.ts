@@ -13,6 +13,7 @@ import { emitEvent } from "../webhooks/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { levelSummary } from "../placement/levels.js";
+import { snapshot } from "../reports/batchReport.js";
 
 export const PRODUCTS = ["skills", "recruitment"] as const;
 export type Product = (typeof PRODUCTS)[number];
@@ -174,7 +175,7 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
       const email = p.email.trim();
       const candidateId = await candidateUser(args.tenantId, email, p.firstName?.trim() || null, p.lastName?.trim() || null);
       const token = generateToken();
-      const expiresAt = new Date(Date.now() + job.invite_valid_days * 86_400_000);
+      const expiresAt = new Date(Date.now() + job.invite_valid_hours * 3_600_000);
       const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
       const r = await client.query(
         `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at)
@@ -255,7 +256,7 @@ export async function resendInvite(tenantId: string, assessmentId: string): Prom
     }
   }
   const token = generateToken();
-  const expiresAt = new Date(Date.now() + a.invite_valid_days * 86_400_000);
+  const expiresAt = new Date(Date.now() + a.invite_valid_hours * 3_600_000);
   await pool.query(
     `UPDATE recruitment_assessments SET token_hash = $2, expires_at = $3, reminder_sent_at = NULL, credit_refunded = false,
        status = CASE WHEN status = 'expired' THEN (CASE WHEN started_at IS NULL THEN 'invited' ELSE 'started' END) ELSE status END
@@ -323,6 +324,10 @@ const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
 export async function recordCandidateResult(userId: string, sessionId: string): Promise<void> {
   const u = (await pool.query(`SELECT role FROM users WHERE id = $1`, [userId])).rows[0];
   if (u?.role !== "candidate") return;
+  // One test completes one invitation: finishing can be processed twice (a
+  // retry, the overdue-test job), and the second time must not mark the
+  // candidate's older, unfinished invitation done with the same test.
+  if ((await pool.query(`SELECT 1 FROM recruitment_assessments WHERE session_id = $1`, [sessionId])).rowCount) return;
   const a = (
     await pool.query(
       `SELECT a.*, j.title, j.min_cefr FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
@@ -355,10 +360,14 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
     const graded = rows.filter((r) => r.status === "scored");
     const ok = (r: (typeof rows)[number]) => isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
     const labels = [...new Set(rows.map((r) => r.part_label).filter(Boolean))];
-    const level = levelSummary(rows);
+    const summary = levelSummary(rows);
+    const overallPercent = graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null;
+    // The headline level is the Spica score's, as on the candidate's own
+    // result, so the report and the test never show different levels.
+    const level = summary && { ...summary, cefrLevel: snapshot(summary.skillLevels as never, summary.skillPercents as never, overallPercent, summary.cefrLevel).level ?? summary.cefrLevel };
     result = {
       kind: "exam",
-      overallPercent: graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null,
+      overallPercent,
       ...(level ?? {}),
       gradedCount: graded.length,
       pendingCount: rows.filter((r) => r.status === "pending").length,
@@ -426,7 +435,8 @@ export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) =
   const due = await pool.query(
     `SELECT a.id, a.email, a.tenant_id, a.expires_at, j.title, j.test_kind, t.name AS org_name, t.default_language
      FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id JOIN tenants t ON t.id = a.tenant_id
-     WHERE a.status = 'invited' AND a.reminder_sent_at IS NULL AND a.expires_at < now() + interval '2 days'
+     -- Halfway through the link's time (at most 2 days before it ends).
+     WHERE a.status = 'invited' AND a.reminder_sent_at IS NULL AND a.expires_at - now() < least(interval '2 days', (a.expires_at - a.invited_at) / 2)
        AND a.invited_at < now() - interval '1 day' LIMIT 500`,
   );
   let reminded = 0;

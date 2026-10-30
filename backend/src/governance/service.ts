@@ -228,6 +228,11 @@ export async function buildExport(exportId: string): Promise<void> {
 // (shorter if the organization sets less); a flagged one keeps the
 // organization's full period.
 export const UNFLAGGED_MEDIA_DAYS = 30;
+// A flagged test (or a confirmed violation) keeps its media at most this
+// long; one still waiting for a reviewer keeps it up to a year.
+export const FLAGGED_MEDIA_DAYS = 60;
+// Proctoring event logs (tab switches, warnings and the like).
+const EVENT_LOG_DAYS = 90;
 
 
 // Proctoring snapshots, scans, voice samples and ID images go after the
@@ -239,9 +244,9 @@ async function runProctoringRetention(): Promise<number> {
      JOIN users u ON u.id = m.user_id JOIN tenants t ON t.id = u.tenant_id
      LEFT JOIN session_integrity si ON si.session_id = m.session_id
      WHERE m.uri IS NOT NULL
-       AND m.created_at < now() - make_interval(days => CASE WHEN coalesce(si.status, '') = 'flagged'
-             THEN coalesce((t.proctoring->>'retentionDays')::int, 90)
-             ELSE least(coalesce((t.proctoring->>'retentionDays')::int, 90), ${UNFLAGGED_MEDIA_DAYS}) END)
+       AND m.created_at < now() - make_interval(days => CASE WHEN coalesce(si.status, '') IN ('flagged', 'violation')
+             THEN least(coalesce((t.proctoring->>'retentionDays')::int, ${FLAGGED_MEDIA_DAYS}), ${FLAGGED_MEDIA_DAYS})
+             ELSE least(coalesce((t.proctoring->>'retentionDays')::int, ${FLAGGED_MEDIA_DAYS}), ${UNFLAGGED_MEDIA_DAYS}) END)
        AND (m.created_at < now() - interval '365 days' OR NOT (
          coalesce(si.status, '') = 'flagged'
          OR EXISTS (SELECT 1 FROM identity_verifications iv WHERE iv.status = 'pending' AND m.id IN (iv.document_media_id, iv.selfie_media_id))
@@ -250,7 +255,7 @@ async function runProctoringRetention(): Promise<number> {
   );
   for (const m of old.rows) await removeMedia(m.uri);
   await pool.query(`UPDATE proctoring_media SET uri = NULL WHERE id = ANY($1::uuid[])`, [old.rows.map((m) => m.id)]);
-  await pool.query(`DELETE FROM proctoring_events WHERE created_at < now() - interval '365 days'`);
+  await pool.query(`DELETE FROM proctoring_events WHERE created_at < now() - make_interval(days => ${EVENT_LOG_DAYS})`);
   return old.rows.length;
 }
 

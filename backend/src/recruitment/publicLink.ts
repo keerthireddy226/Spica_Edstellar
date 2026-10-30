@@ -19,7 +19,7 @@ export interface PublicJob {
   description: string | null;
   test_kind: string;
   status: string;
-  invite_valid_days: number;
+  invite_valid_hours: number;
   public_slug: string | null;
   public_link_enabled: boolean;
   public_link_max: number | null;
@@ -125,8 +125,8 @@ export async function joinByLink(job: PublicJob, email: string, firstName: strin
     const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
     const r = await client.query(
       `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at, source)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, now() + make_interval(days => $9), 'public_link') RETURNING id`,
-      [job.tenant_id, job.id, candidateId, email, firstName, lastName, hashToken(generateToken()), examId, job.invite_valid_days],
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, now() + make_interval(hours => $9), 'public_link') RETURNING id`,
+      [job.tenant_id, job.id, candidateId, email, firstName, lastName, hashToken(generateToken()), examId, job.invite_valid_hours],
     );
     const assessmentId = r.rows[0].id as string;
     await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $3, 'invite', $2, NULL)`, [

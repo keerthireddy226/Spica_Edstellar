@@ -20,6 +20,7 @@ import {
 import { Login } from "@/pages/Login";
 import { Signup } from "@/pages/Signup";
 import { PrivacyNotice } from "@/pages/PrivacyNotice";
+import { PrivacyNoticeDoc } from "@/pages/PrivacyNoticeDoc";
 import { ForgotPassword } from "@/pages/ForgotPassword";
 import { ResetPassword } from "@/pages/ResetPassword";
 import { VerifyEmail } from "@/pages/VerifyEmail";
@@ -114,6 +115,7 @@ function App() {
         <Route path="/login" element={<Navigate to={ROUTES.LOGIN} replace />} />
         <Route path={ROUTES.SIGNUP} element={<Signup />} />
         <Route path={ROUTES.PRIVACY} element={<PrivacyNotice />} />
+        <Route path="/privacy/:audience" element={<PrivacyNoticeDoc />} />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />

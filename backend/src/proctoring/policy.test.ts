@@ -52,7 +52,7 @@ describe("normalizePolicy", () => {
   it("falls back to the standard preset for garbage", () => {
     const p = normalizePolicy({ mode: "nonsense", retentionDays: "x" });
     expect(p.mode).toBe("standard");
-    expect(p.retentionDays).toBe(90);
+    expect(p.retentionDays).toBe(60);
   });
 });
 

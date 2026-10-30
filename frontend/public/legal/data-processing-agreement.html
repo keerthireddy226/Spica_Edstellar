@@ -1,32 +1,37 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Data Processing Agreement (DPA)</title><style>
+:root{--ink:#1f2328;--muted:#5b6470;--rule:#e3ddd3;--paper:#faf6ef;--surface:#ffffff;--accent:#b4573d;--accent-soft:#f6e7e1;--good:#2f7d4f;--warn:#a26b00;--bad:#b42318}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#ece8e1;--muted:#a9b0b9;--rule:#3a3631;--paper:#1b1916;--surface:#24211d;--accent:#e08b6f;--accent-soft:#3a2a24;--good:#6cc596;--warn:#e5b45a;--bad:#f08a80}}
+:root[data-theme="dark"]{--ink:#ece8e1;--muted:#a9b0b9;--rule:#3a3631;--paper:#1b1916;--surface:#24211d;--accent:#e08b6f;--accent-soft:#3a2a24;--good:#6cc596;--warn:#e5b45a;--bad:#f08a80}
 *{box-sizing:border-box}
-body{margin:0;background:#ffffff;color:#000000;font:15px/1.6 Arial,Helvetica,sans-serif}
-main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
-h1{font-size:26px;line-height:1.25;margin:4px 0 6px}
-h2{font-size:19px;margin:28px 0 8px;padding-top:6px;border-top:1px solid #cccccc}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+article{background:var(--surface);border:1px solid var(--rule);border-radius:16px;padding:28px 24px}
+h1{font-size:28px;line-height:1.2;margin:4px 0 6px}
+h2{font-size:19px;margin:32px 0 8px;padding-top:4px;border-top:1px solid var(--rule)}
 h3{font-size:16px;margin:18px 0 6px}
 p,li{margin:6px 0}
 ul{padding-left:22px}
-.eyebrow{font-size:12px;text-transform:uppercase;color:#444444}
-.meta{color:#444444;font-size:13px}
-.banner{border:1px solid #999999;padding:10px 14px;font-size:14px;margin:14px 0}
+.eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.meta{color:var(--muted);font-size:13px}
+.banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:14px;margin:14px 0}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}
-.card{border:1px solid #cccccc;padding:12px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:14px}
 .card b{display:block;margin-bottom:4px}
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
-th,td{border:1px solid #cccccc;padding:7px 9px;text-align:left;vertical-align:top}
-th{background:#f2f2f2}
+th,td{border:1px solid var(--rule);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper)}
 .wrap{overflow-x:auto}
-.y,.n,.m{font-weight:700}
-.note{font-size:13px;color:#444444}
+.y{color:var(--good);font-weight:700}.n{color:var(--bad);font-weight:700}.m{color:var(--warn);font-weight:700}
+.note{font-size:13px;color:var(--muted)}
+a{color:var(--accent)}
 code{font-size:13px}
-nav.toc{font-size:14px;margin:10px 0 0;display:grid;grid-template-columns:repeat(3,max-content);gap:4px 24px}
+nav.toc{font-size:14px;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px}
 nav.toc a{white-space:nowrap}
-footer{margin-top:28px;font-size:13px;color:#444444}
+footer{margin-top:28px;font-size:13px;color:var(--muted)}
 </style></head>
-<body><main>
+<body><main><article>
 <p class="eyebrow">Spica by Edstellar · for organizations and universities</p>
 <h1>Data Processing Agreement (DPA)</h1>
 <p class="meta">Version 2026-10-29 · Last updated 29 October 2026</p>
@@ -78,7 +83,7 @@ sub-processors) are incorporated by reference; for the UK, the UK International 
 <tr><th>People concerned</th><td>The Customer's employees, students, learners, managers and admins; job or admissions candidates the Customer invites.</td></tr>
 <tr><th>Personal data</th><td>Name, email, department or batch, login and device data; answers, audio recordings of spoken answers, scores, levels, certificates; proctoring photos, screenshots, room videos, ID images, voice samples, test event logs.</td></tr>
 <tr><th>Sensitive and special data</th><td>Face and voice templates (biometric data) only where the person consents to face and voice matching; ID document images. No other special-category data is requested.</td></tr>
-<tr><th>Retention</th><td>As the Customer configures in Spica, within: proctoring media 30 days if not flagged, the Customer's period (default 90 days) if flagged, up to 1 year while under review; event logs 1 year; candidate data 30 days to 3 years (default 180 days); otherwise for the term.</td></tr>
+<tr><th>Retention</th><td>As the Customer configures in Spica, within: proctoring media 30 days if not flagged, at most 60 days if flagged, up to 1 year while waiting for review; event logs 90 days; candidate data 30 days to 3 years (default 180 days); otherwise for the term.</td></tr>
 </table></div>
 <h2>Annex 2: Security measures</h2>
 <ul><li>Encryption in transit (TLS) and at rest by the hosting providers.</li><li>Hashed passwords; optional or required two-step login; single sign-on available; IP allow-lists for organizations.</li><li>Role-based access: admins and managers see only their organization; proctoring media is served only to authorized reviewers.</li><li>Audit log of administrative actions; one active session per account.</li><li>Automatic deletion of proctoring media and exports on the retention schedule; backups in the hosting providers' managed storage.</li><li>Proctoring data minimized: photos kept only when something looks wrong plus samples; no continuous camera video unless the Customer turns it on.</li><li>Staff access on a need-to-know basis, under confidentiality.</li></ul>
@@ -97,4 +102,4 @@ sub-processors) are incorporated by reference; for the UK, the UK International 
 <div class="wrap"><table><tr><th>Customer</th><th>Edstellar</th></tr><tr><td>Name, title, date, signature</td><td>Name, title, date, signature</td></tr></table></div>
 
 <footer>Questions about this document: the Spica Super Admin.</footer>
-</main></body></html>
+</article></main></body></html>

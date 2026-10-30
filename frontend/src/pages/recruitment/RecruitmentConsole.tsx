@@ -864,7 +864,7 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
     description: initial?.description ?? "",
     testKind: initial?.test_kind ?? "placement",
     minCefr: initial?.min_cefr ?? null,
-    inviteValidDays: initial?.invite_valid_days ?? 7,
+    inviteValidHours: initial?.invite_valid_hours ?? 4,
     showResultToCandidate: initial?.show_result_to_candidate ?? false,
   });
   const [busy, setBusy] = useState(false);
@@ -918,8 +918,24 @@ function JobForm({ initial, onSave, onCancel, locked }: { initial?: Job; onSave:
           </select>
         </label>
         <label className="flex flex-col gap-1 text-sm text-ink">
-          {tr("Invitation link valid for (days)")}
-          <input type="number" min={1} max={60} value={f.inviteValidDays} onChange={(e) => setF({ ...f, inviteValidDays: Math.max(1, Math.min(60, Number(e.target.value) || 7)) })} className={input} />
+          {tr("Invitation link valid for")}
+          <select value={f.inviteValidHours} onChange={(e) => setF({ ...f, inviteValidHours: Number(e.target.value) })} className={input}>
+            {(
+              [
+                [3, tr("3 hours")],
+                [4, tr("4 hours")],
+                [8, tr("8 hours")],
+                [24, tr("1 day")],
+                [72, tr("3 days")],
+                [168, tr("7 days")],
+              ] as const
+            ).map(([h, label]) => (
+              <option key={h} value={h}>
+                {label}
+              </option>
+            ))}
+            {![3, 4, 8, 24, 72, 168].includes(f.inviteValidHours) && <option value={f.inviteValidHours}>{tr("{{n}} hours", { n: f.inviteValidHours })}</option>}
+          </select>
         </label>
       </div>
       <label className="flex flex-col gap-1 text-sm text-ink">

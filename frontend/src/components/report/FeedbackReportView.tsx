@@ -46,9 +46,12 @@ function StatusIcon({ q }: { q: ReportQuestion }) {
 // The right answer for a question that isn't multiple choice, and why.
 function Expected({ q }: { q: ReportQuestion }) {
   if (!q.expected) return null;
+  const wrong = outcome(q) === "wrong";
   return (
     <div className="text-sm bg-success/10 rounded-input px-3 py-2 flex flex-col gap-1">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-success">{q.expected.points ? tr("A good answer covers") : tr("Correct answer")}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-success">
+        {q.expected.points ? tr("A good answer covers") : wrong ? tr("The right answer is") : tr("Correct answer")}
+      </span>
       {q.expected.text && <span className="text-ink">{q.expected.text}</span>}
       {q.expected.points && (
         <ul className="list-disc pl-5 text-ink">
@@ -215,12 +218,25 @@ function Given({ q }: { q: ReportQuestion }) {
   if (!g) return null;
   const spoken = !!g.audioUri;
   const showText = !q.words && !q.writing && g.text;
+  // A right or wrong answer is boxed and marked, so the right answer under a
+  // wrong one is never read as the learner's own.
+  const o = outcome(q);
+  const marked = o === "right" || o === "wrong";
   return (
     <div className="flex flex-col gap-1.5">
-      {showText && (
+      {showText && !marked && (
         <p className="text-sm text-ink">
           <span className="font-semibold">{spoken ? tr("What we heard:") : tr("Your answer:")}</span> {g.text}
         </p>
+      )}
+      {showText && marked && (
+        <div className={`text-sm rounded-input px-3 py-2 flex flex-col gap-1 border ${o === "right" ? "bg-success/10 border-success/40" : "bg-error/10 border-error/40"}`}>
+          <span className={`text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1.5 ${o === "right" ? "text-success" : "text-error"}`}>
+            {o === "right" ? <CheckCircle2 size={13} /> : <XCircle size={13} />}
+            {spoken ? tr("What we heard") : tr("Your answer")} · {o === "right" ? tr("Right") : tr("Wrong")}
+          </span>
+          <span className="text-ink">{g.text}</span>
+        </div>
       )}
       {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Check your microphone before your next test.")}</p>}
     </div>
@@ -230,8 +246,9 @@ function Given({ q }: { q: ReportQuestion }) {
 export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
   const { t } = useTranslation();
   const o = outcome(q);
+  const edge = { right: "border-l-4 border-l-success", wrong: "border-l-4 border-l-error", skipped: "border-l-4 border-l-warning", pending: "" }[o];
   return (
-    <Card>
+    <Card className={edge}>
       <div className="flex items-start gap-2">
         <StatusIcon q={q} />
         <div className="flex-1 min-w-0">
@@ -263,11 +280,11 @@ export function QuestionCard({ q, n }: { q: ReportQuestion; n?: number }) {
 // and the right one. Shared by the feedback report and Practice Modules results.
 export function QuestionReview({
   questions: qs,
-  initialFilter = "review",
+  initialFilter = "all",
   note,
 }: {
   questions: ReportQuestion[];
-  initialFilter?: "review" | "right" | "wrong" | "skipped" | "all";
+  initialFilter?: "right" | "wrong" | "skipped" | "all";
   note?: string;
 }) {
   const [filter, setFilter] = useState(initialFilter);
@@ -279,19 +296,24 @@ export function QuestionReview({
   };
   const shown = qs.filter((q) => {
     const o = outcome(q);
-    return filter === "all" || (filter === "review" ? o === "wrong" || o === "skipped" : o === filter);
+    return filter === "all" || o === filter;
   });
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <h2 className="font-display font-bold text-lg text-ink flex-1">{tr("Question by question")}</h2>
-        <select value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)} className="rounded-input border border-rule bg-paper px-3 py-1.5 text-sm cursor-pointer">
-          <option value="review">{tr("Wrong and skipped ({{n}})", { n: counts.wrong + counts.skipped })}</option>
-          <option value="right">{tr("Right ({{n}})", { n: counts.right })}</option>
-          <option value="wrong">{tr("Wrong ({{n}})", { n: counts.wrong })}</option>
-          <option value="skipped">{tr("Skipped ({{n}})", { n: counts.skipped })}</option>
-          <option value="all">{tr("All questions ({{n}})", { n: counts.total })}</option>
-        </select>
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="font-display font-bold text-lg text-ink flex-1 min-w-[12rem]">{tr("Question by question")}</h2>
+        {(
+          [
+            ["all", tr("All questions ({{n}})", { n: counts.total }), "border-navy bg-navy/10 text-navy-deep"],
+            ["right", tr("Right ({{n}})", { n: counts.right }), "border-success bg-success/15 text-success"],
+            ["wrong", tr("Wrong ({{n}})", { n: counts.wrong }), "border-error bg-error/15 text-error"],
+            ["skipped", tr("Skipped ({{n}})", { n: counts.skipped }), "border-warning bg-warning/15 text-warning"],
+          ] as const
+        ).map(([k, label, on]) => (
+          <button key={k} type="button" onClick={() => setFilter(k)} className={`px-3 py-1 rounded-pill border text-sm cursor-pointer ${filter === k ? `${on} font-semibold` : "border-rule text-ink"}`}>
+            {label}
+          </button>
+        ))}
       </div>
       {note && <p className="text-sm text-muted">{note}</p>}
       {shown.length === 0 && <p className="text-sm text-success">{filter === "all" ? tr("No questions.") : tr("Nothing here.")}</p>}

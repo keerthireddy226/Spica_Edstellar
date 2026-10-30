@@ -53,7 +53,7 @@ export function CandidateChecklist({
           <Clock size={14} className="mt-0.5 shrink-0" />
           {tr("The test takes {{m}} minutes. Allow about 10 minutes more for the checks before it, and do it in one sitting.", { m: TEST_MINUTES[testKind] })}
         </p>
-        {expiresAt && <p className="text-xs text-muted">{tr("The link works until {{date}}.", { date: new Date(expiresAt).toLocaleDateString() })}</p>}
+        {expiresAt && <p className="text-xs text-muted">{tr("The link works until {{date}}.", { date: new Date(expiresAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) })}</p>}
       </div>
       <div className="grid md:grid-cols-2 gap-x-10 gap-y-5">
         <div className="flex flex-col gap-5">

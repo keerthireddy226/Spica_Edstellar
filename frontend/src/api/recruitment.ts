@@ -93,7 +93,7 @@ export interface Job {
   description: string | null;
   test_kind: TestKind;
   min_cefr: Cefr | null;
-  invite_valid_days: number;
+  invite_valid_hours: number;
   show_result_to_candidate: boolean;
   status: "open" | "closed";
   created_at: string;
@@ -118,7 +118,7 @@ export interface JobInput {
   description?: string | null;
   testKind: TestKind;
   minCefr?: Cefr | null;
-  inviteValidDays: number;
+  inviteValidHours: number;
   showResultToCandidate: boolean;
 }
 
@@ -349,4 +349,32 @@ export function getCandidateReport(id: string): Promise<import("@/api/practiceTe
 // Asks the Spica review team to review a candidate's score (the candidate asks the recruiter).
 export function requestCandidateReview(id: string, reason: string): Promise<{ id: string }> {
   return api(`/recruitment/assessments/${id}/review-request`, { method: "POST", body: JSON.stringify({ reason }) });
+}
+
+// For Edstellar staff: everyone an organization tested, with result, integrity and feedback.
+export interface OrgCandidate {
+  id: string;
+  jobId: string;
+  name: string | null;
+  email: string;
+  job: string;
+  status: string;
+  invitedAt: string;
+  completedAt: string | null;
+  sessionId: string | null;
+  level: string | null;
+  percent: number | null;
+  integrity: string | null;
+  riskScore: number | null;
+  feedback: { skipped: boolean; rating: number | null; recommend: number | null; smooth: boolean | null; issues: string[]; suggestion: string | null } | null;
+  review: string | null;
+}
+export interface OrgBatch {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+}
+export function getOrgCandidates(tenantId: string): Promise<{ candidates: OrgCandidate[]; batches: OrgBatch[] }> {
+  return api(`/recruitment/admin/orgs/${tenantId}/candidates`);
 }

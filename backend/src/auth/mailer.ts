@@ -129,12 +129,14 @@ export async function sendApplyCodeEmail(args: { to: string; code: string; orgNa
 // minutes: the test itself (the checks before it add about 10 minutes).
 export async function sendCandidateInviteEmail(args: { to: string; orgName: string; jobTitle: string; token: string; expiresAt: Date; minutes: string; lang?: string; reminder?: boolean }) {
   const link = `${FRONTEND_URL}/assess/${args.token}`;
-  const until = args.expiresAt.toISOString().slice(0, 10);
+  // A short link: how many hours; a longer one: until which date.
+  const hours = Math.round((args.expiresAt.getTime() - Date.now()) / 3_600_000);
+  const validity = hours <= 48 ? `works for the next ${hours} ${hours === 1 ? "hour" : "hours"}` : `works until ${args.expiresAt.toISOString().slice(0, 10)}`;
   if (args.reminder) {
     await sendMail(
       args.to,
       `Reminder: your English assessment for ${args.jobTitle}`,
-      `Your English assessment for ${args.jobTitle} at ${args.orgName} is still waiting. The link works until ${until}:\n\n${link}\n\nThe test takes ${args.minutes} minutes. Use a computer with a camera and microphone.`,
+      `Your English assessment for ${args.jobTitle} at ${args.orgName} is still waiting. The link ${validity}:\n\n${link}\n\nThe test takes ${args.minutes} minutes. Use a computer with a camera and microphone.`,
       args.lang,
     );
     return;
@@ -142,7 +144,7 @@ export async function sendCandidateInviteEmail(args: { to: string; orgName: stri
   await sendMail(
     args.to,
     `Your English assessment for ${args.jobTitle}`,
-    `${args.orgName} has invited you to an English assessment for ${args.jobTitle}.\n\nStart it here (the link works until ${until}):\n\n${link}\n\nThe test takes ${args.minutes} minutes. Use a computer with a camera and microphone, in a quiet room. If you weren't expecting this, you can ignore this message.`,
+    `${args.orgName} has invited you to an English assessment for ${args.jobTitle}.\n\nStart it here (the link ${validity}):\n\n${link}\n\nThe test takes ${args.minutes} minutes. Use a computer with a camera and microphone, in a quiet room. If you weren't expecting this, you can ignore this message.`,
     args.lang,
   );
 }

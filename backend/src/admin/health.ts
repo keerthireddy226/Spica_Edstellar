@@ -30,7 +30,15 @@ export async function orgHealth(tenantIds: string[]): Promise<Map<string, OrgHea
        (SELECT coalesce(sum(p.quantity - (SELECT count(*) FROM license_assignments a WHERE a.purchase_id = p.id AND a.reclaimed_at IS NULL)), 0)::int
           FROM license_purchases p WHERE p.tenant_id = t.id AND p.pool_expires_at BETWEEN now() AND now() + interval '30 days') AS expiring_unused,
        (SELECT max(le.created_at) FROM login_events le JOIN users u ON u.id = le.user_id
-          WHERE u.tenant_id = t.id AND u.role = 'org_admin' AND u.deleted_at IS NULL) AS org_admin_last_login
+          WHERE u.tenant_id = t.id AND u.role = 'org_admin' AND u.deleted_at IS NULL) AS org_admin_last_login,
+       -- Recruitment: candidates, finished tests, integrity reviews waiting, credits.
+       NOT ('skills' = ANY(coalesce(t.products, '{skills}'))) AS recruitment_only,
+       (SELECT count(*)::int FROM recruitment_assessments a WHERE a.tenant_id = t.id AND a.status <> 'cancelled') AS candidates,
+       (SELECT count(*)::int FROM recruitment_assessments a WHERE a.tenant_id = t.id AND a.status = 'completed') AS finished,
+       (SELECT count(*)::int FROM recruitment_assessments a WHERE a.tenant_id = t.id AND a.status = 'invited' AND a.invited_at < now() - interval '3 days') AS not_started,
+       (SELECT count(*)::int FROM recruitment_assessments a JOIN session_integrity si ON si.session_id = a.session_id
+          WHERE a.tenant_id = t.id AND si.status = 'flagged') AS to_review,
+       (SELECT coalesce(sum(delta), 0)::int FROM recruitment_credit_events c WHERE c.tenant_id = t.id) AS credits
      FROM tenants t WHERE t.id = ANY($1::uuid[])`,
     [tenantIds],
   );
@@ -38,6 +46,33 @@ export async function orgHealth(tenantIds: string[]): Promise<Map<string, OrgHea
   for (const o of r.rows) {
     const flags: string[] = [];
     let score = 0;
+    // A recruitment-only organization has candidates, not learners.
+    if (o.recruitment_only) {
+      const lastLogin = o.org_admin_last_login ? new Date(o.org_admin_last_login).getTime() : null;
+      const days = lastLogin ? (now - lastLogin) / 86400000 : Infinity;
+      if (o.candidates === 0) flags.push("No candidates invited yet");
+      if (o.to_review > 0) flags.push(o.to_review === 1 ? "1 finished test needs an integrity review" : `${o.to_review} finished tests need an integrity review`);
+      if (o.not_started > 0) flags.push(o.not_started === 1 ? "1 candidate hasn't started after 3 days" : `${o.not_started} candidates haven't started after 3 days`);
+      if (o.credits <= 0) flags.push("No assessment credits left");
+      else if (o.credits < 6) flags.push(`Only ${o.credits} assessment credits left`);
+      if (days > 30) flags.push(lastLogin ? "Org Admin hasn't signed in for a month" : "Org Admin has never signed in");
+      score += o.candidates ? Math.round((o.finished / o.candidates) * 40) : 0;
+      score += o.to_review === 0 ? 20 : o.to_review <= 3 ? 10 : 0;
+      score += o.credits >= 6 ? 20 : o.credits > 0 ? 10 : 0;
+      score += days <= 14 ? 20 : days <= 30 ? 10 : 0;
+      score = Math.max(0, Math.min(100, score));
+      out.set(o.id, {
+        tenantId: o.id,
+        score,
+        band: score >= 70 ? "healthy" : score >= 40 ? "watch" : "at_risk",
+        flags,
+        learners: 0,
+        active7: 0,
+        licenseUtilization: null,
+        orgAdminLastLoginAt: o.org_admin_last_login,
+      });
+      continue;
+    }
     const activity = o.learners ? o.active7 / o.learners : 0;
     score += Math.round(Math.min(1, activity / 0.6) * 40);
     if (o.learners > 0 && activity < 0.2) flags.push("Few learners practising this week");

@@ -1,32 +1,37 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Privacy Notice: assessment-only users</title><style>
+:root{--ink:#1f2328;--muted:#5b6470;--rule:#e3ddd3;--paper:#faf6ef;--surface:#ffffff;--accent:#b4573d;--accent-soft:#f6e7e1;--good:#2f7d4f;--warn:#a26b00;--bad:#b42318}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#ece8e1;--muted:#a9b0b9;--rule:#3a3631;--paper:#1b1916;--surface:#24211d;--accent:#e08b6f;--accent-soft:#3a2a24;--good:#6cc596;--warn:#e5b45a;--bad:#f08a80}}
+:root[data-theme="dark"]{--ink:#ece8e1;--muted:#a9b0b9;--rule:#3a3631;--paper:#1b1916;--surface:#24211d;--accent:#e08b6f;--accent-soft:#3a2a24;--good:#6cc596;--warn:#e5b45a;--bad:#f08a80}
 *{box-sizing:border-box}
-body{margin:0;background:#ffffff;color:#000000;font:15px/1.6 Arial,Helvetica,sans-serif}
-main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
-h1{font-size:26px;line-height:1.25;margin:4px 0 6px}
-h2{font-size:19px;margin:28px 0 8px;padding-top:6px;border-top:1px solid #cccccc}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 64px}
+article{background:var(--surface);border:1px solid var(--rule);border-radius:16px;padding:28px 24px}
+h1{font-size:28px;line-height:1.2;margin:4px 0 6px}
+h2{font-size:19px;margin:32px 0 8px;padding-top:4px;border-top:1px solid var(--rule)}
 h3{font-size:16px;margin:18px 0 6px}
 p,li{margin:6px 0}
 ul{padding-left:22px}
-.eyebrow{font-size:12px;text-transform:uppercase;color:#444444}
-.meta{color:#444444;font-size:13px}
-.banner{border:1px solid #999999;padding:10px 14px;font-size:14px;margin:14px 0}
+.eyebrow{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.meta{color:var(--muted);font-size:13px}
+.banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;font-size:14px;margin:14px 0}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}
-.card{border:1px solid #cccccc;padding:12px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:12px;padding:14px}
 .card b{display:block;margin-bottom:4px}
 table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
-th,td{border:1px solid #cccccc;padding:7px 9px;text-align:left;vertical-align:top}
-th{background:#f2f2f2}
+th,td{border:1px solid var(--rule);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper)}
 .wrap{overflow-x:auto}
-.y,.n,.m{font-weight:700}
-.note{font-size:13px;color:#444444}
+.y{color:var(--good);font-weight:700}.n{color:var(--bad);font-weight:700}.m{color:var(--warn);font-weight:700}
+.note{font-size:13px;color:var(--muted)}
+a{color:var(--accent)}
 code{font-size:13px}
-nav.toc{font-size:14px;margin:10px 0 0;display:grid;grid-template-columns:repeat(3,max-content);gap:4px 24px}
+nav.toc{font-size:14px;margin:10px 0 0;display:flex;flex-wrap:wrap;gap:4px 14px}
 nav.toc a{white-space:nowrap}
-footer{margin-top:28px;font-size:13px;color:#444444}
+footer{margin-top:28px;font-size:13px;color:var(--muted)}
 </style></head>
-<body><main>
+<body><main><article>
 <p class="eyebrow">Spica by Edstellar</p>
 <h1>Privacy Notice: assessment-only users</h1>
 <p class="meta">Version 2026-10-29 · Last updated 29 October 2026</p>
@@ -52,7 +57,7 @@ a person to review it and to explain the main reasons. In some places (for examp
 you that an automated tool is used and give you these rights.</p>
 <h2>Who receives your data</h2><ul><li>The organization that invited you (Part A), or only you (Part B).</li><li>Reviewers who check flagged tests.</li><li><b>Service providers</b> that work for us under contract and only on our instructions: website delivery, cloud hosting and storage, AI marking, email delivery and payment processing. We do not sell your data and do not share it for advertising.</li><li>Authorities, only when the law requires it.</li></ul>
 <h2>Where your data is stored</h2><p>Your data is stored on secure cloud servers, which may be outside your country. When data leaves your country, we use the safeguards the law requires, such as standard contractual clauses with our providers, and we only transfer it to countries not restricted by your country's law.</p>
-<h2 id="keep">How long it is kept</h2><ul><li>Proctoring photos, screenshots, recordings and ID images: 30 days after the test if nothing was flagged. A flagged test keeps them for 90 days, or the period your organization sets, and up to 1 year while it is still under review. Proctoring event logs: 1 year.</li><li>Face and voice templates: until you withdraw your consent or delete your account.</li><li>Part A: your result and account as the inviting organization sets (default 180 days). Part B: while your account is open.</li><li>Data download files you request: 7 days.</li></ul>
+<h2 id="keep">How long it is kept</h2><ul><li>Proctoring photos, screenshots, recordings and ID images: 30 days after the test if nothing was flagged. A flagged test keeps them for at most 60 days (less if your organization sets a shorter period), and up to 1 year while it is still waiting for review. Proctoring event logs: 90 days.</li><li>Face and voice templates: until you withdraw your consent or delete your account.</li><li>Part A: your result and account as the inviting organization sets (default 180 days). Part B: while your account is open.</li><li>Data download files you request: 7 days.</li></ul>
 <h2 id="rights">Your rights</h2>
 <p>You have the rights below. For Part A, send requests to the organization that invited you first; Spica helps them. For Part B, contact us directly.</p><ul><li>See and download your data (Profile → Download my data).</li><li>Correct your details.</li><li>Delete your account and data (Profile → Delete my account).</li><li>Withdraw any consent you gave, such as face and voice matching, at any time. Withdrawing does not affect what was done before.</li><li>Ask for a person to review an AI score.</li><li>Ask questions or complain to the Spica Super Admin. We reply within 30 days.</li></ul>
 <h3>Extra rights in some countries</h3>
@@ -74,4 +79,4 @@ correct it, delete it and limit the use of sensitive information, and we will no
 <h2 id="contact">Contact</h2><p>Part A: the organization that invited you, first. Spica: the Spica Super Admin, Grievance Officer.</p>
 
 <footer>Questions about this document: the Spica Super Admin.</footer>
-</main></body></html>
+</article></main></body></html>

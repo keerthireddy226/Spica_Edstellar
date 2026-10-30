@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge, DetailModal, InfoGrid, ModalEmpty, ModalRow, ModalSection, Pill } from "@/components/DetailModal";
 import { Building2, GraduationCap, HeartPulse, Receipt, ShieldCheck, Target, Users } from "lucide-react";
 import { OrgAdminDetailModal } from "@/components/OrgAdminDetailModal";
@@ -12,6 +12,8 @@ import { OrgAuditPanel } from "@/components/OrgAuditPanel";
 import { OrgCommercialPanel } from "@/components/OrgCommercialPanel";
 import { ProctoringSettings } from "@/components/proctoring/ProctoringSettings";
 import { OrgProductsPanel } from "@/components/recruitment/OrgProductsPanel";
+import { OrgCandidatesPanel } from "@/components/recruitment/OrgCandidatesPanel";
+import { getOrgCandidates, type OrgBatch, type OrgCandidate } from "@/api/recruitment";
 import { getTenantProctoringPolicy, saveTenantProctoringPolicy, type ProctoringPolicy } from "@/api/proctoring";
 
 import { tr } from "@/i18n/tr";
@@ -29,6 +31,21 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
   const [viewingManagerId, setViewingManagerId] = useState<string | null>(null);
   const [planTier, setPlanTier] = useState<string>(org.planTier);
   const [tab, setTab] = useState("overview");
+  // People the organization tested (recruitment): loaded with the window, for
+  // the count on top and the Candidates tab.
+  const recruits = !!org.products?.includes("recruitment");
+  const recruitOnly = recruits && !org.products?.includes("skills");
+  const [candidates, setCandidates] = useState<OrgCandidate[] | null>(null);
+  const [batches, setBatches] = useState<OrgBatch[]>([]);
+  useEffect(() => {
+    if (!recruits) return;
+    getOrgCandidates(org.id)
+      .then((r) => {
+        setCandidates(r.candidates);
+        setBatches(r.batches);
+      })
+      .catch(() => setCandidates([]));
+  }, [recruits, org.id]);
   const managedLearners = org.managers.reduce((n, m) => n + m.learnerCount, 0);
   const tierLabel = planTier.charAt(0).toUpperCase() + planTier.slice(1);
   const loadProctoring = useCallback(() => getTenantProctoringPolicy(org.id), [org.id]);
@@ -49,14 +66,19 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
         </>
       }
       stats={[
-        { label: tr("Learners"), value: org.learnerCount, hint: org.expectedLearnerCount ? tr("of {{expectedLearnerCount}} expected", { expectedLearnerCount: org.expectedLearnerCount }) : undefined },
-        { label: tr("Managers"), value: org.managers.length, hint: tr("{{managedLearners}} learners in their batches", { managedLearners: managedLearners }) },
+        recruitOnly
+          ? { label: tr("Candidates"), value: candidates?.length ?? "—", hint: candidates ? tr("{{n}} finished", { n: candidates.filter((c) => c.status === "completed").length }) : undefined }
+          : { label: tr("Learners"), value: org.learnerCount, hint: org.expectedLearnerCount ? tr("of {{expectedLearnerCount}} expected", { expectedLearnerCount: org.expectedLearnerCount }) : undefined },
+        recruitOnly
+          ? { label: tr("Batches"), value: batches.length, hint: tr("{{n}} open", { n: batches.filter((b) => b.status === "open").length }) }
+          : { label: tr("Managers"), value: org.managers.length, hint: tr("{{managedLearners}} learners in their batches", { managedLearners: managedLearners }) },
         { label: tr("Account health"), value: org.health ? `${org.health.score}/100` : "—", hint: org.health?.flags[0] ?? (org.health ? tr("No issues") : undefined) },
         { label: tr("Org Admin"), value: org.orgAdminStatus === "active" ? "Active" : org.orgAdminStatus === "pending" ? "Invited" : "None", hint: org.orgAdmin?.name || org.orgAdmin?.email },
       ]}
       tabs={[
         { key: "overview", label: tr("Overview") },
         { key: "people", label: tr("People"), count: org.managers.length + (org.orgAdmin ? 1 : 0) },
+        ...(recruits ? [{ key: "candidates", label: tr("Candidates"), count: candidates?.length }] : []),
         { key: "products", label: tr("Products & recruitment") },
         { key: "plan", label: tr("Plan & licenses") },
         { key: "billing", label: tr("Contract & billing") },
@@ -164,6 +186,7 @@ export function OrganizationDetailModal({ org, onClose, onChanged }: { org: Admi
 
       {tab === "billing" && <OrgCommercialPanel tenantId={org.id} hasOrgAdmin={!!org.orgAdmin} />}
 
+      {tab === "candidates" && <OrgCandidatesPanel candidates={candidates} batches={batches} />}
       {tab === "products" && <OrgProductsPanel tenantId={org.id} onChanged={onChanged} />}
 
       {tab === "proctoring" && (

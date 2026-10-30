@@ -139,7 +139,9 @@ recruitmentRouter.get("/invite/:token", async (req, res, next) => {
 // Marks the assessment started and signs the candidate in for it (one device
 // at a time, for CANDIDATE_SESSION_MS at most).
 async function signInCandidate(res: Response, assessmentId: string, candidateId: string) {
-  await pool.query(`UPDATE recruitment_assessments SET status = 'started', started_at = coalesce(started_at, now()) WHERE id = $1`, [assessmentId]);
+  // Once started, the link stays usable long enough to finish the test, even
+  // if it was opened close to the end of its time.
+  await pool.query(`UPDATE recruitment_assessments SET status = 'started', started_at = coalesce(started_at, now()), expires_at = greatest(expires_at, now() + interval '3 hours') WHERE id = $1`, [assessmentId]);
   await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [candidateId]);
   const { token } = await createSession(pool, candidateId);
   await pool.query(`UPDATE auth_sessions SET expires_at = least(expires_at, now() + make_interval(secs => $2)) WHERE session_token_hash = $1`, [
@@ -324,7 +326,8 @@ const jobSchema = z.object({
   description: z.string().trim().max(4000).nullable().optional(),
   testKind: z.enum(TEST_KINDS),
   minCefr: z.enum(CEFR).nullable().optional(),
-  inviteValidDays: z.coerce.number().int().min(1).max(60).default(7),
+  // How long an invitation link works, in hours (default 4).
+  inviteValidHours: z.coerce.number().int().min(1).max(1440).default(4),
   showResultToCandidate: z.boolean().default(false),
 });
 
@@ -358,9 +361,9 @@ recruitmentRouter.post("/jobs", requireAuth, async (req: AuthedRequest, res, nex
   try {
     const b = jobSchema.parse(req.body);
     const r = await pool.query(
-      `INSERT INTO recruitment_jobs (tenant_id, title, department, location, description, test_kind, min_cefr, invite_valid_days, show_result_to_candidate, created_by)
+      `INSERT INTO recruitment_jobs (tenant_id, title, department, location, description, test_kind, min_cefr, invite_valid_hours, show_result_to_candidate, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-      [tenantId, b.title, b.department ?? null, b.location ?? null, b.description ?? null, b.testKind, b.minCefr ?? null, b.inviteValidDays, b.showResultToCandidate, req.user!.id],
+      [tenantId, b.title, b.department ?? null, b.location ?? null, b.description ?? null, b.testKind, b.minCefr ?? null, b.inviteValidHours, b.showResultToCandidate, req.user!.id],
     );
     await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "recruitment.job_created", targetType: "job", targetId: r.rows[0].id, targetLabel: b.title, ip: req.ip });
     res.status(201).json({ id: r.rows[0].id });
@@ -381,7 +384,7 @@ recruitmentRouter.patch("/jobs/:id", requireAuth, async (req: AuthedRequest, res
       ["description", "description"],
       ["testKind", "test_kind"],
       ["minCefr", "min_cefr"],
-      ["inviteValidDays", "invite_valid_days"],
+      ["inviteValidHours", "invite_valid_hours"],
       ["showResultToCandidate", "show_result_to_candidate"],
       ["status", "status"],
     ];
@@ -870,6 +873,57 @@ async function staffTenant(req: AuthedRequest, res: Response): Promise<string | 
   }
   return tenantId;
 }
+
+// For Edstellar staff: everyone the organization tested, with their result,
+// the integrity check, their feedback on the test and any review request.
+recruitmentRouter.get("/admin/orgs/:tenantId/candidates", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const tenantId = await staffTenant(req, res);
+    if (!tenantId) return;
+    const r = await pool.query(
+      `SELECT a.id, a.email, nullif(concat_ws(' ', a.first_name, a.last_name), '') AS name, a.status, a.invited_at, a.completed_at, a.session_id,
+         a.result->>'cefrLevel' AS level, (a.result->>'overallPercent')::int AS percent, j.title AS job, a.job_id,
+         si.status AS integrity, si.risk_score,
+         f.skipped AS feedback_skipped, f.rating, f.recommend, f.smooth, f.issues, f.suggestion,
+         ra.status AS review_status, ra.assigned_to IS NOT NULL AS review_taken
+       FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
+       LEFT JOIN session_integrity si ON si.session_id = a.session_id
+       LEFT JOIN test_feedback f ON f.session_id = a.session_id
+       LEFT JOIN result_appeals ra ON ra.session_id = a.session_id
+       WHERE a.tenant_id = $1 AND a.status <> 'cancelled'
+       ORDER BY coalesce(a.completed_at, a.invited_at) DESC LIMIT 500`,
+      [tenantId],
+    );
+    const batches = (
+      await pool.query(`SELECT id, title, status, created_at FROM recruitment_jobs WHERE tenant_id = $1 ORDER BY created_at DESC`, [tenantId])
+    ).rows.map((b) => ({ id: b.id as string, title: b.title as string, status: b.status as string, createdAt: b.created_at }));
+    res.json({
+      batches,
+      candidates: r.rows.map((x) => ({
+        jobId: x.job_id,
+        id: x.id,
+        name: x.name,
+        email: x.email,
+        job: x.job,
+        status: x.status,
+        invitedAt: x.invited_at,
+        completedAt: x.completed_at,
+        sessionId: x.session_id,
+        level: x.level,
+        percent: x.percent,
+        integrity: x.integrity,
+        riskScore: x.risk_score,
+        feedback:
+          x.feedback_skipped === null
+            ? null
+            : { skipped: x.feedback_skipped, rating: x.rating, recommend: x.recommend, smooth: x.smooth, issues: x.issues ?? [], suggestion: x.suggestion },
+        review: x.review_status ? (x.review_status === "open" ? (x.review_taken ? "in_review" : "pending") : x.review_status) : null,
+      })),
+    });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
 
 recruitmentRouter.get("/admin/orgs/:tenantId", requireAuth, async (req: AuthedRequest, res, next) => {
   try {

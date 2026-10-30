@@ -27,6 +27,14 @@ describe("levelSummary", () => {
     expect(s.cefrLevel).toBe("A1");
   });
 
+  it("ignores a skill with too few questions for the cap", () => {
+    const strongReading = ["A1", "A2", "B1", "B2", "C1"].flatMap((l) => [row(l as "A1", true), row(l as "A1", true)]);
+    const shortWriting = [row("A2", false, ["writing"]), row("A2", false, ["writing"])];
+    const s = levelSummary([...strongReading, ...shortWriting])!;
+    expect(s.skillLevels.writing).toBe("A1");
+    expect(s.cefrLevel).not.toBe("A1");
+  });
+
   it("is null when nothing could be scored", () => {
     expect(levelSummary([{ ...row("B1", true), status: "pending" }])).toBeNull();
   });

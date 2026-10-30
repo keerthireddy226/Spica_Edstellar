@@ -52,7 +52,7 @@ export type ProctoringPolicy = z.infer<typeof policySchema>;
 // special-category data and an employee's consent is rarely "freely given".
 // They can still be switched on; learners then always get a manual route.
 const BIOMETRIC_DEFAULT: Record<ProctoringRegion, boolean> = { global: true, eu: false, us: true, india: true };
-const RETENTION_DEFAULT: Record<ProctoringRegion, number> = { global: 90, eu: 30, us: 30, india: 90 };
+const RETENTION_DEFAULT: Record<ProctoringRegion, number> = { global: 60, eu: 30, us: 30, india: 60 };
 
 export function presetPolicy(mode: ProctoringMode, region: ProctoringRegion): ProctoringPolicy {
   const base = {
