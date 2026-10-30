@@ -8,7 +8,7 @@ import { currentLevels, type LevelReading, type LevelSource } from "../learner/c
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { learnerAccessMap } from "../licenses/service.js";
-import { levelSummary } from "../placement/levels.js";
+import { levelSummary, weightedSkillMean } from "../placement/levels.js";
 import { goalStatus, INACTIVE_DAYS, type MockPoint } from "../programs/monitoring.js";
 import { IN_PLAN } from "../programs/service.js";
 import { BANDS, levelOfScore, scoreReport, spicaScore } from "./scoreReport.js";
@@ -59,15 +59,15 @@ export interface Snapshot {
 
 // Each skill's Spica score from its level and share right (the overall share
 // when a skill's own isn't known); the overall score is their mean.
-export function snapshot(levels: Partial<SkillMap<string>>, percents: Partial<SkillMap<number | null>> | null, overallPercent: number | null, overallLevel: string | null): Snapshot {
+export function snapshot(levels: Partial<SkillMap<string>>, percents: Partial<SkillMap<number | null>> | null, overallPercent: number | null, overallLevel: string | null, testTypeId?: string | null): Snapshot {
   const skills: Snapshot["skills"] = {};
   for (const s of SKILLS) {
     const level = levels[s];
     const score = spicaScore(level, percents?.[s] ?? overallPercent);
     if (level && score !== null) skills[s] = { level, score };
   }
-  const scores = Object.values(skills).map((x) => x!.score);
-  const score = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : spicaScore(overallLevel, overallPercent);
+  const mean = weightedSkillMean(Object.fromEntries(Object.entries(skills).map(([s, x]) => [s, x!.score])), testTypeId);
+  const score = mean !== null ? Math.round(mean) : spicaScore(overallLevel, overallPercent);
   return { level: score !== null ? levelOfScore(score) : overallLevel, score, skills };
 }
 

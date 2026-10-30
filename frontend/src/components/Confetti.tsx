@@ -2,9 +2,10 @@ import { useEffect, useRef } from "react";
 
 const COLOURS = ["#c96f4a", "#e0a458", "#7a9e7e", "#5b7fa6", "#d98aa0", "#f2d06b"];
 
-// A short burst of paper confetti from the top of the screen, drawn on a
-// canvas that removes itself. Skipped for people who ask for reduced motion.
-export function Confetti({ pieces = 90, durationMs = 2200 }: { pieces?: number; durationMs?: number }) {
+// A short burst of paper confetti from the top of the screen ("rain"), or shot
+// up from both bottom corners ("cannons"), drawn on a canvas that removes
+// itself. Skipped for people who ask for reduced motion.
+export function Confetti({ pieces = 90, durationMs = 2200, variant = "rain" }: { pieces?: number; durationMs?: number; variant?: "rain" | "cannons" }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -19,16 +20,28 @@ export function Confetti({ pieces = 90, durationMs = 2200 }: { pieces?: number; 
     };
     resize();
     const w = () => canvas.width;
-    const parts = Array.from({ length: pieces }, () => ({
-      x: w() / 2 + (Math.random() - 0.5) * w() * 0.5,
-      y: -20 * dpr - Math.random() * 120 * dpr,
-      vx: (Math.random() - 0.5) * 9 * dpr,
-      vy: (2 + Math.random() * 5) * dpr,
+    const parts = Array.from({ length: pieces }, (_, i) => {
+      const left = i % 2 === 0;
+      return {
+      ...(variant === "cannons"
+        ? {
+            x: left ? 0 : w(),
+            y: canvas.height,
+            vx: (left ? 1 : -1) * (4 + Math.random() * 9) * dpr,
+            vy: -(12 + Math.random() * 10) * dpr,
+          }
+        : {
+            x: w() / 2 + (Math.random() - 0.5) * w() * 0.5,
+            y: -20 * dpr - Math.random() * 120 * dpr,
+            vx: (Math.random() - 0.5) * 9 * dpr,
+            vy: (2 + Math.random() * 5) * dpr,
+          }),
       size: (6 + Math.random() * 6) * dpr,
       rot: Math.random() * Math.PI,
       vr: (Math.random() - 0.5) * 0.3,
       colour: COLOURS[Math.floor(Math.random() * COLOURS.length)],
-    }));
+      };
+    });
     const start = performance.now();
     let frame = 0;
     const draw = (now: number) => {
@@ -57,7 +70,7 @@ export function Confetti({ pieces = 90, durationMs = 2200 }: { pieces?: number; 
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
     };
-  }, [pieces, durationMs]);
+  }, [pieces, durationMs, variant]);
 
   return <canvas ref={ref} aria-hidden="true" className="fixed inset-0 w-full h-full pointer-events-none z-50" />;
 }

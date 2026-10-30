@@ -76,6 +76,7 @@ import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
 import { showFaceCheckOutcome } from "@/hooks/faceCheckWarning";
 import { useProctoring } from "@/hooks/useProctoring";
 import { useAuth } from "@/hooks/useAuth";
+import { Confetti } from "@/components/Confetti";
 import { CandidateFinished } from "@/components/recruitment/CandidateShell";
 import { useTestFocus } from "@/components/AppShell/testFocus";
 import { TestIdTag } from "@/components/TestIdTag";
@@ -1171,6 +1172,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   if (summary) {
     return (
       <div className="flex flex-col gap-6 w-full">
+      {/* Every finished practice or mock test gets a short celebration. */}
+      <Confetti key={sessionId ?? "done"} />
       <div className="max-w-lg w-full mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-5 items-center text-center">
         <div className="h-14 w-14 rounded-full bg-navy text-lime flex items-center justify-center">
           <CheckCircle2 size={32} />

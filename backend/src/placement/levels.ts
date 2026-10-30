@@ -18,6 +18,28 @@ export interface ScoredAttemptRow {
   cefr_level: CefrLevel | null;
 }
 
+// How much each skill counts toward a test's overall result: the same for
+// every skill the test reports, except the English Writing test, where
+// writing is half and the other skills share the rest.
+const WRITING_TEST_ID = "writing";
+export function skillWeights(testTypeId: string | null | undefined, skills: string[]): Record<string, number> {
+  if (!skills.length) return {};
+  if (testTypeId === WRITING_TEST_ID && skills.includes("writing") && skills.length > 1) {
+    const rest = 0.5 / (skills.length - 1);
+    return Object.fromEntries(skills.map((s) => [s, s === "writing" ? 0.5 : rest]));
+  }
+  return Object.fromEntries(skills.map((s) => [s, 1 / skills.length]));
+}
+
+// The weighted mean of the skills' values (percents or scores); null when no
+// skill has one.
+export function weightedSkillMean(values: Partial<Record<string, number | null>>, testTypeId: string | null | undefined): number | null {
+  const skills = Object.keys(values).filter((s) => typeof values[s] === "number");
+  if (!skills.length) return null;
+  const w = skillWeights(testTypeId, skills);
+  return skills.reduce((sum, s) => sum + (values[s] as number) * w[s], 0);
+}
+
 export function rowIsCorrect(r: ScoredAttemptRow): boolean {
   return isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
 }

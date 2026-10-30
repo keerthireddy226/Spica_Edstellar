@@ -12,7 +12,8 @@ import { notify, orgAdminIds } from "../notifications/service.js";
 import { emitEvent } from "../webhooks/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
-import { levelSummary } from "../placement/levels.js";
+import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { testTypeOfExam } from "../catalogue/service.js";
 import { snapshot } from "../reports/batchReport.js";
 
 export const PRODUCTS = ["skills", "recruitment"] as const;
@@ -361,10 +362,13 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
     const ok = (r: (typeof rows)[number]) => isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
     const labels = [...new Set(rows.map((r) => r.part_label).filter(Boolean))];
     const summary = levelSummary(rows);
-    const overallPercent = graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null;
-    // The headline level is the Spica score's, as on the candidate's own
-    // result, so the report and the test never show different levels.
-    const level = summary && { ...summary, cefrLevel: snapshot(summary.skillLevels as never, summary.skillPercents as never, overallPercent, summary.cefrLevel).level ?? summary.cefrLevel };
+    // As on the candidate's own result: the overall percentage is the skills'
+    // weighted mean, and the level is the Spica score's, so the report and the
+    // test never show different figures.
+    const testTypeId = a.exam_id ? await testTypeOfExam(a.exam_id) : null;
+    const weighted = summary ? weightedSkillMean(summary.skillPercents, testTypeId) : null;
+    const overallPercent = weighted !== null ? Math.round(weighted) : graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null;
+    const level = summary && { ...summary, cefrLevel: snapshot(summary.skillLevels as never, summary.skillPercents as never, overallPercent, summary.cefrLevel, testTypeId).level ?? summary.cefrLevel };
     result = {
       kind: "exam",
       overallPercent,

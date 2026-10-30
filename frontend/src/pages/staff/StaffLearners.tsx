@@ -421,7 +421,8 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
                     </td>
                     <td className="px-2.5 py-3">
                       <StatusPill tone={s === "active" ? "success" : s === "pending" ? "warning" : "error"}>
-                        {s === "active" ? tr("Active · {{ago}}", { ago: ago(r.lastActiveOn) }) : s === "pending" ? tr("Invite pending") : tr("Deactivated")}
+                        {/* Someone who signed up themselves wasn't invited: they just haven't logged in yet. */}
+                        {s === "active" ? tr("Active · {{ago}}", { ago: ago(r.lastActiveOn) }) : s === "pending" ? (r.invitedByName ? tr("Invite pending") : tr("Never logged in")) : tr("Deactivated")}
                       </StatusPill>
                     </td>
                     <td className="px-2.5 py-3" onClick={(e) => e.stopPropagation()}>

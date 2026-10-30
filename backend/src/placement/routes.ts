@@ -15,7 +15,7 @@ import {
   stepLevel,
   type CefrLevel,
 } from "./cefr.js";
-import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, type ScoredAttemptRow } from "./levels.js";
+import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
 import { newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
@@ -477,8 +477,10 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
       return res.json({ testCode: sessionResult.rows[0].test_code, gradedCount: 0, correctCount: 0, pendingCount, failedCount });
     }
 
-    const overallPercent = Math.round((correctCount / graded.length) * 100);
-    const { skillPercents, skillLevels, roadmapSkillPercents } = computeSkillBreakdown(graded, overallPercent);
+    // The overall percentage counts each skill the same, not each question.
+    const pooledPercent = Math.round((correctCount / graded.length) * 100);
+    const { skillPercents, skillLevels, roadmapSkillPercents } = computeSkillBreakdown(graded, pooledPercent);
+    const overallPercent = Math.round(weightedSkillMean(skillPercents, null) ?? pooledPercent);
     const { cefrLevel, cefrCappedByGap } = computeHeadlineLevel(graded, rows, correctCount, pendingCount, skillLevels);
 
     // Any flagged face check from this session (enrollment mismatch, repeated

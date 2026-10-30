@@ -1,13 +1,15 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbulb } from "lucide-react";
+import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbulb, Award } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, FeedbackReport, ReportQuestion, ReportResponse, WordOp } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 import { TestFeedbackCard } from "@/components/report/AfterTest";
 import { FinalResultWaiting, ScoreReport } from "@/components/report/ScoreReport";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
+import { Confetti } from "@/components/Confetti";
+import { useAuth } from "@/hooks/useAuth";
 
 const ERROR_TYPE: Record<string, () => string> = {
   spelling: () => tr("Spelling"),
@@ -441,6 +443,87 @@ function Report({ report, upgradeLink, kind, scored = false }: { report: Feedbac
   );
 }
 
+// The first time a learner opens their final assessment result with its
+// certificate: a full-screen celebration (confetti from the top and both
+// corners, then a second wave) over a congratulations card. Remembered per
+// test in this browser; later visits keep only the banner.
+function CertificateCelebration({ sessionId, level, score, checkUrl }: { sessionId: string; level: string; score: number; checkUrl: string }) {
+  const { user } = useAuth();
+  const [open, setOpen] = useState(() => {
+    try {
+      const key = `spica.celebrated.${sessionId}`;
+      if (localStorage.getItem(key)) return false;
+      localStorage.setItem(key, "1");
+    } catch {
+      // Storage blocked: celebrate anyway.
+    }
+    return true;
+  });
+  const [wave, setWave] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => setWave(true), 1800);
+    return () => clearTimeout(t);
+  }, [open]);
+  return (
+    <>
+      {open && (
+        <div className="print:hidden fixed inset-0 z-40 bg-ink/60 flex items-center justify-center p-4" onClick={() => setOpen(false)}>
+          <style>{`@keyframes cert-pop { 0% { transform: scale(.4); opacity: 0 } 70% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) } }`}</style>
+          <Confetti variant="cannons" pieces={220} durationMs={4500} />
+          <Confetti pieces={200} durationMs={5000} />
+          {wave && <Confetti variant="cannons" pieces={160} durationMs={4000} />}
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-md w-full bg-surface rounded-card shadow-xl p-8 flex flex-col items-center text-center gap-4"
+            style={{ animation: "cert-pop .6s ease-out" }}
+          >
+            <div className="h-20 w-20 rounded-full bg-warning/20 text-warning flex items-center justify-center ring-8 ring-warning/10">
+              <Award size={44} />
+            </div>
+            <p className="font-display font-bold text-2xl text-ink">
+              {user?.firstName ? tr("Congratulations, {{name}}!", { name: user.firstName }) : tr("Congratulations!")}
+            </p>
+            <p className="text-sm text-muted">{tr("You completed your final assessment and earned your Spica certificate.")}</p>
+            <div className="flex items-center gap-6 py-2">
+              <div className="flex flex-col items-center">
+                <span className="text-4xl font-display font-bold text-navy-deep">{level}</span>
+                <span className="text-[11px] uppercase tracking-wide text-muted">{tr("CEFR level")}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-4xl font-display font-bold text-ink">{score}</span>
+                <span className="text-[11px] uppercase tracking-wide text-muted">{tr("Spica score")}</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 w-full">
+              <a href={checkUrl} className="flex-1 px-4 py-2.5 rounded-pill bg-navy text-white text-sm font-semibold hover:opacity-90">
+                {tr("View certificate")}
+              </a>
+              <button type="button" onClick={() => setOpen(false)} className="flex-1 px-4 py-2.5 rounded-pill border border-rule text-sm font-semibold text-ink cursor-pointer">
+                {tr("See my result")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="print:hidden rounded-card border border-success/40 bg-success/10 p-5 flex flex-wrap items-center gap-4">
+        <div className="h-12 w-12 rounded-full bg-success/20 text-success flex items-center justify-center shrink-0">
+          <Award size={26} />
+        </div>
+        <div className="flex-1 min-w-[12rem]">
+          <p className="font-display font-bold text-lg text-ink">{tr("Congratulations! You're certified at {{level}}.", { level })}</p>
+          <p className="text-sm text-muted">{tr("Your certificate is ready to view, download and share.")}</p>
+        </div>
+        <a href={checkUrl} className="px-4 py-2 rounded-pill bg-navy text-white text-sm font-semibold hover:opacity-90">
+          {tr("View certificate")}
+        </a>
+      </div>
+    </>
+  );
+}
+
 // Loads a report and waits while it's being built.
 // viewer "org": an Org Admin or Manager reading a learner's report.
 export function FeedbackReportView({
@@ -500,6 +583,7 @@ export function FeedbackReportView({
   if (!data.report && data.about?.deliveryMode === "certified") {
     return data.score?.overall ? (
       <div className="flex flex-col gap-4">
+        {viewer === "learner" && sessionId && !data.about?.levelTest && <CertificateCelebration sessionId={sessionId} level={data.score.overall.level} score={data.score.overall.score} checkUrl={data.score.check.url} />}
         <ScoreReport score={data.score} about={data.about} analysis="" viewer={viewer} />
         {afterTest}
       </div>

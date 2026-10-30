@@ -32,7 +32,7 @@ INSERT INTO item_types (id, name, skills, input_method, instruction_text, questi
 ('dictation', 'Dictation', ARRAY['listening','writing'], 'text',
   'You will hear a sentence. Type exactly what you hear, word for word.',
   'Type exactly what you hear.', 30, NULL, NULL, 40),
-('sentence_completion', 'Sentence Completion', ARRAY['writing'], 'text',
+('sentence_completion', 'Sentence Completion', ARRAY['reading', 'writing'], 'text',
   'Complete the sentence by filling in the blank with the correct form of the word shown.',
   'Fill in the blank.', 20, NULL, NULL, 30),
 ('passage_reconstruction', 'Passage Reconstruction', ARRAY['reading','writing'], 'textarea',

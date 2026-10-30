@@ -6,7 +6,8 @@
 import QRCode from "qrcode";
 import { pool } from "../db.js";
 import { APP_URL } from "../auth/mailer.js";
-import { levelSummary } from "../placement/levels.js";
+import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { testTypeOfExam } from "../catalogue/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { wordDiff, diffSummary } from "./wordDiff.js";
@@ -162,7 +163,11 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
       focus: types.filter((t) => share(t) < 0.6).sort((a, b) => share(a) - share(b)).slice(0, 2),
     });
   }
-  const overallScore = skills.length ? Math.round(avg(skills.map((x) => x.score))!) : null;
+  // Weighted by the test, as the result saved when it finished.
+  const comp = (s.composition ?? {}) as { testTypeId?: string; examId?: string };
+  const testTypeId = comp.testTypeId ?? (comp.examId ? await testTypeOfExam(comp.examId) : null);
+  const overallMean = weightedSkillMean(Object.fromEntries(skills.map((x) => [x.skill, x.score])), testTypeId);
+  const overallScore = overallMean !== null ? Math.round(overallMean) : null;
 
   // Speaking: the recordings' fluency and clarity (0-1 from the grader), speed and fillers.
   const recorded = rows.filter((r) => r.input_method === "mic" && answered(r) && r.status === "scored");

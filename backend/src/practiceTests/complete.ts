@@ -98,7 +98,8 @@ export async function completeSession(
   // error and no way forward. Fall back to a minimal "you finished, score
   // pending" response instead of failing the whole request.
   try {
-    const scored = summarizeScores(await loadScoreRows(sessionId));
+    const testTypeId = (composition.testTypeId as string | undefined) ?? (composition.examId ? await testTypeOfExam(composition.examId) : null);
+    const scored = summarizeScores(await loadScoreRows(sessionId), testTypeId);
     const { rows, graded, rowCorrect, correctCount, pendingCount, failedCount, skippedCount, level, overall } = scored;
 
     const partLabels = [...new Set(rows.map((r) => r.part_label))];
@@ -109,7 +110,7 @@ export async function completeSession(
 
     // A mock's estimated score range on the exam family's scale, where it publishes one.
     // A short form isn't the exam's format, so its score range wouldn't mean anything.
-    const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale((composition.testTypeId as string | undefined) ?? (await testTypeOfExam(composition.examId))) : null;
+    const scale = (deliveryMode === "mock" || deliveryMode === "certified") && !composition.shortForm ? await familyScoreScale(testTypeId) : null;
     const skillScoreBands = level?.skillLevels
       ? Object.fromEntries(Object.entries(level.skillLevels as Record<string, string | null>).map(([k, v]) => [k, bandForLevel(scale, v)]))
       : null;
@@ -161,7 +162,7 @@ export async function completeSession(
       pendingCount,
       skippedCount,
       failedCount,
-      overallPercent: graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : 0,
+      overallPercent: overall ?? 0,
       partResults,
       cefrLevel: level?.cefrLevel ?? null,
       skillLevels: level?.skillLevels ?? null,
