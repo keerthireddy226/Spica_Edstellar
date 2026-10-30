@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
+import { PrivacyNoticeModal } from "@/pages/PrivacyNoticeDoc";
 import { Camera, FileText, Keyboard, Mic, MonitorUp, PenLine, Eye } from "lucide-react";
 import type { DeliveryMode, PreTestInfo, ProctoringSetup } from "@/api/proctoring";
-import { PRIVACY_NOTICE_URL } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { tr } from "@/i18n/tr";
 
@@ -112,22 +112,26 @@ export function PrivacyConsent({ agreed, onChange }: { agreed: boolean; onChange
   const [opened, setOpened] = useState(false);
   // The notice for this person's kind of account (candidate, organization, individual).
   const { user } = useAuth();
-  const href = PRIVACY_NOTICE_URL[user?.privacyAudience ?? "free"];
+  const audience = user?.privacyAudience ?? "free";
+  const [show, setShow] = useState(false);
   return (
     <div className="rounded-card border-2 border-navy/40 bg-navy/5 p-4 flex flex-col gap-3">
       <p className="flex items-center gap-2 font-display font-bold text-base text-ink">
         <FileText size={18} className="text-navy-deep" /> {tr("Privacy Notice")}
       </p>
       <p className="text-sm text-ink">{tr("Please read how Spica uses your data before you continue.")}</p>
-      <a
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-        onClick={() => setOpened(true)}
-        className="self-start inline-flex items-center gap-2 rounded-input bg-navy text-white font-semibold text-sm px-4 py-2 hover:opacity-90"
+      {/* Opens over the test screen, so nobody leaves their place to read it. */}
+      <button
+        type="button"
+        onClick={() => {
+          setOpened(true);
+          setShow(true);
+        }}
+        className="self-start inline-flex items-center gap-2 rounded-input bg-navy text-white font-semibold text-sm px-4 py-2 hover:opacity-90 cursor-pointer"
       >
         <FileText size={16} /> {tr("Open the Privacy Notice")}
-      </a>
+      </button>
+      {show && <PrivacyNoticeModal audience={audience} onClose={() => setShow(false)} />}
       <label className={`flex items-start gap-2 text-sm ${opened ? "text-ink cursor-pointer" : "text-muted"}`}>
         <input type="checkbox" disabled={!opened} checked={agreed} onChange={(e) => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
         <span>

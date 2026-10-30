@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { PrivacyNoticeModal } from "@/pages/PrivacyNoticeDoc";
 import { passwordErrorText } from "@/lib/passwordErrors";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -6,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { PRIVACY_NOTICE_URL, ROUTES } from "@/constants/routes";
+import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 
 export function Signup() {
@@ -19,6 +20,8 @@ export function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreed, setAgreed] = useState(false);
+  // The notice opens over the form, so nothing typed is lost.
+  const [showNotice, setShowNotice] = useState(false);
   const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -130,12 +133,14 @@ export function Signup() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             {tr("I have read the")}{" "}
-            <a href={PRIVACY_NOTICE_URL.free} target="_blank" rel="noreferrer" className="font-medium underline">
+            <button type="button" onClick={() => setShowNotice(true)} className="font-medium underline cursor-pointer">
               {tr("Privacy Notice")}
-            </a>{" "}
+            </button>{" "}
             {tr("and agree to how Spica uses my data.")}
           </span>
         </label>
+        {/* Outside the label, so clicks in the notice don't tick the box. */}
+        {showNotice && <PrivacyNoticeModal audience="free" onClose={() => setShowNotice(false)} />}
         <label className="flex items-start gap-2 text-sm text-ink">
           <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{tr("I am 18 or older.")}</span>

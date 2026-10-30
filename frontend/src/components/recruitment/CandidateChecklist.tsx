@@ -1,13 +1,27 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Camera, Clock, Headphones, IdCard, Lock, MonitorUp, ShieldCheck, Volume2 } from "lucide-react";
 import type { CandidateProctoring, TestKind } from "@/api/recruitment";
 import { TEST_KIND_LABEL, TEST_MINUTES } from "@/components/recruitment/testKinds";
-import { PRIVACY_NOTICE_URL } from "@/constants/routes";
+import { PrivacyNoticeModal } from "@/pages/PrivacyNoticeDoc";
 import { tr } from "@/i18n/tr";
 
 // What a candidate reads before starting: how long it takes, what to have
 // ready, the checks before the test (only those the organization uses) and
 // the few rules during it. Shared by the invite link and the public link.
+// Opens the assessment Privacy Notice over the invitation page, so the
+// candidate never leaves their test link.
+function NoticeLink() {
+  const [show, setShow] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setShow(true)} className="underline text-navy-deep cursor-pointer">
+        {tr("Read the full Privacy Notice")}
+      </button>
+      {show && <PrivacyNoticeModal audience="assessment" onClose={() => setShow(false)} />}
+    </>
+  );
+}
+
 export function CandidateChecklist({
   testKind,
   proctoring,
@@ -98,9 +112,7 @@ export function CandidateChecklist({
           <li>{tr("Your spoken and written answers are scored by AI. Anything unusual is checked by a person; nothing fails you automatically.")}</li>
           <li>{tr("{{org}} receives your results.", { org: orgName })}</li>
           <li>
-            <a href={PRIVACY_NOTICE_URL.assessment} target="_blank" rel="noreferrer" className="underline text-navy-deep">
-              {tr("Read the full Privacy Notice")}
-            </a>
+            <NoticeLink />
           </li>
         </ul>
       </div>
