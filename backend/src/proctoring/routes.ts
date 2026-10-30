@@ -243,8 +243,14 @@ function secureBrowserOk(policy: ProctoringPolicy, req: AuthedRequest): boolean 
   return policy.sebConfigKeys.some((key) => createHash("sha256").update(pageUrl + key.toLowerCase()).digest("hex") === hash);
 }
 
-async function latestIdentity(userId: string) {
-  return (await pool.query(`SELECT id, status, created_at, review_note FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [userId])).rows[0] ?? null;
+// The person's latest ID check; with `since`, only one made from then on.
+async function latestIdentity(userId: string, since: Date | null = null) {
+  return (
+    await pool.query(
+      `SELECT id, status, created_at, review_note FROM identity_verifications WHERE user_id = $1 AND ($2::timestamptz IS NULL OR created_at >= $2) ORDER BY created_at DESC LIMIT 1`,
+      [userId, since],
+    )
+  ).rows[0] ?? null;
 }
 
 proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -264,6 +270,10 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
     const kinds = new Set(media.rows.map((r) => r.kind));
     const face = (await pool.query(`SELECT status, embedding FROM face_enrollments WHERE user_id = $1`, [req.user!.id])).rows[0];
     const who = (await pool.query(`SELECT u.role, t.type AS tenant_type FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [req.user!.id])).rows[0];
+    // An assessment (a job candidate's test, or a real test for a certificate)
+    // asks for the ID check every time: one from an earlier test doesn't count.
+    const sess = (await pool.query(`SELECT started_at, delivery_mode FROM sessions WHERE id = $1`, [si.session_id])).rows[0];
+    const assessment = who?.role === "candidate" || sess?.delivery_mode === "certified";
     const { sebConfigKeys: _keys, ...visible } = p;
     res.json({
       proctored: p.mode !== "off",
@@ -272,7 +282,7 @@ proctoringRouter.get("/sessions/:sessionId/setup", requireAuth, async (req: Auth
       consentVersion: consentVersion(p),
       biometric: usesBiometrics(p),
       biometricOptOut: si.biometric_opt_out,
-      identity: p.idVerification ? await latestIdentity(req.user!.id) : null,
+      identity: p.idVerification ? await latestIdentity(req.user!.id, assessment ? (sess?.started_at ?? null) : null) : null,
       roomScanDone: kinds.has("room_scan"),
       voiceBaselineDone: kinds.has("voice_baseline"),
       voiceBaselineMinSeconds: BASELINE_MIN_SECONDS,
