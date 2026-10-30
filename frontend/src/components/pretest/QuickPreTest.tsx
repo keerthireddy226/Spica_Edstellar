@@ -26,7 +26,7 @@ export function QuickPreTest({
   minutes?: string | null;
   // agreed: the learner agreed here (else the first screen of the test asks).
   onReady: (agreed: boolean) => void;
-  onBack: () => void;
+  onBack?: () => void;
   // Shown on the device check screen, above the agreement (a candidate's voice choice).
   extra?: ReactNode;
 }) {
