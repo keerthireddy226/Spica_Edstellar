@@ -5516,5 +5516,16 @@
  "3 hours": "3 godziny",
  "{{n}} hours": "{{n}} godzin",
  "The right answer is": "Prawidłowa odpowiedź to",
- "What we heard": "To, co usłyszeliśmy"
+ "What we heard": "To, co usłyszeliśmy",
+ "Congratulations! You're certified at {{level}}.": "Gratulacje! Masz certyfikat na poziomie {{level}}.",
+ "Your certificate is ready to view, download and share.": "Twój certyfikat jest gotowy do wyświetlenia, pobrania i udostępnienia.",
+ "Congratulations, {{name}}!": "Gratulacje, {{name}}!",
+ "Congratulations!": "Gratulacje!",
+ "You completed your final assessment and earned your Spica certificate.": "Ukończyłeś ocenę końcową i zdobyłeś certyfikat Spica.",
+ "Open your test link again": "Otwórz ponownie link do testu",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "Aby kontynuować test, otwórz ponownie link z wiadomości e-mail z zaproszeniem. Twoje dotychczasowe odpowiedzi zostały zapisane.",
+ "Reconnecting…": "Ponowne łączenie…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Nie możemy teraz połączyć się ze Spica. Ta strona wznowi działanie automatycznie, gdy połączenie zostanie przywrócone. Twoje odpowiedzi są zapisane.",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "Nie udało się teraz wczytać Twojego testu. Twoje dotychczasowe odpowiedzi zostały zapisane.",
+ "Never logged in": "Nigdy nie zalogowano"
 }

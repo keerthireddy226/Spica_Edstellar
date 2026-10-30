@@ -5516,5 +5516,16 @@
  "3 hours": "3 uur",
  "{{n}} hours": "{{n}} uur",
  "The right answer is": "Het juiste antwoord is",
- "What we heard": "Wat we hebben gehoord"
+ "What we heard": "Wat we hebben gehoord",
+ "Congratulations! You're certified at {{level}}.": "Gefeliciteerd! Je bent gecertificeerd op {{level}}.",
+ "Your certificate is ready to view, download and share.": "Je certificaat is klaar om te bekijken, te downloaden en te delen.",
+ "Congratulations, {{name}}!": "Gefeliciteerd, {{name}}!",
+ "Congratulations!": "Gefeliciteerd!",
+ "You completed your final assessment and earned your Spica certificate.": "Je hebt je eintoets afgerond en je Spica-certificaat verdiend.",
+ "Open your test link again": "Open je testlink opnieuw",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "Om door te gaan met je beoordeling, open je opnieuw de link in je uitnodigingsmail. Je antwoorden tot nu toe zijn opgeslagen.",
+ "Reconnecting…": "Opnieuw verbinden…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "We kunnen Spica momenteel niet bereiken. Deze pagina gaat vanzelf verder zodra de verbinding er weer is. Je antwoorden zijn opgeslagen.",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "Je test kan momenteel niet worden geladen. Je antwoorden tot nu toe zijn opgeslagen.",
+ "Never logged in": "Nooit ingelogd"
 }

@@ -5516,5 +5516,16 @@
  "3 hours": "3 घंटे",
  "{{n}} hours": "{{n}} घंटे",
  "The right answer is": "सही उत्तर है",
- "What we heard": "हमने जो सुना"
+ "What we heard": "हमने जो सुना",
+ "Congratulations! You're certified at {{level}}.": "बधाई हो! आप {{level}} स्तर पर प्रमाणित हो गए हैं।",
+ "Your certificate is ready to view, download and share.": "आपका प्रमाणपत्र देखने, डाउनलोड करने और साझा करने के लिए तैयार है।",
+ "Congratulations, {{name}}!": "बधाई हो, {{name}}!",
+ "Congratulations!": "बधाई हो!",
+ "You completed your final assessment and earned your Spica certificate.": "आपने अपना अंतिम मूल्यांकन पूरा कर लिया है और अपना Spica प्रमाण पत्र प्राप्त कर लिया है।",
+ "Open your test link again": "अपनी टेस्ट लिंक फिर से खोलें",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "अपना आकलन जारी रखने के लिए, अपने आमंत्रण ईमेल से लिंक को फिर से खोलें। आपके अब तक के उत्तर सहेज लिए गए हैं।",
+ "Reconnecting…": "फिर से कनेक्ट हो रहा है...",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "हम अभी Spica से कनेक्ट नहीं हो पा रहे हैं। कनेक्शन वापस आते ही यह पेज अपने आप काम करने लगेगा। आपके उत्तर सहेज लिए गए हैं।",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "आपका टेस्ट अभी लोड नहीं हो सका। आपके अब तक के उत्तर सहेज लिए गए हैं।",
+ "Never logged in": "कभी लॉग इन नहीं किया"
 }

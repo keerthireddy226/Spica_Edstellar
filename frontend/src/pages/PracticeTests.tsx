@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useBranding } from "@/components/AppShell/useBranding";
-import { ApiError } from "@/lib/api";
+import { ApiError, isTransientError, withRetry } from "@/lib/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +23,7 @@ import {
   Laptop,
   CalendarClock,
   Pause,
+  Loader2,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
@@ -572,6 +573,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // tagged in the URL (set by applySessionData above) instead of landing
   // back on the product picker mid-test.
   const [resumeChecked, setResumeChecked] = useState(false);
+  // The test in the address couldn't be loaded (no connection, or a busy
+  // server): offered again, never swapped for the list of practice tests.
+  const [resumeFailed, setResumeFailed] = useState(false);
   // A test resumed after a page reload shows the device check before going on.
   const [resumeNeedsCheck, setResumeNeedsCheck] = useState(false);
   const [resumeProblem, setResumeProblem] = useState<QuickCheckProblem | null>(null);
@@ -590,7 +594,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       setResumeChecked(true);
       return;
     }
-    getExamSession(sessionIdParam)
+    withRetry(() => getExamSession(sessionIdParam))
       .then((res) => {
         if (!res.completed) {
           applySessionData(res);
@@ -603,7 +607,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           });
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (isCandidate || isTransientError(err)) setResumeFailed(true);
+      })
       .finally(() => setResumeChecked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1046,6 +1052,16 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }
 
   if (!resumeChecked) return null;
+  if (resumeFailed) {
+    return (
+      <div className="max-w-sm mx-auto bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col items-center gap-3 text-center">
+        <Loader2 size={26} className="text-navy-deep" />
+        <p className="font-display font-bold text-lg text-ink">{tr("Reconnecting…")}</p>
+        <p className="text-sm text-muted">{tr("Your test couldn't be loaded just now. Your answers so far are saved.")}</p>
+        <Button onClick={() => window.location.reload()}>{tr("Try again")}</Button>
+      </div>
+    );
+  }
   if (quickChecking) return <p className="text-sm text-muted text-center mt-10">{tr("Getting back to your test…")}</p>;
 
   // A test opened on a phone (a link, or a session in the URL): explain, don't run it.

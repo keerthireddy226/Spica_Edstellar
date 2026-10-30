@@ -12,7 +12,8 @@ import { PracticeTests } from "@/pages/PracticeTests";
 import { TestFocusBar, TestFocusProvider, type TestFocus } from "@/components/AppShell/testFocus";
 import { startExamSession } from "@/api/practiceTests";
 import { getApplyInfo, getCandidateAssessment, getInvite, sendApplyCode, startInvite, verifyApplyCode, type ApplyInfo, type CandidateAssessment, type InviteInfo } from "@/api/recruitment";
-import { ApiError } from "@/lib/api";
+import { ApiError, withRetry } from "@/lib/api";
+import { forgetCandidateLink, rememberCandidateLink } from "@/components/CandidateSignedOut";
 import { tr } from "@/i18n/tr";
 import { QuickPreTest } from "@/components/pretest/QuickPreTest";
 import { VoiceSection } from "@/components/VoiceSection";
@@ -41,17 +42,26 @@ export function AssessInvite() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [searchParams] = useSearchParams();
   useEffect(() => {
-    getInvite(token)
+    withRetry(() => getInvite(token))
       .then(setInfo)
       .catch(() => setError(tr("This link isn't valid. Check that you opened the whole link from the email.")));
   }, [token]);
+  // Sent back here after being signed out mid-test: straight back in.
+  const resume = searchParams.get("resume") === "1";
+  useEffect(() => {
+    if (resume && info && (info.status === "invited" || info.status === "started") && !busy) start();
+    if (info && (info.status === "completed" || info.status === "expired")) forgetCandidateLink();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [info]);
 
   async function start() {
     setBusy(true);
     setError(null);
     try {
       await startInvite(token);
+      rememberCandidateLink(`/assess/${token}`);
       await refresh();
       refreshBranding();
       navigate("/candidate", { replace: true });
@@ -173,6 +183,7 @@ export function ApplyByLink() {
     setError(null);
     try {
       await verifyApplyCode(slug, { email: email.trim(), code: code.trim() });
+      rememberCandidateLink(`/apply/${slug}`);
       await refresh();
       refreshBranding();
       navigate("/candidate", { replace: true });
@@ -261,7 +272,7 @@ export function CandidateAssessmentPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    getCandidateAssessment()
+    withRetry(() => getCandidateAssessment())
       .then((x) => {
         setA(x);
         // Coming back to a test already under way goes straight back in.
@@ -317,7 +328,7 @@ export function CandidateAssessmentPage() {
         kind={a.testKind as PreTestKind}
         mode="mock"
         minutes={TEST_MINUTES[a.testKind]}
-        onBack={() => window.history.back()}
+        // No Back: a candidate has nowhere else to go from here.
         onReady={() => !busy && begin()}
         // Listening questions are recorded in two voices: the candidate picks one.
         extra={a.testKind !== "writing" ? <VoiceSection /> : undefined}

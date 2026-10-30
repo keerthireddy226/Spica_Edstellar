@@ -5516,5 +5516,16 @@
  "3 hours": "3 timer",
  "{{n}} hours": "{{n}} timer",
  "The right answer is": "Riktig svar er",
- "What we heard": "Det vi hørte"
+ "What we heard": "Det vi hørte",
+ "Congratulations! You're certified at {{level}}.": "Gratulerer! Du er sertifisert på {{level}}.",
+ "Your certificate is ready to view, download and share.": "Sertifikatet ditt er klart til å vises, lastes ned og deles.",
+ "Congratulations, {{name}}!": "Gratulerer, {{name}}!",
+ "Congratulations!": "Gratulerer!",
+ "You completed your final assessment and earned your Spica certificate.": "Du fullførte den avsluttende vurderingen og fortjente Spica-sertifikatet ditt.",
+ "Open your test link again": "Åpne testlenken din på nytt",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "For å fortsette testen må du åpne lenken fra invitasjonseposten din igjen. Svarene dine så langt er lagret.",
+ "Reconnecting…": "Kobler til på nytt…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Vi får ikke kontakt med Spica akkurat nå. Denne siden fortsetter automatisk når forbindelsen er tilbake. Svarene dine er lagret.",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "Testen din kunne ikke lastes inn akkurat nå. Svarene dine så langt er lagret.",
+ "Never logged in": "Aldri logget inn"
 }

@@ -5516,5 +5516,16 @@
  "3 hours": "3 tuntia",
  "{{n}} hours": "{{n}} tuntia",
  "The right answer is": "Oikea vastaus on",
- "What we heard": "Mitä kuulimme"
+ "What we heard": "Mitä kuulimme",
+ "Congratulations! You're certified at {{level}}.": "Onnittelut! Olet suorittanut tason {{level}}.",
+ "Your certificate is ready to view, download and share.": "Todistuksesi on valmis katsottavaksi, ladattavaksi ja jaettavaksi.",
+ "Congratulations, {{name}}!": "Onneksi olkoon, {{name}}!",
+ "Congratulations!": "Onneksi olkoon!",
+ "You completed your final assessment and earned your Spica certificate.": "Suoritit loppukokeen ja ansaitsit Spica-todistuksesi.",
+ "Open your test link again": "Avaa testilinkkisi uudelleen",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "Jatkaaksesi arviointia avaa kutsuviestissäsi oleva linkki uudelleen. Tähän mennessä antamasi vastaukset on tallennettu.",
+ "Reconnecting…": "Muodostetaan yhteyttä uudelleen…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Spicaan ei saada yhteyttä juuri nyt. Tämä sivu jatkaa automaattisesti, kun yhteys palaa. Vastauksesi on tallennettu.",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "Testiäsi ei voitu ladata juuri nyt. Tähän mennessä antamasi vastaukset on tallennettu.",
+ "Never logged in": "Ei kirjautumiskertoja"
 }

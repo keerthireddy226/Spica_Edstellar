@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import i18n from "i18next";
 import { changeAppLanguage, isSupportedLanguage } from "@/i18n";
-import { api } from "@/lib/api";
+import { api, isTransientError } from "@/lib/api";
+import { forgetCandidateLink } from "@/components/CandidateSignedOut";
 
 export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager" | "recruiter" | "candidate";
 
@@ -71,17 +72,31 @@ type AuthState = {
   user: AuthUser | null;
   loading: boolean;
   error: string | null;
+  // The server didn't answer the sign-in check; trying again.
+  reconnecting?: boolean;
 };
 
 export function useAuthState() {
   const [state, setState] = useState<AuthState>({ user: null, loading: true, error: null });
 
+  // Only the server saying "not signed in" signs someone out. A dropped
+  // connection or a busy or restarting server is tried again (shown as
+  // "Reconnecting…"), keeping whoever was signed in, so a moment's outage never
+  // sends a learner or a candidate mid-test to the login page.
   const refresh = useCallback(async () => {
-    try {
-      const user = await api<AuthUser>("/auth/me");
-      setState({ user, loading: false, error: null });
-    } catch {
-      setState({ user: null, loading: false, error: null });
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const user = await api<AuthUser>("/auth/me");
+        setState({ user, loading: false, error: null });
+        return;
+      } catch (err) {
+        if (!isTransientError(err)) {
+          setState({ user: null, loading: false, error: null });
+          return;
+        }
+        setState((s) => ({ ...s, reconnecting: true }));
+        await new Promise((r) => setTimeout(r, Math.min(2000 * 2 ** attempt, 15000)));
+      }
     }
   }, []);
 
@@ -115,6 +130,8 @@ export function useAuthState() {
       body: JSON.stringify({ email, password, allowedRoles }),
     });
     if (!isMfaChallenge(result)) {
+      // Someone signing in normally here isn't a job candidate any more.
+      forgetCandidateLink();
       setState({ user: result, loading: false, error: null });
       // The login response is a short user; /auth/me adds permissions and
       // the rest, which staff menus and buttons depend on.

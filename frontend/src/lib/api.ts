@@ -1,9 +1,11 @@
 // Thrown on any non-ok response. `.message` is the stable error code; `.body` carries the full JSON.
 export class ApiError extends Error {
   body: unknown;
-  constructor(message: string, body: unknown) {
+  status?: number;
+  constructor(message: string, body: unknown, status?: number) {
     super(message);
     this.body = body;
+    this.status = status;
   }
 }
 
@@ -11,7 +13,8 @@ export class ApiError extends Error {
 // timed-out connection) or a server error, never a refusal like
 // "already_answered".
 export function isTransientError(err: unknown): boolean {
-  if (err instanceof ApiError) return err.message === "unknown_error";
+  // A server error or "too many requests" (a busy moment) counts too.
+  if (err instanceof ApiError) return err.message === "unknown_error" || (err.status !== undefined && (err.status >= 500 || err.status === 429));
   return err instanceof TypeError;
 }
 
@@ -43,7 +46,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       // The session is gone; reloading lands on the right login page.
       window.location.reload();
     }
-    throw new ApiError(body.error ?? "request_failed", body);
+    throw new ApiError(body.error ?? "request_failed", body, res.status);
   }
   if (res.status === 204) return undefined as T;
   return res.json();

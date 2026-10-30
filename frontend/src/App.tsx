@@ -83,11 +83,14 @@ import { ManagerLearners } from "@/pages/manager/ManagerLearners";
 import { AppLayout } from "@/components/AppShell/AppLayout";
 import { AdminLayout } from "@/components/AppShell/AdminLayout";
 import { Certificates } from "@/pages/Certificates";
+import { Reconnecting } from "@/components/Reconnecting";
+import { CandidateSignedOut, candidateLink } from "@/components/CandidateSignedOut";
 
 // Unmatched path: logged-in goes to their landing page, logged-out to learner login.
 function DefaultRedirect() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
+  const { user, loading, reconnecting } = useAuth();
+  if (loading) return reconnecting ? <Reconnecting /> : null;
+  if (!user && candidateLink()) return <CandidateSignedOut />;
   if (!user) return <Navigate to={ROUTES.LOGIN} replace />;
   return <Navigate to={LANDING_ROUTE_BY_ROLE[user.role]} replace />;
 }

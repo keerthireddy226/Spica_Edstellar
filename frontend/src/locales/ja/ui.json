@@ -5516,5 +5516,16 @@
  "3 hours": "3時間",
  "{{n}} hours": "{{n}}時間",
  "The right answer is": "正解は",
- "What we heard": "聞き取れた内容"
+ "What we heard": "聞き取れた内容",
+ "Congratulations! You're certified at {{level}}.": "おめでとうございます！{{level}}の認定を受けました。",
+ "Your certificate is ready to view, download and share.": "修了証の表示、ダウンロード、シェアの準備ができました。",
+ "Congratulations, {{name}}!": "{{name}}さん、おめでとうございます！",
+ "Congratulations!": "おめでとうございます！",
+ "You completed your final assessment and earned your Spica certificate.": "最終テストをクリアし、Spica修了証を獲得しました！",
+ "Open your test link again": "テストのリンクをもう一度開いてください",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "テストを続けるには、招待メールにあるリンクをもう一度開いてください。ここまでの回答は保存されています。",
+ "Reconnecting…": "再接続中…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "現在Spicaに接続できません。接続が回復すると、このページは自動的に続行されます。回答は保存されています。",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "テストを読み込めませんでした。ここまでの回答は保存されています。",
+ "Never logged in": "ログイン履歴なし"
 }

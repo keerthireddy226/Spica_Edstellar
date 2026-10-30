@@ -5516,5 +5516,16 @@
  "3 hours": "3 giờ",
  "{{n}} hours": "{{n}} giờ",
  "The right answer is": "Đáp án đúng là",
- "What we heard": "Những gì chúng tôi nghe được"
+ "What we heard": "Những gì chúng tôi nghe được",
+ "Congratulations! You're certified at {{level}}.": "Chúc mừng bạn! Bạn đã đạt chứng chỉ ở cấp độ {{level}}.",
+ "Your certificate is ready to view, download and share.": "Chứng chỉ của bạn đã sẵn sàng để xem, tải xuống và chia sẻ.",
+ "Congratulations, {{name}}!": "Chúc mừng {{name}}!",
+ "Congratulations!": "Chúc mừng bạn!",
+ "You completed your final assessment and earned your Spica certificate.": "Bạn đã hoàn thành bài kiểm tra cuối khóa và nhận được chứng chỉ Spica.",
+ "Open your test link again": "Mở lại liên kết bài kiểm tra của bạn",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "Để tiếp tục bài đánh giá, hãy mở lại liên kết từ email mời của bạn. Các câu trả lời trước đó của bạn đã được lưu.",
+ "Reconnecting…": "Đang kết nối lại…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Chúng tôi tạm thời không kết nối được với Spica. Trang này sẽ tự động tiếp tục khi có mạng trở lại. Các câu trả lời của bạn đã được lưu.",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "Không thể tải bài kiểm tra lúc này. Các câu trả lời trước đó của bạn đã được lưu.",
+ "Never logged in": "Chưa từng đăng nhập"
 }

@@ -1,3 +1,4 @@
+import { forgetCandidateLink } from "@/components/CandidateSignedOut";
 import { useEffect, useState, type ReactNode } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -35,6 +36,8 @@ export function CandidatePanel({ icon, title, subtitle, children, wide }: { icon
 export function CandidateFinished({ sessionId = null }: { sessionId?: string | null }) {
   const [a, setA] = useState<CandidateAssessment | null>(null);
   useEffect(() => {
+    // The test is handed in: its link has nothing more to sign in to.
+    forgetCandidateLink();
     getCandidateAssessment()
       .then(setA)
       .catch(() => {});

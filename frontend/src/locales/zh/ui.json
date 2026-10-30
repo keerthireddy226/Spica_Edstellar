@@ -5516,5 +5516,16 @@
  "3 hours": "3小时",
  "{{n}} hours": "{{n}}小时",
  "The right answer is": "正确答案是",
- "What we heard": "我们听到的是"
+ "What we heard": "我们听到的是",
+ "Congratulations! You're certified at {{level}}.": "恭喜！您已获得 {{level}} 级认证。",
+ "Your certificate is ready to view, download and share.": "您的证书已生成，可以随时查看、下载和分享。",
+ "Congratulations, {{name}}!": "恭喜你，{{name}}！",
+ "Congratulations!": "恭喜！",
+ "You completed your final assessment and earned your Spica certificate.": "你已完成最终评估并获得了 Spica 证书。",
+ "Open your test link again": "再次打开你的测试链接",
+ "To continue your assessment, open the link from your invitation email again. Your answers so far are saved.": "要继续评估，请重新打开邀请邮件中的链接。你之前的回答已保存。",
+ "Reconnecting…": "正在重新连接…",
+ "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "目前无法连接到 Spica。连接恢复后，此页面将自动继续。你的回答已保存。",
+ "Your test couldn't be loaded just now. Your answers so far are saved.": "暂时无法加载你的测试。你之前的回答已保存。",
+ "Never logged in": "从未登录"
 }
