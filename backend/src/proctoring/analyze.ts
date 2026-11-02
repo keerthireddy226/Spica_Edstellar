@@ -18,6 +18,8 @@ export interface IntegrityReason {
 const EVENT_WEIGHTS: Record<string, { each: number; cap: number }> = {
   tab_hidden: { each: 2, cap: 12 },
   window_blur: { each: 1, cap: 6 },
+  // Another app or window in front of the test for 2 s or more: as serious as leaving the tab.
+  app_switch: { each: 2, cap: 12 },
   fullscreen_exit: { each: 2, cap: 10 },
   paste_blocked: { each: 3, cap: 12 },
   copy_blocked: { each: 1, cap: 5 },

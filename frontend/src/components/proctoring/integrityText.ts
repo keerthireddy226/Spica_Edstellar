@@ -4,6 +4,8 @@ import { tr } from "@/i18n/tr";
 export const REASON_TEXT: Record<string, () => string> = {
   tab_hidden: () => tr("Left the test tab"),
   window_blur: () => tr("Test window lost focus"),
+  app_switch: () => tr("Used another app or window"),
+  app_switch_end: () => tr("Came back to the test"),
   fullscreen_exit: () => tr("Left full screen"),
   paste_blocked: () => tr("Tried to paste"),
   copy_blocked: () => tr("Tried to copy"),

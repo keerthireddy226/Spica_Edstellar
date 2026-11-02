@@ -15,7 +15,7 @@ import { blobToBase64, profileTyping, recordSegments, watchCamera, watchSpeech }
 // What the learner is told right away when something is picked up. Each
 // code maps to a sentence in ProctoringOverlay.
 // The events that take a screenshot of the shared screen, and the routine interval.
-const SCREENSHOT_EVENTS = new Set(["tab_hidden", "window_blur", "paste_blocked", "multi_monitor", "print_screen"]);
+const SCREENSHOT_EVENTS = new Set(["tab_hidden", "window_blur", "app_switch", "paste_blocked", "multi_monitor", "print_screen"]);
 const SCREENSHOT_EVERY_MS = 3 * 60_000;
 
 export type ProctorWarning =
@@ -38,6 +38,8 @@ export type ProctorWarning =
   | "face_mismatch";
 
 const FLUSH_MS = 5000;
+// Out of focus this long counts as using another app or window.
+const APP_SWITCH_MS = 2000;
 const STATUS_MS = 15000;
 const SNAPSHOT_MS = 30000;
 const LIVE_SNAPSHOT_MS = 20000;
@@ -222,6 +224,32 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
         if (document.visibilityState === "hidden") log("tab_hidden", undefined, "tab_hidden");
       });
       on(window as unknown as Document, "blur", () => log("window_blur"));
+      // Another app or window in front of the test (the browser can't tell
+      // which): the tab stays visible, so visibilitychange doesn't fire. Short
+      // blips (a click on the screen-sharing bar) are ignored; after 2 s it's
+      // recorded with a screenshot of what was in front, and the learner is
+      // warned. How long it lasted is recorded when the test gets focus back.
+      let awaySince = 0;
+      let awayTimer: ReturnType<typeof setTimeout> | null = null;
+      on(window as unknown as Document, "blur", () => {
+        awaySince = Date.now();
+        if (awayTimer) clearTimeout(awayTimer);
+        awayTimer = setTimeout(() => {
+          awayTimer = null;
+          if (document.hasFocus() || document.visibilityState === "hidden") return;
+          log("app_switch", undefined, "tab_hidden");
+        }, APP_SWITCH_MS);
+      });
+      on(window as unknown as Document, "focus", () => {
+        if (awayTimer) clearTimeout(awayTimer);
+        awayTimer = null;
+        const ms = awaySince ? Date.now() - awaySince : 0;
+        awaySince = 0;
+        if (ms >= APP_SWITCH_MS && document.visibilityState === "visible") log("app_switch_end", { seconds: Math.round(ms / 1000) });
+      });
+      cleanups.push(() => {
+        if (awayTimer) clearTimeout(awayTimer);
+      });
       on(document, "keydown", (e) => {
         const k = e.key;
         if (k === "PrintScreen" || (e.metaKey && e.shiftKey && ["3", "4", "5", "s", "S"].includes(k))) log("print_screen", { key: k }, "tab_hidden");
@@ -284,6 +312,10 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     let stopped = false;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    // Photos in a row with no face found. One alone is often just a glance
+    // down at the keyboard, so the learner is warned only when the next photo,
+    // taken a few seconds later, agrees.
+    let noFaceRun = 0;
     const stops: (() => void)[] = [];
     const video = document.createElement("video");
     video.muted = true;
@@ -302,11 +334,12 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
       // Another person and no face are warned about, then paused for, by the
       // test page. A face that may not match isn't shown to the learner: a
       // reviewer looks at it (the check can be wrong).
-      setRoom((x) => ({ ...x, extraPerson: r.warning === "multiple_people", noFace: r.warning === "no_face" }));
+      noFaceRun = r.warning === "no_face" ? noFaceRun + 1 : 0;
+      setRoom((x) => ({ ...x, extraPerson: r.warning === "multiple_people", noFace: noFaceRun >= 2 }));
       if (r.warning && r.warning !== "multiple_people" && r.warning !== "no_face" && r.warning !== "face_mismatch") setWarning(r.warning);
     };
     const schedule = (first = false) => {
-      const delay = first ? 4000 : fastRef.current ? FAST_SNAPSHOT_MS : base * (0.6 + Math.random() * 0.8);
+      const delay = first ? 4000 : fastRef.current || noFaceRun === 1 ? FAST_SNAPSHOT_MS : base * (0.6 + Math.random() * 0.8);
       timer = setTimeout(async () => {
         await capture();
         if (!stopped) schedule();

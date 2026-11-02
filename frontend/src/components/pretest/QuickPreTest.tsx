@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { TestDemo } from "@/components/pretest/TestDemo";
-import { ConsentDetails, PrivacyConsent } from "@/components/pretest/ConsentDetails";
+import { ConsentDetails, PrivacyConsent, usePrivacyAgreed } from "@/components/pretest/ConsentDetails";
 import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { holdTestConsent } from "@/lib/testConsent";
 import { demoSeen, deviceNeedsFor } from "@/lib/systemCheck";
@@ -55,7 +55,8 @@ export function CheckAndAgree({
   const needs = deviceNeedsFor(kind);
   const [info, setInfo] = useState<PreTestInfo | null>(null);
   const [biometric, setBiometric] = useState(true);
-  const [privacy, setPrivacy] = useState(false);
+  const privacyDone = usePrivacyAgreed();
+  const [privacy, setPrivacy] = useState(privacyDone);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -68,7 +69,7 @@ export function CheckAndAgree({
     setBusy(true);
     setError(null);
     try {
-      const r = await givePreTestConsent(kind, !!info?.biometric && biometric, mode);
+      const r = await givePreTestConsent(kind, !!info?.biometric && biometric, mode, !privacyDone);
       holdTestConsent(r.consentId);
       onDone();
     } catch {
@@ -91,7 +92,7 @@ export function CheckAndAgree({
           <h2 className="font-display font-bold text-base text-ink">{tr("What this test collects")}</h2>
           {info && <ConsentDetails info={info} mode={mode} />}
           {info?.biometric && <BiometricChoice value={biometric} onChange={setBiometric} />}
-          <PrivacyConsent agreed={privacy} onChange={setPrivacy} />
+          {!privacyDone && <PrivacyConsent agreed={privacy} onChange={setPrivacy} />}
           {error && <p className="text-sm text-error">{error}</p>}
         </div>
         </>

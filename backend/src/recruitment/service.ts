@@ -289,6 +289,18 @@ export async function cancelInvite(tenantId: string, assessmentId: string, actor
 }
 
 // The candidate's live assessment: invited or started, not expired.
+// SQL: a candidate who started and left. The invite is still open ('started')
+// but nothing is happening: no open test with time left or an answer in the
+// last 30 minutes, and the link was opened over 30 minutes ago (so someone
+// still on the set-up screens isn't counted). Shown as "Left the test" until
+// the link expires, when the hourly job marks it expired.
+export function leftTestSql(a = "a"): string {
+  return `(${a}.status = 'started' AND ${a}.started_at < now() - interval '30 minutes' AND NOT EXISTS (
+    SELECT 1 FROM sessions s WHERE s.user_id = ${a}.candidate_id AND s.completed_at IS NULL AND s.started_at >= ${a}.started_at - interval '5 minutes'
+      AND (coalesce((s.composition->>'deadlineAt')::timestamptz > now(), false)
+        OR coalesce((SELECT max(t.created_at) FROM attempts t WHERE t.session_id = s.id), s.started_at) > now() - interval '30 minutes')))`;
+}
+
 export async function activeAssessment(candidateId: string) {
   const r = await pool.query(
     `SELECT a.*, j.title AS job_title, j.test_kind, j.show_result_to_candidate, j.min_cefr, t.name AS org_name

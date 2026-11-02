@@ -270,15 +270,13 @@ authRouter.get("/me", async (req, res, next) => {
     // Everyone who uses the app agrees to the current Privacy Notice once
     // (again when it changes). Candidates agree on their test screen; staff
     // viewing an account don't agree for its owner.
-    const privacyRequired =
-      PRIVACY_ROLES.includes(user.role) &&
-      !check.user.viewAs &&
-      !(
-        await pool.query(`SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'privacy_notice' AND consent_version = $2 AND revoked_at IS NULL LIMIT 1`, [
-          user.id,
-          PRIVACY_NOTICE_VERSION,
-        ])
-      ).rowCount;
+    const privacyAgreed = !!(
+      await pool.query(`SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'privacy_notice' AND consent_version = $2 AND revoked_at IS NULL LIMIT 1`, [
+        user.id,
+        PRIVACY_NOTICE_VERSION,
+      ])
+    ).rowCount;
+    const privacyRequired = PRIVACY_ROLES.includes(user.role) && !check.user.viewAs && !privacyAgreed;
 
     const privacyAudience = await privacyAudienceOf(user.id, user.role);
 
@@ -302,6 +300,8 @@ authRouter.get("/me", async (req, res, next) => {
       mfaSetupRequired: check.user.mfaSetupRequired,
       viewAs: check.user.viewAs,
       privacyRequired,
+      // Agreed to the current Privacy Notice: test screens don't ask again.
+      privacyAgreed,
       privacyAudience,
     });
   } catch (err) {

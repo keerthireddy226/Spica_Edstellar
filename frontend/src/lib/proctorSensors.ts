@@ -95,13 +95,16 @@ export function watchCamera(stream: MediaStream, onCovered: () => void, onFrozen
     lum /= px.length / 4;
     diff /= px.length / 4;
     prev = new Uint8ClampedArray(px);
-    if (lum >= 14 && dark >= 3) onUncovered?.();
+    if (lum >= 14 && dark >= 4) onUncovered?.();
     dark = lum < 14 ? dark + 1 : 0;
-    // A live camera always has some sensor noise between frames.
-    still = lum >= 14 && diff < 0.4 ? still + 1 : 0;
-    // Three samples (6 s) of black, six (12 s) of an unchanging picture.
-    if (dark === 3) onCovered();
-    if (still === 6) onFrozen();
+    // A live camera always has some change between frames, but webcams that
+    // smooth out noise change very little when the learner sits still in front
+    // of a plain wall. Only a picture that is practically identical (a stuck
+    // camera or a still image fed in) counts as frozen.
+    still = lum >= 14 && diff < 0.1 ? still + 1 : 0;
+    // Four samples (8 s) of black, fifteen (30 s) of an unchanging picture.
+    if (dark === 4) onCovered();
+    if (still === 15) onFrozen();
   }, 2000);
   return () => {
     clearInterval(timer);

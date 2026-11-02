@@ -5527,5 +5527,8 @@
  "Reconnecting…": "Muodostetaan yhteyttä uudelleen…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Spicaan ei saada yhteyttä juuri nyt. Tämä sivu jatkaa automaattisesti, kun yhteys palaa. Vastauksesi on tallennettu.",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "Testiäsi ei voitu ladata juuri nyt. Tähän mennessä antamasi vastaukset on tallennettu.",
- "Never logged in": "Ei kirjautumiskertoja"
+ "Never logged in": "Ei kirjautumiskertoja",
+ "Used another app or window": "Käytti toista sovellusta tai ikkunaa",
+ "Came back to the test": "Palasi testiin",
+ "Left the test": "Poistui testistä"
 }

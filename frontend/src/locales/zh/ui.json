@@ -5527,5 +5527,8 @@
  "Reconnecting…": "正在重新连接…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "目前无法连接到 Spica。连接恢复后，此页面将自动继续。你的回答已保存。",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "暂时无法加载你的测试。你之前的回答已保存。",
- "Never logged in": "从未登录"
+ "Never logged in": "从未登录",
+ "Used another app or window": "使用了其他应用或窗口",
+ "Came back to the test": "已返回测试",
+ "Left the test": "已离开测试"
 }

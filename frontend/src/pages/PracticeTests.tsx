@@ -87,7 +87,7 @@ import { ProctoringOverlay } from "@/components/proctoring/ProctoringOverlay";
 import { NoisyAnswerAlert } from "@/components/NoisyAnswerAlert";
 import { PreTestFlow } from "@/components/pretest/PreTestFlow";
 import { BiometricChoice, CheckAndAgree, QuickPreTest } from "@/components/pretest/QuickPreTest";
-import { ConsentDetails, PrivacyConsent } from "@/components/pretest/ConsentDetails";
+import { ConsentDetails, PrivacyConsent, usePrivacyAgreed } from "@/components/pretest/ConsentDetails";
 import { SystemCheck } from "@/components/pretest/SystemCheck";
 import { markChecked, quickDeviceCheck, resumeNeedsFullCheck, type QuickCheckProblem } from "@/lib/smartResume";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
@@ -417,7 +417,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const needAgree = quickTest && showExamOverview && (!agreedBefore || !!proctor.setup?.consentNeeded);
   const [agreeInfo, setAgreeInfo] = useState<PreTestInfo | null>(null);
   const [agreeTicked, setAgreeTicked] = useState(false);
-  const [privacyTicked, setPrivacyTicked] = useState(false);
+  const privacyDone = usePrivacyAgreed();
+  const [privacyTicked, setPrivacyTicked] = useState(privacyDone);
   const [agreeBiometric, setAgreeBiometric] = useState(true);
   const [startError, setStartError] = useState<string | null>(null);
   useEffect(() => {
@@ -460,7 +461,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       try {
         const biometric = !!(proctor.setup?.biometric ?? agreeInfo?.biometric) && agreeBiometric;
         if (sessionId && proctor.setup?.consentNeeded) await giveProctoringConsent(sessionId, biometric);
-        else await givePreTestConsent(selectedProduct as PreTestKind, biometric, deliveryMode);
+        else await givePreTestConsent(selectedProduct as PreTestKind, biometric, deliveryMode, !privacyDone);
       } catch {
         setStartError(tr("Could not save your choice. Try again."));
         setStarting(false);
@@ -1407,7 +1408,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               <input type="checkbox" checked={agreeTicked} onChange={(e) => setAgreeTicked(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--color-navy)]" />
               {tr("I agree to what this test collects.")}
             </label>
-            <PrivacyConsent agreed={privacyTicked} onChange={setPrivacyTicked} />
+            {!privacyDone && <PrivacyConsent agreed={privacyTicked} onChange={setPrivacyTicked} />}
           </div>
         )}
         {startError && <p className="text-sm text-error">{startError}</p>}

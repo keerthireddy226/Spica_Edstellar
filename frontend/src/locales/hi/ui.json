@@ -5527,5 +5527,8 @@
  "Reconnecting…": "फिर से कनेक्ट हो रहा है...",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "हम अभी Spica से कनेक्ट नहीं हो पा रहे हैं। कनेक्शन वापस आते ही यह पेज अपने आप काम करने लगेगा। आपके उत्तर सहेज लिए गए हैं।",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "आपका टेस्ट अभी लोड नहीं हो सका। आपके अब तक के उत्तर सहेज लिए गए हैं।",
- "Never logged in": "कभी लॉग इन नहीं किया"
+ "Never logged in": "कभी लॉग इन नहीं किया",
+ "Used another app or window": "किसी दूसरे ऐप या विंडो का उपयोग किया",
+ "Came back to the test": "टेस्ट पर वापस आए",
+ "Left the test": "टेस्ट छोड़ दिया"
 }

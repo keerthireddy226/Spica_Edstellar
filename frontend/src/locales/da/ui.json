@@ -5527,5 +5527,8 @@
  "Reconnecting…": "Genopretter forbindelse…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Vi kan ikke få kontakt til Spica lige nu. Denne side fortsætter af sig selv, når forbindelsen er tilbage. Dine svar er gemt.",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "Din test kunne ikke indlæses lige nu. Dine svar indtil videre er gemt.",
- "Never logged in": "Aldrig logget ind"
+ "Never logged in": "Aldrig logget ind",
+ "Used another app or window": "Brugte en anden app eller et andet vindue",
+ "Came back to the test": "Kom tilbage til testen",
+ "Left the test": "Forlod testen"
 }

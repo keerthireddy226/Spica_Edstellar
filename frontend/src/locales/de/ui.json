@@ -5527,5 +5527,8 @@
  "Reconnecting…": "Verbindung wird wiederhergestellt…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Wir können Spica gerade nicht erreichen. Diese Seite lädt automatisch weiter, sobald die Verbindung wieder steht. Deine Antworten sind gespeichert.",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "Dein Test konnte im Moment nicht geladen werden. Deine bisherigen Antworten sind gespeichert.",
- "Never logged in": "Noch nie angemeldet"
+ "Never logged in": "Noch nie angemeldet",
+ "Used another app or window": "Eine andere App oder ein anderes Fenster verwendet",
+ "Came back to the test": "Zum Test zurückgekehrt",
+ "Left the test": "Test verlassen"
 }

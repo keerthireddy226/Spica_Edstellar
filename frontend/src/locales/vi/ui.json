@@ -5527,5 +5527,8 @@
  "Reconnecting…": "Đang kết nối lại…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Chúng tôi tạm thời không kết nối được với Spica. Trang này sẽ tự động tiếp tục khi có mạng trở lại. Các câu trả lời của bạn đã được lưu.",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "Không thể tải bài kiểm tra lúc này. Các câu trả lời trước đó của bạn đã được lưu.",
- "Never logged in": "Chưa từng đăng nhập"
+ "Never logged in": "Chưa từng đăng nhập",
+ "Used another app or window": "Đã dùng ứng dụng hoặc cửa sổ khác",
+ "Came back to the test": "Đã quay lại bài kiểm tra",
+ "Left the test": "Đã rời bài kiểm tra"
 }

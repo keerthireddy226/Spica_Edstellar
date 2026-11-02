@@ -151,6 +151,8 @@ export interface CandidateRow {
   invited_at: string;
   expires_at: string;
   started_at: string | null;
+  // Started and left: shown as "Left the test" until the link expires.
+  left_test?: boolean;
   completed_at: string | null;
   session_id: string | null;
   test_code: string | null;
@@ -359,6 +361,7 @@ export interface OrgCandidate {
   email: string;
   job: string;
   status: string;
+  left?: boolean;
   invitedAt: string;
   completedAt: string | null;
   sessionId: string | null;

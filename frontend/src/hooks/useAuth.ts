@@ -28,6 +28,7 @@ type AuthUser = {
   viewAs?: { impersonatorName: string } | null;
   // The current Privacy Notice hasn't been agreed yet.
   privacyRequired?: boolean;
+  privacyAgreed?: boolean;
   // Which Privacy Notice applies to this person.
   privacyAudience?: "free" | "paid" | "organization" | "assessment";
 };

@@ -160,7 +160,7 @@ export function OrgCandidatesPanel({
                           </>
                         ) : (
                           <p className="text-muted">
-                            {STATUS[c.status]?.() ?? c.status}
+                            {c.left ? tr("Left the test") : (STATUS[c.status]?.() ?? c.status)}
                           </p>
                         )}
                         {c.review && (

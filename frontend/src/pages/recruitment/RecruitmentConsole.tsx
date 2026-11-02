@@ -1093,7 +1093,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                         {c.confirmed_level ? tr("Confirmed {{level}}", { level: c.confirmed_level }) : tr("To review")}
                       </StatusPill>
                     )}
-                    <StatusPill tone={STATUS_TONE[c.status]}>{STATUS_TEXT[c.status]()}</StatusPill>
+                    {c.left_test ? <StatusPill tone="warning">{tr("Left the test")}</StatusPill> : <StatusPill tone={STATUS_TONE[c.status]}>{STATUS_TEXT[c.status]()}</StatusPill>}
                     {c.integrity_status && c.status === "completed" && <StatusPill tone={INTEGRITY_TONE[c.integrity_status]}>{INTEGRITY_TEXT[c.integrity_status]()}</StatusPill>}
                     {c.decision && <StatusPill tone={DECISION_TONE[c.decision]}>{DECISION_TEXT[c.decision]()}</StatusPill>}
                     {c.status !== "completed" && (

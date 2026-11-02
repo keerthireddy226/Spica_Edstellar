@@ -101,8 +101,10 @@ export function getPreTestInfo(kind: PreTestKind, mode?: DeliveryMode): Promise<
   return api(`/proctoring/pre-test?kind=${encodeURIComponent(kind)}${mode ? `&mode=${mode}` : ""}`);
 }
 
-export function givePreTestConsent(kind: PreTestKind, biometric: boolean, mode?: DeliveryMode): Promise<{ consentId: string; biometricOptOut: boolean }> {
-  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric, privacy: true }) });
+// privacy: the Privacy Notice box was ticked on this screen (it isn't shown to
+// someone who already agreed to the current notice).
+export function givePreTestConsent(kind: PreTestKind, biometric: boolean, mode?: DeliveryMode, privacy = true): Promise<{ consentId: string; biometricOptOut: boolean }> {
+  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric, privacy }) });
 }
 
 export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {

@@ -5527,5 +5527,8 @@
  "Reconnecting…": "Kobler til på nytt…",
  "We can't reach Spica right now. This page will continue by itself once the connection is back. Your answers are saved.": "Vi får ikke kontakt med Spica akkurat nå. Denne siden fortsetter automatisk når forbindelsen er tilbake. Svarene dine er lagret.",
  "Your test couldn't be loaded just now. Your answers so far are saved.": "Testen din kunne ikke lastes inn akkurat nå. Svarene dine så langt er lagret.",
- "Never logged in": "Aldri logget inn"
+ "Never logged in": "Aldri logget inn",
+ "Used another app or window": "Brukte en annen app eller et annet vindu",
+ "Came back to the test": "Kom tilbake til testen",
+ "Left the test": "Forlot testen"
 }

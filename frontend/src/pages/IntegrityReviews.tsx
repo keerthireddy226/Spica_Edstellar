@@ -37,6 +37,8 @@ import { reasonText } from "@/components/proctoring/integrityText";
 const EVENT_TEXT: Record<string, () => string> = {
   tab_hidden: () => tr("Left the test tab"),
   window_blur: () => tr("Window lost focus"),
+  app_switch: () => tr("Used another app or window"),
+  app_switch_end: () => tr("Came back to the test"),
   fullscreen_exit: () => tr("Left full screen"),
   fullscreen_denied: () => tr("Full screen refused"),
   paste_blocked: () => tr("Paste blocked"),

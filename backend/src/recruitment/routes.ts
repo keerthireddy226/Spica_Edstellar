@@ -33,6 +33,7 @@ import {
   creditBalance,
   inviteCandidates,
   latestAssessment,
+  leftTestSql,
   resendInvite,
   tenantProducts,
   unitPriceCents,
@@ -421,7 +422,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
          a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
-         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source
+         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, ${leftTestSql()} AS left_test
        FROM recruitment_assessments a
        LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
@@ -729,7 +730,7 @@ recruitmentRouter.get("/jobs/:id/export.csv", requireAuth, async (req: AuthedReq
     if (!job) return res.status(404).json({ error: "job_not_found" });
     const rows = (
       await pool.query(
-        `SELECT a.first_name, a.last_name, a.email, a.status, a.result, a.decision, a.confirmed_level, a.completed_at, si.status AS integrity, ts.test_code, e.test_id
+        `SELECT a.first_name, a.last_name, a.email, CASE WHEN ${leftTestSql()} THEN 'left the test' ELSE a.status END AS status, a.result, a.decision, a.confirmed_level, a.completed_at, si.status AS integrity, ts.test_code, e.test_id
          FROM recruitment_assessments a LEFT JOIN session_integrity si ON si.session_id = a.session_id
          LEFT JOIN sessions ts ON ts.id = a.session_id
          LEFT JOIN exams e ON e.id = a.exam_id
@@ -885,7 +886,7 @@ recruitmentRouter.get("/admin/orgs/:tenantId/candidates", requireAuth, async (re
          a.result->>'cefrLevel' AS level, (a.result->>'overallPercent')::int AS percent, j.title AS job, a.job_id,
          si.status AS integrity, si.risk_score,
          f.skipped AS feedback_skipped, f.rating, f.recommend, f.smooth, f.issues, f.suggestion,
-         ra.status AS review_status, ra.assigned_to IS NOT NULL AS review_taken
+         ra.status AS review_status, ra.assigned_to IS NOT NULL AS review_taken, ${leftTestSql()} AS left_test
        FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
        LEFT JOIN test_feedback f ON f.session_id = a.session_id
@@ -906,6 +907,7 @@ recruitmentRouter.get("/admin/orgs/:tenantId/candidates", requireAuth, async (re
         email: x.email,
         job: x.job,
         status: x.status,
+        left: x.left_test,
         invitedAt: x.invited_at,
         completedAt: x.completed_at,
         sessionId: x.session_id,

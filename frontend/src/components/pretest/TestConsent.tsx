@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/Button";
-import { ConsentDetails, PrivacyConsent } from "@/components/pretest/ConsentDetails";
+import { ConsentDetails, PrivacyConsent, usePrivacyAgreed } from "@/components/pretest/ConsentDetails";
 import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { holdTestConsent } from "@/lib/testConsent";
 import { tr } from "@/i18n/tr";
@@ -23,7 +23,8 @@ export function TestConsent({
   const [info, setInfo] = useState<PreTestInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
+  const privacyDone = usePrivacyAgreed();
+  const [privacy, setPrivacy] = useState(privacyDone);
 
   useEffect(() => {
     getPreTestInfo(kind, mode)
@@ -35,7 +36,7 @@ export function TestConsent({
     setBusy(true);
     setError(null);
     try {
-      const r = await givePreTestConsent(kind, biometric, mode);
+      const r = await givePreTestConsent(kind, biometric, mode, !privacyDone);
       holdTestConsent(r.consentId);
       onAgreed();
     } catch {
@@ -72,7 +73,7 @@ export function TestConsent({
       {info && (
         <>
           <ConsentDetails info={info} module={module} mode={mode} />
-          <PrivacyConsent agreed={privacy} onChange={setPrivacy} />
+          {!privacyDone && <PrivacyConsent agreed={privacy} onChange={setPrivacy} />}
         </>
       )}
 

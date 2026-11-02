@@ -58,6 +58,8 @@ const LIVE_WINDOW_MINUTES = 3;
 const EVENT_SEVERITY: Record<string, "info" | "warn" | "high"> = {
   tab_hidden: "warn",
   window_blur: "info",
+  app_switch: "warn",
+  app_switch_end: "info",
   fullscreen_exit: "warn",
   fullscreen_denied: "info",
   copy_blocked: "info",
