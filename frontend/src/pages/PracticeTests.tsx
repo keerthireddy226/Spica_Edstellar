@@ -375,6 +375,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [summary, setSummary] = useState<ExamCompleteResult | null>(null);
   // The last answer is in and the score is being worked out.
   const [finishing, setFinishing] = useState(false);
+  // The server couldn't be told the test is finished, even after retrying.
+  const [finishFailed, setFinishFailed] = useState(false);
   // A mock's time ran out while the learner was away: it was finished on return.
   const [timeRanOut, setTimeRanOut] = useState(false);
   // The organization's proctoring for this session: pre-test steps, then
@@ -855,21 +857,30 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     // The test is over: camera, microphone and screen sharing stop now, not
     // when the result comes back.
     stopAllMedia();
-    // Every item was already submitted successfully by this point (this
-    // only runs after handleSubmit's own submitExamAttempt succeeded) — a
-    // network hiccup calling /complete shouldn't strand the learner on the
-    // question screen with a scary error when they've genuinely finished.
-    // Show a pending-score fallback instead; the session is marked complete
-    // server-side regardless (or will be on a retry from the score screen).
     setFinishing(true);
-    try {
-      const result = await completeExamSession(sessionId);
-      setSummary(result);
-    } catch {
-      setSummary({ gradedCount: 0, correctCount: 0, pendingCount: items.length, failedCount: 0, skippedCount: 0, overallPercent: 0, partResults: [] });
-    } finally {
-      setFinishing(false);
+    await handIn(sessionId);
+  }
+
+  // The test counts as finished only once the server says so: until then the
+  // page shows "Handing in your answers…" and retries (a dropped connection, a
+  // server restart), since finishing twice is harmless. Showing the end page
+  // without it left the test open on the server, so the result and the
+  // feedback form never came. If every try fails, the learner can try again;
+  // a test left like that is still finished by the server after its time.
+  async function handIn(id: string) {
+    setFinishFailed(false);
+    for (const wait of [0, 2, 4, 6, 8, 10, 15, 20]) {
+      if (wait) await new Promise((r) => setTimeout(r, wait * 1000));
+      try {
+        const result = await completeExamSession(id);
+        setSummary(result);
+        setFinishing(false);
+        return;
+      } catch {
+        // Try again after the next wait.
+      }
     }
+    setFinishFailed(true);
   }
 
   // A prior submit on this same session can have actually succeeded
@@ -1294,7 +1305,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       <div className="max-w-lg mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-3 items-center text-center">
         <CheckCircle2 size={32} className="text-success" />
         <h1 className="font-display font-bold text-xl text-ink">{tr("Test finished")}</h1>
-        <p className="text-sm text-muted">{isCandidate ? tr("Monitoring has stopped. Handing in your answers…") : tr("Monitoring has stopped. Scoring your answers; this can take up to a minute.")}</p>
+        {finishFailed ? (
+          <>
+            <p className="text-sm text-ink">{tr("We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.")}</p>
+            {sessionId && <Button onClick={() => void handIn(sessionId)}>{tr("Try again")}</Button>}
+          </>
+        ) : (
+          <p className="text-sm text-muted">{isCandidate ? tr("Monitoring has stopped. Handing in your answers…") : tr("Monitoring has stopped. Scoring your answers; this can take up to a minute.")}</p>
+        )}
       </div>
     );
   }

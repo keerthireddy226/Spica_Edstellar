@@ -5530,5 +5530,6 @@
  "Never logged in": "从未登录",
  "Used another app or window": "使用了其他应用或窗口",
  "Came back to the test": "已返回测试",
- "Left the test": "已离开测试"
+ "Left the test": "已离开测试",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "暂时无法提交你的测试。你目前的答案已保存。请检查网络连接，然后重试。请保持此窗口打开。"
 }

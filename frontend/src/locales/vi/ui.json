@@ -5530,5 +5530,6 @@
  "Never logged in": "Chưa từng đăng nhập",
  "Used another app or window": "Đã dùng ứng dụng hoặc cửa sổ khác",
  "Came back to the test": "Đã quay lại bài kiểm tra",
- "Left the test": "Đã rời bài kiểm tra"
+ "Left the test": "Đã rời bài kiểm tra",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Chúng tôi chưa thể nộp bài kiểm tra của bạn. Các câu trả lời đến giờ đã được lưu. Hãy kiểm tra kết nối internet rồi thử lại. Hãy giữ cửa sổ này mở."
 }

@@ -25,10 +25,28 @@ export function TestFeedbackCard({ sessionId }: { sessionId: string }) {
   const [recommend, setRecommend] = useState<number | null>(null);
   const [suggestion, setSuggestion] = useState("");
   const [busy, setBusy] = useState(false);
+  // Asked again for a minute: the test may still be being handed in when
+  // this first asks, and the form is only due for a finished test.
   useEffect(() => {
-    getFeedbackDue(sessionId)
-      .then((r) => setDue(r.due))
-      .catch(() => setDue(false));
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+    const check = () => {
+      getFeedbackDue(sessionId)
+        .then((r) => {
+          if (stopped) return;
+          setDue(r.due);
+          if (!r.due && ++tries < 12) timer = setTimeout(check, 5000);
+        })
+        .catch(() => {
+          if (!stopped && ++tries < 12) timer = setTimeout(check, 5000);
+        });
+    };
+    check();
+    return () => {
+      stopped = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [sessionId]);
   if (done) return <p className="text-sm text-success text-center">{tr("Thank you for your feedback.")}</p>;
   if (!due) return null;

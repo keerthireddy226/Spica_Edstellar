@@ -5530,5 +5530,6 @@
  "Never logged in": "कभी लॉग इन नहीं किया",
  "Used another app or window": "किसी दूसरे ऐप या विंडो का उपयोग किया",
  "Came back to the test": "टेस्ट पर वापस आए",
- "Left the test": "टेस्ट छोड़ दिया"
+ "Left the test": "टेस्ट छोड़ दिया",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "हम अभी आपका टेस्ट जमा नहीं कर सके। अब तक के आपके उत्तर सेव हैं। अपना इंटरनेट कनेक्शन जाँचें, फिर दोबारा कोशिश करें। यह विंडो खुली रखें।"
 }

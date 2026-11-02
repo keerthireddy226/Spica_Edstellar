@@ -5530,5 +5530,6 @@
  "Never logged in": "Ei kirjautumiskertoja",
  "Used another app or window": "Käytti toista sovellusta tai ikkunaa",
  "Came back to the test": "Palasi testiin",
- "Left the test": "Poistui testistä"
+ "Left the test": "Poistui testistä",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Emme voineet vielä palauttaa testiäsi. Tähänastiset vastauksesi on tallennettu. Tarkista internetyhteytesi ja yritä uudelleen. Pidä tämä ikkuna auki."
 }

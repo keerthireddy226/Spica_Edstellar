@@ -5530,5 +5530,6 @@
  "Never logged in": "Mai effettuato l'accesso",
  "Used another app or window": "Ha usato un’altra app o finestra",
  "Came back to the test": "È tornato al test",
- "Left the test": "Ha lasciato il test"
+ "Left the test": "Ha lasciato il test",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Non siamo ancora riusciti a consegnare il tuo test. Le risposte date finora sono salvate. Controlla la connessione internet e riprova. Tieni aperta questa finestra."
 }

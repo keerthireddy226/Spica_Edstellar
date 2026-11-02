@@ -5530,5 +5530,6 @@
  "Never logged in": "Aldrig inloggad",
  "Used another app or window": "Använde en annan app eller ett annat fönster",
  "Came back to the test": "Kom tillbaka till testet",
- "Left the test": "Lämnade testet"
+ "Left the test": "Lämnade testet",
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Vi kunde inte lämna in ditt test ännu. Dina svar hittills är sparade. Kontrollera din internetanslutning och försök igen. Håll det här fönstret öppet."
 }
