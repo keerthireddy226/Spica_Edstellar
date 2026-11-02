@@ -106,14 +106,8 @@ export function ConsentDetails({ info, module = false, mode }: { info: PreTestIn
   );
 }
 
-// Whether this person has already agreed to the current Privacy Notice (after
-// logging in, or on an earlier test). Test screens then don't ask again.
-export function usePrivacyAgreed(): boolean {
-  return !!useAuth().user?.privacyAgreed;
-}
-
-// The Privacy Notice, required before a test for someone who hasn't agreed to
-// it yet: the box can only be ticked after the notice has been opened.
+// The Privacy Notice, required before every test: the box can only be ticked
+// after the notice has been opened.
 export function PrivacyConsent({ agreed, onChange }: { agreed: boolean; onChange: (v: boolean) => void }) {
   const [opened, setOpened] = useState(false);
   // The notice for this person's kind of account (candidate, organization, individual).
