@@ -1,4 +1,4 @@
-import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
+import { REPORT_VERSION, reportAbout, withCurrentOutcomes } from "../reports/feedbackReport.js";
 import { Router, type Response } from "express";
 import { z } from "zod";
 import { scoreReport } from "../reports/scoreReport.js";
@@ -143,7 +143,7 @@ programViewRouter.get("/programs/:id/reports/:sessionId", requireAuth, async (re
     }
     // The Spica score report too, as the learner sees it.
     const score = await scoreReport(s.id, r.report ?? null).catch(() => null);
-    res.json({ status: r.status, report: r.report, about: await reportAbout(s.id), score, integrity: { status: s.integrity_status, risk: s.risk_level } });
+    res.json({ status: r.status, report: await withCurrentOutcomes(s.id, r.report), about: await reportAbout(s.id), score, integrity: { status: s.integrity_status, risk: s.risk_level } });
   } catch (err) {
     next(err);
   }

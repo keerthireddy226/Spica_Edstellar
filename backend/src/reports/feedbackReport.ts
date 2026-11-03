@@ -541,6 +541,28 @@ Address the learner as "you". Be honest and encouraging, specific, and simple (B
 }
 
 // Recorded answers still being graded: wait for them (the queue retries).
+// A saved report with each question's right/wrong mark, and the counts,
+// worked out again from the answers' current scores. The marks are decided by
+// rules that can change after the report was written (word-perfect spoken
+// answers count as right, 2026-11-03), and answers can be re-scored; the
+// AI-written parts stay as saved.
+export async function withCurrentOutcomes<T extends { questions?: ReportQuestion[]; counts?: Record<string, number> } | null>(sessionId: string, report: T): Promise<T> {
+  if (!report?.questions?.length) return report;
+  const rows = await loadAttemptRows(sessionId, report.questions.map((q) => q.itemId));
+  const byItem = new Map(rows.map((r) => [r.item_id, r]));
+  const questions = report.questions.map((q) => {
+    const r = byItem.get(q.itemId);
+    return r ? { ...q, outcome: outcomeOf(r), status: r.status, score: r.content_score === null ? null : Number(r.content_score) } : q;
+  });
+  const outcomes = questions.map((q) => q.outcome);
+  const count = (o: string) => outcomes.filter((x) => x === o).length;
+  return {
+    ...report,
+    questions,
+    counts: report.counts ? { ...report.counts, right: count("right"), wrong: count("wrong"), skipped: count("skipped"), pending: count("pending") } : report.counts,
+  };
+}
+
 export async function reportReady(sessionId: string): Promise<boolean> {
   const r = await pool.query(
     `SELECT count(*)::int AS n FROM attempts a JOIN scores sc ON sc.attempt_id = a.id WHERE a.session_id = $1 AND sc.status = 'pending' AND a.response_uri IS NOT NULL`,

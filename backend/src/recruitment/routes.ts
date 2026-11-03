@@ -3,7 +3,7 @@ import { AppealError, fileAppeal } from "../quality/service.js";
 // Recruitment API: the candidate's invitation link, the recruiter console
 // (job openings, invitations, results, decisions, team, credits), and the
 // Edstellar staff controls for an organization's products and credits.
-import { REPORT_VERSION, reportAbout } from "../reports/feedbackReport.js";
+import { REPORT_VERSION, reportAbout, withCurrentOutcomes } from "../reports/feedbackReport.js";
 import { Router, type NextFunction, type Response } from "express";
 import { z } from "zod";
 import { interviewQuestions } from "./interviewQuestions.js";
@@ -630,7 +630,7 @@ recruitmentRouter.get("/assessments/:id/report", requireAuth, async (req: Authed
       await enqueue("report.build", { sessionId: a.session_id }, { dedupeKey: `report.build:${a.session_id}:${Date.now() >> 16}`, maxAttempts: 5 });
       return res.json({ status: "pending", report: null, about: await reportAbout(a.session_id) });
     }
-    res.json({ status: r.status, report: r.report, about: await reportAbout(a.session_id) });
+    res.json({ status: r.status, report: await withCurrentOutcomes(a.session_id, r.report), about: await reportAbout(a.session_id) });
   } catch (err) {
     next(err);
   }
