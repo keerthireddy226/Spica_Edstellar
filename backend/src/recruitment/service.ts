@@ -332,23 +332,9 @@ export async function candidateMayStart(candidateId: string, feature: string): P
 
 const CEFR = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-// Called when a candidate's placement or mock-exam session completes.
-// Stores the result on the assessment, then tells the organization.
-export async function recordCandidateResult(userId: string, sessionId: string): Promise<void> {
-  const u = (await pool.query(`SELECT role FROM users WHERE id = $1`, [userId])).rows[0];
-  if (u?.role !== "candidate") return;
-  // One test completes one invitation: finishing can be processed twice (a
-  // retry, the overdue-test job), and the second time must not mark the
-  // candidate's older, unfinished invitation done with the same test.
-  if ((await pool.query(`SELECT 1 FROM recruitment_assessments WHERE session_id = $1`, [sessionId])).rowCount) return;
-  const a = (
-    await pool.query(
-      `SELECT a.*, j.title, j.min_cefr FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
-       WHERE a.candidate_id = $1 AND a.status IN ('invited', 'started') ORDER BY a.invited_at DESC LIMIT 1`,
-      [userId],
-    )
-  ).rows[0];
-  if (!a) return;
+// A candidate's result from their test's answers, as saved on the
+// invitation (also used to work results out again after a scoring change).
+export async function candidateResultFor(sessionId: string, examId: string | null, minCefr: string | null): Promise<Record<string, unknown>> {
   const s = (await pool.query(`SELECT session_type FROM sessions WHERE id = $1`, [sessionId])).rows[0];
   let result: Record<string, unknown> = {};
   if (s?.session_type === "placement") {
@@ -377,7 +363,7 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
     // As on the candidate's own result: the overall percentage is the skills'
     // weighted mean, and the level is the Spica score's, so the report and the
     // test never show different figures.
-    const testTypeId = a.exam_id ? await testTypeOfExam(a.exam_id) : null;
+    const testTypeId = examId ? await testTypeOfExam(examId) : null;
     const weighted = summary ? weightedSkillMean(summary.skillPercents, testTypeId) : null;
     const overallPercent = weighted !== null ? Math.round(weighted) : graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null;
     const level = summary && { ...summary, cefrLevel: snapshot(summary.skillLevels as never, summary.skillPercents as never, overallPercent, summary.cefrLevel, testTypeId).level ?? summary.cefrLevel };
@@ -394,7 +380,28 @@ export async function recordCandidateResult(userId: string, sessionId: string): 
     };
   }
   const level = typeof result.cefrLevel === "string" ? result.cefrLevel : null;
-  result.meetsMinimum = a.min_cefr && level ? CEFR.indexOf(level) >= CEFR.indexOf(a.min_cefr) : null;
+  result.meetsMinimum = minCefr && level ? CEFR.indexOf(level) >= CEFR.indexOf(minCefr) : null;
+  return result;
+}
+
+// Called when a candidate's placement or mock-exam session completes.
+// Stores the result on the assessment, then tells the organization.
+export async function recordCandidateResult(userId: string, sessionId: string): Promise<void> {
+  const u = (await pool.query(`SELECT role FROM users WHERE id = $1`, [userId])).rows[0];
+  if (u?.role !== "candidate") return;
+  // One test completes one invitation: finishing can be processed twice (a
+  // retry, the overdue-test job), and the second time must not mark the
+  // candidate's older, unfinished invitation done with the same test.
+  if ((await pool.query(`SELECT 1 FROM recruitment_assessments WHERE session_id = $1`, [sessionId])).rowCount) return;
+  const a = (
+    await pool.query(
+      `SELECT a.*, j.title, j.min_cefr FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
+       WHERE a.candidate_id = $1 AND a.status IN ('invited', 'started') ORDER BY a.invited_at DESC LIMIT 1`,
+      [userId],
+    )
+  ).rows[0];
+  if (!a) return;
+  const result = await candidateResultFor(sessionId, a.exam_id, a.min_cefr);
   await pool.query(`UPDATE recruitment_assessments SET status = 'completed', completed_at = now(), session_id = $2, result = $3 WHERE id = $1`, [
     a.id,
     sessionId,

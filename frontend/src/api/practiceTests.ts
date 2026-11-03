@@ -200,13 +200,16 @@ export function submitExamAttempt(
   sessionId: string,
   payload: { itemId: string; responseText?: string; audioBase64?: string; audioMimeType?: string; durationMs?: number; activeMs?: number },
 ): Promise<ExamAttemptResult> {
-  // Tried again when the server is briefly busy: an answer handed in is
-  // saved once (a repeat that already arrived comes back "already_answered").
-  return withRetry(() =>
-    api(`/practice-tests/session/${sessionId}/attempts`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+  // Tried again when the server is busy or the connection drops (for about
+  // 35 s, long enough for a server restart): an answer handed in is saved
+  // once (a repeat that already arrived comes back "already_answered").
+  return withRetry(
+    () =>
+      api(`/practice-tests/session/${sessionId}/attempts`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    [1500, 3000, 6000, 10000, 15000],
   );
 }
 

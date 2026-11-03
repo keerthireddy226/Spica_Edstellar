@@ -1,3 +1,4 @@
+import { warmFiles } from "../storage/mirror.js";
 import { pool } from "../db.js";
 import type { VoiceGender } from "./googleTts.js";
 
@@ -17,5 +18,8 @@ export async function withAudioUrls<T extends { id: string }>(userId: string, it
     voice,
   ]);
   const uriByItemId = new Map<string, string>(result.rows.map((row) => [row.item_id as string, row.uri as string]));
+  // The test's recordings are fetched to this server now, while the learner
+  // reads the instructions, so none waits for a download when it plays.
+  warmFiles([...uriByItemId.values()]);
   return items.map((item) => ({ ...item, audioUrl: uriByItemId.get(item.id) ?? null }));
 }

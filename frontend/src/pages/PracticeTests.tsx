@@ -69,7 +69,7 @@ import {
 } from "@/api/practiceTests";
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
-import { NO_RECORDING_TEXT, playSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio, preloadSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
@@ -164,6 +164,10 @@ interface CachedAnswer {
   audioBlobUrl?: string;
   durationMs?: number;
 }
+
+// Below this the microphone heard nothing (the meter's 0–1 scale; speech
+// reaches 0.2 and more, a quiet room about 0.02–0.04).
+const SILENT_PEAK = 0.05;
 
 // Practice tests and mock tests are separate sections of the learner app,
 // sharing this page: "practice" lists practice sets, "mock" the mock tests.
@@ -395,7 +399,15 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     (outcome) => showFaceCheckOutcome(proctor, outcome),
   );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
-  const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
+  const { recording, start: startRecording, stop: stopRecorder } = useVoiceRecorder();
+  const [silentAnswerAt, setSilentAnswerAt] = useState<number | null>(null);
+  // Stops the recording and warns when it picked up nothing at all, so a
+  // muted microphone is noticed after one answer, not after the whole test.
+  const stopRecording = async () => {
+    const r = await stopRecorder();
+    if (r.blob && r.durationMs > 1500 && r.peakLevel < SILENT_PEAK) setSilentAnswerAt(Date.now());
+    return r;
+  };
 
   // Gates question 1 behind a Pearson-style "Overview" of every section —
   // only on a genuinely fresh start, not a resumed session (already seen it).
@@ -618,6 +630,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }, []);
 
   const current = items[index];
+  // The question on screen and the next two: their recordings load now.
+  useEffect(() => {
+    preloadSpokenAudio([items[index], items[index + 1], items[index + 2]]);
+  }, [items, index]);
   const needsAudioFirst = current ? AUDIO_FIRST_TYPES.has(current.itemTypeId) : false;
   const visibleText = current && !needsAudioFirst ? getVisibleText(current) : "";
   const meta = current ? ITEM_TYPE_META[current.itemTypeId] : undefined;
@@ -1333,6 +1349,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     <>
       <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />
       <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
+      <NoisyAnswerAlert kind="silent" at={silentAnswerAt} onDismiss={() => setSilentAnswerAt(null)} />
       {noise.held && <TestHoldOverlay kind={noise.held} level={noise.level} timed={isMock} allowanceLeft={noise.allowanceLeft} />}
       {noise.warning && !noise.held && <TestHoldWarning warning={noise.warning} capReached={noise.capReached} onDismiss={noise.dismissWarning} />}
     </>

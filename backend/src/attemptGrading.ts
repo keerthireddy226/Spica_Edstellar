@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { ensureFile } from "./storage/mirror.js";
+import { saidWordForWord } from "./reports/wordDiff.js";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pool } from "./db.js";
@@ -169,10 +170,11 @@ export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, 
   const freeSignals = item.input_method === "mic" && responseText ? computeFluencySignals(responseText, body.durationMs) : null;
 
   // A deferred answer keeps its recording length for the background grader's pace check.
+  const wordsMatched = item.input_method === "mic" && saidWordForWord(item.item_type_id, item.answer_set, item.content, responseText) ? true : undefined;
   const mannerScores = deferred
     ? { durationMs: body.durationMs ?? null }
     : freeSignals || geminiScores || noise
-      ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined }
+      ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined, wordsMatched }
       : null;
 
   // Same UPSERT reasoning as attempts above (backed by a unique index on
@@ -263,7 +265,8 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   if (grade.status === "failed" && !opts.final) throw new Error("speaking grading: content grading didn't answer, will retry");
   const durationMs = r.manner_scores?.durationMs ?? null;
   const freeSignals = responseText ? computeFluencySignals(responseText, durationMs) : null;
-  const mannerScores = freeSignals || geminiScores || noise ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined } : null;
+  const wordsMatched = saidWordForWord(r.item_type_id, r.answer_set, r.content, responseText) ? true : undefined;
+  const mannerScores = freeSignals || geminiScores || noise ? { ...freeSignals, gemini: geminiScores ?? undefined, noise: noise ?? undefined, wordsMatched } : null;
   const modelVersion = noSpeech ? NO_SPEECH_VERSION : grade.method === "ai-text" ? "gemini-3.5-flash-lite-v1" : grade.method === "text-diff" ? "text-diff-v1" : grade.method === "exact-match" ? "exact-match-v1" : "n/a";
 
   await pool.query(`UPDATE attempts SET response_text = $2 WHERE id = $1`, [attemptId, responseText]);

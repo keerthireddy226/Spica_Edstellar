@@ -193,6 +193,19 @@ export async function ensureFile(absPath: string): Promise<void> {
   if (key.startsWith("uploads/") || key.startsWith("private/")) await ensureLocal(key);
 }
 
+// Question recordings a test is about to play ("/uploads/…" URLs): fetched
+// from the bucket now, in the background and a few at a time, so the first
+// play doesn't wait for the download (3–5 s after a restart). Already-local
+// files cost nothing.
+export function warmFiles(uris: string[]): void {
+  const keys = [...new Set(uris.map((u) => u.replace(/^\//, "")).filter((k) => k.startsWith("uploads/")))];
+  let next = 0;
+  const worker = async () => {
+    while (next < keys.length) await ensureLocal(keys[next++]).catch(() => false);
+  };
+  for (let i = 0; i < Math.min(6, keys.length); i++) void worker();
+}
+
 // The bucket's files, and the mirror once started.
 const remoteKeys = new Set<string>();
 let active: Config | null = null;

@@ -43,6 +43,20 @@ function play(item: TestItem): Promise<"played" | "missing" | "stopped"> {
   });
 }
 
+// Loads the next questions' recordings ahead of time, so pressing Next plays
+// at once instead of waiting for the download. Each recording is loaded once.
+const preloaded = new Set<string>();
+export function preloadSpokenAudio(items: (TestItem | undefined)[]) {
+  for (const item of items) {
+    const url = item?.audioUrl;
+    if (!url || preloaded.has(url)) continue;
+    preloaded.add(url);
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = url;
+  }
+}
+
 export const NO_RECORDING_TEXT = () => tr("This question's recording isn't available yet, so there's nothing to play. Skip it for now.");
 
 // A fixed recorded clip (voice preview, demo question); resolves when it ends or fails.

@@ -34,6 +34,12 @@ describe("computeFluencySignals", () => {
 });
 
 describe("isTrulyCorrect", () => {
+  it("a spoken answer said word for word is right, whatever the delivery or the AI's content score", () => {
+    const m = { wordsMatched: true, gemini: { pronunciation: 0.2, fluency: 0.2, comment: "" } };
+    expect(isTrulyCorrect(0.5, "A1", "mic", m, passThresholdForLevel)).toBe(true);
+    expect(isTrulyCorrect(0.5, "A1", "mic", { ...m, wordsMatched: undefined }, passThresholdForLevel)).toBe(false);
+  });
+
   it("is false when there's no content score at all", () => {
     expect(isTrulyCorrect(null, "B1", "text", null, passThresholdForLevel)).toBe(false);
   });
@@ -49,8 +55,17 @@ describe("isTrulyCorrect", () => {
     expect(isTrulyCorrect(0.5, "B1", "mic", { wordsPerMinute: 130 }, passThresholdForLevel)).toBe(false);
   });
 
-  it("for mic input with content passing, a wildly off pace fails it", () => {
-    expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 30, wordCount: 10 }, passThresholdForLevel)).toBe(false);
+  it("for mic input with content passing, an impossibly fast pace fails it", () => {
+    expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 300, wordCount: 10 }, passThresholdForLevel)).toBe(false);
+    expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 130, wordCount: 10 }, passThresholdForLevel)).toBe(true);
+  });
+
+  it("a slow pace never fails a correct answer: it counts the silence around the answer (5 words in a 15 s Repeat = 20 WPM)", () => {
+    expect(isTrulyCorrect(0.9, "A1", "mic", { wordsPerMinute: 20, wordCount: 5 }, passThresholdForLevel)).toBe(true);
+    expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 30, wordCount: 10 }, passThresholdForLevel)).toBe(true);
+  });
+
+  it("a normal pace passes and an impossibly fast one fails, whatever the length", () => {
     expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 300, wordCount: 10 }, passThresholdForLevel)).toBe(false);
     expect(isTrulyCorrect(0.9, "B1", "mic", { wordsPerMinute: 130, wordCount: 10 }, passThresholdForLevel)).toBe(true);
   });

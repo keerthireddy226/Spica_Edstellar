@@ -72,3 +72,20 @@ export function diffSummary(ops: WordOp[]): { substituted: number; missing: numb
   const extra = ops.filter((o) => o.op === "extra").length;
   return { substituted, missing, extra, accuracy: targetWords ? (targetWords - substituted - missing) / targetWords : 0 };
 }
+
+// A sentence said back word for word (Repeats, Reading aloud, Sentence
+// Builds in any accepted order), as the transcript heard it: such an answer
+// counts as right, whatever the AI thought of the delivery.
+export function saidWordForWord(itemTypeId: string, answerSet: unknown, content: unknown, said: string | null | undefined): boolean {
+  if (!said?.trim()) return false;
+  const a = (answerSet ?? {}) as Record<string, unknown>;
+  const c = (content ?? {}) as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === "string" ? v : "");
+  let targets: string[] = [];
+  if (itemTypeId === "repeats" || itemTypeId === "reading") targets = [text(a.exact) || text(c.text)];
+  else if (itemTypeId === "sentence_builds") targets = [text(a.correct), ...(Array.isArray(a.alternates) ? a.alternates.map(text) : [])];
+  return targets.filter(Boolean).some((t) => {
+    const d = diffSummary(wordDiff(t, said));
+    return d.substituted + d.missing + d.extra === 0;
+  });
+}

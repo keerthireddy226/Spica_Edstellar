@@ -59,7 +59,7 @@ const SPOKEN_TYPES = new Set([
   "lc_speak_followup",
 ]);
 const SPOKEN_RULE =
-  "This is an automatic transcript of speech. Ignore spelling, punctuation and capital letters, and don't penalize the speaker's accent or a word the transcript obviously misheard. Judge the content, the grammar and the vocabulary.";
+  "This is an automatic transcript of speech. Ignore spelling, punctuation and capital letters, and don't penalize the speaker's accent or a word the transcript obviously misheard (a name heard as a similar-sounding name, such as Kemal as Komal, counts as said correctly). Judge the content, the grammar and the vocabulary.";
 
 // One task description per AI-graded type — "answered well" means something different per type.
 function buildTask(

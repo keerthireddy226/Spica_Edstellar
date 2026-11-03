@@ -5531,5 +5531,6 @@
  "Used another app or window": "別のアプリまたはウィンドウを使用しました",
  "Came back to the test": "テストに戻りました",
  "Left the test": "テストを中断しました",
- "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "まだテストを提出できませんでした。これまでの回答は保存されています。インターネット接続を確認して、もう一度お試しください。このウィンドウは開いたままにしてください。"
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "まだテストを提出できませんでした。これまでの回答は保存されています。インターネット接続を確認して、もう一度お試しください。このウィンドウは開いたままにしてください。",
+ "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "前回の音声回答では何も聞こえませんでした。マイクがオンで、ミュートされておらず、ブラウザで選択されているか確認してから、はっきり話してください。"
 }

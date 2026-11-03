@@ -8,7 +8,9 @@ const SHOW_MS = 15_000;
 // (measured on the server, see backend/src/proctoring/answerAudio.ts), so the
 // learner can move somewhere quieter before the next one. `at` is when the
 // noisy answer went in: a new one shows the notice again.
-export function NoisyAnswerAlert({ at, onDismiss }: { at: number | null; onDismiss: () => void }) {
+// kind "silent": the last recording picked up nothing at all (a muted or
+// wrong microphone), so the answer can't score.
+export function NoisyAnswerAlert({ at, onDismiss, kind = "noisy" }: { at: number | null; onDismiss: () => void; kind?: "noisy" | "silent" }) {
   // The page re-renders every second (question timers): the hide timer
   // restarts only for a new noisy answer, not for a new onDismiss.
   const dismissRef = useRef(onDismiss);
@@ -29,7 +31,9 @@ export function NoisyAnswerAlert({ at, onDismiss }: { at: number | null; onDismi
     >
       <VolumeX size={18} className="shrink-0 mt-0.5" />
       <p className="text-sm font-medium flex-1">
-        {tr("There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.")}
+        {kind === "silent"
+          ? tr("We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.")
+          : tr("There was loud background noise in your last spoken answer. It can cover your words and lower your speaking score. Move somewhere quieter before you speak again.")}
       </p>
       <button onClick={onDismiss} aria-label={tr("Dismiss")} className="shrink-0 cursor-pointer">
         <X size={16} />

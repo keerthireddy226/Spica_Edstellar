@@ -33,6 +33,8 @@ export interface StoredMannerScores {
   wordsPerMinute?: number | null;
   fillerCount?: number;
   gemini?: { pronunciation: number; fluency: number; comment: string; model?: string; rubric?: string } | null;
+  // Said word for word (see reports/wordDiff.ts saidWordForWord): always right.
+  wordsMatched?: boolean;
   // Background noise measured in the recording (see proctoring/answerAudio.ts).
   noise?: { snrDb: number | null; noisy: boolean } | null;
 }
@@ -45,7 +47,6 @@ export const DELIVERY_FLOOR = 0.4;
 
 // Rough, unvalidated "reasonable pace" band (same caveat as cefr.ts) —
 // generous, just catches unintelligibly fast/slow, not normal variation.
-const MIN_ACCEPTABLE_WPM = 70;
 const MAX_ACCEPTABLE_WPM = 220;
 // Below this many words, wordsPerMinute is dominated by fixed latency
 // (breath, button-press delay) rather than actual speaking rate — e.g. a
@@ -53,7 +54,7 @@ const MAX_ACCEPTABLE_WPM = 220;
 // gate on below this length.
 const MIN_WORD_COUNT_FOR_PACE_CHECK = 4;
 
-// Single definition of "correct" everywhere. Typed: content only. Mic: content must clear the level's bar, pace must be in range, and
+// Single definition of "correct" everywhere. Typed: content only. Mic: content must clear the level's bar, pace mustn't be impossibly fast, and
 // intelligibility and fluency must clear DELIVERY_FLOOR; a missing signal never counts against the learner.
 export function isTrulyCorrect(
   contentScore: number | null,
@@ -63,14 +64,22 @@ export function isTrulyCorrect(
   passThresholdForLevel: (level: string | null) => number,
 ): boolean {
   if (contentScore == null) return false;
+  // Every word said back as asked is right: delivery is feedback, not a reason
+  // to mark a word-perfect answer wrong.
+  if (inputMethod === "mic" && mannerScores?.wordsMatched) return true;
   const bar = passThresholdForLevel(cefrLevel);
   const contentOk = contentScore >= bar;
   if (inputMethod !== "mic" || !contentOk) return contentOk;
 
+  // The pace is words over the whole recording, silence before and after
+  // the answer included: a correct 5-word Repeat in a 15 s recording reads as
+  // 20 WPM. So it never fails an answer for being slow (the AI's fluency
+  // score, from the speech itself, does that); only an impossibly fast rate,
+  // which silence can't cause, still counts against it.
   const wpm = mannerScores?.wordsPerMinute;
   const wordCount = mannerScores?.wordCount;
   const paceIsMeaningful = typeof wordCount !== "number" || wordCount >= MIN_WORD_COUNT_FOR_PACE_CHECK;
-  if (paceIsMeaningful && typeof wpm === "number" && (wpm < MIN_ACCEPTABLE_WPM || wpm > MAX_ACCEPTABLE_WPM)) return false;
+  if (paceIsMeaningful && typeof wpm === "number" && wpm > MAX_ACCEPTABLE_WPM) return false;
 
   const gemini = mannerScores?.gemini;
   if (gemini && (gemini.pronunciation < DELIVERY_FLOOR || gemini.fluency < DELIVERY_FLOOR)) return false;

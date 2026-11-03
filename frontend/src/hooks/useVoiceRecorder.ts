@@ -10,6 +10,9 @@ interface RecordingResult {
   // Wall-clock length of the recording. Used server-side for a free speech-
   // rate (words-per-minute) signal — see fluencySignals.ts.
   durationMs: number;
+  // Loudest moment of the recording, on the meter's 0–1 scale. Near 0 means
+  // the microphone picked up nothing (muted, wrong device, unplugged).
+  peakLevel: number;
 }
 
 // Live transcription is a progressive enhancement (Chrome/Edge-only) — elsewhere the recording still works, just with an empty transcript.
@@ -26,6 +29,7 @@ export function useVoiceRecorder() {
   const recognitionErrorRef = useRef<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const startedAtRef = useRef(0);
+  const peakRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const endBusyRef = useRef<(() => void) | null>(null);
   const rafIdRef = useRef<number | null>(null);
@@ -34,6 +38,7 @@ export function useVoiceRecorder() {
     transcriptRef.current = "";
     recognitionErrorRef.current = null;
     startedAtRef.current = Date.now();
+    peakRef.current = 0;
     // Explicit rather than relying on the browser's unstated defaults —
     // runs on the raw mic signal in real time (before any lossy encoding),
     // unlike a denoising filter applied after the fact: measured directly,
@@ -67,7 +72,9 @@ export function useVoiceRecorder() {
       // RMS scaled up — ordinary speech rarely reaches anywhere near full
       // amplitude, so a straight 0-1 RMS reading would look nearly empty
       // even when speaking normally.
-      setVolumeLevel(Math.min(1, Math.sqrt(sumSquares / levelData.length) * 4));
+      const level = Math.min(1, Math.sqrt(sumSquares / levelData.length) * 4);
+      if (level > peakRef.current) peakRef.current = level;
+      setVolumeLevel(level);
       rafIdRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -138,6 +145,7 @@ export function useVoiceRecorder() {
           transcript: transcriptRef.current,
           recognitionError: recognitionErrorRef.current,
           durationMs: Date.now() - startedAtRef.current,
+          peakLevel: peakRef.current,
         });
       };
       // MediaRecorder.stop() throws if it's already inactive — the track

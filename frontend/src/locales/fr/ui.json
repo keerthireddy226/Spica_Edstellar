@@ -5531,5 +5531,6 @@
  "Used another app or window": "A utilisé une autre application ou fenêtre",
  "Came back to the test": "Est revenu au test",
  "Left the test": "A quitté le test",
- "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Nous n’avons pas encore pu remettre votre test. Vos réponses jusqu’ici sont enregistrées. Vérifiez votre connexion internet, puis réessayez. Gardez cette fenêtre ouverte."
+ "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Nous n’avons pas encore pu remettre votre test. Vos réponses jusqu’ici sont enregistrées. Vérifiez votre connexion internet, puis réessayez. Gardez cette fenêtre ouverte.",
+ "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "Nous n’avons rien entendu dans votre dernière réponse orale. Vérifiez que votre micro est allumé, non coupé et sélectionné dans votre navigateur, puis parlez clairement."
 }
