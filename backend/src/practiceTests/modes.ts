@@ -134,6 +134,27 @@ export async function mockFormItemIds(
   );
 }
 
+// A candidate's form for their assigned exam: each section as long as the
+// exam's, drawn from that exam's bank (all of its sets). Questions the
+// candidate saw in an earlier invitation go last, and so do questions used in
+// `exposureCap` real tests or more, while enough others remain.
+export async function candidateFormItemIds(examId: string, userId: string, exposureCap = Infinity): Promise<string[]> {
+  const exam = (await pool.query(`SELECT test_type_id, purpose FROM exams WHERE id = $1`, [examId])).rows[0];
+  if (!exam) return [];
+  const r = await pool.query(
+    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, true AS mock_approved, i.certified_exposures
+     FROM exams e
+     JOIN exam_parts ep ON ep.exam_id = e.id
+     JOIN items i ON i.exam_part_id = ep.id
+     WHERE e.is_active AND e.test_type_id = $1 AND e.purpose = $2 AND i.status = 'approved'
+     ORDER BY ep.sort_order, e.code, i.exam_order`,
+    [exam.test_type_id, exam.purpose],
+  );
+  const own = new Map<number, number>();
+  for (const x of r.rows as BankRow[]) if (x.exam_id === examId) own.set(x.sort_order, (own.get(x.sort_order) ?? 0) + 1);
+  return pickBankForm(r.rows, own, await seenItemIds(userId), examId, exposureCap);
+}
+
 interface TimingRow {
   id: string;
   content: Record<string, unknown>;

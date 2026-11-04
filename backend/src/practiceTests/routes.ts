@@ -12,7 +12,6 @@ import { withAudioUrls } from "../voice/itemAudio.js";
 import { toItemPayload } from "../itemPayload.js";
 import { isPhoneUserAgent } from "../lib/device.js";
 import { learnerPolicy } from "../proctoring/policy.js";
-import { randomizedFormItemIds } from "../proctoring/forms.js";
 import { proctoringBlock } from "../proctoring/analyze.js";
 import { activeAssessment } from "../recruitment/service.js";
 import { examPrefix, newTestCode } from "../lib/testCode.js";
@@ -23,6 +22,7 @@ import {
   itemViews,
   mockDeadline,
   mockFormItemIds,
+  candidateFormItemIds,
   mockLimits,
   mockTemplateExam,
   practiceFeedback,
@@ -89,11 +89,6 @@ function derivePartBoundaries(rows: Awaited<ReturnType<typeof selectExamItems>>,
     }
   }
   return boundaries.map(({ sortOrder: _s, ...b }) => b);
-}
-
-// One randomized form for this exam, in section order.
-async function selectRandomizedItems(examId: string) {
-  return selectFormItems(await randomizedFormItemIds(examId), examId);
 }
 
 // A form's items in the given order; part ids are the template exam's.
@@ -663,9 +658,13 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       const bank = mode === "certified" ? "assessment" : "mock";
       form = await selectFormItems(await mockFormItemIds(testTypeId, req.user!.id, template.id, exposureCap, bank), template.id);
     } else if (candidate) {
-      // Proctored organizations give each candidate their own mix of questions.
+      // Proctored organizations give each candidate their own mix of questions:
+      // ones they haven't seen in an earlier invitation, and not overused ones.
       const { policy } = await learnerPolicy(req.user!.id);
-      if (policy.randomizedForms) form = await selectRandomizedItems(examId!);
+      if (policy.randomizedForms) {
+        const { exposureCap: cap } = await qualitySettings();
+        form = await selectFormItems(await candidateFormItemIds(examId!, req.user!.id, cap), examId!);
+      }
     }
     const formRows = form?.rows ?? [];
     if (built && formRows.length === 0) return res.status(404).json({ error: "no_exam_items_available" });
@@ -722,7 +721,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       ],
     );
       // How often each question has been in a real test (the question pool's exposure).
-      if (mode === "certified") await client.query(`UPDATE items SET certified_exposures = certified_exposures + 1 WHERE id = ANY($1::uuid[])`, [itemIds]);
+      if (mode === "certified" || candidate) await client.query(`UPDATE items SET certified_exposures = certified_exposures + 1 WHERE id = ANY($1::uuid[])`, [itemIds]);
       await client.query("COMMIT");
     } catch (err) {
       await client.query("ROLLBACK").catch(() => {});
