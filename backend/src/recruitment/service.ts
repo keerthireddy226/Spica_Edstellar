@@ -229,7 +229,7 @@ async function warnIfLowCredits(tenantId: string) {
 export async function resendInvite(tenantId: string, assessmentId: string): Promise<{ emailed: boolean }> {
   const a = (
     await pool.query(
-      `SELECT a.*, j.title, j.test_kind, j.invite_valid_days, t.name AS org_name FROM recruitment_assessments a
+      `SELECT a.*, j.title, j.test_kind, j.invite_valid_hours, t.name AS org_name FROM recruitment_assessments a
        JOIN recruitment_jobs j ON j.id = a.job_id JOIN tenants t ON t.id = a.tenant_id
        WHERE a.id = $1 AND a.tenant_id = $2`,
       [assessmentId, tenantId],
