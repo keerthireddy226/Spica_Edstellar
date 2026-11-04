@@ -16,10 +16,11 @@ import type { FeedbackReport } from "./feedbackReport.js";
 const SKILLS = ["speaking", "listening", "reading", "writing"] as const;
 type Skill = (typeof SKILLS)[number];
 
-// The Spica score's CEFR bands.
+// The Spica score's CEFR bands. A1 is the lowest level a result gives, so
+// its band starts at the bottom of the scale: a learner with hardly anything
+// right scores near 10, not 20.
 export const BANDS = [
-  { level: "Pre-A1", min: 10, max: 19 },
-  { level: "A1", min: 20, max: 29 },
+  { level: "A1", min: 10, max: 29 },
   { level: "A2", min: 30, max: 39 },
   { level: "B1", min: 40, max: 54 },
   { level: "B2", min: 55, max: 69 },
