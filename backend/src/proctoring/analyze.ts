@@ -178,7 +178,9 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
     if (id && id.status === "pending") {
       if (id.mrz?.expired === true) add("id_expired", 1, 15);
       if (id.mrz?.nameMatches === false && id.mrz?.checksumsValid) add("id_name_mismatch", 1, 10);
-      if (id.auto_decision === "faces_differ") add("id_face_differs", 1, 10);
+      // A note for the reviewer, never points: an ID photo can be years old
+      // or unclear, so a low match alone doesn't show a different person.
+      if (id.auto_decision === "faces_differ") add("id_face_differs", 1, 0);
       if (id.liveness_score !== null && Number(id.liveness_score) < 0.5) add("id_selfie_not_live", 1, 15);
     }
     if (!id) add("id_missing", 1, 15);
