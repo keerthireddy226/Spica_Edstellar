@@ -152,34 +152,4 @@ describe("assessSkillLevel", () => {
     ];
     expect(assessSkillLevel(items)).toEqual({ level: "B1", cappedByGap: false });
   });
-
-  it("is below A1 when the A1 questions were tested and not passed", () => {
-    const items = [
-      { cefrLevel: "A1", correct: true },
-      { cefrLevel: "A1", correct: false },
-      { cefrLevel: "A1", correct: false },
-      { cefrLevel: "A2", correct: false },
-      { cefrLevel: "A2", correct: false },
-    ];
-    expect(assessSkillLevel(items)).toEqual({ level: null, cappedByGap: false, belowA1: true });
-  });
-
-  it("is below A1 when a test starting at A2 fails A2", () => {
-    const items = [
-      { cefrLevel: "A1", correct: false },
-      { cefrLevel: "A2", correct: false },
-      { cefrLevel: "A2", correct: false },
-    ];
-    expect(assessSkillLevel(items).belowA1).toBe(true);
-  });
-
-  it("is not below A1 when a level was passed", () => {
-    const items = [
-      { cefrLevel: "A2", correct: true },
-      { cefrLevel: "A2", correct: true },
-      { cefrLevel: "B1", correct: false },
-      { cefrLevel: "B1", correct: false },
-    ];
-    expect(assessSkillLevel(items).belowA1).toBeUndefined();
-  });
 });

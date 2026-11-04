@@ -11,7 +11,6 @@ import { submitAttemptSchema } from "./schemas.js";
 import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
 import {
   cefrRank,
-  PRE_A1,
   START_LEVEL,
   stepLevel,
   type CefrLevel,
@@ -507,7 +506,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
 
     // Candidates get no learning plan; their result goes to the recruiter.
     const candidate = req.user!.role === "candidate";
-    const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, cefrLevel === PRE_A1 ? "A1" : cefrLevel, roadmapSkillPercents);
+    const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, cefrLevel, roadmapSkillPercents);
     // The new plan's test dates go to the learner's calendar by email.
     if (!candidate && notificationEmailsEnabled()) emailTestDates(req.user!.id).catch((err) => console.error("placement /complete: test dates email failed:", err));
     if (candidate) {

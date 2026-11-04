@@ -6,15 +6,6 @@ export function cefrRank(level: CefrLevel): number {
   return CEFR_LEVELS.indexOf(level);
 }
 
-// A result's level can also be below A1 (see levels.ts). No question is
-// written at it, so it's never a level to test at.
-export const PRE_A1 = "Pre-A1";
-export type ResultLevel = CefrLevel | typeof PRE_A1;
-
-export function resultRank(level: ResultLevel): number {
-  return level === PRE_A1 ? -1 : cefrRank(level);
-}
-
 /**
  * Approximate percent-correct -> CEFR band. A reasonable heuristic, not an
  * official Pearson/Versant score conversion — always surfaced to the user as
@@ -64,9 +55,6 @@ export function stepLevel(level: CefrLevel, correct: boolean): CefrLevel {
 export interface SkillLevelAssessment {
   level: CefrLevel | null;
   cappedByGap: boolean;
-  // Not even the easiest level tested was passed (A1, or A2 when the test
-  // starts there): with hardly anything right, the level is below A1.
-  belowA1?: boolean;
 }
 
 // A single question isn't enough evidence; below this, a level is treated as untested, not pass/fail.
@@ -117,6 +105,5 @@ export function assessSkillLevel(gradedItems: { cefrLevel: string | null; correc
     highestPassed = level;
     below = entry;
   }
-  if (!highestPassed && sawFirstTestedLevel) return { level: null, cappedByGap: false, belowA1: true };
   return { level: highestPassed, cappedByGap: false };
 }
