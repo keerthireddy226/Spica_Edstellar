@@ -35,6 +35,18 @@ describe("levelSummary", () => {
     expect(s.cefrLevel).not.toBe("A1");
   });
 
+  it("is below A1 when the A1 questions weren't passed", () => {
+    const rows = [row("A1", false), row("A1", false), row("A1", true), row("A2", false), row("A2", false), row("B1", false)];
+    const s = levelSummary(rows)!;
+    expect(s.skillLevels.reading).toBe("Pre-A1");
+    expect(s.cefrLevel).toBe("Pre-A1");
+  });
+
+  it("isn't below A1 for a few missed easy questions when much else was right", () => {
+    const rows = [row("A1", false), row("A1", false), row("A1", true), ...["A2", "B1"].flatMap((l) => [row(l as "A1", true), row(l as "A1", true), row(l as "A1", true)])];
+    expect(levelSummary(rows)!.skillLevels.reading).not.toBe("Pre-A1");
+  });
+
   it("is null when nothing could be scored", () => {
     expect(levelSummary([{ ...row("B1", true), status: "pending" }])).toBeNull();
   });
