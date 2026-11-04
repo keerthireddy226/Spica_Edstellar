@@ -9,7 +9,8 @@ import { subBandLabel } from "@/lib/subBand";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
 export const BANDS = [
-  { level: "A1", min: 10, max: 29 },
+  { level: "Pre-A1", min: 10, max: 19 },
+  { level: "A1", min: 20, max: 29 },
   { level: "A2", min: 30, max: 39 },
   { level: "B1", min: 40, max: 54 },
   { level: "B2", min: 55, max: 69 },
@@ -41,6 +42,7 @@ const MEASURES: Record<ScoreSkill, () => string> = {
 // What a learner can do at each level, per skill.
 export const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
   speaking: {
+    "Pre-A1": () => tr("Say a few familiar words and very short phrases about yourself."),
     A1: () => tr("Introduce yourself and answer simple questions about familiar things, slowly."),
     A2: () => tr("Talk about your daily routine, work and plans in short, simple sentences."),
     B1: () => tr("Describe experiences and plans in connected sentences that others understand."),
@@ -49,6 +51,7 @@ export const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
     C2: () => tr("Speak effortlessly and precisely in any situation, including fine shades of meaning."),
   },
   listening: {
+    "Pre-A1": () => tr("Recognise a few familiar words when they're spoken slowly and clearly."),
     A1: () => tr("Understand simple questions and instructions spoken slowly."),
     A2: () => tr("Understand short, clear messages and conversations on familiar topics."),
     B1: () => tr("Follow the main points of clear speech about work and everyday life."),
@@ -57,6 +60,7 @@ export const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
     C2: () => tr("Understand any spoken English with ease, even fast or idiomatic speech."),
   },
   reading: {
+    "Pre-A1": () => tr("Recognise familiar names, words and very simple sentences."),
     A1: () => tr("Understand short, simple texts like notices and signs."),
     A2: () => tr("Find information in short everyday texts like emails and timetables."),
     B1: () => tr("Understand the main points of clear texts on familiar topics."),
@@ -65,6 +69,7 @@ export const CAN_DO: Record<ScoreSkill, Record<string, () => string>> = {
     C2: () => tr("Read almost any text with ease, including specialised or abstract ones."),
   },
   writing: {
+    "Pre-A1": () => tr("Write your name and a few familiar words."),
     A1: () => tr("Write short, simple phrases and fill in forms with personal details."),
     A2: () => tr("Write short, simple notes and messages about everyday needs."),
     B1: () => tr("Write simple connected text on familiar topics, like a short email."),
@@ -406,10 +411,10 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
       )}
       <p className="text-xs text-muted">
         {finalAssessment
-          ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: A1 10–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
+          ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
           : levelTest
-            ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: A1 10–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a level test result, not a certificate.")
-            : tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: A1 10–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
+            ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a level test result, not a certificate.")
+            : tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a practice result, not an official exam score.")}
       </p>
       </div>
             </td>

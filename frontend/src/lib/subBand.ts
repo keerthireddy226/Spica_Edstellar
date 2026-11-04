@@ -3,7 +3,8 @@ import { tr } from "@/i18n/tr";
 // Where a Spica score sits inside its CEFR band: the lower, middle or upper
 // third (for example "B2 · high" just below C1).
 const BANDS: { level: string; min: number; max: number }[] = [
-  { level: "A1", min: 10, max: 29 },
+  { level: "Pre-A1", min: 10, max: 19 },
+  { level: "A1", min: 20, max: 29 },
   { level: "A2", min: 30, max: 39 },
   { level: "B1", min: 40, max: 54 },
   { level: "B2", min: 55, max: 69 },

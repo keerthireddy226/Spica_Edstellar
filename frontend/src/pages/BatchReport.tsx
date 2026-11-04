@@ -25,7 +25,7 @@ import { CertifiedCell } from "@/components/CertifiedCell";
 // Managers open it from Analytics; Download PDF prints it on A4 pages.
 
 const SKILLS: ReportSkill[] = ["speaking", "listening", "reading", "writing"];
-const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const LEVELS = ["Pre-A1", "A1", "A2", "B1", "B2", "C1", "C2"];
 // Each level a stronger shade of the brand colour.
 const LEVEL_FILL = [8, 18, 32, 50, 70, 88, 100];
 const levelStyle = (level: string) => {
@@ -563,7 +563,7 @@ export function BatchReportView({ data, onOpenLearner }: { data: BatchReport; on
       </Card>
 
       <div className="br-avoid text-[12.5px] text-muted flex flex-col gap-1.5 px-1">
-        <p>{tr("Spica scores run from 10 to 90: A1 10–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Practice time counts Practice Modules, practice tests and mock tests.")}</p>
+        <p>{tr("Spica scores run from 10 to 90: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Practice time counts Practice Modules, practice tests and mock tests.")}</p>
         <p>{tr("Generated {{date}} by Spica for {{org}}.", { date: day(data.generatedAt), org: data.batch.organization })}</p>
       </div>
     </div>

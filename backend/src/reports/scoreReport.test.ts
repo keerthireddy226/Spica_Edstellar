@@ -7,22 +7,18 @@ describe("Spica score", () => {
     expect(spicaScore("B2", 100)).toBe(69);
     expect(spicaScore("B1", 50)).toBe(47);
     expect(spicaScore("C2", 100)).toBe(90);
-    expect(spicaScore("A1", null)).toBe(20);
-    // A1 starts at the bottom of the scale: almost nothing right is near 10.
-    expect(spicaScore("A1", 1)).toBe(10);
-    expect(spicaScore("A1", 100)).toBe(29);
+    expect(spicaScore("A1", null)).toBe(25);
     expect(spicaScore(null, 80)).toBeNull();
   });
   it("maps a score back to its level", () => {
-    expect(levelOfScore(10)).toBe("A1");
-    expect(levelOfScore(29)).toBe("A1");
+    expect(levelOfScore(10)).toBe("Pre-A1");
     expect(levelOfScore(54)).toBe("B1");
     expect(levelOfScore(55)).toBe("B2");
     expect(levelOfScore(79)).toBe("C1");
     expect(levelOfScore(90)).toBe("C2");
   });
   it("a skill's score always lands in its own level", () => {
-    for (const level of ["A1", "A2", "B1", "B2", "C1", "C2"])
+    for (const level of ["Pre-A1", "A1", "A2", "B1", "B2", "C1", "C2"])
       for (const p of [0, 33, 50, 99, 100]) expect(levelOfScore(spicaScore(level, p)!)).toBe(level);
   });
 });
