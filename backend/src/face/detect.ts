@@ -14,6 +14,8 @@ const MODEL_PATH = path.join(process.cwd(), "models", "yunet.onnx");
 // Fixed input size; boxes scaled back to original image after inference.
 const IN_W = 640;
 const IN_H = 640;
+// Grey border around the photo, as a share of its longer side.
+const BORDER = 0.2;
 const STRIDES = [8, 16, 32] as const;
 
 export interface Landmark {
@@ -62,12 +64,24 @@ export async function detectFaces(imageBuffer: Buffer, scoreThreshold = 0.6): Pr
   const origW = meta.width!;
   const origH = meta.height!;
 
-  // YuNet takes BGR planar float32, unnormalised (raw 0-255 values).
-  const { data } = await sharp(imageBuffer)
+  // The photo goes into the model's square input without being stretched:
+  // centred on a grey square with a border around it. Stretching a 4:3 camera
+  // photo to a square squashed the face, and a face filling the frame (close
+  // to the camera, looking down at the keyboard) scored 0.2–0.5 against the
+  // 0.6 needed, so a clearly visible learner was reported as "no face"; this
+  // way the same photos score 0.85–0.9.
+  const side = Math.max(origW, origH);
+  const border = Math.round(side * BORDER);
+  const padX = border + Math.floor((side - origW) / 2);
+  const padY = border + Math.floor((side - origH) / 2);
+  const total = side + 2 * border;
+  const square = await sharp(imageBuffer)
     .removeAlpha()
-    .resize(IN_W, IN_H, { fit: "fill" })
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+    .extend({ left: padX, right: total - origW - padX, top: padY, bottom: total - origH - padY, background: { r: 128, g: 128, b: 128 } })
+    .png()
+    .toBuffer();
+  // YuNet takes BGR planar float32, unnormalised (raw 0-255 values).
+  const { data } = await sharp(square).resize(IN_W, IN_H, { fit: "fill" }).raw().toBuffer({ resolveWithObject: true });
 
   const input = new Float32Array(1 * 3 * IN_H * IN_W);
   const plane = IN_H * IN_W;
@@ -81,8 +95,9 @@ export async function detectFaces(imageBuffer: Buffer, scoreThreshold = 0.6): Pr
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const out: any = await oneAtATime(() => s.run({ input: new ort.Tensor("float32", input, [1, 3, IN_H, IN_W]) }));
 
-  const sx = origW / IN_W;
-  const sy = origH / IN_H;
+  // Model input back to the photo: one scale, less the padding.
+  const sx = total / IN_W;
+  const sy = total / IN_H;
   const candidates: FaceBox[] = [];
 
   for (const stride of STRIDES) {
@@ -108,15 +123,15 @@ export async function detectFaces(imageBuffer: Buffer, scoreThreshold = 0.6): Pr
         const landmarks: Landmark[] = [];
         for (let k = 0; k < 5; k++) {
           landmarks.push({
-            x: (c + kps[idx * 10 + k * 2]) * stride * sx,
-            y: (r + kps[idx * 10 + k * 2 + 1]) * stride * sy,
+            x: (c + kps[idx * 10 + k * 2]) * stride * sx - padX,
+            y: (r + kps[idx * 10 + k * 2 + 1]) * stride * sy - padY,
           });
         }
 
         candidates.push({
           score,
-          x: (cx - w / 2) * sx,
-          y: (cy - h / 2) * sy,
+          x: (cx - w / 2) * sx - padX,
+          y: (cy - h / 2) * sy - padY,
           w: w * sx,
           h: h * sy,
           landmarks,

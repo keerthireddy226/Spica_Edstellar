@@ -74,9 +74,10 @@ for (const r of rows) {
     console.log(`  ${r.title} | ${r.email} | no scored answers found, kept ${before.cefrLevel ?? "-"} ${before.overallPercent ?? "-"}%`);
     continue;
   }
-  const same = before.overallPercent === after.overallPercent && before.cefrLevel === after.cefrLevel;
+  const skills = (x: Record<string, unknown>) => ["speaking", "listening", "reading", "writing"].map((k) => `${k[0].toUpperCase()}:${(x.skillLevels as Record<string, string> | undefined)?.[k] ?? "-"}`).join(" ");
+  const same = before.overallPercent === after.overallPercent && before.cefrLevel === after.cefrLevel && skills(before) === skills(after);
   console.log(
-    `${same ? " " : "*"} ${r.title} | ${r.email} | ${before.cefrLevel ?? "-"} ${before.overallPercent ?? "-"}% -> ${after.cefrLevel ?? "-"} ${after.overallPercent ?? "-"}%`,
+    `${same ? " " : "*"} ${r.title} | ${r.email} | ${before.cefrLevel ?? "-"} ${before.overallPercent ?? "-"}% (${skills(before)}) -> ${after.cefrLevel ?? "-"} ${after.overallPercent ?? "-"}% (${skills(after)})`,
   );
   if (same) continue;
   changed++;

@@ -13,16 +13,16 @@ export const TIER_LABELS: Record<PlanTier, string> = {
 
 // Price per license-month by how many licenses are bought in one purchase.
 export const VOLUME_BANDS = [
-  { minQuantity: 1, unitPriceCents: 10000 },
-  { minQuantity: 50, unitPriceCents: 9000 },
-  { minQuantity: 250, unitPriceCents: 8000 },
+  { minQuantity: 1, unitPriceCents: 2500 },
+  { minQuantity: 50, unitPriceCents: 2000 },
+  { minQuantity: 250, unitPriceCents: 1500 },
 ] as const;
 
 // A tier's commitment earns its rate on every purchase, including small top-ups.
 export const TIER_PRICE_FLOOR_CENTS: Record<PlanTier, number> = {
-  starter: 10000,
-  business: 9000,
-  enterprise: 8000,
+  starter: 2500,
+  business: 2000,
+  enterprise: 1500,
 };
 
 // One purchase this size or larger moves a Starter organization to Business.

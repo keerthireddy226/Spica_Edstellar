@@ -43,8 +43,10 @@ const APP_SWITCH_MS = 2000;
 const STATUS_MS = 15000;
 const SNAPSHOT_MS = 30000;
 const LIVE_SNAPSHOT_MS = 20000;
-// Strict mode checks the camera about four times a minute.
-const STRICT_SNAPSHOT_MS = 15000;
+// Strict mode checks the camera about twice a minute (every 15 s doubled
+// the server's photo checks for little gain); a photo showing a problem is
+// followed by another a few seconds later (FAST_SNAPSHOT_MS) to confirm it.
+const STRICT_SNAPSHOT_MS = 30000;
 const SEGMENT_MS = 30000;
 // One input event adding this many characters at once is pasted or injected
 // text, not typing.
@@ -74,7 +76,7 @@ export interface ProctoringState {
   // What the camera shows now: another person, no face, a covered lens.
   // The test page warns about these and pauses if they go on (useTestHold).
   room: RoomState;
-  // Camera photos every few seconds instead of every 15–30, while a problem
+  // Camera photos every few seconds instead of every 20–30, while a problem
   // in the room is being watched or the test is paused for one.
   setFastChecks: (fast: boolean) => void;
   // Records an event on the integrity timeline.
@@ -316,6 +318,8 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
     // down at the keyboard, so the learner is warned only when the next photo,
     // taken a few seconds later, agrees.
     let noFaceRun = 0;
+    // The last photo showed a problem: the next one comes a few seconds later.
+    let followUp = false;
     const stops: (() => void)[] = [];
     const video = document.createElement("video");
     video.muted = true;
@@ -335,11 +339,12 @@ export function useProctoring(sessionId: string | null, active: boolean): Procto
       // test page. A face that may not match isn't shown to the learner: a
       // reviewer looks at it (the check can be wrong).
       noFaceRun = r.warning === "no_face" ? noFaceRun + 1 : 0;
+      followUp = !!r.warning;
       setRoom((x) => ({ ...x, extraPerson: r.warning === "multiple_people", noFace: noFaceRun >= 2 }));
       if (r.warning && r.warning !== "multiple_people" && r.warning !== "no_face" && r.warning !== "face_mismatch") setWarning(r.warning);
     };
     const schedule = (first = false) => {
-      const delay = first ? 4000 : fastRef.current || noFaceRun === 1 ? FAST_SNAPSHOT_MS : base * (0.6 + Math.random() * 0.8);
+      const delay = first ? 4000 : fastRef.current || followUp ? FAST_SNAPSHOT_MS : base * (0.6 + Math.random() * 0.8);
       timer = setTimeout(async () => {
         await capture();
         if (!stopped) schedule();

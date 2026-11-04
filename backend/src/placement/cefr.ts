@@ -75,7 +75,8 @@ export function assessSkillLevel(gradedItems: { cefrLevel: string | null; correc
   const hasEnoughEvidence = (level: CefrLevel) => (byLevel.get(level)?.total ?? 0) >= MIN_LEVEL_SAMPLE;
 
   let highestPassed: CefrLevel | null = null;
-  let consecutiveDips = 0;
+  // The level just below, as tested: each level is judged together with it.
+  let below: { correct: number; total: number } | null = null;
   let sawFirstTestedLevel = false;
   for (const level of CEFR_LEVELS) {
     if (!hasEnoughEvidence(level)) {
@@ -93,15 +94,16 @@ export function assessSkillLevel(gradedItems: { cefrLevel: string | null; correc
     }
     sawFirstTestedLevel = true;
     const entry = byLevel.get(level)!;
-    const accuracy = entry.correct / entry.total;
-    if (accuracy === 0) break;
-    if (accuracy >= passThresholdForLevel(level)) {
-      highestPassed = level;
-      consecutiveDips = 0;
-    } else {
-      consecutiveDips += 1;
-      if (consecutiveDips >= 2) break;
-    }
+    if (entry.correct === 0) break;
+    // A level counts when its questions and the level below's, together,
+    // clear its pass bar, and the walk stops at the first level that
+    // doesn't. Judged alone, a level rested on a handful of questions: one
+    // answer either way moved it (3 of 5 at B1 failed, 4 of 5 passed), and a
+    // failed level could be skipped (33% at B1, then 75% at B2, gave B2).
+    const pooled = below ? (entry.correct + below.correct) / (entry.total + below.total) : entry.correct / entry.total;
+    if (pooled < passThresholdForLevel(level)) break;
+    highestPassed = level;
+    below = entry;
   }
   return { level: highestPassed, cappedByGap: false };
 }

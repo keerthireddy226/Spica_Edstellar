@@ -26,9 +26,9 @@ export const TEST_MINUTES: Record<TestKind, string> = { placement: "30 to 45", f
 
 // Rate card per candidate assessment, by credits bought at once (USD cents).
 export const ASSESSMENT_BANDS = [
-  { minQuantity: 1, unitPriceCents: 1500 },
-  { minQuantity: 100, unitPriceCents: 1200 },
-  { minQuantity: 500, unitPriceCents: 900 },
+  { minQuantity: 1, unitPriceCents: 500 },
+  { minQuantity: 100, unitPriceCents: 400 },
+  { minQuantity: 500, unitPriceCents: 300 },
 ] as const;
 export const LOW_CREDITS = 5;
 const CANDIDATE_EMAIL_DOMAIN = "candidate.spica.invalid";

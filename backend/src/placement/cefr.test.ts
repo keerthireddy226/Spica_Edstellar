@@ -77,10 +77,10 @@ describe("assessSkillLevel", () => {
   });
 
   it("treats a single shaky level (below bar, not 0%) as noise and keeps walking", () => {
-    // B1's bar is 0.65 — 1/2 = 50% is below bar but not a true 0%, so this
-    // one dip alone shouldn't cap the result; B2 passing afterward should
-    // still count as the highest certified level. (A2 needs its own real
-    // evidence too, or the walk stops on that gap before ever reaching B1.)
+    // B1 alone is 1 of 2 (50%, below its 0.65), but with A2 below it 3 of 4
+    // (75%) clears it, and B2 with B1 is 3 of 4 too, so B2 is the level.
+    // (A2 needs its own real evidence too, or the walk stops on that gap
+    // before ever reaching B1.)
     const items = [
       { cefrLevel: "A1", correct: true },
       { cefrLevel: "A1", correct: true },
@@ -94,18 +94,30 @@ describe("assessSkillLevel", () => {
     expect(assessSkillLevel(items)).toEqual({ level: "B2", cappedByGap: false });
   });
 
-  it("stops after two consecutive dips even without a true 0%", () => {
+  it("judges each level with the level below, and stops at the first level that misses its bar", () => {
     const items = [
       { cefrLevel: "A1", correct: true },
       { cefrLevel: "A1", correct: true },
       { cefrLevel: "A2", correct: true },
-      { cefrLevel: "A2", correct: false }, // dip 1 (50%, below A2's 0.6 bar)
+      { cefrLevel: "A2", correct: false }, // A1+A2: 3 of 4 = 75%, clears A2's 0.6
       { cefrLevel: "B1", correct: true },
-      { cefrLevel: "B1", correct: false }, // dip 2 (50%, below B1's 0.65 bar)
+      { cefrLevel: "B1", correct: false }, // A2+B1: 2 of 4 = 50%, below B1's 0.65: stop
       { cefrLevel: "B2", correct: true },
-      { cefrLevel: "B2", correct: true },
+      { cefrLevel: "B2", correct: true }, // never reached
     ];
-    expect(assessSkillLevel(items)).toEqual({ level: "A1", cappedByGap: false });
+    expect(assessSkillLevel(items)).toEqual({ level: "A2", cappedByGap: false });
+  });
+
+  // Two real candidates with the same 21 of 36 speaking answers right got B2
+  // and A2 under the old rule (a failed B1 was skipped for one, a 3-of-5 B1
+  // just missed for the other). Judged with the level below, both are B1.
+  const answers = (counts: Record<string, [number, number]>) =>
+    Object.entries(counts).flatMap(([level, [right, total]]) => Array.from({ length: total }, (_, i) => ({ cefrLevel: level, correct: i < right })));
+  it("a failed level can't be skipped: 3 of 9 at B1, then 6 of 8 at B2, is B1", () => {
+    expect(assessSkillLevel(answers({ A1: [2, 2], A2: [10, 10], B1: [3, 9], B2: [6, 8], C1: [0, 7] }))).toEqual({ level: "B1", cappedByGap: false });
+  });
+  it("one answer doesn't decide a level: 3 of 5 at B1, after 12 of 12 at A2, is B1", () => {
+    expect(assessSkillLevel(answers({ A1: [3, 3], A2: [12, 12], B1: [3, 5], B2: [3, 12], C1: [0, 4] }))).toEqual({ level: "B1", cappedByGap: false });
   });
 
   it("a level with fewer than MIN_LEVEL_SAMPLE items counts as untested, not passed or failed", () => {
