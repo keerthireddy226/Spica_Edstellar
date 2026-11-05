@@ -56,7 +56,7 @@ import { tr } from "@/i18n/tr";
 import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
-import { partTone, resultMarks } from "@/components/recruitment/resultMarks";
+import { isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
 import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { trServer } from "@/i18n/serverText";
 
@@ -118,9 +118,17 @@ function money(cents: number): string {
 }
 
 // The level, or the score for a fixed-length test.
-function ResultBadge({ result, min }: { result: AssessmentResult | null; min?: Cefr | null }) {
+function ResultBadge({ result, min, answers }: { result: AssessmentResult | null; min?: Cefr | null; answers?: { answered: number; total: number } | null }) {
   if (!result) return <span className="text-xs text-muted">—</span>;
   if (result.pending) return <span className="text-xs text-muted">{tr("Not scored")}</span>;
+  if (isIncomplete(answers)) {
+    return (
+      <span className="flex items-center gap-1.5" title={tr("{{a}} of {{t}} questions answered", { a: answers!.answered, t: answers!.total })}>
+        <span className="font-display font-bold text-warning">{tr("Incomplete")}</span>
+        <span className="text-xs text-muted">{tr("{{a}} of {{t}} answered", { a: answers!.answered, t: answers!.total })}</span>
+      </span>
+    );
+  }
   const below = min && result.cefrLevel && CEFR.indexOf(result.cefrLevel) < CEFR.indexOf(min);
   return (
     <span className="flex items-center gap-1.5">
@@ -130,7 +138,7 @@ function ResultBadge({ result, min }: { result: AssessmentResult | null; min?: C
   );
 }
 
-function ResultDetails({ result, kind }: { result: AssessmentResult; kind: TestKind }) {
+function ResultDetails({ result, kind, answers }: { result: AssessmentResult; kind: TestKind; answers?: { answered: number; total: number } | null }) {
   if (result.pending || (result.kind === "exam" && !result.partResults?.some((p) => p.gradedCount > 0) && !result.pendingCount)) {
     return <p className="text-sm text-muted">{tr("No answers could be scored. The candidate may have skipped the questions.")}</p>;
   }
@@ -138,6 +146,7 @@ function ResultDetails({ result, kind }: { result: AssessmentResult; kind: TestK
   const { best, worst } = rankSkills(skills);
   return (
     <div className="flex flex-col gap-4">
+      {isIncomplete(answers) && <IncompleteNote answers={answers!} />}
       <StrengthsSummary skills={skills} parts={parts} unit="percent" />
       {skills.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -179,6 +188,15 @@ function ResultDetails({ result, kind }: { result: AssessmentResult; kind: TestK
       )}
       {(result.pendingCount ?? 0) > 0 && <p className="text-xs text-muted">{tr("{{n}} answers still being scored.", { n: result.pendingCount })}</p>}
     </div>
+  );
+}
+
+// A mostly blank test: the level isn't a fair measure of the candidate.
+export function IncompleteNote({ answers }: { answers: { answered: number; total: number } }) {
+  return (
+    <p className="text-sm rounded-input border border-warning/50 bg-warning/10 px-3 py-2 text-ink">
+      <b>{tr("Incomplete")}:</b> {tr("only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.", { a: answers.answered, t: answers.total })}
+    </p>
   );
 }
 
@@ -390,7 +408,9 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
         ) : undefined
       }
       stats={[
-        { label: tr("Level"), value: a.result?.cefrLevel ?? "—", hint: a.min_cefr ? tr("Minimum {{l}}", { l: a.min_cefr }) : undefined },
+        isIncomplete(a.answers)
+          ? { label: tr("Level"), value: tr("Incomplete"), hint: tr("{{a}} of {{t}} answered", { a: a.answers!.answered, t: a.answers!.total }) }
+          : { label: tr("Level"), value: a.result?.cefrLevel ?? "—", hint: a.min_cefr ? tr("Minimum {{l}}", { l: a.min_cefr }) : undefined },
         { label: tr("Score"), value: a.result?.overallPercent !== undefined && a.result?.overallPercent !== null ? `${a.result.overallPercent}%` : "—" },
         { label: tr("Integrity"), value: a.integrity_status ? INTEGRITY_TEXT[a.integrity_status]() : "—", hint: a.risk_level ? tr("Risk {{s}}", { s: a.risk_score ?? 0 }) : undefined },
         { label: tr("Completed"), value: a.completed_at ? shortDate(a.completed_at) : "—", hint: a.completed_at ? timeOfDay(a.completed_at) : undefined },
@@ -398,7 +418,7 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
     >
       <div className="flex flex-col gap-5">
         <Panel title={tr("Result")}>
-          {a.result ? <ResultDetails result={a.result} kind={a.test_kind} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
+          {a.result ? <ResultDetails result={a.result} kind={a.test_kind} answers={a.answers} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
           <p className="text-xs text-muted">
             {[
               TEST_KIND_LABEL[a.test_kind](),
@@ -1099,7 +1119,7 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                     </span>
                   </button>
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <ResultBadge result={c.result} min={job.min_cefr} />
+                    <ResultBadge result={c.result} min={job.min_cefr} answers={c.answers} />
                     {adm && c.status === "completed" && (
                       <StatusPill tone={c.confirmed_level ? "success" : "warning"}>
                         {c.confirmed_level ? tr("Confirmed {{level}}", { level: c.confirmed_level }) : tr("To review")}

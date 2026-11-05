@@ -9,10 +9,22 @@ describe("gradeAttempt", () => {
     expect(result).toEqual({ status: "pending", correct: null, score: null, method: null });
   });
 
-  describe("dictation (exact text match)", () => {
-    it("matches ignoring case, trailing punctuation, and extra whitespace", async () => {
+  describe("dictation (word by word)", () => {
+    it("matches ignoring case, punctuation, hyphens and extra whitespace", async () => {
       const result = await gradeAttempt("dictation", { exact: "The cat sat." }, {}, "A1", null, "the   cat sat");
-      expect(result).toEqual({ status: "scored", correct: true, score: 1, method: "exact-match" });
+      expect(result).toEqual({ status: "scored", correct: true, score: 1, method: "text-diff" });
+      const spaced = await gradeAttempt("dictation", { exact: "Could we see the dessert menu, please?" }, {}, "A2", null, "Could we see the dessert Menu . Please .");
+      expect(spaced.score).toBe(1);
+      const hyphen = await gradeAttempt("dictation", { exact: "Let's schedule a follow-up call for early next week." }, {}, "B1", null, "Let's schedule a follow up call for early next week");
+      expect(hyphen.score).toBe(1);
+    });
+
+    it("lets one slip pass and three fail", async () => {
+      const one = await gradeAttempt("dictation", { exact: "The coastal path is closed while repairs are carried out." }, {}, "B2", null, "The coastal path is closed while the repairs are carried out.");
+      expect(one.correct).toBe(true);
+      expect(one.score).toBeCloseTo(0.85);
+      const two = await gradeAttempt("dictation", { exact: "The coastal path is closed while repairs are carried out." }, {}, "B2", null, "The coastal path closed while the repairs carried out.");
+      expect(two.correct).toBe(false);
     });
 
     it("marks a genuinely different answer wrong", async () => {

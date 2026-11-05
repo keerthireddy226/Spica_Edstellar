@@ -7,6 +7,7 @@ import type { ReportAbout, ScoreReport as ScoreReportData, ScoreSkill, ScoreType
 import { tr } from "@/i18n/tr";
 import { subBandLabel } from "@/lib/subBand";
 import { StrengthsSummary, rankSkills, type PartMark, type SkillMark } from "@/components/report/StrengthsSummary";
+import { isIncomplete } from "@/components/recruitment/resultMarks";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
 export const BANDS = [
@@ -188,8 +189,11 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
   @page { size: A4; margin: 0 0 7mm 0; @bottom-right { content: counter(page) " / " counter(pages); font-size: 9px; color: #7d6f5b; margin-right: 12mm; } }
   .score-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 13px; }
   .score-report .sr-body { gap: 10px; }
-  .score-report section { box-shadow: none; padding: 12px 14px; gap: 8px; }
-  .score-report .print-page { break-before: page; }
+  .score-report section { box-shadow: none; padding: 10px 14px; gap: 6px; }
+  /* Compact print text, so the four skill cards share a page with the profile. */
+  .score-report section .text-sm { font-size: 12px; line-height: 1.45; }
+  /* Sections flow on from page to page (no forced breaks, so no half-empty pages); a section never splits. */
+  .score-report .print-page { break-before: auto; }
   html, body, *:has(.score-report) { background: #fff !important; }
   /* Shorter skill bars, so page 1 keeps the summary and the skills together. */
   .score-report .sr-bar { height: 180px !important; }
@@ -344,6 +348,14 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
             )}
           </div>
         </div>
+        {isIncomplete(score.answers) && (
+          <p className="text-sm rounded-input border border-warning/50 bg-warning/10 px-3 py-2 text-ink">
+            <b>{tr("Incomplete")}:</b>{" "}
+            {org
+              ? tr("only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.", { a: score.answers!.answered, t: score.answers!.total })
+              : tr("you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.", { a: score.answers!.answered, t: score.answers!.total })}
+          </p>
+        )}
         <StrengthsSummary skills={marks} parts={parts} unit="score" />
       </Section>
 
@@ -551,7 +563,7 @@ function ProfileChart({ score, org = false }: { score: ScoreReportData; org?: bo
         <span className="text-xs text-muted">{org ? tr("Each part of the learner's English out of 100. The further out, the stronger.") : tr("Each part of your English out of 100. The further out, the stronger.")}</span>
       </div>
       <div className="grid md:grid-cols-[minmax(0,1fr)_220px] print:grid-cols-[minmax(0,1fr)_200px] gap-5 items-center">
-        <svg viewBox="-50 0 540 410" className="w-full max-w-[520px] print:max-w-[340px] h-auto mx-auto" role="img" aria-label={parts.map((p) => `${name(p.key)} ${p.value}`).join(", ")}>
+        <svg viewBox="-50 0 540 410" className="w-full max-w-[520px] print:max-w-[280px] h-auto mx-auto" role="img" aria-label={parts.map((p) => `${name(p.key)} ${p.value}`).join(", ")}>
           {[25, 50, 75, 100].map((v) => (
             <g key={v}>
               <polygon points={ring(v)} fill="none" stroke="var(--color-rule-strong)" strokeWidth={1} />

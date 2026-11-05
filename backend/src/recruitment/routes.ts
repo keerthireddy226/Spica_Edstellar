@@ -64,6 +64,11 @@ async function recruiterTenant(req: AuthedRequest, res: Response): Promise<strin
   return req.user.tenantId;
 }
 
+// How many of the test's questions the candidate answered (typed or said),
+// for "Incomplete" on a mostly blank test.
+const ANSWERS_SQL = `(SELECT json_build_object('answered', count(*) FILTER (WHERE coalesce(at.response_text, '') <> '' OR at.response_uri IS NOT NULL), 'total', count(*))
+   FROM attempts at WHERE at.session_id = a.session_id) AS answers`;
+
 // One candidate's assessment with its job, integrity and decision.
 async function assessmentDetail(id: string, tenantId: string): Promise<Record<string, any> | undefined> {
   return (
@@ -74,7 +79,8 @@ async function assessmentDetail(id: string, tenantId: string): Promise<Record<st
            concat_ws(' ', dec.first_name, dec.last_name) AS decided_by_name,
            concat_ws(' ', conf.first_name, conf.last_name) AS confirmed_by_name, t.category AS tenant_category,
            (SELECT status FROM identity_verifications iv WHERE iv.user_id = a.candidate_id ORDER BY created_at DESC LIMIT 1) AS identity_status,
-           (SELECT code FROM certificates c WHERE c.session_id = a.session_id AND c.revoked_at IS NULL LIMIT 1) AS certificate_code
+           (SELECT code FROM certificates c WHERE c.session_id = a.session_id AND c.revoked_at IS NULL LIMIT 1) AS certificate_code,
+           ${ANSWERS_SQL}
          FROM recruitment_assessments a JOIN recruitment_jobs j ON j.id = a.job_id
          LEFT JOIN session_integrity si ON si.session_id = a.session_id
          LEFT JOIN sessions ts ON ts.id = a.session_id
@@ -430,7 +436,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
          a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
-         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, ${leftTestSql()} AS left_test
+         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
        FROM recruitment_assessments a
        LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id

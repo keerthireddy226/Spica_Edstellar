@@ -1,8 +1,9 @@
 // Form assembly: a new set (exam) of a test type, laid out like its first set
 // (same parts, same question types and counts), filled with approved
-// questions that aren't in any set yet. Each question takes the level of the
-// question in the same place in the first set where it can, else the nearest
-// level, so a new set has the same level spread.
+// questions that aren't in any set yet. Each part's questions are spread over
+// every level the test covers (balancedLevels), easiest first, so every level
+// up to C2 can be reached; each slot takes the nearest level available. (Sets
+// used to copy the first set's levels, which had no C2.)
 import { pool } from "../db.js";
 import { CEFR_LEVELS, type CefrLevel } from "../placement/cefr.js";
 
@@ -52,6 +53,35 @@ async function pool_(itemTypeIds: string[], mockOnly: boolean, maxLevel: string 
 
 const levelIndex = (l: string | null) => CEFR_LEVELS.indexOf((l ?? "B1") as CefrLevel);
 
+// Share of a set's questions at each level: a little more in the middle,
+// where most decisions fall, and enough at both ends for A1 and C2 to count
+// (a level needs two questions in a skill).
+export const LEVEL_WEIGHTS: Record<CefrLevel, number> = { A1: 8, A2: 12, B1: 14, B2: 14, C1: 12, C2: 10 };
+
+// The levels for a part of n questions, easiest first: each level of the
+// test's range gets its weighted share (largest remainder), and at least one
+// question when the part has room for all of them.
+export function balancedLevels(n: number, min: string | null, max: string | null): CefrLevel[] {
+  const lo = Math.max(0, levelIndex(min ?? "A1"));
+  const hi = Math.min(CEFR_LEVELS.length - 1, levelIndex(max ?? "C2"));
+  const levels = CEFR_LEVELS.slice(lo, hi + 1);
+  if (n <= 0 || !levels.length) return [];
+  const total = levels.reduce((a, l) => a + LEVEL_WEIGHTS[l], 0);
+  const exact = levels.map((l) => (n * LEVEL_WEIGHTS[l]) / total);
+  const counts = exact.map(Math.floor);
+  const order = exact.map((x, i) => [x - Math.floor(x), i] as const).sort((a, b) => b[0] - a[0]);
+  for (let k = 0, left = n - counts.reduce((a, b) => a + b, 0); left > 0; k++, left--) counts[order[k % order.length][1]]++;
+  if (n >= levels.length) {
+    for (let i = 0; i < counts.length; i++) {
+      if (counts[i] > 0) continue;
+      const from = counts.indexOf(Math.max(...counts));
+      counts[from]--;
+      counts[i]++;
+    }
+  }
+  return levels.flatMap((l, i) => Array<CefrLevel>(counts[i]).fill(l));
+}
+
 // What can be assembled now: per part, questions needed and available.
 export async function assemblyPlan(testTypeId: string, mockOnly: boolean) {
   const { rows } = await template(testTypeId);
@@ -74,8 +104,14 @@ export async function assemblyPlan(testTypeId: string, mockOnly: boolean) {
 }
 
 export async function assembleSet(testTypeId: string, opts: { mockOnly: boolean }): Promise<{ examId: string; code: string; testId: string }> {
-  const { exam, rows } = await template(testTypeId);
-  const tt = (await pool.query(`SELECT cefr_max FROM test_types WHERE id = $1`, [testTypeId])).rows[0];
+  const { exam, rows: templateRows } = await template(testTypeId);
+  const tt = (await pool.query(`SELECT cefr_min, cefr_max FROM test_types WHERE id = $1`, [testTypeId])).rows[0];
+  // Each part's slots take a balanced spread of levels instead of the template's.
+  const rows = [...new Set(templateRows.map((r) => r.sort_order))].flatMap((so) => {
+    const part = templateRows.filter((r) => r.sort_order === so);
+    const levels = balancedLevels(part.length, tt?.cefr_min ?? null, tt?.cefr_max ?? null);
+    return part.map((r, i) => ({ ...r, cefr_level: levels[i] ?? r.cefr_level }));
+  });
   const available = await pool_([...new Set(rows.map((r) => r.item_type_id))], opts.mockOnly, tt?.cefr_max ?? null);
   const used = new Set<string>();
   const picks: (TemplateRow & { itemId: string })[] = [];

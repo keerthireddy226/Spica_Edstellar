@@ -5550,5 +5550,17 @@
  "Needs most work": "最も改善が必要",
  "Question types": "問題形式",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spicaスコア（10〜90）はSpica独自の尺度で、CEFRレベルに対応しています：Pre-A1 10〜19、A1 20〜29、A2 30〜39、B1 40〜54、B2 55〜69、C1 70〜79、C2 80〜90。採用判断の材料の一つであり、公式の試験スコアではありません。",
- "Hiring details": "採用の詳細"
+ "Hiring details": "採用の詳細",
+ "Couldn't be checked automatically: compare the photos": "自動で確認できませんでした。写真を比較してください",
+ "Incomplete": "未完了",
+ "{{a}} of {{t}} questions answered": "{{t}}問中{{a}}問に回答",
+ "{{a}} of {{t}} answered": "{{t}}問中{{a}}問回答",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "{{t}}問中{{a}}問しか回答がないため、下のレベルはこの候補者の英語力を正確に示していません。再度の招待をご検討ください。",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "{{t}}問中{{a}}問しか回答がないため、このレベルは学習者の英語力を正確に示していません。",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "{{t}}問中{{a}}問しか回答していないため、このレベルはあなたの英語力を正確に示していません。次回はすべての問題に回答してください。",
+ "We can't hear your microphone": "マイクの音が聞こえません",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "直前の2つの音声回答で何も聞こえませんでした。マイクがオンでミュートされていないか確認してください。",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "直前の2つの音声回答が無音でした。マイクがオンで、ミュートされておらず、ブラウザで選択されているか確認してください。その後、何か話してください。声が聞こえたらテストが再開します。",
+ "Say a few words now…": "何か話してください…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ブラウザがマイクを開けません。アドレスバーで許可してから、ページを再読み込みしてください。"
 }

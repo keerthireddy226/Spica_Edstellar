@@ -1,4 +1,5 @@
-import { AlertTriangle, CameraOff, ScanFace, Users, VolumeX, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, CameraOff, MicOff, ScanFace, Users, VolumeX, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { VOICE_ABOVE_ROOM_DB } from "@/lib/noiseGuard";
 import { MAX_WARNINGS, type IssueKind } from "@/lib/issueGuard";
@@ -24,6 +25,12 @@ const TEXT: Record<IssueKind, { icon: LucideIcon; title: () => string; warn: () 
     warn: () => tr("We can't see your face. Sit in front of the camera, facing it."),
     fix: () => tr("Sit in front of the camera, facing it, with your face clearly lit. The test continues by itself once we can see you."),
   },
+  mic_silent: {
+    icon: MicOff,
+    title: () => tr("We can't hear your microphone"),
+    warn: () => tr("We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted."),
+    fix: () => tr("Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you."),
+  },
   camera_covered: {
     icon: CameraOff,
     title: () => tr("Your camera is covered or too dark"),
@@ -34,7 +41,7 @@ const TEXT: Record<IssueKind, { icon: LucideIcon; title: () => string; warn: () 
 
 // The test paused for a problem in the room (useTestHold). It covers the
 // question completely, so nobody can work on it while it's paused.
-export function TestHoldOverlay({ kind, level, timed, allowanceLeft }: { kind: IssueKind; level: number | null; timed: boolean; allowanceLeft: number | null }) {
+export function TestHoldOverlay({ kind, level, timed, allowanceLeft, onMicWorks }: { kind: IssueKind; level: number | null; timed: boolean; allowanceLeft: number | null; onMicWorks?: () => void }) {
   const t = TEXT[kind];
   const Icon = t.icon;
   // Sound above the room's own quiet level: 0 dB (quiet) to 30 dB (a voice close by), as 0–100%.
@@ -61,6 +68,7 @@ export function TestHoldOverlay({ kind, level, timed, allowanceLeft }: { kind: I
             <p className="text-xs text-muted">{loud ? tr("Still hearing a voice") : tr("Getting quieter…")}</p>
           </div>
         )}
+        {kind === "mic_silent" && onMicWorks && <MicRecheck onWorks={onMicWorks} />}
         {timed && (
           <p className="text-xs text-muted">
             {allowanceLeft !== null
@@ -70,6 +78,73 @@ export function TestHoldOverlay({ kind, level, timed, allowanceLeft }: { kind: I
         )}
         <p className="text-xs text-muted">{tr("This pause is recorded for the reviewer. It doesn't fail your test.")}</p>
       </div>
+    </div>
+  );
+}
+
+// The microphone, live, while the test is paused for silent answers: the test
+// continues on its own once a voice is heard for about half a second, or when
+// the learner chooses to go on anyway (a microphone that can't be fixed).
+function MicRecheck({ onWorks }: { onWorks: () => void }) {
+  const [level, setLevel] = useState(0);
+  const [failed, setFailed] = useState(false);
+  const doneRef = useRef(false);
+  const finish = useRef(onWorks);
+  finish.current = onWorks;
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let ctx: AudioContext | null = null;
+    let raf = 0;
+    let heardMs = 0;
+    let last = performance.now();
+    navigator.mediaDevices
+      .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
+      .then((s) => {
+        stream = s;
+        ctx = new AudioContext();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 1024;
+        ctx.createMediaStreamSource(s).connect(analyser);
+        const buf = new Float32Array(analyser.fftSize);
+        const tick = () => {
+          analyser.getFloatTimeDomainData(buf);
+          const peak = buf.reduce((m, x) => Math.max(m, Math.abs(x)), 0);
+          const now = performance.now();
+          heardMs = peak > 0.05 ? heardMs + (now - last) : Math.max(0, heardMs - (now - last) / 2);
+          last = now;
+          setLevel(Math.min(1, peak * 4));
+          if (heardMs > 500 && !doneRef.current) {
+            doneRef.current = true;
+            finish.current();
+            return;
+          }
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      })
+      .catch(() => setFailed(true));
+    return () => {
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+      void ctx?.close();
+    };
+  }, []);
+  return (
+    <div className="flex flex-col gap-2 text-left">
+      <div className="h-3 rounded-pill bg-paper-warm overflow-hidden" aria-label={tr("Microphone level")}>
+        <div className={`h-full transition-[width] duration-75 ${level > 0.2 ? "bg-success" : "bg-muted"}`} style={{ width: `${Math.round(level * 100)}%` }} />
+      </div>
+      <p className="text-xs text-muted">{failed ? tr("The browser can't open your microphone. Allow it in the address bar, then reload the page.") : tr("Say a few words now…")}</p>
+      <button
+        onClick={() => {
+          if (doneRef.current) return;
+          doneRef.current = true;
+          finish.current();
+        }}
+        className="self-center text-xs font-semibold text-navy-deep underline cursor-pointer"
+      >
+        {tr("Continue anyway")}
+      </button>
     </div>
   );
 }

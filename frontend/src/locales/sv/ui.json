@@ -5550,5 +5550,17 @@
  "Needs most work": "Behöver mest arbete",
  "Question types": "Frågetyper",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica-poängen (10–90) är Spicas egen skala, anpassad till CEFR-nivåerna: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Det är ett underlag för ett anställningsbeslut, inte ett officiellt provresultat.",
- "Hiring details": "Anställningsuppgifter"
+ "Hiring details": "Anställningsuppgifter",
+ "Couldn't be checked automatically: compare the photos": "Kunde inte kontrolleras automatiskt: jämför bilderna",
+ "Incomplete": "Ofullständig",
+ "{{a}} of {{t}} questions answered": "{{a}} av {{t}} frågor besvarade",
+ "{{a}} of {{t}} answered": "{{a}} av {{t}} besvarade",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "bara {{a}} av {{t}} frågor besvarades, så nivån nedan visar inte kandidatens engelska på ett tillförlitligt sätt. Överväg att bjuda in igen.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "bara {{a}} av {{t}} frågor besvarades, så den här nivån visar inte elevens engelska på ett tillförlitligt sätt.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "du svarade bara på {{a}} av {{t}} frågor, så den här nivån visar inte din engelska på ett tillförlitligt sätt. Svara på alla frågor nästa gång.",
+ "We can't hear your microphone": "Vi hör inte din mikrofon",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Vi hörde ingenting i dina två senaste muntliga svar. Kontrollera att mikrofonen är på och inte avstängd.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Dina två senaste muntliga svar var tysta. Kontrollera att mikrofonen är på, inte avstängd och vald i webbläsaren. Säg sedan några ord: provet fortsätter när vi hör dig.",
+ "Say a few words now…": "Säg några ord nu…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Webbläsaren kan inte öppna mikrofonen. Tillåt den i adressfältet och ladda om sidan."
 }

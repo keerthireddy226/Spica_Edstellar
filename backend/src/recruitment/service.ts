@@ -273,15 +273,27 @@ export async function resendInvite(tenantId: string, assessmentId: string): Prom
     });
 }
 
-// Cancelling an invitation nobody started gives the credit back.
+// Whether the candidate saw any question of this invitation's test. Opening
+// the link (and the checks before the test) doesn't use the test: a
+// candidate who left before the first question gets the credit back.
+async function sawQuestion(assessmentId: string): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT 1 FROM recruitment_assessments a JOIN sessions s ON s.user_id = a.candidate_id AND s.created_at >= a.started_at - interval '1 minute'
+     JOIN session_item_views v ON v.session_id = s.id WHERE a.id = $1 LIMIT 1`,
+    [assessmentId],
+  );
+  return (r.rowCount ?? 0) > 0;
+}
+
+// Cancelling an invitation before any question was seen gives the credit back.
 export async function cancelInvite(tenantId: string, assessmentId: string, actorId: string): Promise<void> {
   const a = (await pool.query(`SELECT status, started_at, credit_refunded FROM recruitment_assessments WHERE id = $1 AND tenant_id = $2`, [assessmentId, tenantId])).rows[0];
   if (!a) throw new RecruitmentError("assessment_not_found", 404);
   if (!["invited", "started", "expired"].includes(a.status)) throw new RecruitmentError("cannot_cancel");
   await pool.query(`UPDATE recruitment_assessments SET status = 'cancelled' WHERE id = $1`, [assessmentId]);
-  if (!a.started_at && !a.credit_refunded) {
+  if (!a.credit_refunded && (!a.started_at || !(await sawQuestion(assessmentId)))) {
     await pool.query(`UPDATE recruitment_assessments SET credit_refunded = true WHERE id = $1`, [assessmentId]);
-    await addCredits({ tenantId, delta: await chargedFor(assessmentId), reason: "refund", assessmentId, actorId, note: "Invitation cancelled before it was started" });
+    await addCredits({ tenantId, delta: await chargedFor(assessmentId), reason: "refund", assessmentId, actorId, note: "Invitation cancelled before any question was seen" });
   }
   await pool.query(`UPDATE auth_sessions SET revoked_at = now() WHERE revoked_at IS NULL AND user_id = (SELECT candidate_id FROM recruitment_assessments WHERE id = $1)`, [
     assessmentId,
@@ -449,9 +461,9 @@ export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) =
      WHERE status IN ('invited', 'started') AND expires_at < now() RETURNING id, tenant_id, started_at, credit_refunded`,
   );
   for (const a of expired.rows) {
-    if (!a.started_at && !a.credit_refunded) {
+    if (!a.credit_refunded && (!a.started_at || !(await sawQuestion(a.id)))) {
       await pool.query(`UPDATE recruitment_assessments SET credit_refunded = true WHERE id = $1`, [a.id]);
-      await addCredits({ tenantId: a.tenant_id, delta: await chargedFor(a.id), reason: "refund", assessmentId: a.id, note: "Invitation expired without being started" });
+      await addCredits({ tenantId: a.tenant_id, delta: await chargedFor(a.id), reason: "refund", assessmentId: a.id, note: "Invitation expired before any question was seen" });
     }
   }
 

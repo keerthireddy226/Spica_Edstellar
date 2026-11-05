@@ -153,7 +153,7 @@ export function markItemShown(sessionId: string, itemId: string): Promise<{ seco
 // A problem in the room that went on after three warnings: holds the test
 // ("start") until it's fixed ("end"). A timed test's clock stops while held,
 // up to capSeconds in total.
-export type HoldReason = "noise" | "extra_person" | "no_face" | "camera_covered";
+export type HoldReason = "noise" | "extra_person" | "no_face" | "camera_covered" | "mic_silent";
 export interface HoldResult {
   held: boolean;
   capReached?: boolean;
@@ -402,6 +402,7 @@ export interface ScoreReport {
   }[];
   // Skills the test covers with nothing answered: shown as 0, not in the overall score.
   missingSkills?: ScoreSkill[];
+  answers?: { answered: number; total: number };
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;

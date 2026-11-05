@@ -154,6 +154,8 @@ export interface CandidateRow {
   started_at: string | null;
   // Started and left: shown as "Left the test" until the link expires.
   left_test?: boolean;
+  // Questions answered (typed or said) out of those shown.
+  answers?: { answered: number; total: number } | null;
   completed_at: string | null;
   session_id: string | null;
   test_code: string | null;

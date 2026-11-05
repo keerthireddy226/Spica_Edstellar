@@ -5550,5 +5550,17 @@
  "Needs most work": "À travailler en priorité",
  "Question types": "Types de questions",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Le score Spica (10–90) est l'échelle propre à Spica, alignée sur les niveaux du CECR : Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. C'est un élément parmi d'autres pour une décision d'embauche, pas un score d'examen officiel.",
- "Hiring details": "Détails du recrutement"
+ "Hiring details": "Détails du recrutement",
+ "Couldn't be checked automatically: compare the photos": "Vérification automatique impossible : comparez les photos",
+ "Incomplete": "Incomplet",
+ "{{a}} of {{t}} questions answered": "{{a}} questions sur {{t}} répondues",
+ "{{a}} of {{t}} answered": "{{a}} sur {{t}} répondues",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "seules {{a}} questions sur {{t}} ont reçu une réponse : le niveau ci-dessous ne reflète pas de façon fiable l'anglais de ce candidat. Pensez à l'inviter de nouveau.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "seules {{a}} questions sur {{t}} ont reçu une réponse : ce niveau ne reflète pas de façon fiable l'anglais de l'apprenant.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "vous n'avez répondu qu'à {{a}} questions sur {{t}} : ce niveau ne reflète pas de façon fiable votre anglais. La prochaine fois, répondez à toutes les questions.",
+ "We can't hear your microphone": "Nous n'entendons pas votre micro",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Nous n'avons rien entendu dans vos deux dernières réponses orales. Vérifiez que votre micro est allumé et non coupé.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Vos deux dernières réponses orales étaient silencieuses. Vérifiez que votre micro est allumé, non coupé et sélectionné dans le navigateur. Puis dites quelques mots : le test reprend dès que nous vous entendons.",
+ "Say a few words now…": "Dites quelques mots maintenant…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Le navigateur ne peut pas ouvrir votre micro. Autorisez-le dans la barre d'adresse, puis rechargez la page."
 }

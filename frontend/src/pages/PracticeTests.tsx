@@ -401,11 +401,23 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const { recording, start: startRecording, stop: stopRecorder } = useVoiceRecorder();
   const [silentAnswerAt, setSilentAnswerAt] = useState<number | null>(null);
+  const silentStreakRef = useRef(0);
+  const micCheckRef = useRef<() => void>(() => {});
   // Stops the recording and warns when it picked up nothing at all, so a
   // muted microphone is noticed after one answer, not after the whole test.
+  // A second silent answer in a row pauses the test for a microphone check.
   const stopRecording = async () => {
     const r = await stopRecorder();
-    if (r.blob && r.durationMs > 1500 && r.peakLevel < SILENT_PEAK) setSilentAnswerAt(Date.now());
+    if (r.blob && r.durationMs > 1500) {
+      if (r.peakLevel < SILENT_PEAK) {
+        setSilentAnswerAt(Date.now());
+        silentStreakRef.current += 1;
+        if (silentStreakRef.current >= 2) {
+          silentStreakRef.current = 0;
+          micCheckRef.current();
+        }
+      } else silentStreakRef.current = 0;
+    }
     return r;
   };
 
@@ -759,6 +771,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       setMockSecondsLeft(seconds);
     },
   });
+
+  micCheckRef.current = noise.requestMicCheck;
 
   const timeUpRef = useRef<() => void>(() => {});
   useEffect(() => {
@@ -1350,7 +1364,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       <ProctoringOverlay proctor={proctor} onFinish={recoverAlreadyCompletedSession} />
       <NoisyAnswerAlert at={noisyAnswerAt} onDismiss={() => setNoisyAnswerAt(null)} />
       <NoisyAnswerAlert kind="silent" at={silentAnswerAt} onDismiss={() => setSilentAnswerAt(null)} />
-      {noise.held && <TestHoldOverlay kind={noise.held} level={noise.level} timed={isMock} allowanceLeft={noise.allowanceLeft} />}
+      {noise.held && <TestHoldOverlay kind={noise.held} level={noise.level} timed={isMock} allowanceLeft={noise.allowanceLeft} onMicWorks={noise.endMicCheck} />}
       {noise.warning && !noise.held && <TestHoldWarning warning={noise.warning} capReached={noise.capReached} onDismiss={noise.dismissWarning} />}
     </>
   );

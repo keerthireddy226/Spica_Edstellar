@@ -5550,5 +5550,17 @@
  "Needs most work": "सबसे ज़्यादा सुधार चाहिए",
  "Question types": "प्रश्न के प्रकार",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica स्कोर (10–90) Spica का अपना पैमाना है, जो CEFR स्तरों से मेल खाता है: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90। यह भर्ती के फ़ैसले का एक आधार है, आधिकारिक परीक्षा स्कोर नहीं।",
- "Hiring details": "भर्ती का विवरण"
+ "Hiring details": "भर्ती का विवरण",
+ "Couldn't be checked automatically: compare the photos": "अपने-आप जाँच नहीं हो सकी: फ़ोटो की तुलना करें",
+ "Incomplete": "अधूरा",
+ "{{a}} of {{t}} questions answered": "{{t}} में से {{a}} प्रश्नों के उत्तर दिए",
+ "{{a}} of {{t}} answered": "{{t}} में से {{a}} उत्तर दिए",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "{{t}} में से केवल {{a}} प्रश्नों के उत्तर दिए गए, इसलिए नीचे का स्तर इस उम्मीदवार की अंग्रेज़ी को भरोसेमंद तरीके से नहीं दिखाता। उन्हें फिर से आमंत्रित करने पर विचार करें।",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "{{t}} में से केवल {{a}} प्रश्नों के उत्तर दिए गए, इसलिए यह स्तर शिक्षार्थी की अंग्रेज़ी को भरोसेमंद तरीके से नहीं दिखाता।",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "आपने {{t}} में से केवल {{a}} प्रश्नों के उत्तर दिए, इसलिए यह स्तर आपकी अंग्रेज़ी को भरोसेमंद तरीके से नहीं दिखाता। अगली बार हर प्रश्न का उत्तर दें।",
+ "We can't hear your microphone": "हमें आपका माइक्रोफ़ोन सुनाई नहीं दे रहा",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "आपके पिछले दो बोले गए उत्तरों में कुछ सुनाई नहीं दिया। जाँचें कि माइक्रोफ़ोन चालू है और म्यूट नहीं है।",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "आपके पिछले दो बोले गए उत्तर खाली थे। जाँचें कि माइक्रोफ़ोन चालू है, म्यूट नहीं है और ब्राउज़र में वही चुना गया है। फिर कुछ शब्द बोलें: आपकी आवाज़ सुनते ही परीक्षा जारी रहेगी।",
+ "Say a few words now…": "अब कुछ शब्द बोलें…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ब्राउज़र आपका माइक्रोफ़ोन नहीं खोल पा रहा। एड्रेस बार में अनुमति दें, फिर पेज रीलोड करें।"
 }

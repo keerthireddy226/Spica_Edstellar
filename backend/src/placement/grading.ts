@@ -1,6 +1,7 @@
 import { gradeWithAI, scoreTypingAccuracy, AI_GRADED_TYPES } from "./aiGrading.js";
 import { passThresholdForLevel } from "./cefr.js";
 import { canonicalSpelling } from "./spelling.js";
+import { diffSummary, wordDiff } from "../reports/wordDiff.js";
 
 // Exact-text grading for items with a definite answer, AI rubric grading otherwise. `correct` = score >= pass bar.
 export type GradeResult = {
@@ -21,6 +22,22 @@ function normalize(s: string): string {
       .replace(/[.,!?;:]+$/g, "")
       .replace(/\s+/g, " "),
   );
+}
+
+// Typed text compared word by word: punctuation and spacing don't count, and
+// a hyphen is a space ("follow-up" = "follow up").
+function plainWords(s: string): string {
+  return normalize(s.replace(/[‘’]/g, "'").replace(/[^A-Za-z0-9'\s]+/g, " "));
+}
+
+// A dictation answer's score: each word missed, wrong or added costs 1.5
+// words' worth, so one slip still meets the item level's pass bar (for
+// sentences of the usual length) and two slips don't. All-or-nothing marking
+// counted "follow up" for "follow-up", or one extra "the", as a wrong answer.
+export function dictationScore(exact: string, typed: string): number {
+  const d = diffSummary(wordDiff(plainWords(exact), plainWords(typed)));
+  const words = Math.max(1, plainWords(exact).split(" ").filter(Boolean).length);
+  return Math.max(0, Math.round((1 - (1.5 * (d.substituted + d.missing + d.extra)) / words) * 100) / 100);
 }
 
 const PENDING: GradeResult = { status: "pending", correct: null, score: null, method: null };
@@ -74,12 +91,14 @@ export async function gradeAttempt(
     case "dictation": {
       const exact = set.exact;
       if (typeof exact !== "string") return PENDING;
-      return exactResult(given === normalize(exact));
+      const score = dictationScore(exact, responseText);
+      return { status: "scored", correct: score >= passThresholdForLevel(cefrLevel), score, method: "text-diff" };
     }
     case "sentence_completion": {
       const accepted = set.acceptable_answers;
       if (!Array.isArray(accepted) || accepted.length === 0) return PENDING;
-      return exactResult(accepted.some((a) => typeof a === "string" && normalize(a) === given));
+      const typed = plainWords(responseText);
+      return exactResult(accepted.some((a) => typeof a === "string" && (normalize(a) === given || plainWords(a) === typed)));
     }
     // Multiple-choice: client submits the option's index as a string (e.g. "1") — exact to grade.
     case "response_selection":

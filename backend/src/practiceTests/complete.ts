@@ -1,7 +1,7 @@
 // Finishing a practice test, mock or real attempt: the learner's /complete,
 // and the periodic sweep for timed tests left open past their deadline.
 import { pool } from "../db.js";
-import { finishPendingSpeaking, gradeAndSaveAttempt } from "../attemptGrading.js";
+import { finishPendingSpeaking, regradeBrowserTranscriptAnswers, gradeAndSaveAttempt } from "../attemptGrading.js";
 import { checkAndAwardBadges } from "../gamification/stats.js";
 import { applyTestLevels } from "../learner/path.js";
 import { rebuildRoadmap } from "../roadmap/save.js";
@@ -91,6 +91,7 @@ export async function completeSession(
   }
 
   // Recorded answers graded in the background must count in the result.
+  await regradeBrowserTranscriptAnswers(sessionId).catch((err) => console.error("practiceTests /complete: speaking re-grade failed:", err));
   await finishPendingSpeaking(sessionId).catch((err) => console.error("practiceTests /complete: speaking grading failed:", err));
 
   // The session is now genuinely done — a crash computing the score

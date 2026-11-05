@@ -58,3 +58,15 @@ describe("splitTurns", () => {
     expect(splitTurns("Welcome to the museum.\nPlease keep your bags with you.")).toEqual([{ speaker: null, text: "Welcome to the museum.\nPlease keep your bags with you." }]);
   });
 });
+
+describe("balancedLevels", () => {
+  it("spreads a part over every level, easiest first", async () => {
+    const { balancedLevels } = await import("./assembly.js");
+    const l = balancedLevels(16, "A1", "C2");
+    expect(l).toHaveLength(16);
+    expect(new Set(l)).toEqual(new Set(["A1", "A2", "B1", "B2", "C1", "C2"]));
+    expect([...l].sort()).toEqual(l);
+    expect(balancedLevels(2, "A1", "C2")).toHaveLength(2);
+    expect(balancedLevels(8, "B1", "C1").every((x) => ["B1", "B2", "C1"].includes(x))).toBe(true);
+  });
+});

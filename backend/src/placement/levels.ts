@@ -19,15 +19,11 @@ export interface ScoredAttemptRow {
 }
 
 // How much each skill counts toward a test's overall result: the same for
-// every skill the test reports, except the English Writing test, where
-// writing is half and the other skills share the rest.
-const WRITING_TEST_ID = "writing";
+// every skill the test reports, in every test (owner decision 2026-11-05; the
+// English Writing test used to count writing as half).
 export function skillWeights(testTypeId: string | null | undefined, skills: string[]): Record<string, number> {
+  void testTypeId;
   if (!skills.length) return {};
-  if (testTypeId === WRITING_TEST_ID && skills.includes("writing") && skills.length > 1) {
-    const rest = 0.5 / (skills.length - 1);
-    return Object.fromEntries(skills.map((s) => [s, s === "writing" ? 0.5 : rest]));
-  }
   return Object.fromEntries(skills.map((s) => [s, 1 / skills.length]));
 }
 

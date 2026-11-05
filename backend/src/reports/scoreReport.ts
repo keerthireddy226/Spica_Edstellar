@@ -80,6 +80,8 @@ export interface ScoreReport {
   // Skills the test covers with no result (nothing answered): shown as 0,
   // never counted in the overall score.
   missingSkills: Skill[];
+  // Questions answered (typed or said) out of those shown.
+  answers: { answered: number; total: number };
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;
@@ -261,6 +263,7 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
     goal,
     skills,
     missingSkills,
+    answers: { answered: raw.filter(answered).length, total: raw.length },
     profile,
     speaking,
     writing,

@@ -824,6 +824,9 @@ proctoringRouter.post("/identity", requireAuth, async (req: AuthedRequest, res, 
 // ID checks cut off before they finished (the server restarted, say) run once
 // more from the saved photos; a second failure is left for the reviewer.
 export async function retryIdentityChecks(): Promise<number> {
+  // A check that failed again an hour ago won't finish by itself: the
+  // reviewer compares the photos (it no longer sits at "checking" forever).
+  await pool.query(`UPDATE identity_verifications SET auto_decision = 'not_checked' WHERE auto_decision = 'checking_again' AND created_at < now() - interval '1 hour'`);
   const r = await pool.query(
     `SELECT iv.id, iv.user_id, iv.document_type, u.role, d.uri AS doc_uri, f.uri AS selfie_uri
      FROM identity_verifications iv JOIN users u ON u.id = iv.user_id
@@ -836,7 +839,10 @@ export async function retryIdentityChecks(): Promise<number> {
     await pool.query(`UPDATE identity_verifications SET auto_decision = 'checking_again' WHERE id = $1`, [v.id]);
     const docFile = mediaPath(v.doc_uri);
     const selfieFile = mediaPath(v.selfie_uri);
-    if (!docFile || !selfieFile) continue;
+    if (!docFile || !selfieFile) {
+      await pool.query(`UPDATE identity_verifications SET auto_decision = 'not_checked' WHERE id = $1`, [v.id]);
+      continue;
+    }
     try {
       await Promise.all([ensureFile(docFile), ensureFile(selfieFile)]);
       const [doc, selfie] = await Promise.all([readFile(docFile), readFile(selfieFile)]);
@@ -844,6 +850,7 @@ export async function retryIdentityChecks(): Promise<number> {
       done++;
     } catch (err) {
       console.error("identity check retry failed:", v.id, err);
+      await pool.query(`UPDATE identity_verifications SET auto_decision = 'not_checked' WHERE id = $1`, [v.id]);
     }
   }
   return done;

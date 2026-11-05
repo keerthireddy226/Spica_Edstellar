@@ -5550,5 +5550,17 @@
  "Needs most work": "Meeste werk nodig",
  "Question types": "Vraagtypen",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "De Spica-score (10–90) is Spica's eigen schaal, afgestemd op de CEFR-niveaus: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Het is één onderdeel van een aanstellingsbesluit, geen officiële examenscore.",
- "Hiring details": "Gegevens van de vacature"
+ "Hiring details": "Gegevens van de vacature",
+ "Couldn't be checked automatically: compare the photos": "Kon niet automatisch worden gecontroleerd: vergelijk de foto's",
+ "Incomplete": "Onvolledig",
+ "{{a}} of {{t}} questions answered": "{{a}} van {{t}} vragen beantwoord",
+ "{{a}} of {{t}} answered": "{{a}} van {{t}} beantwoord",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "slechts {{a}} van {{t}} vragen zijn beantwoord, dus het niveau hieronder toont het Engels van deze kandidaat niet betrouwbaar. Overweeg een nieuwe uitnodiging.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "slechts {{a}} van {{t}} vragen zijn beantwoord, dus dit niveau toont het Engels van de leerling niet betrouwbaar.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "je hebt maar {{a}} van {{t}} vragen beantwoord, dus dit niveau toont je Engels niet betrouwbaar. Beantwoord de volgende keer alle vragen.",
+ "We can't hear your microphone": "We horen je microfoon niet",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "We hoorden niets in je laatste twee gesproken antwoorden. Controleer of je microfoon aan staat en niet gedempt is.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Je laatste twee gesproken antwoorden waren stil. Controleer of je microfoon aan staat, niet gedempt is en in je browser is gekozen. Zeg daarna een paar woorden: de toets gaat verder zodra we je horen.",
+ "Say a few words now…": "Zeg nu een paar woorden…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "De browser kan je microfoon niet openen. Sta hem toe in de adresbalk en laad de pagina opnieuw."
 }

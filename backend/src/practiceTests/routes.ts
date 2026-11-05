@@ -810,7 +810,8 @@ practiceTestsRouter.post("/session/:sessionId/view", requireAuth, async (req: Au
 // test's) stops while it's held, for at most MAX_NOISE_PAUSE_SECONDS per test
 // in total; each hold goes on the integrity timeline. A practice test's timer
 // is only a guide, so it's held in the browser alone.
-const HOLD_REASONS = ["noise", "extra_person", "no_face", "camera_covered"] as const;
+// mic_silent: two spoken answers in a row with nothing heard (a muted or wrong microphone).
+const HOLD_REASONS = ["noise", "extra_person", "no_face", "camera_covered", "mic_silent"] as const;
 practiceTestsRouter.post("/session/:sessionId/hold", requireAuth, async (req: AuthedRequest, res, next) => {
   const client = await pool.connect();
   try {

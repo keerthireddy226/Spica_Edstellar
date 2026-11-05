@@ -4,7 +4,8 @@ import { CheckCircle2 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { getCandidateAssessment, type CandidateAssessment } from "@/api/recruitment";
 import { tr } from "@/i18n/tr";
-import { TestFeedbackCard } from "@/components/report/AfterTest";
+import { ReviewRequestRow, TestFeedbackCard } from "@/components/report/AfterTest";
+import { getMyAppeals, type MyAppeal } from "@/api/quality";
 import { IntegrityResultNote } from "@/components/proctoring/IntegrityResultNote";
 
 export function CandidateShell({ org, children }: { org?: string | null; children: ReactNode }) {
@@ -35,14 +36,21 @@ export function CandidatePanel({ icon, title, subtitle, children, wide }: { icon
 // Shown when the candidate finishes, from either test page.
 export function CandidateFinished({ sessionId = null }: { sessionId?: string | null }) {
   const [a, setA] = useState<CandidateAssessment | null>(null);
+  const [appeals, setAppeals] = useState<MyAppeal[]>([]);
+  const loadAppeals = () =>
+    getMyAppeals()
+      .then((x) => setAppeals(x.appeals))
+      .catch(() => {});
   useEffect(() => {
     // The test is handed in: its link has nothing more to sign in to.
     forgetCandidateLink();
     getCandidateAssessment()
       .then(setA)
       .catch(() => {});
+    void loadAppeals();
   }, []);
   const r = a?.result;
+  const sid = sessionId ?? a?.sessionId ?? null;
   return (
     <CandidateShell org={a?.organization}>
       <CandidatePanel
@@ -56,6 +64,8 @@ export function CandidateFinished({ sessionId = null }: { sessionId?: string | n
             {r.overallPercent !== null && r.overallPercent !== undefined && <p className="text-sm text-muted">{tr("Score: {{p}}%", { p: r.overallPercent })}</p>}
           </div>
         )}
+        {/* A result the candidate thinks is wrong: a person at Edstellar reviews it. */}
+        {r && sid && <ReviewRequestRow sessionId={sid} kind="review" mine={appeals.find((x) => x.sessionId === sid) ?? null} onSent={loadAppeals} />}
         <IntegrityResultNote sessionId={sessionId} />
         {(sessionId ?? a?.sessionId) && <TestFeedbackCard sessionId={(sessionId ?? a?.sessionId)!} />}
         <p className="text-xs text-muted text-center">{tr("You can close this window.")}</p>

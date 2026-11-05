@@ -5550,5 +5550,17 @@
  "Needs most work": "最需要加强",
  "Question types": "题型",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica 分数（10–90）是 Spica 自有的评分标准，与 CEFR 等级对应：Pre-A1 10–19，A1 20–29，A2 30–39，B1 40–54，B2 55–69，C1 70–79，C2 80–90。这是招聘决定的参考之一，不是官方考试成绩。",
- "Hiring details": "招聘详情"
+ "Hiring details": "招聘详情",
+ "Couldn't be checked automatically: compare the photos": "无法自动检查：请比对照片",
+ "Incomplete": "未完成",
+ "{{a}} of {{t}} questions answered": "已回答 {{t}} 题中的 {{a}} 题",
+ "{{a}} of {{t}} answered": "{{t}} 题中答了 {{a}} 题",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "{{t}} 题中只回答了 {{a}} 题，因此下方的等级不能可靠反映该候选人的英语水平。可考虑重新邀请。",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "{{t}} 题中只回答了 {{a}} 题，因此该等级不能可靠反映学员的英语水平。",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "你在 {{t}} 题中只回答了 {{a}} 题，因此该等级不能可靠反映你的英语水平。下次请回答所有题目。",
+ "We can't hear your microphone": "听不到你的麦克风",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "你最后两次口头回答没有任何声音。请检查麦克风是否打开且未静音。",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "你最后两次口头回答都是无声的。请检查麦克风已打开、未静音，并在浏览器中被选中。然后说几句话：听到你的声音后测试会继续。",
+ "Say a few words now…": "现在说几句话…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "浏览器无法打开你的麦克风。请在地址栏中允许，然后刷新页面。"
 }

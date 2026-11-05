@@ -46,9 +46,9 @@ describe("skill weights", () => {
     expect(weightedSkillMean({ speaking: 80, listening: 40 }, "speaking-listening")).toBe(60);
   });
 
-  it("makes writing half of the English Writing test", () => {
-    expect(skillWeights("writing", ["writing", "reading", "listening"])).toEqual({ writing: 0.5, reading: 0.25, listening: 0.25 });
-    expect(weightedSkillMean({ writing: 80, reading: 40, listening: 40, speaking: null }, "writing")).toBe(60);
+  it("counts each skill the same in the English Writing test too", () => {
+    expect(skillWeights("writing", ["writing", "reading", "listening"])).toEqual({ writing: 1 / 3, reading: 1 / 3, listening: 1 / 3 });
+    expect(weightedSkillMean({ writing: 80, reading: 50, listening: 50, speaking: null }, "writing")).toBeCloseTo(60);
   });
 
   it("is null with no skill scored", () => {

@@ -163,6 +163,7 @@ const AUTO_TEXT: Record<string, () => string> = {
   faces_differ: () => tr("Faces look different"),
   no_face_on_document: () => tr("No face found on the document"),
   no_single_face_in_selfie: () => tr("Selfie didn't show one face"),
+  not_checked: () => tr("Couldn't be checked automatically: compare the photos"),
 };
 
 function MediaView({ id, kind, className = "" }: { id: string; kind: "image" | "video" | "audio"; className?: string }) {

@@ -82,9 +82,10 @@ const REVIEW_SCHEMA = {
 };
 
 // The language's CEFR level (within one of the target), sensitivity and clarity.
+// Sensitivity and clarity. The level is judged blind in levelChecks.ts (this
+// prompt used to name the target level, which pulled the estimate towards it).
 export async function reviewCheck(itemTypeId: string, level: string, content: Json, usage: Usage): Promise<Checks> {
   const prompt = `You review questions for an English test. Type: ${SPECS[itemTypeId].brief}
-Target CEFR level: ${level}.
 
 QUESTION (JSON):
 ${JSON.stringify(content)}
@@ -93,10 +94,8 @@ Estimate the CEFR level of the language a learner must understand (vocabulary, g
   const r = await generateJson<{ estimatedLevel: string; sensitivity: string[]; clarity: string[] }>({ model: CHECK_MODEL, prompt, schema: REVIEW_SCHEMA, temperature: 0 });
   usage.inputTokens += r.usage.inputTokens;
   usage.outputTokens += r.usage.outputTokens;
-  const est = CEFR_LEVELS.indexOf(r.data.estimatedLevel as CefrLevel);
-  const target = CEFR_LEVELS.indexOf(level as CefrLevel);
+  void level;
   return {
-    level: { ok: est >= 0 && Math.abs(est - target) <= 1, estimate: r.data.estimatedLevel, notes: est >= 0 && Math.abs(est - target) <= 1 ? [] : [`estimated ${r.data.estimatedLevel}, target ${level}`] },
     sensitivity: { ok: (r.data.sensitivity ?? []).length === 0, notes: r.data.sensitivity ?? [] },
     clarity: { ok: (r.data.clarity ?? []).length === 0, notes: r.data.clarity ?? [] },
   };

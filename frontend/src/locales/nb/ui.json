@@ -5550,5 +5550,17 @@
  "Needs most work": "Trenger mest arbeid",
  "Question types": "Spørsmålstyper",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica-poengsummen (10–90) er Spicas egen skala, tilpasset CEFR-nivåene: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Det er ett grunnlag for en ansettelsesbeslutning, ikke en offisiell eksamenspoengsum.",
- "Hiring details": "Ansettelsesdetaljer"
+ "Hiring details": "Ansettelsesdetaljer",
+ "Couldn't be checked automatically: compare the photos": "Kunne ikke kontrolleres automatisk: sammenlign bildene",
+ "Incomplete": "Ufullstendig",
+ "{{a}} of {{t}} questions answered": "{{a}} av {{t}} spørsmål besvart",
+ "{{a}} of {{t}} answered": "{{a}} av {{t}} besvart",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "bare {{a}} av {{t}} spørsmål ble besvart, så nivået nedenfor viser ikke kandidatens engelsk pålitelig. Vurder å invitere på nytt.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "bare {{a}} av {{t}} spørsmål ble besvart, så dette nivået viser ikke elevens engelsk pålitelig.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "du svarte bare på {{a}} av {{t}} spørsmål, så dette nivået viser ikke engelsken din pålitelig. Svar på alle spørsmålene neste gang.",
+ "We can't hear your microphone": "Vi hører ikke mikrofonen din",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Vi hørte ingenting i de to siste muntlige svarene dine. Sjekk at mikrofonen er på og ikke dempet.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "De to siste muntlige svarene dine var stille. Sjekk at mikrofonen er på, ikke dempet og valgt i nettleseren. Si så noen ord: testen fortsetter når vi hører deg.",
+ "Say a few words now…": "Si noen ord nå…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Nettleseren kan ikke åpne mikrofonen. Tillat den i adressefeltet, og last inn siden på nytt."
 }

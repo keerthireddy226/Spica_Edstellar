@@ -5,7 +5,9 @@
 // paused the test, it pauses straight away if it comes back in the same test
 // (no new round of warnings).
 
-export type IssueKind = "noise" | "extra_person" | "no_face" | "camera_covered";
+// mic_silent is never found by the guard: the test page asks for it after two
+// silent spoken answers in a row (useTestHold's requestMicCheck).
+export type IssueKind = "noise" | "extra_person" | "no_face" | "camera_covered" | "mic_silent";
 
 export const MAX_WARNINGS = 3;
 export const WARN_GAP_MS = 20_000;

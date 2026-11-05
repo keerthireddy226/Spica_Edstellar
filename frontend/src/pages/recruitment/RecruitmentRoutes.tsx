@@ -13,7 +13,8 @@ import { tr } from "@/i18n/tr";
 import { ScoreReport } from "@/components/report/ScoreReport";
 import type { ScoreReport as ScoreReportData } from "@/api/practiceTests";
 import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
-import { partTone, resultMarks } from "@/components/recruitment/resultMarks";
+import { isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
+import { IncompleteNote } from "@/pages/recruitment/RecruitmentConsole";
 
 // An organization that only bought recruitment lands on recruitment.
 export function OrgAdminHome() {
@@ -100,8 +101,9 @@ export function CandidateReportPrint() {
   return (
     <div className="cr-print min-h-screen bg-white text-ink" style={LIGHT}>
       <style>{`.cr-print { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-@media print { ${full ? "" : "@page { size: A4; margin: 10mm 0; }"} html, body, *:has(.cr-print) { background: #fff !important; } .cr-print { font-size: 13px; } .cr-print section { box-shadow: none; padding: 12px 14px; } .cr-extra { break-before: page; padding: 10mm 12mm 0; } }`}</style>
+@media print { ${full ? "" : "@page { size: A4; margin: 10mm 0; }"} html, body, *:has(.cr-print) { background: #fff !important; } .cr-print { font-size: 13px; } .cr-print section { box-shadow: none; padding: 12px 14px; } .cr-extra { padding: 4mm 12mm 0; } }`}</style>
       <div className={`${full ? "max-w-4xl" : "max-w-3xl"} mx-auto px-4 sm:px-8 py-8 print:p-0 print:max-w-none flex flex-col gap-4`}>
+        {isIncomplete(a.answers) && <IncompleteNote answers={a.answers!} />}
         {full ? (
           <ScoreReport score={score!} about={null} analysis="" viewer="org" hiring={[TEST_KIND_LABEL[a.test_kind](), a.exam_name].filter(Boolean).join(" · ")} />
         ) : (

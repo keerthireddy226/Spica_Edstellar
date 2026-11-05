@@ -324,6 +324,23 @@ export async function finishPendingSpeaking(sessionId: string): Promise<void> {
   await Promise.all(ids.map((id) => gradeSpeakingAttempt(id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking grading failed:", err))));
 }
 
+// Spoken answers graded on the spot from the browser's transcript (Gemini
+// didn't answer in time): the browser's speech recognition is tuned to one
+// accent, so before the final level each is graded again from its recording.
+// The last try falls back to the same transcript, so nothing is left ungraded.
+export async function regradeBrowserTranscriptAnswers(sessionId: string): Promise<number> {
+  const r = await pool.query(
+    `UPDATE scores sc SET status = 'pending', updated_at = now()
+     FROM attempts a JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+     WHERE sc.attempt_id = a.id AND a.session_id = $1 AND it.input_method = 'mic' AND a.response_uri IS NOT NULL
+       AND sc.status = 'scored' AND sc.manner_scores->'gemini' IS NULL AND sc.model_version NOT IN ($2, $3)
+     RETURNING a.id`,
+    [sessionId, NO_SPEECH_VERSION, NO_ANSWER_VERSION],
+  );
+  await Promise.all(r.rows.map((x) => gradeSpeakingAttempt(x.id, { final: true, timeoutMs: 25_000 }).catch((err) => console.error("speaking re-grade failed:", err))));
+  return r.rows.length;
+}
+
 // An answer can be left ungraded or failed: a recording still waiting after
 // every background try, or an AI grading that timed out or hit the model's
 // daily limit. Each one gets a round of background tries once a day for 30

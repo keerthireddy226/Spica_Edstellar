@@ -5550,5 +5550,17 @@
  "Needs most work": "ఎక్కువ సాధన అవసరం",
  "Question types": "ప్రశ్నల రకాలు",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica స్కోర్ (10–90) Spica సొంత స్కేల్, ఇది CEFR స్థాయిలకు అనుగుణంగా ఉంటుంది: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. ఇది నియామక నిర్ణయంలో ఒక అంశం మాత్రమే, అధికారిక పరీక్ష స్కోర్ కాదు.",
- "Hiring details": "నియామక వివరాలు"
+ "Hiring details": "నియామక వివరాలు",
+ "Couldn't be checked automatically: compare the photos": "స్వయంచాలకంగా తనిఖీ చేయలేకపోయాం: ఫోటోలను పోల్చండి",
+ "Incomplete": "అసంపూర్ణం",
+ "{{a}} of {{t}} questions answered": "{{t}} లో {{a}} ప్రశ్నలకు సమాధానం ఇచ్చారు",
+ "{{a}} of {{t}} answered": "{{t}} లో {{a}} సమాధానాలు",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "{{t}} లో కేవలం {{a}} ప్రశ్నలకే సమాధానం వచ్చింది, కాబట్టి కింది స్థాయి ఈ అభ్యర్థి ఇంగ్లీష్‌ను నమ్మకంగా చూపదు. వారిని మళ్లీ ఆహ్వానించడం గురించి ఆలోచించండి.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "{{t}} లో కేవలం {{a}} ప్రశ్నలకే సమాధానం వచ్చింది, కాబట్టి ఈ స్థాయి అభ్యాసకుడి ఇంగ్లీష్‌ను నమ్మకంగా చూపదు.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "మీరు {{t}} లో కేవలం {{a}} ప్రశ్నలకే సమాధానం ఇచ్చారు, కాబట్టి ఈ స్థాయి మీ ఇంగ్లీష్‌ను నమ్మకంగా చూపదు. వచ్చేసారి అన్ని ప్రశ్నలకు సమాధానం ఇవ్వండి.",
+ "We can't hear your microphone": "మీ మైక్రోఫోన్ వినిపించడం లేదు",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "మీ చివరి రెండు మాట్లాడిన సమాధానాల్లో ఏమీ వినిపించలేదు. మైక్రోఫోన్ ఆన్‌లో ఉందో, మ్యూట్ కాలేదో చూడండి.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "మీ చివరి రెండు మాట్లాడిన సమాధానాలు నిశ్శబ్దంగా ఉన్నాయి. మైక్రోఫోన్ ఆన్‌లో ఉందో, మ్యూట్ కాలేదో, బ్రౌజర్‌లో అదే ఎంచుకున్నారో చూడండి. తర్వాత కొన్ని మాటలు చెప్పండి: మీ గొంతు వినగానే పరీక్ష కొనసాగుతుంది.",
+ "Say a few words now…": "ఇప్పుడు కొన్ని మాటలు చెప్పండి…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "బ్రౌజర్ మీ మైక్రోఫోన్‌ను తెరవలేకపోతోంది. అడ్రస్ బార్‌లో అనుమతించి, పేజీని రీలోడ్ చేయండి."
 }

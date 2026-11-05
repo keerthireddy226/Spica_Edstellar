@@ -5550,5 +5550,17 @@
  "Needs most work": "Cần cải thiện nhiều nhất",
  "Question types": "Các dạng câu hỏi",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Điểm Spica (10–90) là thang điểm riêng của Spica, tương ứng với các cấp độ CEFR: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Đây là một căn cứ cho quyết định tuyển dụng, không phải điểm thi chính thức.",
- "Hiring details": "Thông tin tuyển dụng"
+ "Hiring details": "Thông tin tuyển dụng",
+ "Couldn't be checked automatically: compare the photos": "Không thể kiểm tra tự động: hãy so sánh ảnh",
+ "Incomplete": "Chưa hoàn thành",
+ "{{a}} of {{t}} questions answered": "Đã trả lời {{a}}/{{t}} câu hỏi",
+ "{{a}} of {{t}} answered": "Đã trả lời {{a}}/{{t}}",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "chỉ {{a}}/{{t}} câu hỏi được trả lời, nên trình độ bên dưới không phản ánh đáng tin cậy tiếng Anh của ứng viên. Hãy cân nhắc mời lại.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "chỉ {{a}}/{{t}} câu hỏi được trả lời, nên trình độ này không phản ánh đáng tin cậy tiếng Anh của học viên.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "bạn chỉ trả lời {{a}}/{{t}} câu hỏi, nên trình độ này không phản ánh đáng tin cậy tiếng Anh của bạn. Lần sau hãy trả lời mọi câu hỏi.",
+ "We can't hear your microphone": "Chúng tôi không nghe thấy micrô của bạn",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Chúng tôi không nghe thấy gì trong hai câu trả lời nói gần nhất của bạn. Hãy kiểm tra micrô đã bật và không bị tắt tiếng.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Hai câu trả lời nói gần nhất của bạn không có tiếng. Hãy kiểm tra micrô đã bật, không bị tắt tiếng và được chọn trong trình duyệt. Sau đó hãy nói vài từ: bài thi sẽ tiếp tục khi chúng tôi nghe thấy bạn.",
+ "Say a few words now…": "Hãy nói vài từ ngay bây giờ…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Trình duyệt không mở được micrô. Hãy cho phép trên thanh địa chỉ rồi tải lại trang."
 }

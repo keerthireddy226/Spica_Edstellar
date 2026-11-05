@@ -187,7 +187,11 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
     else if (id.status === "rejected") add("id_rejected", 1, 30);
     else if (id.status === "pending") {
       add("id_pending", 1, 0);
-      needsHuman = true;
+      // An ID nobody has reviewed yet holds back a certificate (a real final
+      // assessment) but doesn't flag a candidate or mock test by itself: the
+      // recruiter still sees "ID check waiting" next to the result.
+      const mode = (await pool.query(`SELECT delivery_mode FROM sessions WHERE id = $1`, [sessionId])).rows[0]?.delivery_mode;
+      if (mode === "certified") needsHuman = true;
     }
   }
   if (si.biometric_opt_out && (policy.faceMatch || policy.voiceMatch)) {

@@ -1,6 +1,7 @@
 // Runs a generation job: write questions in batches, check each one, and
 // approve it for practice only if every check passes. Anything else waits in
 // the review queue; mocks always need a person (ASSESSMENT_ENGINE.md section 6).
+import { blindLevelCheck, lengthCheck, vocabularyCheck } from "./levelChecks.js";
 import { pool } from "../db.js";
 import { buildBrief } from "./brief.js";
 import { GENERATION_MODEL, embed, generateJson, type Usage } from "./gemini.js";
@@ -55,6 +56,9 @@ export async function checkItem(itemId: string, opts: { others?: { id: string; v
     await Promise.all([
       run("key", () => keyCheck(it.item_type_id, it.content, it.answer_set, usage)),
       run("review", () => reviewCheck(it.item_type_id, it.cefr_level, it.content, usage)),
+      run("levels", () => blindLevelCheck(it.item_type_id, it.cefr_level, it.content, usage)),
+      run("vocabulary", async () => vocabularyCheck(itemText(it.content), it.cefr_level)),
+      run("length", () => lengthCheck(it.item_type_id, it.cefr_level, it.content, it.id)),
       run("duplicate", async () => {
         const [v] = await embed([itemText(it.content)]);
         await pool.query(`UPDATE items SET embedding = $2 WHERE id = $1`, [it.id, v]);

@@ -2,6 +2,7 @@
 // everyone right or almost everyone wrong, or learners who do well overall
 // doing worse on it than learners who don't (ASSESSMENT_ENGINE.md section 6).
 import { pool } from "../db.js";
+import { levelOrderProblems } from "./levelChecks.js";
 
 // Enough answers for the numbers to mean something.
 export const MIN_ANSWERS = 30;
@@ -43,6 +44,15 @@ export async function flagByStatistics(): Promise<number> {
       `UPDATE items SET review_state = 'needs_review', review_reason = $2, updated_at = now()
        WHERE id = $1 AND status = 'approved' AND review_state IS NULL AND (reviewed_at IS NULL OR reviewed_at < now() - interval '90 days')`,
       [id, `Statistics: ${problem}`],
+    );
+    flagged += r.rowCount ?? 0;
+  }
+  // Real difficulty two or more levels from the question's own level.
+  for (const p of await levelOrderProblems()) {
+    const r = await pool.query(
+      `UPDATE items SET review_state = 'needs_review', review_reason = $2, updated_at = now()
+       WHERE id = $1 AND status = 'approved' AND review_state IS NULL AND (reviewed_at IS NULL OR reviewed_at < now() - interval '90 days')`,
+      [p.itemId, `Statistics: answered like a ${p.nearest} question, not ${p.level} (${Math.round(p.mean * 100)}% average score, ${p.n} answers)`],
     );
     flagged += r.rowCount ?? 0;
   }

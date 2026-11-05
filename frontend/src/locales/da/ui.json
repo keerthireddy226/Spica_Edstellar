@@ -5550,5 +5550,17 @@
  "Needs most work": "Kræver mest arbejde",
  "Question types": "Spørgsmålstyper",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica-scoren (10–90) er Spicas egen skala, tilpasset CEFR-niveauerne: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Det er ét input til en ansættelsesbeslutning, ikke en officiel eksamensscore.",
- "Hiring details": "Ansættelsesdetaljer"
+ "Hiring details": "Ansættelsesdetaljer",
+ "Couldn't be checked automatically: compare the photos": "Kunne ikke kontrolleres automatisk: sammenlign billederne",
+ "Incomplete": "Ufuldstændig",
+ "{{a}} of {{t}} questions answered": "{{a}} af {{t}} spørgsmål besvaret",
+ "{{a}} of {{t}} answered": "{{a}} af {{t}} besvaret",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "kun {{a}} af {{t}} spørgsmål blev besvaret, så niveauet nedenfor viser ikke kandidatens engelsk pålideligt. Overvej at invitere igen.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "kun {{a}} af {{t}} spørgsmål blev besvaret, så dette niveau viser ikke den studerendes engelsk pålideligt.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "du besvarede kun {{a}} af {{t}} spørgsmål, så dette niveau viser ikke dit engelsk pålideligt. Besvar alle spørgsmål næste gang.",
+ "We can't hear your microphone": "Vi kan ikke høre din mikrofon",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Vi hørte intet i dine to sidste mundtlige svar. Tjek, at mikrofonen er tændt og ikke slået fra.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Dine to sidste mundtlige svar var stille. Tjek, at mikrofonen er tændt, ikke slået fra og valgt i browseren. Sig så et par ord: testen fortsætter, når vi hører dig.",
+ "Say a few words now…": "Sig et par ord nu…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Browseren kan ikke åbne din mikrofon. Tillad den i adresselinjen, og genindlæs siden."
 }

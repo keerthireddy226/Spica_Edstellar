@@ -5550,5 +5550,17 @@
  "Needs most work": "Eniten kehitettävää",
  "Question types": "Kysymystyypit",
  "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica-pisteet (10–90) ovat Spican oma asteikko, joka on sovitettu EVK-tasoihin: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Se on yksi rekrytointipäätöksen tekijä, ei virallinen koetulos.",
- "Hiring details": "Rekrytoinnin tiedot"
+ "Hiring details": "Rekrytoinnin tiedot",
+ "Couldn't be checked automatically: compare the photos": "Automaattinen tarkistus ei onnistunut: vertaa kuvia",
+ "Incomplete": "Kesken",
+ "{{a}} of {{t}} questions answered": "{{a}}/{{t}} kysymykseen vastattu",
+ "{{a}} of {{t}} answered": "{{a}}/{{t}} vastattu",
+ "only {{a}} of {{t}} questions were answered, so the level below doesn't reliably show this candidate's English. Consider inviting them again.": "vain {{a}}/{{t}} kysymykseen vastattiin, joten alla oleva taso ei kuvaa luotettavasti hakijan englantia. Harkitse uutta kutsua.",
+ "only {{a}} of {{t}} questions were answered, so this level doesn't reliably show the learner's English.": "vain {{a}}/{{t}} kysymykseen vastattiin, joten tämä taso ei kuvaa luotettavasti oppijan englantia.",
+ "you answered only {{a}} of {{t}} questions, so this level doesn't reliably show your English. Answer every question next time.": "vastasit vain {{a}}/{{t}} kysymykseen, joten tämä taso ei kuvaa englantiasi luotettavasti. Vastaa ensi kerralla kaikkiin kysymyksiin.",
+ "We can't hear your microphone": "Emme kuule mikrofoniasi",
+ "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Emme kuulleet mitään kahdessa viimeisessä puhutussa vastauksessasi. Tarkista, että mikrofoni on päällä eikä mykistetty.",
+ "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Kaksi viimeistä puhuttua vastaustasi olivat hiljaisia. Tarkista, että mikrofoni on päällä, ei mykistetty ja valittu selaimessa. Sano sitten muutama sana: testi jatkuu, kun kuulemme sinut.",
+ "Say a few words now…": "Sano nyt muutama sana…",
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Selain ei voi avata mikrofoniasi. Salli se osoiterivillä ja lataa sivu uudelleen."
 }

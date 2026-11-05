@@ -22,6 +22,12 @@ export function resultMarks(result: AssessmentResult, kind: TestKind): { skills:
   return { skills: [...scored, ...missing], parts };
 }
 
+// Fewer than half the questions answered: the level says little, so it shows
+// as "Incomplete" (the score itself is unchanged).
+export function isIncomplete(answers: { answered: number; total: number } | null | undefined): boolean {
+  return !!answers && answers.total > 0 && answers.answered / answers.total < 0.5;
+}
+
 // A question type's bar colour: green when it went well, amber in between, red when weak.
 export function partTone(right: number, total: number): string {
   const share = right / Math.max(1, total);

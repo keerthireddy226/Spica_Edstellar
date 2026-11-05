@@ -77,6 +77,8 @@ export function useTestHold({
   const busyRef = useRef(false);
   const heldRef = useRef<IssueKind | null>(null);
   const capTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // A microphone check asked for by the test page, and its end (the learner's voice was heard).
+  const micCheckRef = useRef<"wanted" | "done" | null>(null);
   const live = useRef({ sessionId, itemId, timed, room, setFastChecks, logEvent, onHold, onRelease });
   live.current = { sessionId, itemId, timed, room, setFastChecks, logEvent, onHold, onRelease };
 
@@ -163,6 +165,30 @@ export function useTestHold({
 
     const timer = setInterval(async () => {
       if (busyRef.current) return;
+      // Two silent answers in a row: paused until the microphone is heard.
+      if (micCheckRef.current === "wanted" && !heldRef.current) {
+        micCheckRef.current = null;
+        busyRef.current = true;
+        try {
+          if (capRef.current) setWarning({ kind: "mic_silent", n: 3, at: Date.now() });
+          else await pause("mic_silent");
+        } finally {
+          busyRef.current = false;
+        }
+        return;
+      }
+      if (micCheckRef.current === "done") {
+        micCheckRef.current = null;
+        if (heldRef.current === "mic_silent") {
+          busyRef.current = true;
+          try {
+            await release();
+          } finally {
+            busyRef.current = false;
+          }
+          return;
+        }
+      }
       const r = live.current.room;
       const present: Partial<Record<IssueKind, boolean>> = {
         noise: noisyRef.current,
@@ -210,5 +236,18 @@ export function useTestHold({
     return () => clearInterval(t);
   }, [held, allowanceLeft === null]);
 
-  return { held, warning, level, capReached, allowanceLeft, dismissWarning: () => setWarning(null) };
+  return {
+    held,
+    warning,
+    level,
+    capReached,
+    allowanceLeft,
+    dismissWarning: () => setWarning(null),
+    requestMicCheck: () => {
+      if (micCheckRef.current === null) micCheckRef.current = "wanted";
+    },
+    endMicCheck: () => {
+      micCheckRef.current = "done";
+    },
+  };
 }
