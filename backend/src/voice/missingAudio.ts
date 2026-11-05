@@ -11,7 +11,7 @@ import { AUDIO_FIRST_TYPES, getSpokenSegments } from "./spokenText.js";
 const UPLOADS_DIR = path.join(process.cwd(), "uploads", "item-audio");
 const VOICES = ["male", "female"] as const;
 
-export async function recordMissingItemAudio(limit = 20): Promise<number> {
+export async function recordMissingItemAudio(limit = 80): Promise<number> {
   if (!process.env.GOOGLE_TTS_API_KEY) return 0;
   const r = await pool.query(
     `SELECT i.id, i.item_type_id, i.content FROM items i
