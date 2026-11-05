@@ -321,8 +321,14 @@ const WRITING_SCHEMA = {
 async function writingFeedback(r: AttemptRow, usage: Usage): Promise<ReportQuestion["writing"]> {
   const answer = r.response_text ?? "";
   const task = str(r.content.prompt) || str(r.content.passage) || str(r.content.text);
+  // A reconstruction is retold in the learner's own words: a "task" fix that
+  // copies the passage reads as if the exact wording was expected.
+  const ownWords =
+    r.item_type_id === "passage_reconstruction"
+      ? `\nThe learner read the passage for 30 seconds and rewrote it from memory in their own words. Different wording from the passage is correct, never an error. For a "task" error, the correction names only the missing facts in a few words ("Missing: ..."), never a copy of the passage. The rewrite keeps the learner's own wording and adds only the missing facts.`
+      : "";
   const prompt = `You are an English teacher marking a learner's written answer (target level ${r.cefr_level ?? "B1"}).
-Task: ${task}
+Task: ${task}${ownWords}
 
 Learner's answer:
 """${answer}"""

@@ -192,6 +192,7 @@ function Writing({ q }: { q: ReportQuestion }) {
           {showModel && <p className="text-sm text-ink whitespace-pre-wrap leading-relaxed mt-2 border-l-4 border-success/40 pl-3">{w.modelAnswer}</p>}
         </div>
       )}
+      {q.itemTypeId === "passage_reconstruction" && <p className="text-[11px] text-muted">{tr("Your own words are fine: only the key facts count.")}</p>}
       <p className="text-[11px] text-muted">{tr("British, American and Indian spellings are all correct.")}</p>
     </div>
   );
