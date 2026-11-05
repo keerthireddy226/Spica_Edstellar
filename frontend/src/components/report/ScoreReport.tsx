@@ -157,7 +157,8 @@ export function FinalResultWaiting({ status, waiting }: { status: string; waitin
 // printed (Download PDF) as the learner's score report.
 // viewer "org": an Org Admin or Manager reading a learner's report, so it
 // speaks about the learner, not to them, and leaves out the learner's summary.
-export function ScoreReport({ score, about, analysis, viewer = "learner" }: { score: ScoreReportData; about: ReportAbout | null | undefined; analysis: string; viewer?: "learner" | "org" }) {
+// hiring: the test named a recruiter gave (no practice, mock or certificate wording).
+export function ScoreReport({ score, about, analysis, viewer = "learner", hiring }: { score: ScoreReportData; about: ReportAbout | null | undefined; analysis: string; viewer?: "learner" | "org"; hiring?: string }) {
   const org = viewer === "org";
   if (!score.overall) return null;
   const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
@@ -222,6 +223,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
           <div>
             <span className="font-logo font-bold text-2xl text-navy">Spica</span>
             <h2 className="font-display font-bold text-2xl text-ink mt-1">{tr("Score report")}</h2>
+            {hiring && <p className="text-sm text-muted">{hiring}</p>}
             {test && (
               <p className="text-sm text-muted">
                 {test} ·{" "}
@@ -427,7 +429,9 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
       )}
 
       <p className="text-xs text-muted">
-        {finalAssessment
+        {hiring
+          ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.")
+          : finalAssessment
           ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
           : levelTest
             ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is a level test result, not a certificate.")

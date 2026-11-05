@@ -5548,5 +5548,7 @@
  "Not attempted": "Ikke besvart",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Ingen svar i denne ferdigheten, så den gir 0. Den teller ikke med i totalpoengsummen.",
  "Needs most work": "Trenger mest arbeid",
- "Question types": "Spørsmålstyper"
+ "Question types": "Spørsmålstyper",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica-poengsummen (10–90) er Spicas egen skala, tilpasset CEFR-nivåene: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Det er ett grunnlag for en ansettelsesbeslutning, ikke en offisiell eksamenspoengsum.",
+ "Hiring details": "Ansettelsesdetaljer"
 }

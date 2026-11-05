@@ -5548,5 +5548,7 @@
  "Not attempted": "Non svolto",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Nessuna risposta in questa abilità, quindi vale 0. Non conta nel punteggio complessivo.",
  "Needs most work": "Da migliorare di più",
- "Question types": "Tipi di domanda"
+ "Question types": "Tipi di domanda",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Il punteggio Spica (10–90) è una scala propria di Spica, allineata ai livelli CEFR: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. È un elemento di una decisione di assunzione, non un punteggio d'esame ufficiale.",
+ "Hiring details": "Dettagli dell'assunzione"
 }

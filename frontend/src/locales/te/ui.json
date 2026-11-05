@@ -5548,5 +5548,7 @@
  "Not attempted": "ప్రయత్నించలేదు",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "ఈ నైపుణ్యంలో సమాధానాలు లేవు, కాబట్టి స్కోర్ 0. ఇది మొత్తం స్కోర్‌లో లెక్కించబడదు.",
  "Needs most work": "ఎక్కువ సాధన అవసరం",
- "Question types": "ప్రశ్నల రకాలు"
+ "Question types": "ప్రశ్నల రకాలు",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica స్కోర్ (10–90) Spica సొంత స్కేల్, ఇది CEFR స్థాయిలకు అనుగుణంగా ఉంటుంది: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. ఇది నియామక నిర్ణయంలో ఒక అంశం మాత్రమే, అధికారిక పరీక్ష స్కోర్ కాదు.",
+ "Hiring details": "నియామక వివరాలు"
 }

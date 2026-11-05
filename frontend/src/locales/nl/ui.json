@@ -5548,5 +5548,7 @@
  "Not attempted": "Niet gemaakt",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Geen antwoorden in deze vaardigheid, dus score 0. Telt niet mee in de totaalscore.",
  "Needs most work": "Meeste werk nodig",
- "Question types": "Vraagtypen"
+ "Question types": "Vraagtypen",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "De Spica-score (10–90) is Spica's eigen schaal, afgestemd op de CEFR-niveaus: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Het is één onderdeel van een aanstellingsbesluit, geen officiële examenscore.",
+ "Hiring details": "Gegevens van de vacature"
 }

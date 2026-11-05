@@ -5548,5 +5548,7 @@
  "Not attempted": "未作答",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "此技能没有作答，因此得 0 分。不计入总分。",
  "Needs most work": "最需要加强",
- "Question types": "题型"
+ "Question types": "题型",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spica 分数（10–90）是 Spica 自有的评分标准，与 CEFR 等级对应：Pre-A1 10–19，A1 20–29，A2 30–39，B1 40–54，B2 55–69，C1 70–79，C2 80–90。这是招聘决定的参考之一，不是官方考试成绩。",
+ "Hiring details": "招聘详情"
 }

@@ -367,6 +367,7 @@ function Report({ report, upgradeLink, kind, scored = false }: { report: Feedbac
               {Object.entries(report.overall.skillLevels).map(([s, l]) => (
                 <span key={s} className="text-sm bg-paper-warm rounded-input px-3 py-2">
                   {t(`skills.${s}`)} <b>{l}</b>
+                  {typeof report.overall.skillPercents?.[s] === "number" && <span className="text-muted"> · {report.overall.skillPercents[s]}%</span>}
                 </span>
               ))}
             </div>

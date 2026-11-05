@@ -351,7 +351,7 @@ export interface FeedbackReport {
   explanationsMissing?: boolean;
   deliveryMode: DeliveryMode;
   testTypeId: string | null;
-  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; scoreBand: ScoreBand | null; pathCompare?: PathCompare | null };
+  overall: { cefrLevel: string | null; percent: number | null; skillLevels: Record<string, string> | null; skillPercents?: Record<string, number> | null; scoreBand: ScoreBand | null; pathCompare?: PathCompare | null };
   target: { level: string; date: string; programName: string } | null;
   analysis: string;
   nextSteps: { title: string; why: string; skill: string; link: { testTypeId: string } | null }[];

@@ -10,6 +10,8 @@ import { TEST_KIND_LABEL } from "@/components/recruitment/testKinds";
 import { getAssessment, getSharedAssessment, type AssessmentReport, type InterviewQuestion } from "@/api/recruitment";
 import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { tr } from "@/i18n/tr";
+import { ScoreReport } from "@/components/report/ScoreReport";
+import type { ScoreReport as ScoreReportData } from "@/api/practiceTests";
 import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
 import { partTone, resultMarks } from "@/components/recruitment/resultMarks";
 
@@ -72,12 +74,14 @@ export function CandidateReportPrint() {
   const [a, setA] = useState<AssessmentReport | null>(null);
   const [interview, setInterview] = useState<InterviewQuestion[]>([]);
   const [sharedUntil, setSharedUntil] = useState<string | null>(null);
+  const [score, setScore] = useState<ScoreReportData | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {
     (token ? getSharedAssessment(token) : getAssessment(id))
       .then((r) => {
         setA(r.assessment);
         setInterview(r.interview ?? []);
+        setScore(r.score ?? null);
         if ("sharedUntil" in r) setSharedUntil(r.sharedUntil as string);
       })
       .catch(() => setError(true));
@@ -90,11 +94,18 @@ export function CandidateReportPrint() {
   const { skills, parts } = r ? resultMarks(r, a.test_kind) : { skills: [], parts: [] };
   const { best, worst } = rankSkills(skills);
   const completed = a.completed_at ? new Date(a.completed_at).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+  // With a score report: the learner's report as it is (every skill's graph,
+  // the profile, speaking and writing), then the hiring details on their own page.
+  const full = !!score?.overall;
   return (
     <div className="cr-print min-h-screen bg-white text-ink" style={LIGHT}>
       <style>{`.cr-print { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-@media print { @page { size: A4; margin: 10mm 0; } html, body, *:has(.cr-print) { background: #fff !important; } .cr-print { font-size: 13px; } .cr-print section { box-shadow: none; padding: 12px 14px; } }`}</style>
-      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8 print:py-0 flex flex-col gap-4">
+@media print { ${full ? "" : "@page { size: A4; margin: 10mm 0; }"} html, body, *:has(.cr-print) { background: #fff !important; } .cr-print { font-size: 13px; } .cr-print section { box-shadow: none; padding: 12px 14px; } .cr-extra { break-before: page; padding: 10mm 12mm 0; } }`}</style>
+      <div className={`${full ? "max-w-4xl" : "max-w-3xl"} mx-auto px-4 sm:px-8 py-8 print:p-0 print:max-w-none flex flex-col gap-4`}>
+        {full ? (
+          <ScoreReport score={score!} about={null} analysis="" viewer="org" hiring={[TEST_KIND_LABEL[a.test_kind](), a.exam_name].filter(Boolean).join(" · ")} />
+        ) : (
+        <>
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -192,6 +203,43 @@ export function CandidateReportPrint() {
           </Card>
         )}
 
+        </>
+        )}
+
+        <div className={`flex flex-col gap-4 ${full ? "cr-extra" : ""}`}>
+        {full && (
+          <Card title={tr("Hiring details")}>
+            <dl className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 gap-3 text-sm">
+              {[
+                [[a.job_title, a.location].filter(Boolean).join(" · ") || "—", tr("Job opening")],
+                [a.min_cefr ?? tr("None"), tr("Minimum level for the job")],
+                [r?.cefrLevel ? `${r.cefrLevel}${r.overallPercent !== null && r.overallPercent !== undefined ? ` · ${r.overallPercent}%` : ""}` : "—", tr("Level")],
+                [a.test_code ?? "—", tr("Attempt ID")],
+              ].map(([v, k]) => (
+                <div key={k} className="min-w-0">
+                  <dd className="font-semibold text-ink break-words">{v}</dd>
+                  <dt className="text-xs text-muted break-words">{k}</dt>
+                </div>
+              ))}
+            </dl>
+            {r?.meetsMinimum !== null && r?.meetsMinimum !== undefined && (
+              <span className={`self-start text-xs font-semibold px-2.5 py-0.5 rounded-pill ${r.meetsMinimum ? "bg-success/15 text-success" : "bg-error/10 text-error"}`}>
+                {r.meetsMinimum ? tr("Meets the minimum level for this job.") : tr("Below the minimum level for this job.")}
+              </span>
+            )}
+            {a.certificate_code && (
+              <p className="text-xs text-muted">
+                {tr("Certificate")}: <a href={`/certificate/${a.certificate_code}`} className="underline">{a.certificate_code}</a>
+              </p>
+            )}
+            {a.decision && (
+              <p className="text-sm border-t border-rule pt-3">
+                <b>{tr("Decision")}:</b> {DECISION_TEXT[a.decision]()}
+                {a.decision_note && <span className="text-muted"> · {a.decision_note}</span>}
+              </p>
+            )}
+          </Card>
+        )}
         {scored && parts.length > 0 && (
           <Card title={tr("Question types")}>
             <div className="flex flex-col gap-2">
@@ -229,7 +277,7 @@ export function CandidateReportPrint() {
           </Card>
         )}
 
-        {a.decision && (
+        {a.decision && !full && (
           <Card title={tr("Decision")}>
             <p className="text-sm">{DECISION_TEXT[a.decision]()}</p>
             {a.decision_note && <p className="text-sm text-muted">{a.decision_note}</p>}
@@ -240,6 +288,7 @@ export function CandidateReportPrint() {
           {tr("Generated by Spica on {{date}}. Contains personal data: share only with people involved in this hiring decision.", { date: new Date().toLocaleDateString() })}
           {sharedUntil ? ` ${tr("Shared link valid until {{date}}.", { date: sharedUntil })}` : ""}
         </p>
+        </div>
       </div>
     </div>
   );

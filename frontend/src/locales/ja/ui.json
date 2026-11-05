@@ -5548,5 +5548,7 @@
  "Not attempted": "未回答",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "この技能には回答がないため 0 点です。総合スコアには含まれません。",
  "Needs most work": "最も改善が必要",
- "Question types": "問題形式"
+ "Question types": "問題形式",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Spicaスコア（10〜90）はSpica独自の尺度で、CEFRレベルに対応しています：Pre-A1 10〜19、A1 20〜29、A2 30〜39、B1 40〜54、B2 55〜69、C1 70〜79、C2 80〜90。採用判断の材料の一つであり、公式の試験スコアではありません。",
+ "Hiring details": "採用の詳細"
 }

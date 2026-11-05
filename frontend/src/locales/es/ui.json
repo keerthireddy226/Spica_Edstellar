@@ -5548,5 +5548,7 @@
  "Not attempted": "Sin intentar",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "No hay respuestas en esta destreza, así que puntúa 0. No cuenta en la puntuación global.",
  "Needs most work": "Necesita más trabajo",
- "Question types": "Tipos de pregunta"
+ "Question types": "Tipos de pregunta",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "La puntuación Spica (10–90) es la escala propia de Spica, alineada con los niveles del MCER: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Es un dato más para una decisión de contratación, no una puntuación oficial de examen.",
+ "Hiring details": "Datos de la contratación"
 }

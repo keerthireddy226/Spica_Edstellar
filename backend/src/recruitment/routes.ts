@@ -4,6 +4,7 @@ import { AppealError, fileAppeal } from "../quality/service.js";
 // (job openings, invitations, results, decisions, team, credits), and the
 // Edstellar staff controls for an organization's products and credits.
 import { REPORT_VERSION, reportAbout, withCurrentOutcomes } from "../reports/feedbackReport.js";
+import { scoreReport } from "../reports/scoreReport.js";
 import { Router, type NextFunction, type Response } from "express";
 import { z } from "zod";
 import { interviewQuestions } from "./interviewQuestions.js";
@@ -92,6 +93,13 @@ function assessmentJson(a: Record<string, any>) {
   const { token_hash: _t, ...rest } = a;
   // Questions for the interview, aimed at the skills the test showed weakest.
   return { assessment: rest, interview: a.status === "completed" ? interviewQuestions(a.result, a.min_cefr) : [] };
+}
+
+// The candidate's score report, as a learner's, for the printed report.
+async function candidateScore(a: Record<string, any>) {
+  if (!a.session_id || a.status !== "completed") return null;
+  const r = (await pool.query(`SELECT status, report FROM feedback_reports WHERE session_id = $1`, [a.session_id])).rows[0];
+  return scoreReport(a.session_id, r?.status === "ready" ? r.report : null).catch(() => null);
 }
 
 // ---------- Candidate: the invitation link ----------
@@ -562,7 +570,7 @@ recruitmentRouter.get("/assessments/:id", requireAuth, async (req: AuthedRequest
   try {
     const a = await assessmentDetail(String(req.params.id), tenantId);
     if (!a) return res.status(404).json({ error: "assessment_not_found" });
-    res.json(assessmentJson(a));
+    res.json({ ...assessmentJson(a), score: await candidateScore(a) });
   } catch (err) {
     next(err);
   }
@@ -610,7 +618,7 @@ recruitmentRouter.get("/shared/:token", async (req, res, next) => {
     const t = (await pool.query(`SELECT tenant_id FROM recruitment_assessments WHERE id = $1`, [id])).rows[0];
     const a = t ? await assessmentDetail(id, t.tenant_id) : null;
     if (!a || a.status !== "completed") return res.status(404).json({ error: "link_not_valid" });
-    res.json({ ...assessmentJson(a), sharedUntil: new Date(until * 86_400_000).toISOString().slice(0, 10) });
+    res.json({ ...assessmentJson(a), score: await candidateScore(a), sharedUntil: new Date(until * 86_400_000).toISOString().slice(0, 10) });
   } catch (err) {
     next(err);
   }

@@ -1,4 +1,5 @@
 import { api, withRetry } from "@/lib/api";
+import type { ScoreReport } from "@/api/practiceTests";
 
 export type Product = "skills" | "recruitment";
 export type TestKind = "placement" | "fourSkills" | "speakingListening" | "writing" | "professional";
@@ -255,13 +256,13 @@ export function shareAssessment(id: string): Promise<{ url: string; until: strin
   return api(`/recruitment/assessments/${id}/share`, { method: "POST", body: "{}" });
 }
 
-export async function getSharedAssessment(token: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[]; sharedUntil: string }> {
+export async function getSharedAssessment(token: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[]; score?: ScoreReport | null; sharedUntil: string }> {
   const r = await fetch(`/api/recruitment/shared/${encodeURIComponent(token)}`);
   if (!r.ok) throw new Error("link_not_valid");
   return r.json();
 }
 
-export function getAssessment(id: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[] }> {
+export function getAssessment(id: string): Promise<{ assessment: AssessmentReport; interview: InterviewQuestion[]; score?: ScoreReport | null }> {
   return api(`/recruitment/assessments/${id}`);
 }
 

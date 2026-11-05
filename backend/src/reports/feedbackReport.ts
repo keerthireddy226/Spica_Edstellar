@@ -552,8 +552,10 @@ Address the learner as "you". Be honest and encouraging, specific, and simple (B
 // rules that can change after the report was written (word-perfect spoken
 // answers count as right, 2026-11-03), and answers can be re-scored; the
 // AI-written parts stay as saved.
-export async function withCurrentOutcomes<T extends { questions?: ReportQuestion[]; counts?: Record<string, number> } | null>(sessionId: string, report: T): Promise<T> {
+export async function withCurrentOutcomes<T extends { questions?: ReportQuestion[]; counts?: Record<string, number>; overall?: Record<string, unknown> } | null>(sessionId: string, report: T): Promise<T> {
   if (!report?.questions?.length) return report;
+  // Each skill's percent next to its level (reports saved before it had none).
+  const skillPercents = (await pool.query(`SELECT result->'skillPercents' AS p FROM sessions WHERE id = $1`, [sessionId])).rows[0]?.p ?? null;
   const rows = await loadAttemptRows(sessionId, report.questions.map((q) => q.itemId));
   const byItem = new Map(rows.map((r) => [r.item_id, r]));
   const questions = report.questions.map((q) => {
@@ -564,6 +566,7 @@ export async function withCurrentOutcomes<T extends { questions?: ReportQuestion
   const count = (o: string) => outcomes.filter((x) => x === o).length;
   return {
     ...report,
+    overall: report.overall ? { ...report.overall, skillPercents } : report.overall,
     questions,
     counts: report.counts ? { ...report.counts, right: count("right"), wrong: count("wrong"), skipped: count("skipped"), pending: count("pending") } : report.counts,
   };

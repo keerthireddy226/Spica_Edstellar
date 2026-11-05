@@ -5548,5 +5548,7 @@
  "Not attempted": "Chưa làm",
  "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Không có câu trả lời ở kỹ năng này, nên được 0 điểm. Không tính vào điểm tổng.",
  "Needs most work": "Cần cải thiện nhiều nhất",
- "Question types": "Các dạng câu hỏi"
+ "Question types": "Các dạng câu hỏi",
+ "The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. It is one input to a hiring decision, not an official exam score.": "Điểm Spica (10–90) là thang điểm riêng của Spica, tương ứng với các cấp độ CEFR: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. Đây là một căn cứ cho quyết định tuyển dụng, không phải điểm thi chính thức.",
+ "Hiring details": "Thông tin tuyển dụng"
 }
