@@ -49,7 +49,10 @@ async function seenItemIds(userId: string): Promise<Set<string>> {
   return new Set(r.rows.map((x) => x.item_id as string));
 }
 
-export type BankRow = FormRow & { mock_approved: boolean; certified_exposures?: number };
+export type BankRow = FormRow & { mock_approved: boolean; certified_exposures?: number; cefr_level?: string | null };
+
+const LEVEL_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"];
+const levelRank = (l: string | null | undefined) => LEVEL_ORDER.indexOf(l ?? "B1");
 
 // One form from a bank's rows: each section (sort_order) gets exactly as many
 // questions as the template has there. Groups of questions the learner has
@@ -59,6 +62,9 @@ export type BankRow = FormRow & { mock_approved: boolean; certified_exposures?: 
 // A section the draw can't fill exactly takes one exam's whole section of the
 // right length (the template's first, then the least seen); failing that, what
 // the draw found.
+// Single-question sections keep the template's levels: each slot takes the
+// best question at its level (not seen, not over-used), else the nearest
+// level, so every form has the same spread from A1 to C2 as the template.
 export function pickBankForm(
   rows: BankRow[],
   targets: Map<number, number>,
@@ -76,6 +82,22 @@ export function pickBankForm(
       .map((g) => ({ g, over: Number(over(g)), seen: seenShare(g) }))
       .sort((a, b) => a.over - b.over || a.seen - b.seen)
       .map((x) => x.g);
+    const want = rows.filter((x) => x.exam_id === templateExamId && x.sort_order === sortOrder).map((x) => x.cefr_level);
+    if (want.length === target && want.every((l) => l) && groups.every((g) => g.length === 1)) {
+      const left = groups.map((g) => g[0]);
+      const chosen: BankRow[] = [];
+      for (const l of want) {
+        // Not over-used first, then not seen, then the nearest level; ties keep the random order.
+        const cost = (x: BankRow) => Number((x.certified_exposures ?? 0) >= exposureCap) * 100 + Number(seen.has(x.id)) * 10 + Math.abs(levelRank(x.cefr_level) - levelRank(l));
+        const best = left.reduce((b, x, i) => (b < 0 || cost(x) < cost(left[b]) ? i : b), -1);
+        if (best < 0) break;
+        chosen.push(left.splice(best, 1)[0]);
+      }
+      if (chosen.length === target) {
+        ids.push(...chosen.map((x) => x.id));
+        continue;
+      }
+    }
     const picked: BankRow[] = [];
     for (const g of groups) {
       if (picked.length + g.length <= target) picked.push(...g);
@@ -112,7 +134,7 @@ export async function mockFormItemIds(
 ): Promise<string[]> {
   const bank = await resolveBank(testTypeId, wanted);
   const r = await pool.query(
-    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, i.mock_approved, i.certified_exposures
+    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, i.mock_approved, i.certified_exposures, i.cefr_level
      FROM exams e
      JOIN exam_parts ep ON ep.exam_id = e.id
      JOIN items i ON i.exam_part_id = ep.id
@@ -142,7 +164,7 @@ export async function candidateFormItemIds(examId: string, userId: string, expos
   const exam = (await pool.query(`SELECT test_type_id, purpose FROM exams WHERE id = $1`, [examId])).rows[0];
   if (!exam) return [];
   const r = await pool.query(
-    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, true AS mock_approved, i.certified_exposures
+    `SELECT i.id, e.id AS exam_id, i.exam_order, ep.sort_order, ep.part_label, i.content, true AS mock_approved, i.certified_exposures, i.cefr_level
      FROM exams e
      JOIN exam_parts ep ON ep.exam_id = e.id
      JOIN items i ON i.exam_part_id = ep.id
