@@ -5,6 +5,7 @@ import { refundExpiredTests } from "../orgTests/service.js";
 import { deliverWebhook } from "../webhooks/service.js";
 import { buildExport, eraseLearner, runRetention } from "../governance/service.js";
 import { every } from "./schedule.js";
+import { recordMissingItemAudio } from "../voice/missingAudio.js";
 import { sendQueuedNotificationEmail } from "../notifications/service.js";
 import { runAllJobs } from "../notifications/jobs.js";
 import { refreshActivityRollup } from "../analytics/rollup.js";
@@ -125,6 +126,11 @@ export function registerJobs() {
   every(1, "forms.autobuild", async () => {
     const n = await continueAutoBuilds();
     if (n) console.log(`builder: ${n} tests completed with AI questions`);
+  });
+  // New test questions without a recording get one, in both voices.
+  every(5, "content.missing-audio", async () => {
+    const n = await recordMissingItemAudio();
+    if (n) console.log(`content: ${n} question recordings made`);
   });
   // Question generation jobs interrupted by a restart carry on.
   every(15, "generation.resume", async () => {
