@@ -5533,5 +5533,20 @@
  "Left the test": "Đã rời bài kiểm tra",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Chúng tôi chưa thể nộp bài kiểm tra của bạn. Các câu trả lời đến giờ đã được lưu. Hãy kiểm tra kết nối internet rồi thử lại. Hãy giữ cửa sổ này mở.",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "Chúng tôi không nghe thấy gì trong câu trả lời nói gần nhất của bạn. Hãy kiểm tra micro đang bật, không bị tắt tiếng và được chọn trong trình duyệt, rồi nói rõ ràng.",
- "Your own words are fine: only the key facts count.": "Bạn có thể dùng từ ngữ của mình: chỉ các ý chính được tính."
+ "Your own words are fine: only the key facts count.": "Bạn có thể dùng từ ngữ của mình: chỉ các ý chính được tính.",
+ "{{level}}, score {{value}}": "{{level}}, điểm {{value}}",
+ "{{level}}, {{value}}%": "{{level}}, {{value}}%",
+ "Strongest skill: {{skill}} ({{mark}}).": "Kỹ năng mạnh nhất: {{skill}} ({{mark}}).",
+ "Did well in {{list}}.": "Làm tốt ở {{list}}.",
+ "Weakest skill: {{skill}} ({{mark}}).": "Kỹ năng yếu nhất: {{skill}} ({{mark}}).",
+ "Lost the most marks in {{list}}.": "Mất nhiều điểm nhất ở {{list}}.",
+ "Not attempted, so scored 0: {{skills}}.": "Chưa làm, nên được 0 điểm: {{skills}}.",
+ "Good at": "Điểm mạnh",
+ "No clear strength yet.": "Chưa có điểm mạnh rõ ràng.",
+ "Needs work": "Cần cải thiện",
+ "Nothing stands out as weak.": "Không có điểm yếu nổi bật.",
+ "Not attempted": "Chưa làm",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Không có câu trả lời ở kỹ năng này, nên được 0 điểm. Không tính vào điểm tổng.",
+ "Needs most work": "Cần cải thiện nhiều nhất",
+ "Question types": "Các dạng câu hỏi"
 }

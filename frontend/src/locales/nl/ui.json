@@ -5533,5 +5533,20 @@
  "Left the test": "Test verlaten",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "We konden je test nog niet inleveren. Je antwoorden tot nu toe zijn opgeslagen. Controleer je internetverbinding en probeer het opnieuw. Houd dit venster open.",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "We hoorden niets in je laatste gesproken antwoord. Controleer of je microfoon aan staat, niet gedempt is en in je browser is geselecteerd, en spreek duidelijk.",
- "Your own words are fine: only the key facts count.": "Je eigen woorden zijn prima: alleen de belangrijkste feiten tellen."
+ "Your own words are fine: only the key facts count.": "Je eigen woorden zijn prima: alleen de belangrijkste feiten tellen.",
+ "{{level}}, score {{value}}": "{{level}}, score {{value}}",
+ "{{level}}, {{value}}%": "{{level}}, {{value}}%",
+ "Strongest skill: {{skill}} ({{mark}}).": "Sterkste vaardigheid: {{skill}} ({{mark}}).",
+ "Did well in {{list}}.": "Goed in {{list}}.",
+ "Weakest skill: {{skill}} ({{mark}}).": "Zwakste vaardigheid: {{skill}} ({{mark}}).",
+ "Lost the most marks in {{list}}.": "De meeste punten verloren bij {{list}}.",
+ "Not attempted, so scored 0: {{skills}}.": "Niet gemaakt, dus score 0: {{skills}}.",
+ "Good at": "Sterk in",
+ "No clear strength yet.": "Nog geen duidelijke sterke kant.",
+ "Needs work": "Werkpunten",
+ "Nothing stands out as weak.": "Niets springt eruit als zwak.",
+ "Not attempted": "Niet gemaakt",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Geen antwoorden in deze vaardigheid, dus score 0. Telt niet mee in de totaalscore.",
+ "Needs most work": "Meeste werk nodig",
+ "Question types": "Vraagtypen"
 }

@@ -77,6 +77,9 @@ export interface ScoreReport {
     strengths: { itemTypeId: string; typeName: string; right: number; total: number }[];
     focus: { itemTypeId: string; typeName: string; right: number; total: number }[];
   }[];
+  // Skills the test covers with no result (nothing answered): shown as 0,
+  // never counted in the overall score.
+  missingSkills: Skill[];
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;
@@ -168,6 +171,10 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
   const testTypeId = comp.testTypeId ?? (comp.examId ? await testTypeOfExam(comp.examId) : null);
   const overallMean = weightedSkillMean(Object.fromEntries(skills.map((x) => [x.skill, x.score])), testTypeId);
   const overallScore = overallMean !== null ? Math.round(overallMean) : null;
+  const covered: string[] = testTypeId
+    ? ((await pool.query(`SELECT skills FROM test_types WHERE id = $1`, [testTypeId])).rows[0]?.skills ?? [])
+    : rows.flatMap((r) => r.skills);
+  const missingSkills = SKILLS.filter((k) => covered.includes(k) && !skills.some((x) => x.skill === k));
 
   // Speaking: the recordings' fluency and clarity (0-1 from the grader), speed and fillers.
   const recorded = rows.filter((r) => r.input_method === "mic" && answered(r) && r.status === "scored");
@@ -253,6 +260,7 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
     overall: overallScore === null ? null : { score: overallScore, level: levelOfScore(overallScore) },
     goal,
     skills,
+    missingSkills,
     profile,
     speaking,
     writing,

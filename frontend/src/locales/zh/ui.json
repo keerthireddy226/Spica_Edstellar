@@ -5533,5 +5533,20 @@
  "Left the test": "已离开测试",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "暂时无法提交你的测试。你目前的答案已保存。请检查网络连接，然后重试。请保持此窗口打开。",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "你上一次的口语回答中我们什么也没听到。请检查麦克风已打开、未静音，并已在浏览器中选中，然后清楚地说话。",
- "Your own words are fine: only the key facts count.": "可以用你自己的话：只看关键事实。"
+ "Your own words are fine: only the key facts count.": "可以用你自己的话：只看关键事实。",
+ "{{level}}, score {{value}}": "{{level}}，分数 {{value}}",
+ "{{level}}, {{value}}%": "{{level}}，{{value}}%",
+ "Strongest skill: {{skill}} ({{mark}}).": "最强技能：{{skill}}（{{mark}}）。",
+ "Did well in {{list}}.": "表现好的题型：{{list}}。",
+ "Weakest skill: {{skill}} ({{mark}}).": "最弱技能：{{skill}}（{{mark}}）。",
+ "Lost the most marks in {{list}}.": "失分最多的题型：{{list}}。",
+ "Not attempted, so scored 0: {{skills}}.": "未作答，因此得 0 分：{{skills}}。",
+ "Good at": "擅长",
+ "No clear strength yet.": "暂无明显强项。",
+ "Needs work": "需要加强",
+ "Nothing stands out as weak.": "没有明显的弱项。",
+ "Not attempted": "未作答",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "此技能没有作答，因此得 0 分。不计入总分。",
+ "Needs most work": "最需要加强",
+ "Question types": "题型"
 }

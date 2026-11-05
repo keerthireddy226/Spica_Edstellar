@@ -5533,5 +5533,20 @@
  "Left the test": "Forlod testen",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Vi kunne ikke aflevere din test endnu. Dine svar indtil nu er gemt. Tjek din internetforbindelse, og prøv igen. Hold dette vindue åbent.",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "Vi kunne ikke høre noget i dit sidste mundtlige svar. Tjek, at din mikrofon er tændt, ikke slået fra og er valgt i din browser, og tal tydeligt.",
- "Your own words are fine: only the key facts count.": "Dine egne ord er fine: kun de vigtigste fakta tæller."
+ "Your own words are fine: only the key facts count.": "Dine egne ord er fine: kun de vigtigste fakta tæller.",
+ "{{level}}, score {{value}}": "{{level}}, score {{value}}",
+ "{{level}}, {{value}}%": "{{level}}, {{value}} %",
+ "Strongest skill: {{skill}} ({{mark}}).": "Stærkeste færdighed: {{skill}} ({{mark}}).",
+ "Did well in {{list}}.": "Klarede sig godt i {{list}}.",
+ "Weakest skill: {{skill}} ({{mark}}).": "Svageste færdighed: {{skill}} ({{mark}}).",
+ "Lost the most marks in {{list}}.": "Mistede flest point i {{list}}.",
+ "Not attempted, so scored 0: {{skills}}.": "Ikke besvaret, så scoren er 0: {{skills}}.",
+ "Good at": "God til",
+ "No clear strength yet.": "Ingen tydelig styrke endnu.",
+ "Needs work": "Skal forbedres",
+ "Nothing stands out as weak.": "Intet skiller sig ud som svagt.",
+ "Not attempted": "Ikke besvaret",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Ingen svar i denne færdighed, så den giver 0. Den tæller ikke med i den samlede score.",
+ "Needs most work": "Kræver mest arbejde",
+ "Question types": "Spørgsmålstyper"
 }

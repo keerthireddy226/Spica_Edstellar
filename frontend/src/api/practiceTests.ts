@@ -400,6 +400,8 @@ export interface ScoreReport {
     strengths: ScoreTypeResult[];
     focus: ScoreTypeResult[];
   }[];
+  // Skills the test covers with nothing answered: shown as 0, not in the overall score.
+  missingSkills?: ScoreSkill[];
   profile: { key: string; value: number | null }[];
   speaking: {
     answers: number;

@@ -5533,5 +5533,20 @@
  "Left the test": "Poistui testistä",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "Emme voineet vielä palauttaa testiäsi. Tähänastiset vastauksesi on tallennettu. Tarkista internetyhteytesi ja yritä uudelleen. Pidä tämä ikkuna auki.",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "Viimeisestä puhutusta vastauksestasi ei kuulunut mitään. Tarkista, että mikrofoni on päällä, ei mykistetty ja valittu selaimessa, ja puhu selkeästi.",
- "Your own words are fine: only the key facts count.": "Omat sanasi käyvät: vain keskeiset tosiasiat ratkaisevat."
+ "Your own words are fine: only the key facts count.": "Omat sanasi käyvät: vain keskeiset tosiasiat ratkaisevat.",
+ "{{level}}, score {{value}}": "{{level}}, pisteet {{value}}",
+ "{{level}}, {{value}}%": "{{level}}, {{value}} %",
+ "Strongest skill: {{skill}} ({{mark}}).": "Vahvin taito: {{skill}} ({{mark}}).",
+ "Did well in {{list}}.": "Hyvin meni: {{list}}.",
+ "Weakest skill: {{skill}} ({{mark}}).": "Heikoin taito: {{skill}} ({{mark}}).",
+ "Lost the most marks in {{list}}.": "Eniten pisteitä menetettiin: {{list}}.",
+ "Not attempted, so scored 0: {{skills}}.": "Ei vastattu, joten pisteet 0: {{skills}}.",
+ "Good at": "Vahvuudet",
+ "No clear strength yet.": "Ei vielä selvää vahvuutta.",
+ "Needs work": "Kehitettävää",
+ "Nothing stands out as weak.": "Mikään ei erotu heikkona.",
+ "Not attempted": "Ei vastattu",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "Tässä taidossa ei ole vastauksia, joten pisteet ovat 0. Sitä ei lasketa kokonaispisteisiin.",
+ "Needs most work": "Eniten kehitettävää",
+ "Question types": "Kysymystyypit"
 }

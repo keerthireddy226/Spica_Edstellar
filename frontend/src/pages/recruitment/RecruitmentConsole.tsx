@@ -55,6 +55,8 @@ import { getOrgAppeals, type OrgAppeal } from "@/api/quality";
 import { tr } from "@/i18n/tr";
 import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
+import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
+import { partTone, resultMarks } from "@/components/recruitment/resultMarks";
 import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { trServer } from "@/i18n/serverText";
 
@@ -128,21 +130,31 @@ function ResultBadge({ result, min }: { result: AssessmentResult | null; min?: C
   );
 }
 
-function ResultDetails({ result }: { result: AssessmentResult }) {
+function ResultDetails({ result, kind }: { result: AssessmentResult; kind: TestKind }) {
   if (result.pending || (result.kind === "exam" && !result.partResults?.some((p) => p.gradedCount > 0) && !result.pendingCount)) {
     return <p className="text-sm text-muted">{tr("No answers could be scored. The candidate may have skipped the questions.")}</p>;
   }
+  const { skills, parts } = resultMarks(result, kind);
+  const { best, worst } = rankSkills(skills);
   return (
     <div className="flex flex-col gap-4">
-      {result.skillLevels && Object.keys(result.skillLevels).length > 0 && (
+      <StrengthsSummary skills={skills} parts={parts} unit="percent" />
+      {skills.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Object.entries(result.skillLevels).map(([skill, level]) => (
-            <div key={skill} className="bg-paper-warm rounded-input p-3">
-              <p className="text-xs text-muted capitalize">{tr(skill.charAt(0).toUpperCase() + skill.slice(1))}</p>
-              <p className="font-display font-bold text-lg text-ink">{level}</p>
-              {result.skillPercents?.[skill] !== undefined && <p className="text-[11px] text-muted">{result.skillPercents[skill]}%</p>}
-            </div>
-          ))}
+          {skills.map((s) => {
+            const tone = s.skill === best?.skill ? "bg-success/15 ring-2 ring-success/50" : s.skill === worst?.skill ? "bg-warning/15 ring-1 ring-warning/60" : "bg-paper-warm";
+            return (
+              <div key={s.skill} className={`rounded-input p-3 ${tone}`}>
+                <p className="text-xs text-muted flex items-center justify-between gap-1">
+                  {s.name}
+                  {s.skill === best?.skill && <span className="text-[10px] font-semibold uppercase tracking-wide text-success">{tr("Strongest")}</span>}
+                  {s.skill === worst?.skill && <span className="text-[10px] font-semibold uppercase tracking-wide text-ink">{tr("Needs most work")}</span>}
+                </p>
+                <p className={`font-display font-bold text-lg ${s.attempted ? "text-ink" : "text-muted"}`}>{s.attempted ? s.level : tr("Not attempted")}</p>
+                <p className="text-[11px] text-muted">{s.value}%</p>
+              </div>
+            );
+          })}
         </div>
       )}
       {(result.partResults ?? []).length > 0 && (
@@ -158,7 +170,7 @@ function ResultDetails({ result }: { result: AssessmentResult }) {
                   </span>
                 </div>
                 <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
-                  <div className="h-full bg-navy" style={{ width: `${pct}%` }} />
+                  <div className={`h-full ${partTone(p.correctCount, p.gradedCount)}`} style={{ width: `${pct}%` }} />
                 </div>
               </div>
             );
@@ -386,7 +398,7 @@ export function CandidateReport({ id, onClose, onChanged }: { id: string; onClos
     >
       <div className="flex flex-col gap-5">
         <Panel title={tr("Result")}>
-          {a.result ? <ResultDetails result={a.result} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
+          {a.result ? <ResultDetails result={a.result} kind={a.test_kind} /> : <EmptyNote>{tr("No result yet.")}</EmptyNote>}
           <p className="text-xs text-muted">
             {[
               TEST_KIND_LABEL[a.test_kind](),

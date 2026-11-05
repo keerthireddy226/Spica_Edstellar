@@ -5533,5 +5533,20 @@
  "Left the test": "テストを中断しました",
  "We couldn't hand in your test yet. Your answers so far are saved. Check your internet connection, then try again. Keep this window open.": "まだテストを提出できませんでした。これまでの回答は保存されています。インターネット接続を確認して、もう一度お試しください。このウィンドウは開いたままにしてください。",
  "We couldn't hear anything in your last spoken answer. Check that your microphone is on, not muted, and is the one selected in your browser, then speak clearly.": "前回の音声回答では何も聞こえませんでした。マイクがオンで、ミュートされておらず、ブラウザで選択されているか確認してから、はっきり話してください。",
- "Your own words are fine: only the key facts count.": "自分の言葉で書いて構いません。重要な事実だけが評価されます。"
+ "Your own words are fine: only the key facts count.": "自分の言葉で書いて構いません。重要な事実だけが評価されます。",
+ "{{level}}, score {{value}}": "{{level}}、スコア {{value}}",
+ "{{level}}, {{value}}%": "{{level}}、{{value}}%",
+ "Strongest skill: {{skill}} ({{mark}}).": "最も得意な技能: {{skill}}（{{mark}}）。",
+ "Did well in {{list}}.": "よくできた問題形式: {{list}}。",
+ "Weakest skill: {{skill}} ({{mark}}).": "最も苦手な技能: {{skill}}（{{mark}}）。",
+ "Lost the most marks in {{list}}.": "最も失点した問題形式: {{list}}。",
+ "Not attempted, so scored 0: {{skills}}.": "未回答のため 0 点: {{skills}}。",
+ "Good at": "得意なこと",
+ "No clear strength yet.": "まだはっきりした強みはありません。",
+ "Needs work": "改善が必要なこと",
+ "Nothing stands out as weak.": "特に目立つ弱点はありません。",
+ "Not attempted": "未回答",
+ "No answers in this skill, so it scores 0. It isn't counted in the overall score.": "この技能には回答がないため 0 点です。総合スコアには含まれません。",
+ "Needs most work": "最も改善が必要",
+ "Question types": "問題形式"
 }

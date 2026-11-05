@@ -6,6 +6,7 @@ import { ROUTES } from "@/constants/routes";
 import type { ReportAbout, ScoreReport as ScoreReportData, ScoreSkill, ScoreTypeResult } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 import { subBandLabel } from "@/lib/subBand";
+import { StrengthsSummary, rankSkills, type PartMark, type SkillMark } from "@/components/report/StrengthsSummary";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
 export const BANDS = [
@@ -165,8 +166,14 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
   // certificate; only the final assessment certifies.
   const levelTest = about?.deliveryMode === "certified" ? (about.levelTest ?? null) : null;
   const finalAssessment = about?.deliveryMode === "certified" && !levelTest;
-  const best = [...score.skills].sort((a, b) => b.score - a.score)[0];
-  const worst = [...score.skills].sort((a, b) => a.score - b.score)[0];
+  const missing = score.missingSkills ?? [];
+  const marks: SkillMark[] = [
+    ...score.skills.map((s) => ({ skill: s.skill, name: SKILL_NAME[s.skill](), level: s.level, value: s.score, attempted: true })),
+    ...missing.map((k) => ({ skill: k, name: SKILL_NAME[k](), level: null, value: 0, attempted: false })),
+  ];
+  const best = rankSkills(marks).best?.skill ?? null;
+  // Each question type once (a type can count for two skills).
+  const parts: PartMark[] = [...new Map(score.skills.flatMap((s) => s.types).map((t) => [t.itemTypeId, { label: t.typeName, right: t.right, total: t.total }])).values()];
 
   return (
     <div className="score-report">
@@ -182,6 +189,9 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
   .score-report .sr-body { gap: 10px; }
   .score-report section { box-shadow: none; padding: 12px 14px; gap: 8px; }
   .score-report .print-page { break-before: page; }
+  html, body, *:has(.score-report) { background: #fff !important; }
+  /* Shorter skill bars, so page 1 keeps the summary and the skills together. */
+  .score-report .sr-bar { height: 180px !important; }
   /* A table frame: its header row is every page's top margin, its footer row
      every page's footer (who, report ID, where to check it, QR code). */
   .sr-frame { display: table; width: 100%; border-collapse: collapse; }
@@ -332,12 +342,13 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
             )}
           </div>
         </div>
+        <StrengthsSummary skills={marks} parts={parts} unit="score" />
       </Section>
 
       {/* Four skills */}
       <Section label={org ? tr("Skills") : tr("Your skills")}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="font-display font-bold text-lg text-ink">{org ? (score.skills.length === 4 ? tr("The four skills") : tr("Skills")) : score.skills.length === 4 ? tr("Your four skills") : tr("Your skills")}</h3>
+          <h3 className="font-display font-bold text-lg text-ink">{org ? (marks.length === 4 ? tr("The four skills") : tr("Skills")) : marks.length === 4 ? tr("Your four skills") : tr("Your skills")}</h3>
           <span className="text-xs text-muted">{org
             ? score.goal
               ? tr("Bars show the Spica score; the line is the goal ({{level}}).", { level: score.goal })
@@ -346,7 +357,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
               ? tr("Bars show your Spica score; the line is your goal ({{level}}).", { level: score.goal })
               : tr("Bars show your Spica score.")}</span>
         </div>
-        <SkillBars score={score} />
+        <SkillBars score={score} missing={missing} best={best} />
       </Section>
 
       <div className="print-page flex flex-col gap-4 print:gap-2.5">
@@ -359,9 +370,12 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
           // The question type that went least well; none when every type went well.
           const tip = s.focus[0] ?? null;
           return (
-            <Section key={s.skill} label={SKILL_NAME[s.skill]()}>
+            <Section key={s.skill} label={SKILL_NAME[s.skill]()} className={s.skill === best ? "!border-success/50 !bg-success/5" : ""}>
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <h3 className="font-display font-bold text-lg text-ink">{SKILL_NAME[s.skill]()}</h3>
+                <h3 className="font-display font-bold text-lg text-ink flex items-center gap-2">
+                  {SKILL_NAME[s.skill]()}
+                  {s.skill === best && <StrongestPill />}
+                </h3>
                 <span className="font-display font-bold text-xl tabular-nums" style={{ color: SKILL_COLOR[s.skill] }}>
                   {s.level} · {s.score}
                 </span>
@@ -391,6 +405,16 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
             </Section>
           );
         })}
+        {missing.map((k) => (
+          <Section key={k} label={SKILL_NAME[k]()}>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h3 className="font-display font-bold text-lg text-ink">{SKILL_NAME[k]()}</h3>
+              <span className="font-display font-bold text-xl tabular-nums text-muted">0</span>
+            </div>
+            <span className="h-1 -mt-2 rounded-pill bg-rule-strong" aria-hidden="true" />
+            <Fact title={tr("Not attempted")}>{tr("No answers in this skill, so it scores 0. It isn't counted in the overall score.")}</Fact>
+          </Section>
+        ))}
       </div>
 
       </div>
@@ -402,13 +426,6 @@ export function ScoreReport({ score, about, analysis, viewer = "learner" }: { sc
         </div>
       )}
 
-      {best && worst && best.skill !== worst.skill && (
-        <p className="text-sm text-muted">
-          {org
-            ? tr("Strongest skill: {{best}}. The skill that will lift the score most: {{worst}}.", { best: SKILL_NAME[best.skill](), worst: SKILL_NAME[worst.skill]() })
-            : tr("Strongest skill: {{best}}. The skill that will lift your score most: {{worst}}.", { best: SKILL_NAME[best.skill](), worst: SKILL_NAME[worst.skill]() })}
-        </p>
-      )}
       <p className="text-xs text-muted">
         {finalAssessment
           ? tr("The Spica score (10–90) is Spica's own scale, aligned to CEFR levels: Pre-A1 10–19, A1 20–29, A2 30–39, B1 40–54, B2 55–69, C1 70–79, C2 80–90. This result is from a strictly proctored final assessment.")
@@ -452,14 +469,19 @@ function Fact({ title, children }: { title: string; children: ReactNode }) {
 }
 
 // Four bars on the 10-90 scale, against the CEFR bands, with the goal line.
-function SkillBars({ score }: { score: ScoreReportData }) {
+function StrongestPill() {
+  return <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill bg-success/15 text-success whitespace-nowrap">{tr("Strongest")}</span>;
+}
+
+function SkillBars({ score, missing, best }: { score: ScoreReportData; missing: ScoreSkill[]; best: string | null }) {
   const H = 240;
   const goalBand = BANDS.find((b) => b.level === score.goal);
   const edges = [20, 30, 40, 55, 70, 80];
+  const n = score.skills.length + missing.length;
   return (
     <div>
-      <div className="grid gap-x-3" style={{ gridTemplateColumns: `44px repeat(${score.skills.length}, minmax(0, 1fr))` }}>
-        <div className="relative text-[11px] font-semibold text-muted" style={{ height: H }}>
+      <div className="grid gap-x-3" style={{ gridTemplateColumns: `44px repeat(${n}, minmax(0, 1fr))` }}>
+        <div className="sr-bar relative text-[11px] font-semibold text-muted" style={{ height: H }}>
           {BANDS.map((b) => (
             <span key={b.level} className="absolute right-1 translate-y-1/2 whitespace-nowrap" style={{ bottom: `${at((b.min + b.max) / 2) * 100}%` }}>
               {b.level}
@@ -467,7 +489,7 @@ function SkillBars({ score }: { score: ScoreReportData }) {
           ))}
         </div>
         {score.skills.map((s) => (
-          <div key={s.skill} className="relative rounded-lg bg-paper" style={{ height: H }}>
+          <div key={s.skill} className={`sr-bar relative rounded-lg ${s.skill === best ? "bg-success/10 ring-2 ring-success/50" : "bg-paper"}`} style={{ height: H }}>
             {edges.map((e) => (
               <span key={e} className="absolute inset-x-0 border-t border-dashed border-rule-strong" style={{ bottom: `${at(e) * 100}%` }} aria-hidden="true" />
             ))}
@@ -477,13 +499,25 @@ function SkillBars({ score }: { score: ScoreReportData }) {
             {goalBand && <span className="absolute inset-x-0 border-t-2 border-ink" style={{ bottom: `${at(goalBand.min) * 100}%` }} aria-hidden="true" />}
           </div>
         ))}
+        {missing.map((k) => (
+          <div key={k} className="sr-bar relative rounded-lg bg-paper" style={{ height: H }}>
+            <b className="absolute bottom-1 inset-x-0 text-center font-display text-base text-muted tabular-nums">0</b>
+          </div>
+        ))}
       </div>
-      <div className="grid gap-x-3 mt-2 text-center text-sm" style={{ gridTemplateColumns: `44px repeat(${score.skills.length}, minmax(0, 1fr))` }}>
+      <div className="grid gap-x-3 mt-2 text-center text-sm" style={{ gridTemplateColumns: `44px repeat(${n}, minmax(0, 1fr))` }}>
         <span />
         {score.skills.map((s) => (
           <div key={s.skill} className="flex flex-col items-center gap-1">
             <b className="text-ink">{SKILL_NAME[s.skill]()}</b>
             <StatusChip status={s.status} level={s.level} />
+            {s.skill === best && <StrongestPill />}
+          </div>
+        ))}
+        {missing.map((k) => (
+          <div key={k} className="flex flex-col items-center gap-1">
+            <b className="text-muted">{SKILL_NAME[k]()}</b>
+            <span className="text-xs font-semibold text-muted">{tr("Not attempted")}</span>
           </div>
         ))}
       </div>
