@@ -23,12 +23,13 @@ export interface SynthesizedSpeech {
 }
 
 // opts.ssml: `text` is SSML (e.g. with <break> tags). opts.speakingRate: 1 =
-// normal; slower for lower levels.
+// normal; slower for lower levels. opts.voiceName: a Google voice to use
+// instead of the accent's Neural2 voice.
 export async function synthesizeSpeech(
   text: string,
   voice: VoiceGender,
   accent: Accent = "en-US",
-  opts: { ssml?: boolean; speakingRate?: number } = {},
+  opts: { ssml?: boolean; speakingRate?: number; voiceName?: string } = {},
 ): Promise<SynthesizedSpeech | null> {
   const apiKey = process.env.GOOGLE_TTS_API_KEY;
   if (!apiKey) return null;
@@ -38,7 +39,7 @@ export async function synthesizeSpeech(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         input: opts.ssml ? { ssml: text } : { text },
-        voice: { languageCode: accent, name: VOICE_NAME[accent][voice] },
+        voice: { languageCode: accent, name: opts.voiceName ?? VOICE_NAME[accent][voice] },
         audioConfig: { audioEncoding: "MP3", ...(opts.speakingRate ? { speakingRate: opts.speakingRate } : {}) },
       }),
     });
