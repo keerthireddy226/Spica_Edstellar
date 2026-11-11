@@ -15,6 +15,8 @@ export class ApiError extends Error {
 export function isTransientError(err: unknown): boolean {
   // A server error or "too many requests" (a busy moment) counts too.
   if (err instanceof ApiError) return err.message === "unknown_error" || (err.status !== undefined && (err.status >= 500 || err.status === 429));
+  // A request given up on after its time limit (no answer at all) is tried again too.
+  if (err instanceof DOMException && (err.name === "TimeoutError" || err.name === "AbortError")) return true;
   return err instanceof TypeError;
 }
 
@@ -31,10 +33,14 @@ export async function withRetry<T>(run: () => Promise<T>, waitsMs = [1500, 3000,
   }
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+// timeoutMs: give up on a request that gets no answer at all (a server
+// restarting mid-request), so withRetry can send it again instead of the page
+// waiting forever.
+export async function api<T>(path: string, init?: RequestInit, timeoutMs?: number): Promise<T> {
   const res = await fetch(`/api${path}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json" },
+    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
     ...init,
   });
   if (!res.ok) {
