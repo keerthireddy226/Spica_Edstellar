@@ -1,6 +1,6 @@
 // Test questions that need a recording: ones with none yet (new questions
 // loaded into the bank from a file), and set questions still in the old
-// voices (Neural2, before 2026-11-11). Recorded on the server with its voice
+// voices or format (Neural2, or read without pauses, before 2026-11-11). Recorded on the server with its voice
 // key, so the files land in the server's file storage like the rest. Both
 // voices (googleTts: Chirp 3 HD Sulafat and Alnilam). The new files end in
 // VOICE_FILE_SUFFIX, which marks them as done; old files stay on disk.
@@ -12,6 +12,7 @@ import path from "path";
 import { pool } from "../db.js";
 import { synthesizeSpeech, VOICE_FILE_SUFFIX, type Accent } from "./googleTts.js";
 import { AUDIO_FIRST_TYPES, getSpokenSegments } from "./spokenText.js";
+import { spokenSsml } from "./spokenSsml.js";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads", "item-audio");
 const VOICES = ["male", "female"] as const;
@@ -43,13 +44,16 @@ export async function recordMissingItemAudio(limit = 100): Promise<number> {
   );
   let recorded = 0;
   for (const item of r.rows) {
-    const text = getSpokenSegments(item.item_type_id, item.content).join(". ");
+    // The approved reading format (pauses, "Speaker A/B"); plain text for
+    // the LanguageCert-style types.
+    const ssml = spokenSsml(item.item_type_id, item.content);
+    const text = ssml ?? getSpokenSegments(item.item_type_id, item.content).join(". ");
     if (!text) continue;
     const accent: Accent = item.in_set ? trialAccent(item.position, item.cefr_level) : "en-US";
     for (const voice of VOICES) {
       const has = await pool.query(`SELECT uri FROM item_audio WHERE item_id = $1 AND voice_id = $2`, [item.id, voice]);
       if (has.rowCount && (!item.in_set || String(has.rows[0].uri).endsWith(VOICE_FILE_SUFFIX))) continue;
-      const speech = await synthesizeSpeech(text, voice, accent);
+      const speech = await synthesizeSpeech(text, voice, accent, { ssml: !!ssml });
       if (!speech) continue;
       const file = `${item.id}${VOICE_FILE_SUFFIX}`;
       await mkdir(path.join(UPLOADS_DIR, voice), { recursive: true });

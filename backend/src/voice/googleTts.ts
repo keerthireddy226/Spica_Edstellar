@@ -15,9 +15,10 @@ const VOICE_NAME: Record<Accent, Record<VoiceGender, string>> = Object.fromEntri
   ACCENTS.map((a) => [a, { female: `${a}-Chirp3-HD-Sulafat`, male: `${a}-Chirp3-HD-Alnilam` }]),
 ) as Record<Accent, Record<VoiceGender, string>>;
 
-// Recording files made with these voices end in this, so the ones still in
-// the old voices can be told apart (and re-recorded).
-export const VOICE_FILE_SUFFIX = ".c3.mp3";
+// Recording files made with these voices, read in the approved format
+// (spokenSsml), end in this, so older ones can be told apart and re-recorded.
+// (".c3.mp3" files: these voices without the pauses, Practice Set 1 trial.)
+export const VOICE_FILE_SUFFIX = ".c3s.mp3";
 
 export interface SynthesizedSpeech {
   audioBuffer: Buffer;
