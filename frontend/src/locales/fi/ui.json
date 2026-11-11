@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Emme kuulleet mitään kahdessa viimeisessä puhutussa vastauksessasi. Tarkista, että mikrofoni on päällä eikä mykistetty.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Kaksi viimeistä puhuttua vastaustasi olivat hiljaisia. Tarkista, että mikrofoni on päällä, ei mykistetty ja valittu selaimessa. Sano sitten muutama sana: testi jatkuu, kun kuulemme sinut.",
  "Say a few words now…": "Sano nyt muutama sana…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Selain ei voi avata mikrofoniasi. Salli se osoiterivillä ja lataa sivu uudelleen."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Selain ei voi avata mikrofoniasi. Salli se osoiterivillä ja lataa sivu uudelleen.",
+ "Out of {{total}} questions:": "{{total}} kysymyksestä:",
+ "{{n}} right": "{{n}} oikein",
+ "{{n}} wrong": "{{n}} väärin",
+ "{{n}} not answered": "{{n}} vastaamatta"
 }

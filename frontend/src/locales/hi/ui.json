@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "आपके पिछले दो बोले गए उत्तरों में कुछ सुनाई नहीं दिया। जाँचें कि माइक्रोफ़ोन चालू है और म्यूट नहीं है।",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "आपके पिछले दो बोले गए उत्तर खाली थे। जाँचें कि माइक्रोफ़ोन चालू है, म्यूट नहीं है और ब्राउज़र में वही चुना गया है। फिर कुछ शब्द बोलें: आपकी आवाज़ सुनते ही परीक्षा जारी रहेगी।",
  "Say a few words now…": "अब कुछ शब्द बोलें…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ब्राउज़र आपका माइक्रोफ़ोन नहीं खोल पा रहा। एड्रेस बार में अनुमति दें, फिर पेज रीलोड करें।"
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ब्राउज़र आपका माइक्रोफ़ोन नहीं खोल पा रहा। एड्रेस बार में अनुमति दें, फिर पेज रीलोड करें।",
+ "Out of {{total}} questions:": "{{total}} प्रश्नों में से:",
+ "{{n}} right": "{{n}} सही",
+ "{{n}} wrong": "{{n}} गलत",
+ "{{n}} not answered": "{{n}} के उत्तर नहीं दिए"
 }

@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "మీ చివరి రెండు మాట్లాడిన సమాధానాల్లో ఏమీ వినిపించలేదు. మైక్రోఫోన్ ఆన్‌లో ఉందో, మ్యూట్ కాలేదో చూడండి.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "మీ చివరి రెండు మాట్లాడిన సమాధానాలు నిశ్శబ్దంగా ఉన్నాయి. మైక్రోఫోన్ ఆన్‌లో ఉందో, మ్యూట్ కాలేదో, బ్రౌజర్‌లో అదే ఎంచుకున్నారో చూడండి. తర్వాత కొన్ని మాటలు చెప్పండి: మీ గొంతు వినగానే పరీక్ష కొనసాగుతుంది.",
  "Say a few words now…": "ఇప్పుడు కొన్ని మాటలు చెప్పండి…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "బ్రౌజర్ మీ మైక్రోఫోన్‌ను తెరవలేకపోతోంది. అడ్రస్ బార్‌లో అనుమతించి, పేజీని రీలోడ్ చేయండి."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "బ్రౌజర్ మీ మైక్రోఫోన్‌ను తెరవలేకపోతోంది. అడ్రస్ బార్‌లో అనుమతించి, పేజీని రీలోడ్ చేయండి.",
+ "Out of {{total}} questions:": "{{total}} ప్రశ్నల్లో:",
+ "{{n}} right": "{{n}} సరైనవి",
+ "{{n}} wrong": "{{n}} తప్పు",
+ "{{n}} not answered": "{{n}} సమాధానం ఇవ్వలేదు"
 }

@@ -361,7 +361,7 @@ export async function candidateResultFor(sessionId: string, examId: string | nul
       await pool.query(
         `SELECT CASE WHEN sc.status = 'pending' AND coalesce(at.response_text, '') = '' AND at.response_uri IS NULL THEN 'scored' ELSE sc.status END AS status,
            CASE WHEN sc.status = 'pending' AND coalesce(at.response_text, '') = '' AND at.response_uri IS NULL THEN 0 ELSE sc.content_score END AS content_score,
-           sc.manner_scores, it.input_method, it.skills, i.cefr_level, ep.part_label
+           sc.manner_scores, it.input_method, it.skills, i.cefr_level, coalesce(ep.part_label, it.name) AS part_label
          FROM attempts at JOIN scores sc ON sc.attempt_id = at.id JOIN items i ON i.id = at.item_id
          JOIN item_types it ON it.id = i.item_type_id LEFT JOIN exam_parts ep ON ep.id = i.exam_part_id
          WHERE at.session_id = $1`,

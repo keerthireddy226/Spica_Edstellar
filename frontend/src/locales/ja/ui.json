@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "直前の2つの音声回答で何も聞こえませんでした。マイクがオンでミュートされていないか確認してください。",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "直前の2つの音声回答が無音でした。マイクがオンで、ミュートされておらず、ブラウザで選択されているか確認してください。その後、何か話してください。声が聞こえたらテストが再開します。",
  "Say a few words now…": "何か話してください…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ブラウザがマイクを開けません。アドレスバーで許可してから、ページを再読み込みしてください。"
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "ブラウザがマイクを開けません。アドレスバーで許可してから、ページを再読み込みしてください。",
+ "Out of {{total}} questions:": "{{total}}問中：",
+ "{{n}} right": "正解 {{n}}",
+ "{{n}} wrong": "不正解 {{n}}",
+ "{{n}} not answered": "未回答 {{n}}"
 }

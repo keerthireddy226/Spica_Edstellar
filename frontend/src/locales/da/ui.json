@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Vi hørte intet i dine to sidste mundtlige svar. Tjek, at mikrofonen er tændt og ikke slået fra.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Dine to sidste mundtlige svar var stille. Tjek, at mikrofonen er tændt, ikke slået fra og valgt i browseren. Sig så et par ord: testen fortsætter, når vi hører dig.",
  "Say a few words now…": "Sig et par ord nu…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Browseren kan ikke åbne din mikrofon. Tillad den i adresselinjen, og genindlæs siden."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Browseren kan ikke åbne din mikrofon. Tillad den i adresselinjen, og genindlæs siden.",
+ "Out of {{total}} questions:": "Ud af {{total}} spørgsmål:",
+ "{{n}} right": "{{n}} rigtige",
+ "{{n}} wrong": "{{n}} forkerte",
+ "{{n}} not answered": "{{n}} ubesvarede"
 }

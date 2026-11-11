@@ -14,7 +14,7 @@ import { ScoreReport } from "@/components/report/ScoreReport";
 import type { ScoreReport as ScoreReportData } from "@/api/practiceTests";
 import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
 import { isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
-import { IncompleteNote } from "@/pages/recruitment/RecruitmentConsole";
+import { AnswerTotals, IncompleteNote } from "@/pages/recruitment/RecruitmentConsole";
 
 // An organization that only bought recruitment lands on recruitment.
 export function OrgAdminHome() {
@@ -224,6 +224,7 @@ export function CandidateReportPrint() {
                 </div>
               ))}
             </dl>
+            {r && <AnswerTotals result={r} answers={a.answers} />}
             {r?.meetsMinimum !== null && r?.meetsMinimum !== undefined && (
               <span className={`self-start text-xs font-semibold px-2.5 py-0.5 rounded-pill ${r.meetsMinimum ? "bg-success/15 text-success" : "bg-error/10 text-error"}`}>
                 {r.meetsMinimum ? tr("Meets the minimum level for this job.") : tr("Below the minimum level for this job.")}

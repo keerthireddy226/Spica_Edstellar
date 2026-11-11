@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "Chúng tôi không nghe thấy gì trong hai câu trả lời nói gần nhất của bạn. Hãy kiểm tra micrô đã bật và không bị tắt tiếng.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Hai câu trả lời nói gần nhất của bạn không có tiếng. Hãy kiểm tra micrô đã bật, không bị tắt tiếng và được chọn trong trình duyệt. Sau đó hãy nói vài từ: bài thi sẽ tiếp tục khi chúng tôi nghe thấy bạn.",
  "Say a few words now…": "Hãy nói vài từ ngay bây giờ…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Trình duyệt không mở được micrô. Hãy cho phép trên thanh địa chỉ rồi tải lại trang."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "Trình duyệt không mở được micrô. Hãy cho phép trên thanh địa chỉ rồi tải lại trang.",
+ "Out of {{total}} questions:": "Trong {{total}} câu hỏi:",
+ "{{n}} right": "{{n}} đúng",
+ "{{n}} wrong": "{{n}} sai",
+ "{{n}} not answered": "{{n}} chưa trả lời"
 }

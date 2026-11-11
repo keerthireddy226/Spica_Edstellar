@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "We hoorden niets in je laatste twee gesproken antwoorden. Controleer of je microfoon aan staat en niet gedempt is.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Je laatste twee gesproken antwoorden waren stil. Controleer of je microfoon aan staat, niet gedempt is en in je browser is gekozen. Zeg daarna een paar woorden: de toets gaat verder zodra we je horen.",
  "Say a few words now…": "Zeg nu een paar woorden…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "De browser kan je microfoon niet openen. Sta hem toe in de adresbalk en laad de pagina opnieuw."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "De browser kan je microfoon niet openen. Sta hem toe in de adresbalk en laad de pagina opnieuw.",
+ "Out of {{total}} questions:": "Van de {{total}} vragen:",
+ "{{n}} right": "{{n}} goed",
+ "{{n}} wrong": "{{n}} fout",
+ "{{n}} not answered": "{{n}} niet beantwoord"
 }

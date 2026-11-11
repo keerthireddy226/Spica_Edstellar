@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "No oímos nada en tus dos últimas respuestas habladas. Comprueba que el micrófono esté encendido y no silenciado.",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "Tus dos últimas respuestas habladas estaban en silencio. Comprueba que el micrófono esté encendido, no silenciado y seleccionado en el navegador. Luego di unas palabras: la prueba continúa cuando te oigamos.",
  "Say a few words now…": "Di unas palabras ahora…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "El navegador no puede abrir el micrófono. Permítelo en la barra de direcciones y recarga la página."
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "El navegador no puede abrir el micrófono. Permítelo en la barra de direcciones y recarga la página.",
+ "Out of {{total}} questions:": "De {{total}} preguntas:",
+ "{{n}} right": "{{n}} correctas",
+ "{{n}} wrong": "{{n}} incorrectas",
+ "{{n}} not answered": "{{n}} sin responder"
 }

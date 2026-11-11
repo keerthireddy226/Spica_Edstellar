@@ -56,7 +56,7 @@ import { tr } from "@/i18n/tr";
 import { useAdmissions } from "@/components/AppShell/useBranding";
 import { FeedbackReportView } from "@/components/report/FeedbackReportView";
 import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSummary";
-import { isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
+import { answerTotals, isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
 import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { trServer } from "@/i18n/serverText";
 
@@ -147,6 +147,7 @@ function ResultDetails({ result, kind, answers }: { result: AssessmentResult; ki
   return (
     <div className="flex flex-col gap-4">
       {isIncomplete(answers) && <IncompleteNote answers={answers!} />}
+      <AnswerTotals result={result} answers={answers} />
       <StrengthsSummary skills={skills} parts={parts} unit="percent" />
       {skills.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -188,6 +189,18 @@ function ResultDetails({ result, kind, answers }: { result: AssessmentResult; ki
       )}
       {(result.pendingCount ?? 0) > 0 && <p className="text-xs text-muted">{tr("{{n}} answers still being scored.", { n: result.pendingCount })}</p>}
     </div>
+  );
+}
+
+// "Out of 70 questions: 47 right, 18 wrong, 5 not answered."
+export function AnswerTotals({ result, answers }: { result: AssessmentResult; answers?: { answered: number; total: number } | null }) {
+  const t = answerTotals(result, answers);
+  if (!t) return null;
+  return (
+    <p className="text-sm text-ink">
+      {tr("Out of {{total}} questions:", { total: t.total })} <b className="text-success">{tr("{{n}} right", { n: t.right })}</b> ·{" "}
+      <b className="text-error">{tr("{{n}} wrong", { n: t.wrong })}</b> · <span className="text-muted">{tr("{{n}} not answered", { n: t.skipped })}</span>
+    </p>
   );
 }
 

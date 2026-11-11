@@ -28,6 +28,14 @@ export function isIncomplete(answers: { answered: number; total: number } | null
   return !!answers && answers.total > 0 && answers.answered / answers.total < 0.5;
 }
 
+// Out of all the questions: how many right, wrong and not answered. Right is
+// counted from the parts' marks; null without the answered count.
+export function answerTotals(result: AssessmentResult, answers: { answered: number; total: number } | null | undefined): { total: number; right: number; wrong: number; skipped: number } | null {
+  if (!answers || !answers.total) return null;
+  const right = Math.min(answers.answered, (result.partResults ?? []).reduce((n, p) => n + p.correctCount, 0));
+  return { total: answers.total, right, wrong: answers.answered - right, skipped: answers.total - answers.answered };
+}
+
 // A question type's bar colour: green when it went well, amber in between, red when weak.
 export function partTone(right: number, total: number): string {
   const share = right / Math.max(1, total);

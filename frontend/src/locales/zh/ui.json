@@ -5562,5 +5562,9 @@
  "We couldn't hear anything in your last two spoken answers. Check that your microphone is on and not muted.": "你最后两次口头回答没有任何声音。请检查麦克风是否打开且未静音。",
  "Your last two spoken answers were silent. Check that your microphone is on, not muted, and is the one selected in your browser. Then say a few words: the test continues once we hear you.": "你最后两次口头回答都是无声的。请检查麦克风已打开、未静音，并在浏览器中被选中。然后说几句话：听到你的声音后测试会继续。",
  "Say a few words now…": "现在说几句话…",
- "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "浏览器无法打开你的麦克风。请在地址栏中允许，然后刷新页面。"
+ "The browser can't open your microphone. Allow it in the address bar, then reload the page.": "浏览器无法打开你的麦克风。请在地址栏中允许，然后刷新页面。",
+ "Out of {{total}} questions:": "共 {{total}} 题：",
+ "{{n}} right": "答对 {{n}}",
+ "{{n}} wrong": "答错 {{n}}",
+ "{{n}} not answered": "未作答 {{n}}"
 }
