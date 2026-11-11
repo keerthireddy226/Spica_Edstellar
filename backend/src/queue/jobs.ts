@@ -127,7 +127,8 @@ export function registerJobs() {
     const n = await continueAutoBuilds();
     if (n) console.log(`builder: ${n} tests completed with AI questions`);
   });
-  // New test questions without a recording get one, in both voices.
+  // Test questions without a recording, or a set question still in the old
+  // voices, get one in both voices (up to 100 questions every 5 minutes).
   every(5, "content.missing-audio", async () => {
     const n = await recordMissingItemAudio();
     if (n) console.log(`content: ${n} question recordings made`);

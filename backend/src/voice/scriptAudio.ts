@@ -1,11 +1,11 @@
 // Recordings for generated listening questions: a dialogue's "A:" and "B:"
 // turns are read by two different voices (a man and a woman), with a short
-// pause between turns; one accent per recording, rotated across questions;
+// pause between turns; one accent per recording (US English unless given);
 // a slower pace at lower levels.
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pool } from "../db.js";
-import { ACCENTS, synthesizeSpeech, type Accent, type VoiceGender } from "./googleTts.js";
+import { synthesizeSpeech, VOICE_FILE_SUFFIX, type Accent, type VoiceGender } from "./googleTts.js";
 
 const UPLOADS_DIR = path.join(process.cwd(), "uploads", "item-audio");
 
@@ -50,18 +50,18 @@ async function synthesizeScript(script: string, first: VoiceGender, accent: Acce
 // Returns the longer duration in seconds, or null without a TTS key.
 export async function generateScriptAudio(itemId: string, script: string, level: string, accent?: Accent): Promise<number | null> {
   if (!process.env.GOOGLE_TTS_API_KEY) return null;
-  const a = accent ?? ACCENTS[Math.floor(Math.random() * ACCENTS.length)];
+  const a = accent ?? "en-US";
   let longest = 0;
   for (const voice of ["male", "female"] as VoiceGender[]) {
     const audio = await synthesizeScript(script, voice, a, RATE[level] ?? 1);
     if (!audio) throw new Error(`speech synthesis failed for item ${itemId}`);
     const dir = path.join(UPLOADS_DIR, voice);
     await mkdir(dir, { recursive: true });
-    await writeFile(path.join(dir, `${itemId}.mp3`), audio.buffer);
+    await writeFile(path.join(dir, `${itemId}${VOICE_FILE_SUFFIX}`), audio.buffer);
     await pool.query(
       `INSERT INTO item_audio (item_id, voice_id, accent, uri, duration_ms) VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (item_id, voice_id) DO UPDATE SET uri = EXCLUDED.uri, duration_ms = EXCLUDED.duration_ms, accent = EXCLUDED.accent`,
-      [itemId, voice, a, `/uploads/item-audio/${voice}/${itemId}.mp3`, audio.durationMs],
+      [itemId, voice, a, `/uploads/item-audio/${voice}/${itemId}${VOICE_FILE_SUFFIX}`, audio.durationMs],
     );
     longest = Math.max(longest, audio.durationMs);
   }

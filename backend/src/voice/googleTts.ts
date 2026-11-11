@@ -7,14 +7,17 @@ export type VoiceGender = "male" | "female";
 export type Accent = "en-US" | "en-GB" | "en-IN" | "en-AU";
 export const ACCENTS: Accent[] = ["en-US", "en-GB", "en-IN", "en-AU"];
 
-// Google's Neural2 voices per accent. item_audio.voice_id stores the gender
-// label and item_audio.accent the accent, not these names.
-const VOICE_NAME: Record<Accent, Record<VoiceGender, string>> = {
-  "en-US": { male: "en-US-Neural2-D", female: "en-US-Neural2-F" },
-  "en-GB": { male: "en-GB-Neural2-B", female: "en-GB-Neural2-A" },
-  "en-IN": { male: "en-IN-Neural2-B", female: "en-IN-Neural2-A" },
-  "en-AU": { male: "en-AU-Neural2-B", female: "en-AU-Neural2-A" },
-};
+// Google's Chirp 3 HD voices, the same two in every accent: Sulafat (female)
+// and Alnilam (male), chosen by the owner on 2026-11-11 (before that, Neural2
+// F/D). item_audio.voice_id stores the gender label and item_audio.accent the
+// accent, not these names.
+const VOICE_NAME: Record<Accent, Record<VoiceGender, string>> = Object.fromEntries(
+  ACCENTS.map((a) => [a, { female: `${a}-Chirp3-HD-Sulafat`, male: `${a}-Chirp3-HD-Alnilam` }]),
+) as Record<Accent, Record<VoiceGender, string>>;
+
+// Recording files made with these voices end in this, so the ones still in
+// the old voices can be told apart (and re-recorded).
+export const VOICE_FILE_SUFFIX = ".c3.mp3";
 
 export interface SynthesizedSpeech {
   audioBuffer: Buffer;
