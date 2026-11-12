@@ -307,6 +307,8 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
          ${name("b")} AS buyer_name, b.email AS buyer_email,
          (SELECT i.id FROM invoices i WHERE i.order_id = o.id LIMIT 1) AS invoice_id,
          (SELECT i.invoice_number FROM invoices i WHERE i.order_id = o.id LIMIT 1) AS invoice_number,
+         (SELECT coalesce(sum(c.amount), 0)::int FROM credit_notes c JOIN invoices i ON i.id = c.invoice_id WHERE i.order_id = o.id) AS credited,
+         (o.entitlement_id IS NOT NULL) AS has_access,
          pr.name AS product_name, o.level
        FROM payment_orders o
        JOIN tenants t ON t.id = o.tenant_id
@@ -378,6 +380,8 @@ staffConsoleRouter.get("/billing", requireAuth, async (req: AuthedRequest, res, 
         paymentReference: o.payment_reference,
         invoiceId: o.invoice_id,
         invoiceNumber: o.invoice_number,
+        credited: o.credited,
+        hasAccess: o.has_access,
         // A product an individual bought: what it was.
         productName: o.product_name ?? null,
         level: o.level ?? null,

@@ -10,7 +10,7 @@ import { LicenseStatusPill } from "@/components/licenses/LicenseStatusPill";
 import { Award, Layers, Pencil } from "lucide-react";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
 import { certificateByLearner, orgCertificates, revokeCertificate, type CertificateSummary } from "@/api/reports";
-import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
+import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, setOrgLearnerExtraTime, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
@@ -255,6 +255,7 @@ export function OrgAdminBatchDetailModal({ batchId, onClose, onChanged }: { batc
           onBack={() => setViewingLearnerId(null)}
           fetcher={getOrgLearnerDetail}
           saveDetails={(id, d) => updateOrgLearnerDetails(id, d).then(load)}
+          saveExtraTime={setOrgLearnerExtraTime}
         />
       )}
     </DetailModal>

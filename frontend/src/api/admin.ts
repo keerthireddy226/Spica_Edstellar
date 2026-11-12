@@ -421,6 +421,8 @@ export function getConsoleLearners(): Promise<{ learners: ConsoleLearner[] }> {
 }
 
 export interface LearnerProfile {
+  // Org learners only: extra time on every test (a disability adjustment).
+  extraTimePercent?: number;
   // Final assessments and level tests, each attempt's result and certificate.
   finalAssessments?: {
     kind: "prep" | "assessment" | "level" | "final";
@@ -600,8 +602,11 @@ export const commercialApi = {
   markPaid: (tenantId: string, orderId: string, reference: string) =>
     api(`/admin/organizations/${tenantId}/orders/${orderId}/mark-paid`, { method: "POST", body: JSON.stringify({ reference }) }),
   cancel: (tenantId: string, orderId: string) => api(`/admin/organizations/${tenantId}/orders/${orderId}/cancel`, { method: "POST" }),
-  creditNote: (tenantId: string, invoiceId: string, body: { amount: number; licensesToRemove: number; reason: string }) =>
+  creditNote: (tenantId: string, invoiceId: string, body: { amount: number; licensesToRemove: number; reason: string; refundPayment?: boolean; removeAccess?: boolean }) =>
     api<{ creditNoteNumber: string }>(`/admin/organizations/${tenantId}/invoices/${invoiceId}/credit-notes`, { method: "POST", body: JSON.stringify(body) }),
+  // A refund on any paid order (individuals too), from the Billing page.
+  refund: (invoiceId: string, body: { amount: number; reason: string; refundPayment: boolean; removeAccess: boolean }) =>
+    api<{ creditNoteNumber: string; refundedToCard: boolean; accessRemoved: boolean }>(`/admin/invoices/${invoiceId}/refund`, { method: "POST", body: JSON.stringify(body) }),
   viewAs: (tenantId: string) => api<{ ok: true }>(`/admin/organizations/${tenantId}/view-as`, { method: "POST" }),
   health: () => api<{ organizations: (OrgHealth & { id: string; name: string })[] }>("/admin/health"),
 };

@@ -38,6 +38,9 @@ export interface Certificate {
   validUntil: string | null;
   // A result certificate whose test passed the face and ID checks.
   identityVerified: boolean;
+  // A result certificate: its check page links to the full score report (the learner can turn this off).
+  reportPublic: boolean;
+  sessionId: string | null;
 }
 
 // A course certificate's details: the course, its period, the goal, the
@@ -76,6 +79,8 @@ function toCert(r: Record<string, any>): Certificate {
     skillScores: r.skill_scores ?? null,
     validUntil: r.valid_until ? dateOnly(r.valid_until) : null,
     identityVerified: !!r.identity_verified,
+    reportPublic: r.report_public !== false,
+    sessionId: r.session_id ?? null,
   };
 }
 
@@ -169,6 +174,12 @@ const IDENTITY_VERIFIED = `EXISTS (SELECT 1 FROM session_integrity si WHERE si.s
 export async function listForLearner(userId: string): Promise<Certificate[]> {
   const r = await pool.query(`SELECT *, ${IDENTITY_VERIFIED} FROM certificates WHERE user_id = $1 AND revoked_at IS NULL ORDER BY issued_at DESC`, [userId]);
   return r.rows.map(toCert);
+}
+
+// The learner shows or hides the full report link on their certificate's check page.
+export async function setReportPublic(userId: string, id: string, visible: boolean): Promise<boolean> {
+  const r = await pool.query(`UPDATE certificates SET report_public = $3 WHERE id = $1 AND user_id = $2 AND kind = 'result' RETURNING id`, [id, userId, visible]);
+  return (r.rowCount ?? 0) > 0;
 }
 
 // Every certificate the organization issued. `expired` (past its valid-until

@@ -73,6 +73,54 @@ export const OPENAPI = {
     "/batches": { get: { summary: "List batches", responses: { "200": { description: "Batches" } } } },
     "/certificates": { get: { summary: "Completion certificates", responses: { "200": { description: "Certificates" } } } },
     "/analytics/summary": { get: { summary: "Activity summary for the organization", responses: { "200": { description: "Summary" } } } },
+    "/jobs": { get: { summary: "Recruitment: job openings (organizations with recruitment only)", responses: { "200": { description: "Job openings" }, "403": { description: "Recruitment not enabled" } } } },
+    "/jobs/{id}/assessments": {
+      post: {
+        summary: "Recruitment: invite candidates to a job opening's assessment (scope: write). Each invitation uses credits; an invitation email is sent. People already invited to the job are skipped.",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["people"],
+                properties: {
+                  people: {
+                    type: "array",
+                    maxItems: 100,
+                    items: {
+                      type: "object",
+                      required: ["email"],
+                      properties: { email: { type: "string" }, firstName: { type: "string" }, lastName: { type: "string" }, extraTimePercent: { type: "integer", enum: [0, 25, 50, 100], description: "Extra time for a candidate with a disability" } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: { "201": { description: "{ data: [{ id, email }], skipped }" }, "402": { description: "Not enough credits" }, "404": { description: "Job not found" }, "400": { description: "Job closed or invalid body" } },
+      },
+    },
+    "/assessments": {
+      get: {
+        summary: "Recruitment: list assessments, oldest invitation first",
+        parameters: [
+          { name: "jobId", in: "query", schema: { type: "string" } },
+          { name: "status", in: "query", schema: { type: "string", enum: ["invited", "started", "completed", "expired", "cancelled"] } },
+          { name: "email", in: "query", schema: { type: "string" } },
+          { name: "cursor", in: "query", schema: { type: "string" }, description: "nextCursor from the previous page (100 per page)" },
+        ],
+        responses: { "200": { description: "{ data: Assessment[], nextCursor }" } },
+      },
+    },
+    "/assessments/{id}": {
+      get: {
+        summary: "Recruitment: one assessment with its result (CEFR level, Spica score, skills) once completed, and the hiring decision",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "The assessment" }, "404": { description: "Not found" } },
+      },
+    },
   },
   "x-webhooks": {
     description:
@@ -87,6 +135,10 @@ export const OPENAPI = {
       "license.reclaimed",
       "batch.completed",
       "certificate.issued",
+      "assessment.invited",
+      "assessment.expired",
+      "assessment.completed",
+      "assessment.decided",
     ],
   },
 };

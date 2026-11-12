@@ -21,7 +21,7 @@ import {
   reactivateLearner,
   getBatches,
   moveLearner,
-  updateOrgLearnerDetails,
+  updateOrgLearnerDetails, setOrgLearnerExtraTime,
   type OrgLearner,
   type OrgBatch,
 } from "@/api/orgAdmin";
@@ -299,6 +299,7 @@ export function OrgAdminLearners() {
           onClose={() => setViewingLearnerId(null)}
           fetcher={getOrgLearnerDetail}
           saveDetails={(id, d) => updateOrgLearnerDetails(id, d).then(load)}
+          saveExtraTime={setOrgLearnerExtraTime}
         />
       )}
 

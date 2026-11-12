@@ -123,11 +123,13 @@ export interface InviteInput {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
+  // Extra time for a candidate with a disability: 0, 25, 50 or 100 (%).
+  extraTimePercent?: number;
 }
 
 // Invites people to one job opening. Each invitation costs the test's
 // credits; one live invitation per email per job.
-export async function inviteCandidates(args: { tenantId: string; jobId: string; actorId: string; people: InviteInput[] }) {
+export async function inviteCandidates(args: { tenantId: string; jobId: string; actorId: string | null; people: InviteInput[] }) {
   const job = (await pool.query(`SELECT * FROM recruitment_jobs WHERE id = $1 AND tenant_id = $2`, [args.jobId, args.tenantId])).rows[0];
   if (!job) throw new RecruitmentError("job_not_found", 404);
   if (job.status !== "open") throw new RecruitmentError("job_closed");
@@ -179,9 +181,9 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
       const expiresAt = new Date(Date.now() + job.invite_valid_hours * 3_600_000);
       const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
       const r = await client.query(
-        `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-        [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt],
+        `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at, extra_time_percent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+        [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt, p.extraTimePercent ?? 0],
       );
       const id = r.rows[0].id;
       await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $4, 'invite', $2, $3)`, [
@@ -205,6 +207,7 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
       console.error("failed to send candidate invite:", err),
     );
   }
+  for (const x of invited) await emitEvent(args.tenantId, "assessment.invited", { assessmentId: x.id, jobId: args.jobId, email: x.email });
   if (invited.length) await warnIfLowCredits(args.tenantId);
   return { invited, skipped: people.length - fresh.length };
 }
@@ -458,9 +461,10 @@ async function recruitmentContacts(tenantId: string, invitedBy: string | null): 
 export async function runRecruitmentLifecycle(eraseCandidate: (userId: string) => Promise<boolean>) {
   const expired = await pool.query(
     `UPDATE recruitment_assessments SET status = 'expired'
-     WHERE status IN ('invited', 'started') AND expires_at < now() RETURNING id, tenant_id, started_at, credit_refunded`,
+     WHERE status IN ('invited', 'started') AND expires_at < now() RETURNING id, tenant_id, job_id, email, started_at, credit_refunded`,
   );
   for (const a of expired.rows) {
+    await emitEvent(a.tenant_id, "assessment.expired", { assessmentId: a.id, jobId: a.job_id, email: a.email });
     if (!a.credit_refunded && (!a.started_at || !(await sawQuestion(a.id)))) {
       await pool.query(`UPDATE recruitment_assessments SET credit_refunded = true WHERE id = $1`, [a.id]);
       await addCredits({ tenantId: a.tenant_id, delta: await chargedFor(a.id), reason: "refund", assessmentId: a.id, note: "Invitation expired before any question was seen" });

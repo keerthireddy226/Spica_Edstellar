@@ -25,6 +25,12 @@ const SIZE = 112;
 // Measured: genuine 0.631-0.977, impostor ceiling 0.426 (31 people, 0 false accepts).
 export const MATCH_THRESHOLD = 0.6;
 export const UNCERTAIN_FLOOR = 0.45;
+// An ID card's photo against a selfie scores lower than two camera photos:
+// the card photo is printed, often years old and small in the picture. The
+// same person scored 0.38-0.44 when the card photo was about 50-70 pixels
+// wide, so between this and UNCERTAIN_FLOOR the result is "unclear" (compare
+// by eye), not "faces differ".
+export const ID_DIFFER_BELOW = 0.3;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let session: any = null;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, FileText } from "lucide-react";
@@ -8,6 +8,9 @@ import { EmptyNote, FilterPills, PageError, PageHeader, PageLoading, Panel, Sear
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { commercialApi } from "@/api/admin";
+import { ApiError } from "@/lib/api";
+import { Button } from "@/components/Button";
 type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
 
 // Orders also include products individuals bought (Full access, preparation, a test).
@@ -35,6 +38,10 @@ export function StaffBilling() {
   const [filter, setFilter] = useState<F>("unpaid");
   const [query, setQuery] = useState("");
   const [chartCurrency, setChartCurrency] = useState<string | null>(null);
+  const [refundFor, setRefundFor] = useState<string | null>(null);
+  const [refund, setRefund] = useState({ amount: "", reason: "", refundPayment: true, removeAccess: true });
+  const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [refunding, setRefunding] = useState(false);
   const load = () => {
     setError(null);
     getStaffBilling()
@@ -187,6 +194,7 @@ export function StaffBilling() {
               ["all", tr("All"), orders.length],
             ]}
           />
+          {refundMsg && <p className={`text-sm mb-2 ${refundMsg.ok ? "text-success" : "text-error"}`}>{refundMsg.text}</p>}
           {shown.length === 0 ? (
             <EmptyNote>{q ? tr("No payments match your search.") : tr("No payments in this view.")}</EmptyNote>
           ) : (
@@ -204,7 +212,8 @@ export function StaffBilling() {
                 </thead>
                 <tbody>
                   {shown.map((o) => (
-                    <tr key={o.id} className="border-b border-rule last:border-0">
+                    <Fragment key={o.id}>
+                    <tr className="border-b border-rule last:border-0">
                       <td className="px-4 py-3">
                         <p className="text-ink font-medium">{o.orgName ?? o.buyerName ?? o.buyerEmail ?? "—"}</p>
                         <p className="text-xs text-muted">{individual(o) ? tr("Individual · {{v}}", { v: o.buyerEmail ?? "" }) : (o.buyerName ?? "")}</p>
@@ -249,8 +258,91 @@ export function StaffBilling() {
                         ) : o.quoteNumber ? (
                           <span className="text-xs text-muted">{o.quoteNumber}</span>
                         ) : null}
+                        {o.status === "paid" && o.invoiceId && perms.manageOrganizations && (o.credited ?? 0) < o.total && (
+                          <button
+                            onClick={() => {
+                              setRefundMsg(null);
+                              setRefund({ amount: String(((o.total - (o.credited ?? 0)) / 100).toFixed(2)), reason: "", refundPayment: o.provider !== "invoice", removeAccess: !!o.hasAccess });
+                              setRefundFor(refundFor === o.id ? null : o.id);
+                            }}
+                            className="block ml-auto mt-1 text-xs font-semibold text-error hover:underline cursor-pointer"
+                          >
+                            {tr("Refund")}
+                          </button>
+                        )}
+                        {(o.credited ?? 0) > 0 && <p className="text-[11px] text-muted mt-0.5">{tr("{{amount}} refunded", { amount: money(o.credited!, o.currency) })}</p>}
                       </td>
                     </tr>
+                    {refundFor === o.id && o.invoiceId && (
+                      <tr className="border-b border-rule bg-paper-warm">
+                        <td colSpan={6} className="px-4 py-3">
+                          <div className="flex gap-3 flex-wrap items-end">
+                            <label className="flex flex-col gap-1 text-xs text-muted">
+                              {tr("Amount ({{currency}})", { currency: o.currency })}
+                              <input type="number" min={0} step="0.01" value={refund.amount} onChange={(e) => setRefund({ ...refund, amount: e.target.value })} className="w-28 rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+                            </label>
+                            <label className="flex flex-col gap-1 text-xs text-muted flex-1 min-w-48">
+                              {tr("Reason")}
+                              <input value={refund.reason} onChange={(e) => setRefund({ ...refund, reason: e.target.value })} className="rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink" />
+                            </label>
+                            {o.provider !== "invoice" && (
+                              <label className="flex items-center gap-1.5 text-xs text-ink">
+                                <input type="checkbox" checked={refund.refundPayment} onChange={(e) => setRefund({ ...refund, refundPayment: e.target.checked })} />
+                                {tr("Refund the money to the card or UPI")}
+                              </label>
+                            )}
+                            {o.hasAccess && (
+                              <label className="flex items-center gap-1.5 text-xs text-ink">
+                                <input type="checkbox" checked={refund.removeAccess} onChange={(e) => setRefund({ ...refund, removeAccess: e.target.checked })} />
+                                {tr("Remove what this order gave (plan, test or pack)")}
+                              </label>
+                            )}
+                            <Button
+                              disabled={refunding || !(Number(refund.amount) > 0) || refund.reason.trim().length < 3}
+                              onClick={async () => {
+                                setRefunding(true);
+                                setRefundMsg(null);
+                                try {
+                                  const r = await commercialApi.refund(o.invoiceId!, {
+                                    amount: Math.round(Number(refund.amount) * 100),
+                                    reason: refund.reason.trim(),
+                                    refundPayment: o.provider !== "invoice" && refund.refundPayment,
+                                    removeAccess: !!o.hasAccess && refund.removeAccess,
+                                  });
+                                  setRefundMsg({
+                                    ok: true,
+                                    text: r.refundedToCard
+                                      ? tr("Refunded to the card or UPI. Credit note {{n}} issued.", { n: r.creditNoteNumber })
+                                      : tr("Credit note {{n}} issued. Pay the money back by bank.", { n: r.creditNoteNumber }),
+                                  });
+                                  setRefundFor(null);
+                                  load();
+                                } catch (err) {
+                                  const code = err instanceof ApiError ? err.message : "";
+                                  setRefundMsg({
+                                    ok: false,
+                                    text:
+                                      code === "amount_too_high"
+                                        ? tr("That's more than is left to refund on this order.")
+                                        : code === "not_a_card_payment"
+                                          ? tr("This order wasn't paid by card or UPI, so refund it by bank.")
+                                          : code === "refund_failed"
+                                            ? tr("The payment provider refused the refund. Nothing was changed.")
+                                            : tr("The refund didn't go through."),
+                                  });
+                                } finally {
+                                  setRefunding(false);
+                                }
+                              }}
+                              className="!px-3 !py-2"
+                            >
+                              {tr("Refund")}
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

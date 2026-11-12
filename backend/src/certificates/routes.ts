@@ -5,7 +5,9 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import path from "node:path";
 import QRCode from "qrcode";
-import { COMPLETION_CERTIFICATES, issueCertificate, listForLearner, listForTenant, revokeCertificate, verifyCertificate } from "./service.js";
+import { COMPLETION_CERTIFICATES, issueCertificate, listForLearner, listForTenant, revokeCertificate, setReportPublic, verifyCertificate } from "./service.js";
+import { scoreReport } from "../reports/scoreReport.js";
+import { reportAbout } from "../reports/feedbackReport.js";
 import { CourseCertificateError, certificateStatus, decideRequest, listRequests, proofFor, requestCertificate, saveVersantResult } from "./course.js";
 import { LOGO_DIR } from "../orgAdmin/settings.js";
 import { APP_URL } from "../auth/mailer.js";
@@ -147,9 +149,39 @@ certificatesRouter.get("/verify/:code", verifyLimiter, async (req, res, next) =>
       validUntil: c.validUntil,
       expired,
       identityVerified: c.kind === "result" && c.identityVerified,
+      // A valid result certificate links to its full score report, unless the learner turned that off.
+      reportAvailable: c.kind === "result" && !c.revokedAt && !expired && c.reportPublic && !!c.sessionId,
       orgLogoUrl: c.hasOrgLogo && !c.revokedAt ? `/api/certificates/verify/${c.code}/logo` : null,
       verifyUrl,
       qr: await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240, color: { dark: "#1f3a5f", light: "#ffffff" } }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The full score report behind a valid result certificate, for anyone who has
+// the code (an employer checking it). The learner can turn this off. The
+// example answers (what they said and wrote) are left out.
+certificatesRouter.get("/verify/:code/report", verifyLimiter, async (req, res, next) => {
+  try {
+    const c = await verifyCertificate(String(req.params.code));
+    const expired = !!c?.validUntil && c.validUntil < new Date().toISOString().slice(0, 10);
+    if (!c || c.kind !== "result" || c.revokedAt || expired || !c.reportPublic || !c.sessionId) return res.status(404).json({ error: "not_found" });
+    const stored = (await pool.query(`SELECT report FROM feedback_reports WHERE session_id = $1 AND status = 'ready'`, [c.sessionId])).rows[0]?.report ?? null;
+    const score = await scoreReport(c.sessionId, stored);
+    if (!score?.overall) return res.status(404).json({ error: "not_found" });
+    const about = await reportAbout(c.sessionId);
+    res.json({
+      code: c.code,
+      score: {
+        ...score,
+        // The certificate's own name and the check page's link.
+        learner: { ...score.learner, name: c.learnerName },
+        speaking: score.speaking ? { ...score.speaking, example: null } : null,
+        writing: score.writing ? { ...score.writing, example: null } : null,
+      },
+      about: about ? { ...about, setName: null } : null,
     });
   } catch (err) {
     next(err);
@@ -301,6 +333,17 @@ certificatesRouter.post("/requests/:id/decide", requireAuth, async (req: AuthedR
 certificatesRouter.get("/mine", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     res.json({ certificates: await listForLearner(req.user!.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// The learner shows or hides the full report link on a result certificate's check page.
+certificatesRouter.patch("/mine/:id/report-public", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ visible: z.boolean() }).parse(req.body);
+    if (!(await setReportPublic(req.user!.id, String(req.params.id), body.visible))) return res.status(404).json({ error: "not_found" });
+    res.json({ reportPublic: body.visible });
   } catch (err) {
     next(err);
   }

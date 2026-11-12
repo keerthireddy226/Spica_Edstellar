@@ -219,6 +219,10 @@ export function getOrgLearnerDetail(id: string): Promise<LearnerProfile> {
   return api(`/org-admin/learners/${id}`);
 }
 
+export function setOrgLearnerExtraTime(id: string, percent: 0 | 25 | 50 | 100): Promise<{ extraTimePercent: number }> {
+  return api(`/org-admin/learners/${id}/extra-time`, { method: "PATCH", body: JSON.stringify({ percent }) });
+}
+
 export function updateOrgLearnerDetails(id: string, d: LearnerDetails): Promise<{ id: string }> {
   return api(`/org-admin/learners/${id}/details`, { method: "PATCH", body: JSON.stringify(d) });
 }

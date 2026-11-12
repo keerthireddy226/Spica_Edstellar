@@ -107,6 +107,10 @@ export interface BillingOrder {
   paymentReference: string | null;
   invoiceId: string | null;
   invoiceNumber: string | null;
+  // Already refunded or credited on this order, in minor units.
+  credited?: number;
+  // The order gave a learner a plan, test or pack (a refund can remove it).
+  hasAccess?: boolean;
 }
 
 export interface BillingContract {

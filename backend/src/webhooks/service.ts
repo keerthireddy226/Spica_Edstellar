@@ -14,6 +14,8 @@ export const WEBHOOK_EVENTS = [
   "license.reclaimed",
   "batch.completed",
   "certificate.issued",
+  "assessment.invited",
+  "assessment.expired",
   "assessment.completed",
   "assessment.decided",
 ] as const;

@@ -852,6 +852,26 @@ orgAdminRouter.patch("/learners/:id/details", requireAuth, async (req: AuthedReq
   }
 });
 
+// Extra time for a learner with a disability: every question's time and the
+// whole test's time grow by this percentage, in tests started from now on.
+orgAdminRouter.patch("/learners/:id/extra-time", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireOrgAdmin(req, res)) return;
+  const tenantId = await requireOwnTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const body = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]) }).parse(req.body);
+    const r = await pool.query(`UPDATE users SET extra_time_percent = $3, updated_at = now() WHERE id = $1 AND tenant_id = $2 AND role = 'learner' AND erased_at IS NULL RETURNING id`, [
+      req.params.id,
+      tenantId,
+      body.percent,
+    ]);
+    if (!r.rowCount) return res.status(404).json({ error: "learner_not_found" });
+    res.json({ extraTimePercent: body.percent });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Org Admins can add learners directly — into any of their batches, or with
 // no batch yet (moved under a Manager's batch later via /learners/:id/move).
 // Optionally gives them licenses straight away so they aren't locked out.
@@ -980,7 +1000,8 @@ orgAdminRouter.get("/learners/:id", requireAuth, async (req: AuthedRequest, res,
   try {
     const profile = await buildLearnerProfile(String(req.params.id), { tenantId, includeSensitive: true });
     if (!profile) return res.status(404).json({ error: "learner_not_found" });
-    res.json(profile);
+    const et = (await pool.query(`SELECT extra_time_percent FROM users WHERE id = $1`, [req.params.id])).rows[0];
+    res.json({ ...profile, extraTimePercent: et?.extra_time_percent ?? 0 });
   } catch (err) {
     next(err);
   }

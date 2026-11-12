@@ -141,7 +141,21 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
   );
   // A built test's own time limits.
   const timers = (sessionRow.composition?.timers as Record<string, number> | undefined) ?? {};
-  const byId = new Map(itemsResult.rows.map((r) => [r.id, { ...r, timer_seconds: timers[r.id] ?? r.timer_seconds }]));
+  // Extra time (an accommodation) stretches every timer of the question.
+  const factor = 1 + (Number(sessionRow.composition?.extraTimePercent) || 0) / 100;
+  const stretch = (s: number | null) => (s == null || factor === 1 ? s : Math.round(s * factor));
+  const byId = new Map(
+    itemsResult.rows.map((r) => [
+      r.id,
+      {
+        ...r,
+        timer_seconds: stretch(timers[r.id] ?? r.timer_seconds),
+        two_phase_read_seconds: stretch(r.two_phase_read_seconds),
+        two_phase_write_seconds: stretch(r.two_phase_write_seconds),
+        prep_seconds: stretch(r.prep_seconds),
+      },
+    ]),
+  );
   const attemptsResult = await pool.query(`SELECT item_id, response_text, response_uri FROM attempts WHERE session_id = $1`, [sessionRow.id]);
   const attemptByItem = new Map(attemptsResult.rows.map((r) => [r.item_id, r.response_text]));
   // Handed in with something in it (typed, chosen or recorded), not just let run out.
@@ -678,12 +692,18 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const partBoundaries = derivePartBoundaries(rows, formRows.length ? form?.partIdByOrder : undefined);
     const itemIds = rows.map((r) => r.id);
     const timers = builtTest?.timers ?? {};
+    // Extra time (an accommodation): from the candidate's invitation, else the learner's own setting.
+    const extraTimePercent: number = candidate
+      ? ((await activeAssessment(req.user!.id))?.extra_time_percent ?? 0)
+      : ((await pool.query(`SELECT extra_time_percent FROM users WHERE id = $1`, [req.user!.id])).rows[0]?.extra_time_percent ?? 0);
+    const stretch = (s: number) => Math.round(s * (1 + extraTimePercent / 100));
     const mock: MockComposition | null =
       timed
-        ? await mockLimits(itemIds, timers).then((limits) => {
+        ? await mockLimits(itemIds, timers).then((raw) => {
+            const limits = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, stretch(v)]));
             // A built mock's whole-test deadline follows its duration (never shorter than its questions need).
             const byQuestions = mockDeadline(limits, partBoundaries.length).getTime();
-            const byDuration = builtTest && mode !== "sample" ? Date.now() + (builtTest.durationMinutes + 10) * 60_000 : 0;
+            const byDuration = builtTest && mode !== "sample" ? Date.now() + stretch((builtTest.durationMinutes + 10) * 60) * 1000 : 0;
             return { limits, deadlineAt: new Date(Math.max(byQuestions, byDuration)).toISOString() };
           })
         : null;
@@ -712,6 +732,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
           randomized: !!formRows.length && !builtTest && !levelRows,
           ...(ownedLevel ? { levelTest: ownedLevel } : {}),
           ...(builtTest ? { formId: builtTest.id, formCode: builtTest.code, durationMinutes: builtTest.durationMinutes, shortForm: builtTest.shortForm, timers } : {}),
+          ...(extraTimePercent ? { extraTimePercent } : {}),
           ...mock,
         }),
         testCode,

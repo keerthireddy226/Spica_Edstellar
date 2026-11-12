@@ -161,6 +161,7 @@ const DOC_TEXT: Record<string, () => string> = {
 const AUTO_TEXT: Record<string, () => string> = {
   likely_same_person: () => tr("Faces look alike"),
   faces_differ: () => tr("Faces look different"),
+  match_unclear: () => tr("Unclear match (the ID photo may be small or old): compare the photos"),
   no_face_on_document: () => tr("No face found on the document"),
   no_single_face_in_selfie: () => tr("Selfie didn't show one face"),
   not_checked: () => tr("Couldn't be checked automatically: compare the photos"),

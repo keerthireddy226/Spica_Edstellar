@@ -31,6 +31,8 @@ export interface CertificateSummary {
   spicaScore?: number | null;
   validUntil?: string | null;
   identityVerified?: boolean;
+  // A result certificate: its check page links to the full score report.
+  reportPublic?: boolean;
 }
 
 // Each learner's certificate to show: a final assessment's before a course
@@ -39,6 +41,10 @@ export function certificateByLearner(certs: CertificateSummary[]): Map<string, C
   const rank = (c: CertificateSummary) => `${c.kind === "result" ? 1 : 0}${c.issuedAt}`;
   const sorted = certs.filter((c) => !c.revokedAt && c.userId).sort((a, b) => rank(a).localeCompare(rank(b)));
   return new Map(sorted.map((c) => [c.userId!, c]));
+}
+
+export function setCertificateReportPublic(id: string, visible: boolean) {
+  return api<{ reportPublic: boolean }>(`/certificates/mine/${id}/report-public`, { method: "PATCH", body: JSON.stringify({ visible }) });
 }
 
 export function myCertificates() {

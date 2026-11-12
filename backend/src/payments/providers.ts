@@ -109,6 +109,12 @@ export async function stripeSessionPaid(sessionId: string): Promise<{ paid: bool
   };
 }
 
+// Refunds part or all of a Stripe payment (amount in minor units). Returns the refund id.
+export async function stripeRefund(paymentIntentId: string, amount: number): Promise<string> {
+  const r = await stripeRequest("POST", "/refunds", { payment_intent: paymentIntentId, amount: String(amount) });
+  return String(r.id);
+}
+
 // Stripe-Signature: t=<ts>,v1=<hex hmac of `${t}.${rawBody}`>
 export function stripeVerifyWebhook(rawBody: string, header: string | undefined): boolean {
   if (!header || !PAYMENT_CONFIG.stripeWebhookSecret) return false;
@@ -129,6 +135,19 @@ export async function razorpayCreateOrder(args: { orderId: string; amount: numbe
     method: "POST",
     headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
     body: JSON.stringify({ amount: args.amount, currency: args.currency, receipt: args.orderId.slice(0, 40), notes: { order_id: args.orderId } }),
+  });
+  const json = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) throw new Error(`razorpay_error: ${JSON.stringify(json.error ?? json)}`);
+  return String(json.id);
+}
+
+// Refunds part or all of a Razorpay payment (amount in paise/cents). Returns the refund id.
+export async function razorpayRefund(paymentId: string, amount: number): Promise<string> {
+  const auth = Buffer.from(`${PAYMENT_CONFIG.razorpayKeyId}:${PAYMENT_CONFIG.razorpayKeySecret}`).toString("base64");
+  const res = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}/refund`, {
+    method: "POST",
+    headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ amount }),
   });
   const json = (await res.json()) as Record<string, unknown>;
   if (!res.ok) throw new Error(`razorpay_error: ${JSON.stringify(json.error ?? json)}`);

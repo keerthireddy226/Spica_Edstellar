@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MfaSetup } from "@/pages/MfaSetup";
 import { CertificateView } from "@/pages/CertificateView";
 import { SampleReport } from "@/pages/SampleReport";
+import { CertificateReport } from "@/pages/CertificateReport";
 import { CertificateRequests } from "@/pages/CertificateRequests";
 import { QuoteView } from "@/pages/QuoteView";
 import {
@@ -124,6 +125,7 @@ function App() {
         <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />
         <Route path="/sample-report" element={<SampleReport />} />
+        <Route path="/certificate/:code/report" element={<CertificateReport />} />
         {/* A candidate's report shared with a hiring manager (no login). */}
         <Route path="/recruitment/shared/:token" element={<CandidateReportPrint />} />
         {/* Public pages per English level (no account needed). */}

@@ -197,6 +197,8 @@ commercialRouter.post("/organizations/:id/invoices/:invoiceId/credit-notes", req
         amount: z.number().int().positive(),
         licensesToRemove: z.number().int().min(0).default(0),
         reason: z.string().trim().min(3).max(500),
+        refundPayment: z.boolean().optional(),
+        removeAccess: z.boolean().optional(),
       })
       .parse(req.body);
     const own = await pool.query(`SELECT 1 FROM invoices WHERE id = $1 AND tenant_id = $2`, [String(req.params.invoiceId), tenantId]);
@@ -208,6 +210,39 @@ commercialRouter.post("/organizations/:id/invoices/:invoiceId/credit-notes", req
       actorRole: req.user!.role,
       action: "billing.credit_note",
       targetType: "organization",
+      targetLabel: cn.creditNoteNumber,
+      details: body,
+      ip: req.ip ?? null,
+    });
+    res.status(201).json(cn);
+  } catch (err) {
+    if (err instanceof CreditNoteError) return res.status(err.code === "invoice_not_found" ? 404 : 400).json({ error: err.code });
+    next(err);
+  }
+});
+
+// Super Admin and billing staff: a refund on any paid order (individuals too),
+// from the Billing page. Same rules as a credit note.
+commercialRouter.post("/invoices/:invoiceId/refund", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+    const body = z
+      .object({
+        amount: z.number().int().positive(),
+        reason: z.string().trim().min(3).max(500),
+        refundPayment: z.boolean().optional(),
+        removeAccess: z.boolean().optional(),
+      })
+      .parse(req.body);
+    const inv = (await pool.query(`SELECT tenant_id FROM invoices WHERE id = $1`, [String(req.params.invoiceId)])).rows[0];
+    if (!inv) return res.status(404).json({ error: "invoice_not_found" });
+    const cn = await issueCreditNote({ invoiceId: String(req.params.invoiceId), ...body, licensesToRemove: 0, actorId: req.user!.id });
+    await recordAudit({
+      tenantId: inv.tenant_id,
+      actorId: req.user!.id,
+      actorRole: req.user!.role,
+      action: "billing.refund",
+      targetType: "invoice",
       targetLabel: cn.creditNoteNumber,
       details: body,
       ip: req.ip ?? null,

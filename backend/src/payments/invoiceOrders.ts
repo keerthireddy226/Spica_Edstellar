@@ -1,3 +1,5 @@
+import { razorpayRefund, stripeRefund } from "./providers.js";
+import { accessCache } from "../licenses/accessCache.js";
 import { pool } from "../db.js";
 import { assertFeature } from "../plans/service.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
@@ -125,20 +127,30 @@ export async function cancelInvoiceOrder(orderId: string, tenantId: string): Pro
 // ---- Credit notes ----
 
 export class CreditNoteError extends Error {
-  constructor(public code: "invoice_not_found" | "amount_too_high" | "not_enough_unused_licenses") {
+  constructor(public code: "invoice_not_found" | "amount_too_high" | "not_enough_unused_licenses" | "not_a_card_payment" | "refund_failed") {
     super(code);
   }
 }
 
-// Money back against an invoice (paid out in Stripe/Razorpay or by bank
-// separately), optionally taking unused licenses from that purchase back out.
-export async function issueCreditNote(args: { invoiceId: string; amount: number; licensesToRemove: number; reason: string; actorId: string }) {
+// Money back against an invoice, optionally taking unused licenses from that
+// purchase back out. refundPayment also returns the money to the card or UPI
+// through Stripe or Razorpay (otherwise it is paid back by bank separately);
+// removeAccess ends what the order gave a learner (a plan, test or pack).
+export async function issueCreditNote(args: {
+  invoiceId: string;
+  amount: number;
+  licensesToRemove: number;
+  reason: string;
+  actorId: string;
+  refundPayment?: boolean;
+  removeAccess?: boolean;
+}) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const inv = (
       await client.query(
-        `SELECT i.id, i.tenant_id, i.total, i.currency, o.license_purchase_id,
+        `SELECT i.id, i.tenant_id, i.total, i.currency, o.license_purchase_id, o.provider, o.provider_payment_id, o.entitlement_id, o.buyer_id,
            (SELECT coalesce(sum(amount), 0)::int FROM credit_notes c WHERE c.invoice_id = i.id) AS credited
          FROM invoices i JOIN payment_orders o ON o.id = i.order_id WHERE i.id = $1 FOR UPDATE OF i`,
         [args.invoiceId],
@@ -146,6 +158,14 @@ export async function issueCreditNote(args: { invoiceId: string; amount: number;
     ).rows[0];
     if (!inv) throw new CreditNoteError("invoice_not_found");
     if (args.amount > inv.total - inv.credited) throw new CreditNoteError("amount_too_high");
+    const card = inv.provider === "stripe" || inv.provider === "razorpay" || inv.provider === "test";
+    if (args.refundPayment && (!card || (inv.provider !== "test" && !inv.provider_payment_id))) throw new CreditNoteError("not_a_card_payment");
+
+    let accessRemoved = false;
+    if (args.removeAccess && inv.entitlement_id) {
+      const e = await client.query(`UPDATE entitlements SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL RETURNING user_id`, [inv.entitlement_id]);
+      accessRemoved = (e.rowCount ?? 0) > 0;
+    }
 
     if (args.licensesToRemove > 0) {
       // Same lock every license change takes.
@@ -163,10 +183,26 @@ export async function issueCreditNote(args: { invoiceId: string; amount: number;
     const number = (
       await client.query(`SELECT 'CN-' || to_char(now(), 'YYYY') || '-' || lpad(nextval('credit_note_number_seq')::text, 5, '0') AS n`)
     ).rows[0].n as string;
+    // The money goes back last, once everything else is in place; if the
+    // provider refuses, nothing is saved.
+    let refundId: string | null = null;
+    if (args.refundPayment) {
+      try {
+        refundId =
+          inv.provider === "stripe"
+            ? await stripeRefund(inv.provider_payment_id, args.amount)
+            : inv.provider === "razorpay"
+              ? await razorpayRefund(inv.provider_payment_id, args.amount)
+              : `test_refund_${number}`;
+      } catch (err) {
+        console.error("refund failed:", err);
+        throw new CreditNoteError("refund_failed");
+      }
+    }
     const cn = await client.query(
-      `INSERT INTO credit_notes (credit_note_number, invoice_id, tenant_id, issued_by, licenses_removed, currency, amount, reason)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [number, inv.id, inv.tenant_id, args.actorId, args.licensesToRemove, inv.currency, args.amount, args.reason],
+      `INSERT INTO credit_notes (credit_note_number, invoice_id, tenant_id, issued_by, licenses_removed, currency, amount, reason, provider_refund_id, refunded_to_card, access_removed)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+      [number, inv.id, inv.tenant_id, args.actorId, args.licensesToRemove, inv.currency, args.amount, args.reason, refundId, !!refundId, accessRemoved],
     );
     if (args.licensesToRemove > 0) {
       await client.query(`INSERT INTO license_events (tenant_id, kind, quantity, actor_id, note) VALUES ($1, 'refund', $2, $3, $4)`, [
@@ -177,7 +213,8 @@ export async function issueCreditNote(args: { invoiceId: string; amount: number;
       ]);
     }
     await client.query("COMMIT");
-    return { id: cn.rows[0].id as string, creditNoteNumber: number };
+    if (accessRemoved && inv.buyer_id) accessCache.delete(inv.buyer_id);
+    return { id: cn.rows[0].id as string, creditNoteNumber: number, refundedToCard: !!refundId, accessRemoved };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
@@ -188,7 +225,7 @@ export async function issueCreditNote(args: { invoiceId: string; amount: number;
 
 export async function listCreditNotes(invoiceId: string) {
   const r = await pool.query(
-    `SELECT credit_note_number, issued_at, licenses_removed, currency, amount, reason FROM credit_notes WHERE invoice_id = $1 ORDER BY issued_at`,
+    `SELECT credit_note_number, issued_at, licenses_removed, currency, amount, reason, refunded_to_card, access_removed FROM credit_notes WHERE invoice_id = $1 ORDER BY issued_at`,
     [invoiceId],
   );
   return r.rows.map((c) => ({
@@ -198,5 +235,7 @@ export async function listCreditNotes(invoiceId: string) {
     currency: c.currency,
     amount: c.amount,
     reason: c.reason,
+    refundedToCard: c.refunded_to_card,
+    accessRemoved: c.access_removed,
   }));
 }

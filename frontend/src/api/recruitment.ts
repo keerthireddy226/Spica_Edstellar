@@ -154,6 +154,8 @@ export interface CandidateRow {
   started_at: string | null;
   // Started and left: shown as "Left the test" until the link expires.
   left_test?: boolean;
+  // Extra time for a disability (%), set at invitation.
+  extra_time_percent?: number;
   // Questions answered (typed or said) out of those shown.
   answers?: { answered: number; total: number } | null;
   completed_at: string | null;
@@ -206,7 +208,15 @@ export function verifyApplyCode(slug: string, v: { email: string; code: string }
   return api(`/recruitment/apply/${encodeURIComponent(slug)}/verify`, { method: "POST", body: JSON.stringify(v) });
 }
 
-export function inviteCandidates(jobId: string, people: { email: string; firstName?: string; lastName?: string }[]): Promise<{ invited: { id: string; email: string }[]; skipped: number }> {
+// Extra time for a test taker with a disability: every question's time and
+// the whole test's time grow by this percentage.
+export type ExtraTimePercent = 0 | 25 | 50 | 100;
+
+export function setCandidateExtraTime(assessmentId: string, percent: ExtraTimePercent): Promise<{ extraTimePercent: number }> {
+  return api(`/recruitment/assessments/${assessmentId}/extra-time`, { method: "PATCH", body: JSON.stringify({ percent }) });
+}
+
+export function inviteCandidates(jobId: string, people: { email: string; firstName?: string; lastName?: string; extraTimePercent?: ExtraTimePercent }[]): Promise<{ invited: { id: string; email: string }[]; skipped: number }> {
   return api(`/recruitment/jobs/${jobId}/invites`, { method: "POST", body: JSON.stringify({ people }) });
 }
 

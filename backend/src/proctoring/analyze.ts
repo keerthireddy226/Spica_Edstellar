@@ -1,6 +1,7 @@
 // Turns a proctored session's signals into a risk score and a list of
 // reasons a reviewer can read. The score only decides what a person looks
 // at first: "flagged" means "needs a human", never "cheated".
+import { ID_DIFFER_BELOW } from "../face/embed.js";
 import { pool } from "../db.js";
 import { holdResultCertificate } from "../assessment/service.js";
 import { notifyFlagged } from "./alerts.js";
@@ -173,14 +174,15 @@ export async function analyzeSession(sessionId: string): Promise<{ riskScore: nu
 
   let needsHuman = false;
   if (policy.idVerification) {
-    const id = (await pool.query(`SELECT status, mrz, liveness_score, auto_decision FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.user_id])).rows[0];
+    const id = (await pool.query(`SELECT status, mrz, liveness_score, auto_decision, face_similarity FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.user_id])).rows[0];
     // What was read from the document, while a reviewer hasn't decided yet.
     if (id && id.status === "pending") {
       if (id.mrz?.expired === true) add("id_expired", 1, 15);
       if (id.mrz?.nameMatches === false && id.mrz?.checksumsValid) add("id_name_mismatch", 1, 10);
       // A note for the reviewer, never points: an ID photo can be years old
       // or unclear, so a low match alone doesn't show a different person.
-      if (id.auto_decision === "faces_differ") add("id_face_differs", 1, 0);
+      // Checks saved before the "unclear" band existed count by their score.
+      if (id.auto_decision === "faces_differ" && !(id.face_similarity !== null && Number(id.face_similarity) >= ID_DIFFER_BELOW)) add("id_face_differs", 1, 0);
       if (id.liveness_score !== null && Number(id.liveness_score) < 0.5) add("id_selfie_not_live", 1, 15);
     }
     if (!id) add("id_missing", 1, 15);

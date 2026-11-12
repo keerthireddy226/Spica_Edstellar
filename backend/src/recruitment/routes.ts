@@ -436,7 +436,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
          a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
          si.status AS integrity_status, si.risk_level, si.risk_score,
-         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
+         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, a.extra_time_percent, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
        FROM recruitment_assessments a
        LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
@@ -458,11 +458,14 @@ const inviteSchema = z.object({
         email: z.string().trim().email(),
         firstName: z.string().trim().max(80).optional().nullable(),
         lastName: z.string().trim().max(80).optional().nullable(),
+        extraTimePercent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]).optional(),
       }),
     )
     .min(1)
     .max(200),
 });
+
+const extraTimeSchema = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]) });
 
 // The job's public link: turned on or off, a limit on how many can start
 // through it and a closing time. Turning it on the first time makes the link.
@@ -528,6 +531,24 @@ recruitmentRouter.post("/jobs/:id/invites", requireAuth, async (req: AuthedReque
     res.status(201).json(r);
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) return res.status(409).json({ error: "already_invited" });
+    fail(err, res, next);
+  }
+});
+
+// Extra time for a candidate with a disability, changed before they start.
+recruitmentRouter.patch("/assessments/:id/extra-time", requireAuth, async (req: AuthedRequest, res, next) => {
+  const tenantId = await recruiterTenant(req, res);
+  if (!tenantId) return;
+  try {
+    const b = extraTimeSchema.parse(req.body);
+    const r = await pool.query(
+      `UPDATE recruitment_assessments SET extra_time_percent = $3 WHERE id = $1 AND tenant_id = $2 AND status = 'invited' AND started_at IS NULL RETURNING id`,
+      [String(req.params.id), tenantId, b.percent],
+    );
+    if (!r.rowCount) return res.status(409).json({ error: "already_started" });
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "recruitment.extra_time", targetType: "candidate", targetId: String(req.params.id), details: b, ip: req.ip });
+    res.json({ extraTimePercent: b.percent });
+  } catch (err) {
     fail(err, res, next);
   }
 });

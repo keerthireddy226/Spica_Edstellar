@@ -16,7 +16,7 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
   const [refFor, setRefFor] = useState<string | null>(null);
   const [reference, setReference] = useState("");
   const [creditFor, setCreditFor] = useState<string | null>(null);
-  const [credit, setCredit] = useState({ amount: "", licenses: "0", reason: "" });
+  const [credit, setCredit] = useState({ amount: "", licenses: "0", reason: "", refundPayment: false, removeAccess: false });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   function load() {
@@ -52,6 +52,10 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
             ? tr("That's more than is left to credit on this invoice.")
             : code === "not_enough_unused_licenses"
               ? tr("That many licenses from this purchase aren't unused any more.")
+              : code === "not_a_card_payment"
+                ? tr("This order wasn't paid by card or UPI, so refund it by bank.")
+                : code === "refund_failed"
+                  ? tr("The payment provider refused the refund. Nothing was changed.")
               : code === "contract_end_before_start"
                 ? tr("The contract can't end before it starts.")
                 : tr("That didn't save."),
@@ -195,6 +199,12 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
                     <label className="flex flex-col gap-1 text-xs text-muted flex-1 min-w-40">
                       {tr("Reason")}<input value={credit.reason} onChange={(e) => setCredit({ ...credit, reason: e.target.value })} className={inputClass} />
                     </label>
+                    {["stripe", "razorpay", "test"].includes(o.provider) && (
+                      <label className="flex items-center gap-1.5 text-xs text-ink">
+                        <input type="checkbox" checked={credit.refundPayment} onChange={(e) => setCredit({ ...credit, refundPayment: e.target.checked })} />
+                        {tr("Also refund the money to the card or UPI")}
+                      </label>
+                    )}
                     <Button
                       disabled={!credit.amount || credit.reason.trim().length < 3}
                       onClick={() =>
@@ -204,11 +214,12 @@ export function OrgCommercialPanel({ tenantId, hasOrgAdmin }: { tenantId: string
                               amount: Math.round(Number(credit.amount) * 100),
                               licensesToRemove: Math.max(0, Math.floor(Number(credit.licenses) || 0)),
                               reason: credit.reason.trim(),
+                              refundPayment: credit.refundPayment,
                             }),
-                          tr("Credit note issued. Refund the money in Stripe, Razorpay or by bank."),
+                          credit.refundPayment ? tr("Refunded to the card or UPI, and a credit note issued.") : tr("Credit note issued. Refund the money in Stripe, Razorpay or by bank."),
                         ).then(() => {
                           setCreditFor(null);
-                          setCredit({ amount: "", licenses: "0", reason: "" });
+                          setCredit({ amount: "", licenses: "0", reason: "", refundPayment: false, removeAccess: false });
                         })
                       }
                       className="!px-3 !py-2"

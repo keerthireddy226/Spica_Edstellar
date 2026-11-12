@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/constants/routes";
 import { useTranslation } from "react-i18next";
-import { BadgeCheck, Download, RotateCcw, Share2, ShieldCheck, ShieldX } from "lucide-react";
+import { BadgeCheck, Download, FileText, RotateCcw, Share2, ShieldCheck, ShieldX } from "lucide-react";
 import { linkedInAddUrl } from "@/lib/linkedin";
 import { subBandLabel } from "@/lib/subBand";
 import { Button } from "@/components/Button";
@@ -43,6 +43,8 @@ interface VerifiedCertificate {
   expired?: boolean;
   // The test passed the face and ID checks.
   identityVerified?: boolean;
+  // The full score report can be opened from here (the learner allows it).
+  reportAvailable?: boolean;
 }
 
 const SKILL_ORDER = ["speaking", "listening", "reading", "writing"];
@@ -195,6 +197,14 @@ export function CertificateView() {
           >
             <Share2 size={15} /> {tr("Add to LinkedIn")}
           </a>
+        )}
+        {cert.valid && cert.reportAvailable && !cert.sample && (
+          <Link
+            to={`/certificate/${encodeURIComponent(cert.code)}/report`}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-pill border border-rule-strong text-sm font-semibold text-ink hover:bg-paper-warm"
+          >
+            <FileText size={15} /> {tr("View full report")}
+          </Link>
         )}
       </div>
       {cert.valid && <p className="print:hidden text-xs text-muted -mt-2 text-center">{tr("In the print window, choose \"Save as PDF\".")}</p>}

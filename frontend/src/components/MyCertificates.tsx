@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Award, ExternalLink } from "lucide-react";
-import { myCertificates, type CertificateSummary } from "@/api/reports";
+import { myCertificates, setCertificateReportPublic, type CertificateSummary } from "@/api/reports";
 import { tr } from "@/i18n/tr";
 
 // The learner's certificates: from their final assessments (and any earlier
@@ -11,6 +11,13 @@ import { tr } from "@/i18n/tr";
 export function MyCertificates({ showEmpty = false }: { showEmpty?: boolean } = {}) {
   const { t, i18n } = useTranslation();
   const [certs, setCerts] = useState<CertificateSummary[] | null>(null);
+  const [saveFailed, setSaveFailed] = useState<string | null>(null);
+  const toggleReport = (c: CertificateSummary, visible: boolean) => {
+    setSaveFailed(null);
+    setCertificateReportPublic(c.id, visible)
+      .then(() => setCerts((all) => all?.map((x) => (x.id === c.id ? { ...x, reportPublic: visible } : x)) ?? null))
+      .catch(() => setSaveFailed(c.id));
+  };
   useEffect(() => {
     myCertificates()
       .then((r) => setCerts(r.certificates))
@@ -50,6 +57,13 @@ export function MyCertificates({ showEmpty = false }: { showEmpty?: boolean } = 
               {c.kind === "result" ? ` · ${c.validUntil ? tr("valid until {{date}}", { date: new Date(c.validUntil).toLocaleDateString(i18n.language) }) : tr("Valid for life")}` : ""}
               {c.identityVerified ? ` · ${tr("Identity verified")}` : ""} · <span className="font-mono">{c.code}</span>
             </p>
+            {c.kind === "result" && (
+              <label className="mt-1.5 flex items-center gap-2 text-xs text-ink cursor-pointer">
+                <input type="checkbox" checked={c.reportPublic !== false} onChange={(e) => toggleReport(c, e.target.checked)} className="cursor-pointer" />
+                {tr("Let people who check this certificate see my full score report")}
+              </label>
+            )}
+            {saveFailed === c.id && <p className="text-xs text-error mt-1">{tr("Could not save this setting. Try again.")}</p>}
           </div>
           <a
             href={`/certificate/${c.code}`}

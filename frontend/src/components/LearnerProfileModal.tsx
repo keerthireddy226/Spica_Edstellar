@@ -71,6 +71,7 @@ export function LearnerProfileModal({
   onBack,
   fetcher = getLearnerProfile,
   saveDetails,
+  saveExtraTime,
 }: {
   learnerId: string;
   onClose: () => void;
@@ -80,12 +81,15 @@ export function LearnerProfileModal({
   fetcher?: (learnerId: string) => Promise<LearnerProfile>;
   // Org Admin and Manager: lets them edit the learner's employee details.
   saveDetails?: (learnerId: string, d: LearnerDetails) => Promise<unknown>;
+  // Org Admin: extra time on every test for a learner with a disability.
+  saveExtraTime?: (learnerId: string, percent: 0 | 25 | 50 | 100) => Promise<unknown>;
 }) {
   const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [reload, setReload] = useState(0);
+  const [extraTimeMsg, setExtraTimeMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetcher(learnerId)
@@ -146,6 +150,31 @@ export function LearnerProfileModal({
             <Field label={tr("Plan / org type")} value={learner.tenantCategory ?? learner.tenantType ?? "—"} />
             <Field label={tr("Status")} value={learner.active ? tr("Active") : tr("Deactivated")} />
           </div>
+          {saveExtraTime && profile.extraTimePercent !== undefined && (
+            <div className="mt-4">
+              <label className="text-xs font-semibold text-muted block mb-1">{tr("Extra time on tests")}</label>
+              <select
+                value={profile.extraTimePercent}
+                onChange={(e) => {
+                  const percent = Number(e.target.value) as 0 | 25 | 50 | 100;
+                  setExtraTimeMsg(null);
+                  saveExtraTime(learner.id, percent)
+                    .then(() => {
+                      setProfile({ ...profile, extraTimePercent: percent });
+                      setExtraTimeMsg(tr("Saved. It applies to tests started from now on."));
+                    })
+                    .catch(() => setExtraTimeMsg(tr("Could not save the extra time.")));
+                }}
+                className="rounded-input border border-rule bg-surface px-3 py-2 text-sm cursor-pointer"
+              >
+                <option value={0}>{tr("None")}</option>
+                <option value={25}>{tr("25% more time")}</option>
+                <option value={50}>{tr("50% more time")}</option>
+                <option value={100}>{tr("Double time")}</option>
+              </select>
+              <p className="text-xs text-muted mt-1">{extraTimeMsg ?? tr("For a learner with a disability: every timed part of their tests gets this much more time.")}</p>
+            </div>
+          )}
         </Section>
 
         {employment ? (

@@ -19,7 +19,7 @@ import { cropFace, detectFaces } from "../face/detect.js";
 import { scoreLiveness } from "../face/liveness.js";
 import { headPose } from "./headPose.js";
 import { readMrz } from "./idDocument.js";
-import { embedFace, cosineSimilarity, bufferToEmbedding, embeddingToBuffer, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "../face/embed.js";
+import { embedFace, cosineSimilarity, bufferToEmbedding, embeddingToBuffer, ID_DIFFER_BELOW, MATCH_THRESHOLD, UNCERTAIN_FLOOR } from "../face/embed.js";
 import { detectObjects } from "./objects.js";
 import { mediaPath, removeMedia, saveMedia } from "./storage.js";
 import { analyzeSession } from "./analyze.js";
@@ -864,14 +864,16 @@ export async function retryIdentityChecks(): Promise<number> {
 async function checkIdentityPhotos(verificationId: string, userId: string, role: string, documentType: string, doc: Buffer, selfie: Buffer) {
   let similarity: number | null = null;
   let auto = "no_face_on_document";
-  const docFaces = (await detectFaces(doc, 0.5).catch(() => [])).sort((a, b) => b.w * b.h - a.w * a.h);
+  // A phone photo of the ID may be stored sideways with a rotation tag: turn it upright first.
+  const docUpright = await sharp(doc).rotate().toBuffer().catch(() => doc);
+  const docFaces = (await detectFaces(docUpright, 0.5).catch(() => [])).sort((a, b) => b.w * b.h - a.w * a.h);
   const selfieFaces = await detectFaces(selfie).catch(() => []);
   if (selfieFaces.length !== 1) auto = "no_single_face_in_selfie";
   else if (docFaces[0]) {
-    const [a, b] = await Promise.all([embedFace(doc, docFaces[0]).catch(() => null), embedFace(selfie, selfieFaces[0]).catch(() => null)]);
+    const [a, b] = await Promise.all([embedFace(docUpright, docFaces[0]).catch(() => null), embedFace(selfie, selfieFaces[0]).catch(() => null)]);
     if (a && b) {
       similarity = Math.round(cosineSimilarity(a, b) * 1000) / 1000;
-      auto = similarity >= UNCERTAIN_FLOOR ? "likely_same_person" : "faces_differ";
+      auto = similarity >= UNCERTAIN_FLOOR ? "likely_same_person" : similarity >= ID_DIFFER_BELOW ? "match_unclear" : "faces_differ";
     }
   }
   let liveness: number | null = null;
@@ -1078,9 +1080,11 @@ proctoringRouter.get("/reviews/:sessionId", requireAuth, async (req: AuthedReque
       pool.query(`SELECT decision, similarity_score, liveness_score, face_count, created_at FROM face_check_results WHERE session_id = $1 ORDER BY created_at`, [si.session_id]),
       pool.query(`SELECT decision, similarity_score, detail, created_at FROM voice_check_results WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`, [si.session_id]),
       pool.query(
-        `SELECT id, status, document_type, document_media_id, selfie_media_id, face_similarity, auto_decision, mrz, liveness_score, review_note, reviewed_at, created_at
+        `SELECT id, status, document_type, document_media_id, selfie_media_id, face_similarity,
+           CASE WHEN auto_decision = 'faces_differ' AND face_similarity >= $2 THEN 'match_unclear' ELSE auto_decision END AS auto_decision,
+           mrz, liveness_score, review_note, reviewed_at, created_at
          FROM identity_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
-        [si.user_id],
+        [si.user_id, ID_DIFFER_BELOW],
       ),
       pool.query(`SELECT id, status, cefr_level, overall_percent FROM placements WHERE session_id = $1`, [si.session_id]),
     ]);
@@ -1231,8 +1235,9 @@ proctoringRouter.get("/identity-reviews", requireAuth, async (req: AuthedRequest
   try {
     const status = ["pending", "verified", "rejected"].includes(String(req.query.status)) ? String(req.query.status) : "pending";
     const rows = await pool.query(
-      `SELECT iv.id, iv.status, iv.document_type, iv.document_media_id, iv.selfie_media_id, iv.face_similarity, iv.auto_decision, iv.mrz, iv.liveness_score,
-         iv.review_note, iv.reviewed_at, iv.created_at, u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
+      `SELECT iv.id, iv.status, iv.document_type, iv.document_media_id, iv.selfie_media_id, iv.face_similarity,
+         CASE WHEN iv.auto_decision = 'faces_differ' AND iv.face_similarity >= ${ID_DIFFER_BELOW} THEN 'match_unclear' ELSE iv.auto_decision END AS auto_decision,
+         iv.mrz, iv.liveness_score, iv.review_note, iv.reviewed_at, iv.created_at, u.id AS user_id, u.email, concat_ws(' ', u.first_name, u.last_name) AS name,
          CASE WHEN t.type = 'cohort' THEN t.name END AS org_name, concat_ws(' ', r.first_name, r.last_name) AS reviewer
        FROM identity_verifications iv
        JOIN users u ON u.id = iv.user_id
