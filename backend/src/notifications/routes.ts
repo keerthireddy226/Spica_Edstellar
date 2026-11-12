@@ -1,3 +1,5 @@
+import { verifyMarketingUnsubscribeToken } from "./marketing.js";
+import { logPrivacyRequest } from "../governance/service.js";
 import { z } from "zod";
 import { Router, type Response } from "express";
 import { pool } from "../db.js";
@@ -102,6 +104,29 @@ notificationsRouter.all("/unsubscribe", async (req, res, next) => {
       .type("html")
       .send(
         `<!doctype html><meta charset="utf-8"><title>Unsubscribed</title><body style="font-family:system-ui;max-width:420px;margin:80px auto;text-align:center"><h2>You're unsubscribed</h2><p>You won't get practice reminder emails anymore. You can turn them back on any time from your Profile.</p></body>`,
+      );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// One-click unsubscribe from marketing emails (link in every marketing email).
+notificationsRouter.all("/unsubscribe-marketing", async (req, res, next) => {
+  try {
+    const userId = String(req.query.u ?? "");
+    const token = String(req.query.t ?? "");
+    if (!/^[0-9a-f-]{36}$/.test(userId) || !verifyMarketingUnsubscribeToken(userId, token)) {
+      return res.status(400).send("This unsubscribe link isn't valid.");
+    }
+    const r = await pool.query(`UPDATE users SET marketing_consent = false, marketing_consent_at = now() WHERE id = $1 AND marketing_consent RETURNING id`, [userId]);
+    if (r.rowCount) {
+      await pool.query(`UPDATE consent_records SET revoked_at = now() WHERE user_id = $1 AND consent_type = 'marketing' AND revoked_at IS NULL`, [userId]);
+      await logPrivacyRequest({ userId, kind: "objection", details: { to: "marketing_emails", via: "email_link" } });
+    }
+    res
+      .type("html")
+      .send(
+        `<!doctype html><meta charset="utf-8"><title>Unsubscribed</title><body style="font-family:system-ui;max-width:420px;margin:80px auto;text-align:center"><h2>You're unsubscribed</h2><p>You won't get news, tips or offers from Spica by email anymore. Emails about your tests, results and account still arrive. You can change this any time in your Profile.</p></body>`,
       );
   } catch (err) {
     next(err);

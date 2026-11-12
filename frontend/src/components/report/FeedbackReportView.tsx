@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, XCircle, MinusCircle, Target, Sparkles, Loader2, Lightbulb, Award } from "lucide-react";
@@ -213,10 +213,31 @@ function Speech({ q }: { q: ReportQuestion }) {
   );
 }
 
+// Recruiters reviewing a candidate can play each spoken answer; learners'
+// own reports show what we heard, without a player.
+const RecordingsContext = createContext(false);
+
+// A spoken answer's player. Recordings are deleted after the retention period;
+// then the player gives way to a short note.
+function AnswerRecording({ uri }: { uri: string }) {
+  const [gone, setGone] = useState(false);
+  return (
+    <div className="flex flex-col gap-1 print:hidden">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("Recording")}</span>
+      {gone ? (
+        <p className="text-xs text-muted">{tr("The recording is no longer available. Recordings are deleted after the retention period.")}</p>
+      ) : (
+        <audio controls preload="none" src={uri} onError={() => setGone(true)} className="w-full max-w-md h-9" />
+      )}
+    </div>
+  );
+}
+
 // The learner's own answer, right or wrong: the typed text, or for a spoken
 // answer what we heard (unless the word-by-word block already shows it). Same
-// view in Practice Modules, practice tests and mock tests; no recording player.
+// view in Practice Modules, practice tests and mock tests.
 function Given({ q }: { q: ReportQuestion }) {
+  const playRecordings = useContext(RecordingsContext);
   const g = q.given;
   if (!g) return null;
   const spoken = !!g.audioUri;
@@ -241,6 +262,7 @@ function Given({ q }: { q: ReportQuestion }) {
           <span className="text-ink">{g.text}</span>
         </div>
       )}
+      {playRecordings && g.audioUri && <AnswerRecording uri={g.audioUri} />}
       {g.noSpeech && <p className="text-sm text-warning">{tr("No words were heard in your recording. Check your microphone before your next test.")}</p>}
     </div>
   );
@@ -528,18 +550,25 @@ function CertificateCelebration({ sessionId, level, score, checkUrl }: { session
 
 // Loads a report and waits while it's being built.
 // viewer "org": an Org Admin or Manager reading a learner's report.
-export function FeedbackReportView({
-  load,
-  upgradeLink = false,
-  viewer = "learner",
-  sessionId,
-}: {
+type FeedbackReportProps = {
   load: () => Promise<ReportResponse>;
   upgradeLink?: boolean;
   viewer?: "learner" | "org";
   // The learner's own test: the feedback form and "Request a review" go under it.
   sessionId?: string;
-}) {
+  // A recruiter's view: each spoken answer gets a player.
+  playRecordings?: boolean;
+};
+
+export function FeedbackReportView(props: FeedbackReportProps) {
+  return (
+    <RecordingsContext.Provider value={!!props.playRecordings}>
+      <FeedbackReportBody {...props} />
+    </RecordingsContext.Provider>
+  );
+}
+
+function FeedbackReportBody({ load, upgradeLink = false, viewer = "learner", sessionId }: FeedbackReportProps) {
   const [data, setData] = useState<ReportResponse | null>(null);
   const [error, setError] = useState(false);
   useEffect(() => {

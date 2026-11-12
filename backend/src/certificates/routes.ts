@@ -15,8 +15,108 @@ export const certificatesRouter = Router();
 // Public, so it gets its own small budget against code guessing.
 const verifyLimiter = rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: true, legacyHeaders: false });
 
+// Public samples for the website's Demo page, with made-up data: a certificate
+// (checked at /certificate/SAMPLE) and a full score report.
+const SAMPLE_SKILLS = { speaking: { level: "B2", score: 67 }, listening: { level: "B2", score: 66 }, reading: { level: "B1", score: 49 }, writing: { level: "B1", score: 48 } };
+
+async function sampleCertificate() {
+  const verifyUrl = `${APP_URL}/certificate/SAMPLE`;
+  const year = new Date().getFullYear();
+  return {
+    sample: true,
+    valid: true,
+    revoked: false,
+    code: "SAMPLE",
+    learnerName: "Sample Candidate",
+    participantId: "SPC-26-000123",
+    organizationName: null,
+    batchName: null,
+    cefrLevel: "B2",
+    issuedAt: `${year}-01-15T10:00:00Z`,
+    courseName: null,
+    periodFrom: null,
+    periodTo: null,
+    goalLevel: null,
+    versantLevel: null,
+    versantScore: null,
+    versantTakenOn: null,
+    kind: "result",
+    testName: "English 4 Skills Essentials",
+    spicaScore: 58,
+    skillScores: SAMPLE_SKILLS,
+    validUntil: `${year + 1}-01-15`,
+    expired: false,
+    identityVerified: true,
+    orgLogoUrl: null,
+    verifyUrl,
+    qr: await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240, color: { dark: "#1f3a5f", light: "#ffffff" } }),
+  };
+}
+
+certificatesRouter.get("/sample-report", verifyLimiter, async (_req, res, next) => {
+  try {
+    const url = `${APP_URL}/certificate/SAMPLE`;
+    const T = (itemTypeId: string, typeName: string, right: number, total: number) => ({ itemTypeId, typeName, right, total });
+    const rep = T("repeats", "Repeats", 10, 12), sb = T("sentence_builds", "Sentence Builds", 5, 6), conv = T("conversations", "Conversations", 10, 11), ra = T("reading", "Read Aloud", 5, 6);
+    const sc = T("sentence_completion", "Sentence Completion", 16, 25), dic = T("dictation", "Dictation", 3, 6), pr = T("passage_reconstruction", "Passage Reconstruction", 2, 4);
+    const share = (t: { right: number; total: number }) => t.right / t.total;
+    const skill = (name: keyof typeof SAMPLE_SKILLS, percent: number, types: ReturnType<typeof T>[]) => ({
+      skill: name,
+      level: SAMPLE_SKILLS[name].level,
+      score: SAMPLE_SKILLS[name].score,
+      percent,
+      status: null,
+      types,
+      strengths: types.filter((t) => share(t) >= 0.75).sort((x, y) => share(y) - share(x)).slice(0, 2),
+      focus: types.filter((t) => share(t) < 0.6).sort((x, y) => share(x) - share(y)).slice(0, 2),
+    });
+    res.json({
+      sample: true,
+      analysis:
+        "You reached B2 overall. Speaking (B2) is your strongest skill: you repeat and build sentences accurately and speak at a natural pace. Writing (B1) needs the most work: Dictation and Passage Reconstruction lost the most marks.",
+      score: {
+        learner: { name: "Sample Candidate", learnerId: "SPC-26-000123" },
+        reportId: "SAMPLE",
+        completedAt: `${new Date().getFullYear()}-01-15T10:00:00Z`,
+        check: { url, qr: await QRCode.toDataURL(url, { margin: 0, width: 160, color: { dark: "#1f3a5f", light: "#ffffff" } }) },
+        overall: { score: 58, level: "B2" },
+        goal: null,
+        skills: [
+          skill("speaking", 86, [rep, sb, conv, ra]),
+          skill("listening", 76, [rep, sb, conv, dic]),
+          skill("reading", 62, [ra, sc, pr]),
+          skill("writing", 56, [sc, dic, pr]),
+        ],
+        missingSkills: [],
+        answers: { answered: 62, total: 70 },
+        profile: [
+          { key: "listening", value: 76 },
+          { key: "reading", value: 62 },
+          { key: "fluency", value: 82 },
+          { key: "pronunciation", value: 85 },
+          { key: "spokenGrammar", value: 88 },
+          { key: "vocabulary", value: 64 },
+          { key: "writtenGrammar", value: 58 },
+          { key: "spelling", value: 61 },
+        ],
+        speaking: {
+          answers: 35, silent: 0, wordsPerMinute: 128, fillers: 3, fluency: 82, clarity: 85, grammar: 88, vocabulary: 64,
+          example: { typeName: "Conversations", transcript: "The meeting was moved to Thursday because the manager was travelling.", comment: "Clear and well paced; the answer was complete." },
+        },
+        writing: {
+          answers: 35, grammar: 58, vocabulary: 66, spelling: 61, task: 55, errors: { grammar: 4, spelling: 3, punctuation: 1 }, marked: true,
+          example: { text: "he go to office", correction: "he goes to the office", reason: "Use 'goes' after he, she or it." },
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 certificatesRouter.get("/verify/:code", verifyLimiter, async (req, res, next) => {
   try {
+    if (String(req.params.code).toUpperCase() === "SAMPLE") return res.json(await sampleCertificate());
     const c = await verifyCertificate(String(req.params.code));
     if (!c) return res.status(404).json({ valid: false });
     // Only what's printed on the certificate itself, plus its QR code.

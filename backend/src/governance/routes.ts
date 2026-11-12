@@ -22,7 +22,7 @@ governanceRouter.get("/data", requireAuth, async (req: AuthedRequest, res, next)
   try {
     const t = (
       await pool.query(
-        `SELECT t.dpa_accepted_at, t.dpa_version, t.retention_recordings_months, t.retention_inactive_learner_months,
+        `SELECT t.dpa_accepted_at, t.dpa_version, t.retention_recordings_months, t.retention_inactive_learner_months, t.data_region,
            coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS dpa_by
          FROM tenants t LEFT JOIN users u ON u.id = t.dpa_accepted_by WHERE t.id = $1`,
         [tenantId],
@@ -41,6 +41,8 @@ governanceRouter.get("/data", requireAuth, async (req: AuthedRequest, res, next)
         url: process.env.DPA_URL ?? "/privacy/dpa",
       },
       retention: { recordingsMonths: t.retention_recordings_months, inactiveLearnerMonths: t.retention_inactive_learner_months },
+      // Where the organization's data is stored (Singapore unless a European copy is set up for it).
+      dataRegion: t.data_region as "sg" | "eu",
       exports: exports.rows.map((e) => ({
         id: e.id,
         status: e.status,

@@ -12,6 +12,8 @@ import { formatDay } from "@/api/certificates";
 
 import { tr } from "@/i18n/tr";
 interface VerifiedCertificate {
+  // The made-up sample shown on the website's Demo page.
+  sample?: boolean;
   valid: boolean;
   revoked: boolean;
   code: string;
@@ -153,6 +155,14 @@ export function CertificateView() {
     <div className="app-surface min-h-screen flex flex-col items-center gap-4 p-3 sm:p-10 print:p-0 print:bg-white print:block">
       {/* One landscape A4 page when printed or saved as a PDF. */}
       <style>{`@page { size: A4 landscape; margin: 0; } @media print { html, body { background: #fff !important; } .cert-page { transform: none !important; } }`}</style>
+      {cert.sample && (
+        <p className="print:hidden w-full max-w-[960px] rounded-card border border-warning/40 bg-warning/10 px-4 py-2 text-sm text-ink">
+          {tr("This is a sample certificate with made-up details, to show what a Spica certificate looks like.")}{" "}
+          <a href="/sample-report" className="font-semibold underline">
+            {tr("See the sample score report")}
+          </a>
+        </p>
+      )}
       {back && (
         <button
           onClick={back}
@@ -176,7 +186,7 @@ export function CertificateView() {
             <Download size={15} /> {tr("Download PDF")}
           </Button>
         )}
-        {cert.valid && cert.kind === "result" && (
+        {cert.valid && cert.kind === "result" && !cert.sample && (
           <a
             href={linkedInAddUrl({ name: `${cert.testName ?? "English"}: ${cert.cefrLevel ?? ""}${cert.spicaScore != null ? `, Spica score ${cert.spicaScore}` : ""}`, code: cert.code, issuedAt: cert.issuedAt, validUntil: cert.validUntil ?? null, verifyUrl: cert.verifyUrl })}
             target="_blank"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, FileCheck2 } from "lucide-react";
+import { Download, FileCheck2, MapPin } from "lucide-react";
 import { Button } from "@/components/Button";
 import { PlanLockNote, useHasFeature } from "@/components/plans/usePlan";
 import { planErrorMessage } from "@/api/plans";
@@ -42,6 +42,15 @@ export function DataGovernanceSection() {
         <p className="text-sm text-muted mt-1">{tr("The data processing agreement, how long personal data is kept, and a full export of everything your organization has in Spica.")}</p>
       </div>
       <div className="flex flex-col gap-5">
+        <div className="flex items-start gap-3">
+          <MapPin size={18} className="text-navy-deep mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-ink">
+              {tr("Where your data is stored")}: <span className="font-semibold">{data.dataRegion === "eu" ? tr("European Union (Frankfurt)") : tr("Singapore")}</span>
+            </p>
+            <p className="text-xs text-muted">{tr("Your organization's accounts, tests, recordings and reports are kept in this region. If you need your data kept in the European Union, contact Spica support.")}</p>
+          </div>
+        </div>
         <div className="flex items-start gap-3">
           <FileCheck2 size={18} className={dpaCurrent ? "text-success mt-0.5" : "text-warning mt-0.5"} />
           <div className="flex-1">

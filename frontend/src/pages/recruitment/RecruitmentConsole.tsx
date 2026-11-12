@@ -226,7 +226,7 @@ function CandidateFeedback({ id }: { id: string }) {
         </button>
       }
     >
-      {open ? <FeedbackReportView load={() => getCandidateReport(id)} /> : <p className="text-xs text-muted">{tr("Every answer reviewed: what was right or wrong and why, writing corrected, and notes on speaking.")}</p>}
+      {open ? <FeedbackReportView load={() => getCandidateReport(id)} playRecordings /> : <p className="text-xs text-muted">{tr("Every answer reviewed: what was right or wrong and why, writing corrected, and notes on speaking.")}</p>}
     </Panel>
   );
 }

@@ -38,6 +38,8 @@ export const developersApi = {
 export interface DataGovernance {
   dpa: { acceptedAt: string | null; acceptedBy: string | null; acceptedVersion: string | null; currentVersion: string; url: string | null };
   retention: { recordingsMonths: number | null; inactiveLearnerMonths: number | null };
+  // Where the organization's data is stored.
+  dataRegion?: "sg" | "eu";
   exports: { id: string; status: "queued" | "ready" | "failed" | "expired"; sizeBytes: number | null; createdAt: string; completedAt: string | null; expiresAt: string | null }[];
 }
 
