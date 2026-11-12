@@ -1,9 +1,10 @@
 """Question bank dashboard: one Excel file with
   - Dashboard: totals and charts, and a filter (test, skill, question type,
     usage) that recounts the questions by CEFR level, difficulty and length;
-  - one sheet per skill (Speaking, Listening, Reading, Writing, Other test types)
-    and All questions, each a filterable table, with a column for each of the
-    six tests.
+  - All questions, one sheet per test (the six tests) and one per skill
+    (Speaking, Listening, Reading, Writing), each a filterable table, with a
+    column for each of the six tests.
+The hidden LanguageCert-style questions are left out.
 
   PROFILE_DB_URL=... python dashboard.py OUT_DIR OUTPUT.xlsx
 Then calculate the formulas once (recalc.py from the xlsx skill) so the
@@ -18,7 +19,8 @@ from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
-from openpyxl.worksheet.table import Table, TableStyleInfo
+
+import re
 
 import question_list as ql
 
@@ -53,7 +55,7 @@ SKILL_SHEET = {
     "Reading": {"reading_comprehension", "sentence_completion"},
     "Writing": {"free_writing", "typing", "email_writing", "passage_reconstruction", "summary_and_opinion"},
 }
-SKILLS = ["Speaking", "Listening", "Reading", "Writing", "Other test types"]
+SKILLS = ["Speaking", "Listening", "Reading", "Writing"]
 STATUS = ["Approved, not yet teacher-reviewed", "Reviewed", "Needs correction"]
 
 NAVY = "1F3A5F"
@@ -142,9 +144,9 @@ def data_sheet(wb, title, rows, table_name):
             c.alignment = WRAP
     ws.freeze_panes = "C2"
     if rows:
-        t = Table(displayName=table_name, ref=f"A1:{get_column_letter(len(HDR))}{len(rows) + 1}")
-        t.tableStyleInfo = TableStyleInfo(name="TableStyleLight9", showRowStripes=True)
-        ws.add_table(t)
+        # Filter buttons on the header row. (Excel "tables" would add striping,
+        # but a dozen of them make LibreOffice take many minutes to open the file.)
+        ws.auto_filter.ref = f"A1:{get_column_letter(len(HDR))}{len(rows) + 1}"
         dv = DataValidation(type="list", formula1='"' + ",".join(STATUS) + '"', allow_blank=True)
         col = get_column_letter(HDR.index("Status") + 1)
         dv.add(f"{col}2:{col}{len(rows) + 1}")
@@ -155,6 +157,8 @@ def data_sheet(wb, title, rows, table_name):
 def main():
     out = ql.collect()
     out.sort(key=lambda o: (o["kind"], o["type"], LEVELS.index(o["cefr"]) if o["cefr"] in LEVELS else 9, o["id"]))
+    # The hidden LanguageCert-style questions are not part of Spica's tests.
+    out = [o for o in out if not o["type_id"].startswith("lc_")]
     rows = [row_of(o) for o in out]
     n = len(rows)
 
@@ -162,6 +166,18 @@ def main():
     dash = wb.active
     dash.title = "Dashboard"
     all_ws = data_sheet(wb, "All questions", rows, "AllQuestions")
+    # One sheet per test: the questions in its sets (assessment forms first,
+    # then mock and practice sets). The level test has no fixed sets: its sheet
+    # lists the bank questions it draws from.
+    def natural(v):
+        return [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", v or "")]
+
+    usage_i, ass_i, mock_i, prac_i = HDR.index("Usage"), HDR.index("Assessment"), HDR.index("Mock Test"), HDR.index("Practice Test")
+    for tid, name in TESTS:
+        ci = HDR.index(name)
+        mine = [r for r in rows if (r[ci] == "In this test" if tid != "level" else r[ci] in ("Can be used", "Reserved"))]
+        mine.sort(key=lambda r: (USAGE.index(r[usage_i]), natural(r[ass_i] or r[mock_i] or r[prac_i]), r[3], LEVELS.index(r[5]) if r[5] in LEVELS else 9))
+        data_sheet(wb, name, mine, re.sub(r"[^A-Za-z0-9]", "", name) + "Test")
     for s in SKILLS:
         data_sheet(wb, s, [r for r in rows if r[2] == s], s.replace(" ", "") + "Questions")
 
@@ -194,7 +210,7 @@ def main():
         d.column_dimensions[col].width = w
     d["A1"] = "Spica question bank"
     d["A1"].font = F(size=18, bold=True, color=NAVY)
-    d["A2"] = f"All approved questions, {date.today().isoformat()}. Difficulty and length are worked out from each question's text, compared with questions of the same type and level."
+    d["A2"] = f"All approved questions of Spica's six tests, {date.today().isoformat()}. Difficulty and length are worked out from each question's text, compared with questions of the same type and level."
     d["A2"].font = F(color="5B6B7C")
 
     # Headline numbers.
@@ -326,7 +342,8 @@ def main():
         ("How to use this file", True),
         ("All questions: the first sheet: every question in one table. Use the filter buttons in the header row.", False),
         ("Dashboard: pick a test, skill, question type or usage in the yellow cells. The tables recount the questions by CEFR level, difficulty, length and usage.", False),
-        ("Skill sheets (Speaking, Listening, Reading, Writing, Other test types): every question is on one sheet, by what the test taker does: speaks, listens and chooses or types, reads and chooses or fills a gap, or writes. 'Skills Scored' lists every skill the question is scored on.", False),
+        ("Test sheets (English Placement ... Level Test): the questions in that test's sets, real test forms first, then mock and practice sets. The Level Test has no fixed sets, so its sheet lists the bank questions it draws from. Bank questions other tests can use are on All questions: filter the test's column for 'Can be used'.", False),
+        ("Skill sheets (Speaking, Listening, Reading, Writing): every question is on one sheet, by what the test taker does: speaks, listens and chooses or types, reads and chooses or fills a gap, or writes. 'Skills Scored' lists every skill the question is scored on.", False),
         ("", False),
         ("Columns", True),
         ("Question ID: the first 8 characters of the question's ID in the system; it never changes.", False),
@@ -337,14 +354,14 @@ def main():
         ("Usage: where the question is used: Assessment (real test), Mock test, Practice test, or Question bank (Practice Modules, level tests and new tests). Practice Test, Mock Test and Assessment columns name the sets.", False),
         ("One column per test (English Placement ... Level Test): 'In this test' = in one of that test's sets; 'Can be used' = a bank question of a type the test uses; 'Reserved' = kept for level tests.", False),
         ("Status: all questions are approved; none has a teacher review recorded yet. Teachers can set Reviewed or Needs correction from the dropdown.", False),
-        ("Other test types: the LanguageCert-style questions, kept but hidden in the app.", False),
+        ("Not included: the 202 LanguageCert-style questions, which are hidden in the app and not part of Spica's tests.", False),
     ]
     for text, bold in lines:
         how.append([text])
         how.cell(row=how.max_row, column=1).font = F(bold=bold, size=12 if bold else 10)
         how.cell(row=how.max_row, column=1).alignment = WRAP
 
-    order = ["All questions", "Dashboard", "How to read", *SKILLS, "Lists"]
+    order = ["All questions", "Dashboard", "How to read", *[name for _, name in TESTS if name in wb.sheetnames], *SKILLS, "Lists"]
     wb._sheets = [wb[name] for name in order]
     wb.active = 0
     wb.save(ql.XLSX)
