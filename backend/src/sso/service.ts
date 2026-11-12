@@ -7,6 +7,7 @@ import { discover, exchangeCode, verifyIdToken } from "./oidc.js";
 import { applyLearnerDefaults } from "../orgAdmin/settings.js";
 import { emitEvent } from "../webhooks/service.js";
 import { recordAudit } from "../audit/service.js";
+import { SAML_ACS_URL, SAML_SP_ENTITY_ID, normalizeCert, readSamlResponse, samlSignInUrl } from "./saml.js";
 
 export const APP_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 // Goes through the app's own origin (the dev proxy / production reverse
@@ -33,6 +34,15 @@ export class SsoError extends Error {
 }
 
 export interface SsoConfig {
+  // OpenID Connect or SAML 2.0.
+  protocol: "oidc" | "saml";
+  samlEntryPoint: string;
+  samlIdpIssuer: string;
+  hasSamlCert: boolean;
+  // What the organization's identity provider needs (SAML).
+  samlSpEntityId: string;
+  samlAcsUrl: string;
+  samlMetadataUrl: string;
   issuer: string;
   clientId: string;
   hasClientSecret: boolean;
@@ -47,6 +57,13 @@ export async function getSsoConfig(tenantId: string): Promise<SsoConfig | null> 
   const c = (await pool.query(`SELECT * FROM tenant_sso WHERE tenant_id = $1`, [tenantId])).rows[0];
   const domains = await pool.query(`SELECT domain, verification_token, verified_at FROM sso_domains WHERE tenant_id = $1 ORDER BY domain`, [tenantId]);
   return {
+    protocol: c?.protocol ?? "oidc",
+    samlEntryPoint: c?.saml_entry_point ?? "",
+    samlIdpIssuer: c?.saml_idp_issuer ?? "",
+    hasSamlCert: !!c?.saml_idp_cert,
+    samlSpEntityId: SAML_SP_ENTITY_ID,
+    samlAcsUrl: SAML_ACS_URL,
+    samlMetadataUrl: SAML_SP_ENTITY_ID,
     issuer: c?.issuer ?? "",
     clientId: c?.client_id ?? "",
     hasClientSecret: !!c?.client_secret_sealed,
@@ -65,19 +82,60 @@ export async function getSsoConfig(tenantId: string): Promise<SsoConfig | null> 
 
 export async function saveSsoConfig(
   tenantId: string,
-  body: { issuer: string; clientId: string; clientSecret?: string; enabled: boolean; enforce: boolean; jitProvisioning: boolean },
+  body: {
+    protocol?: "oidc" | "saml";
+    issuer?: string;
+    clientId?: string;
+    clientSecret?: string;
+    samlEntryPoint?: string;
+    samlIdpIssuer?: string;
+    samlIdpCert?: string;
+    enabled: boolean;
+    enforce: boolean;
+    jitProvisioning: boolean;
+  },
 ) {
+  if (body.protocol === "saml") return saveSamlConfig(tenantId, body);
+  if (!body.issuer || !body.clientId) throw new SsoError("sso_not_configured", "issuer and client ID required");
   // Checks the provider is reachable and speaks OpenID Connect before saving.
   await discover(body.issuer);
   const existing = (await pool.query(`SELECT client_secret_sealed FROM tenant_sso WHERE tenant_id = $1`, [tenantId])).rows[0];
   const sealed = body.clientSecret ? seal(body.clientSecret) : existing?.client_secret_sealed;
   if (!sealed) throw new SsoError("sso_not_configured", "client secret required");
   await pool.query(
-    `INSERT INTO tenant_sso (tenant_id, issuer, client_id, client_secret_sealed, enabled, enforce, jit_provisioning)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     ON CONFLICT (tenant_id) DO UPDATE SET issuer = $2, client_id = $3, client_secret_sealed = $4, enabled = $5, enforce = $6,
+    `INSERT INTO tenant_sso (tenant_id, protocol, issuer, client_id, client_secret_sealed, enabled, enforce, jit_provisioning)
+     VALUES ($1, 'oidc', $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (tenant_id) DO UPDATE SET protocol = 'oidc', issuer = $2, client_id = $3, client_secret_sealed = $4, enabled = $5, enforce = $6,
        jit_provisioning = $7, updated_at = now()`,
     [tenantId, body.issuer.replace(/\/+$/, ""), body.clientId, sealed, body.enabled, body.enabled && body.enforce, body.jitProvisioning],
+  );
+}
+
+// SAML: the identity provider's sign-in address and signing certificate.
+async function saveSamlConfig(
+  tenantId: string,
+  body: { samlEntryPoint?: string; samlIdpIssuer?: string; samlIdpCert?: string; enabled: boolean; enforce: boolean; jitProvisioning: boolean },
+) {
+  const entry = body.samlEntryPoint?.trim() ?? "";
+  if (!/^https:\/\//i.test(entry) && !(process.env.NODE_ENV !== "production" && /^http:\/\/localhost[:/]/i.test(entry))) {
+    throw new SsoError("sso_not_configured", "the sign-in address must start with https://");
+  }
+  const existing = (await pool.query(`SELECT saml_idp_cert FROM tenant_sso WHERE tenant_id = $1`, [tenantId])).rows[0];
+  let cert: string | null = existing?.saml_idp_cert ?? null;
+  if (body.samlIdpCert?.trim()) {
+    try {
+      cert = normalizeCert(body.samlIdpCert);
+    } catch {
+      throw new SsoError("sso_not_configured", "the certificate isn't a valid X.509 certificate");
+    }
+  }
+  if (!cert) throw new SsoError("sso_not_configured", "certificate required");
+  await pool.query(
+    `INSERT INTO tenant_sso (tenant_id, protocol, saml_entry_point, saml_idp_issuer, saml_idp_cert, enabled, enforce, jit_provisioning)
+     VALUES ($1, 'saml', $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (tenant_id) DO UPDATE SET protocol = 'saml', saml_entry_point = $2, saml_idp_issuer = $3, saml_idp_cert = $4,
+       enabled = $5, enforce = $6, jit_provisioning = $7, updated_at = now()`,
+    [tenantId, entry, body.samlIdpIssuer?.trim() || null, cert, body.enabled, body.enabled && body.enforce, body.jitProvisioning],
   );
 }
 
@@ -130,9 +188,18 @@ function b64url(buf: Buffer) {
 export async function startSignIn(email: string): Promise<string> {
   const route = await ssoForEmail(email);
   if (!route) throw new SsoError("domain_not_verified");
-  const c = (await pool.query(`SELECT issuer, client_id FROM tenant_sso WHERE tenant_id = $1`, [route.tenantId])).rows[0];
-  const d = await discover(c.issuer);
+  const c = (await pool.query(`SELECT * FROM tenant_sso WHERE tenant_id = $1`, [route.tenantId])).rows[0];
   const state = b64url(randomBytes(24));
+  if (c.protocol === "saml") {
+    // The RelayState comes back with the response and says which organization it is for.
+    await pool.query(`INSERT INTO sso_states (state, tenant_id, nonce, code_verifier, expires_at) VALUES ($1, $2, 'saml', '', $3)`, [
+      state,
+      route.tenantId,
+      new Date(Date.now() + STATE_TTL_MS),
+    ]);
+    return samlSignInUrl({ entryPoint: c.saml_entry_point, cert: c.saml_idp_cert, issuer: c.saml_idp_issuer }, state, email);
+  }
+  const d = await discover(c.issuer);
   const nonce = b64url(randomBytes(24));
   const verifier = b64url(randomBytes(32));
   await pool.query(`INSERT INTO sso_states (state, tenant_id, nonce, code_verifier, expires_at) VALUES ($1, $2, $3, $4, $5)`, [
@@ -160,9 +227,9 @@ export async function startSignIn(email: string): Promise<string> {
 // Step 2: the provider sends the browser back with a code. Returns the user
 // to sign in (the caller creates the session).
 export async function finishSignIn(state: string, code: string, ip: string | undefined): Promise<{ userId: string; role: string }> {
-  const s = (await pool.query(`DELETE FROM sso_states WHERE state = $1 AND expires_at > now() RETURNING tenant_id, nonce, code_verifier`, [state])).rows[0];
+  const s = (await pool.query(`DELETE FROM sso_states WHERE state = $1 AND expires_at > now() AND nonce <> 'saml' RETURNING tenant_id, nonce, code_verifier`, [state])).rows[0];
   if (!s) throw new SsoError("invalid_state");
-  const c = (await pool.query(`SELECT * FROM tenant_sso WHERE tenant_id = $1 AND enabled`, [s.tenant_id])).rows[0];
+  const c = (await pool.query(`SELECT * FROM tenant_sso WHERE tenant_id = $1 AND enabled AND protocol = 'oidc'`, [s.tenant_id])).rows[0];
   if (!c) throw new SsoError("sso_not_configured");
   let claims: Record<string, unknown>;
   try {
@@ -174,6 +241,37 @@ export async function finishSignIn(state: string, code: string, ip: string | und
   }
   const email = String(claims.email ?? "").toLowerCase();
   if (!email || claims.email_verified === false) throw new SsoError("email_not_verified");
+  return signInByEmail(s.tenant_id, c, email, (claims.given_name as string) ?? null, (claims.family_name as string) ?? null, ip);
+}
+
+// SAML: the identity provider posts its signed response back with the RelayState.
+export async function finishSamlSignIn(relayState: string, samlResponse: string, ip: string | undefined): Promise<{ userId: string; role: string }> {
+  const s = (await pool.query(`DELETE FROM sso_states WHERE state = $1 AND expires_at > now() AND nonce = 'saml' RETURNING tenant_id`, [relayState])).rows[0];
+  if (!s) throw new SsoError("invalid_state");
+  const c = (await pool.query(`SELECT * FROM tenant_sso WHERE tenant_id = $1 AND enabled AND protocol = 'saml'`, [s.tenant_id])).rows[0];
+  if (!c) throw new SsoError("sso_not_configured");
+  let who: Awaited<ReturnType<typeof readSamlResponse>>;
+  try {
+    who = await readSamlResponse({ entryPoint: c.saml_entry_point, cert: c.saml_idp_cert, issuer: c.saml_idp_issuer }, samlResponse);
+  } catch (err) {
+    throw new SsoError("provider_error", err instanceof Error ? err.message : String(err));
+  }
+  if (!who.email) throw new SsoError("email_not_verified");
+  return signInByEmail(s.tenant_id, c, who.email, who.givenName, who.familyName, ip);
+}
+
+// Both standards: the person behind a checked email, on this organization's
+// verified domain (created on first sign-in if the organization allows it).
+async function signInByEmail(
+  tenantId: string,
+  c: Record<string, any>,
+  email: string,
+  givenName: string | null,
+  familyName: string | null,
+  ip: string | undefined,
+): Promise<{ userId: string; role: string }> {
+  const s = { tenant_id: tenantId };
+  const claims = { given_name: givenName, family_name: familyName };
   const domain = email.split("@")[1];
   // The email must be on one of this organization's verified domains.
   const owns = await pool.query(`SELECT 1 FROM sso_domains WHERE domain = $1 AND tenant_id = $2 AND verified_at IS NOT NULL`, [domain, s.tenant_id]);

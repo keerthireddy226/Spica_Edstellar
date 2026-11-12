@@ -25,13 +25,20 @@ import {
 } from "./service.js";
 import { AttemptError } from "../assessment/service.js";
 import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
+import { billingPortalUrl, handleStripeSubscriptionEvent, liveSubscription, setCancelAtPeriodEnd, startSubscription, subscriptionQuote, testRenewal } from "./subscriptions.js";
 import { CURRENCIES, createProductOrder, createSwitchOrder, currencyFor, planQuote, priceList, productQuote, type Currency } from "./products.js";
 
 export const paymentsRouter = Router();
 
 function handle(err: unknown, res: Response, next: NextFunction) {
   if (err instanceof PaymentError) {
-    const status = err.code === "order_not_found" ? 404 : err.code === "no_provider" ? 503 : 400;
+    const status = ["order_not_found", "subscription_not_found", "no_billing_account"].includes(err.code)
+      ? 404
+      : err.code === "no_provider"
+        ? 503
+        : err.code === "already_subscribed"
+          ? 409
+          : 400;
     return res.status(status).json({ error: err.code });
   }
   next(err);
@@ -311,6 +318,8 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
   if (!stripeVerifyWebhook(raw, req.header("stripe-signature"))) return res.status(400).json({ error: "invalid_signature" });
   try {
     const event = JSON.parse(raw) as { type: string; data: { object: Record<string, any> } };
+    // Monthly renewals: subscriptions, their invoices and cancellations.
+    if (await handleStripeSubscriptionEvent(event)) return res.json({ received: true });
     if (event.type === "checkout.session.completed" && event.data.object.payment_status === "paid") {
       const orderId = event.data.object.metadata?.order_id as string | undefined;
       if (orderId) await fulfillOrder(orderId, (event.data.object.payment_intent as string) ?? null);
@@ -321,6 +330,71 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
     res.status(500).json({ error: "webhook_failed" });
   }
 }
+
+// ---- Full access that renews monthly (individual learners) ----
+
+// The learner's subscription, and whether (and for how much) they can start one.
+paymentsRouter.get("/subscription", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "individual_plan") return res.json({ subscription: null, available: false });
+    const currency = typeof req.query.currency === "string" ? req.query.currency : undefined;
+    const q = await subscriptionQuote(buyer, currency).catch(() => null);
+    res.json({
+      subscription: await liveSubscription(buyer.userId),
+      available: !!q,
+      monthly: q ? { currency: q.currency, subtotal: q.subtotal, taxLabel: q.taxLabel, taxAmount: q.taxAmount, total: q.total } : null,
+    });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+paymentsRouter.post("/subscriptions", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const buyer = await resolveBuyer(req.user!);
+    if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
+    const body = z.object({ currency: z.string().length(3).optional() }).parse(req.body ?? {});
+    res.status(201).json(await startSubscription(buyer, body.currency));
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+paymentsRouter.post("/subscriptions/:id/cancel", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ subscription: await setCancelAtPeriodEnd(req.user!.id, String(req.params.id), true) });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+paymentsRouter.post("/subscriptions/:id/resume", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ subscription: await setCancelAtPeriodEnd(req.user!.id, String(req.params.id), false) });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+// Development only (test payments): what a paid or failed renewal does.
+paymentsRouter.post("/subscriptions/:id/test-renewal", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ outcome: z.enum(["paid", "failed"]) }).parse(req.body);
+    res.json({ subscription: await testRenewal(req.user!.id, String(req.params.id), body.outcome) });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
+// "Manage billing": Stripe's page to change the card, see payments and cancel.
+paymentsRouter.post("/billing-portal", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json({ url: await billingPortalUrl(req.user!.id) });
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
 
 // ---- Pay by invoice (Business and up) ----
 

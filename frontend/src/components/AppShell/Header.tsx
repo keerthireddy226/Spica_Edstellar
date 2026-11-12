@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, Sun, Moon, User, LogOut } from "lucide-react";
+import { Menu, Sun, Moon, User, LogOut, HelpCircle } from "lucide-react";
 import { ROUTES, PROFILE_ROUTE_BY_ROLE } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -10,6 +10,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { OrgBrandBadge, useAdmissions, useBrandColor } from "@/components/AppShell/useBranding";
 
 import { tr } from "@/i18n/tr";
+import { helpTopicFor } from "@/pages/Help";
 function useTitleKey(pathname: string): string {
   if (pathname === ROUTES.ROADMAP) return "nav.roadmap";
   if (pathname === ROUTES.DASHBOARD) return "nav.overview";
@@ -193,6 +194,17 @@ export function Header({ onMenuClick }: { onMenuClick: () => void }) {
 
       <div className="flex items-center gap-1 sm:gap-3 shrink-0">
         <LanguageSwitcher compact />
+        {/* Help: the guide for this screen, in a new tab so the work here stays open. */}
+        <a
+          href={`/help#${helpTopicFor(location.pathname)}`}
+          target="_blank"
+          rel="noopener"
+          aria-label={tr("Help")}
+          title={tr("Help")}
+          className="p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors"
+        >
+          <HelpCircle size={22} />
+        </a>
         <button
           onClick={toggleTheme}
           aria-label={t("shell.toggleTheme")}

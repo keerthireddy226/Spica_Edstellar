@@ -4,6 +4,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { accessCache } from "./accessCache.js";
 import { freeTierUsage, learnerAccess, learnerKind } from "./service.js";
 import { candidateMayStart } from "../recruitment/service.js";
+import { inSubscriptionGrace } from "../payments/subscriptions.js";
 
 export type GatedFeature = "practice" | "mocktest" | "placement" | "coach";
 
@@ -38,6 +39,8 @@ export function requireAccess(feature: GatedFeature) {
         const access = cached.access;
         const live = access.status === "active" || access.status === "grace";
         if (live) return next();
+        // A monthly renewal that failed: access continues during its grace days.
+        if (kind === "individual" && (await inSubscriptionGrace(req.user!.id))) return next();
         // Something bought or given outside a licence: Full access opens
         // everything; anything else only its own part (see above).
         const owned = await accessOf(req.user!.id);

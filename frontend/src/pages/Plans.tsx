@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ProductShop } from "@/components/plans/ProductShop";
+import { SubscriptionPanel } from "@/components/plans/SubscriptionPanel";
 import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
 import { Check, X as XIcon, FileText, Building2, Sparkles, CheckCircle2 } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -257,6 +258,7 @@ export function Plans() {
           <Button onClick={pay} disabled={paying || !q}>
             {paying ? t("plans.redirecting") : live ? t("plans.extend", { count: months }) : t("plans.buy", { count: months })}
           </Button>
+          <SubscriptionPanel />
         </div>
       </div>
 

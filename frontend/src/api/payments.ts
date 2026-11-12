@@ -158,6 +158,46 @@ function loadRazorpay(): Promise<void> {
   });
 }
 
+// ---- Full access that renews monthly ----
+
+export interface SubscriptionView {
+  id: string;
+  provider: "stripe" | "test";
+  status: "incomplete" | "trialing" | "active" | "past_due" | "canceled";
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+  graceUntil: string | null;
+  currency: string;
+  monthlyTotal: number;
+  canManageBilling: boolean;
+}
+
+export interface SubscriptionState {
+  subscription: SubscriptionView | null;
+  available: boolean;
+  monthly: { currency: string; subtotal: number; taxLabel: string | null; taxAmount: number; total: number } | null;
+}
+
+export function getSubscription(): Promise<SubscriptionState> {
+  return api("/payments/subscription");
+}
+
+export function startSubscription(currency?: string): Promise<{ subscriptionId: string; provider: "stripe" | "test"; redirectUrl?: string }> {
+  return api("/payments/subscriptions", { method: "POST", body: JSON.stringify(currency ? { currency } : {}) });
+}
+
+export function cancelSubscription(id: string): Promise<{ subscription: SubscriptionView }> {
+  return api(`/payments/subscriptions/${id}/cancel`, { method: "POST" });
+}
+
+export function resumeSubscription(id: string): Promise<{ subscription: SubscriptionView }> {
+  return api(`/payments/subscriptions/${id}/resume`, { method: "POST" });
+}
+
+export function openBillingPortal(): Promise<{ url: string }> {
+  return api("/payments/billing-portal", { method: "POST" });
+}
+
 export const CHECKOUT_RETURN_PATH = "/checkout/return";
 
 // Sends the browser through whichever provider the server picked. Every path

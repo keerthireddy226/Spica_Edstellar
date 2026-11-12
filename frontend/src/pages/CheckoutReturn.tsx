@@ -13,6 +13,33 @@ import { tr } from "@/i18n/tr";
 // mode), then adds the licenses and issues the invoice.
 export function CheckoutReturn() {
   const [params] = useSearchParams();
+  if (params.get("subscription")) return <SubscriptionReturn cancelled={params.get("cancelled") === "1"} />;
+  return <OrderReturn />;
+}
+
+// After starting a monthly subscription. Stripe tells the server (not this
+// page) when it's paid; the access shows on the Plans page within a minute.
+function SubscriptionReturn({ cancelled }: { cancelled: boolean }) {
+  return (
+    <div className="app-surface min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="bg-surface border border-rule rounded-card shadow-sm p-8 max-w-md w-full flex flex-col items-center text-center gap-4">
+        {cancelled ? <XCircle size={40} className="text-muted" /> : <CheckCircle2 size={40} className="text-success" />}
+        <p className="font-display font-bold text-lg text-ink">{cancelled ? tr("No subscription started") : tr("Your monthly subscription is set up")}</p>
+        <p className="text-sm text-muted">
+          {cancelled
+            ? tr("You left the payment page, so nothing was charged.")
+            : tr("Full access is added as soon as the payment is confirmed, usually within a minute. You'll get an invoice each month.")}
+        </p>
+        <Link to="/plans">
+          <Button>{tr("Go to your plan")}</Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function OrderReturn() {
+  const [params] = useSearchParams();
   const { user } = useAuth();
   const orderId = params.get("order") ?? "";
   const cancelled = params.get("cancelled") === "1";

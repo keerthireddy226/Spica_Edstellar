@@ -53,6 +53,13 @@ export const governanceApi = {
 };
 
 export interface SsoSettings {
+  protocol: "oidc" | "saml";
+  samlEntryPoint: string;
+  samlIdpIssuer: string;
+  hasSamlCert: boolean;
+  samlSpEntityId: string;
+  samlAcsUrl: string;
+  samlMetadataUrl: string;
   issuer: string;
   clientId: string;
   hasClientSecret: boolean;
@@ -66,7 +73,12 @@ export interface SsoSettings {
 
 export const ssoApi = {
   get: () => api<SsoSettings>("/org-admin/sso"),
-  save: (body: { issuer: string; clientId: string; clientSecret?: string; enabled: boolean; enforce: boolean; jitProvisioning: boolean }) =>
+  save: (
+    body: { enabled: boolean; enforce: boolean; jitProvisioning: boolean } & (
+      | { protocol: "oidc"; issuer: string; clientId: string; clientSecret?: string }
+      | { protocol: "saml"; samlEntryPoint: string; samlIdpIssuer?: string; samlIdpCert?: string }
+    ),
+  ) =>
     api<SsoSettings>("/org-admin/sso", { method: "PATCH", body: JSON.stringify(body) }),
   addDomain: (domain: string) => api<SsoSettings>("/org-admin/sso/domains", { method: "POST", body: JSON.stringify({ domain }) }),
   verifyDomain: (domain: string) => api<SsoSettings>(`/org-admin/sso/domains/${encodeURIComponent(domain)}/verify`, { method: "POST" }),

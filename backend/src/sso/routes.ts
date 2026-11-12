@@ -1,12 +1,13 @@
 import { z } from "zod";
-import { Router, type Response } from "express";
+import express, { Router, type Request, type Response } from "express";
 import rateLimit from "express-rate-limit";
 import { createHash, randomBytes } from "node:crypto";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { createSession, setSessionCookie } from "../auth/routes.js";
 import { assertFeature } from "../plans/service.js";
-import { APP_URL, SsoError, addDomain, finishSignIn, getSsoConfig, removeDomain, saveSsoConfig, ssoForEmail, startSignIn, verifyDomain } from "./service.js";
+import { spMetadata } from "./saml.js";
+import { APP_URL, SsoError, addDomain, finishSamlSignIn, finishSignIn, getSsoConfig, removeDomain, saveSsoConfig, ssoForEmail, startSignIn, verifyDomain } from "./service.js";
 
 const LANDING: Record<string, string> = { learner: "/onboarding", manager: "/manager/dashboard", org_admin: "/orgadmin/dashboard" };
 
@@ -41,21 +42,42 @@ ssoRouter.get("/callback", limiter, async (req, res) => {
   try {
     if (typeof req.query.error === "string") return fail(res, "provider_error");
     const q = z.object({ state: z.string().min(10), code: z.string().min(1) }).parse(req.query);
-    const { userId, role } = await finishSignIn(q.state, q.code, req.ip);
-    const active = await pool.query(
-      `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() AND impersonator_id IS NULL LIMIT 1`,
-      [userId],
-    );
-    if (active.rowCount) return fail(res, "already_logged_in");
-    const { token } = await createSession(pool, userId);
-    setSessionCookie(res, token);
-    pool
-      .query(`INSERT INTO login_events (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`, [userId, req.ip, req.headers["user-agent"] ?? null])
-      .catch(() => {});
-    res.redirect(302, `${APP_URL}${LANDING[role] ?? "/"}`);
+    await signedIn(req, res, await finishSignIn(q.state, q.code, req.ip));
   } catch (err) {
     if (err instanceof SsoError && err.code === "provider_error") console.error("SSO provider error:", err.message);
     fail(res, err instanceof SsoError ? err.code : "provider_error");
+  }
+});
+
+// The session for someone the identity provider signed in (one session per account).
+async function signedIn(req: Request, res: Response, who: { userId: string; role: string }) {
+  const active = await pool.query(
+    `SELECT 1 FROM auth_sessions WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() AND impersonator_id IS NULL LIMIT 1`,
+    [who.userId],
+  );
+  if (active.rowCount) return fail(res, "already_logged_in");
+  const { token } = await createSession(pool, who.userId);
+  setSessionCookie(res, token);
+  pool
+    .query(`INSERT INTO login_events (user_id, ip_address, user_agent) VALUES ($1, $2, $3)`, [who.userId, req.ip, req.headers["user-agent"] ?? null])
+    .catch(() => {});
+  res.redirect(302, `${APP_URL}${LANDING[who.role] ?? "/"}`);
+}
+
+// SAML: what an organization's identity provider needs to know about Spica.
+ssoRouter.get("/saml/metadata", limiter, (_req, res) => {
+  res.type("application/samlmetadata+xml").send(spMetadata());
+});
+
+// SAML: the identity provider posts the signed response here (HTTP-POST binding).
+ssoRouter.post("/saml/acs", limiter, express.urlencoded({ extended: false, limit: "512kb" }), async (req, res) => {
+  try {
+    const b = z.object({ SAMLResponse: z.string().min(20).max(500_000), RelayState: z.string().min(10).max(200) }).parse(req.body);
+    await signedIn(req, res, await finishSamlSignIn(b.RelayState, b.SAMLResponse, req.ip));
+  } catch (err) {
+    if (err instanceof SsoError && err.code === "provider_error") console.error("SAML sign-in error:", err.message);
+    // No RelayState: a sign-in started at the identity provider, which Spica doesn't accept.
+    fail(res, err instanceof SsoError ? err.code : "invalid_state");
   }
 });
 
@@ -85,16 +107,25 @@ ssoAdminRouter.patch("/sso", requireAuth, async (req: AuthedRequest, res, next) 
   if (!tenantId) return res.status(403).json({ error: "forbidden" });
   try {
     await assertFeature(tenantId, "sso");
+    const common = { enabled: z.boolean(), enforce: z.boolean(), jitProvisioning: z.boolean() };
     const body = z
-      .object({
-        issuer: z.string().trim().url().max(300),
-        clientId: z.string().trim().min(1).max(300),
-        clientSecret: z.string().trim().min(1).max(1000).optional(),
-        enabled: z.boolean(),
-        enforce: z.boolean(),
-        jitProvisioning: z.boolean(),
-      })
-      .parse(req.body);
+      .discriminatedUnion("protocol", [
+        z.object({
+          protocol: z.literal("oidc"),
+          issuer: z.string().trim().url().max(300),
+          clientId: z.string().trim().min(1).max(300),
+          clientSecret: z.string().trim().min(1).max(1000).optional(),
+          ...common,
+        }),
+        z.object({
+          protocol: z.literal("saml"),
+          samlEntryPoint: z.string().trim().url().max(500),
+          samlIdpIssuer: z.string().trim().max(500).optional(),
+          samlIdpCert: z.string().trim().max(20_000).optional(),
+          ...common,
+        }),
+      ])
+      .parse({ protocol: "oidc", ...req.body });
     if (body.enabled) {
       const verified = await pool.query(`SELECT 1 FROM sso_domains WHERE tenant_id = $1 AND verified_at IS NOT NULL`, [tenantId]);
       if (verified.rowCount === 0) return res.status(400).json({ error: "verify_a_domain_first" });

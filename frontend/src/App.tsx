@@ -5,6 +5,7 @@ import { MfaSetup } from "@/pages/MfaSetup";
 import { CertificateView } from "@/pages/CertificateView";
 import { SampleReport } from "@/pages/SampleReport";
 import { CertificateReport } from "@/pages/CertificateReport";
+import { Help } from "@/pages/Help";
 import { CertificateRequests } from "@/pages/CertificateRequests";
 import { QuoteView } from "@/pages/QuoteView";
 import {
@@ -126,6 +127,7 @@ function App() {
         <Route path={ROUTES.CERTIFICATE} element={<CertificateView />} />
         <Route path="/sample-report" element={<SampleReport />} />
         <Route path="/certificate/:code/report" element={<CertificateReport />} />
+        <Route path="/help" element={<Help />} />
         {/* A candidate's report shared with a hiring manager (no login). */}
         <Route path="/recruitment/shared/:token" element={<CandidateReportPrint />} />
         {/* Public pages per English level (no account needed). */}

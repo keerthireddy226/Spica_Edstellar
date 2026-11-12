@@ -8,6 +8,8 @@ import { APP_URL, sendNotificationEmail } from "../auth/mailer.js";
 export const LEARNER_NUDGE_EMAILS_PER_DAY = 2;
 
 export type NotificationKind =
+  | "subscription_cancelled"
+  | "subscription_payment_failed"
   | "license_expiring"
   | "license_ended"
   | "license_grace_ended"

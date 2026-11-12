@@ -25,7 +25,7 @@ const ERRORS: Record<string, string> = {
   provider_unreachable: tr("Couldn't reach the identity provider's OpenID configuration at that issuer URL."),
   domain_taken: tr("That domain is already registered to an organization."),
   txt_record_not_found: tr("The TXT record wasn't found yet. DNS changes can take a while — try again later."),
-  sso_not_configured: tr("Enter the client secret."),
+  sso_not_configured: tr("Enter the client secret (OpenID Connect) or the certificate (SAML)."),
 };
 
 // Single sign-on through the organization's identity provider (OpenID
@@ -33,14 +33,36 @@ const ERRORS: Record<string, string> = {
 export function SsoSettingsSection() {
   const allowed = useHasFeature("sso");
   const [s, setS] = useState<SsoSettings | null>(null);
-  const [form, setForm] = useState({ issuer: "", clientId: "", clientSecret: "", enabled: false, enforce: false, jitProvisioning: false });
+  const [form, setForm] = useState({
+    protocol: "oidc" as "oidc" | "saml",
+    issuer: "",
+    clientId: "",
+    clientSecret: "",
+    samlEntryPoint: "",
+    samlIdpIssuer: "",
+    samlIdpCert: "",
+    enabled: false,
+    enforce: false,
+    jitProvisioning: false,
+  });
   const [domain, setDomain] = useState("");
   const [scimToken, setScimToken] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   function apply(x: SsoSettings) {
     setS(x);
-    setForm({ issuer: x.issuer, clientId: x.clientId, clientSecret: "", enabled: x.enabled, enforce: x.enforce, jitProvisioning: x.jitProvisioning });
+    setForm({
+      protocol: x.protocol ?? "oidc",
+      issuer: x.issuer,
+      clientId: x.clientId,
+      clientSecret: "",
+      samlEntryPoint: x.samlEntryPoint ?? "",
+      samlIdpIssuer: x.samlIdpIssuer ?? "",
+      samlIdpCert: "",
+      enabled: x.enabled,
+      enforce: x.enforce,
+      jitProvisioning: x.jitProvisioning,
+    });
   }
   useEffect(() => {
     ssoApi.get().then(apply).catch(() => {});
@@ -66,7 +88,7 @@ export function SsoSettingsSection() {
       <div>
         <h2 className="font-display font-bold text-base text-ink">{tr("Single sign-on")}</h2>
         <p className="text-sm text-muted mt-1">
-          {tr("People sign in with your company account (Okta, Microsoft Entra ID, Google Workspace, Auth0, OneLogin — any OpenID Connect provider), and your directory can add and remove learners automatically (SCIM).")}</p>
+          {tr("People sign in with your company account (Okta, Microsoft Entra ID, Google Workspace, Auth0, OneLogin — with OpenID Connect or SAML 2.0), and your directory can add and remove learners automatically (SCIM).")}</p>
       </div>
       <div className="flex flex-col gap-5">
         <PlanLockNote feature="sso" compact />
@@ -114,6 +136,51 @@ export function SsoSettingsSection() {
 
         <div className="flex flex-col gap-2 border-t border-rule pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{tr("2. Connect your identity provider")}</p>
+          <div className="flex gap-4 text-sm text-ink">
+            {(
+              [
+                ["oidc", tr("OpenID Connect")],
+                ["saml", tr("SAML 2.0")],
+              ] as const
+            ).map(([p, label]) => (
+              <label key={p} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="sso-protocol" checked={form.protocol === p} disabled={locked} onChange={() => setForm({ ...form, protocol: p })} className="accent-navy" />
+                {label}
+              </label>
+            ))}
+          </div>
+          {form.protocol === "saml" ? (
+            <>
+              <p className="text-xs text-muted">
+                {tr("Create a SAML app in your provider with these values (or give it the metadata address).")}
+              </p>
+              <div className="text-xs text-muted flex flex-col gap-1">
+                <span>
+                  {tr("Entity ID (Audience):")} <CopyText text={s.samlSpEntityId} />
+                </span>
+                <span>
+                  {tr("Reply / ACS URL:")} <CopyText text={s.samlAcsUrl} />
+                </span>
+                <span>
+                  {tr("Metadata:")} <CopyText text={s.samlMetadataUrl} />
+                </span>
+                <span>{tr("Name ID: the person's email address. Sign the assertion.")}</span>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                <input value={form.samlEntryPoint} onChange={(e) => setForm({ ...form, samlEntryPoint: e.target.value })} placeholder={tr("Identity provider sign-in URL (SSO URL)")} disabled={locked} className={inputClass} />
+                <input value={form.samlIdpIssuer} onChange={(e) => setForm({ ...form, samlIdpIssuer: e.target.value })} placeholder={tr("Identity provider entity ID (optional)")} disabled={locked} className={inputClass} />
+              </div>
+              <textarea
+                value={form.samlIdpCert}
+                onChange={(e) => setForm({ ...form, samlIdpCert: e.target.value })}
+                placeholder={s.hasSamlCert ? tr("Signing certificate (saved — leave blank to keep)") : tr("Signing certificate (paste the X.509 certificate)")}
+                disabled={locked}
+                rows={4}
+                className={`${inputClass} font-mono text-xs`}
+              />
+            </>
+          ) : (
+          <>
           <p className="text-xs text-muted">
             {tr("Create an OpenID Connect web app in your provider with this sign-in redirect URL:")}{" "}<CopyText text={s.redirectUri} />
           </p>
@@ -129,6 +196,8 @@ export function SsoSettingsSection() {
               className={inputClass}
             />
           </div>
+          </>
+          )}
           {(
             [
               ["enabled", tr("Turn on single sign-on")],
@@ -148,18 +217,31 @@ export function SsoSettingsSection() {
             </label>
           ))}
           <Button
-            disabled={locked || !form.issuer || !form.clientId}
+            disabled={locked || (form.protocol === "saml" ? !form.samlEntryPoint : !form.issuer || !form.clientId)}
             onClick={() =>
               run(
                 () =>
-                  ssoApi.save({
-                    issuer: form.issuer.trim(),
-                    clientId: form.clientId.trim(),
-                    clientSecret: form.clientSecret.trim() || undefined,
-                    enabled: form.enabled,
-                    enforce: form.enforce,
-                    jitProvisioning: form.jitProvisioning,
-                  }),
+                  ssoApi.save(
+                    form.protocol === "saml"
+                      ? {
+                          protocol: "saml",
+                          samlEntryPoint: form.samlEntryPoint.trim(),
+                          samlIdpIssuer: form.samlIdpIssuer.trim() || undefined,
+                          samlIdpCert: form.samlIdpCert.trim() || undefined,
+                          enabled: form.enabled,
+                          enforce: form.enforce,
+                          jitProvisioning: form.jitProvisioning,
+                        }
+                      : {
+                          protocol: "oidc",
+                          issuer: form.issuer.trim(),
+                          clientId: form.clientId.trim(),
+                          clientSecret: form.clientSecret.trim() || undefined,
+                          enabled: form.enabled,
+                          enforce: form.enforce,
+                          jitProvisioning: form.jitProvisioning,
+                        },
+                  ),
                 tr("Single sign-on saved. Try it from the sign-in page in a private window before requiring it."),
                 apply,
               )

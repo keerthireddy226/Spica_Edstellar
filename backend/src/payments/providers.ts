@@ -52,7 +52,7 @@ export function chooseProvider(billingCountry: string | null): { provider: Provi
 
 // ---- Stripe Checkout ----
 
-async function stripeRequest(method: "GET" | "POST", path: string, form?: Record<string, string>) {
+export async function stripeRequest(method: "GET" | "POST", path: string, form?: Record<string, string>) {
   const res = await fetch(`https://api.stripe.com/v1${path}`, {
     method,
     headers: {

@@ -14,7 +14,19 @@ export type OrderKind = "org_licenses" | "individual_plan" | "product";
 export const INDIVIDUAL_PLAN_MONTHS = [1, 3, 6] as const;
 
 export class PaymentError extends Error {
-  constructor(public code: "no_provider" | "order_not_found" | "payment_not_verified" | "invalid_quantity") {
+  constructor(
+    public code:
+      | "no_provider"
+      | "order_not_found"
+      | "payment_not_verified"
+      | "invalid_quantity"
+      | "already_subscribed"
+      | "subscriptions_unavailable"
+      | "subscription_not_found"
+      | "subscription_not_ready"
+      | "no_billing_account"
+      | "not_available",
+  ) {
     super(code);
   }
 }
