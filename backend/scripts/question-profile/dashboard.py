@@ -324,9 +324,9 @@ def main():
     how.column_dimensions["A"].width = 120
     lines = [
         ("How to use this file", True),
+        ("All questions: the first sheet: every question in one table. Use the filter buttons in the header row.", False),
         ("Dashboard: pick a test, skill, question type or usage in the yellow cells. The tables recount the questions by CEFR level, difficulty, length and usage.", False),
         ("Skill sheets (Speaking, Listening, Reading, Writing, Other test types): every question is on one sheet, by what the test taker does: speaks, listens and chooses or types, reads and chooses or fills a gap, or writes. 'Skills Scored' lists every skill the question is scored on.", False),
-        ("All questions: every question in one table. Use the filter buttons in the header row.", False),
         ("", False),
         ("Columns", True),
         ("Question ID: the first 8 characters of the question's ID in the system; it never changes.", False),
@@ -344,7 +344,7 @@ def main():
         how.cell(row=how.max_row, column=1).font = F(bold=bold, size=12 if bold else 10)
         how.cell(row=how.max_row, column=1).alignment = WRAP
 
-    order = ["Dashboard", "How to read", *SKILLS, "All questions", "Lists"]
+    order = ["All questions", "Dashboard", "How to read", *SKILLS, "Lists"]
     wb._sheets = [wb[name] for name in order]
     wb.active = 0
     wb.save(ql.XLSX)
