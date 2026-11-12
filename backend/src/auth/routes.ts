@@ -9,6 +9,7 @@ import { checkSession, requireAuth, type AuthedRequest } from "./middleware.js";
 import { ORG_CONSOLE_ROLES, ipAllowed, passwordMinLengthFor, passwordProblem } from "./policy.js";
 import { ssoForEmail } from "../sso/service.js";
 import { ownedRows } from "../access/entitlements.js";
+import { logPrivacyRequest } from "../governance/service.js";
 import { checkSecondFactor, confirmMfaSetup, createChallenge, disableMfa, redeemChallenge, regenerateRecoveryCodes, startMfaSetup } from "./mfa.js";
 import {
   forgotPasswordSchema,
@@ -16,6 +17,8 @@ import {
   resetPasswordSchema,
   signupSchema,
   PRIVACY_NOTICE_VERSION,
+  termsUrl,
+  termsVersion,
   updateNameSchema,
   verifyEmailSchema,
 } from "./schemas.js";
@@ -73,6 +76,7 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
   const client = await pool.connect();
   try {
     const body = signupSchema.parse(req.body);
+    if (termsVersion() && body.acceptTerms !== true) return res.status(400).json({ error: "terms_not_accepted" });
     const problem = passwordProblem(body.password);
     if (problem) return res.status(400).json({ error: problem, minLength: 8 });
     await client.query("BEGIN");
@@ -95,6 +99,7 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
        VALUES ($1, $2, 'privacy_notice', $3), ($1, $2, 'adult_confirmation', $3)`,
       [userId, PRIVACY_NOTICE_VERSION, req.ip],
     );
+    await recordTermsAndMarketing(client, userId, { acceptTerms: body.acceptTerms, marketingConsent: body.marketingConsent }, req.ip);
 
     const verifyToken = generateToken();
     await client.query(
@@ -276,7 +281,14 @@ authRouter.get("/me", async (req, res, next) => {
         PRIVACY_NOTICE_VERSION,
       ])
     ).rowCount;
-    const privacyRequired = PRIVACY_ROLES.includes(user.role) && !check.user.viewAs && !privacyAgreed;
+    // The Terms (once published) are agreed the same way, on the same screen.
+    const tv = termsVersion();
+    const termsAgreed =
+      !tv ||
+      !!(await pool.query(`SELECT 1 FROM consent_records WHERE user_id = $1 AND consent_type = 'terms' AND consent_version = $2 AND revoked_at IS NULL LIMIT 1`, [user.id, tv]))
+        .rowCount;
+    const privacyRequired = PRIVACY_ROLES.includes(user.role) && !check.user.viewAs && (!privacyAgreed || !termsAgreed);
+    const marketing = (await pool.query(`SELECT marketing_consent FROM users WHERE id = $1`, [user.id])).rows[0];
 
     const privacyAudience = await privacyAudienceOf(user.id, user.role);
 
@@ -302,6 +314,8 @@ authRouter.get("/me", async (req, res, next) => {
       privacyRequired,
       // Agreed to the current Privacy Notice: test screens don't ask again.
       privacyAgreed,
+      termsRequired: !termsAgreed,
+      marketingConsent: !!marketing?.marketing_consent,
       privacyAudience,
     });
   } catch (err) {
@@ -310,6 +324,49 @@ authRouter.get("/me", async (req, res, next) => {
 });
 
 const PRIVACY_ROLES = ["learner", "manager", "org_admin", "recruiter"];
+
+// Saves acceptance of the current Terms (with its date and version) and an
+// optional marketing choice, as consent records and on the user.
+async function recordTermsAndMarketing(
+  db: { query: typeof pool.query },
+  userId: string,
+  body: { acceptTerms?: boolean; marketingConsent?: boolean },
+  ip: string | undefined,
+) {
+  const tv = termsVersion();
+  if (tv && body.acceptTerms === true) {
+    await db.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'terms', $3)`, [userId, tv, ip ?? null]);
+    await db.query(`UPDATE users SET terms_accepted_at = now(), terms_version = $2 WHERE id = $1`, [userId, tv]);
+  }
+  if (body.marketingConsent !== undefined) await setMarketingConsent(db, userId, body.marketingConsent, ip);
+}
+
+async function setMarketingConsent(db: { query: typeof pool.query }, userId: string, consent: boolean, ip: string | undefined) {
+  await db.query(`UPDATE users SET marketing_consent = $2, marketing_consent_at = now() WHERE id = $1`, [userId, consent]);
+  if (consent) {
+    await db.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'marketing', $3)`, [userId, PRIVACY_NOTICE_VERSION, ip ?? null]);
+  } else {
+    await db.query(`UPDATE consent_records SET revoked_at = now() WHERE user_id = $1 AND consent_type = 'marketing' AND revoked_at IS NULL`, [userId]);
+  }
+}
+
+// Public: which Terms version is current and where it is published, so the
+// sign-up form can show the box (nothing to show until the Terms are live).
+authRouter.get("/legal", (_req, res) => {
+  res.json({ termsVersion: termsVersion(), termsUrl: termsUrl(), privacyNoticeVersion: PRIVACY_NOTICE_VERSION });
+});
+
+// Marketing emails: opt in or out at any time from the profile.
+authRouter.patch("/me/marketing", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    const body = z.object({ consent: z.boolean() }).parse(req.body);
+    await setMarketingConsent(pool, req.user!.id, body.consent, req.ip);
+    if (!body.consent) await logPrivacyRequest({ userId: req.user!.id, kind: "objection", details: { to: "marketing_emails" } });
+    res.json({ marketingConsent: body.consent });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Which Privacy Notice applies: a job or admissions candidate, someone using
 // Spica through their organization or university, or an individual (free,
@@ -329,12 +386,16 @@ async function privacyAudienceOf(userId: string, role: string): Promise<"assessm
 // the notice changes).
 authRouter.post("/me/privacy", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    z.object({ acceptPrivacy: z.literal(true), adultConfirmed: z.literal(true) }).parse(req.body);
+    const body = z
+      .object({ acceptPrivacy: z.literal(true), adultConfirmed: z.literal(true), acceptTerms: z.boolean().optional(), marketingConsent: z.boolean().optional() })
+      .parse(req.body);
+    if (termsVersion() && body.acceptTerms !== true) return res.status(400).json({ error: "terms_not_accepted" });
     await pool.query(
       `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
        VALUES ($1, $2, 'privacy_notice', $3), ($1, $2, 'adult_confirmation', $3)`,
       [req.user!.id, PRIVACY_NOTICE_VERSION, req.ip],
     );
+    await recordTermsAndMarketing(pool, req.user!.id, body, req.ip);
     res.status(201).json({ ok: true });
   } catch (err) {
     next(err);
@@ -366,6 +427,7 @@ authRouter.patch("/me", requireAuth, async (req: AuthedRequest, res, next) => {
       body.lastName,
       req.user!.id,
     ]);
+    await logPrivacyRequest({ userId: req.user!.id, kind: "correction", details: { fields: ["first_name", "last_name"] } });
     res.status(204).send();
   } catch (err) {
     next(err);

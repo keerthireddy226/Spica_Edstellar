@@ -4,6 +4,7 @@ import { AUDIT_VERBS, auditDetailParts } from "@/lib/auditVerbs";
 import { getAdminConsoleOverview } from "@/api/admin";
 import { getStaffAudit, type StaffAuditEntry, type StaffAuditFilters } from "@/api/staff";
 import { X } from "lucide-react";
+import { api } from "@/lib/api";
 import { EmptyNote, Notice, PageHeader, SelectFilter, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
@@ -145,6 +146,79 @@ export function StaffAudit() {
           {loading ? tr("Loading…") : tr("Load more")}
         </Button>
       )}
+      {perms.isSuper && <PrivacyRequests />}
     </div>
+  );
+}
+
+interface PrivacyRequest {
+  id: string;
+  kind: string;
+  status: string;
+  requested_at: string;
+  completed_at: string | null;
+  user_email: string | null;
+  organization: string | null;
+  requested_by_email: string | null;
+}
+
+const KIND_LABEL: Record<string, string> = {
+  export: tr("Data download"),
+  deletion: tr("Deletion"),
+  correction: tr("Correction"),
+  objection: tr("Objection"),
+  consent_withdrawal: tr("Consent withdrawn"),
+};
+
+// The privacy request log (Super Admin): every download, deletion, correction,
+// objection and consent withdrawal, with when it was answered.
+function PrivacyRequests() {
+  const [rows, setRows] = useState<PrivacyRequest[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    api<{ requests: PrivacyRequest[] }>("/admin/privacy-requests")
+      .then((r) => setRows(r.requests))
+      .catch(() => setFailed(true));
+  }, []);
+  const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—");
+  return (
+    <section className="flex flex-col gap-3 mt-4">
+      <PageHeader title={tr("Privacy requests")} subtitle={tr("Every data download, deletion, correction, objection and consent withdrawal, and when it was completed.")} />
+      {failed ? (
+        <Notice tone="error">{tr("Could not load the privacy requests.")}</Notice>
+      ) : rows === null ? (
+        <div className="h-24 rounded-card bg-surface border border-rule animate-pulse" aria-busy="true" />
+      ) : rows.length === 0 ? (
+        <EmptyNote>{tr("No privacy requests yet.")}</EmptyNote>
+      ) : (
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
+            <thead>
+              <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
+                <th className="px-4 py-3 w-44">{tr("Requested")}</th>
+                <th className="px-4 py-3">{tr("Request")}</th>
+                <th className="px-4 py-3">{tr("Person")}</th>
+                <th className="px-4 py-3">{tr("Requested by")}</th>
+                <th className="px-4 py-3 w-44">{tr("Completed")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-b border-rule last:border-0 align-top">
+                  <td className="px-4 py-3 text-muted whitespace-nowrap">{when(r.requested_at)}</td>
+                  <td className="px-4 py-3 text-ink">{KIND_LABEL[r.kind] ?? r.kind}</td>
+                  <td className="px-4 py-3 text-ink">
+                    {r.user_email ?? (r.organization ? tr("Whole organization") : "—")}
+                    {r.organization && <p className="text-xs text-muted">{r.organization}</p>}
+                  </td>
+                  <td className="px-4 py-3 text-muted">{r.requested_by_email ?? tr("Automatic (retention rules)")}</td>
+                  <td className="px-4 py-3 text-muted whitespace-nowrap">{when(r.completed_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }

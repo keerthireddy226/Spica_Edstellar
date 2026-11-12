@@ -9,6 +9,7 @@ import { AuthCard, FormField } from "@/components/AuthCard";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { MarketingCheckbox, TermsCheckbox, useLegal } from "@/components/TermsAndMarketing";
 
 export function Signup() {
   const { t } = useTranslation();
@@ -23,6 +24,9 @@ export function Signup() {
   // The notice opens over the form, so nothing typed is lost.
   const [showNotice, setShowNotice] = useState(false);
   const [adult, setAdult] = useState(false);
+  const legal = useLegal();
+  const [terms, setTerms] = useState(false);
+  const [marketing, setMarketing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -48,9 +52,13 @@ export function Signup() {
       setError(tr("Please confirm you are 18 or older."));
       return;
     }
+    if (legal?.termsVersion && !terms) {
+      setError(tr("Please agree to the Terms and Conditions to continue."));
+      return;
+    }
     setSubmitting(true);
     try {
-      await signup(email, password, firstName, lastName);
+      await signup(email, password, firstName, lastName, { acceptTerms: legal?.termsVersion ? terms : undefined, marketingConsent: marketing });
       setSubmittedEmail(email);
     } catch (err) {
       setError(
@@ -145,6 +153,8 @@ export function Signup() {
           <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{tr("I am 18 or older.")}</span>
         </label>
+        <TermsCheckbox legal={legal} checked={terms} onChange={setTerms} />
+        <MarketingCheckbox checked={marketing} onChange={setMarketing} />
         {error && <p className="text-sm text-error">{error}</p>}
         <Button type="submit" className="mt-1 w-full" disabled={submitting}>
           {submitting ? t("auth.signup.submitting") : t("auth.signup.submit")}

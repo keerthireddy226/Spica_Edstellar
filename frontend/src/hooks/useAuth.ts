@@ -29,6 +29,10 @@ type AuthUser = {
   // The current Privacy Notice hasn't been agreed yet.
   privacyRequired?: boolean;
   privacyAgreed?: boolean;
+  // The current Terms (once published) haven't been agreed yet.
+  termsRequired?: boolean;
+  // Opted in to marketing emails.
+  marketingConsent?: boolean;
   // Which Privacy Notice applies to this person.
   privacyAudience?: "free" | "paid" | "organization" | "assessment";
 };
@@ -150,12 +154,15 @@ export function useAuthState() {
 
   // Deliberately doesn't set auth state — signup ends with "check your email,"
   // not an automatic login (the backend doesn't create a session either).
-  const signup = useCallback(async (email: string, password: string, firstName: string, lastName: string) => {
-    await api<{ email: string }>("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true, adultConfirmed: true }),
-    });
-  }, []);
+  const signup = useCallback(
+    async (email: string, password: string, firstName: string, lastName: string, extra: { acceptTerms?: boolean; marketingConsent?: boolean } = {}) => {
+      await api<{ email: string }>("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true, adultConfirmed: true, ...extra }),
+      });
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
     await api("/auth/logout", { method: "POST" });

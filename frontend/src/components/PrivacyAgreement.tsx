@@ -5,12 +5,17 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { PrivacyConsent } from "@/components/pretest/ConsentDetails";
 import { tr } from "@/i18n/tr";
+import { MarketingCheckbox, TermsCheckbox, useLegal } from "@/components/TermsAndMarketing";
 
 // Shown instead of the app until the current Privacy Notice is agreed: for
 // people invited by an organization (who never saw the sign-up form) and for
 // everyone after the notice changes.
 export function PrivacyAgreement() {
-  const { refresh, logout } = useAuth();
+  const { user, refresh, logout } = useAuth();
+  const legal = useLegal();
+  const needTerms = !!(user?.termsRequired && legal?.termsVersion);
+  const [terms, setTerms] = useState(false);
+  const [marketing, setMarketing] = useState(!!user?.marketingConsent);
   const [privacy, setPrivacy] = useState(false);
   const [adult, setAdult] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -20,7 +25,10 @@ export function PrivacyAgreement() {
     setBusy(true);
     setError(null);
     try {
-      await api("/auth/me/privacy", { method: "POST", body: JSON.stringify({ acceptPrivacy: true, adultConfirmed: true }) });
+      await api("/auth/me/privacy", {
+        method: "POST",
+        body: JSON.stringify({ acceptPrivacy: true, adultConfirmed: true, acceptTerms: needTerms ? terms : undefined, marketingConsent: marketing }),
+      });
       await refresh();
     } catch {
       setError(tr("Could not save your choice. Try again."));
@@ -45,8 +53,10 @@ export function PrivacyAgreement() {
           <input type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
           {tr("I am 18 or older.")}
         </label>
+        {needTerms && <TermsCheckbox legal={legal} checked={terms} onChange={setTerms} />}
+        <MarketingCheckbox checked={marketing} onChange={setMarketing} />
         {error && <p className="text-sm text-error">{error}</p>}
-        <Button onClick={agree} disabled={busy || !privacy || !adult}>
+        <Button onClick={agree} disabled={busy || !privacy || !adult || (needTerms && !terms)}>
           {tr("Continue")}
         </Button>
         <button onClick={() => void logout()} className="self-center text-sm text-muted hover:text-ink cursor-pointer">

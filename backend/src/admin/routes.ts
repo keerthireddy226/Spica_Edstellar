@@ -178,6 +178,24 @@ const GENUINELY_PARTIAL = `
   )
 `;
 
+// The privacy request log: every download, deletion, correction, objection
+// and consent withdrawal, newest first, with how long it took.
+adminRouter.get("/privacy-requests", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!requireSuperAdmin(req, res)) return;
+  try {
+    const r = await pool.query(
+      `SELECT pr.id, pr.kind, pr.status, pr.details, pr.requested_at, pr.completed_at,
+         coalesce(u.email, 'erased') AS user_email, t.name AS organization, rb.email AS requested_by_email
+       FROM privacy_requests pr
+       LEFT JOIN users u ON u.id = pr.user_id LEFT JOIN tenants t ON t.id = pr.tenant_id LEFT JOIN users rb ON rb.id = pr.requested_by
+       ORDER BY pr.requested_at DESC LIMIT 500`,
+    );
+    res.json({ requests: r.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 adminRouter.get("/stats", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!requireSuperAdmin(req, res)) return;
   try {

@@ -101,6 +101,16 @@ export async function sendAdminInviteEmail(email: string, token: string, roleLab
   );
 }
 
+// Sent 30 days before an inactive individual account is deleted (retention rules).
+export async function sendInactiveAccountWarningEmail(email: string, days: number) {
+  const link = `${FRONTEND_URL}/login`;
+  await sendMail(
+    email,
+    "Your Spica account will be deleted soon",
+    `You haven't used your Spica account for almost a year. To protect your privacy, we delete accounts that are not used.\n\nYour account and its data will be deleted in ${days} days. To keep it, simply log in before then:\n\n${link}\n\nIf you no longer need the account, you don't need to do anything.`,
+  );
+}
+
 export async function sendPasswordResetEmail(email: string, token: string) {
   const link = `${FRONTEND_URL}/reset-password?token=${token}`;
   await sendMail(email, "Reset your password — Spica", `Reset your password by opening this link (expires in 30 minutes):\n\n${link}\n\nIf you didn't request this, ignore this message.`);

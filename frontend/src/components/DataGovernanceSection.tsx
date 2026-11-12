@@ -8,6 +8,8 @@ import { downloadCsv } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
 const MONTHS = [3, 6, 12, 24, 36];
+// Recordings are kept at most 12 months (3 months unless the organization chooses longer).
+const RECORDING_MONTHS = [6, 12];
 
 // Data processing agreement, retention rules and full data export.
 export function DataGovernanceSection() {
@@ -81,8 +83,8 @@ export function DataGovernanceSection() {
                 }
                 className={inputClass}
               >
-                <option value="">{tr("Keep while the account exists")}</option>
-                {MONTHS.map((m) => (
+                <option value="">{tr("3 months (default)")}</option>
+                {RECORDING_MONTHS.map((m) => (
                   <option key={m} value={m}>
                     {tr("{{m}} months", { m: m })}</option>
                 ))}
@@ -97,7 +99,7 @@ export function DataGovernanceSection() {
                 }
                 className={inputClass}
               >
-                <option value="">{tr("Never automatically")}</option>
+                <option value="">{tr("12 months (default)")}</option>
                 {MONTHS.map((m) => (
                   <option key={m} value={m}>
                     {tr("{{m}} months", { m: m })}</option>

@@ -7,6 +7,7 @@ import { releaseQueuedMonths } from "../licenses/service.js";
 import { recordAudit } from "../audit/service.js";
 import { notify } from "../notifications/service.js";
 import { removeMedia } from "../proctoring/storage.js";
+import { sendInactiveAccountWarningEmail } from "../auth/mailer.js";
 
 export const EXPORT_DIR = path.resolve("uploads", "exports");
 const EXPORT_TTL_DAYS = 7;
@@ -259,49 +260,215 @@ async function runProctoringRetention(): Promise<number> {
   return old.rows.length;
 }
 
-export async function runRetention(): Promise<{ recordings: number; erased: number; expiredExports: number; proctoringMedia: number }> {
-  let recordings = 0;
-  let erased = 0;
-  const tenants = await pool.query(
-    `SELECT id, retention_recordings_months, retention_inactive_learner_months FROM tenants
-     WHERE retention_recordings_months IS NOT NULL OR retention_inactive_learner_months IS NOT NULL`,
+// ---- Retention rules (owner decision, launch plan) ----
+// Defaults for everyone; an organisation can set its own recording period (at
+// most 12 months) and its own period for removed learners.
+export const RETENTION = {
+  templateMonths: 3, // face and voice templates, after the person's last test
+  recordingMonths: 3, // spoken-answer recordings and face-check photos
+  recordingMaxMonths: 12, // the longest an organisation may choose
+  inactiveIndividualMonths: 12, // individual accounts without any activity
+  warningDays: 30, // the warning email comes this long before deletion
+  removedLearnerMonths: 12, // learners removed from an organisation
+  auditLogMonths: 12,
+};
+
+// The new default rules only report what they would delete until this is
+// "true" (set it after checking a week of reports). Rules an organisation set
+// itself, proctoring media and candidates' retention always apply.
+export function retentionEnforced(): boolean {
+  return process.env.RETENTION_ENFORCE === "true";
+}
+
+// A test whose evidence must be kept: an open appeal or score review, a flag
+// or an integrity review still in progress, or an answer waiting in the review queue.
+const OPEN_CASE = `(
+  EXISTS (SELECT 1 FROM result_appeals ra WHERE ra.session_id = s.id AND ra.status = 'open')
+  OR EXISTS (SELECT 1 FROM session_integrity si WHERE si.session_id = s.id AND si.status IN ('flagged', 'in_progress'))
+  OR EXISTS (SELECT 1 FROM review_queue rq WHERE rq.attempt_id = a.id AND rq.resolved_at IS NULL)
+)`;
+
+export interface RetentionReport {
+  enforced: boolean;
+  recordings: number;
+  faceCheckPhotos: number;
+  templates: number;
+  warned: number;
+  erased: number;
+  auditRows: number;
+  expiredExports: number;
+  proctoringMedia: number;
+  wouldDelete: { recordings: number; faceCheckPhotos: number; templates: number; warn: number; erase: number; auditRows: number };
+}
+
+export async function runRetention(): Promise<RetentionReport> {
+  const enforce = retentionEnforced();
+  const report: RetentionReport = {
+    enforced: enforce,
+    recordings: 0,
+    faceCheckPhotos: 0,
+    templates: 0,
+    warned: 0,
+    erased: 0,
+    auditRows: 0,
+    expiredExports: 0,
+    proctoringMedia: 0,
+    wouldDelete: { recordings: 0, faceCheckPhotos: 0, templates: 0, warn: 0, erase: 0, auditRows: 0 },
+  };
+
+  // 1. Spoken-answer recordings: the organisation's period (capped at 12
+  // months), else 3 months; kept while the test has an open case.
+  const recordings = await pool.query(
+    `SELECT a.id, a.response_uri, (t.retention_recordings_months IS NOT NULL) AS explicit
+     FROM attempts a JOIN sessions s ON s.id = a.session_id JOIN users u ON u.id = s.user_id LEFT JOIN tenants t ON t.id = u.tenant_id
+     WHERE a.response_uri IS NOT NULL
+       AND a.created_at < now() - make_interval(months => least(coalesce(t.retention_recordings_months, $1), $2))
+       AND NOT ${OPEN_CASE}
+     LIMIT 5000`,
+    [RETENTION.recordingMonths, RETENTION.recordingMaxMonths],
   );
-  for (const t of tenants.rows) {
-    if (t.retention_recordings_months) {
-      const months = t.retention_recordings_months;
-      const attempts = await pool.query(
-        `SELECT a.id, a.response_uri FROM attempts a JOIN sessions s ON s.id = a.session_id JOIN users u ON u.id = s.user_id
-         WHERE u.tenant_id = $1 AND a.response_uri IS NOT NULL AND a.created_at < now() - make_interval(months => $2) LIMIT 5000`,
-        [t.id, months],
-      );
-      for (const a of attempts.rows) await removeUpload(a.response_uri);
-      await pool.query(`UPDATE attempts SET response_uri = NULL WHERE id = ANY($1::uuid[])`, [attempts.rows.map((a) => a.id)]);
-      const files = await pool.query(
-        `SELECT fc.id, fc.sample_uri FROM face_check_results fc JOIN users u ON u.id = fc.user_id
-         WHERE u.tenant_id = $1 AND fc.sample_uri IS NOT NULL AND fc.created_at < now() - make_interval(months => $2)`,
-        [t.id, months],
-      );
-      for (const f of files.rows) await removeUpload(f.sample_uri);
-      await pool.query(`UPDATE face_check_results SET sample_uri = NULL WHERE id = ANY($1::uuid[])`, [files.rows.map((f) => f.id)]);
-      recordings += attempts.rows.length + files.rows.length;
+  const recNow = recordings.rows.filter((r) => enforce || r.explicit);
+  report.wouldDelete.recordings = recordings.rows.length;
+  for (const r of recNow) await removeUpload(r.response_uri);
+  if (recNow.length) await pool.query(`UPDATE attempts SET response_uri = NULL WHERE id = ANY($1::uuid[])`, [recNow.map((r) => r.id)]);
+  report.recordings = recNow.length;
+
+  // Face-check photos taken during tests: the same periods.
+  const photos = await pool.query(
+    `SELECT fc.id, fc.sample_uri, (t.retention_recordings_months IS NOT NULL) AS explicit
+     FROM face_check_results fc JOIN users u ON u.id = fc.user_id LEFT JOIN tenants t ON t.id = u.tenant_id
+     WHERE fc.sample_uri IS NOT NULL
+       AND fc.created_at < now() - make_interval(months => least(coalesce(t.retention_recordings_months, $1), $2))
+     LIMIT 5000`,
+    [RETENTION.recordingMonths, RETENTION.recordingMaxMonths],
+  );
+  const photosNow = photos.rows.filter((r) => enforce || r.explicit);
+  report.wouldDelete.faceCheckPhotos = photos.rows.length;
+  for (const f of photosNow) await removeUpload(f.sample_uri);
+  if (photosNow.length) await pool.query(`UPDATE face_check_results SET sample_uri = NULL WHERE id = ANY($1::uuid[])`, [photosNow.map((f) => f.id)]);
+  report.faceCheckPhotos = photosNow.length;
+
+  // 2. Face and voice templates: 3 months after the person's last test (or
+  // their enrolment, if later). The next test asks them to enrol again; their
+  // consent stays as it is.
+  const idle = `greatest(e.created_at, coalesce((SELECT max(s.started_at) FROM sessions s WHERE s.user_id = e.user_id), e.created_at))
+                < now() - make_interval(months => $1)`;
+  const face = await pool.query(`SELECT e.id, e.sample_uri FROM face_enrollments e WHERE ${idle} LIMIT 2000`, [RETENTION.templateMonths]);
+  const voice = await pool.query(`SELECT e.id, e.sample_uri, e.sample_uri_2 FROM voice_enrollments e WHERE ${idle} LIMIT 2000`, [RETENTION.templateMonths]);
+  report.wouldDelete.templates = face.rows.length + voice.rows.length;
+  if (enforce) {
+    for (const f of face.rows) await removeUpload(f.sample_uri);
+    for (const v of voice.rows) {
+      await removeUpload(v.sample_uri);
+      await removeUpload(v.sample_uri_2);
     }
-    if (t.retention_inactive_learner_months) {
-      const gone = await pool.query(
-        `SELECT id FROM users WHERE tenant_id = $1 AND role = 'learner' AND erased_at IS NULL AND deleted_at IS NOT NULL
-           AND deleted_at < now() - make_interval(months => $2) LIMIT 500`,
-        [t.id, t.retention_inactive_learner_months],
-      );
-      for (const g of gone.rows) {
-        if (await eraseLearner({ userId: g.id, actorId: null, actorRole: "system", reason: `Deactivated over ${t.retention_inactive_learner_months} months` })) erased++;
+    if (face.rows.length) await pool.query(`DELETE FROM face_enrollments WHERE id = ANY($1::uuid[])`, [face.rows.map((r) => r.id)]);
+    if (voice.rows.length) await pool.query(`DELETE FROM voice_enrollments WHERE id = ANY($1::uuid[])`, [voice.rows.map((r) => r.id)]);
+    report.templates = face.rows.length + voice.rows.length;
+  }
+
+  // 3. Individual accounts with no activity for 12 months: a warning email 30
+  // days before, then deletion. Never while the account holds a valid
+  // certificate, or a plan or credits that are not used up or ended.
+  const lastActive = `greatest(u.created_at,
+      coalesce((SELECT max(l.created_at) FROM login_events l WHERE l.user_id = u.id), u.created_at),
+      coalesce((SELECT max(s.started_at) FROM sessions s WHERE s.user_id = u.id), u.created_at))`;
+  const keep = `(
+    EXISTS (SELECT 1 FROM certificates c WHERE c.user_id = u.id AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until > now()))
+    OR EXISTS (SELECT 1 FROM entitlements en WHERE en.user_id = u.id AND en.revoked_at IS NULL AND (en.ends_at IS NULL OR en.ends_at > now())
+               AND (en.attempts_total IS NULL OR coalesce(en.attempts_used, 0) < en.attempts_total))
+  )`;
+  const individual = `u.role = 'learner' AND u.erased_at IS NULL AND u.deleted_at IS NULL
+    AND EXISTS (SELECT 1 FROM tenants t WHERE t.id = u.tenant_id AND t.type LIKE 'individual%')`;
+  // Someone active again after a warning is no longer due.
+  if (enforce) await pool.query(`UPDATE users u SET deletion_warned_at = NULL WHERE u.deletion_warned_at IS NOT NULL AND ${lastActive} > u.deletion_warned_at`);
+  const toWarn = await pool.query(
+    `SELECT u.id, u.email FROM users u
+     WHERE ${individual} AND u.deletion_warned_at IS NULL AND NOT ${keep}
+       AND ${lastActive} < now() - make_interval(months => $1) + make_interval(days => $2)
+     LIMIT 500`,
+    [RETENTION.inactiveIndividualMonths, RETENTION.warningDays],
+  );
+  report.wouldDelete.warn = toWarn.rows.length;
+  if (enforce) {
+    for (const u of toWarn.rows) {
+      try {
+        await sendInactiveAccountWarningEmail(u.email, RETENTION.warningDays);
+        await pool.query(`UPDATE users SET deletion_warned_at = now() WHERE id = $1`, [u.id]);
+        report.warned++;
+      } catch (err) {
+        console.error("inactive account warning failed:", err);
       }
     }
   }
+  const toErase = await pool.query(
+    `SELECT u.id FROM users u
+     WHERE ${individual} AND u.deletion_warned_at < now() - make_interval(days => $1) AND NOT ${keep}
+       AND ${lastActive} < u.deletion_warned_at
+     LIMIT 500`,
+    [RETENTION.warningDays],
+  );
+  report.wouldDelete.erase = toErase.rows.length;
+
+  // Learners removed from an organisation: the organisation's period, else 12 months.
+  const removed = await pool.query(
+    `SELECT u.id, (t.retention_inactive_learner_months IS NOT NULL) AS explicit, coalesce(t.retention_inactive_learner_months, $1) AS months
+     FROM users u JOIN tenants t ON t.id = u.tenant_id
+     WHERE u.role = 'learner' AND u.erased_at IS NULL AND u.deleted_at IS NOT NULL AND t.type = 'cohort'
+       AND u.deleted_at < now() - make_interval(months => coalesce(t.retention_inactive_learner_months, $1))
+     LIMIT 500`,
+    [RETENTION.removedLearnerMonths],
+  );
+  report.wouldDelete.erase += removed.rows.length;
+  const eraseNow = [
+    ...(enforce ? toErase.rows.map((r) => ({ id: r.id as string, reason: `No activity for ${RETENTION.inactiveIndividualMonths} months` })) : []),
+    ...removed.rows.filter((r) => enforce || r.explicit).map((r) => ({ id: r.id as string, reason: `Removed from the organisation over ${r.months} months ago` })),
+  ];
+  for (const e of eraseNow) {
+    if (await eraseLearner({ userId: e.id, actorId: null, actorRole: "system", reason: e.reason })) {
+      report.erased++;
+      await logPrivacyRequest({ userId: e.id, kind: "deletion", requestedBy: null, details: { by: "retention", reason: e.reason } });
+    }
+  }
+
+  // 4. Audit log entries older than 12 months.
+  const audit = await pool.query(`SELECT count(*)::int AS n FROM audit_log WHERE created_at < now() - make_interval(months => $1)`, [RETENTION.auditLogMonths]);
+  report.wouldDelete.auditRows = audit.rows[0].n;
+  if (enforce && audit.rows[0].n) {
+    const d = await pool.query(`DELETE FROM audit_log WHERE created_at < now() - make_interval(months => $1)`, [RETENTION.auditLogMonths]);
+    report.auditRows = d.rowCount ?? 0;
+  }
+
+  // Data exports past their download window, and proctoring media (always on).
   const expired = await pool.query(`UPDATE data_exports SET status = 'expired' WHERE status = 'ready' AND expires_at < now() RETURNING file_path`);
   for (const e of expired.rows) if (e.file_path?.startsWith(EXPORT_DIR)) await unlink(e.file_path).catch(() => {});
-  const proctoringMedia = await runProctoringRetention();
-  return { recordings, erased, expiredExports: expired.rowCount ?? 0, proctoringMedia };
+  report.expiredExports = expired.rowCount ?? 0;
+  report.proctoringMedia = await runProctoringRetention();
+  return report;
 }
 
 export async function acceptDpa(tenantId: string, userId: string) {
   await pool.query(`UPDATE tenants SET dpa_accepted_at = now(), dpa_accepted_by = $2, dpa_version = $3 WHERE id = $1`, [tenantId, userId, DPA_VERSION]);
 }
+
+// Every privacy request (download, deletion, correction, objection, consent
+// withdrawal) is logged with its dates, so we can show it was answered within
+// the legal time (30 days under GDPR). Never blocks the request itself.
+export type PrivacyRequestKind = "export" | "deletion" | "correction" | "objection" | "consent_withdrawal";
+export async function logPrivacyRequest(r: {
+  userId: string | null;
+  tenantId?: string | null;
+  kind: PrivacyRequestKind;
+  requestedBy?: string | null;
+  details?: Record<string, unknown>;
+  completed?: boolean;
+}): Promise<void> {
+  await pool
+    .query(
+      `INSERT INTO privacy_requests (user_id, tenant_id, kind, status, requested_by, details, completed_at)
+       VALUES ($1, coalesce($2, (SELECT tenant_id FROM users WHERE id = $1)), $3, $4, $5, $6, CASE WHEN $4 = 'completed' THEN now() END)`,
+      [r.userId, r.tenantId ?? null, r.kind, r.completed === false ? "received" : "completed", r.requestedBy ?? r.userId, r.details ?? null],
+    )
+    .catch((err) => console.error("privacy request log failed:", err));
+}
+

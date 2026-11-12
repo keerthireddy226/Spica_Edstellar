@@ -147,6 +147,7 @@ export function registerJobs() {
   });
   every(24 * 60, "data.retention", async () => {
     const r = await runRetention();
-    if (r.recordings || r.erased || r.expiredExports || r.proctoringMedia) console.log("retention:", r);
+    // Logged every day: in report-only mode, wouldDelete shows what the new rules would remove.
+    console.log("retention:", JSON.stringify(r));
   });
 }

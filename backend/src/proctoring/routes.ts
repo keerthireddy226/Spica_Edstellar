@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { Router, type Response } from "express";
 import sharp from "sharp";
 import { PRIVACY_NOTICE_VERSION } from "../auth/schemas.js";
-import { UNFLAGGED_MEDIA_DAYS } from "../governance/service.js";
+import { RETENTION, UNFLAGGED_MEDIA_DAYS } from "../governance/service.js";
 import { ensureFile, ensurePrivateFile } from "../storage/mirror.js";
 import { z } from "zod";
 import { holdResultCertificate, issueResultCertificate } from "../assessment/service.js";
@@ -337,7 +337,8 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
     biometric: proctored && usesBiometrics(policy),
     faceCheck: org.faceCheckRequired,
     retentionDays: Math.min(policy.retentionDays, UNFLAGGED_MEDIA_DAYS),
-    recordingsMonths: (t?.retention_recordings_months as number | null) ?? null,
+    // The organization's period, else the default (retention rules).
+    recordingsMonths: Math.min((t?.retention_recordings_months as number | null) ?? RETENTION.recordingMonths, RETENTION.recordingMaxMonths),
     audience: resultsAudience(t?.role, t?.tenant_type),
     version: testConsentVersion(proctored ? consentVersion(policy) : null),
   };

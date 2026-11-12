@@ -6,7 +6,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { SESSION_COOKIE } from "../auth/tokens.js";
 import { assertFeature } from "../plans/service.js";
 import { enqueue } from "../queue/queue.js";
-import { DPA_VERSION, acceptDpa, eraseLearner, requestExport, withdrawBiometrics } from "./service.js";
+import { DPA_VERSION, RETENTION, acceptDpa, eraseLearner, logPrivacyRequest, requestExport, withdrawBiometrics } from "./service.js";
 
 // Mounted under /api/org-admin: data processing agreement, retention, exports
 // and erasure for an organization.
@@ -73,7 +73,7 @@ governanceRouter.patch("/data/retention", requireAuth, async (req: AuthedRequest
     await assertFeature(tenantId, "data_governance");
     const body = z
       .object({
-        recordingsMonths: z.number().int().min(1).max(120).nullable(),
+        recordingsMonths: z.number().int().min(1).max(RETENTION.recordingMaxMonths).nullable(),
         inactiveLearnerMonths: z.number().int().min(1).max(120).nullable(),
       })
       .parse(req.body);
@@ -97,6 +97,7 @@ governanceRouter.post("/data-export", requireAuth, async (req: AuthedRequest, re
     if (running.rowCount) return res.status(409).json({ error: "export_in_progress" });
     const id = await requestExport(tenantId, req.user!.id);
     await enqueue("data.export", { exportId: id }, { maxAttempts: 3 });
+    await logPrivacyRequest({ userId: null, tenantId, kind: "export", requestedBy: req.user!.id, details: { scope: "organization", exportId: id } });
     res.status(202).json({ id });
   } catch (err) {
     next(err);
@@ -130,6 +131,7 @@ governanceRouter.post("/learners/:id/erase", requireAuth, async (req: AuthedRequ
     if (own.rowCount === 0) return res.status(404).json({ error: "learner_not_found" });
     const ok = await eraseLearner({ userId: String(req.params.id), actorId: req.user!.id, actorRole: "org_admin", reason: body.reason });
     if (!ok) return res.status(400).json({ error: "already_erased" });
+    await logPrivacyRequest({ userId: String(req.params.id), tenantId, kind: "deletion", requestedBy: req.user!.id, details: { by: "org_admin", reason: body.reason } });
     res.json({ id: req.params.id });
   } catch (err) {
     next(err);
@@ -143,7 +145,9 @@ export const selfEraseRouter = Router();
 selfEraseRouter.post("/me/biometrics/withdraw", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     if (req.user!.role !== "learner") return res.status(403).json({ error: "forbidden" });
-    res.json(await withdrawBiometrics(req.user!.id));
+    const result = await withdrawBiometrics(req.user!.id);
+    await logPrivacyRequest({ userId: req.user!.id, kind: "consent_withdrawal", details: { consent: "face_and_voice" } });
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -178,6 +182,7 @@ selfEraseRouter.get("/me/export", requireAuth, async (req: AuthedRequest, res, n
       voiceEnrollment: (await q(`SELECT status, (sample_uri IS NOT NULL) AS has_sample, created_at FROM voice_enrollments WHERE user_id = $1`))[0] ?? null,
       identityChecks: await q(`SELECT status, document_type, reviewed_at, created_at FROM identity_verifications WHERE user_id = $1 ORDER BY created_at`),
     };
+    await logPrivacyRequest({ userId: id, kind: "export", details: { scope: "self" } });
     res.setHeader("Content-Disposition", `attachment; filename="spica-my-data-${new Date().toISOString().slice(0, 10)}.json"`);
     res.json(data);
   } catch (err) {
@@ -191,6 +196,7 @@ selfEraseRouter.post("/me/erase", requireAuth, async (req: AuthedRequest, res, n
     const u = (await pool.query(`SELECT password_hash FROM users WHERE id = $1`, [req.user!.id])).rows[0];
     if (!u || !(await bcrypt.compare(body.password, u.password_hash))) return res.status(401).json({ error: "invalid_credentials" });
     await eraseLearner({ userId: req.user!.id, actorId: req.user!.id, actorRole: "learner", reason: "Requested by the learner" });
+    await logPrivacyRequest({ userId: req.user!.id, kind: "deletion", details: { by: "self" } });
     res.clearCookie(SESSION_COOKIE);
     res.json({ erased: true });
   } catch (err) {
