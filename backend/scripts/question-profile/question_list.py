@@ -87,7 +87,8 @@ def words(s: str) -> int:
     return len(re.findall(r"[A-Za-z0-9']+", body))
 
 
-def main():
+def collect() -> list:
+    """Every approved question with its display text, difficulty, length and uses."""
     prof = {}
     for line in open(os.path.join(OUT, "profile.jsonl")):
         r = json.loads(line)
@@ -95,18 +96,20 @@ def main():
 
     with psycopg.connect(os.environ["PROFILE_DB_URL"]) as conn:
         rows = conn.execute(
-            """SELECT i.id::text, i.item_type_id, it.name, i.cefr_level, i.content, i.answer_set
+            """SELECT i.id::text, i.item_type_id, it.name, i.cefr_level, i.content, i.answer_set, i.pool, it.skills
                FROM items i JOIN item_types it ON it.id = i.item_type_id WHERE i.status = 'approved'"""
         ).fetchall()
         usage = defaultdict(list)
+        sets = defaultdict(list)
         # The set the question belongs to, and every built test that uses it.
-        for iid, purpose, name in conn.execute(
-            """SELECT i.id::text, e.purpose, e.name FROM items i JOIN exam_parts ep ON ep.id = i.exam_part_id JOIN exams e ON e.id = ep.exam_id
+        for iid, purpose, name, test_type in conn.execute(
+            """SELECT i.id::text, e.purpose, e.name, e.test_type_id FROM items i JOIN exam_parts ep ON ep.id = i.exam_part_id JOIN exams e ON e.id = ep.exam_id
                WHERE i.status = 'approved'
                UNION
-               SELECT fi.item_id::text, f.purpose, f.name FROM form_items fi JOIN forms f ON f.id = fi.form_id"""
+               SELECT fi.item_id::text, f.purpose, f.name, f.test_type_id FROM form_items fi JOIN forms f ON f.id = fi.form_id"""
         ):
             usage[iid].append(f"{PURPOSE.get(purpose, (purpose or '').title())}: {name}")
+            sets[iid].append((purpose, name, test_type))
 
     # Difficulty within the level: a question's text measures (length, sentence
     # length, clauses, word length, share of less common words, speech rate)
@@ -142,7 +145,7 @@ def main():
             p["difficulty"] = "Easy" if i < n / 3 else "Medium" if i < 2 * n / 3 else "Hard"
 
     out = []
-    for iid, t, tname, cefr, content, answer in rows:
+    for iid, t, tname, cefr, content, answer, pool, skills in rows:
         p = prof.get(iid)
         if not p:
             continue
@@ -160,8 +163,18 @@ def main():
                 "type": tname,
                 "usage": "\n".join(used),
                 "kind": 0 if any(u.startswith("Assessment") for u in used) else 1 if any(u.startswith("Mock") for u in used) else 2 if any(u.startswith("Practice test") for u in used) else 3,
+                "sets": sets.get(iid, []),
+                "pool": pool,
+                "skills": list(skills or []),
+                "audio_seconds": p.get("audio_seconds"),
+                "length_band": p["length"],
             }
         )
+    return out
+
+
+def main():
+    out = collect()
 
     if SAMPLE:
         # A spread of types, levels and uses.
