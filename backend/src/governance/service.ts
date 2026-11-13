@@ -11,7 +11,7 @@ import { sendInactiveAccountWarningEmail } from "../auth/mailer.js";
 
 export const EXPORT_DIR = path.resolve("uploads", "exports");
 const EXPORT_TTL_DAYS = 7;
-export const DPA_VERSION = "2026-10-29";
+export const DPA_VERSION = "2026-11-13";
 
 // Stored URIs look like "/uploads/attempts/x.webm"; only ever delete inside uploads/.
 async function removeUpload(uri: string | null) {
