@@ -59,8 +59,8 @@ export function MyCertificates({ showEmpty = false }: { showEmpty?: boolean } = 
             </p>
             {c.kind === "result" && (
               <label className="mt-1.5 flex items-center gap-2 text-xs text-ink cursor-pointer">
-                <input type="checkbox" checked={c.reportPublic !== false} onChange={(e) => toggleReport(c, e.target.checked)} className="cursor-pointer" />
-                {tr("Let people who check this certificate see my full score report")}
+                <input type="checkbox" checked={c.reportPublic === true} onChange={(e) => toggleReport(c, e.target.checked)} className="cursor-pointer" />
+                {tr("Let people who check this certificate also see my full score report (without my answers)")}
               </label>
             )}
             {saveFailed === c.id && <p className="text-xs text-error mt-1">{tr("Could not save this setting. Try again.")}</p>}

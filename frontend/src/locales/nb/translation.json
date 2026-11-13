@@ -217,7 +217,6 @@
       "consent": {
         "title": "Før vi fortsetter",
         "subtitle": "Stemmen din tas opp under øving og tester",
-        "body": "Vi tar opp de muntlige svarene dine for å vurdere talen din og gi tilbakemelding. Opptakene lagres i en begrenset periode og brukes bare til å vurdere og forbedre resultatene dine. Du kan når som helst slette dataene dine under Innstillinger.",
         "checkboxLabel": "Jeg forstår og godtar at stemmen min tas opp under øving og tester.",
         "submit": "Gå videre til testen",
         "submitting": "Lagrer…",
@@ -234,7 +233,6 @@
         "ageLabel": "Alder (valgfritt)",
         "select": "Velg…",
         "skip": "Vil helst ikke oppgi",
-        "consent": "Jeg godtar at kjønn og aldersgruppe lagres og bare brukes i anonymiserte, samlede rapporter.",
         "privacyNote": "Kjønn og alder er valgfritt. Det vises aldri for andre elever og rapporteres bare i grupper på 5 eller flere."
       }
     }

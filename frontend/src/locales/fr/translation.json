@@ -231,7 +231,6 @@
       "consent": {
         "title": "Avant de continuer",
         "subtitle": "Votre voix sera enregistrée pendant la pratique et les tests",
-        "body": "Nous enregistrons vos réponses orales pour évaluer votre expression et vous donner des retours. Les enregistrements sont conservés pendant une durée limitée et ne sont jamais utilisés à d'autres fins que l'évaluation et l'amélioration de vos propres résultats. Vous pouvez supprimer vos données à tout moment depuis les Paramètres.",
         "checkboxLabel": "Je comprends et consens à ce que ma voix soit enregistrée à des fins de pratique et d'évaluation.",
         "submit": "Aller au test",
         "submitting": "Enregistrement…",
@@ -248,7 +247,6 @@
         "ageLabel": "Âge (facultatif)",
         "select": "Sélectionnez…",
         "skip": "Je préfère ne pas répondre",
-        "consent": "J'accepte que mon genre et ma tranche d'âge soient enregistrés et utilisés uniquement dans des rapports anonymisés et agrégés.",
         "privacyNote": "Le genre et l'âge sont facultatifs. Ils ne sont jamais montrés aux autres apprenants et ne sont rapportés que par groupes de 5 ou plus."
       }
     }

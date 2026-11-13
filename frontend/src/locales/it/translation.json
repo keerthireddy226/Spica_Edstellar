@@ -217,7 +217,6 @@
       "consent": {
         "title": "Prima di continuare",
         "subtitle": "La tua voce verrà registrata durante esercizi e test",
-        "body": "Registriamo le tue risposte orali per valutare il tuo parlato e darti un feedback. Le registrazioni sono conservate per un periodo limitato e usate solo per valutare e migliorare i tuoi risultati. Puoi eliminare i tuoi dati in qualsiasi momento dalle Impostazioni.",
         "checkboxLabel": "Ho capito e acconsento alla registrazione della mia voce per esercizi e test.",
         "submit": "Vai al test",
         "submitting": "Salvataggio…",
@@ -234,7 +233,6 @@
         "ageLabel": "Età (facoltativo)",
         "select": "Seleziona…",
         "skip": "Preferisco non rispondere",
-        "consent": "Accetto che il mio genere e la mia fascia d'età vengano memorizzati e usati solo in report anonimi e aggregati.",
         "privacyNote": "Genere ed età sono facoltativi. Non vengono mai mostrati ad altri studenti e sono riportati solo in gruppi di almeno 5 persone."
       }
     }

@@ -217,7 +217,6 @@
       "consent": {
         "title": "Bevor es weitergeht",
         "subtitle": "Deine Stimme wird beim Üben und in Tests aufgezeichnet",
-        "body": "Wir zeichnen deine gesprochenen Antworten auf, um dein Sprechen zu bewerten und dir Feedback zu geben. Aufnahmen werden nur begrenzte Zeit gespeichert und ausschließlich zur Bewertung und Verbesserung deiner eigenen Ergebnisse verwendet. Du kannst deine Daten jederzeit in den Einstellungen löschen.",
         "checkboxLabel": "Ich habe verstanden und stimme zu, dass meine Stimme zum Üben und Testen aufgezeichnet wird.",
         "submit": "Zum Test",
         "submitting": "Wird gespeichert…",
@@ -234,7 +233,6 @@
         "ageLabel": "Alter (optional)",
         "select": "Auswählen…",
         "skip": "Lieber nicht angeben",
-        "consent": "Ich bin einverstanden, dass mein Geschlecht und meine Altersgruppe gespeichert und nur in anonymisierten, zusammengefassten Berichten verwendet werden.",
         "privacyNote": "Geschlecht und Alter sind freiwillig. Sie werden anderen Lernenden nie angezeigt und nur in Gruppen von mindestens 5 Personen ausgewertet."
       }
     }

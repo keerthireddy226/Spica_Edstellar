@@ -231,7 +231,6 @@
       "consent": {
         "title": "Antes de continuar",
         "subtitle": "Tu voz será grabada durante la práctica y las pruebas",
-        "body": "Grabamos tus respuestas habladas para calificar tu expresión oral y darte retroalimentación. Las grabaciones se conservan por un tiempo limitado y nunca se usan para nada que no sea calificar y mejorar tus propios resultados. Puedes eliminar tus datos en cualquier momento desde Configuración.",
         "checkboxLabel": "Entiendo y doy mi consentimiento para que se grabe mi voz con fines de práctica y evaluación.",
         "submit": "Ir a la prueba",
         "submitting": "Guardando…",
@@ -248,7 +247,6 @@
         "ageLabel": "Edad (opcional)",
         "select": "Selecciona…",
         "skip": "Prefiero omitirlo",
-        "consent": "Acepto que mi género y rango de edad se guarden y se usen solo en informes anónimos y agregados.",
         "privacyNote": "El género y la edad son opcionales. Nunca se muestran a otros estudiantes y solo se informan en grupos de 5 o más."
       }
     }

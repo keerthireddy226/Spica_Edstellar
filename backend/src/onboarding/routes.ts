@@ -4,6 +4,12 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { demographicsSchema, onboardingSchema } from "./schemas.js";
 
+// The consent wording's version (Legal Documents: consent register C06, C07).
+// v2 (13 Nov 2026): the texts say who can hear recordings and who can see
+// gender and age.
+const RECORDING_CONSENT_VERSION = "v2";
+const DEMOGRAPHICS_CONSENT_VERSION = "v2";
+
 const voicePreferenceSchema = z.object({ preferredVoice: z.enum(["male", "female"]) });
 const preferencesSchema = z.object({ spokenPromptsEnabled: z.boolean() });
 
@@ -97,7 +103,7 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
     if (body.gender || body.ageBand) {
       await client.query(
         `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
-         VALUES ($1, 'v1', 'demographics', $2)`,
+         VALUES ($1, '${DEMOGRAPHICS_CONSENT_VERSION}', 'demographics', $2)`,
         [req.user!.id, req.ip],
       );
     }
@@ -130,7 +136,7 @@ onboardingRouter.post("/complete", requireAuth, async (req: AuthedRequest, res, 
     await client.query(
       `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
        VALUES ($1, $2, 'recording', $3)`,
-      [req.user!.id, "v1", req.ip],
+      [req.user!.id, RECORDING_CONSENT_VERSION, req.ip],
     );
 
     await client.query("COMMIT");
@@ -174,7 +180,7 @@ onboardingRouter.patch("/demographics", requireAuth, async (req: AuthedRequest, 
       );
       if (existing.rowCount === 0) {
         await pool.query(
-          `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, 'v1', 'demographics', $2)`,
+          `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, '${DEMOGRAPHICS_CONSENT_VERSION}', 'demographics', $2)`,
           [req.user!.id, req.ip],
         );
       }

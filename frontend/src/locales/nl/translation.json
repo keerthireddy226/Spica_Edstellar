@@ -217,7 +217,6 @@
       "consent": {
         "title": "Voordat we verdergaan",
         "subtitle": "Je stem wordt opgenomen tijdens oefeningen en toetsen",
-        "body": "We nemen je gesproken antwoorden op om je spreekvaardigheid te beoordelen en je feedback te geven. Opnames worden beperkte tijd bewaard en alleen gebruikt om je eigen resultaten te beoordelen en te verbeteren. Je kunt je gegevens op elk moment verwijderen via Instellingen.",
         "checkboxLabel": "Ik begrijp het en geef toestemming om mijn stem op te nemen voor oefeningen en toetsen.",
         "submit": "Naar de toets",
         "submitting": "Opslaan…",
@@ -234,7 +233,6 @@
         "ageLabel": "Leeftijd (optioneel)",
         "select": "Selecteer…",
         "skip": "Liever niet",
-        "consent": "Ik ga ermee akkoord dat mijn geslacht en leeftijdsgroep worden opgeslagen en alleen in geanonimiseerde, samengevoegde rapporten worden gebruikt.",
         "privacyNote": "Geslacht en leeftijd zijn optioneel. Ze worden nooit aan andere cursisten getoond en alleen gerapporteerd in groepen van 5 of meer."
       }
     }

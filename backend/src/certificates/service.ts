@@ -79,7 +79,7 @@ function toCert(r: Record<string, any>): Certificate {
     skillScores: r.skill_scores ?? null,
     validUntil: r.valid_until ? dateOnly(r.valid_until) : null,
     identityVerified: !!r.identity_verified,
-    reportPublic: r.report_public !== false,
+    reportPublic: r.report_public === true,
     sessionId: r.session_id ?? null,
   };
 }
@@ -177,9 +177,17 @@ export async function listForLearner(userId: string): Promise<Certificate[]> {
 }
 
 // The learner shows or hides the full report link on their certificate's check page.
-export async function setReportPublic(userId: string, id: string, visible: boolean): Promise<boolean> {
-  const r = await pool.query(`UPDATE certificates SET report_public = $3 WHERE id = $1 AND user_id = $2 AND kind = 'result' RETURNING id`, [id, userId, visible]);
-  return (r.rowCount ?? 0) > 0;
+// Off until the learner chooses; each choice is kept as a consent record
+// (consent register C13).
+export async function setReportPublic(userId: string, id: string, visible: boolean, ip: string | null = null): Promise<boolean> {
+  const r = await pool.query(`UPDATE certificates SET report_public = $3 WHERE id = $1 AND user_id = $2 AND kind = 'result' RETURNING code`, [id, userId, visible]);
+  if (!r.rowCount) return false;
+  if (visible) {
+    await pool.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'report_sharing', $3)`, [userId, `v1:${r.rows[0].code}`, ip]);
+  } else {
+    await pool.query(`UPDATE consent_records SET revoked_at = now() WHERE user_id = $1 AND consent_type = 'report_sharing' AND consent_version = $2 AND revoked_at IS NULL`, [userId, `v1:${r.rows[0].code}`]);
+  }
+  return true;
 }
 
 // Every certificate the organization issued. `expired` (past its valid-until

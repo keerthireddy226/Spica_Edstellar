@@ -217,7 +217,6 @@
       "consent": {
         "title": "Ennen kuin jatketaan",
         "subtitle": "Äänesi tallennetaan harjoitusten ja testien aikana",
-        "body": "Tallennamme suulliset vastauksesi arvioidaksemme puhumistasi ja antaaksemme palautetta. Tallenteita säilytetään rajoitetun ajan, ja niitä käytetään vain tulostesi arviointiin ja parantamiseen. Voit poistaa tietosi milloin tahansa Asetuksista.",
         "checkboxLabel": "Ymmärrän ja hyväksyn, että ääneni tallennetaan harjoitusten ja testien aikana.",
         "submit": "Siirry testiin",
         "submitting": "Tallennetaan…",
@@ -234,7 +233,6 @@
         "ageLabel": "Ikä (valinnainen)",
         "select": "Valitse…",
         "skip": "En halua kertoa",
-        "consent": "Hyväksyn, että sukupuoleni ja ikäryhmäni tallennetaan ja niitä käytetään vain anonymisoiduissa koosteraporteissa.",
         "privacyNote": "Sukupuoli ja ikä ovat valinnaisia. Niitä ei koskaan näytetä muille opiskelijoille, ja ne raportoidaan vain vähintään 5 hengen ryhminä."
       }
     }

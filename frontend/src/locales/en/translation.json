@@ -231,7 +231,7 @@
       "consent": {
         "title": "Before we continue",
         "subtitle": "Your voice will be recorded during practice and tests",
-        "body": "We record your spoken responses to score your speaking and provide feedback. Recordings are kept for a limited time and are never used for anything other than scoring and improving your own results. You can delete your data at any time from Settings.",
+        "body": "We record your spoken answers to score your speaking and give you feedback. Recordings are scored by Spica with the help of its AI scoring provider, and they can be listened to by Spica's reviewers and, if you take a test for an organisation or an employer, by that organisation's reviewers or the recruiter. Recordings are deleted after 3 months, or after the period your organisation has set (up to 12 months), unless a review of your result is still open. You can delete your data at any time from Settings.",
         "checkboxLabel": "I understand and consent to my voice being recorded for practice and testing.",
         "submit": "Go to test",
         "submitting": "Saving…",
@@ -248,7 +248,7 @@
         "ageLabel": "Age (optional)",
         "select": "Select…",
         "skip": "Prefer to skip",
-        "consent": "I agree that my gender and age range can be stored and used only in anonymised, aggregated reports.",
+        "consent": "I agree that my gender and age range can be stored and used for fairness checks and grouped reports. If I take part through an organisation, its administrators can also see them.",
         "privacyNote": "Gender and age are optional. They're never shown to other learners and only ever reported in groups of 5 or more."
       }
     }

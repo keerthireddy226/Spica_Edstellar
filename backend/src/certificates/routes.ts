@@ -342,7 +342,7 @@ certificatesRouter.get("/mine", requireAuth, async (req: AuthedRequest, res, nex
 certificatesRouter.patch("/mine/:id/report-public", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const body = z.object({ visible: z.boolean() }).parse(req.body);
-    if (!(await setReportPublic(req.user!.id, String(req.params.id), body.visible))) return res.status(404).json({ error: "not_found" });
+    if (!(await setReportPublic(req.user!.id, String(req.params.id), body.visible, req.ip ?? null))) return res.status(404).json({ error: "not_found" });
     res.json({ reportPublic: body.visible });
   } catch (err) {
     next(err);

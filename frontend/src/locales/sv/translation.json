@@ -217,7 +217,6 @@
       "consent": {
         "title": "Innan vi fortsätter",
         "subtitle": "Din röst spelas in under övningar och prov",
-        "body": "Vi spelar in dina muntliga svar för att bedöma ditt tal och ge dig feedback. Inspelningarna sparas under en begränsad tid och används bara för att bedöma och förbättra dina resultat. Du kan när som helst radera dina data under Inställningar.",
         "checkboxLabel": "Jag förstår och godkänner att min röst spelas in under övningar och prov.",
         "submit": "Fortsätt till testet",
         "submitting": "Sparar…",
@@ -234,7 +233,6 @@
         "ageLabel": "Ålder (valfritt)",
         "select": "Välj…",
         "skip": "Vill inte uppge",
-        "consent": "Jag godkänner att mitt kön och min åldersgrupp sparas och bara används i anonymiserade, sammanställda rapporter.",
         "privacyNote": "Kön och ålder är valfritt. Det visas aldrig för andra deltagare och redovisas bara i grupper om 5 eller fler."
       }
     }

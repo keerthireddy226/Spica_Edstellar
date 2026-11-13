@@ -217,7 +217,6 @@
       "consent": {
         "title": "Zanim przejdziemy dalej",
         "subtitle": "Twój głos będzie nagrywany podczas ćwiczeń i testów",
-        "body": "Nagrywamy Twoje odpowiedzi ustne, aby ocenić mówienie i przekazać informację zwrotną. Nagrania są przechowywane przez ograniczony czas i służą wyłącznie do oceny i poprawy Twoich wyników. W każdej chwili możesz usunąć swoje dane w Ustawieniach.",
         "checkboxLabel": "Rozumiem i zgadzam się na nagrywanie mojego głosu podczas ćwiczeń i testów.",
         "submit": "Przejdź do testu",
         "submitting": "Zapisywanie…",
@@ -234,7 +233,6 @@
         "ageLabel": "Wiek (opcjonalnie)",
         "select": "Wybierz…",
         "skip": "Wolę nie podawać",
-        "consent": "Zgadzam się, aby moja płeć i przedział wiekowy były przechowywane i wykorzystywane wyłącznie w zanonimizowanych, zbiorczych raportach.",
         "privacyNote": "Płeć i wiek są opcjonalne. Nigdy nie są pokazywane innym kursantom i są raportowane tylko w grupach co najmniej 5 osób."
       }
     }

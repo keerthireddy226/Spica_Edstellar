@@ -217,7 +217,6 @@
       "consent": {
         "title": "Trước khi tiếp tục",
         "subtitle": "Giọng nói của bạn sẽ được ghi âm trong khi luyện tập và kiểm tra",
-        "body": "Chúng tôi ghi âm câu trả lời nói của bạn để đánh giá kỹ năng nói và đưa ra nhận xét. Bản ghi được lưu trong thời gian giới hạn và chỉ dùng để đánh giá, cải thiện kết quả của bạn. Bạn có thể xóa dữ liệu bất cứ lúc nào trong Cài đặt.",
         "checkboxLabel": "Tôi hiểu và đồng ý cho ghi âm giọng nói trong khi luyện tập và kiểm tra.",
         "submit": "Tiếp tục đến bài kiểm tra",
         "submitting": "Đang lưu…",
@@ -234,7 +233,6 @@
         "ageLabel": "Độ tuổi (không bắt buộc)",
         "select": "Chọn…",
         "skip": "Không muốn trả lời",
-        "consent": "Tôi đồng ý cho lưu giới tính và nhóm tuổi của mình, chỉ dùng trong báo cáo tổng hợp ẩn danh.",
         "privacyNote": "Giới tính và tuổi là không bắt buộc. Thông tin này không bao giờ hiển thị cho học viên khác và chỉ được báo cáo theo nhóm từ 5 người trở lên."
       }
     }
