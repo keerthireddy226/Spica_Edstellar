@@ -859,13 +859,25 @@ orgAdminRouter.patch("/learners/:id/extra-time", requireAuth, async (req: Authed
   const tenantId = await requireOwnTenant(req, res);
   if (!tenantId) return;
   try {
-    const body = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]) }).parse(req.body);
-    const r = await pool.query(`UPDATE users SET extra_time_percent = $3, updated_at = now() WHERE id = $1 AND tenant_id = $2 AND role = 'learner' AND erased_at IS NULL RETURNING id`, [
-      req.params.id,
-      tenantId,
-      body.percent,
-    ]);
+    // Above 0 the admin confirms the learner asked for it and agreed it is recorded (consent register N05).
+    const body = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]), confirmed: z.boolean().optional() }).parse(req.body);
+    if (body.percent && !body.confirmed) return res.status(400).json({ error: "extra_time_confirmation_required" });
+    const r = await pool.query(
+      `UPDATE users SET extra_time_percent = $3, updated_at = now() WHERE id = $1 AND tenant_id = $2 AND role = 'learner' AND erased_at IS NULL RETURNING id, email`,
+      [req.params.id, tenantId, body.percent],
+    );
     if (!r.rowCount) return res.status(404).json({ error: "learner_not_found" });
+    await recordAudit({
+      tenantId,
+      actorId: req.user!.id,
+      actorRole: "org_admin",
+      action: "learner.extra_time",
+      targetType: "learner",
+      targetId: String(req.params.id),
+      targetLabel: r.rows[0].email,
+      details: { percent: body.percent, ...(body.percent ? { extraTimeConfirmed: true } : {}) },
+      ip: req.ip ?? null,
+    });
     res.json({ extraTimePercent: body.percent });
   } catch (err) {
     next(err);

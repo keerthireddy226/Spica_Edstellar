@@ -25,6 +25,7 @@ import {
 } from "./service.js";
 import { AttemptError } from "../assessment/service.js";
 import { cancelInvoiceOrder, getQuote, listInvoiceOrders, requestInvoiceOrder } from "./invoiceOrders.js";
+import { agreementsSchema, checkoutTerms, recordAgreements, requireAgreements } from "./agreements.js";
 import { billingPortalUrl, handleStripeSubscriptionEvent, liveSubscription, setCancelAtPeriodEnd, startSubscription, subscriptionQuote, testRenewal } from "./subscriptions.js";
 import { CURRENCIES, createProductOrder, createSwitchOrder, currencyFor, planQuote, priceList, productQuote, type Currency } from "./products.js";
 
@@ -113,12 +114,15 @@ paymentsRouter.post("/product-orders", requireAuth, async (req: AuthedRequest, r
     const buyer = await resolveBuyer(req.user!);
     if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
     const body = productOrderSchema.parse(req.body);
+    const agreements = agreementsSchema.parse(req.body?.agreements);
+    requireAgreements(buyer, agreements);
     // Full access is bought by the month on the Plans page (POST /orders), at its price list row.
     const kind = (await pool.query(`SELECT kind FROM products WHERE id = $1`, [body.productId])).rows[0]?.kind;
     if (kind === "full") return res.status(400).json({ error: "use_plan_checkout" });
     const q = await productQuote(buyer, body.productId, body);
     if (body.productId === "cert_print" && !body.shipping) return res.status(400).json({ error: "shipping_required" });
     const orderId = await createProductOrder(buyer, q, body.productId === "cert_print" ? body.shipping : null);
+    await recordAgreements(buyer, `order:${orderId}`, req.ip ?? null);
     await productCheckout(res, buyer, { orderId, provider: q.provider, currency: q.currency, subtotal: q.subtotal, taxLabel: q.taxLabel, taxAmount: q.taxAmount, total: q.total, name: `${q.productName}${q.level ? ` (${q.level})` : ""}` });
   } catch (err) {
     handle(err, res, next);
@@ -176,8 +180,10 @@ paymentsRouter.post("/switch-orders", requireAuth, async (req: AuthedRequest, re
     const buyer = await resolveBuyer(req.user!);
     if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
     const body = z.object({ entitlementId: z.string().uuid(), testTypeId: z.string().min(1).max(60) }).parse(req.body);
+    requireAgreements(buyer, agreementsSchema.parse(req.body?.agreements));
     const o = await createSwitchOrder(buyer, body.entitlementId, body.testTypeId);
     if (!o) return res.status(400).json({ error: "switch_is_free" });
+    await recordAgreements(buyer, `order:${o.orderId}`, req.ip ?? null);
     await productCheckout(res, buyer, o);
   } catch (err) {
     if (err instanceof AttemptError) return res.status(400).json({ error: err.code });
@@ -192,8 +198,10 @@ paymentsRouter.post("/orders", requireAuth, async (req: AuthedRequest, res, next
     const buyer = await resolveBuyer(req.user!);
     if (!buyer) return res.status(403).json({ error: "forbidden" });
     const body = z.object({ quantity: z.coerce.number().int(), currency: z.string().length(3).optional() }).parse(req.body);
+    requireAgreements(buyer, agreementsSchema.parse(req.body?.agreements));
     const q = buyer.kind === "individual_plan" ? await planQuote(buyer, body.quantity, { currency: body.currency }) : quote(buyer, body.quantity);
     const orderId = await createOrder(buyer, q);
+    await recordAgreements(buyer, `order:${orderId}`, req.ip ?? null);
     const returnPath = "/checkout/return";
     const productName = buyer.kind === "individual_plan" ? "Spica learner access (1 month)" : "Spica learner license (1 learner-month)";
 
@@ -331,6 +339,16 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
   }
 }
 
+// What an individual buyer must agree to at checkout (refund policy once the
+// Terms are published; EU, EEA and UK buyers the "start now" waiver).
+paymentsRouter.get("/checkout-terms", requireAuth, async (req: AuthedRequest, res, next) => {
+  try {
+    res.json(checkoutTerms(await resolveBuyer(req.user!)));
+  } catch (err) {
+    handle(err, res, next);
+  }
+});
+
 // ---- Full access that renews monthly (individual learners) ----
 
 // The learner's subscription, and whether (and for how much) they can start one.
@@ -355,7 +373,10 @@ paymentsRouter.post("/subscriptions", requireAuth, async (req: AuthedRequest, re
     const buyer = await resolveBuyer(req.user!);
     if (!buyer || buyer.kind !== "individual_plan") return res.status(403).json({ error: "forbidden" });
     const body = z.object({ currency: z.string().length(3).optional() }).parse(req.body ?? {});
-    res.status(201).json(await startSubscription(buyer, body.currency));
+    requireAgreements(buyer, agreementsSchema.parse(req.body?.agreements), { renewal: true });
+    const started = await startSubscription(buyer, body.currency);
+    await recordAgreements(buyer, `subscription:${started.subscriptionId}`, req.ip ?? null, { renewal: true });
+    res.status(201).json(started);
   } catch (err) {
     handle(err, res, next);
   }

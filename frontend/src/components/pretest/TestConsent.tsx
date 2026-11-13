@@ -4,6 +4,7 @@ import { Button } from "@/components/Button";
 import { ConsentDetails, PrivacyConsent } from "@/components/pretest/ConsentDetails";
 import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo, type PreTestKind } from "@/api/proctoring";
 import { holdTestConsent } from "@/lib/testConsent";
+import { NO_DECLARATIONS, TestDeclarations, declarationsDone } from "@/components/pretest/TestDeclarations";
 import { tr } from "@/i18n/tr";
 
 // Before every test, right before the first face photo: what this test
@@ -24,6 +25,7 @@ export function TestConsent({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [privacy, setPrivacy] = useState(false);
+  const [declarations, setDeclarations] = useState(NO_DECLARATIONS);
 
   useEffect(() => {
     getPreTestInfo(kind, mode)
@@ -35,7 +37,7 @@ export function TestConsent({
     setBusy(true);
     setError(null);
     try {
-      const r = await givePreTestConsent(kind, biometric, mode);
+      const r = await givePreTestConsent(kind, biometric, mode, true, declarations);
       holdTestConsent(r.consentId);
       onAgreed();
     } catch {
@@ -73,6 +75,7 @@ export function TestConsent({
         <>
           <ConsentDetails info={info} module={module} mode={mode} />
           <PrivacyConsent agreed={privacy} onChange={setPrivacy} />
+          <TestDeclarations info={info} value={declarations} onChange={setDeclarations} />
         </>
       )}
 
@@ -82,15 +85,15 @@ export function TestConsent({
         <div className="flex flex-col gap-2">
           {info.biometric ? (
             <>
-              <Button onClick={() => accept(true)} disabled={busy || !privacy}>
+              <Button onClick={() => accept(true)} disabled={busy || !privacy || !declarationsDone(info, declarations)}>
                 {tr("I agree, including face and voice matching")}
               </Button>
-              <Button variant="secondary" onClick={() => accept(false)} disabled={busy || !privacy}>
+              <Button variant="secondary" onClick={() => accept(false)} disabled={busy || !privacy || !declarationsDone(info, declarations)}>
                 {tr("I agree, but check my identity manually")}
               </Button>
             </>
           ) : (
-            <Button onClick={() => accept(false)} disabled={busy || !privacy}>
+            <Button onClick={() => accept(false)} disabled={busy || !privacy || !declarationsDone(info, declarations)}>
               {module ? tr("I agree, start practising") : tr("I agree, start the test")}
             </Button>
           )}

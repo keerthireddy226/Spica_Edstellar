@@ -109,8 +109,25 @@ export function getQuote(quantity: number): Promise<Quote> {
   return api(`/payments/quote?quantity=${quantity}`);
 }
 
-export function createPaymentOrder(quantity: number): Promise<CreatedOrder> {
-  return api("/payments/orders", { method: "POST", body: JSON.stringify({ quantity }) });
+// Agreements an individual buyer gives at checkout (refund policy, monthly
+// renewal, the EU "start now" waiver); organisations send none.
+export interface CheckoutAgreementsValue {
+  refundPolicy?: boolean;
+  renewal?: boolean;
+  withdrawalWaiver?: boolean;
+}
+
+export interface CheckoutTerms {
+  refundPolicyUrl: string | null;
+  withdrawalWaiver: boolean;
+}
+
+export function getCheckoutTerms(): Promise<CheckoutTerms> {
+  return api("/payments/checkout-terms");
+}
+
+export function createPaymentOrder(quantity: number, agreements?: CheckoutAgreementsValue): Promise<CreatedOrder> {
+  return api("/payments/orders", { method: "POST", body: JSON.stringify({ quantity, agreements }) });
 }
 
 export function confirmPaymentOrder(
@@ -182,8 +199,8 @@ export function getSubscription(): Promise<SubscriptionState> {
   return api("/payments/subscription");
 }
 
-export function startSubscription(currency?: string): Promise<{ subscriptionId: string; provider: "stripe" | "test"; redirectUrl?: string }> {
-  return api("/payments/subscriptions", { method: "POST", body: JSON.stringify(currency ? { currency } : {}) });
+export function startSubscription(currency?: string, agreements?: CheckoutAgreementsValue): Promise<{ subscriptionId: string; provider: "stripe" | "test"; redirectUrl?: string }> {
+  return api("/payments/subscriptions", { method: "POST", body: JSON.stringify({ ...(currency ? { currency } : {}), agreements }) });
 }
 
 export function cancelSubscription(id: string): Promise<{ subscription: SubscriptionView }> {
@@ -292,10 +309,15 @@ export function getProductQuote(productId: string, currency: ShopCurrency, level
 }
 
 // Pays the difference to switch preparation to a dearer test; the switch is made once paid.
-export function createSwitchOrder(entitlementId: string, testTypeId: string): Promise<CreatedOrder> {
-  return api("/payments/switch-orders", { method: "POST", body: JSON.stringify({ entitlementId, testTypeId }) });
+export function createSwitchOrder(entitlementId: string, testTypeId: string, agreements?: CheckoutAgreementsValue): Promise<CreatedOrder> {
+  return api("/payments/switch-orders", { method: "POST", body: JSON.stringify({ entitlementId, testTypeId, agreements }) });
 }
 
-export function createProductOrder(productId: string, currency: ShopCurrency, level?: string, extra?: { certificateId?: string; shipping?: Shipping }): Promise<CreatedOrder> {
+export function createProductOrder(
+  productId: string,
+  currency: ShopCurrency,
+  level?: string,
+  extra?: { certificateId?: string; shipping?: Shipping; agreements?: CheckoutAgreementsValue },
+): Promise<CreatedOrder> {
   return api("/payments/product-orders", { method: "POST", body: JSON.stringify({ productId, currency, level, ...extra }) });
 }

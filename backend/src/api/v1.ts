@@ -8,7 +8,7 @@ import { learnerAccessMap, assignMonths, releaseQueuedMonths, LicenseError } fro
 import { recordAudit } from "../audit/service.js";
 import { requireApiKey, requireScope, type ApiRequest } from "./keys.js";
 import { OPENAPI } from "./openapi.js";
-import { assertProduct, inviteCandidates, RecruitmentError } from "../recruitment/service.js";
+import { assertProduct, auditExtraTime, extraTimeUnconfirmed, inviteCandidates, RecruitmentError } from "../recruitment/service.js";
 
 // Public REST API for an organization's own systems. Everything is scoped to
 // the organization that owns the key.
@@ -400,6 +400,7 @@ const apiInviteSchema = z.object({
         firstName: z.string().max(100).optional(),
         lastName: z.string().max(100).optional(),
         extraTimePercent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]).optional(),
+        extraTimeConfirmed: z.boolean().optional(),
       }),
     )
     .min(1)
@@ -414,6 +415,7 @@ apiV1Router.post("/jobs/:id/assessments", requireScope("write"), async (req: Api
   try {
     if (!UUID_RE.test(String(req.params.id))) return res.status(404).json({ error: "job_not_found" });
     const b = apiInviteSchema.parse(req.body);
+    if (extraTimeUnconfirmed(b.people)) return res.status(400).json({ error: "extra_time_confirmation_required" });
     const r = await inviteCandidates({ tenantId, jobId: String(req.params.id), actorId: null, people: b.people });
     await recordAudit({
       tenantId,
@@ -427,6 +429,7 @@ apiV1Router.post("/jobs/:id/assessments", requireScope("write"), async (req: Api
       details: { count: r.invited.length, skipped: r.skipped },
       ip: req.ip ?? null,
     });
+    await auditExtraTime({ tenantId, actorId: null, actorRole: "api", actorLabel: `API key: ${req.apiKey!.name}`, ip: req.ip ?? null }, b.people, r.invited);
     res.status(201).json({ data: r.invited.map((x) => ({ id: x.id, email: x.email })), skipped: r.skipped });
   } catch (err) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: "invalid_body", fields: err.issues.map((i) => i.path.join(".")) });

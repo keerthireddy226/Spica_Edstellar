@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ProductShop } from "@/components/plans/ProductShop";
 import { SubscriptionPanel } from "@/components/plans/SubscriptionPanel";
+import { CheckoutAgreements, agreementsReady, useCheckoutTerms } from "@/components/plans/CheckoutAgreements";
 import { OwnedList, useMyAccess } from "@/components/learner/MyPlan";
 import { Check, X as XIcon, FileText, Building2, Sparkles, CheckCircle2 } from "lucide-react";
 import { LearnerHero } from "@/components/learner/LearnerHero";
@@ -16,6 +17,7 @@ import {
   getInvoices,
   getQuote,
   startCheckout,
+  type CheckoutAgreementsValue,
   type InvoiceSummary,
   type Quote,
 } from "@/api/payments";
@@ -67,6 +69,8 @@ export function Plans() {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tiers, setTiers] = useState<QuotaTier[]>([]);
+  const terms = useCheckoutTerms();
+  const [agreements, setAgreements] = useState<CheckoutAgreementsValue>({});
 
   // Prices only for someone who buys for themselves: an organization's learner
   // sees who manages their plan (wait for the licence to know which).
@@ -113,7 +117,7 @@ export function Plans() {
     setPaying(true);
     setError(null);
     try {
-      const order = await createPaymentOrder(months);
+      const order = await createPaymentOrder(months, agreements);
       await startCheckout(order, navigate);
     } catch {
       setError(t("plans.payError"));
@@ -255,7 +259,8 @@ export function Plans() {
           )}
 
           {error && <p className="text-sm text-error">{error}</p>}
-          <Button onClick={pay} disabled={paying || !q}>
+          <CheckoutAgreements terms={terms} value={agreements} onChange={setAgreements} />
+          <Button onClick={pay} disabled={paying || !q || !agreementsReady(terms, agreements)}>
             {paying ? t("plans.redirecting") : live ? t("plans.extend", { count: months }) : t("plans.buy", { count: months })}
           </Button>
           <SubscriptionPanel />

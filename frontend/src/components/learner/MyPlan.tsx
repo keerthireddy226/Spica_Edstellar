@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Award, BookOpen, ClipboardCheck } from "lucide-react";
 import { getMyAccess, type MyAccess, type Owned } from "@/api/access";
 import { getSwitchQuote, switchPrepTest, type SwitchQuote } from "@/api/assessment";
-import { createSwitchOrder, formatAmount, getPriceList, startCheckout } from "@/api/payments";
+import { createSwitchOrder, formatAmount, getPriceList, startCheckout, type CheckoutAgreementsValue } from "@/api/payments";
+import { CheckoutAgreements, agreementsReady, useCheckoutTerms } from "@/components/plans/CheckoutAgreements";
 import { formatShortDate } from "@/api/licenses";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
@@ -37,6 +38,8 @@ function SwitchTest({ o }: { o: Owned }) {
   const [tests, setTests] = useState<{ id: string; name: string }[]>([]);
   const [pick, setPick] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const terms = useCheckoutTerms();
+  const [agreements, setAgreements] = useState<CheckoutAgreementsValue>({});
   // What the picked test costs; "org" when an organization gave this preparation and the test is dearer.
   const [q, setQ] = useState<SwitchQuote | "org" | "error" | null>(null);
   useEffect(() => {
@@ -82,12 +85,13 @@ function SwitchTest({ o }: { o: Owned }) {
       ) : q?.free === false ? (
         <>
           <span className="text-muted">{tr("Switching to {{test}} costs {{amount}} more.", { test: tests.find((t) => t.id === pick)?.name ?? "", amount: formatAmount(q.total, q.currency) })}</span>
+          <CheckoutAgreements terms={terms} value={agreements} onChange={setAgreements} />
           <button
-            disabled={state === "busy"}
+            disabled={state === "busy" || !agreementsReady(terms, agreements)}
             onClick={async () => {
               setState("busy");
               try {
-                await startCheckout(await createSwitchOrder(o.id, pick), navigate);
+                await startCheckout(await createSwitchOrder(o.id, pick, agreements), navigate);
               } catch {
                 setState("error");
               }

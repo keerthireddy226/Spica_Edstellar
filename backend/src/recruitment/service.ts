@@ -15,6 +15,7 @@ import { passThresholdForLevel } from "../placement/cefr.js";
 import { levelSummary, weightedSkillMean } from "../placement/levels.js";
 import { testTypeOfExam } from "../catalogue/service.js";
 import { snapshot } from "../reports/batchReport.js";
+import { recordAudit } from "../audit/service.js";
 
 export const PRODUCTS = ["skills", "recruitment"] as const;
 export type Product = (typeof PRODUCTS)[number];
@@ -125,6 +126,39 @@ export interface InviteInput {
   lastName?: string | null;
   // Extra time for a candidate with a disability: 0, 25, 50 or 100 (%).
   extraTimePercent?: number;
+  // Who set it confirms the candidate asked for it and agreed it is recorded.
+  extraTimeConfirmed?: boolean;
+}
+
+// True when someone has extra time without the confirmation that they asked for it.
+export function extraTimeUnconfirmed(people: InviteInput[]): boolean {
+  return people.some((p) => p.extraTimePercent && !p.extraTimeConfirmed);
+}
+
+// One audit entry per invited candidate given extra time: that it was
+// confirmed as asked for, by whom (consent register N05).
+export async function auditExtraTime(
+  actor: { tenantId: string; actorId: string | null; actorRole: string; actorLabel?: string; ip: string | null },
+  people: InviteInput[],
+  invited: { id: string; email: string }[],
+): Promise<void> {
+  for (const p of people) {
+    if (!p.extraTimePercent) continue;
+    const inv = invited.find((x) => x.email.toLowerCase() === p.email.trim().toLowerCase());
+    if (!inv) continue;
+    await recordAudit({
+      tenantId: actor.tenantId,
+      actorId: actor.actorId,
+      actorRole: actor.actorRole,
+      actorLabel: actor.actorLabel,
+      action: "recruitment.extra_time",
+      targetType: "candidate",
+      targetId: inv.id,
+      targetLabel: inv.email,
+      details: { percent: p.extraTimePercent, extraTimeConfirmed: true },
+      ip: actor.ip,
+    });
+  }
 }
 
 // Invites people to one job opening. Each invitation costs the test's

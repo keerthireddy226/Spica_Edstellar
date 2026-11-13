@@ -90,6 +90,16 @@ export interface PreTestInfo {
   recordingsMonths: number | null;
   audience?: Audience;
   version: string;
+  // Real tests and candidate tests: the test rules declaration.
+  testRules?: boolean;
+  // Candidates: the notice that scoring is automatic, naming the employer.
+  automatedNotice?: boolean;
+  employer?: string | null;
+}
+
+export interface TestDeclarationsValue {
+  testRules: boolean;
+  automatedNotice: boolean;
 }
 
 // mode: a practice test's practice or mock mode. Practice mode isn't monitored.
@@ -103,12 +113,18 @@ export function getPreTestInfo(kind: PreTestKind, mode?: DeliveryMode): Promise<
 
 // privacy: the Privacy Notice box was ticked on this screen (it isn't shown to
 // someone who already agreed to the current notice).
-export function givePreTestConsent(kind: PreTestKind, biometric: boolean, mode?: DeliveryMode, privacy = true): Promise<{ consentId: string; biometricOptOut: boolean }> {
-  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric, privacy }) });
+export function givePreTestConsent(
+  kind: PreTestKind,
+  biometric: boolean,
+  mode?: DeliveryMode,
+  privacy = true,
+  declarations?: TestDeclarationsValue,
+): Promise<{ consentId: string; biometricOptOut: boolean }> {
+  return api("/proctoring/pre-test/consent", { method: "POST", body: JSON.stringify({ kind, mode, accept: true, biometric, privacy, ...declarations }) });
 }
 
-export function giveProctoringConsent(sessionId: string, biometric: boolean): Promise<{ ok: boolean; biometricOptOut: boolean }> {
-  return api(`/proctoring/sessions/${sessionId}/consent`, { method: "POST", body: JSON.stringify({ accept: true, biometric }) });
+export function giveProctoringConsent(sessionId: string, biometric: boolean, declarations?: TestDeclarationsValue): Promise<{ ok: boolean; biometricOptOut: boolean }> {
+  return api(`/proctoring/sessions/${sessionId}/consent`, { method: "POST", body: JSON.stringify({ accept: true, biometric, ...declarations }) });
 }
 
 export interface ProctoringEvent {

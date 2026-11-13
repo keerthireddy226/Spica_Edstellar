@@ -10,8 +10,10 @@ import {
   openBillingPortal,
   resumeSubscription,
   startSubscription,
+  type CheckoutAgreementsValue,
   type SubscriptionState,
 } from "@/api/payments";
+import { CheckoutAgreements, agreementsReady, useCheckoutTerms } from "@/components/plans/CheckoutAgreements";
 import { tr } from "@/i18n/tr";
 
 // Full access that renews every month: start it, see when it renews, cancel
@@ -22,6 +24,8 @@ export function SubscriptionPanel({ onChanged }: { onChanged?: () => void }) {
   const [data, setData] = useState<SubscriptionState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const terms = useCheckoutTerms();
+  const [agreements, setAgreements] = useState<CheckoutAgreementsValue>({});
 
   const load = () =>
     getSubscription()
@@ -52,7 +56,7 @@ export function SubscriptionPanel({ onChanged }: { onChanged?: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      const r = await startSubscription(data?.monthly?.currency);
+      const r = await startSubscription(data?.monthly?.currency, agreements);
       if (r.redirectUrl) {
         window.location.href = r.redirectUrl;
         return;
@@ -87,8 +91,9 @@ export function SubscriptionPanel({ onChanged }: { onChanged?: () => void }) {
             price: formatAmount(m.total, m.currency),
           })}
         </p>
+        <CheckoutAgreements terms={terms} value={agreements} onChange={setAgreements} renewal />
         {error && <p className="text-xs text-error">{error}</p>}
-        <Button variant="secondary" onClick={subscribe} disabled={busy}>
+        <Button variant="secondary" onClick={subscribe} disabled={busy || !agreementsReady(terms, agreements, true)}>
           {busy ? tr("Please wait…") : tr("Subscribe monthly")}
         </Button>
       </div>

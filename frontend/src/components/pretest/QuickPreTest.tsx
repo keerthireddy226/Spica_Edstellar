@@ -6,6 +6,7 @@ import { getPreTestInfo, givePreTestConsent, type DeliveryMode, type PreTestInfo
 import { holdTestConsent } from "@/lib/testConsent";
 import { demoSeen, deviceNeedsFor } from "@/lib/systemCheck";
 import { tr } from "@/i18n/tr";
+import { NO_DECLARATIONS, TestDeclarations, declarationsDone } from "@/components/pretest/TestDeclarations";
 
 // Before a practice or mock test (learners): as few screens as possible,
 // every check still done.
@@ -56,6 +57,7 @@ export function CheckAndAgree({
   const [info, setInfo] = useState<PreTestInfo | null>(null);
   const [biometric, setBiometric] = useState(true);
   const [privacy, setPrivacy] = useState(false);
+  const [declarations, setDeclarations] = useState(NO_DECLARATIONS);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -68,7 +70,7 @@ export function CheckAndAgree({
     setBusy(true);
     setError(null);
     try {
-      const r = await givePreTestConsent(kind, !!info?.biometric && biometric, mode);
+      const r = await givePreTestConsent(kind, !!info?.biometric && biometric, mode, true, declarations);
       holdTestConsent(r.consentId);
       onDone();
     } catch {
@@ -81,7 +83,7 @@ export function CheckAndAgree({
     <SystemCheck
       needs={needs}
       onBack={onBack}
-      busy={busy || !info || !privacy}
+      busy={busy || !info || !privacy || !declarationsDone(info, declarations)}
       doneLabel={tr("I agree, continue")}
       onPassed={() => agree()}
       extra={
@@ -92,6 +94,7 @@ export function CheckAndAgree({
           {info && <ConsentDetails info={info} mode={mode} />}
           {info?.biometric && <BiometricChoice value={biometric} onChange={setBiometric} />}
           <PrivacyConsent agreed={privacy} onChange={setPrivacy} />
+          {info && <TestDeclarations info={info} value={declarations} onChange={setDeclarations} />}
           {error && <p className="text-sm text-error">{error}</p>}
         </div>
         </>

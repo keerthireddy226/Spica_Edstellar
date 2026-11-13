@@ -15,6 +15,8 @@ import {
 } from "@/api/payments";
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { CheckoutAgreements, agreementsReady, useCheckoutTerms } from "@/components/plans/CheckoutAgreements";
+import type { CheckoutAgreementsValue } from "@/api/payments";
 
 // Buy just one test: preparation + assessment, an assessment on its own, or a
 // level test. Prices in the learner's currency, which they can change.
@@ -61,6 +63,8 @@ export function Checkout({ product, currency, certificateId, onClose }: { produc
   const [q, setQ] = useState<ProductQuote | null>(null);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const terms = useCheckoutTerms();
+  const [agreements, setAgreements] = useState<CheckoutAgreementsValue>({});
   useEffect(() => {
     setQ(null);
     getProductQuote(product.id, currency, level || undefined, certificateId)
@@ -71,7 +75,7 @@ export function Checkout({ product, currency, certificateId, onClose }: { produc
     setPaying(true);
     setError(null);
     try {
-      await startCheckout(await createProductOrder(product.id, currency, level || undefined, { certificateId, shipping: needsShipping ? ship : undefined }), navigate);
+      await startCheckout(await createProductOrder(product.id, currency, level || undefined, { certificateId, shipping: needsShipping ? ship : undefined, agreements }), navigate);
     } catch {
       setError(tr("Checkout couldn't start. Try again."));
       setPaying(false);
@@ -162,7 +166,8 @@ export function Checkout({ product, currency, certificateId, onClose }: { produc
           <p className="text-sm text-muted">{tr("Loading…")}</p>
         ) : null}
         {error && <p className="text-sm text-error">{error}</p>}
-        <Button onClick={pay} disabled={!q || paying || !shipReady} className="w-full">
+        <CheckoutAgreements terms={terms} value={agreements} onChange={setAgreements} />
+        <Button onClick={pay} disabled={!q || paying || !shipReady || !agreementsReady(terms, agreements)} className="w-full">
           {paying ? tr("Starting checkout…") : q ? tr("Pay {{amount}}", { amount: formatAmount(q.total, q.currency) }) : tr("Pay")}
         </Button>
       </div>

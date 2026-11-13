@@ -25,7 +25,10 @@ export class PaymentError extends Error {
       | "subscription_not_found"
       | "subscription_not_ready"
       | "no_billing_account"
-      | "not_available",
+      | "not_available"
+      | "refund_policy_required"
+      | "withdrawal_waiver_required"
+      | "renewal_agreement_required",
   ) {
     super(code);
   }

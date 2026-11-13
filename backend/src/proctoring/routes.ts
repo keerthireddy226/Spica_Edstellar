@@ -327,7 +327,7 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
           ? practicePolicy(learner)
           : learner;
   const org = await learnerOrgPolicy(userId);
-  const t = (await pool.query(`SELECT u.role, t.type AS tenant_type, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
+  const t = (await pool.query(`SELECT u.role, t.type AS tenant_type, t.name AS tenant_name, t.retention_recordings_months FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [userId])).rows[0];
   // Practice Modules aren't proctored; practice tests run the background checks (practicePolicy).
   const proctored = kind !== "module" && policy.mode !== "off";
   const { sebConfigKeys: _keys, ...visible } = policy;
@@ -341,6 +341,11 @@ async function preTestInfo(userId: string, kind: string, mode?: DeliveryMode) {
     recordingsMonths: Math.min((t?.retention_recordings_months as number | null) ?? RETENTION.recordingMonths, RETENTION.recordingMaxMonths),
     audience: resultsAudience(t?.role, t?.tenant_type),
     version: testConsentVersion(proctored ? consentVersion(policy) : null),
+    // Real tests (and every candidate test): the test rules declaration.
+    testRules: kind !== "module" && (mode === "certified" || !!candidate),
+    // Candidates: who receives the result, and that it is scored automatically.
+    automatedNotice: !!candidate,
+    employer: candidate ? ((t?.tenant_name as string | null) ?? null) : null,
   };
 }
 
@@ -366,8 +371,20 @@ proctoringRouter.get("/pre-test", requireAuth, async (req: AuthedRequest, res, n
 
 proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
-    const body = z.object({ kind: kindSchema, mode: modeSchema, accept: z.literal(true), biometric: z.boolean(), privacy: z.boolean().optional() }).parse(req.body);
+    const body = z
+      .object({
+        kind: kindSchema,
+        mode: modeSchema,
+        accept: z.literal(true),
+        biometric: z.boolean(),
+        privacy: z.boolean().optional(),
+        testRules: z.boolean().optional(),
+        automatedNotice: z.boolean().optional(),
+      })
+      .parse(req.body);
     const info = await preTestInfo(req.user!.id, body.kind, body.mode);
+    if (info.testRules && !body.testRules) return res.status(400).json({ error: "test_rules_required" });
+    if (info.automatedNotice && !body.automatedNotice) return res.status(400).json({ error: "automated_notice_required" });
     const biometric = info.biometric && body.biometric;
     const client = await pool.connect();
     try {
@@ -381,6 +398,17 @@ proctoringRouter.post("/pre-test/consent", requireAuth, async (req: AuthedReques
         await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'proctoring_biometric', $3)`, [
           req.user!.id,
           info.version,
+          req.ip,
+        ]);
+      }
+      // The declarations on the same screen (consent register N01, N06).
+      if (info.testRules) {
+        await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'test_rules', $3)`, [req.user!.id, TEST_RULES_VERSION, req.ip]);
+      }
+      if (info.automatedNotice) {
+        await client.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'automated_scoring_notice', $3)`, [
+          req.user!.id,
+          AUTOMATED_NOTICE_VERSION,
           req.ip,
         ]);
       }
@@ -434,7 +462,11 @@ async function attachTestConsent(req: AuthedRequest, si: IntegrityRow) {
   si.biometric_opt_out = optOut;
 }
 
-const consentSchema = z.object({ accept: z.literal(true), biometric: z.boolean() });
+const consentSchema = z.object({ accept: z.literal(true), biometric: z.boolean(), testRules: z.boolean().optional(), automatedNotice: z.boolean().optional() });
+
+// Versions of the declaration wording (consent register N01, N06).
+const TEST_RULES_VERSION = "v1";
+const AUTOMATED_NOTICE_VERSION = "v1";
 
 proctoringRouter.post("/sessions/:sessionId/consent", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
@@ -454,6 +486,12 @@ proctoringRouter.post("/sessions/:sessionId/consent", requireAuth, async (req: A
         version,
         req.ip,
       ]);
+    }
+    if (body.testRules) {
+      await pool.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'test_rules', $3)`, [req.user!.id, TEST_RULES_VERSION, req.ip]);
+    }
+    if (body.automatedNotice) {
+      await pool.query(`INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address) VALUES ($1, $2, 'automated_scoring_notice', $3)`, [req.user!.id, AUTOMATED_NOTICE_VERSION, req.ip]);
     }
     await pool.query(`UPDATE session_integrity SET consent_record_id = $2, biometric_opt_out = $3, updated_at = now() WHERE session_id = $1`, [
       si.session_id,

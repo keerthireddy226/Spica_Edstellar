@@ -10,6 +10,7 @@ import { tr } from "@/i18n/tr";
 import { dateTime } from "@/api/staff";
 import { trServer } from "@/i18n/serverText";
 import { LearnerIntegritySection } from "@/components/proctoring/LearnerIntegritySection";
+import { extraTimeConfirmText } from "@/constants/extraTime";
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -82,7 +83,7 @@ export function LearnerProfileModal({
   // Org Admin and Manager: lets them edit the learner's employee details.
   saveDetails?: (learnerId: string, d: LearnerDetails) => Promise<unknown>;
   // Org Admin: extra time on every test for a learner with a disability.
-  saveExtraTime?: (learnerId: string, percent: 0 | 25 | 50 | 100) => Promise<unknown>;
+  saveExtraTime?: (learnerId: string, percent: 0 | 25 | 50 | 100, confirmed: boolean) => Promise<unknown>;
 }) {
   const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
@@ -158,7 +159,9 @@ export function LearnerProfileModal({
                 onChange={(e) => {
                   const percent = Number(e.target.value) as 0 | 25 | 50 | 100;
                   setExtraTimeMsg(null);
-                  saveExtraTime(learner.id, percent)
+                  // Extra time is only given when the learner asked for it (consent register N05).
+                  if (percent && !window.confirm(extraTimeConfirmText())) return;
+                  saveExtraTime(learner.id, percent, percent > 0)
                     .then(() => {
                       setProfile({ ...profile, extraTimePercent: percent });
                       setExtraTimeMsg(tr("Saved. It applies to tests started from now on."));

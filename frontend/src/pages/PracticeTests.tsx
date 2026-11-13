@@ -113,6 +113,7 @@ import { tr } from "@/i18n/tr";
 import { useTestHold } from "@/hooks/useTestHold";
 import { TestHoldOverlay, TestHoldWarning } from "@/components/TestHoldOverlay";
 import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
+import { NO_DECLARATIONS, TestDeclarations, declarationsDone } from "@/components/pretest/TestDeclarations";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -445,6 +446,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [agreeTicked, setAgreeTicked] = useState(false);
   const [privacyTicked, setPrivacyTicked] = useState(false);
   const [agreeBiometric, setAgreeBiometric] = useState(true);
+  const [declarations, setDeclarations] = useState(NO_DECLARATIONS);
   const [startError, setStartError] = useState<string | null>(null);
   useEffect(() => {
     if (!needAgree || !selectedProduct) return;
@@ -485,8 +487,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       setStarting(true);
       try {
         const biometric = !!(proctor.setup?.biometric ?? agreeInfo?.biometric) && agreeBiometric;
-        if (sessionId && proctor.setup?.consentNeeded) await giveProctoringConsent(sessionId, biometric);
-        else await givePreTestConsent(selectedProduct as PreTestKind, biometric, deliveryMode);
+        if (sessionId && proctor.setup?.consentNeeded) await giveProctoringConsent(sessionId, biometric, declarations);
+        else await givePreTestConsent(selectedProduct as PreTestKind, biometric, deliveryMode, true, declarations);
       } catch {
         setStartError(tr("Could not save your choice. Try again."));
         setStarting(false);
@@ -1457,10 +1459,11 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               {tr("I agree to what this test collects.")}
             </label>
             <PrivacyConsent agreed={privacyTicked} onChange={setPrivacyTicked} />
+            {agreeInfo && <TestDeclarations info={agreeInfo} value={declarations} onChange={setDeclarations} />}
           </div>
         )}
         {startError && <p className="text-sm text-error">{startError}</p>}
-        <Button onClick={startFromOverview} disabled={starting || (needAgree && (!agreeTicked || !privacyTicked || !agreeInfo))} className="w-full max-w-md">
+        <Button onClick={startFromOverview} disabled={starting || (needAgree && (!agreeTicked || !privacyTicked || !agreeInfo || !declarationsDone(agreeInfo, declarations)))} className="w-full max-w-md">
           {quickTest && !proctor.ready && proctor.setup?.policy.screenRecording && !proctor.screenStream
             ? tr("Share screen and start")
             : t("practiceTests.overview.begin")}
