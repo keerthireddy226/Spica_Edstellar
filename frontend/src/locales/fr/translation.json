@@ -831,7 +831,6 @@
     "enrollmentConsent": {
       "title": "Configurer la vérification faciale",
       "subtitle": "Cela permet de confirmer que c'est bien vous qui passez le test.",
-      "body": "Nous allons prendre une photo de votre visage pour créer une référence de vérification d'identité. Avant et à des moments aléatoires (toutes les 30 à 90 secondes) pendant les tests de positionnement, les tests d'entraînement et les sessions d'entraînement (Modules), une nouvelle photo est comparée à celle-ci pour confirmer que c'est bien vous. Les photos ne servent qu'à cela, ne sont vues que par les vérificateurs de votre organisation ou d'Edstellar, et sont conservées jusqu'à la suppression de votre compte ou la fin de la durée de conservation de votre organisation.",
       "checkboxLabel": "Je comprends et j'accepte la vérification d'identité par reconnaissance faciale, y compris des contrôles à des moments aléatoires pendant les tests et les sessions d'entraînement.",
       "submit": "Continuer",
       "decline": "Pas maintenant"

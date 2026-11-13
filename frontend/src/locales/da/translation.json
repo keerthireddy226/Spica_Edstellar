@@ -815,7 +815,6 @@
     "enrollmentConsent": {
       "title": "Konfigurer ansigtsbekræftelse",
       "subtitle": "Det hjælper med at bekræfte, at det virkelig er dig, der tager testen.",
-      "body": "Vi tager et foto af dit ansigt for at oprette en reference til identitetsbekræftelse. Før og på tilfældige tidspunkter (hvert 30. til 90. sekund) under indplaceringstests, prøvetest og øvelsessessioner (Moduler) sammenlignes et nyt foto med det for at bekræfte, at det er dig. Fotos bruges kun til dette, ses kun af bedømmere i din organisation eller hos Edstellar og opbevares, indtil din konto slettes, eller din organisations opbevaringsperiode udløber.",
       "checkboxLabel": "Jeg forstår og giver samtykke til identitetsbekræftelse med ansigtsgenkendelse, også tjek på tilfældige tidspunkter under test og øvelsessessioner.",
       "submit": "Fortsæt",
       "decline": "Ikke nu"

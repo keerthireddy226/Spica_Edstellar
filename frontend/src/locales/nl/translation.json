@@ -815,7 +815,6 @@
     "enrollmentConsent": {
       "title": "Gezichtsverificatie instellen",
       "subtitle": "Zo bevestigen we dat jij echt degene bent die de toets maakt.",
-      "body": "We maken een foto van je gezicht als referentie voor identiteitsverificatie. Vóór en op willekeurige momenten (elke 30 tot 90 seconden) tijdens instaptoetsen, oefentoetsen en oefensessies (Modules) wordt een nieuwe foto daarmee vergeleken om te bevestigen dat jij het bent. Foto's worden alleen hiervoor gebruikt, alleen gezien door beoordelaars van je organisatie of van Edstellar, en bewaard tot je account wordt verwijderd of de bewaartermijn van je organisatie afloopt.",
       "checkboxLabel": "Ik begrijp en ga akkoord met identiteitsverificatie via het gezicht, inclusief controles op willekeurige momenten tijdens toetsen en oefensessies.",
       "submit": "Doorgaan",
       "decline": "Niet nu"

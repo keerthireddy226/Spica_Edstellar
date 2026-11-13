@@ -84,7 +84,8 @@ faceRouter.post("/enrollment", requireAuth, faceCheckLimiter, async (req: Authed
     const consentResult = await client.query(
       `INSERT INTO consent_records (user_id, consent_version, consent_type, ip_address)
        VALUES ($1, $2, 'face_identity', $3) RETURNING id`,
-      [req.user!.id, "v1", req.ip],
+      // v2 (13 Nov 2026): the text states who sees the photos and when they are deleted.
+      [req.user!.id, "v2", req.ip],
     );
     const consentRecordId = consentResult.rows[0].id;
 
