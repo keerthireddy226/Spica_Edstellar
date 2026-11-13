@@ -6,7 +6,7 @@ import { pool } from "../db.js";
 import { generateToken, hashToken, SESSION_COOKIE } from "./tokens.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "./mailer.js";
 import { checkSession, requireAuth, type AuthedRequest } from "./middleware.js";
-import { ORG_CONSOLE_ROLES, ipAllowed, passwordMinLengthFor, passwordProblem } from "./policy.js";
+import { ORG_CONSOLE_ROLES, ipAllowed, mfaMandatory, passwordMinLengthFor, passwordProblem } from "./policy.js";
 import { ssoForEmail } from "../sso/service.js";
 import { ownedRows } from "../access/entitlements.js";
 import { logPrivacyRequest } from "../governance/service.js";
@@ -232,7 +232,7 @@ async function finishLogin(req: import("express").Request, res: import("express"
     lastName: u.last_name,
     preferredLanguage: u.preferred_language,
     // The organization requires two-factor sign-in and it isn't set up yet.
-    mfaSetupRequired: ORG_CONSOLE_ROLES.includes(u.role) && u.mfa_required && !u.mfa_enabled_at,
+    mfaSetupRequired: mfaMandatory(u.role, u.mfa_required) && !u.mfa_enabled_at,
   });
 }
 
@@ -674,6 +674,8 @@ authRouter.get("/mfa/status", requireAuth, async (req: AuthedRequest, res, next)
       enabledAt: u.mfa_enabled_at,
       recoveryCodesLeft: u.codes_left,
       requiredByOrganization: ORG_CONSOLE_ROLES.includes(req.user!.role) && !!u.mfa_required,
+      // Required for Spica staff, or by the organization: it can't be turned off.
+      required: mfaMandatory(req.user!.role, u.mfa_required),
     });
   } catch (err) {
     next(err);
@@ -710,6 +712,7 @@ authRouter.post("/mfa/disable", requireAuth, async (req: AuthedRequest, res, nex
       await pool.query(`SELECT u.password_hash, t.mfa_required FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [req.user!.id])
     ).rows[0];
     if (ORG_CONSOLE_ROLES.includes(req.user!.role) && u.mfa_required) return res.status(403).json({ error: "required_by_organization" });
+    if (mfaMandatory(req.user!.role, u.mfa_required)) return res.status(403).json({ error: "required_for_staff" });
     if (!(await bcrypt.compare(body.password, u.password_hash))) return res.status(401).json({ error: "invalid_credentials" });
     if (!(await checkSecondFactor(req.user!.id, body.code))) return res.status(401).json({ error: "invalid_code" });
     await disableMfa(req.user!.id);

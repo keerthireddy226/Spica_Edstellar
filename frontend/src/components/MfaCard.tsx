@@ -85,7 +85,7 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void }) {
                 ? tr("On since {{date}}. 1 recovery code left.", { date: new Date(status.enabledAt!).toLocaleDateString() })
                 : tr("On since {{date}}. {{n}} recovery codes left.", { date: new Date(status.enabledAt!).toLocaleDateString(), n: status.recoveryCodesLeft })
               : tr("Ask for a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…) when you sign in.")}
-            {status.requiredByOrganization && tr(" Your organization requires it.")}
+            {status.requiredByOrganization ? tr(" Your organization requires it.") : status.required ? tr(" It is required for Spica staff accounts.") : null}
           </p>
         </div>
       </div>
@@ -136,7 +136,7 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void }) {
         <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => setMode("regenerate")} className="!px-3.5 !py-2">
             {tr("New recovery codes")}</Button>
-          {!status.requiredByOrganization && (
+          {!status.requiredByOrganization && !status.required && (
             <Button variant="secondary" onClick={() => setMode("disable")} className="!px-3.5 !py-2">
               {tr("Turn off")}</Button>
           )}

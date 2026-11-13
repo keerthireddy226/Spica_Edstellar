@@ -552,6 +552,8 @@ export interface MfaStatus {
   enabledAt: string | null;
   recoveryCodesLeft: number;
   requiredByOrganization: boolean;
+  // Required for Spica staff or by the organization: it can't be turned off.
+  required?: boolean;
 }
 
 export const mfaApi = {

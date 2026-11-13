@@ -6,6 +6,19 @@ import { pool } from "../db.js";
 // anywhere, so those two don't apply to them.
 export const ORG_CONSOLE_ROLES = ["org_admin", "manager", "recruiter"];
 
+// Spica's own staff can see every organization's data, so two-step sign-in is
+// always required for them (launch plan 7.2). STAFF_MFA_OPTIONAL=1 turns that
+// off, for a local copy only.
+export const STAFF_ROLES = ["admin", "super_admin"];
+const staffMfaRequired = process.env.STAFF_MFA_OPTIONAL !== "1";
+
+// Whether this person must use two-step sign-in: staff always; an
+// organization's console roles when the organization requires it.
+export function mfaMandatory(role: string, orgRequires: boolean | null | undefined): boolean {
+  if (STAFF_ROLES.includes(role)) return staffMfaRequired;
+  return ORG_CONSOLE_ROLES.includes(role) && !!orgRequires;
+}
+
 const COMMON = new Set([
   "password", "password1", "password123", "12345678", "123456789", "1234567890", "qwerty123", "qwertyuiop",
   "11111111", "iloveyou", "admin123", "welcome1", "letmein1", "abc12345", "passw0rd", "spica123",

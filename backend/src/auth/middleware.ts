@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { pool } from "../db.js";
 import { hashToken, SESSION_COOKIE } from "./tokens.js";
-import { ipAllowed } from "./policy.js";
+import { ipAllowed, mfaMandatory } from "./policy.js";
 
 export interface AuthedRequest extends Request {
   user?: { id: string; role: string; tenantId: string | null };
@@ -59,7 +59,7 @@ export async function checkSession(token: string | undefined, ip: string | undef
       role: r.role,
       tenantId: r.tenant_id,
       mfaEnabled: r.mfa_enabled_at !== null,
-      mfaSetupRequired: !viewAs && isConsole && r.mfa_required && r.mfa_enabled_at === null,
+      mfaSetupRequired: !viewAs && mfaMandatory(r.role, r.mfa_required) && r.mfa_enabled_at === null,
       viewAs,
     },
   };

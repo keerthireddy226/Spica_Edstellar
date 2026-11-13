@@ -17,7 +17,9 @@ export function MfaSetup() {
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Set up two-step sign-in")}</h1>
           <p className="text-sm text-muted mt-1">
-            {user?.mfaSetupRequired
+            {user?.mfaSetupRequired && (user.role === "admin" || user.role === "super_admin")
+              ? tr("Spica staff accounts need a code from an authenticator app each time you sign in. Set it up to continue.")
+              : user?.mfaSetupRequired
               ? tr("Your organization requires a code from an authenticator app each time you sign in. Set it up to continue.")
               : tr("Add a code from an authenticator app to your sign-in.")}
           </p>
