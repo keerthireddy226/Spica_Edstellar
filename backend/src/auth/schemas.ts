@@ -19,7 +19,7 @@ export const signupSchema = z.object({
 });
 
 // The Privacy Notice version people agree to (its "last updated" date).
-export const PRIVACY_NOTICE_VERSION = "2026-10-29";
+export const PRIVACY_NOTICE_VERSION = "2026-11-13";
 
 // The Terms and Conditions version people agree to, and where they are
 // published. Unset until the lawyer-approved Terms are live: then nobody is
