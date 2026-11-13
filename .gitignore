@@ -14,3 +14,4 @@ backend/models/*
 !backend/models/*.onnx
 !backend/models/*.traineddata.gz
 backend/.file-mirror-tmp/
+demo-org-password.txt
