@@ -26,7 +26,7 @@ export const OPENAPI = {
   openapi: "3.1.0",
   info: {
     title: "Spica API",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
       "Read and manage your organization's learners from your LMS or HR system. Authenticate with `Authorization: Bearer spk_…` (create keys in Settings → Developers). 120 requests per minute per key.",
   },
