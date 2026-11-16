@@ -941,11 +941,8 @@ body {
 }
 
 /* ===== 2026-11-16 step 1: page identity (menu, heroes, motion, tests) ===== */
-.tone-clay { --t-bg: #f8e8dd; --t-bg2: #fdf4ee; --t-acc: #b4623e; --t-deep: #8f4526; --t-soft: #f3d6c7; }
-.tone-moss { --t-bg: #e2ecd9; --t-bg2: #f3f8ef; --t-acc: #4f7d45; --t-deep: #3b6133; --t-soft: #d3e3c8; }
-.tone-sky  { --t-bg: #dde9f4; --t-bg2: #f1f6fb; --t-acc: #2f6690; --t-deep: #234e6f; --t-soft: #c9dcee; }
-.tone-gold { --t-bg: #f6ebcc; --t-bg2: #fcf7e9; --t-acc: #9a6b12; --t-deep: #75510c; --t-soft: #efdca8; }
-.tone-plum { --t-bg: #eee2ef; --t-bg2: #f8f2f8; --t-acc: #7b3f7f; --t-deep: #5e2f61; --t-soft: #e2cfe4; }
+/* One colour for the whole site: every "tone" uses the brand clay. */
+.tone-clay, .tone-moss, .tone-sky, .tone-gold, .tone-plum { --t-bg: #f8e8dd; --t-bg2: #fdf4ee; --t-acc: #b4623e; --t-deep: #8f4526; --t-soft: #f3d6c7; }
 
 /* Page fade on every page change */
 .page-in { animation: pageIn 0.45s ease both; }
@@ -1388,7 +1385,7 @@ body {
 .site .connect { display: flex; flex-direction: column; align-items: center; gap: 18px; }
 .site .connect-hub {
   display: flex; flex-direction: column; align-items: center; justify-content: center; width: 140px; height: 140px; border-radius: 50%; text-align: center;
-  background: radial-gradient(circle at 30% 30%, #4b86b4, var(--t-deep)); color: #fff; box-shadow: 0 0 0 14px rgba(47, 102, 144, 0.12), 0 0 0 30px rgba(47, 102, 144, 0.06), var(--shadow);
+  background: radial-gradient(circle at 30% 30%, var(--clay), var(--clay-deep)); color: #fff; box-shadow: 0 0 0 14px rgba(180, 98, 62, 0.12), 0 0 0 30px rgba(180, 98, 62, 0.06), var(--shadow);
 }
 .site .connect-hub b { font-family: var(--font-logo), Georgia, serif; font-size: 1.7rem; color: #fff; line-height: 1; }
 .site .connect-hub small { display: block; color: rgba(255, 255, 255, 0.85); font-size: 0.78rem; margin-top: 4px; }
