@@ -53,8 +53,8 @@ export function Header() {
               <SignInLinks />
             </div>
           </details>
-          <a className="btn primary small" href={app.signUp}>
-            Start free
+          <a className="btn primary small" href="/#demo">
+            Book a demo
           </a>
         </div>
         <details className="menu-toggle">
@@ -66,7 +66,10 @@ export function Header() {
               </Link>
             ))}
             <SignInLinks />
-            <a className="btn primary" href={app.signUp}>
+            <a className="btn primary" href="/#demo">
+              Book a demo
+            </a>
+            <a className="btn ghost" href={app.signUp}>
               Start free
             </a>
           </div>
