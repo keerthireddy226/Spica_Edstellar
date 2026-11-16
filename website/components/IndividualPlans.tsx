@@ -47,7 +47,7 @@ export function IndividualPlans() {
             {money("full", c)} <small>a month</small>
           </div>
           <ul className="ticks">
-            <li>All six tests, every Practice Module</li>
+            <li>All five main tests and every Practice Module (Level Tests are bought separately)</li>
             <li>Unlimited practice tests</li>
             <li>2 mock tests a month in each test</li>
             <li>Full progress and score reports</li>

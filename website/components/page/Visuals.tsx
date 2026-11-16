@@ -89,7 +89,7 @@ export function PriceMock() {
         </div>
         <ul className="vlist">
           <li>
-            <CheckCircle2 size={15} /> All six tests and every Practice Module
+            <CheckCircle2 size={15} /> All five main tests and every Practice Module
           </li>
           <li>
             <CheckCircle2 size={15} /> 2 mock tests a month in each test
