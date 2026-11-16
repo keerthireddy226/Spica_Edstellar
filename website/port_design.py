@@ -101,6 +101,25 @@ body = body.replace(
 )
 body = body.replace('<a class="btn ghost" href="#reports">See a sample report</a>', '<a class="btn ghost" href="__APP__/sample-report?test=speakingListening">See a sample report</a>')
 body = body.replace('<a class="btn light small" href="#demo">Ask about plans</a>', '<span class="bar-right"><a class="btn light small" href="/pricing">See all prices</a><a class="btn light small" href="#demo">Ask about plans</a></span>')
+# One card per level test (A1 to C2) instead of a single "Level tests, A1 to C2" card.
+LEVELS = [
+    ("A1", "Beginner", "Checking the basics: simple everyday phrases and questions"),
+    ("A2", "Elementary", "Checking routine tasks and simple exchanges at work"),
+    ("B1", "Intermediate", "Checking independent English for work and travel"),
+    ("B2", "Upper intermediate", "Checking fluent English for most work roles"),
+    ("C1", "Advanced", "Checking advanced English for demanding, senior roles"),
+    ("C2", "Proficient", "Checking near-expert English for specialist roles"),
+]
+m = re.search(r'<article class="test lvltest">.*?</article>', body, re.S)
+if m:
+    card = m.group(0)
+    cards = []
+    for code, name, good in LEVELS:
+        c = card.replace("<h3>Level tests, A1 to C2</h3>", f"<h3>{code} level test</h3>")
+        c = c.replace('<p class="gf">One chosen level, about 28 questions</p>', f'<p class="gf">{name} · 28 questions, all at {code}</p>')
+        c = c.replace("<b>Good for</b>Checking whether someone has reached a level", f"<b>Good for</b>{good}")
+        cards.append(c)
+    body = body.replace(card, "\n      ".join(cards), 1)
 body = body.replace("__APP__", APP)
 open(f"{W}/lib/homeMarkup.ts", "w").write("// Generated from spica 2.html by port_design.py. Edit the design or the script, then run it again.\nexport const HOME_MARKUP = " + json.dumps(body) + ";\n")
 
