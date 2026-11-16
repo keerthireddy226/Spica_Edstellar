@@ -33,8 +33,6 @@ import {
   cancelInvite,
   creditBalance,
   inviteCandidates,
-  auditExtraTime,
-  extraTimeUnconfirmed,
   latestAssessment,
   leftTestSql,
   resendInvite,
@@ -440,7 +438,7 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
          -- When the latest link was sent: each link lasts the job's invite period, so a resent one shows here.
          a.expires_at - make_interval(hours => jb.invite_valid_hours) AS last_sent_at,
          si.status AS integrity_status, si.risk_level, si.risk_score,
-         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, a.extra_time_percent, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
+         concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
        FROM recruitment_assessments a
        JOIN recruitment_jobs jb ON jb.id = a.job_id
        LEFT JOIN sessions ts ON ts.id = a.session_id
@@ -463,16 +461,12 @@ const inviteSchema = z.object({
         email: z.string().trim().email(),
         firstName: z.string().trim().max(80).optional().nullable(),
         lastName: z.string().trim().max(80).optional().nullable(),
-        extraTimePercent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]).optional(),
-        // The recruiter confirms the candidate asked for the extra time and agreed it is recorded.
-        extraTimeConfirmed: z.boolean().optional(),
       }),
     )
     .min(1)
     .max(200),
 });
 
-const extraTimeSchema = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]), confirmed: z.boolean().optional() });
 
 // The job's public link: turned on or off, a limit on how many can start
 // through it and a closing time. Turning it on the first time makes the link.
@@ -524,7 +518,6 @@ recruitmentRouter.post("/jobs/:id/invites", requireAuth, async (req: AuthedReque
   if (!tenantId) return;
   try {
     const b = inviteSchema.parse(req.body);
-    if (extraTimeUnconfirmed(b.people)) return res.status(400).json({ error: "extra_time_confirmation_required" });
     const r = await inviteCandidates({ tenantId, jobId: String(req.params.id), actorId: req.user!.id, people: b.people });
     await recordAudit({
       tenantId,
@@ -536,29 +529,9 @@ recruitmentRouter.post("/jobs/:id/invites", requireAuth, async (req: AuthedReque
       details: { count: r.invited.length, skipped: r.skipped },
       ip: req.ip,
     });
-    await auditExtraTime({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, ip: req.ip ?? null }, b.people, r.invited);
     res.status(201).json(r);
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === PG_UNIQUE_VIOLATION) return res.status(409).json({ error: "already_invited" });
-    fail(err, res, next);
-  }
-});
-
-// Extra time for a candidate with a disability, changed before they start.
-recruitmentRouter.patch("/assessments/:id/extra-time", requireAuth, async (req: AuthedRequest, res, next) => {
-  const tenantId = await recruiterTenant(req, res);
-  if (!tenantId) return;
-  try {
-    const b = extraTimeSchema.parse(req.body);
-    if (b.percent && !b.confirmed) return res.status(400).json({ error: "extra_time_confirmation_required" });
-    const r = await pool.query(
-      `UPDATE recruitment_assessments SET extra_time_percent = $3 WHERE id = $1 AND tenant_id = $2 AND status = 'invited' AND started_at IS NULL RETURNING id`,
-      [String(req.params.id), tenantId, b.percent],
-    );
-    if (!r.rowCount) return res.status(409).json({ error: "already_started" });
-    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "recruitment.extra_time", targetType: "candidate", targetId: String(req.params.id), details: { percent: b.percent, ...(b.percent ? { extraTimeConfirmed: true } : {}) }, ip: req.ip });
-    res.json({ extraTimePercent: b.percent });
-  } catch (err) {
     fail(err, res, next);
   }
 });

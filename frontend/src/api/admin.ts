@@ -421,8 +421,6 @@ export function getConsoleLearners(): Promise<{ learners: ConsoleLearner[] }> {
 }
 
 export interface LearnerProfile {
-  // Org learners only: extra time on every test (a disability adjustment).
-  extraTimePercent?: number;
   // Final assessments and level tests, each attempt's result and certificate.
   finalAssessments?: {
     kind: "prep" | "assessment" | "level" | "final";

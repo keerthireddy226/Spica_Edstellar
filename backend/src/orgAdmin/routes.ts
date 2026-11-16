@@ -852,38 +852,6 @@ orgAdminRouter.patch("/learners/:id/details", requireAuth, async (req: AuthedReq
   }
 });
 
-// Extra time for a learner with a disability: every question's time and the
-// whole test's time grow by this percentage, in tests started from now on.
-orgAdminRouter.patch("/learners/:id/extra-time", requireAuth, async (req: AuthedRequest, res, next) => {
-  if (!requireOrgAdmin(req, res)) return;
-  const tenantId = await requireOwnTenant(req, res);
-  if (!tenantId) return;
-  try {
-    // Above 0 the admin confirms the learner asked for it and agreed it is recorded (consent register N05).
-    const body = z.object({ percent: z.union([z.literal(0), z.literal(25), z.literal(50), z.literal(100)]), confirmed: z.boolean().optional() }).parse(req.body);
-    if (body.percent && !body.confirmed) return res.status(400).json({ error: "extra_time_confirmation_required" });
-    const r = await pool.query(
-      `UPDATE users SET extra_time_percent = $3, updated_at = now() WHERE id = $1 AND tenant_id = $2 AND role = 'learner' AND erased_at IS NULL RETURNING id, email`,
-      [req.params.id, tenantId, body.percent],
-    );
-    if (!r.rowCount) return res.status(404).json({ error: "learner_not_found" });
-    await recordAudit({
-      tenantId,
-      actorId: req.user!.id,
-      actorRole: "org_admin",
-      action: "learner.extra_time",
-      targetType: "learner",
-      targetId: String(req.params.id),
-      targetLabel: r.rows[0].email,
-      details: { percent: body.percent, ...(body.percent ? { extraTimeConfirmed: true } : {}) },
-      ip: req.ip ?? null,
-    });
-    res.json({ extraTimePercent: body.percent });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Org Admins can add learners directly — into any of their batches, or with
 // no batch yet (moved under a Manager's batch later via /learners/:id/move).
 // Optionally gives them licenses straight away so they aren't locked out.
@@ -1012,8 +980,7 @@ orgAdminRouter.get("/learners/:id", requireAuth, async (req: AuthedRequest, res,
   try {
     const profile = await buildLearnerProfile(String(req.params.id), { tenantId, includeSensitive: true });
     if (!profile) return res.status(404).json({ error: "learner_not_found" });
-    const et = (await pool.query(`SELECT extra_time_percent FROM users WHERE id = $1`, [req.params.id])).rows[0];
-    res.json({ ...profile, extraTimePercent: et?.extra_time_percent ?? 0 });
+    res.json(profile);
   } catch (err) {
     next(err);
   }

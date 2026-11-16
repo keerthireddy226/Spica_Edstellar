@@ -219,11 +219,6 @@ export function getOrgLearnerDetail(id: string): Promise<LearnerProfile> {
   return api(`/org-admin/learners/${id}`);
 }
 
-// Above 0, `confirmed` says the learner asked for it and agreed it is recorded.
-export function setOrgLearnerExtraTime(id: string, percent: 0 | 25 | 50 | 100, confirmed = false): Promise<{ extraTimePercent: number }> {
-  return api(`/org-admin/learners/${id}/extra-time`, { method: "PATCH", body: JSON.stringify({ percent, confirmed }) });
-}
-
 export function updateOrgLearnerDetails(id: string, d: LearnerDetails): Promise<{ id: string }> {
   return api(`/org-admin/learners/${id}/details`, { method: "PATCH", body: JSON.stringify(d) });
 }

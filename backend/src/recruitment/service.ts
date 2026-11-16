@@ -124,41 +124,6 @@ export interface InviteInput {
   email: string;
   firstName?: string | null;
   lastName?: string | null;
-  // Extra time for a candidate with a disability: 0, 25, 50 or 100 (%).
-  extraTimePercent?: number;
-  // Who set it confirms the candidate asked for it and agreed it is recorded.
-  extraTimeConfirmed?: boolean;
-}
-
-// True when someone has extra time without the confirmation that they asked for it.
-export function extraTimeUnconfirmed(people: InviteInput[]): boolean {
-  return people.some((p) => p.extraTimePercent && !p.extraTimeConfirmed);
-}
-
-// One audit entry per invited candidate given extra time: that it was
-// confirmed as asked for, by whom (consent register N05).
-export async function auditExtraTime(
-  actor: { tenantId: string; actorId: string | null; actorRole: string; actorLabel?: string; ip: string | null },
-  people: InviteInput[],
-  invited: { id: string; email: string }[],
-): Promise<void> {
-  for (const p of people) {
-    if (!p.extraTimePercent) continue;
-    const inv = invited.find((x) => x.email.toLowerCase() === p.email.trim().toLowerCase());
-    if (!inv) continue;
-    await recordAudit({
-      tenantId: actor.tenantId,
-      actorId: actor.actorId,
-      actorRole: actor.actorRole,
-      actorLabel: actor.actorLabel,
-      action: "recruitment.extra_time",
-      targetType: "candidate",
-      targetId: inv.id,
-      targetLabel: inv.email,
-      details: { percent: p.extraTimePercent, extraTimeConfirmed: true },
-      ip: actor.ip,
-    });
-  }
 }
 
 // Invites people to one job opening. Each invitation costs the test's
@@ -215,9 +180,9 @@ export async function inviteCandidates(args: { tenantId: string; jobId: string; 
       const expiresAt = new Date(Date.now() + job.invite_valid_hours * 3_600_000);
       const examId = examIds.length ? examIds[Math.floor(Math.random() * examIds.length)] : null;
       const r = await client.query(
-        `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at, extra_time_percent)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-        [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt, p.extraTimePercent ?? 0],
+        `INSERT INTO recruitment_assessments (tenant_id, job_id, candidate_id, email, first_name, last_name, token_hash, exam_id, invited_by, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        [args.tenantId, args.jobId, candidateId, email, p.firstName?.trim() || null, p.lastName?.trim() || null, hashToken(token), examId, args.actorId, expiresAt],
       );
       const id = r.rows[0].id;
       await client.query(`INSERT INTO recruitment_credit_events (tenant_id, delta, reason, assessment_id, actor_id) VALUES ($1, $4, 'invite', $2, $3)`, [

@@ -28,8 +28,6 @@ import {
   getRecruiters,
   getRecruitmentOverview,
   inviteCandidates,
-  setCandidateExtraTime,
-  type ExtraTimePercent,
   jobExportUrl,
   removeRecruiter,
   renewPublicLink,
@@ -61,7 +59,6 @@ import { StrengthsSummary, rankSkills } from "@/components/report/StrengthsSumma
 import { answerTotals, isIncomplete, partTone, resultMarks } from "@/components/recruitment/resultMarks";
 import { InterviewQuestionList } from "@/components/recruitment/InterviewQuestions";
 import { trServer } from "@/i18n/serverText";
-import { extraTimeConfirmText } from "@/constants/extraTime";
 
 const CEFR: Cefr[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const TEST_KINDS: TestKind[] = ["placement", "fourSkills", "speakingListening", "writing", "professional"];
@@ -612,8 +609,6 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
   const [email, setEmail] = useState("");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
-  const [extraTime, setExtraTime] = useState<ExtraTimePercent>(0);
-  const [extraTimeOk, setExtraTimeOk] = useState(false);
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -657,7 +652,7 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
     setBusy(true);
     setNote(null);
     try {
-      const r = await inviteCandidates(job.id, people.map((p) => (extraTime && p.email.trim().toLowerCase() === email.trim().toLowerCase() ? { ...p, extraTimePercent: extraTime, extraTimeConfirmed: extraTimeOk } : p)));
+      const r = await inviteCandidates(job.id, people);
       setNote({
         ok: true,
         text: r.skipped
@@ -667,8 +662,6 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
       setEmail("");
       setFirst("");
       setLast("");
-      setExtraTime(0);
-      setExtraTimeOk(false);
       setBulk("");
       setSheet(null);
       onInvited();
@@ -709,29 +702,6 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
             <span className={label}>{tr("Last name")}</span>
             <input value={last} onChange={(e) => setLast(e.target.value)} className={field} />
           </label>
-          <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className={label}>{tr("Extra time (for a disability)")}</span>
-            <select
-              value={extraTime}
-              onChange={(e) => {
-                setExtraTime(Number(e.target.value) as ExtraTimePercent);
-                setExtraTimeOk(false);
-              }}
-              className={field}
-            >
-              <option value={0}>{tr("None")}</option>
-              <option value={25}>{tr("25% more time")}</option>
-              <option value={50}>{tr("50% more time")}</option>
-              <option value={100}>{tr("Double time")}</option>
-            </select>
-            <span className="text-xs text-muted">{tr("Every question and the whole test get this much more time.")}</span>
-          </label>
-          {extraTime > 0 && (
-            <label className="flex items-start gap-2 text-sm text-ink sm:col-span-2 cursor-pointer">
-              <input type="checkbox" checked={extraTimeOk} onChange={(e) => setExtraTimeOk(e.target.checked)} className="mt-0.5" />
-              <span>{extraTimeConfirmText()}</span>
-            </label>
-          )}
         </div>
       </div>
       <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
@@ -802,7 +772,7 @@ function InvitePanel({ job, credits, onInvited }: { job: Job; credits: number; o
           </div>
         </div>
         <div className="ml-auto">
-          <Button onClick={send} disabled={busy || people.length === 0 || (extraTime > 0 && !extraTimeOk)}>
+          <Button onClick={send} disabled={busy || people.length === 0}>
             <Send size={15} className="inline mr-1.5" />
             {busy ? tr("Sending...") : tr("Send invitations")}
           </Button>
@@ -1173,24 +1143,6 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                     {c.left_test ? <StatusPill tone="warning">{tr("Left the test")}</StatusPill> : <StatusPill tone={STATUS_TONE[c.status]}>{STATUS_TEXT[c.status]()}</StatusPill>}
                     {c.integrity_status && c.status === "completed" && <StatusPill tone={INTEGRITY_TONE[c.integrity_status]}>{INTEGRITY_TEXT[c.integrity_status]()}</StatusPill>}
                     {c.decision && <StatusPill tone={DECISION_TONE[c.decision]}>{DECISION_TEXT[c.decision]()}</StatusPill>}
-                    {c.status === "invited" && (
-                      <select
-                        title={tr("Extra time (for a disability)")}
-                        value={c.extra_time_percent ?? 0}
-                        onChange={(e) => {
-                          const percent = Number(e.target.value) as ExtraTimePercent;
-                          // Only when the candidate asked for it (consent register N05).
-                          if (percent && !window.confirm(extraTimeConfirmText())) return;
-                          act(() => setCandidateExtraTime(c.id, percent, percent > 0), tr("Extra time saved."));
-                        }}
-                        className="h-8 rounded-input border border-rule bg-surface px-2 text-xs text-ink"
-                      >
-                        <option value={0}>{tr("No extra time")}</option>
-                        <option value={25}>{tr("+25% time")}</option>
-                        <option value={50}>{tr("+50% time")}</option>
-                        <option value={100}>{tr("Double time")}</option>
-                      </select>
-                    )}
                     {c.status !== "completed" && (
                       <>
                         <button title={tr("Send the link again")} onClick={() => act(() => resendInvite(c.id), tr("A new link was emailed."))} className="h-8 w-8 rounded-input border border-rule flex items-center justify-center text-muted hover:text-ink cursor-pointer">

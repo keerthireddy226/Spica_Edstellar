@@ -91,7 +91,7 @@ export const OPENAPI = {
                     items: {
                       type: "object",
                       required: ["email"],
-                      properties: { email: { type: "string" }, firstName: { type: "string" }, lastName: { type: "string" }, extraTimePercent: { type: "integer", enum: [0, 25, 50, 100], description: "Extra time for a candidate with a disability" }, extraTimeConfirmed: { type: "boolean", description: "Required as true when extraTimePercent is above 0: you confirm the candidate asked for this adjustment and agreed that it is recorded" } },
+                      properties: { email: { type: "string" }, firstName: { type: "string" }, lastName: { type: "string" } },
                     },
                   },
                 },
