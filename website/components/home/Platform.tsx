@@ -26,7 +26,7 @@ const TABS = [
     icon: Award,
     title: "Certify",
     lead: "A proctored final test and a certificate anyone can check.",
-    points: ["ID, camera and screen checks, reviewed by people", "Certificate with a code and QR code", "Add it to LinkedIn, extend it, or order a print"],
+    points: ["ID, camera and screen checks, reviewed by people", "Certificate with a code and QR code", "Add it to LinkedIn, share it, or extend it"],
     mock: "cert",
   },
   {

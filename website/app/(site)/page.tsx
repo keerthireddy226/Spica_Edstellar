@@ -24,8 +24,8 @@ const FAQ: [string, string][] = [
   ["What does a test taker need?", "A laptop or desktop computer with a camera, a microphone and a modern browser, a stable connection and a quiet room. A system check runs first."],
   ["Do job candidates need an account?", "No. Candidates open the link in their invitation, take one proctored test, and the recruiter receives the report."],
   ["Can we use our own sign-in and branding?", "Yes. Organisations can add their logo and colour, and on Enterprise use company sign-in (SAML or OpenID Connect) and automatic accounts (SCIM)."],
-  ["How long is a certificate valid?", "12 months. It can be extended for another 12 months or made valid for life, and a printed copy can be posted."],
-  ["Where is our data stored?", "In Singapore. Recordings and photos are deleted on a fixed schedule, and data is never sold or used to train AI models."],
+  ["How long is a certificate valid?", "12 months. It can be extended for another 12 months or made valid for life."],
+  ["How is our data protected?", "Data is encrypted, recordings and photos are deleted on a fixed schedule, and data is never sold or used to train AI models. See Security and trust."],
 ];
 
 export default function Home() {
@@ -68,7 +68,7 @@ export default function Home() {
                 <QrCode size={16} /> Verifiable certificates
               </li>
               <li>
-                <Lock size={16} /> Data stored in Singapore
+                <Lock size={16} /> Data never sold
               </li>
             </ul>
           </div>

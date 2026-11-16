@@ -54,7 +54,7 @@ export function IndividualPlans() {
             <li>One final assessment with a certificate</li>
           </ul>
           <p className="muted" style={{ fontSize: "0.88rem", margin: 0 }}>
-            Buy 1, 3 or 6 months, or subscribe monthly and cancel any time.
+            One month at a time: buy another month when you need it, or subscribe monthly and cancel any time.
           </p>
           <a className="btn primary" href={app.signUp}>
             Get Full access
@@ -129,13 +129,6 @@ export function IndividualPlans() {
               </td>
               <td>{money("certLifetime", c)}</td>
               <td>The certificate never expires.</td>
-            </tr>
-            <tr>
-              <td>
-                <b>Printed certificate</b>
-              </td>
-              <td>{money("certPrint", c)}</td>
-              <td>A printed copy posted to you.</td>
             </tr>
           </tbody>
         </table>

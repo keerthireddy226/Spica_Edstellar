@@ -15,7 +15,7 @@ export default function PrivacyPage() {
         <p className="lead">The full Privacy Policy is being finalised and will be published here before launch.</p>
         <p>
           The privacy notices that apply today are on our <Link href="/legal">legal page</Link>, and every user agrees to the one that applies
-          to them inside Spica. In short: data is stored in Singapore, never sold, deleted on a fixed schedule, and you can download or delete
+          to them inside Spica. In short: data is never sold, it is deleted on a fixed schedule, and you can download or delete
           it at any time. See <Link href="/security">Security and trust</Link> for details.
         </p>
         <p>

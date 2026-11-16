@@ -42,7 +42,7 @@ export default function AboutPage() {
           <div className="card">
             <h3>Private</h3>
             <p className="muted">
-              Data stored in Singapore, deleted on a fixed schedule, never sold. <Link href="/security">How we protect it</Link>.
+              Data protected, deleted on a fixed schedule, and never sold. <Link href="/security">How we protect it</Link>.
             </p>
           </div>
         </div>

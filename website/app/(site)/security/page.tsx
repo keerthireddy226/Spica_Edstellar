@@ -4,16 +4,16 @@ import { APP_URL, company } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Security and trust",
-  description: "How Spica protects data: storage in Singapore, encryption, two-step sign-in, proctoring reviewed by people, retention rules and the companies that process data.",
+  description: "How Spica protects data: encryption, two-step sign-in, proctoring reviewed by people, retention rules and the companies that process data.",
 };
 
-const PROVIDERS: [string, string, string][] = [
-  ["Render", "Runs Spica's servers and stores files", "Singapore"],
-  ["Supabase", "Database and a copy of stored files", "Singapore"],
-  ["Vercel", "Delivers the website and app pages", "Global network (passes data through)"],
-  ["Google (Gemini)", "Transcribes and scores spoken and written answers", "Google's servers"],
-  ["Brevo", "Sends emails", "European Union"],
-  ["Stripe, Razorpay", "Online payments", "Global, India"],
+const PROVIDERS: [string, string][] = [
+  ["Render", "Runs Spica's servers and stores files"],
+  ["Supabase", "Database and a copy of stored files"],
+  ["Vercel", "Delivers the website and app pages"],
+  ["Google (Gemini)", "Transcribes and scores spoken and written answers"],
+  ["Brevo", "Sends emails"],
+  ["Stripe, Razorpay", "Online payments"],
 ];
 
 const RETENTION: [string, string][] = [
@@ -35,8 +35,8 @@ export default function SecurityPage() {
           <p className="lead">How Spica stores and protects data, how proctoring works, and which companies help us run the service.</p>
           <div className="grid g3" style={{ marginTop: 32 }}>
             <div className="card">
-              <h3>Where data lives</h3>
-              <p className="muted">Spica&apos;s database and files are stored in Singapore. Data is never sold or used to train AI models.</p>
+              <h3>Your data, kept safe</h3>
+              <p className="muted">Data is encrypted, kept only as long as it is needed, and never sold or used to train AI models.</p>
             </div>
             <div className="card">
               <h3>Protection</h3>
@@ -92,13 +92,12 @@ export default function SecurityPage() {
             <div className="table-wrap">
               <table className="t">
                 <tbody>
-                  {PROVIDERS.map(([n, w, l]) => (
+                  {PROVIDERS.map(([n, w]) => (
                     <tr key={n}>
                       <td>
                         <b>{n}</b>
                       </td>
                       <td>{w}</td>
-                      <td>{l}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -24,7 +24,6 @@ export const PRICES: Record<string, Row> = {
   pack: r(599, 12, 11, 9, 44, 16),
   certExtend: r(199, 5, 5, 4, 18, 7),
   certLifetime: r(699, 15, 14, 12, 55, 20),
-  certPrint: r(499, 12, 11, 9, 44, 16),
 };
 
 const SYMBOL: Record<Currency, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED ", SGD: "S$" };
