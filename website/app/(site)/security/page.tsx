@@ -80,7 +80,7 @@ export default function SecurityPage() {
                 <Scale size={20} />
               </span>
               <h3>Privacy laws</h3>
-              <p className="muted">Spica follows India&apos;s Digital Personal Data Protection Act and the EU and UK GDPR, with standard contractual clauses for transfers.</p>
+              <p className="muted">Spica is built to meet India&apos;s Digital Personal Data Protection Act and the EU and UK GDPR, with standard contractual clauses for transfers outside Europe.</p>
             </div>
             <div className="card icard" data-reveal style={{ ["--i" as string]: 2 }}>
               <span className="icard-icon">

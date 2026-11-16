@@ -52,7 +52,7 @@ export default function GrievancePage() {
         {
           id: "next",
           title: "What happens next",
-          body: <p>We confirm that we have received your complaint and reply with our answer within [response time — to be confirmed].</p>,
+          body: <p>We confirm that we have received your complaint within 48 hours and resolve it within one month of receiving it.</p>,
         },
         {
           id: "escalate",

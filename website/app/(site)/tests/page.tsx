@@ -101,7 +101,7 @@ export default function TestsPage() {
             Six English tests, <span className="ph-accent">one scale</span>
           </>
         }
-        lead="Every Spica test runs online, is scored on the Spica scale from 10 to 90 and is linked to the CEFR levels A1 to C2. Choose the test that matches what you need to know."
+        lead="Every Spica test runs online, is scored on the Spica scale from 10 to 90 and reports a CEFR level from A1 to C2. Choose the test that matches what you need to know."
         actions={
           <>
             <a className="btn primary" href="#choose">
@@ -127,7 +127,7 @@ export default function TestsPage() {
           </div>
           <div>
             <b>10–90</b>
-            <span>Spica scale, linked to CEFR A1–C2</span>
+            <span>Spica scale, reported as CEFR A1–C2</span>
           </div>
           <div>
             <b data-count={shortest}>{shortest}</b>

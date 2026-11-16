@@ -62,7 +62,7 @@ export const SOLUTIONS: Solution[] = [
   },
   {
     slug: "universities",
-    name: "Universities and schools",
+    name: "Universities and colleges",
     headline: "Admit, place and prepare students with one platform",
     problem: "Placement and exit testing take staff time, and students need proof of their English for placements and jobs.",
     answer: "Online admission and placement tests, preparation for placements with progress by class, and certificates students can share with employers.",

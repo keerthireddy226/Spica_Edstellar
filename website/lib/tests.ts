@@ -56,7 +56,7 @@ export const TESTS: TestInfo[] = [
     id: "placement",
     name: "English Placement",
     short: "Places learners at the right level, from beginner to advanced.",
-    forWho: "Training companies, language schools and universities placing learners in the right class.",
+    forWho: "Training companies, language institutes and universities placing adult learners in the right class.",
     purpose: "A broad test that starts easy and becomes harder, so learners at every level can show what they can do.",
     skills: ["Speaking", "Listening", "Reading", "Writing"],
     questions: 80,

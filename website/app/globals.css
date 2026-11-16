@@ -1556,3 +1556,9 @@ body {
 @media (max-width: 760px) { .site .sitemap-grid { grid-template-columns: 1fr 1fr; } }
 /* Default tone for cards without their own */
 .site { --t-bg: #f8e8dd; --t-bg2: #fdf4ee; --t-acc: #b4623e; --t-deep: #8f4526; --t-soft: #f3d6c7; }
+.site .lang-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.site .lang-chips span { padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--rule); font-size: 0.88rem; }
+.site .ed-list { display: grid; gap: 10px; }
+.site .ed-list > div { background: #fff; border: 1px solid var(--rule); border-radius: 14px; padding: 14px 16px; }
+.site .ed-list b { display: block; font-size: 1rem; }
+.site .ed-list span { color: var(--muted); font-size: 0.92rem; }

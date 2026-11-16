@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Accessibility, ArrowRight, ArrowUpRight, Award, Building2, ClipboardCheck, Cookie, FileText, Lock, MessageSquareWarning, ReceiptText, Scale, ShieldCheck, User } from "lucide-react";
+import { Fingerprint, Accessibility, ArrowRight, ArrowUpRight, Award, Building2, ClipboardCheck, Cookie, FileText, Lock, MessageSquareWarning, ReceiptText, Scale, ShieldCheck, User } from "lucide-react";
 import { APP_URL } from "@/lib/site";
 import { PageHero } from "@/components/page/PageHero";
 
@@ -21,6 +21,7 @@ const GROUPS: { title: string; icon: React.ElementType; docs: Doc[] }[] = [
       { title: "Refunds and cancellation", text: "How to cancel, when we refund, and how Spica is delivered.", href: "/legal/refunds", icon: ReceiptText },
       { title: "Test rules", text: "Taking a real test alone, identity checks, proctoring, reviews and retakes.", href: "/legal/test-rules", icon: ClipboardCheck },
       { title: "Certificate policy", text: "When certificates are issued, how long they are valid and how to check one.", href: "/legal/certificates", icon: Award },
+      { title: "Biometric data policy", text: "Face and voice checks: consent, the alternative, and deletion.", href: "/legal/biometric-data", icon: Fingerprint },
       { title: "Cookie notice", text: "No advertising or tracking cookies.", href: "/legal/cookies", icon: Cookie },
       { title: "Accessibility", text: "Using the website and tests with a disability.", href: "/legal/accessibility", icon: Accessibility },
       { title: "Grievance redressal", text: "How to raise a complaint, and our Grievance Officer.", href: "/legal/grievance", icon: MessageSquareWarning },

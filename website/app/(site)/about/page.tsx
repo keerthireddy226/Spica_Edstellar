@@ -49,7 +49,7 @@ export default function AboutPage() {
             <p className="eyebrow">Why we built it</p>
             <h2>Three problems, one platform</h2>
             <p className="muted">
-              Spica answers all three: tests on one scale linked to the CEFR levels, practice for every question type, and a proctored final test
+              Spica answers all three: tests on one scale that reports the CEFR levels, practice for every question type, and a proctored final test
               with a certificate anyone can check online.
             </p>
           </div>

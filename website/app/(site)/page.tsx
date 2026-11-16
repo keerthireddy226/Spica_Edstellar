@@ -13,8 +13,25 @@ import "./home.css";
 export const metadata: Metadata = {
   title: { absolute: "Spica by Edstellar | Measure, build and certify English" },
   description:
-    "Spica tests English in all four skills on one 10–90 scale linked to CEFR A1–C2, trains people with a plan for their level, and certifies results with a proctored test and a certificate anyone can check.",
+    "Spica tests English in all four skills on one 10–90 scale with CEFR levels A1–C2, trains people with a plan for their level, and certifies results with a proctored test and a certificate anyone can check.",
 };
+
+// Who reads a Spica report, and what each one gets. Every point exists in Spica today.
+const REPORTS: [React.ElementType, string, string, string[]][] = [
+  [Users, "Recruiters", "Everything to decide on a candidate", ["Level, score and a score for each skill", "Spoken answers to play, with transcripts", "Suggested questions for the interview", "A secure link to share with hiring managers"]],
+  [GraduationCap, "Learners", "A clear picture of where to improve", ["CEFR level and Spica score", "A score for each of the four skills", "What to work on next, linked to practice"]],
+  [Building2, "Teams and classes", "Reports for every batch", ["Levels and progress by person and by batch", "Progress towards a target level", "Exports for HR and placement offices"]],
+];
+
+// The languages of Spica's menus and instructions (frontend/src/i18n).
+const LANGUAGES = ["English", "हिन्दी Hindi", "తెలుగు Telugu", "中文 Chinese", "日本語 Japanese", "Tiếng Việt Vietnamese", "Français French", "Deutsch German", "Español Spanish", "Italiano Italian", "Nederlands Dutch", "Polski Polish", "Dansk Danish", "Suomi Finnish", "Norsk Norwegian", "Svenska Swedish"];
+
+const EDSTELLAR: [string, string][] = [
+  ["Capability OS", "Edstellar's main platform for building workforce capability"],
+  ["TNA/TNI Engine", "Find the training needs behind skills gaps"],
+  ["Spectra LMS", "Edstellar's learning management system"],
+  ["Corporate training", "Instructor-led programmes across 77 domains"],
+];
 
 const FAQ: [string, string][] = [
   ["Is a Spica certificate official or accredited?", "It is Spica's own certificate. It shows a CEFR level and anyone can check it online. It is not a government or visa certificate."],
@@ -145,7 +162,7 @@ export default function Home() {
               <span className="h-card-icon">
                 <GraduationCap size={20} />
               </span>
-              <h3>Universities and schools</h3>
+              <h3>Universities and colleges</h3>
               <p>Admission tests, preparation for placements and certificates students can share.</p>
               <span className="h-link">
                 For universities <ArrowRight size={15} />
@@ -252,6 +269,68 @@ export default function Home() {
             <a className="h-link" href={app.sampleReport()} style={{ marginTop: 16 }}>
               Open a full sample report <ArrowRight size={15} />
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* REPORTS */}
+      <section className="h-section">
+        <div className="h-wrap">
+          <div className="h-head" data-reveal>
+            <span className="h-kicker">Reports</span>
+            <h2>Reports that go beyond a single score</h2>
+            <p>Every report shows the CEFR level, a Spica score from 10 to 90 and each skill on its own, with clear next steps for the person reading it.</p>
+          </div>
+          <div className="grid g3">
+            {REPORTS.map(([I, who, title, points], i) => (
+              <div key={who} className="card icard" data-reveal style={{ ["--i" as string]: i }}>
+                <span className="icard-icon">
+                  <I size={20} />
+                </span>
+                <p className="eyebrow" style={{ margin: "14px 0 4px" }}>{who}</p>
+                <h3>{title}</h3>
+                <ul className="ticks">
+                  {points.map((pt) => (
+                    <li key={pt}>{pt}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LANGUAGES AND EDSTELLAR */}
+      <section className="h-section">
+        <div className="h-wrap grid g2" style={{ alignItems: "start", gap: 40 }}>
+          <div data-reveal>
+            <span className="h-kicker">Online, anywhere</span>
+            <h2 style={{ margin: "10px 0 12px" }}>Menus and instructions in {LANGUAGES.length} languages</h2>
+            <p className="muted" style={{ marginBottom: 18 }}>
+              Spica runs in a web browser, so people can learn and test at home, at work or on campus, with nothing to install and no test centre. The
+              tests themselves are in English.
+            </p>
+            <div className="lang-chips">
+              {LANGUAGES.map((l) => (
+                <span key={l}>{l}</span>
+              ))}
+            </div>
+          </div>
+          <div data-reveal style={{ ["--i" as string]: 1 }}>
+            <span className="h-kicker">Training and testing</span>
+            <h2 style={{ margin: "10px 0 12px" }}>From the same partner</h2>
+            <p className="muted" style={{ marginBottom: 18 }}>
+              Spica is built by Edstellar, a corporate training company. Pair English testing with training programmes and the rest of the Edstellar
+              platforms.
+            </p>
+            <div className="ed-list">
+              {EDSTELLAR.map(([name, text]) => (
+                <div key={name}>
+                  <b>{name}</b>
+                  <span>{text}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

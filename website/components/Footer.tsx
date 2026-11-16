@@ -31,7 +31,7 @@ export function Footer() {
         </div>
         <div className="footer-base">
           <span>
-            © {new Date().getFullYear()} {company.legalName}. {company.address}. Spica is a product of Edstellar.
+            © {new Date().getFullYear()} {company.legalName}. {company.address}. Spica is a product of Edstellar. Spica is not affiliated with any other test provider.
           </span>
           <span className="footer-base-links">
             <Link href="/legal/terms">Terms</Link>

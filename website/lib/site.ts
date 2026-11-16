@@ -98,6 +98,7 @@ export const footer: { title: string; links: { href: string; label: string }[] }
       { href: "/legal/refunds", label: "Refunds and cancellation" },
       { href: "/legal/test-rules", label: "Test rules" },
       { href: "/legal/certificates", label: "Certificate policy" },
+      { href: "/legal/biometric-data", label: "Biometric data policy" },
       { href: "/legal/cookies", label: "Cookie notice" },
       { href: "/legal/accessibility", label: "Accessibility" },
       { href: "/legal/grievance", label: "Grievance redressal" },

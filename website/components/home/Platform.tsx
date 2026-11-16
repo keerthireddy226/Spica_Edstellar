@@ -10,7 +10,7 @@ const TABS = [
     icon: BarChart3,
     title: "Assess",
     lead: "Know every person's level in about 30 minutes.",
-    points: ["Six tests on one 10–90 scale, linked to CEFR A1–C2", "A level for each of the four skills", "Results in minutes, with a full score report"],
+    points: ["Six tests on one 10–90 scale, with CEFR levels A1–C2", "A level for each of the four skills", "Results in minutes, with a full score report"],
     mock: "team",
   },
   {

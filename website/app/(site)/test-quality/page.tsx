@@ -6,11 +6,11 @@ import { JourneyMock } from "@/components/page/Visuals";
 
 export const metadata: Metadata = {
   title: "Test quality and fairness",
-  description: "How Spica tests are built and checked: linked to CEFR, the same conditions for everyone, fair marking of accents and spellings, people reviewing flags and scores.",
+  description: "How Spica tests are built and checked: CEFR levels, the same conditions for everyone, fair marking of accents and spellings, people reviewing flags and scores.",
 };
 
 const POINTS: [React.ElementType, string, React.ReactNode][] = [
-  [Layers, "Linked to the CEFR", <>Every result is a Spica score from 10 to 90 and a CEFR level, overall and for each skill. See <Link href="/levels">English levels</Link>.</>],
+  [Layers, "Reported on the CEFR levels", <>Every result is a Spica score from 10 to 90 and a CEFR level, overall and for each skill. See <Link href="/levels">English levels</Link>.</>],
   [Clock, "The same conditions for everyone", "Each question has its own timer, recordings play at most twice, and a question left blank counts as wrong."],
   [Languages, "Fair to every speaker", "Speaking is scored on how clearly you are understood, not on your accent. British, American and Indian spellings are all accepted."],
   [Scale, "Clear rules for each task", "Spoken and written answers are scored against clear rules for each task. Multiple-choice answers are marked by fixed rules."],

@@ -124,7 +124,7 @@ export default function PricingPage() {
             </div>
             <div>
               <GraduationCap size={20} />
-              <span>Universities and schools: {EDUCATION_DISCOUNT}% off.</span>
+              <span>Universities and colleges: {EDUCATION_DISCOUNT}% off.</span>
             </div>
             <div>
               <Rocket size={20} />
