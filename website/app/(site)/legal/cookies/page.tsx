@@ -30,8 +30,8 @@ export default function CookiesPage() {
           body: (
             <p>
               When you sign in to Spica, we use only the cookies and browser storage needed to keep you signed in and to remember your settings, such
-              as your language. We do not use advertising or tracking cookies. Spica&apos;s pages load their fonts from an external font service,
-              which receives your device&apos;s IP address.
+              as your language. We do not use advertising or tracking cookies. Spica&apos;s fonts are served from Spica&apos;s own servers, so no
+              font service receives your IP address.
             </p>
           ),
         },

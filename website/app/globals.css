@@ -1502,7 +1502,7 @@ body {
 }
 
 /* Legal and policy pages */
-.site .legal-doc { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 56px; align-items: start; }
+.site .legal-doc { display: block; }
 .site .legal-toc { position: sticky; top: 92px; background: #fff; border: 1px solid var(--rule); border-radius: 18px; padding: 18px 20px; font-size: 0.9rem; }
 .site .legal-updated { margin: 0 0 14px; color: var(--muted); font-size: 0.85rem; }
 .site .legal-toc-title { margin: 0 0 8px; font-weight: 700; }
