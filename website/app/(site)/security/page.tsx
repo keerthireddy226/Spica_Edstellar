@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Bot, Building2, Bug, Database, Fingerprint, Lock, Scale, ShieldCheck, Timer, UserCog } from "lucide-react";
 import { APP_URL, company } from "@/lib/site";
+import { PageHero } from "@/components/page/PageHero";
+import { SecurityMock } from "@/components/page/Visuals";
 
 export const metadata: Metadata = {
   title: "Security and trust",
@@ -28,38 +31,70 @@ const RETENTION: [string, string][] = [
 export default function SecurityPage() {
   return (
     <>
+      <PageHero
+        crumbs={[{ label: "Security and trust" }]}
+        eyebrow="Security and trust"
+        icon={<ShieldCheck size={16} />}
+        tone="sky"
+        title={
+          <>
+            Your data is protected, and <span className="ph-accent">people make the decisions</span>
+          </>
+        }
+        lead="How Spica protects data, how proctoring works, and which companies help us run the service."
+        visual={<SecurityMock />}
+      />
       <section className="section">
         <div className="wrap">
-          <p className="eyebrow">Security and trust</p>
-          <h1>Your data is protected, and people make the decisions</h1>
-          <p className="lead">How Spica stores and protects data, how proctoring works, and which companies help us run the service.</p>
-          <div className="grid g3" style={{ marginTop: 32 }}>
-            <div className="card">
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">How we protect it</p>
+            <h2>Six promises we keep</h2>
+          </div>
+          <div className="grid g3">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 0 }}>
+              <span className="icard-icon">
+                <Lock size={20} />
+              </span>
               <h3>Your data, kept safe</h3>
               <p className="muted">Data is encrypted, kept only as long as it is needed, and never sold or used to train AI models.</p>
             </div>
-            <div className="card">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 1 }}>
+              <span className="icard-icon">
+                <ShieldCheck size={20} />
+              </span>
               <h3>Protection</h3>
               <p className="muted">
                 Encrypted connections and storage, hashed passwords, two-step sign-in, company sign-in, role-based access, one session per account
                 and an audit log of every administrative change.
               </p>
             </div>
-            <div className="card">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 2 }}>
+              <span className="icard-icon">
+                <Bot size={20} />
+              </span>
               <h3>AI and people</h3>
               <p className="muted">AI scores the answers. People review every proctoring flag and any score someone asks to have checked. Nobody is failed automatically.</p>
             </div>
-            <div className="card">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 0 }}>
+              <span className="icard-icon">
+                <Fingerprint size={20} />
+              </span>
               <h3>Biometrics by choice</h3>
               <p className="muted">
                 Face and voice matching only with separate consent, run on Spica&apos;s own servers. Anyone can choose a manual identity check instead.
               </p>
             </div>
-            <div className="card">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 1 }}>
+              <span className="icard-icon">
+                <Scale size={20} />
+              </span>
               <h3>Privacy laws</h3>
               <p className="muted">Spica follows India&apos;s Digital Personal Data Protection Act and the EU and UK GDPR, with standard contractual clauses for transfers.</p>
             </div>
-            <div className="card">
+            <div className="card icard" data-reveal style={{ ["--i" as string]: 2 }}>
+              <span className="icard-icon">
+                <Building2 size={20} />
+              </span>
               <h3>For organisations</h3>
               <p className="muted">
                 A Data Processing Agreement, IP limits, required two-step sign-in, data export and erasure, and your own retention periods. A
@@ -73,6 +108,9 @@ export default function SecurityPage() {
       <section className="section alt">
         <div className="wrap grid g2">
           <div>
+            <p className="eyebrow">
+              <Timer size={14} /> Retention
+            </p>
             <h2>How long data is kept</h2>
             <div className="table-wrap">
               <table className="t">
@@ -88,6 +126,9 @@ export default function SecurityPage() {
             </div>
           </div>
           <div>
+            <p className="eyebrow">
+              <Database size={14} /> Service providers
+            </p>
             <h2>Companies that process data for us</h2>
             <div className="table-wrap">
               <table className="t">
@@ -114,13 +155,19 @@ export default function SecurityPage() {
       <section className="section">
         <div className="wrap grid g2">
           <div>
+            <p className="eyebrow">
+              <Bug size={14} /> Responsible disclosure
+            </p>
             <h2>Report a security issue</h2>
             <p>
               If you think you have found a weakness in Spica, write to <b>{company.securityEmail}</b>. Please give us time to fix it before telling
               anyone else.
             </p>
           </div>
-          <div className="card">
+          <div className="card icard">
+            <span className="icard-icon">
+              <UserCog size={20} />
+            </span>
             <h3>Privacy questions</h3>
             <p className="muted">
               To download or delete your data, or for any privacy question, write to {company.privacyEmail}. See our <Link href="/legal">legal documents</Link>.

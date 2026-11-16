@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, FileText, Scale, ShieldCheck } from "lucide-react";
 import { APP_URL } from "@/lib/site";
+import { PageHero } from "@/components/page/PageHero";
 
 export const metadata: Metadata = { title: "Legal", description: "Spica's terms, privacy policy, privacy notices and data processing agreement." };
 
@@ -14,21 +16,40 @@ const NOTICES: [string, string, string][] = [
 
 export default function LegalPage() {
   return (
+    <>
+    <PageHero
+      crumbs={[{ label: "Legal" }]}
+      eyebrow="Legal"
+      icon={<Scale size={16} />}
+      tone="gold"
+      title="Legal documents"
+      lead="Our terms, privacy policy, the privacy notices for each kind of user, and the agreement for organisations."
+    />
     <section className="section">
-      <div className="wrap" style={{ maxWidth: 900 }}>
-        <p className="eyebrow">Legal</p>
-        <h1>Legal documents</h1>
-        <div className="grid g2" style={{ marginTop: 24 }}>
-          <Link className="card test-card" href="/legal/terms">
+      <div className="wrap prose">
+        <div className="grid g2">
+          <Link className="tcard tone-gold" href="/legal/terms" data-reveal>
+            <span className="tcard-icon">
+              <FileText size={22} />
+            </span>
             <h3>Terms and Conditions</h3>
-            <p className="muted" style={{ margin: 0 }}>The rules for using Spica, payments, refunds and test rules.</p>
+            <p className="muted">The rules for using Spica, payments, refunds and test rules.</p>
+            <span className="tcard-more">
+              Read <ArrowRight size={16} aria-hidden="true" />
+            </span>
           </Link>
-          <Link className="card test-card" href="/legal/privacy">
+          <Link className="tcard tone-sky" href="/legal/privacy" data-reveal style={{ ["--i" as string]: 1 }}>
+            <span className="tcard-icon">
+              <ShieldCheck size={22} />
+            </span>
             <h3>Privacy Policy</h3>
-            <p className="muted" style={{ margin: 0 }}>What data Spica collects, why, who receives it, how long it is kept and your rights.</p>
+            <p className="muted">What data Spica collects, why, who receives it, how long it is kept and your rights.</p>
+            <span className="tcard-more">
+              Read <ArrowRight size={16} aria-hidden="true" />
+            </span>
           </Link>
         </div>
-        <h2 style={{ marginTop: 40 }}>Privacy notices and agreements</h2>
+        <h2 style={{ marginTop: 48 }}>Privacy notices and agreements</h2>
         <div className="table-wrap">
           <table className="t">
             <tbody>
@@ -50,5 +71,6 @@ export default function LegalPage() {
         </p>
       </div>
     </section>
+    </>
   );
 }

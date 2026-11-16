@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { Briefcase, Building2, ChevronDown, GraduationCap, Presentation, User } from "lucide-react";
+import { Building2, ChevronDown, GraduationCap, Presentation, User, UserSearch } from "lucide-react";
 import { app, nav } from "@/lib/site";
 
 // The audiences in the "Who it's for" menu, with an icon each.
 export const AUDIENCES = [
   { href: "/solutions/companies", label: "Companies", note: "Test, train and certify employees", icon: Building2 },
-  { href: "/solutions/recruiters", label: "Recruiters", note: "Check applicants before interviews", icon: Briefcase },
+  { href: "/solutions/recruiters", label: "Recruiters", note: "Check applicants before interviews", icon: UserSearch },
   { href: "/solutions/universities", label: "Universities", note: "Admissions and placement", icon: GraduationCap },
   { href: "/solutions/training-providers", label: "Training providers", note: "Place and certify your learners", icon: Presentation },
   { href: "/solutions/individuals", label: "Individuals", note: "Know, improve and prove your level", icon: User },

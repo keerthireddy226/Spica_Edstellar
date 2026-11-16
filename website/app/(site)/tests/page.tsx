@@ -19,25 +19,14 @@ import {
   Timer,
 } from "lucide-react";
 import { PageHero, type Tone } from "@/components/page/PageHero";
-import { TESTS, type Skill } from "@/lib/tests";
+import { TESTS } from "@/lib/tests";
+import { TEST_LOOK as LOOK, SKILL_ICON } from "@/components/page/looks";
 import { money } from "@/lib/prices";
 
 export const metadata: Metadata = {
   title: "English tests",
   description: "Six online English tests: 4 Skills Essentials, Placement, Professional English, Speaking & Listening, Writing and Level Tests, all on the Spica 10–90 scale and CEFR levels.",
 };
-
-// Each test's picture and colour on this page.
-const LOOK: Record<string, { icon: React.ElementType; tone: Tone }> = {
-  "english-4-skills-essentials": { icon: LayoutGrid, tone: "clay" },
-  "english-placement": { icon: Compass, tone: "sky" },
-  "professional-english": { icon: Briefcase, tone: "plum" },
-  "speaking-and-listening": { icon: Mic, tone: "moss" },
-  writing: { icon: PenLine, tone: "gold" },
-  "level-tests": { icon: BarChart3, tone: "clay" },
-};
-
-const SKILL_ICON: Record<Skill, React.ElementType> = { Speaking: Mic, Listening: Headphones, Reading: BookOpen, Writing: PenLine };
 
 // Which test answers which question.
 const CHOOSER = [

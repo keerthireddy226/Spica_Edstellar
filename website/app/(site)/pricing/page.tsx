@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ArrowRight, Building2, CreditCard, GraduationCap, Rocket, User } from "lucide-react";
 import { IndividualPlans } from "@/components/IndividualPlans";
+import { PageHero } from "@/components/page/PageHero";
+import { PriceMock } from "@/components/page/Visuals";
 import { CREDIT_BANDS, EDUCATION_DISCOUNT, LICENCE_BANDS, PILOT } from "@/lib/prices";
 import { TESTS } from "@/lib/tests";
 
@@ -21,26 +24,56 @@ const FAQ: [string, string][] = [
 export default function PricingPage() {
   return (
     <>
-      <section className="section">
+      <PageHero
+        crumbs={[{ label: "Pricing" }]}
+        eyebrow="Pricing"
+        icon={<CreditCard size={16} />}
+        tone="moss"
+        title={
+          <>
+            Simple prices, <span className="ph-accent">nothing renews by surprise</span>
+          </>
+        }
+        lead="Start free. Pay for a single test, a month of everything, or licences and credits for your organisation."
+        actions={
+          <>
+            <a className="btn primary" href="#individuals">
+              For individuals <ArrowRight size={17} aria-hidden="true" />
+            </a>
+            <a className="btn ghost" href="#organisations">
+              For organisations
+            </a>
+          </>
+        }
+        visual={<PriceMock />}
+      />
+      <section className="section" id="individuals">
         <div className="wrap">
-          <p className="eyebrow">Pricing</p>
-          <h1>Simple prices, nothing renews by surprise</h1>
-          <p className="lead">Start free. Pay for a single test, a month of everything, or licences and credits for your organisation.</p>
-          <h2 style={{ marginTop: 40 }}>For individuals</h2>
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">
+              <User size={14} /> For individuals
+            </p>
+            <h2>Learn, practise and get certified</h2>
+          </div>
           <IndividualPlans />
         </div>
       </section>
 
-      <section className="section alt">
+      <section className="section alt" id="organisations">
         <div className="wrap">
-          <h2>For organisations</h2>
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">
+              <Building2 size={14} /> For organisations
+            </p>
+            <h2>Licences for learners, credits for tests</h2>
+          </div>
           <p className="lead">
             Companies, universities and training providers buy <b>learner licences</b>. Recruiters and anyone giving single tests use{" "}
             <b>credits</b>. Prices in US dollars.
           </p>
           <div className="grid g3" style={{ marginTop: 28 }}>
             {LICENCE_BANDS.map((b) => (
-              <div key={b.tier} className={`card plan${b.tier === "Business" ? " featured" : ""}`}>
+              <div key={b.tier} className={`card plan${b.tier === "Business" ? " featured" : ""}`} data-reveal>
                 <h3>{b.tier}</h3>
                 <div className="price">
                   US${b.usd} <small>per learner-month</small>
@@ -84,15 +117,22 @@ export default function PricingPage() {
               </div>
             ))}
           </div>
-          <ul className="ticks" style={{ marginTop: 28 }}>
-            <li>
-              One licence gives one learner Full access for one month, including a final assessment with a certificate.
-            </li>
-            <li>Universities and schools: {EDUCATION_DISCOUNT}% off.</li>
-            <li>
-              Pilot: {PILOT.licences} licences for {PILOT.days} days to try Spica with your team.
-            </li>
-          </ul>
+          <div className="perks" data-reveal>
+            <div>
+              <User size={20} />
+              <span>One licence gives one learner Full access for one month, including a final assessment with a certificate.</span>
+            </div>
+            <div>
+              <GraduationCap size={20} />
+              <span>Universities and schools: {EDUCATION_DISCOUNT}% off.</span>
+            </div>
+            <div>
+              <Rocket size={20} />
+              <span>
+                Pilot: {PILOT.licences} licences for {PILOT.days} days to try Spica with your team.
+              </span>
+            </div>
+          </div>
 
           <h3 style={{ marginTop: 40 }}>Credits for tests and recruitment</h3>
           <div className="grid g2">
@@ -138,7 +178,10 @@ export default function PricingPage() {
 
       <section className="section">
         <div className="wrap faq" style={{ maxWidth: 820 }}>
-          <h2>Billing questions</h2>
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">Questions</p>
+            <h2>Billing questions</h2>
+          </div>
           {FAQ.map(([q, a]) => (
             <details key={q}>
               <summary>{q}</summary>

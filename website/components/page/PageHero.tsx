@@ -14,6 +14,7 @@ export function PageHero({
   tone = "clay",
   actions,
   visual,
+  top,
 }: {
   crumbs: { href?: string; label: string }[];
   eyebrow: string;
@@ -23,11 +24,13 @@ export function PageHero({
   tone?: Tone;
   actions?: React.ReactNode;
   visual?: React.ReactNode;
+  /** Align the text to the top, for a tall picture such as a form. */
+  top?: boolean;
 }) {
   return (
     <section className={`ph tone-${tone}`}>
       <div className="ph-glow" aria-hidden="true" />
-      <div className={`wrap ph-grid${visual ? "" : " solo"}`}>
+      <div className={`wrap ph-grid${visual ? "" : " solo"}${top ? " top" : ""}`}>
         <div className="ph-copy">
           <nav className="ph-crumbs" aria-label="Breadcrumb">
             <Link href="/">Home</Link>

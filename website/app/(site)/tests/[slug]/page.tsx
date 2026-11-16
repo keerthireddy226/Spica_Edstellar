@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { TASKS, TESTS } from "@/lib/tests";
 import { money } from "@/lib/prices";
 import { app } from "@/lib/site";
+import { ArrowRight, Calculator, ClipboardList, FileText, ListOrdered } from "lucide-react";
+import { PageHero } from "@/components/page/PageHero";
+import { TestFacts } from "@/components/page/Visuals";
+import { TEST_LOOK } from "@/components/page/looks";
 
 export function generateStaticParams() {
   return TESTS.map((t) => ({ slug: t.slug }));
@@ -21,53 +25,37 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
   if (!t) notFound();
   const taskNames = [...new Set(t.parts.map((p) => p.task))];
   const isLevel = t.id === "level";
+  const look = TEST_LOOK[t.slug] ?? TEST_LOOK["english-4-skills-essentials"];
+  const Icon = look.icon;
   return (
     <>
-      <section className="section">
-        <div className="wrap">
-          <p className="crumbs">
-            <Link href="/tests">Tests</Link> / {t.name}
-          </p>
-          <h1>{t.name}</h1>
-          <p className="lead">{t.purpose}</p>
-          <div className="skills" style={{ marginTop: 16 }}>
-            {t.skills.map((s) => (
-              <span key={s} className="pill">
-                {s}
-              </span>
-            ))}
-          </div>
-          <div className="grid g4" style={{ marginTop: 28 }}>
-            <div className="card">
-              <div className="muted">Questions</div>
-              <div className="price">{t.questions}</div>
-            </div>
-            <div className="card">
-              <div className="muted">Time</div>
-              <div className="price" style={{ fontSize: "1.5rem" }}>
-                {t.minutes}
-              </div>
-            </div>
-            <div className="card">
-              <div className="muted">{isLevel ? "Level test" : "Real test"}</div>
-              <div className="price">
-                {money(t.priceKey, "INR")} <small>/ {money(t.priceKey, "USD")}</small>
-              </div>
-            </div>
-            <div className="card">
-              <div className="muted">Organisations</div>
-              <div className="price">
-                {t.credits} <small>credit{t.credits > 1 ? "s" : ""}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        crumbs={[{ href: "/tests", label: "Tests" }, { label: t.name }]}
+        eyebrow={isLevel ? "Level test" : "English test"}
+        icon={<Icon size={16} />}
+        tone={look.tone}
+        title={t.name}
+        lead={t.purpose}
+        actions={
+          <>
+            <a className="btn primary" href={app.signUp}>
+              Start free <ArrowRight size={17} aria-hidden="true" />
+            </a>
+            <a className="btn ghost" href={app.sampleReport(t.id)}>
+              See a sample report
+            </a>
+          </>
+        }
+        visual={<TestFacts t={t} />}
+      />
 
       <section className="section alt">
         <div className="wrap grid g2">
-          <div>
-            <h2>Who it's for</h2>
+          <div data-reveal>
+            <p className="eyebrow">
+              <ClipboardList size={14} /> Audience
+            </p>
+            <h2>Who it&apos;s for</h2>
             <p>{t.forWho}</p>
             <h2 style={{ marginTop: 28 }}>The result</h2>
             <p>{t.result}</p>
@@ -113,8 +101,13 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
 
       <section className="section">
         <div className="wrap">
-          <h2>The parts of the test</h2>
-          <p className="lead">Each part starts with a short instruction and an example. Every question has its own timer.</p>
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">
+              <ListOrdered size={14} /> Structure
+            </p>
+            <h2>The parts of the test</h2>
+            <p className="muted">Each part starts with a short instruction and an example. Every question has its own timer.</p>
+          </div>
           <div className="table-wrap" style={{ marginTop: 24 }}>
             <table className="t">
               <thead>
@@ -155,10 +148,16 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
 
       <section className="section alt">
         <div className="wrap">
-          <h2>What each task asks</h2>
-          <div className="grid g3" style={{ marginTop: 24 }}>
-            {taskNames.map((n) => (
-              <div className="card" key={n}>
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">
+              <FileText size={14} /> Tasks
+            </p>
+            <h2>What each task asks</h2>
+          </div>
+          <div className="grid g3">
+            {taskNames.map((n, i) => (
+              <div className={`card task tone-${look.tone}`} key={n} data-reveal style={{ ["--i" as string]: i % 3 }}>
+                <span className="task-num">{String(i + 1).padStart(2, "0")}</span>
                 <h3>{n}</h3>
                 <p className="muted">{TASKS[n]?.does}</p>
                 <p style={{ fontSize: "0.92rem", margin: 0 }}>
@@ -175,7 +174,10 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
 
       <section className="section">
         <div className="wrap grid g2">
-          <div>
+          <div data-reveal>
+            <p className="eyebrow">
+              <Calculator size={14} /> Scoring
+            </p>
             <h2>How answers are scored</h2>
             <ul className="ticks">
               <li>Spoken answers are scored for what was said and how clearly and fluently it was said. A clear accent is never marked down.</li>
