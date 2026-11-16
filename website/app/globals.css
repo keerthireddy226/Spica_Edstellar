@@ -1,0 +1,350 @@
+/* Colours from the Spica design (spica 2.html). Light theme only. */
+:root {
+  --band-a: #b5694a;
+  --band-b: #9c5637;
+  --on-band: #ffffff;
+  --on-band-soft: rgba(255, 255, 255, 0.9);
+  --accent-word: #ffe3d1;
+  --paper: #f3ebd8;
+  --cream: #efe4cc;
+  --cream-2: #e6d8bb;
+  --surface: #ffffff;
+  --ink: #2e2419;
+  --muted: #6a5c4b;
+  --rule: rgba(46, 36, 25, 0.13);
+  --clay: #c97c5c;
+  --clay-deep: #a8613f;
+  --clay-text: #96512f;
+  --moss: #6e9660;
+  --moss-ink: #4b6e3f;
+  --moss-bg: #e3ead9;
+  --shadow: 0 24px 50px -28px rgba(46, 36, 25, 0.5);
+  --radius: 18px;
+  --wrap: 1180px;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  line-height: 1.15;
+  margin: 0 0 0.5em;
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+}
+h2 {
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+}
+h3 {
+  font-size: 1.2rem;
+}
+p {
+  margin: 0 0 1em;
+}
+a {
+  color: var(--clay-text);
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.muted {
+  color: var(--muted);
+}
+.skip {
+  position: absolute;
+  left: -999px;
+}
+.skip:focus {
+  left: 16px;
+  top: 16px;
+  z-index: 100;
+  background: var(--surface);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.98rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn.primary {
+  background: var(--clay-deep);
+  color: #fff;
+}
+.btn.primary:hover {
+  background: var(--band-b);
+}
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.btn.light {
+  background: #fff;
+  color: var(--clay-text);
+}
+.btn.small {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+/* Header */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(243, 235, 216, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 68px;
+}
+.logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.logo svg {
+  width: 30px;
+  height: 30px;
+  align-self: center;
+  background: var(--clay-deep);
+  border-radius: 9px;
+  padding: 4px;
+}
+.logo b {
+  font-family: var(--font-logo), Georgia, serif;
+  font-size: 1.45rem;
+  color: var(--clay-deep);
+}
+.logo i {
+  font-family: var(--font-logo), Georgia, serif;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.nav {
+  display: flex;
+  gap: 22px;
+  margin-left: auto;
+}
+.nav a {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.nav a:hover,
+.nav a[aria-current="page"] {
+  color: var(--clay-text);
+}
+.bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.signin {
+  position: relative;
+}
+.signin summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 8px 4px;
+}
+.signin summary::-webkit-details-marker {
+  display: none;
+}
+.signin-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 230px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.signin-menu a {
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.93rem;
+}
+.signin-menu a:hover {
+  background: var(--cream);
+}
+.signin-menu small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.menu-toggle {
+  display: none;
+}
+
+@media (max-width: 920px) {
+  .nav,
+  .bar-actions .signin,
+  .bar-actions .btn {
+    display: none;
+  }
+  .menu-toggle {
+    display: block;
+    margin-left: auto;
+  }
+  .menu-toggle summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .menu-toggle summary::-webkit-details-marker {
+    display: none;
+  }
+  .mobile-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 68px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 12px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mobile-menu a {
+    padding: 10px 4px;
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .mobile-menu .btn {
+    margin-top: 8px;
+  }
+}
+
+/* Footer: kept light, like every Spica page */
+.site-footer {
+  margin-top: 80px;
+  background: var(--cream);
+  border-top: 1px solid var(--rule);
+  padding: 56px 0 28px;
+  font-size: 0.93rem;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 1fr);
+  gap: 32px;
+}
+.footer-grid h4 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+.footer-grid ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.footer-grid a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.footer-grid a:hover {
+  color: var(--clay-text);
+}
+.footer-base {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+@media (max-width: 860px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Sections used by every page */
+.section {
+  padding: 72px 0;
+}
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clay-text);
+  margin-bottom: 10px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 24px;
+}
