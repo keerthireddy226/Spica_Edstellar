@@ -320,7 +320,7 @@ a:hover > .h-link svg,
 }
 .h-chip.ok {
   background: var(--h-moss-bg);
-  color: var(--h-moss);
+  color: #3b6133;
 }
 .h-chip.warn {
   background: var(--h-warn-bg);
