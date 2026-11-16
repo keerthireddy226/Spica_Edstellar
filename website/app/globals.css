@@ -724,3 +724,217 @@ body {
   color: var(--muted);
 }
 
+
+/* ===== 2026-11-16 visual refresh: inner pages match the Home page ===== */
+:root {
+  --paper: #fcfaf6;
+  --cream: #f6efe4;
+  --ink: #1d1712;
+  --muted: #6b5d4e;
+  --rule: rgba(29, 23, 18, 0.1);
+  --clay: #b4623e;
+  --clay-deep: #8f4526;
+  --clay-text: #8f4526;
+  --shadow: 0 30px 60px -30px rgba(60, 35, 15, 0.35), 0 8px 18px -10px rgba(60, 35, 15, 0.15);
+  --radius: 20px;
+}
+body {
+  background: var(--paper);
+}
+.site h1,
+.site h2,
+.site h3 {
+  letter-spacing: -0.025em;
+  color: var(--ink);
+}
+.site h1 {
+  font-size: clamp(2.4rem, 5vw, 3.7rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+.site h2 {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  line-height: 1.12;
+}
+.site .lead {
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+/* First section of every inner page reads as a page hero */
+.site > .section:first-of-type {
+  padding-top: 64px;
+  background:
+    radial-gradient(800px 420px at 90% 0%, rgba(180, 98, 62, 0.13), transparent 60%),
+    radial-gradient(600px 360px at 0% 100%, rgba(79, 125, 69, 0.07), transparent 60%),
+    var(--paper);
+}
+.site .section {
+  padding: 88px 0;
+}
+.site .alt {
+  background: var(--cream);
+}
+.site .eyebrow {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--clay);
+  margin-bottom: 14px;
+}
+.site .crumbs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid var(--rule);
+  font-size: 0.85rem;
+}
+.site .crumbs a {
+  color: var(--clay-text);
+  text-decoration: none;
+}
+/* Buttons */
+.site .btn {
+  padding: 13px 24px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.site .btn.primary {
+  background: linear-gradient(135deg, var(--clay), var(--clay-deep));
+  color: #fff;
+  box-shadow: 0 12px 24px -12px rgba(143, 69, 38, 0.7);
+}
+.site .btn.primary:hover {
+  background: linear-gradient(135deg, var(--clay), var(--clay-deep));
+  transform: translateY(-2px);
+  box-shadow: 0 18px 30px -14px rgba(143, 69, 38, 0.75);
+}
+.site .btn.ghost {
+  background: #fff;
+  border-color: var(--rule);
+}
+.site .btn.ghost:hover {
+  border-color: var(--clay);
+  transform: translateY(-2px);
+}
+.site .btn.small {
+  padding: 9px 18px;
+}
+/* Cards */
+.site .card {
+  border-radius: var(--radius);
+  border-color: var(--rule);
+  padding: 26px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.site a.card:hover,
+.site .test-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: rgba(180, 98, 62, 0.4);
+}
+.site .card h3 {
+  font-size: 1.2rem;
+}
+.site .plan.featured {
+  border: 2px solid var(--clay);
+  box-shadow: var(--shadow);
+}
+.site .price {
+  letter-spacing: -0.02em;
+}
+/* Ticks: same check marks as the Home page */
+.site .ticks li::before {
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  background: #e6efdf url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 8.5l2.5 2.5L12 5.5' stroke='%234f7d45' stroke-width='2' fill='none' stroke-linecap='round'/></svg>") center/12px no-repeat;
+}
+/* Steps */
+.site .step::before {
+  background: linear-gradient(135deg, var(--clay), var(--clay-deep));
+  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 10px 20px -12px rgba(143, 69, 38, 0.7);
+}
+.site .card.step {
+  padding-top: 84px;
+}
+.site .card.step::before {
+  top: 24px;
+  left: 26px;
+}
+/* Pills and skills */
+.site .pill {
+  background: var(--cream);
+  color: var(--clay-text);
+  padding: 4px 11px;
+}
+/* Tables */
+.site .table-wrap {
+  border-radius: var(--radius);
+  border-color: var(--rule);
+  box-shadow: 0 16px 34px -28px rgba(60, 35, 15, 0.4);
+}
+.site table.t th {
+  background: var(--cream);
+  font-size: 0.9rem;
+}
+.site table.t tbody tr:hover td {
+  background: #fdf8f2;
+}
+/* FAQ */
+.site .faq details {
+  border-radius: 16px;
+  padding: 18px 22px;
+}
+.site .faq summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.site .faq summary::-webkit-details-marker {
+  display: none;
+}
+.site .faq summary::after {
+  content: "+";
+  color: var(--clay);
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+.site .faq details[open] summary::after {
+  transform: rotate(45deg);
+}
+/* Currency switch */
+.site .tabs button[aria-pressed="true"] {
+  background: var(--ink);
+}
+/* Forms */
+.site .field input,
+.site select,
+.site textarea {
+  border-radius: 12px;
+}
+/* Header */
+.site .site-header {
+  background: rgba(252, 250, 246, 0.88);
+  backdrop-filter: saturate(1.4) blur(12px);
+}
+.site .nav a {
+  padding: 8px 12px;
+  border-radius: 999px;
+  transition: background 0.15s ease;
+}
+.site .nav {
+  gap: 4px;
+}
+.site .nav a:hover {
+  background: var(--cream);
+  color: var(--ink);
+}
+/* Footer */
+.site .site-footer {
+  background: var(--cream);
+}

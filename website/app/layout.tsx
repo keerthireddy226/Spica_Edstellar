@@ -14,7 +14,9 @@ export const metadata: Metadata = {
   title: { default: "Spica by Edstellar | Know your English level and prove it", template: "%s | Spica by Edstellar" },
   description:
     "Spica measures English in all four skills, helps people improve, and ends with a proctored test and a certificate anyone can check online. For companies, recruiters, universities and individuals.",
-  openGraph: { siteName: "Spica by Edstellar", type: "website" },
+  openGraph: { siteName: "Spica by Edstellar", type: "website", locale: "en_GB" },
+  twitter: { card: "summary_large_image" },
+  robots: process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true" ? undefined : { index: false, follow: false },
 };
 
 export const viewport: Viewport = { themeColor: "#f3ebd8", colorScheme: "light" };
