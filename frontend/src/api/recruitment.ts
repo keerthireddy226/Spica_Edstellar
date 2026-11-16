@@ -151,6 +151,8 @@ export interface CandidateRow {
   confirmed_at?: string | null;
   invited_at: string;
   expires_at: string;
+  // When the latest link was sent (later than invited_at after "Send the link again").
+  last_sent_at?: string | null;
   started_at: string | null;
   // Started and left: shown as "Left the test" until the link expires.
   left_test?: boolean;

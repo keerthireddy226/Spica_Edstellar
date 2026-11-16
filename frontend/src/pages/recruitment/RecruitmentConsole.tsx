@@ -1155,8 +1155,10 @@ function JobDetail({ jobId, credits, onClose, onChanged }: { jobId: string; cred
                     <span className="h-9 w-9 rounded-full bg-navy/10 text-navy-deep flex items-center justify-center text-xs font-bold shrink-0">{initialsOf(c)}</span>
                     <span className="min-w-0">
                     <p className="text-sm font-semibold text-ink truncate">{personName(c)}</p>
-                    <p className="text-xs text-muted truncate">
+                    <p className="text-xs text-muted">
                       {c.email} · {c.completed_at ? tr("finished {{d}}", { d: dateTime(c.completed_at) }) : c.source === "public_link" ? tr("joined through the link {{d}}", { d: dateTime(c.invited_at) }) : tr("invited {{d}}", { d: dateTime(c.invited_at) })}
+                      {!c.completed_at && c.last_sent_at && new Date(c.last_sent_at).getTime() - new Date(c.invited_at).getTime() > 120_000 && tr(" · link sent again {{d}}", { d: dateTime(c.last_sent_at) })}
+                      {(c.status === "invited" || c.status === "started") && tr(" · link valid until {{d}}", { d: dateTime(c.expires_at) })}
                       {c.test_code ? ` · ${c.test_code}` : ""}
                     </p>
                     </span>

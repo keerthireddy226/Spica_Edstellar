@@ -437,9 +437,12 @@ recruitmentRouter.get("/jobs/:id", requireAuth, async (req: AuthedRequest, res, 
     const candidates = await pool.query(
       `SELECT a.id, a.candidate_id, a.email, a.first_name, a.last_name, a.status, a.result, a.decision, a.decision_note, a.decided_at,
          a.confirmed_level, a.confirmed_at, a.invited_at, a.expires_at, a.started_at, a.completed_at, a.session_id, ts.test_code,
+         -- When the latest link was sent: each link lasts the job's invite period, so a resent one shows here.
+         a.expires_at - make_interval(hours => jb.invite_valid_hours) AS last_sent_at,
          si.status AS integrity_status, si.risk_level, si.risk_score,
          concat_ws(' ', inv.first_name, inv.last_name) AS invited_by_name, a.source, a.extra_time_percent, ${leftTestSql()} AS left_test, ${ANSWERS_SQL}
        FROM recruitment_assessments a
+       JOIN recruitment_jobs jb ON jb.id = a.job_id
        LEFT JOIN sessions ts ON ts.id = a.session_id
        LEFT JOIN session_integrity si ON si.session_id = a.session_id
        LEFT JOIN users inv ON inv.id = a.invited_by
@@ -564,7 +567,9 @@ recruitmentRouter.post("/assessments/:id/resend", requireAuth, async (req: Authe
   const tenantId = await recruiterTenant(req, res);
   if (!tenantId) return;
   try {
-    res.json({ ok: true, ...(await resendInvite(tenantId, String(req.params.id))) });
+    const r = await resendInvite(tenantId, String(req.params.id));
+    await recordAudit({ tenantId, actorId: req.user!.id, actorRole: req.user!.role, action: "recruitment.invite_resent", targetType: "candidate", targetId: String(req.params.id), details: { emailed: r.emailed }, ip: req.ip ?? null });
+    res.json({ ok: true, ...r });
   } catch (err) {
     fail(err, res, next);
   }
