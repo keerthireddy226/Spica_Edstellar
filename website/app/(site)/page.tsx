@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Building2, Eye, FileCheck2, GraduationCap, Lock, MonitorCheck, QrCode, ScanFace, ShieldCheck, Sparkles, UserCheck, Users } from "lucide-react";
-import { Reveal } from "@/components/home/Reveal";
 import { CandidatesMock, FloatChips, ReportMock, TeamMock } from "@/components/home/Mocks";
 import { Platform } from "@/components/home/Platform";
 import { TestsExplorer } from "@/components/home/TestsExplorer";
@@ -31,7 +30,6 @@ const FAQ: [string, string][] = [
 export default function Home() {
   return (
     <div className="h">
-      <Reveal />
 
       {/* HERO */}
       <section className="h-hero">

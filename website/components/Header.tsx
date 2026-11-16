@@ -1,5 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { Briefcase, Building2, ChevronDown, GraduationCap, Presentation, User } from "lucide-react";
 import { app, nav } from "@/lib/site";
+
+// The audiences in the "Who it's for" menu, with an icon each.
+export const AUDIENCES = [
+  { href: "/solutions/companies", label: "Companies", note: "Test, train and certify employees", icon: Building2 },
+  { href: "/solutions/recruiters", label: "Recruiters", note: "Check applicants before interviews", icon: Briefcase },
+  { href: "/solutions/universities", label: "Universities", note: "Admissions and placement", icon: GraduationCap },
+  { href: "/solutions/training-providers", label: "Training providers", note: "Place and certify your learners", icon: Presentation },
+  { href: "/solutions/individuals", label: "Individuals", note: "Know, improve and prove your level", icon: User },
+];
 
 export function Logo() {
   return (
@@ -31,20 +45,66 @@ function SignInLinks() {
   );
 }
 
+const isActive = (path: string, href: string) => path === href || path.startsWith(href + "/");
+
 export function Header() {
+  const path = usePathname() || "/";
+  const header = useRef<HTMLElement>(null);
+
+  // Close any open menu after moving to another page, and when clicking elsewhere.
+  useEffect(() => {
+    header.current?.querySelectorAll("details[open]").forEach((d) => d.removeAttribute("open"));
+  }, [path]);
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      header.current?.querySelectorAll("details[open]").forEach((d) => {
+        if (!d.contains(e.target as Node)) d.removeAttribute("open");
+      });
+    };
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, []);
+
   return (
-    <header className="site-header">
+    <header className="site-header" ref={header}>
       <a className="skip" href="#main">
         Skip to content
       </a>
       <div className="wrap bar">
         <Logo />
         <nav className="nav" aria-label="Main">
-          {nav.map((n) => (
-            <Link key={n.href} href={n.href}>
-              {n.label}
-            </Link>
-          ))}
+          {nav.map((n) =>
+            n.href === "/solutions" ? (
+              <details key={n.href} className={`drop${isActive(path, n.href) ? " on" : ""}`}>
+                <summary aria-current={isActive(path, n.href) ? "page" : undefined}>
+                  {n.label} <ChevronDown size={15} aria-hidden="true" />
+                </summary>
+                <div className="drop-menu">
+                  {AUDIENCES.map((a) => {
+                    const Icon = a.icon;
+                    return (
+                      <Link key={a.href} href={a.href} aria-current={isActive(path, a.href) ? "page" : undefined}>
+                        <span className="drop-icon">
+                          <Icon size={18} />
+                        </span>
+                        <span>
+                          <b>{a.label}</b>
+                          <small>{a.note}</small>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                  <Link href="/solutions" className="drop-all">
+                    Compare all audiences →
+                  </Link>
+                </div>
+              </details>
+            ) : (
+              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined}>
+                {n.label}
+              </Link>
+            ),
+          )}
         </nav>
         <div className="bar-actions">
           <details className="signin">
@@ -61,7 +121,7 @@ export function Header() {
           <summary aria-label="Menu">Menu</summary>
           <div className="mobile-menu">
             {nav.map((n) => (
-              <Link key={n.href} href={n.href}>
+              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined}>
                 {n.label}
               </Link>
             ))}
