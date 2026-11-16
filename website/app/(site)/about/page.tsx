@@ -16,7 +16,7 @@ const PROBLEMS: [React.ElementType, string, string][] = [
 ];
 
 const VALUES: [React.ElementType, string, React.ReactNode][] = [
-  [Scale, "Fair", "Accents are never marked down, and British, American and Indian spellings are all accepted."],
+  [Scale, "Fair", "Speaking is scored on how clearly you are understood, not on your accent, and British, American and Indian spellings are all accepted."],
   [UserCheck, "Trustworthy", "AI scores the answers, and people review flags and any score someone asks to have checked."],
   [
     Lock,

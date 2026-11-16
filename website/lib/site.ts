@@ -25,15 +25,17 @@ export const company = {
   securityEmail: "[security email]",
 };
 
+// Main menu. Each entry opens a drop-down (built in components/Header.tsx),
+// except Pricing.
 export const nav = [
   { href: "/tests", label: "Tests" },
-  { href: "/solutions", label: "Who it's for" },
+  { href: "/levels", label: "Levels" },
+  { href: "/solutions", label: "Solutions" },
+  { href: "/help", label: "Resources" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/demo", label: "Demo" },
-  { href: "/certificate-check", label: "Check a certificate" },
 ];
 
-export const footer = [
+export const footer: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Tests",
     links: [
@@ -43,35 +45,63 @@ export const footer = [
       { href: "/tests/speaking-and-listening", label: "Speaking & Listening" },
       { href: "/tests/writing", label: "English Writing" },
       { href: "/tests/level-tests", label: "Level Tests (A1–C2)" },
+      { href: "/tests#compare", label: "Compare tests" },
     ],
   },
   {
-    title: "Who it's for",
+    title: "Learners",
+    links: [
+      { href: app.signUp, label: "Free level test" },
+      { href: "/levels", label: "English levels" },
+      { href: "/how-to-take-a-test", label: "How to take a test" },
+      { href: "/understanding-your-score", label: "Understanding your score" },
+      { href: "/solutions/individuals", label: "Spica for individuals" },
+      { href: "/faq", label: "FAQ" },
+    ],
+  },
+  {
+    title: "Organisations",
     links: [
       { href: "/solutions/companies", label: "Companies" },
       { href: "/solutions/recruiters", label: "Recruiters" },
       { href: "/solutions/universities", label: "Universities" },
       { href: "/solutions/training-providers", label: "Training providers" },
-      { href: "/solutions/individuals", label: "Individuals" },
+      { href: "/certificate-check", label: "Verify a certificate" },
+      { href: "/developers", label: "Developers (API)" },
+      { href: "/demo", label: "Book a demo" },
     ],
   },
   {
-    title: "Spica",
-    links: [
-      { href: "/pricing", label: "Pricing" },
-      { href: "/demo", label: "Demo" },
-      { href: "/security", label: "Security and trust" },
-      { href: "/about", label: "About" },
-      { href: "/contact", label: "Contact" },
-    ],
-  },
-  {
-    title: "Help",
+    title: "Resources",
     links: [
       { href: "/help", label: "Help centre" },
-      { href: "/developers", label: "Developers (API)" },
-      { href: "/certificate-check", label: "Check a certificate" },
-      { href: "/legal", label: "Legal" },
+      { href: "/demo", label: "Sample reports" },
+      { href: "/test-quality", label: "Test quality and fairness" },
+      { href: "/how-ai-is-used", label: "How AI is used" },
+      { href: "/security", label: "Security and trust" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/contact", label: "Contact" },
+      { href: "/site-map", label: "Sitemap" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/legal/terms", label: "Terms and Conditions" },
+      { href: "/legal/privacy", label: "Privacy Policy" },
+      { href: "/legal/refunds", label: "Refunds and cancellation" },
+      { href: "/legal/test-rules", label: "Test rules" },
+      { href: "/legal/certificates", label: "Certificate policy" },
+      { href: "/legal/cookies", label: "Cookie notice" },
+      { href: "/legal/accessibility", label: "Accessibility" },
+      { href: "/legal/grievance", label: "Grievance redressal" },
+      { href: "/legal", label: "All legal documents" },
     ],
   },
 ];

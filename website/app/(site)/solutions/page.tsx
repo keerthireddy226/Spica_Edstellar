@@ -7,7 +7,7 @@ import { AudienceTiles } from "@/components/page/Visuals";
 import { SOLUTION_LOOK } from "@/components/page/looks";
 
 export const metadata: Metadata = {
-  title: "Who it's for",
+  title: "Solutions",
   description: "Spica for companies, recruiters, universities, training providers and individuals: English tests, practice and certificates.",
 };
 
@@ -15,8 +15,8 @@ export default function SolutionsPage() {
   return (
     <>
       <PageHero
-        crumbs={[{ label: "Who it's for" }]}
-        eyebrow="Who it's for"
+        crumbs={[{ label: "Solutions" }]}
+        eyebrow="Solutions"
         icon={<Users size={16} />}
         tone="plum"
         title={

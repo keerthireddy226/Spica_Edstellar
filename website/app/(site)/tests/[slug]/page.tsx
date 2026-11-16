@@ -180,7 +180,7 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             </p>
             <h2>How answers are scored</h2>
             <ul className="ticks">
-              <li>Spoken answers are scored for what was said and how clearly and fluently it was said. A clear accent is never marked down.</li>
+              <li>Spoken answers are scored for what was said and how clearly and fluently it was said. Speaking is scored on how clearly you are understood, not on your accent.</li>
               <li>Typed answers are scored for the right words, grammar and meaning; longer writing for covering the task, organisation, grammar and vocabulary.</li>
               <li>Multiple-choice answers are right or wrong. British, American and Indian spellings are all accepted.</li>
               <li>AI scores the answers, people review any proctoring flags, and anyone can ask for a person to review their score.</li>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { company, footer } from "@/lib/site";
+import { ArrowRight, Mail } from "lucide-react";
+import { app, company, footer } from "@/lib/site";
 import { Logo } from "./Header";
 
 export function Footer() {
@@ -9,18 +10,20 @@ export function Footer() {
         <div className="footer-grid">
           <div className="footer-brand">
             <Logo />
-            <p className="muted" style={{ marginTop: 12, maxWidth: 300 }}>
-              Know your English level. Improve it. Prove it. Practice, proctored tests and certificates anyone can check.
+            <p className="muted">English tests, practice and certificates anyone can check, for organisations and individuals.</p>
+            <p className="footer-help">
+              <Mail size={15} aria-hidden="true" /> Need help? Email us at <b>{company.supportEmail}</b>
             </p>
+            <a className="btn primary small" href={app.signUp}>
+              Start free <ArrowRight size={15} aria-hidden="true" />
+            </a>
           </div>
           {footer.map((col) => (
             <div key={col.title}>
               <h2 className="footer-title">{col.title}</h2>
               <ul>
                 {col.links.map((l) => (
-                  <li key={l.href}>
-                    <Link href={l.href}>{l.label}</Link>
-                  </li>
+                  <li key={l.href + l.label}>{l.href.startsWith("http") ? <a href={l.href}>{l.label}</a> : <Link href={l.href}>{l.label}</Link>}</li>
                 ))}
               </ul>
             </div>
@@ -28,10 +31,14 @@ export function Footer() {
         </div>
         <div className="footer-base">
           <span>
-            © {new Date().getFullYear()} {company.legalName}. {company.address}.
+            © {new Date().getFullYear()} {company.legalName}. {company.address}. Spica is a product of Edstellar.
           </span>
-          <span>
-            <Link href="/legal/terms">Terms</Link> · <Link href="/legal/privacy">Privacy</Link> · <Link href="/security">Security</Link>
+          <span className="footer-base-links">
+            <Link href="/legal/terms">Terms</Link>
+            <Link href="/legal/privacy">Privacy</Link>
+            <Link href="/legal/cookies">Cookies</Link>
+            <Link href="/legal/accessibility">Accessibility</Link>
+            <Link href="/site-map">Sitemap</Link>
           </span>
         </div>
       </div>

@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 const FAQ: [string, string][] = [
   ["Is a Spica certificate official or accredited?", "It is Spica's own certificate. It shows a CEFR level and anyone can check it online. It is not a government or visa certificate."],
   ["How are answers scored?", "AI scores spoken and written answers against clear rules for each task; multiple-choice and gap-fill answers are marked automatically. People review every proctoring flag, and anyone can ask for a person to review a score."],
-  ["Will an accent lower the score?", "No. Spoken answers are judged on how easily they can be understood. British, American and Indian spellings are all accepted."],
+  ["Will an accent lower the score?", "Speaking is scored on how clearly you are understood, not on your accent. British, American and Indian spellings are all accepted."],
   ["What does a test taker need?", "A laptop or desktop computer with a camera, a microphone and a modern browser, a stable connection and a quiet room. A system check runs first."],
   ["Do job candidates need an account?", "No. Candidates open the link in their invitation, take one proctored test, and the recruiter receives the report."],
   ["Can we use our own sign-in and branding?", "Yes. Organisations can add their logo and colour, and on Enterprise use company sign-in (SAML or OpenID Connect) and automatic accounts (SCIM)."],
@@ -114,7 +114,7 @@ export default function Home() {
       <section className="h-section h-tint">
         <div className="h-wrap">
           <div className="h-head" data-reveal>
-            <span className="h-kicker">Who it&apos;s for</span>
+            <span className="h-kicker">Solutions</span>
             <h2>Built for every team that needs proof of English</h2>
           </div>
           <div className="h-bento">

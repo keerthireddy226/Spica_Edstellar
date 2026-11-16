@@ -40,7 +40,7 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
   return (
     <>
       <PageHero
-        crumbs={[{ href: "/solutions", label: "Who it's for" }, { label: s.name }]}
+        crumbs={[{ href: "/solutions", label: "Solutions" }, { label: s.name }]}
         eyebrow={`For ${s.name.toLowerCase()}`}
         icon={<Icon size={16} />}
         tone={look.tone}
