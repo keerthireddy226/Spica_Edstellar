@@ -25,7 +25,6 @@ const GROUPS: { title: string; items: [string, React.ReactNode][] }[] = [
     items: [
       ["What do I need?", <>A laptop or desktop computer with a camera, a microphone and an up-to-date browser, a stable connection and a quiet room. See <Link href="/how-to-take-a-test">How to take a test</Link>.</>],
       ["What if something goes wrong during the test?", "If a fault on our side stops you from finishing, you can ask for a new attempt or a refund."],
-      ["Can I get extra time?", <>Yes, if a disability affects how you take a test. See <Link href="/legal/accessibility">Accessibility</Link>.</>],
       ["Do job candidates need an account?", "No. Candidates open the link in their invitation, take one proctored test, and the recruiter receives the report."],
     ],
   },

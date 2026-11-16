@@ -4,7 +4,7 @@ import { company } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Accessibility",
-  description: "How Spica's website and tests can be used with a disability, extra time for tests, known limits and how to ask for help.",
+  description: "How Spica's website and tests can be used with a disability, known limits and how to ask for help.",
 };
 
 export default function AccessibilityPage() {
@@ -28,24 +28,13 @@ export default function AccessibilityPage() {
           ),
         },
         {
-          id: "extra-time",
-          title: "Extra time in tests",
-          body: (
-            <p>
-              If a disability affects how you can take a test, extra time (25%, 50% or double on every timed part) can be set for you. If you take
-              tests through an organisation or a recruiter, ask them to set it. If you bought a test yourself, write to {company.supportEmail} before
-              your test. We record only the amount of extra time, never the reason.
-            </p>
-          ),
-        },
-        {
           id: "limits",
           title: "What does not work yet",
           body: (
             <ul>
               <li>Listening questions need you to hear recordings, and speaking questions need you to speak into a microphone.</li>
               <li>Real tests need a camera and screen sharing for proctoring.</li>
-              <li>A policy on other accommodations is being prepared.</li>
+              <li>Every test taker has the same time on each question. Extra time and other adjustments are not offered at the moment.</li>
             </ul>
           ),
         },

@@ -22,7 +22,7 @@ const GROUPS: { title: string; icon: React.ElementType; docs: Doc[] }[] = [
       { title: "Test rules", text: "Taking a real test alone, identity checks, proctoring, reviews and retakes.", href: "/legal/test-rules", icon: ClipboardCheck },
       { title: "Certificate policy", text: "When certificates are issued, how long they are valid and how to check one.", href: "/legal/certificates", icon: Award },
       { title: "Cookie notice", text: "No advertising or tracking cookies.", href: "/legal/cookies", icon: Cookie },
-      { title: "Accessibility", text: "Using Spica with a disability, and extra time in tests.", href: "/legal/accessibility", icon: Accessibility },
+      { title: "Accessibility", text: "Using the website and tests with a disability.", href: "/legal/accessibility", icon: Accessibility },
       { title: "Grievance redressal", text: "How to raise a complaint, and our Grievance Officer.", href: "/legal/grievance", icon: MessageSquareWarning },
     ],
   },

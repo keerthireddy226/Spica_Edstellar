@@ -38,7 +38,7 @@ export default function TestRulesPage() {
               <li>Do not record, copy, photograph, share or publish any question, answer or part of a real test.</li>
               <li>Do not let anyone else take a test for you, and do not take a test for someone else.</li>
               <li>Use only the browser window of the test; leaving it is recorded.</li>
-              <li>Every question has its own timer. Recordings play at most twice. A question left blank counts as wrong.</li>
+              <li>Every question has its own timer, the same for every test taker. Recordings play at most twice. A question left blank counts as wrong.</li>
             </ul>
           ),
         },
@@ -79,15 +79,6 @@ export default function TestRulesPage() {
             <p>
               After a final assessment below your goal you can take another real test after 30 days. After a Level Test that was not passed, the
               next one at that level opens after 7 days. Each attempt uses questions you have not seen where possible.
-            </p>
-          ),
-        },
-        {
-          id: "extra-time",
-          title: "Extra time",
-          body: (
-            <p>
-              If a disability affects how you take a test, extra time can be set for you. See <Link href="/legal/accessibility">Accessibility</Link>.
             </p>
           ),
         },
