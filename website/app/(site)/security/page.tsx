@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bot, Building2, Bug, Database, Fingerprint, Lock, Scale, ShieldCheck, Timer, UserCog } from "lucide-react";
-import { APP_URL, company } from "@/lib/site";
+import { Bot, Building2, Bug, Fingerprint, Lock, Scale, ShieldCheck, Timer, UserCog } from "lucide-react";
+import { company } from "@/lib/site";
 import { PageHero } from "@/components/page/PageHero";
 import { SecurityMock } from "@/components/page/Visuals";
 
 export const metadata: Metadata = {
   title: "Security and trust",
-  description: "How Spica protects data: encryption, two-step sign-in, proctoring reviewed by people, retention rules and the companies that process data.",
+  description: "How Spica protects data: encryption, two-step sign-in, proctoring reviewed by people, and how long data is kept.",
 };
-
-const PROVIDERS: [string, string][] = [
-  ["Render", "Runs Spica's servers and stores files"],
-  ["Supabase", "Database and a copy of stored files"],
-  ["Vercel", "Delivers the website and app pages"],
-  ["Google (Gemini)", "Transcribes and scores spoken and written answers"],
-  ["Brevo", "Sends emails"],
-  ["Stripe, Razorpay", "Online payments"],
-];
 
 const RETENTION: [string, string][] = [
   ["Proctoring photos, screen recordings, ID images", "30 days if nothing was flagged; up to 60 days if flagged"],
@@ -41,7 +32,7 @@ export default function SecurityPage() {
             Your data is protected, and <span className="ph-accent">people make the decisions</span>
           </>
         }
-        lead="How Spica protects data, how proctoring works, and which companies help us run the service."
+        lead="How Spica protects data, how proctoring works, and how long data is kept."
         visual={<SecurityMock />}
       />
       <section className="section">
@@ -106,8 +97,8 @@ export default function SecurityPage() {
       </section>
 
       <section className="section alt">
-        <div className="wrap grid g2">
-          <div>
+        <div className="wrap">
+          <div data-reveal>
             <p className="eyebrow">
               <Timer size={14} /> Retention
             </p>
@@ -124,30 +115,6 @@ export default function SecurityPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-          <div>
-            <p className="eyebrow">
-              <Database size={14} /> Service providers
-            </p>
-            <h2>Companies that process data for us</h2>
-            <div className="table-wrap">
-              <table className="t">
-                <tbody>
-                  {PROVIDERS.map(([n, w]) => (
-                    <tr key={n}>
-                      <td>
-                        <b>{n}</b>
-                      </td>
-                      <td>{w}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="muted" style={{ fontSize: "0.9rem", marginTop: 12 }}>
-              The full list, with safeguards, is in the <a href={`${APP_URL}/legal/data-processing-agreement.html`}>Data Processing Agreement</a>.
-              Organisations are told 30 days before a new provider is added.
-            </p>
           </div>
         </div>
       </section>
