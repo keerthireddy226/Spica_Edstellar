@@ -98,14 +98,14 @@ const takeLink = (t: OwnedTest, mode: "certified" | "sample", sessionId?: string
 type Shop = { products: PricedProduct[]; currency: ShopCurrency } | null;
 
 // What a learner can do with a final assessment certificate: add it to
-// LinkedIn and, buying for themselves, keep it valid longer or order a printed copy.
+// LinkedIn and, buying for themselves, keep it valid longer.
 function CertificateExtras({ a, testName, shop }: { a: OwnedTest["attempts"][number]; testName: string; shop: Shop }) {
   const [buying, setBuying] = useState<PricedProduct | null>(null);
   if (!a.certificateCode || !a.certificateId) return null;
   const extra = (kind: PricedProduct["kind"]) => shop?.products.find((p) => p.kind === kind) ?? null;
-  const offers = [!a.lifetime ? extra("cert_extend") : null, !a.lifetime ? extra("cert_lifetime") : null, extra("cert_print")].filter((p): p is PricedProduct => !!p);
+  const offers = [!a.lifetime ? extra("cert_extend") : null, !a.lifetime ? extra("cert_lifetime") : null].filter((p): p is PricedProduct => !!p);
   const label = (p: PricedProduct) =>
-    p.kind === "cert_extend" ? tr("Keep it valid 12 more months") : p.kind === "cert_lifetime" ? tr("Make it valid for life") : tr("Order a printed copy");
+    p.kind === "cert_extend" ? tr("Keep it valid 12 more months") : tr("Make it valid for life");
   return (
     <div className="basis-full flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs pl-0 sm:pl-[7.75rem]">
       <a

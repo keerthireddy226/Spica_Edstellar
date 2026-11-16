@@ -100,7 +100,7 @@ export function KeepGoingCard() {
         </div>
 
         {k.kind === "individual" ? (
-          <Link to={`${ROUTES.PLANS}?months=${accessIssue ? 1 : 3}`} className="shrink-0">
+          <Link to={`${ROUTES.PLANS}?months=1`} className="shrink-0">
             <Button>{accessIssue ? tr("Extend my access") : tr("See plans")}</Button>
           </Link>
         ) : pending || !timeHelps ? null : (

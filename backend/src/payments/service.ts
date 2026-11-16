@@ -11,7 +11,9 @@ import type { CreditSource, Currency } from "./products.js";
 
 // product: one of the products (Full access, preparation, assessment, level test), see products.ts.
 export type OrderKind = "org_licenses" | "individual_plan" | "product";
-export const INDIVIDUAL_PLAN_MONTHS = [1, 3, 6] as const;
+// Full access is sold one month at a time; a learner extends by buying another
+// month or by subscribing monthly.
+export const INDIVIDUAL_PLAN_MONTHS = [1] as const;
 
 export class PaymentError extends Error {
   constructor(
@@ -122,7 +124,7 @@ export async function resolveBuyer(user: { id: string; role: string; tenantId: s
 // still invoiced in INR.
 export function quote(buyer: Buyer, quantity: number, opts: { byInvoice?: boolean } = {}): Quote {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) throw new PaymentError("invalid_quantity");
-  if (buyer.kind === "individual_plan" && !INDIVIDUAL_PLAN_MONTHS.includes(quantity as 1 | 3 | 6)) {
+  if (buyer.kind === "individual_plan" && !INDIVIDUAL_PLAN_MONTHS.includes(quantity as 1)) {
     throw new PaymentError("invalid_quantity");
   }
   const choice = opts.byInvoice

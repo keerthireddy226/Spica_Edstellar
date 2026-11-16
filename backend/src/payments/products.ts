@@ -141,7 +141,7 @@ export async function upgradeCredit(userId: string, currency: Currency, cap: num
 // chose); PAYMENT_CONFIG only fills in when a currency has no row. Unused
 // preparation counts towards it.
 export async function planQuote(buyer: Buyer, months: number, opts: { currency?: string } = {}): Promise<Quote> {
-  if (!INDIVIDUAL_PLAN_MONTHS.includes(months as 1 | 3 | 6)) throw new PaymentError("invalid_quantity");
+  if (!INDIVIDUAL_PLAN_MONTHS.includes(months as 1)) throw new PaymentError("invalid_quantity");
   let currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
   let provider = providerFor(currency);
   if (!provider) {
@@ -222,7 +222,7 @@ async function levelResults(userId: string): Promise<{ level: string; passed: bo
 export async function productQuote(buyer: Buyer, productId: string, opts: { currency?: string; level?: string; certificateId?: string } = {}): Promise<ProductQuote> {
   // Full access is bought by the month from the Plans page (planQuote); the
   // final assessment comes with it.
-  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind NOT IN ('final', 'full')`, [productId])).rows[0];
+  const p = (await pool.query(`SELECT * FROM products WHERE id = $1 AND active AND kind NOT IN ('final', 'full', 'cert_print')`, [productId])).rows[0];
   if (!p) throw new PaymentError("invalid_quantity");
   // A certificate extra is for one of the buyer's own final assessment certificates.
   if (String(p.kind).startsWith("cert_")) {
@@ -330,7 +330,7 @@ export async function priceList(currency: Currency) {
      FROM products p LEFT JOIN test_types tt ON tt.id = p.test_type_id
      LEFT JOIN product_prices pp ON pp.product_id = p.id AND pp.currency = $1
      LEFT JOIN product_prices usd ON usd.product_id = p.id AND usd.currency = 'USD'
-     WHERE p.active AND p.kind <> 'final' ORDER BY p.sort_order`,
+     WHERE p.active AND p.kind NOT IN ('final', 'cert_print') ORDER BY p.sort_order`,
     [currency],
   );
   return r.rows.map((x) => ({

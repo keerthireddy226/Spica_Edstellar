@@ -24,7 +24,8 @@ import {
 import { getQuota, type QuotaTier } from "@/api/practiceTests";
 import { tr } from "@/i18n/tr";
 
-const PLAN_MONTHS = [1, 3, 6] as const;
+// Full access is one month at a time; buy another month or subscribe to extend.
+const PLAN_MONTHS = [1] as const;
 
 // "Practice tests: 2 a month" lines for a tier, from the server's limits.
 function testLimitLines(q: QuotaTier | undefined): { practice: string; mocks: string } | null {
@@ -59,11 +60,8 @@ export function Plans() {
   const goBack = () => (locationKey !== "default" ? navigate(-1) : navigate(ROUTES.SPICA_PLANS));
   const license = useMyLicense();
   const access = useMyAccess();
-  // ?months=1 or 3 pre-selects the length (from the "keep going" card).
-  const [months, setMonths] = useState<number>(() => {
-    const m = Number(new URLSearchParams(window.location.search).get("months"));
-    return m === 1 || m === 3 || m === 6 || m === 12 ? m : 3;
-  });
+  // Always one month: a learner extends by buying another month or subscribing.
+  const months = PLAN_MONTHS[0];
   const [quotes, setQuotes] = useState<Record<number, Quote>>({});
   const [invoices, setInvoices] = useState<InvoiceSummary[]>([]);
   const [paying, setPaying] = useState(false);
@@ -211,21 +209,6 @@ export function Plans() {
             <Feature ok>{tr("One final assessment on the test you choose")}</Feature>
             <Feature ok>{tr("Certificate provided")}</Feature>
           </ul>
-
-          <div className="grid grid-cols-3 gap-2">
-            {PLAN_MONTHS.map((m) => (
-              <button
-                key={m}
-                onClick={() => setMonths(m)}
-                className={`rounded-input border px-3 py-2.5 text-center cursor-pointer transition-colors ${
-                  months === m ? "border-navy bg-paper-warm" : "border-rule hover:border-rule-strong"
-                }`}
-              >
-                <p className="text-sm font-semibold text-ink">{t("plans.months", { count: m })}</p>
-                <p className="text-xs text-muted">{quotes[m] ? formatAmount(quotes[m].subtotal, quotes[m].currency) : "…"}</p>
-              </button>
-            ))}
-          </div>
 
           {q && (
             <div className="text-sm flex flex-col gap-1 bg-paper-warm rounded-input px-3.5 py-2.5">

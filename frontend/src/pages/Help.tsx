@@ -50,7 +50,7 @@ export const HELP_TOPICS: HelpTopic[] = [
     title: () => tr("Plans, payments and invoices"),
     points: [
       () => tr("Full access opens every test, practice test, mock test and Practice Module, with one final assessment."),
-      () => tr("Buy 1, 3 or 6 months at once, or subscribe monthly by card. A subscription renews until you cancel it."),
+      () => tr("Full access is one month at a time. To keep going, buy another month or subscribe monthly by card. A subscription renews until you cancel it."),
       () => tr("If you cancel a subscription, you keep access until the end of the month you paid for."),
       () => tr("Manage billing opens a secure page where you change your card and see your payments."),
       () => tr("Your invoices are at the bottom of the Plans page. Open one to print it or save it as a PDF."),
