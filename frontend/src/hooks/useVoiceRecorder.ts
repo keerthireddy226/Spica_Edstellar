@@ -15,7 +15,7 @@ interface RecordingResult {
   peakLevel: number;
 }
 
-// Live transcription is a progressive enhancement (Chrome/Edge-only) — elsewhere the recording still works, just with an empty transcript.
+// Records the microphone. The transcript comes from the server, never the browser.
 export function useVoiceRecorder() {
   const [recording, setRecording] = useState(false);
   // 0-1, updated live while recording — lets Voice Check show a real volume
@@ -88,30 +88,9 @@ export function useVoiceRecorder() {
     recorderRef.current = recorder;
     recorder.start();
 
-    const SpeechRecognitionCtor = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
-    if (SpeechRecognitionCtor) {
-      const recognition = new SpeechRecognitionCtor();
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      // The learner's own English (en-IN, en-GB...) when the browser says so.
-      // Only for the live text; grading uses the server's transcript.
-      recognition.lang = navigator.language?.toLowerCase().startsWith("en") ? navigator.language : "en-US";
-      recognition.onresult = (event: any) => {
-        let text = "";
-        for (let i = 0; i < event.results.length; i++) {
-          text += event.results[i][0].transcript;
-        }
-        transcriptRef.current = text.trim();
-      };
-      recognition.onerror = (event: any) => {
-        // "no-speech" is the ordinary silent-mic case (handled elsewhere); anything else (usually "network") is a real recognizer failure, surfaced separately.
-        if (event?.error && event.error !== "no-speech") {
-          recognitionErrorRef.current = event.error;
-        }
-      };
-      recognitionRef.current = recognition;
-      recognition.start();
-    }
+    // The browser's own speech recognition (which sends the voice to Google)
+    // is not used: the server transcribes every recording. Removed 16 Nov 2026
+    // (launch plan 10.1), so transcript stays empty and screens use the server's.
 
     endBusyRef.current = beginAudioBusy();
     setRecording(true);

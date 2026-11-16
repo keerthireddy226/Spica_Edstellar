@@ -271,6 +271,13 @@ export const RETENTION = {
   warningDays: 30, // the warning email comes this long before deletion
   removedLearnerMonths: 12, // learners removed from an organisation
   auditLogMonths: 12,
+  // Decided 16 Nov 2026 (data map "Decisions needed").
+  loginHistoryMonths: 12, // sign-in history (IP address, device)
+  coachAudioMonths: 3, // AI coach recordings, as test recordings
+  printAddressMonths: 6, // postal address of a printed certificate, after posting
+  privacyRequestYears: 3, // records that privacy requests were handled
+  webhookDeliveryDays: 30, // webhook delivery records
+  realTestAnswerMonths: 12, // written answers and transcripts of real tests, once no valid certificate needs them
 };
 
 // The new default rules only report what they would delete until this is
@@ -298,8 +305,19 @@ export interface RetentionReport {
   auditRows: number;
   expiredExports: number;
   proctoringMedia: number;
-  wouldDelete: { recordings: number; faceCheckPhotos: number; templates: number; warn: number; erase: number; auditRows: number };
+  housekeeping: Housekeeping;
+  wouldDelete: { recordings: number; faceCheckPhotos: number; templates: number; warn: number; erase: number; auditRows: number; housekeeping: Housekeeping };
 }
+
+interface Housekeeping {
+  loginEvents: number;
+  coachAudio: number;
+  printAddresses: number;
+  privacyRequests: number;
+  webhookDeliveries: number;
+  realTestAnswers: number;
+}
+const NO_HOUSEKEEPING: Housekeeping = { loginEvents: 0, coachAudio: 0, printAddresses: 0, privacyRequests: 0, webhookDeliveries: 0, realTestAnswers: 0 };
 
 export async function runRetention(): Promise<RetentionReport> {
   const enforce = retentionEnforced();
@@ -313,7 +331,8 @@ export async function runRetention(): Promise<RetentionReport> {
     auditRows: 0,
     expiredExports: 0,
     proctoringMedia: 0,
-    wouldDelete: { recordings: 0, faceCheckPhotos: 0, templates: 0, warn: 0, erase: 0, auditRows: 0 },
+    housekeeping: { ...NO_HOUSEKEEPING },
+    wouldDelete: { recordings: 0, faceCheckPhotos: 0, templates: 0, warn: 0, erase: 0, auditRows: 0, housekeeping: { ...NO_HOUSEKEEPING } },
   };
 
   // 1. Spoken-answer recordings: the organisation's period (capped at 12
@@ -439,12 +458,77 @@ export async function runRetention(): Promise<RetentionReport> {
     report.auditRows = d.rowCount ?? 0;
   }
 
+  // 5. Other records with a fixed period (decided 16 Nov 2026). Like the
+  // rules above, they only report until RETENTION_ENFORCE is on.
+  await runHousekeeping(enforce, report);
+
   // Data exports past their download window, and proctoring media (always on).
   const expired = await pool.query(`UPDATE data_exports SET status = 'expired' WHERE status = 'ready' AND expires_at < now() RETURNING file_path`);
   for (const e of expired.rows) if (e.file_path?.startsWith(EXPORT_DIR)) await unlink(e.file_path).catch(() => {});
   report.expiredExports = expired.rowCount ?? 0;
   report.proctoringMedia = await runProctoringRetention();
   return report;
+}
+
+async function runHousekeeping(enforce: boolean, report: RetentionReport) {
+  const R = RETENTION;
+  const count = async (sql: string, params: unknown[]) => (await pool.query(`SELECT count(*)::int AS n FROM ${sql}`, params)).rows[0].n as number;
+  const would = report.wouldDelete.housekeeping;
+  const done = report.housekeeping;
+
+  // Sign-in history.
+  const loginWhere = `login_events WHERE created_at < now() - make_interval(months => $1)`;
+  would.loginEvents = await count(loginWhere, [R.loginHistoryMonths]);
+  if (enforce && would.loginEvents) done.loginEvents = (await pool.query(`DELETE FROM ${loginWhere}`, [R.loginHistoryMonths])).rowCount ?? 0;
+
+  // AI coach recordings (the transcript stays with the conversation).
+  const coach = await pool.query(
+    `SELECT id, audio_uri FROM coach_turns WHERE audio_uri IS NOT NULL AND created_at < now() - make_interval(months => $1) LIMIT 5000`,
+    [R.coachAudioMonths],
+  );
+  would.coachAudio = coach.rows.length;
+  if (enforce && coach.rows.length) {
+    for (const c of coach.rows) await removeUpload(c.audio_uri);
+    await pool.query(`UPDATE coach_turns SET audio_uri = NULL WHERE id = ANY($1::uuid[])`, [coach.rows.map((c) => c.id)]);
+    done.coachAudio = coach.rows.length;
+  }
+
+  // Postal addresses of printed certificates, once posted.
+  const printWhere = `certificate_prints WHERE shipping IS NOT NULL AND posted_at < now() - make_interval(months => $1)`;
+  would.printAddresses = await count(printWhere, [R.printAddressMonths]);
+  if (enforce && would.printAddresses) {
+    done.printAddresses =
+      (await pool.query(`UPDATE certificate_prints SET shipping = NULL WHERE shipping IS NOT NULL AND posted_at < now() - make_interval(months => $1)`, [R.printAddressMonths]))
+        .rowCount ?? 0;
+  }
+
+  // Records of handled privacy requests.
+  const prWhere = `privacy_requests WHERE coalesce(completed_at, requested_at) < now() - make_interval(years => $1)`;
+  would.privacyRequests = await count(prWhere, [R.privacyRequestYears]);
+  if (enforce && would.privacyRequests) done.privacyRequests = (await pool.query(`DELETE FROM ${prWhere}`, [R.privacyRequestYears])).rowCount ?? 0;
+
+  // Webhook delivery records.
+  const whWhere = `webhook_deliveries WHERE created_at < now() - make_interval(days => $1)`;
+  would.webhookDeliveries = await count(whWhere, [R.webhookDeliveryDays]);
+  if (enforce && would.webhookDeliveries) done.webhookDeliveries = (await pool.query(`DELETE FROM ${whWhere}`, [R.webhookDeliveryDays])).rowCount ?? 0;
+
+  // Written answers and transcripts of real tests: kept while the test's
+  // certificate is valid, else 12 months after the test; never while a case
+  // is open. Scores stay, so the result and certificate stay as they are.
+  const answers = await pool.query(
+    `SELECT a.id FROM attempts a JOIN sessions s ON s.id = a.session_id
+     WHERE s.delivery_mode = 'certified' AND a.response_text IS NOT NULL
+       AND s.completed_at < now() - make_interval(months => $1)
+       AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id AND c.revoked_at IS NULL AND (c.valid_until IS NULL OR c.valid_until > now()))
+       AND NOT ${OPEN_CASE}
+     LIMIT 20000`,
+    [R.realTestAnswerMonths],
+  );
+  would.realTestAnswers = answers.rows.length;
+  if (enforce && answers.rows.length) {
+    await pool.query(`UPDATE attempts SET response_text = NULL WHERE id = ANY($1::uuid[])`, [answers.rows.map((r) => r.id)]);
+    done.realTestAnswers = answers.rows.length;
+  }
 }
 
 export async function acceptDpa(tenantId: string, userId: string) {
