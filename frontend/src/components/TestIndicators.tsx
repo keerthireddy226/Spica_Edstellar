@@ -41,22 +41,28 @@ export function RecordingIndicator({ level }: { level: number }) {
   );
 }
 
-// Two speaker circles for Conversations questions (Speaker A and Speaker B).
-export function SpeakerAvatars({ active }: { active: boolean }) {
+// Two speaker circles for Conversations questions (Speaker A and Speaker B):
+// both the same quiet colour, and the one talking lights up while it speaks.
+export function SpeakerAvatars({ speaking }: { speaking: "A" | "B" | null }) {
   return (
-    <div className="flex items-center justify-center gap-4" aria-label={tr("Two speakers: Speaker A and Speaker B")}>
-      {(["A", "B"] as const).map((s, i) => (
-        <span key={s} className="flex flex-col items-center gap-1">
-          <span
-            className={`h-11 w-11 rounded-full flex items-center justify-center font-display font-bold text-lg border-2 ${
-              i === 0 ? "bg-lime text-navy-deep border-lime" : "bg-warning text-ink border-warning"
-            } ${active ? "shadow-md" : "opacity-90"}`}
-          >
-            {s}
+    <div className="flex items-center justify-center gap-5" aria-label={tr("Two speakers: Speaker A and Speaker B")}>
+      {(["A", "B"] as const).map((s) => {
+        const on = speaking === s;
+        return (
+          <span key={s} className="flex flex-col items-center gap-0.5">
+            <span
+              className={`h-10 w-10 rounded-full flex items-center justify-center font-display font-bold text-base border-2 transition-all duration-200 ${
+                on ? "bg-warning text-ink border-white scale-110 shadow-lg ring-4 ring-warning/40" : "bg-lime/15 text-lime border-lime/40"
+              }`}
+            >
+              {s}
+            </span>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${on ? "text-white" : "text-lime/70"}`}>
+              {s === "A" ? tr("Speaker A") : tr("Speaker B")}
+            </span>
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-lime/90">{s === "A" ? tr("Speaker A") : tr("Speaker B")}</span>
-        </span>
-      ))}
+        );
+      })}
     </div>
   );
 }

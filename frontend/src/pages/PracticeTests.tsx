@@ -105,6 +105,7 @@ import {
   SKILL_BADGE_CLASS,
   ITEM_TYPE_META,
   getSpokenSegments,
+  speakerAt,
   getVisibleText,
   getPassageAndQuestion,
   getGroupQuestions,
@@ -381,6 +382,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [playCount, setPlayCount] = useState(0);
   // Recordings play twice in practice and mock tests, once in a real test (set by the server).
   const [maxPlays, setMaxPlays] = useState(2);
+  // Conversations: which speaker is talking in the recording right now.
+  const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
@@ -835,7 +838,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   async function handlePlay() {
     if (!current || playCount >= maxPlays) return;
     setPlaying(true);
-    const result = await playSpokenAudio(current, getSpokenSegments(current));
+    const playingItem = current;
+    const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => setSpeaking(speakerAt(playingItem, sec, dur)));
+    setSpeaking(null);
     // Stopped by Skip or Back: the new question's state is already set.
     if (result === "stopped") return;
     setPlaying(false);
@@ -1642,12 +1647,19 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             style={{ backgroundColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
           />
           <div className="flex-1 px-8 pb-6 pt-4 flex flex-col justify-start gap-4 overflow-y-auto">
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
+                  {(meta?.skills ?? current.skills).map((skill) => (
+                    <span key={skill} className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-pill border ${SKILL_BADGE_CLASS[skill]}`}>
+                      {t(`skills.${skill}`)}
+                    </span>
+                  ))}
+                </div>
                 <div className="flex items-center gap-2">
                   {currentPart && (
-                    <span className="text-sm font-bold text-ink bg-surface border-2 border-navy/30 rounded-pill px-3 py-1">
+                    <span className="text-xs font-bold text-ink bg-surface border border-navy/30 rounded-pill px-2.5 py-0.5 leading-5">
                       {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
                     </span>
                   )}
@@ -1656,27 +1668,17 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       role="timer"
                       aria-live="off"
                       title={isMock ? tr("Time left for this question") : tr("Suggested time")}
-                      className={`flex items-center gap-1.5 font-mono font-bold text-lg px-3.5 py-1 rounded-pill border-2 shadow-sm transition-colors ${
+                      className={`flex items-center gap-1 font-mono font-bold text-base leading-5 px-3 py-0.5 rounded-pill border shadow-sm transition-colors ${
                         shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5)
                           ? "timer-warning bg-error text-white border-error"
                           : "bg-warning text-ink border-warning"
                       }`}
                     >
-                      {isMock ? <Timer size={18} /> : <Clock size={18} />}
+                      {isMock ? <Timer size={15} /> : <Clock size={15} />}
                       {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
                     </span>
                   )}
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {(meta?.skills ?? current.skills).map((skill) => (
-                  <span
-                    key={skill}
-                    className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill border ${SKILL_BADGE_CLASS[skill]}`}
-                  >
-                    {t(`skills.${skill}`)}
-                  </span>
-                ))}
               </div>
               <div className="h-2 rounded-pill bg-paper-warm overflow-hidden">
                 <div className="h-full bg-navy rounded-pill transition-all" style={{ width: `${progressPct}%` }} />
@@ -1706,7 +1708,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       <CheckCircle2 size={13} /> {tr("Played")}
                     </span>
                   )}
-                  {current.itemTypeId === "conversations" && <SpeakerAvatars active={playing} />}
+                  {current.itemTypeId === "conversations" && <SpeakerAvatars speaking={playing ? speaking : null} />}
                   <button
                     onClick={handlePlay}
                     disabled={playing || recording || playCount >= maxPlays}

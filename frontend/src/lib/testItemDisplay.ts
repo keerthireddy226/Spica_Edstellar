@@ -140,3 +140,37 @@ export function getOptions(item: TestItem): string[] {
   const c = item.content as Record<string, unknown>;
   return Array.isArray(c.options) ? (c.options as string[]) : [];
 }
+
+// Who is talking at a point in a Conversations recording. The recording follows
+// a fixed layout (backend voice/spokenSsml.ts): a 0.4 s silence, then for each
+// turn "Speaker A." + 0.5 s + the line, 0.8 s between turns, 1.2 s before the
+// question, the question, 0.3 s. Speech time is shared out by the length of
+// each part, so the answer is an estimate; null during the question and pauses.
+export function speakerAt(item: TestItem, seconds: number, duration: number): "A" | "B" | null {
+  const c = item.content as Record<string, unknown>;
+  if (item.itemTypeId !== "conversations" || typeof c.dialogue !== "string" || !duration) return null;
+  const turns = c.dialogue
+    .split(/\s*(?=\b[A-Z]:\s)/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => {
+      const m = p.match(/^([A-Z]):\s*([\s\S]*)$/);
+      return m ? { speaker: m[1], text: m[2].trim() } : { speaker: "A", text: p };
+    })
+    .filter((t) => t.text);
+  if (!turns.length) return null;
+  const question = typeof c.question === "string" ? c.question : "";
+  const len = (t: string) => t.replace(/\s+/g, "").length || 1;
+  const silence = 0.4 + turns.length * 0.5 + (turns.length - 1) * 0.8 + 1.2 + 0.3;
+  const parts = [...turns.map((t) => len(`Speaker ${t.speaker}`) + len(t.text)), len(question)];
+  const perChar = Math.max(0, duration - silence) / parts.reduce((a, b) => a + b, 0);
+  let t = 0.4;
+  for (let i = 0; i < turns.length; i++) {
+    const start = t;
+    const end = start + parts[i] * perChar + 0.5;
+    if (seconds >= start && seconds < end) return turns[i].speaker === "B" ? "B" : "A";
+    t = end + 0.8;
+    if (seconds >= end && seconds < t) return null;
+  }
+  return null;
+}

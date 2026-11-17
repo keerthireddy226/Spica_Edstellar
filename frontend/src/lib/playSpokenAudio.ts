@@ -5,9 +5,15 @@ import { beginAudioBusy } from "@/lib/audioBusy";
 // Plays the question's recorded audio (Google Neural2 voices). There is no
 // browser-voice fallback: a question without a recording, or one that fails
 // to load, plays nothing and reports "missing" so the page can say so.
-export function playSpokenAudio(item: TestItem, _segments: string[]): Promise<"played" | "missing" | "stopped"> {
+// onProgress: the playing position and length in seconds, a few times a second
+// (used to light up the speaker who is talking in a conversation).
+export function playSpokenAudio(
+  item: TestItem,
+  _segments: string[],
+  onProgress?: (seconds: number, duration: number) => void,
+): Promise<"played" | "missing" | "stopped"> {
   const done = beginAudioBusy();
-  return play(item).finally(done);
+  return play(item, onProgress).finally(done);
 }
 
 // The recording playing now, so moving to another question can stop it.
@@ -18,7 +24,7 @@ export function stopSpokenAudio() {
   stopCurrent?.();
 }
 
-function play(item: TestItem): Promise<"played" | "missing" | "stopped"> {
+function play(item: TestItem, onProgress?: (seconds: number, duration: number) => void): Promise<"played" | "missing" | "stopped"> {
   stopSpokenAudio();
   if (!item.audioUrl) return Promise.resolve("missing");
   return new Promise<"played" | "missing" | "stopped">((resolve) => {
@@ -35,6 +41,7 @@ function play(item: TestItem): Promise<"played" | "missing" | "stopped"> {
       audio.pause();
       resolve("missing");
     };
+    if (onProgress) audio.ontimeupdate = () => onProgress(audio.currentTime, Number.isFinite(audio.duration) ? audio.duration : 0);
     audio.onended = () => resolve("played");
     audio.onerror = fail;
     audio.play().catch(fail);
