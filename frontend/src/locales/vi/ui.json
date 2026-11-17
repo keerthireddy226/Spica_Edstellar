@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "Đoạn ghi âm tự phát một lần. Hãy nghe kỹ.",
  "The timer starts when the recording ends": "Đồng hồ bắt đầu khi đoạn ghi âm kết thúc",
  "Play the question. It plays once.": "Phát câu hỏi. Câu hỏi chỉ phát một lần.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Mỗi bản ghi âm tự phát một lần. Đồng hồ bắt đầu khi bản ghi kết thúc. Hãy trả lời trong thời gian hiển thị trên màn hình."
+ "Press Play when you are ready": "Nhấn Phát khi bạn sẵn sàng",
+ "Press Play when you are ready. The recording plays once.": "Nhấn Phát khi bạn sẵn sàng. Bản ghi âm chỉ phát một lần.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Nhấn Phát khi bạn sẵn sàng. Bản ghi âm chỉ phát một lần. Nếu chờ quá lâu, nó sẽ tự phát.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Nhấn Phát khi bạn sẵn sàng. Bản ghi âm chỉ phát một lần. Hãy nghe kỹ.",
+ "Press Play when you are ready. The timer starts after the recording.": "Nhấn Phát khi bạn sẵn sàng. Đồng hồ bắt đầu sau bản ghi âm.",
+ "plays by itself in {{s}} s": "tự phát sau {{s}} giây",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Mỗi bản ghi âm chỉ phát một lần. Nhấn Phát khi bạn sẵn sàng. Đồng hồ bắt đầu khi bản ghi âm kết thúc."
 }

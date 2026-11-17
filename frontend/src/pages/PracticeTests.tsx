@@ -72,7 +72,7 @@ import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
 import { SectionIntro } from "@/components/SectionIntro";
-import { NO_RECORDING_TEXT, playSpokenAudio, preloadSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
+import { NO_RECORDING_TEXT, playSpokenAudio, preloadSpokenAudio, spokenAudioSeconds, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { usePeriodicFaceCheck } from "@/hooks/usePeriodicFaceCheck";
@@ -406,10 +406,17 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // clock starts only when it has finished. awaitingAudio: the question is
   // open and its recording hasn't finished yet (no countdown shown).
   const [awaitingAudio, setAwaitingAudio] = useState(false);
+  const awaitingAudioRef = useRef(false);
+  awaitingAudioRef.current = awaitingAudio;
   const serverEndsAtRef = useRef<number | null>(null);
   const audioSecondsRef = useRef(0);
   const startAnswerClockRef = useRef<() => void>(() => {});
   const autoPlayRef = useRef<() => void>(() => {});
+  // Timed tests: the test taker presses Play when ready. If they wait too long,
+  // the recording plays by itself at readyEndsAt, so the answer time is never cut.
+  const readyEndsAtRef = useRef<number | null>(null);
+  const [readyLeft, setReadyLeft] = useState<number | null>(null);
+  const playStartedForRef = useRef<string | null>(null);
   // Conversations: which speaker is talking in the recording right now.
   const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
@@ -755,6 +762,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     questionEndsAtRef.current = null;
     timeUpFiredRef.current = false;
     setMockSecondsLeft(null);
+    readyEndsAtRef.current = null;
+    setReadyLeft(null);
+    audioSecondsRef.current = 0;
     // The whole exam's time is over (a learner coming back much later): finish it.
     if (mockDeadlineRef.current !== null && Date.now() + clockOffsetRef.current > mockDeadlineRef.current) {
       setTimeRanOut(true);
@@ -770,7 +780,22 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         questionEndsAtRef.current = null;
         setMockSecondsLeft(null);
         setAwaitingAudio(true);
-        autoPlayRef.current();
+        readyEndsAtRef.current = null;
+        setReadyLeft(null);
+        // Time to press Play = the question's limit minus the answer time and one listen (2 s margin).
+        const serverEnd = serverEndsAtRef.current!;
+        const item = current;
+        void spokenAudioSeconds(item).then((dur) => {
+          if (cancelled || playStartedForRef.current === item.id) return;
+          const limit = item.limitSeconds ?? seconds;
+          const t = item.timerSeconds;
+          const a = dur ?? (t != null ? Math.max(0, (limit - t - 5) / 2) : 0);
+          if (dur) audioSecondsRef.current = dur;
+          const answer = t ?? Math.max(5, limit - Math.ceil(2 * a) - 5);
+          const end = dur == null && t == null ? Date.now() + 3000 : serverEnd - (answer + a + 2) * 1000;
+          readyEndsAtRef.current = Math.max(Date.now(), end);
+          setReadyLeft(Math.max(0, Math.ceil((readyEndsAtRef.current - Date.now()) / 1000)));
+        });
         return;
       }
       setAwaitingAudio(false);
@@ -799,15 +824,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
   pausedRef.current = paused;
-  // Practice: a listening question's recording plays by itself when it opens
-  // (once; mock and real tests start theirs with the question's clock).
-  useEffect(() => {
-    if (isMock || !questionVisible || !current || paused || feedback) return;
-    if (!AUDIO_FIRST_TYPES.has(current.itemTypeId) || (playCountsRef.current[index] ?? 0) > 0) return;
-    const id = setTimeout(() => autoPlayRef.current(), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMock, questionVisible, current?.id, paused]);
 
   const heldSecondsRef = useRef<number | null>(null);
   const hasSpokenItems = items.some((it) => it.inputMethod === "mic");
@@ -834,6 +850,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       if (!isMock) return;
       const seconds = left ?? heldSecondsRef.current;
       heldSecondsRef.current = null;
+      // The recording hadn't finished: no answer clock yet. Press Play again
+      // (it plays by itself after 5 s); the answer clock starts when it ends.
+      if (awaitingAudioRef.current) {
+        if (seconds !== null) serverEndsAtRef.current = Date.now() + seconds * 1000;
+        readyEndsAtRef.current = Date.now() + 5000;
+        setReadyLeft(5);
+        return;
+      }
       if (seconds === null) return;
       questionEndsAtRef.current = Date.now() + seconds * 1000;
       setMockSecondsLeft(seconds);
@@ -848,6 +872,17 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   useEffect(() => {
     if (!isMock) return;
     const timer = setInterval(() => {
+      const ready = readyEndsAtRef.current;
+      if (ready !== null) {
+        const r = Math.max(0, Math.ceil((ready - Date.now()) / 1000));
+        setReadyLeft(r);
+        // Not pressed in time: the recording plays by itself (not while the test is on hold).
+        if (r === 0 && !noiseHeldRef.current) {
+          readyEndsAtRef.current = null;
+          setReadyLeft(null);
+          autoPlayRef.current();
+        }
+      }
       const end = questionEndsAtRef.current;
       if (end === null) return;
       const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
@@ -895,6 +930,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   async function handlePlay() {
     if (!current || playCount >= maxPlays) return;
     setPlaying(true);
+    playStartedForRef.current = current.id;
+    readyEndsAtRef.current = null;
+    setReadyLeft(null);
     const playingItem = current;
     const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => {
       if (dur) audioSecondsRef.current = dur;
@@ -923,7 +961,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     const now = Date.now();
     let end = serverEnd;
     if (AUDIO_FIRST_TYPES.has(current.itemTypeId)) {
-      const answer = current.timerSeconds ?? Math.max(5, Math.round((serverEnd - now) / 1000 - audioSecondsRef.current - 5));
+      // No set answer time (Conversations): the question's limit minus two listens and 5 s,
+      // the same sum the server used, so waiting before Play never shortens it.
+      const a = audioSecondsRef.current;
+      const answer =
+        current.timerSeconds ??
+        (current.limitSeconds != null
+          ? Math.max(5, current.limitSeconds - Math.ceil(2 * a) - 5)
+          : Math.max(5, Math.round((serverEnd - now) / 1000 - a - 5)));
       end = Math.min(serverEnd, now + answer * 1000);
     }
     setAwaitingAudio(false);
@@ -1749,9 +1794,18 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
                     </span>
                   )}
-                  {isMock && awaitingAudio && (
+                  {needsAudioFirst && !hasPlayed && (!isMock || awaitingAudio) && (
                     <span className="flex items-center gap-1 text-xs font-bold leading-5 px-3 py-0.5 rounded-pill border border-navy/30 bg-navy/10 text-navy-deep" role="status">
-                      <Headphones size={14} /> {tr("Listening… the timer starts after the recording")}
+                      {playing ? (
+                        <>
+                          <Headphones size={14} /> {tr("Listening… the timer starts after the recording")}
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 size={14} /> {tr("Press Play when you are ready. The timer starts after the recording.")}
+                          {isMock && readyLeft !== null && <span className="font-mono">({tr("plays by itself in {{s}} s", { s: readyLeft })})</span>}
+                        </>
+                      )}
                     </span>
                   )}
                   {shownSeconds !== null && (
@@ -1812,7 +1866,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       <PlayingBars /> {t("placementTest.playing")}
                     </span>
                   ) : (
-                    <span className="text-xs text-lime/80">{t("placementTest.play")}</span>
+                    !hasPlayed && <span className="text-xs font-semibold text-lime">{tr("Press Play when you are ready")}</span>
                   )}
                   {hasPlayed && maxPlays > 1 && (
                     <button

@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "Tallenne toistuu itsestään kerran. Kuuntele tarkasti.",
  "The timer starts when the recording ends": "Ajastin käynnistyy, kun tallenne päättyy",
  "Play the question. It plays once.": "Toista kysymys. Se toistetaan kerran.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Jokainen tallenne toistuu kerran itsestään. Ajastin käynnistyy, kun se päättyy. Vastaa näytöllä näkyvässä ajassa."
+ "Press Play when you are ready": "Paina Toista, kun olet valmis",
+ "Press Play when you are ready. The recording plays once.": "Paina Toista, kun olet valmis. Tallenne toistetaan kerran.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Paina Toista, kun olet valmis. Tallenne toistetaan kerran. Jos odotat liian kauan, se alkaa itsestään.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Paina Toista, kun olet valmis. Tallenne toistetaan kerran. Kuuntele tarkasti.",
+ "Press Play when you are ready. The timer starts after the recording.": "Paina Toista, kun olet valmis. Ajastin käynnistyy tallenteen jälkeen.",
+ "plays by itself in {{s}} s": "alkaa itsestään {{s}} s kuluttua",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Jokainen tallenne toistetaan kerran. Paina Toista, kun olet valmis. Ajastin käynnistyy, kun tallenne päättyy."
 }

@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "Nagranie odtworzy się samo, jeden raz. Słuchaj uważnie.",
  "The timer starts when the recording ends": "Czas rusza, gdy nagranie się skończy",
  "Play the question. It plays once.": "Odtwórz pytanie. Odtwarza się tylko raz.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Każde nagranie odtwarza się samo, jeden raz. Licznik czasu startuje, gdy się skończy. Odpowiedz w czasie pokazanym na ekranie."
+ "Press Play when you are ready": "Naciśnij Odtwórz, gdy będziesz gotowy",
+ "Press Play when you are ready. The recording plays once.": "Naciśnij Odtwórz, gdy będziesz gotowy. Nagranie odtwarza się raz.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Naciśnij Odtwórz, gdy będziesz gotowy. Nagranie odtwarza się raz. Jeśli zwlekasz zbyt długo, włączy się samo.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Naciśnij Odtwórz, gdy będziesz gotowy. Nagranie odtwarza się raz. Słuchaj uważnie.",
+ "Press Play when you are ready. The timer starts after the recording.": "Naciśnij Odtwórz, gdy będziesz gotowy. Licznik czasu startuje po nagraniu.",
+ "plays by itself in {{s}} s": "włączy się samo za {{s}} s",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Każde nagranie odtwarza się raz. Naciśnij Odtwórz, gdy będziesz gotowy. Licznik czasu startuje po zakończeniu nagrania."
 }

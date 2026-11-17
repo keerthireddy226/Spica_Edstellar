@@ -3,7 +3,7 @@ import { PhoneBlockNotice } from "@/components/PhoneBlockNotice";
 import { isPhone } from "@/lib/device";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Volume2, CheckCircle2, Clock, X, ArrowRightCircle } from "lucide-react";
+import { Volume2, CheckCircle2, Clock, X, ArrowRightCircle, Headphones } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { Button } from "@/components/Button";
 import {
@@ -36,6 +36,7 @@ import { NO_RECORDING_TEXT, playSpokenAudio, stopSpokenAudio } from "@/lib/playS
 import { AnswerInputControl } from "@/components/AnswerInputControl";
 import {
   AUDIO_FIRST_TYPES,
+  speakerAt,
   SKILL_BADGE_CLASS,
   ITEM_TYPE_META,
   getSpokenSegments,
@@ -44,6 +45,7 @@ import {
 } from "@/lib/testItemDisplay";
 
 import { tr } from "@/i18n/tr";
+import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
 import { CEFR_MEANING } from "@/lib/cefrMeaning";
 import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 // Matches backend ITEMS_PER_TYPE sum — for the progress bar only.
@@ -67,7 +69,9 @@ function PlacementTestRun() {
   const isCandidate = useAuth().user?.role === "candidate";
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
+  const { recording, volumeLevel, start: startRecording, stop: stopRecording } = useVoiceRecorder();
+  // Conversations: which speaker is talking in the recording now.
+  const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [testCode, setTestCode] = useState<string | null>(null);
@@ -242,25 +246,16 @@ function PlacementTestRun() {
   async function handlePlay() {
     if (!current || hasPlayed) return;
     setPlaying(true);
-    const result = await playSpokenAudio(current, getSpokenSegments(current));
+    const playingItem = current;
+    const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => setSpeaking(speakerAt(playingItem, sec, dur)));
+    setSpeaking(null);
     if (result === "stopped") return;
     setPlaying(false);
     setHasPlayed(true);
     markPlayed(current.id);
     if (result === "missing") setError(NO_RECORDING_TEXT());
   }
-  // A listening question's recording plays by itself when the question opens.
-  const autoPlayRef = useRef<() => void>(() => {});
-  autoPlayRef.current = () => {
-    if (!playing && !hasPlayed) void handlePlay();
-  };
-  const questionOnScreen = !!sessionId && !!current && proctor.ready && !summary && !showTypeIntro && !finishing;
-  useEffect(() => {
-    if (!questionOnScreen || !needsAudioFirst || hasPlayed) return;
-    const id = setTimeout(() => autoPlayRef.current(), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionOnScreen, current?.id]);
+
 
   async function handleToggleRecord() {
     setError(null);
@@ -583,18 +578,7 @@ function PlacementTestRun() {
       <div className="h-1.5 w-full shrink-0" style={{ backgroundColor: `var(--color-${current.skills[0]})` }} />
 
       <div className="relative flex items-center justify-between gap-3 px-5 py-3 shrink-0">
-        <div className="flex items-center">
-          {remainingSeconds !== null && (
-            <span
-              className={`flex items-center gap-1.5 text-sm font-mono font-bold rounded-pill px-3 py-1 border transition-colors ${
-                urgentTimer ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
-              }`}
-            >
-              <Clock size={14} />
-              {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
-            </span>
-          )}
-        </div>
+        <div className="flex items-center" />
 
         <span className="absolute left-1/2 -translate-x-1/2 font-logo tracking-tight flex items-baseline gap-1.5">
           <span className="font-bold text-base text-navy-deep">{tr("Spica")}</span>
@@ -603,8 +587,7 @@ function PlacementTestRun() {
 
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-muted">
-            {testCode && <span className="hidden sm:inline mr-3">{tr("Attempt ID")} {testCode}</span>}
-            {t("placementTest.progress", { current: questionNumber, total: TOTAL_QUESTIONS })}
+            {testCode && <span className="hidden sm:inline">{tr("Attempt ID")} {testCode}</span>}
           </span>
           <button
             onClick={handleExit}
@@ -638,6 +621,28 @@ function PlacementTestRun() {
                 </span>
               ))}
             </div>
+            <div className="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
+              {needsAudioFirst && !hasPlayed && (
+                <span className="flex items-center gap-1 text-xs font-bold leading-5 px-3 py-0.5 rounded-pill border border-navy/30 bg-navy/10 text-navy-deep" role="status">
+                  {playing ? <Headphones size={14} /> : <Volume2 size={14} />}
+                  {playing ? tr("Listening… the timer starts after the recording") : tr("Press Play when you are ready. The timer starts after the recording.")}
+                </span>
+              )}
+              <span className="text-xs font-bold text-ink bg-surface border border-navy/30 rounded-pill px-2.5 py-0.5 leading-5">
+                {t("placementTest.progress", { current: questionNumber, total: TOTAL_QUESTIONS })}
+              </span>
+              {remainingSeconds !== null && (
+                <span
+                  role="timer"
+                  className={`flex items-center gap-1 font-mono font-bold text-base leading-5 px-3 py-0.5 rounded-pill border shadow-sm transition-colors ${
+                    urgentTimer ? "timer-warning bg-error text-white border-error" : "bg-warning text-ink border-warning"
+                  }`}
+                >
+                  <Clock size={15} />
+                  {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
+                </span>
+              )}
+            </div>
           </div>
           <div className="bg-paper-warm border-y border-rule px-6 py-3">
             <p className="text-sm font-semibold text-ink">{current.questionInstruction}</p>
@@ -649,6 +654,11 @@ function PlacementTestRun() {
               <span className="text-xs font-semibold text-muted">{needsAudioFirst ? t("practiceTests.youHear") : tr("You read")}</span>
               {needsAudioFirst ? (
                 <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
+                  {current.itemTypeId === "conversations" && (
+                    <div className="rounded-card bg-navy px-4 py-2">
+                      <SpeakerAvatars speaking={playing ? speaking : null} />
+                    </div>
+                  )}
                   <button
                     onClick={handlePlay}
                     disabled={playing || recording || hasPlayed}
@@ -657,9 +667,15 @@ function PlacementTestRun() {
                   >
                     <Volume2 size={26} />
                   </button>
-                  <span className="text-sm text-muted">
-                    {playing ? t("placementTest.playing") : hasPlayed ? tr("This recording has been played.") : tr("This recording plays once. Listen carefully.")}
-                  </span>
+                  {playing ? (
+                    <span className="flex items-center gap-2 text-sm font-bold text-navy-deep" role="status" aria-live="polite">
+                      <PlayingBars /> {t("placementTest.playing")}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted text-center px-4">
+                      {hasPlayed ? tr("This recording has been played.") : tr("Press Play when you are ready. The recording plays once.")}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] p-6 flex flex-col justify-center gap-3 overflow-hidden">
@@ -689,7 +705,12 @@ function PlacementTestRun() {
                     : undefined
                 }
               >
-                <div className="relative w-full">
+                <div className="relative w-full flex flex-col gap-3">
+                  {recording && (
+                    <div className="self-center w-full max-w-xs">
+                      <RecordingIndicator level={volumeLevel} />
+                    </div>
+                  )}
                   <AnswerInputControl
                     item={current}
                     answerText={answerText}

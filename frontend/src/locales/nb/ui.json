@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "Opptaket spilles av automatisk én gang. Lytt nøye.",
  "The timer starts when the recording ends": "Tiden starter når opptaket er ferdig",
  "Play the question. It plays once.": "Spill av spørsmålet. Det spilles av én gang.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Hvert opptak spilles av én gang av seg selv. Tidtakeren starter når det er ferdig. Svar innen tiden som vises på skjermen."
+ "Press Play when you are ready": "Trykk Spill av når du er klar",
+ "Press Play when you are ready. The recording plays once.": "Trykk Spill av når du er klar. Opptaket spilles av én gang.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Trykk Spill av når du er klar. Opptaket spilles av én gang. Venter du for lenge, starter det av seg selv.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Trykk Spill av når du er klar. Opptaket spilles av én gang. Lytt nøye.",
+ "Press Play when you are ready. The timer starts after the recording.": "Trykk Spill av når du er klar. Tidtakeren starter etter opptaket.",
+ "plays by itself in {{s}} s": "starter av seg selv om {{s}} s",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Hvert opptak spilles av én gang. Trykk Spill av når du er klar. Tidtakeren starter når opptaket er ferdig."
 }

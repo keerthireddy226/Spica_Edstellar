@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "रिकॉर्डिंग अपने आप एक बार चलेगी। ध्यान से सुनें।",
  "The timer starts when the recording ends": "रिकॉर्डिंग खत्म होने पर टाइमर शुरू होता है",
  "Play the question. It plays once.": "प्रश्न चलाएँ। यह केवल एक बार चलेगा।",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "हर रिकॉर्डिंग अपने आप एक बार चलती है। उसके खत्म होने पर टाइमर शुरू होता है। स्क्रीन पर दिखाए गए समय में जवाब दें।"
+ "Press Play when you are ready": "तैयार होने पर Play दबाएँ",
+ "Press Play when you are ready. The recording plays once.": "तैयार होने पर Play दबाएँ। रिकॉर्डिंग एक बार चलेगी।",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "तैयार होने पर Play दबाएँ। रिकॉर्डिंग एक बार चलेगी। ज़्यादा देर रुकने पर यह अपने आप चलेगी।",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "तैयार होने पर Play दबाएँ। रिकॉर्डिंग एक बार चलेगी। ध्यान से सुनें।",
+ "Press Play when you are ready. The timer starts after the recording.": "तैयार होने पर Play दबाएँ। रिकॉर्डिंग के बाद टाइमर शुरू होगा।",
+ "plays by itself in {{s}} s": "{{s}} सेकंड में अपने आप चलेगी",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "हर रिकॉर्डिंग एक बार चलती है। तैयार होने पर Play दबाएँ। रिकॉर्डिंग खत्म होने पर टाइमर शुरू होता है।"
 }

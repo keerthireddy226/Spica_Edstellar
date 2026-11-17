@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "La registrazione parte da sola, una volta. Ascolta con attenzione.",
  "The timer starts when the recording ends": "Il timer parte quando finisce la registrazione",
  "Play the question. It plays once.": "Riproduci la domanda. Viene riprodotta una sola volta.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Ogni registrazione parte da sola, una volta. Il timer parte quando finisce. Rispondi entro il tempo mostrato sullo schermo."
+ "Press Play when you are ready": "Premi Riproduci quando sei pronto",
+ "Press Play when you are ready. The recording plays once.": "Premi Riproduci quando sei pronto. La registrazione viene riprodotta una volta.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Premi Riproduci quando sei pronto. La registrazione viene riprodotta una volta. Se aspetti troppo, parte da sola.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Premi Riproduci quando sei pronto. La registrazione viene riprodotta una volta. Ascolta con attenzione.",
+ "Press Play when you are ready. The timer starts after the recording.": "Premi Riproduci quando sei pronto. Il timer parte dopo la registrazione.",
+ "plays by itself in {{s}} s": "parte da sola tra {{s}} s",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Ogni registrazione viene riprodotta una volta. Premi Riproduci quando sei pronto. Il timer parte quando finisce la registrazione."
 }

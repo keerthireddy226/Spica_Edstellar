@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "录音会自动播放一次，请仔细听。",
  "The timer starts when the recording ends": "录音结束后开始计时",
  "Play the question. It plays once.": "播放问题。只播放一次。",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "每段录音自动播放一次。录音结束后计时开始。请在屏幕显示的时间内作答。"
+ "Press Play when you are ready": "准备好后请按播放",
+ "Press Play when you are ready. The recording plays once.": "准备好后请按播放。录音只播放一次。",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "准备好后请按播放。录音只播放一次。等待太久会自动播放。",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "准备好后请按播放。录音只播放一次。请仔细听。",
+ "Press Play when you are ready. The timer starts after the recording.": "准备好后请按播放。录音结束后计时开始。",
+ "plays by itself in {{s}} s": "{{s}} 秒后自动播放",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "每段录音只播放一次。准备好后请按播放。录音结束后计时开始。"
 }

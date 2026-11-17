@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "De opname speelt vanzelf één keer af. Luister goed.",
  "The timer starts when the recording ends": "De timer start als de opname afgelopen is",
  "Play the question. It plays once.": "Speel de vraag af. Die wordt één keer afgespeeld.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Elke opname speelt één keer vanzelf af. De timer start als die afgelopen is. Antwoord binnen de tijd op het scherm."
+ "Press Play when you are ready": "Druk op Afspelen als je klaar bent",
+ "Press Play when you are ready. The recording plays once.": "Druk op Afspelen als je klaar bent. De opname speelt één keer af.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "Druk op Afspelen als je klaar bent. De opname speelt één keer af. Wacht je te lang, dan start die vanzelf.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "Druk op Afspelen als je klaar bent. De opname speelt één keer af. Luister goed.",
+ "Press Play when you are ready. The timer starts after the recording.": "Druk op Afspelen als je klaar bent. De timer start na de opname.",
+ "plays by itself in {{s}} s": "start vanzelf over {{s}} s",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "Elke opname speelt één keer af. Druk op Afspelen als je klaar bent. De timer start als de opname afgelopen is."
 }

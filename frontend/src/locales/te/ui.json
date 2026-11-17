@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "రికార్డింగ్ దానంతట అదే ఒక్కసారి ప్లే అవుతుంది. జాగ్రత్తగా వినండి.",
  "The timer starts when the recording ends": "రికార్డింగ్ ముగిసినప్పుడు టైమర్ మొదలవుతుంది",
  "Play the question. It plays once.": "ప్రశ్నను ప్లే చేయండి. ఇది ఒక్కసారి మాత్రమే ప్లే అవుతుంది.",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "ప్రతి రికార్డింగ్ తనంతట తానే ఒక్కసారి ప్లే అవుతుంది. అది ముగిసినప్పుడు టైమర్ మొదలవుతుంది. స్క్రీన్‌పై చూపిన సమయంలో సమాధానం ఇవ్వండి."
+ "Press Play when you are ready": "సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి",
+ "Press Play when you are ready. The recording plays once.": "సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి. రికార్డింగ్ ఒక్కసారి మాత్రమే ప్లే అవుతుంది.",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి. రికార్డింగ్ ఒక్కసారి మాత్రమే ప్లే అవుతుంది. ఎక్కువసేపు ఆగితే అది తనంతట తానే ప్లే అవుతుంది.",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి. రికార్డింగ్ ఒక్కసారి మాత్రమే ప్లే అవుతుంది. శ్రద్ధగా వినండి.",
+ "Press Play when you are ready. The timer starts after the recording.": "సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి. రికార్డింగ్ తర్వాత టైమర్ మొదలవుతుంది.",
+ "plays by itself in {{s}} s": "{{s}} సెకన్లలో తనంతట తానే ప్లే అవుతుంది",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "ప్రతి రికార్డింగ్ ఒక్కసారి ప్లే అవుతుంది. సిద్ధంగా ఉన్నప్పుడు Play నొక్కండి. రికార్డింగ్ ముగిసినప్పుడు టైమర్ మొదలవుతుంది."
 }

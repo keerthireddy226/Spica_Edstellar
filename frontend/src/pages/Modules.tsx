@@ -83,7 +83,9 @@ import {
   getSpokenSegments,
   getVisibleText,
   getPassageAndQuestion,
+  speakerAt,
 } from "@/lib/testItemDisplay";
+import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
 
 import { tr } from "@/i18n/tr";
 import { QuestionReview } from "@/components/report/FeedbackReportView";
@@ -723,7 +725,9 @@ function ModulesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { recording, start: startRecording, stop: stopRecording } = useVoiceRecorder();
+  const { recording, volumeLevel, start: startRecording, stop: stopRecording } = useVoiceRecorder();
+  // Conversations: which speaker is talking in the recording now.
+  const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
 
   const [availability, setAvailability] = useState<SkillAvailability[] | null>(null);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
@@ -1250,7 +1254,9 @@ function ModulesPage() {
   async function handlePlay() {
     if (!current || hasPlayed) return;
     setPlaying(true);
-    const result = await playSpokenAudio(current, getSpokenSegments(current));
+    const playingItem = current;
+    const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => setSpeaking(speakerAt(playingItem, sec, dur)));
+    setSpeaking(null);
     // Stopped by Skip or Back: the new question's state is already set.
     if (result === "stopped") return;
     setPlaying(false);
@@ -1258,17 +1264,7 @@ function ModulesPage() {
     markPlayed(current.id);
     if (result === "missing") setError(NO_RECORDING_TEXT());
   }
-  // A listening question's recording plays by itself when the question opens.
-  const autoPlayRef = useRef<() => void>(() => {});
-  autoPlayRef.current = () => {
-    if (!playing && !hasPlayed) void handlePlay();
-  };
-  useEffect(() => {
-    if (!questionOnScreen || !current || !AUDIO_FIRST_TYPES.has(current.itemTypeId) || hasPlayed) return;
-    const id = setTimeout(() => autoPlayRef.current(), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionOnScreen, current?.id]);
+
 
   async function handleToggleRecord() {
     setError(null);
@@ -1754,22 +1750,30 @@ function ModulesPage() {
                   <span className="font-display font-bold text-sm text-ink leading-tight">{meta?.name}</span>
                   <span className="text-[11px] text-muted">
                     {[context?.unitName, context?.setName].filter(Boolean).join(" · ")}
-                    {context?.unitName || context?.setName ? " · " : ""}
-                    <span className="font-mono">
-                      {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : t("placementTest.progress", { current: index + 1, total: items.length })}
-                    </span>
                   </span>
                   {context?.tests?.length && !small ? <span className="text-[11px] text-muted">{tr("Tests: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
               </div>
+              <span className="flex flex-wrap items-center justify-end gap-1.5">
+                {needsAudioFirst && !hasPlayed && (
+                  <span className="flex items-center gap-1 text-xs font-bold leading-5 px-3 py-0.5 rounded-pill border border-navy/30 bg-navy/10 text-navy-deep" role="status">
+                    {playing ? <Headphones size={14} /> : <Volume2 size={14} />}
+                    {playing ? tr("Listening… the timer starts after the recording") : tr("Press Play when you are ready. The timer starts after the recording.")}
+                  </span>
+                )}
+                <span className="text-xs font-bold text-ink bg-surface border border-navy/30 rounded-pill px-2.5 py-0.5 leading-5">
+                  {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : tr("Question {{n}} of {{total}}", { n: index + 1, total: items.length })}
+                </span>
               {remainingSeconds !== null ? (
                 <span className="flex items-center gap-1.5">
                   <span
-                    className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
-                      remainingSeconds <= 5 ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
+                    role="timer"
+                    title={tr("Suggested time")}
+                    className={`flex items-center gap-1 font-mono font-bold text-base leading-5 px-3 py-0.5 rounded-pill border shadow-sm transition-colors ${
+                      remainingSeconds <= 5 ? "timer-warning bg-error text-white border-error" : "bg-warning text-ink border-warning"
                     }`}
                   >
-                    <Clock size={16} />
+                    <Clock size={15} />
                     {String(Math.floor(remainingSeconds / 60)).padStart(1, "0")}:{String(remainingSeconds % 60).padStart(2, "0")}
                   </span>
                   <button
@@ -1787,6 +1791,7 @@ function ModulesPage() {
                   </button>
                 </span>
               ) : null}
+              </span>
             </div>
             <div className={small ? "hidden" : "flex items-center gap-1.5"}>
               {(meta?.skills ?? current.skills).map((skill) => (
@@ -1850,6 +1855,11 @@ function ModulesPage() {
         // Mic: two equal columns, so the full-width record control can't squeeze Play.
         <div className={current.inputMethod === "mic" ? "grid grid-cols-2 items-start gap-6" : "flex flex-col gap-4"}>
           <div className={`flex flex-col items-center gap-3 ${current.inputMethod === "mic" ? "" : "self-center"}`}>
+            {current.itemTypeId === "conversations" && (
+              <div className="rounded-card bg-navy px-4 py-2">
+                <SpeakerAvatars speaking={playing ? speaking : null} />
+              </div>
+            )}
             <button
               onClick={handlePlay}
               disabled={playing || recording || hasPlayed}
@@ -1857,9 +1867,15 @@ function ModulesPage() {
             >
               <Volume2 size={22} />
             </button>
-            <span className="text-sm font-medium text-muted whitespace-nowrap">
-              {playing ? t("placementTest.playing") : hasPlayed ? tr("This recording has been played.") : tr("This recording plays once. Listen carefully.")}
-            </span>
+            {playing ? (
+              <span className="flex items-center gap-2 text-sm font-bold text-navy-deep" role="status" aria-live="polite">
+                <PlayingBars /> {t("placementTest.playing")}
+              </span>
+            ) : (
+              <span className="text-sm font-medium text-muted text-center">
+                {hasPlayed ? tr("This recording has been played.") : tr("Press Play when you are ready. The recording plays once.")}
+              </span>
+            )}
           </div>
           <AnswerInputControl
             item={current}
@@ -1924,6 +1940,11 @@ function ModulesPage() {
         </>
       )}
 
+          {recording && (
+            <div className="flex justify-center">
+              <RecordingIndicator level={volumeLevel} />
+            </div>
+          )}
           {remainingSeconds === 0 && !feedback && <p className="text-sm text-warning text-center">{tr("Time's up. Submit what you have, or skip.")}</p>}
           </div>
           {feedback && (

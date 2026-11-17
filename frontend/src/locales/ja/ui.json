@@ -5615,5 +5615,11 @@
  "The recording plays by itself, once. Listen carefully.": "音声は自動で1回だけ再生されます。よく聞いてください。",
  "The timer starts when the recording ends": "音声が終わるとタイマーが始まります",
  "Play the question. It plays once.": "質問を再生します。再生は1回だけです。",
- "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "各録音は自動で1回だけ再生されます。再生が終わるとタイマーが始まります。画面に表示された時間内に答えてください。"
+ "Press Play when you are ready": "準備ができたら再生を押してください",
+ "Press Play when you are ready. The recording plays once.": "準備ができたら再生を押してください。録音は1回だけ再生されます。",
+ "Press Play when you are ready. The recording plays once. If you wait too long, it plays by itself.": "準備ができたら再生を押してください。録音は1回だけ再生されます。待ちすぎると自動で再生されます。",
+ "Press Play when you are ready. The recording plays once. Listen carefully.": "準備ができたら再生を押してください。録音は1回だけ再生されます。よく聞いてください。",
+ "Press Play when you are ready. The timer starts after the recording.": "準備ができたら再生を押してください。タイマーは録音の後に始まります。",
+ "plays by itself in {{s}} s": "{{s}}秒後に自動で再生",
+ "Each recording plays once. Press Play when you are ready. The timer starts when the recording ends.": "各録音は1回だけ再生されます。準備ができたら再生を押してください。録音が終わるとタイマーが始まります。"
 }

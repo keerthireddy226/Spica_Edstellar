@@ -50,6 +50,26 @@ function play(item: TestItem, onProgress?: (seconds: number, duration: number) =
   });
 }
 
+// The question recording's length in seconds (null if it has none or can't load
+// within 4 s). Used to know how long a test taker can wait before pressing Play.
+export function spokenAudioSeconds(item: TestItem): Promise<number | null> {
+  if (!item.audioUrl) return Promise.resolve(null);
+  return new Promise<number | null>((resolve) => {
+    const audio = new Audio();
+    audio.preload = "metadata";
+    const t = setTimeout(() => resolve(null), 4000);
+    audio.onloadedmetadata = () => {
+      clearTimeout(t);
+      resolve(Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null);
+    };
+    audio.onerror = () => {
+      clearTimeout(t);
+      resolve(null);
+    };
+    audio.src = item.audioUrl!;
+  });
+}
+
 // Loads the next questions' recordings ahead of time, so pressing Next plays
 // at once instead of waiting for the download. Each recording is loaded once.
 const preloaded = new Set<string>();

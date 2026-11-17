@@ -5,7 +5,8 @@ import { AnswerInputControl } from "@/components/AnswerInputControl";
 import type { TestItem } from "@/api/testSession";
 import type { CoachAnswer } from "@/api/coach";
 import { blobToBase64, useVoiceRecorder } from "@/hooks/useVoiceRecorder";
-import { AUDIO_FIRST_TYPES, getPassageAndQuestion, getSpokenSegments, getVisibleText } from "@/lib/testItemDisplay";
+import { AUDIO_FIRST_TYPES, getPassageAndQuestion, getSpokenSegments, getVisibleText, speakerAt } from "@/lib/testItemDisplay";
+import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
 import { playSpokenAudio } from "@/lib/playSpokenAudio";
 import { tr } from "@/i18n/tr";
 
@@ -22,7 +23,9 @@ export function CoachQuestionCard({
   onSubmit: (answer: CoachAnswer) => Promise<void>;
 }) {
   // Speaking: the recording (and the browser's transcript as a fallback).
-  const { recording, start, stop } = useVoiceRecorder();
+  const { recording, volumeLevel, start, stop } = useVoiceRecorder();
+  // Conversations: which speaker is talking in the recording now.
+  const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
   const [audio, setAudio] = useState<{ base64: string; mimeType: string; durationMs: number; url: string } | null>(null);
   const [micError, setMicError] = useState(false);
   const mic = item.inputMethod === "mic";
@@ -61,7 +64,8 @@ export function CoachQuestionCard({
   async function play() {
     if (hasPlayed) return;
     setPlaying(true);
-    const r = await playSpokenAudio(item, getSpokenSegments(item));
+    const r = await playSpokenAudio(item, getSpokenSegments(item), (sec, dur) => setSpeaking(speakerAt(item, sec, dur)));
+    setSpeaking(null);
     setPlaying(false);
     if (r === "missing") setNoAudio(true);
     else {
@@ -92,7 +96,12 @@ export function CoachQuestionCard({
     <div className={`mt-2 flex flex-col gap-3 rounded-xl border border-rule bg-paper/60 p-3 ${locked ? "opacity-80 pointer-events-none" : ""}`}>
       {item.instructionText && <p className="text-xs text-muted">{item.instructionText}</p>}
       {audioFirst ? (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {item.itemTypeId === "conversations" && (
+            <div className="rounded-lg bg-navy px-3 py-1.5">
+              <SpeakerAvatars speaking={playing ? speaking : null} />
+            </div>
+          )}
           <button
             onClick={play}
             disabled={playing || locked || hasPlayed}
@@ -101,7 +110,13 @@ export function CoachQuestionCard({
           >
             <Volume2 size={18} />
           </button>
-          <span className="text-sm text-muted">{playing ? tr("Playing…") : hasPlayed ? tr("This recording has been played.") : tr("Play the question. It plays once.")}</span>
+          {playing ? (
+            <span className="flex items-center gap-2 text-sm font-bold text-navy-deep" role="status" aria-live="polite">
+              <PlayingBars /> {tr("Playing…")}
+            </span>
+          ) : (
+            <span className="text-sm text-muted">{hasPlayed ? tr("This recording has been played.") : tr("Play the question. It plays once.")}</span>
+          )}
           {noAudio && <span className="text-xs text-error">{tr("This question's recording isn't available. Ask me for another one.")}</span>}
         </div>
       ) : pq ? (
@@ -112,6 +127,7 @@ export function CoachQuestionCard({
       ) : (
         <p className="text-sm text-ink bg-surface rounded-lg border border-rule p-3 whitespace-pre-wrap leading-relaxed">{getVisibleText(item)}</p>
       )}
+      {recording && <RecordingIndicator level={volumeLevel} />}
       <AnswerInputControl
         item={item}
         answerText={answerText}
