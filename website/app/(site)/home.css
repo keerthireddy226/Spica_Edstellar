@@ -1252,3 +1252,8 @@ a:hover > .h-link svg,
 main:has(.h) + .site .site-footer {
   margin-top: 0;
 }
+
+/* Try a question: text beside the playable sample. */
+.h-try { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; }
+.h-try .h-link { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 900px) { .h-try { grid-template-columns: 1fr; gap: 24px; } }

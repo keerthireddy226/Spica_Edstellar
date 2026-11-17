@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Building2, CreditCard, GraduationCap, Rocket, User } from "lucide-react";
+import { ArrowRight, Building2, Check, Compass, CreditCard, GraduationCap, Rocket, User, X } from "lucide-react";
 import { IndividualPlans } from "@/components/IndividualPlans";
 import { PageHero } from "@/components/page/PageHero";
 import { PriceMock } from "@/components/page/Visuals";
-import { CREDIT_BANDS, EDUCATION_DISCOUNT, LICENCE_BANDS, PILOT } from "@/lib/prices";
+import { CREDIT_BANDS, EDUCATION_DISCOUNT, LICENCE_BANDS, PILOT, money } from "@/lib/prices";
+import { app } from "@/lib/site";
 import { TESTS } from "@/lib/tests";
 
 export const metadata: Metadata = {
@@ -47,7 +48,79 @@ export default function PricingPage() {
         }
         visual={<PriceMock />}
       />
-      <section className="section" id="individuals">
+      <section className="section">
+        <div className="wrap">
+          <div className="sec-head" data-reveal>
+            <p className="eyebrow">
+              <Compass size={14} /> Choose
+            </p>
+            <h2>Which plan is right for you?</h2>
+            <p className="muted">Start from what you want to achieve. You can always start free and move up later.</p>
+          </div>
+          <div className="grid g4 goals">
+            {[
+              ["I want to know my level", "A free placement test gives your level for each skill, plus practice every week.", "Free", app.signUp, "Start free"],
+              ["I need a certificate soon", "Take one real test with a score report and a certificate anyone can check.", `from ${money("assessment:placement", "INR")} / ${money("assessment:placement", "USD")}`, "#individuals", "See single tests"],
+              ["I want to pass one test", "30 days of practice and mock tests for that test, then the real test.", `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, "#individuals", "See preparation"],
+              ["I want to improve overall", "Every main test, unlimited practice tests, mock tests and a final assessment.", `${money("full", "INR")} / ${money("full", "USD")} a month`, "#individuals", "See Full access"],
+            ].map(([h, d, price, href, cta]) => (
+              <a className="card goal" href={href} key={h} data-reveal>
+                <h3>{h}</h3>
+                <p className="muted">{d}</p>
+                <span className="path-tag">{price}</span>
+                <span className="goal-cta">
+                  {cta} <ArrowRight size={15} aria-hidden="true" />
+                </span>
+              </a>
+            ))}
+          </div>
+          <p className="muted" style={{ marginTop: 14 }}>
+            Buying for a team? <a href="#organisations">See licences and credits for organisations</a>.
+          </p>
+
+          <div className="table-wrap" style={{ marginTop: 32 }} data-reveal>
+            <table className="t compare">
+              <thead>
+                <tr>
+                  <th />
+                  <th>Free</th>
+                  <th>Preparation + test</th>
+                  <th>Full access</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["Tests covered", "Try any test", "One test of your choice", "All five main tests"],
+                    ["Placement test with a level for each skill", true, true, true],
+                    ["Practice tests", "2 a month", "Unlimited, for that test", "Unlimited"],
+                    ["Mock tests under real conditions", "1 a month", "2 a month, for that test", "2 a month in each test"],
+                    ["Score reports", "Summary", "Full", "Full"],
+                    ["Real test with a certificate", false, "That test", "One final assessment"],
+                    ["Price", "Free", `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, `${money("full", "INR")} / ${money("full", "USD")} a month`],
+                  ] as [string, string | boolean, string | boolean, string | boolean][]
+                ).map(([row, ...cells]) => (
+                  <tr key={row}>
+                    <td>
+                      <b>{row}</b>
+                    </td>
+                    {cells.map((c, i) => (
+                      <td key={i}>
+                        {c === true ? <Check size={18} className="yes" aria-label="Included" /> : c === false ? <X size={18} className="no" aria-label="Not included" /> : c}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted" style={{ marginTop: 10, fontSize: "0.88rem" }}>
+            One month of Full access includes up to 10 mock tests: 2 in each of the five main tests. Level Tests (A1–C2) are bought separately.
+          </p>
+        </div>
+      </section>
+
+      <section className="section alt" id="individuals">
         <div className="wrap">
           <div className="sec-head" data-reveal>
             <p className="eyebrow">

@@ -8,6 +8,8 @@ import { DemoForm } from "@/components/home/DemoForm";
 import { CertificateForm } from "@/components/CertificateForm";
 import { app } from "@/lib/site";
 import { money } from "@/lib/prices";
+import { SampleQuestion } from "@/components/page/SampleQuestion";
+import { SAMPLES } from "@/lib/samples";
 import "./home.css";
 
 export const metadata: Metadata = {
@@ -188,6 +190,28 @@ export default function Home() {
                 For you <ArrowRight size={15} />
               </span>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* TRY A QUESTION */}
+      <section className="h-section h-tint">
+        <div className="h-wrap h-try">
+          <div className="h-head" data-reveal style={{ textAlign: "left", margin: 0 }}>
+            <span className="h-kicker">Try it now</span>
+            <h2>Hear how a Spica test feels</h2>
+            <p>
+              Press Play when you are ready. Each recording plays once, like the real exam, and your answer time starts only when it ends. The timer sits
+              next to the question, turns red in the last seconds, and every part opens with clear steps, so nothing catches you out.
+            </p>
+            <p>
+              <Link href="/tests" className="h-link">
+                See every test and its parts <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </p>
+          </div>
+          <div data-reveal>
+            <SampleQuestion s={SAMPLES["english-4-skills-essentials"]} />
           </div>
         </div>
       </section>

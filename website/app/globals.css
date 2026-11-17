@@ -1562,3 +1562,62 @@ body {
 .site .ed-list > div { background: #fff; border: 1px solid var(--rule); border-radius: 14px; padding: 14px 16px; }
 .site .ed-list b { display: block; font-size: 1rem; }
 .site .ed-list span { color: var(--muted); font-size: 0.92rem; }
+
+/* Test pages: playable sample question (looks like the Spica test card). */
+.site .sq-wrap { align-items: center; gap: 40px; }
+.site .sq { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; }
+.site .sq-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.site .sq-task { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--clay-text); }
+.site .sq-pills { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.site .sq-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(46, 36, 25, 0.25); background: var(--cream); color: var(--ink); }
+.site .sq-pill.plain { background: var(--surface); }
+.site .sq-timer { display: inline-flex; align-items: center; gap: 5px; font-family: ui-monospace, monospace; font-weight: 800; font-size: 1rem; padding: 2px 12px; border-radius: 999px; background: #f4b740; color: var(--ink); }
+.site .sq-timer.low { background: #c0392b; color: #fff; animation: sq-blink 1s steps(2, start) infinite; }
+@keyframes sq-blink { to { opacity: 0.45; } }
+.site .sq-instr { font-weight: 600; text-align: center; background: var(--cream); border-radius: 12px; padding: 10px 14px; margin: 12px 0; }
+.site .sq-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.site .sq-hear, .site .sq-say { border-radius: 14px; padding: 30px 14px 16px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 190px; text-align: center; }
+.site .sq-hear { background: var(--clay-deep); color: #fff; }
+.site .sq-say { background: var(--cream); border: 1px solid var(--rule); }
+.site .sq-label { position: absolute; top: 10px; left: 14px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.site .sq-play { width: 58px; height: 58px; border-radius: 50%; border: none; background: #fff; color: var(--clay-deep); display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.4); transition: transform 0.15s; }
+.site .sq-play:hover:not(:disabled) { transform: scale(1.06); }
+.site .sq-play:disabled { opacity: 0.55; cursor: not-allowed; }
+.site .sq-hear small { font-size: 0.78rem; opacity: 0.9; }
+.site .sq-speakers { display: flex; gap: 14px; }
+.site .sq-speakers i { font-style: normal; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; border: 2px solid rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.15); }
+.site .sq-bars { display: inline-flex; align-items: flex-end; gap: 3px; height: 18px; }
+.site .sq-bars b { width: 4px; height: 100%; border-radius: 2px; background: #fff; animation: sq-bar 0.9s ease-in-out infinite; transform-origin: bottom; }
+.site .sq-bars b:nth-child(2) { animation-delay: 0.15s; } .site .sq-bars b:nth-child(3) { animation-delay: 0.3s; } .site .sq-bars b:nth-child(4) { animation-delay: 0.45s; }
+@keyframes sq-bar { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+.site .sq-mic { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; margin: 0; text-align: left; }
+.site .sq-input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--rule); font: inherit; background: #fff; }
+.site .sq-ok { color: var(--moss-ink); font-weight: 700; display: flex; gap: 6px; align-items: center; margin: 0; }
+.site .sq-answer { margin: 0; font-size: 0.92rem; background: #fff; border-radius: 10px; padding: 8px 10px; border: 1px solid var(--rule); }
+.site .sq-note { font-size: 0.8rem; color: var(--muted); margin: 12px 0 0; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .site .sq-timer.low, .site .sq-bars b { animation: none; } }
+@media (max-width: 620px) { .site .sq-body { grid-template-columns: 1fr; } }
+
+/* Test pages: steps, levels, get-ready path. */
+.site .grid.g4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .site .grid.g4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .site .grid.g4 { grid-template-columns: 1fr; } }
+.site .level-card { text-decoration: none; color: inherit; display: block; transition: transform 0.15s, box-shadow 0.15s; }
+.site .level-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.site .level-code { font-family: var(--font-display), sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--clay-text); margin-right: 8px; }
+.site .level-name { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.site .level-can { font-size: 0.9rem; margin: 6px 0 0; }
+.site .path { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.site .path .btn { margin-top: auto; }
+.site .path.featured { border: 2px solid var(--clay); }
+.site .path-tag { font-size: 0.8rem; font-weight: 700; background: var(--cream); border-radius: 999px; padding: 3px 10px; }
+.site .wrap.narrow { max-width: 820px; }
+.site .sq-mic svg { flex-shrink: 0; margin-top: 3px; }
+/* Pricing: goal picker and plan comparison. */
+.site .goal { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; transition: transform 0.15s, box-shadow 0.15s; }
+.site .goal:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.site .goal-cta { margin-top: auto; font-weight: 700; color: var(--clay-text); display: inline-flex; align-items: center; gap: 4px; }
+.site .compare td, .site .compare th { text-align: center; }
+.site .compare td:first-child, .site .compare th:first-child { text-align: left; }
+.site .compare .yes { color: var(--moss-ink); }
+.site .compare .no { color: rgba(46, 36, 25, 0.35); }
