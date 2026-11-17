@@ -329,15 +329,6 @@ export function CandidateAssessmentPage() {
         minutes={TEST_MINUTES[a.testKind]}
         // No Back: a candidate has nowhere else to go from here.
         onReady={() => !busy && begin()}
-        // A real assessment reads its questions in both voices (female and male,
-        // fixed per question) and plays each recording once: no voice to pick.
-        extra={
-          a.testKind !== "writing" ? (
-            <p className="text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-2.5">
-              {tr("Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.")}
-            </p>
-          ) : undefined
-        }
       />
     </div>
   );

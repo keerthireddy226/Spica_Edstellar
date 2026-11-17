@@ -380,8 +380,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [playCount, setPlayCount] = useState(0);
   // Recordings play twice in practice and mock tests, once in a real test (set by the server).
   const [maxPlays, setMaxPlays] = useState(2);
-  // A real test plays questions in both voices; the person doesn't choose.
-  const [mixedVoices, setMixedVoices] = useState(false);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
@@ -527,7 +525,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setTestCode(res.testCode);
     setDeliveryMode(res.deliveryMode ?? "practice");
     setMaxPlays(res.maxPlays ?? 2);
-    setMixedVoices(!!res.mixedVoices);
     playCountsRef.current = { ...(readProgress(res.sessionId).plays ?? {}) } as Record<number, number>;
     clockOffsetRef.current = res.timing ? Date.parse(res.timing.serverNow) - Date.now() : 0;
     mockDeadlineRef.current = res.timing?.deadlineAt ? Date.parse(res.timing.deadlineAt) : null;
@@ -1638,9 +1635,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         <p className="text-[11px] font-mono text-muted px-1 -mt-2">
           {[activeTestId ? `${tr("Test ID")} ${activeTestId}` : null, testCode ? `${tr("Attempt ID")} ${testCode}` : null].filter(Boolean).join(" · ")}
         </p>
-        {mixedVoices && (
-          <p className="text-[11px] text-muted px-1 -mt-2">{tr("Questions in this test are read in both a female and a male voice. Each recording plays once.")}</p>
-        )}
 
         {/* Mock: every question says how it moves on, since there are no
             Skip/Next buttons for spoken answers. */}
