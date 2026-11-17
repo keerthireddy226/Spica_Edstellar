@@ -7,7 +7,7 @@ import { SAMPLES } from "@/lib/samples";
 import { SampleQuestion } from "@/components/page/SampleQuestion";
 import { money } from "@/lib/prices";
 import { app } from "@/lib/site";
-import { ArrowRight, Calculator, ClipboardList, FileText, Gauge, HelpCircle, Laptop, ListOrdered, PlayCircle, Rocket } from "lucide-react";
+import { ArrowRight, BadgeCheck, Calculator, ClipboardList, FileText, Gauge, HelpCircle, Laptop, ListOrdered, Lock, Mic, PlayCircle, QrCode, Rocket, ShieldCheck, Timer } from "lucide-react";
 import { PageHero } from "@/components/page/PageHero";
 import { TestFacts } from "@/components/page/Visuals";
 import { TEST_LOOK } from "@/components/page/looks";
@@ -49,8 +49,60 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             </a>
           </>
         }
-        visual={<TestFacts t={t} />}
+        below={
+          <ul className="tp-trust">
+            <li>
+              <BadgeCheck size={16} /> CEFR A1–C2 and a 10–90 score
+            </li>
+            <li>
+              <Mic size={16} /> Scored on clarity, not accent
+            </li>
+            <li>
+              <ShieldCheck size={16} /> {isLevel ? "Same rules for everyone" : "Proctored, reviewed by people"}
+            </li>
+            <li>
+              <Lock size={16} /> Data never sold
+            </li>
+          </ul>
+        }
+        visual={
+          <div className="tp-visual">
+            <div className="tp-glow" aria-hidden="true" />
+            <TestFacts t={t} />
+            <div className="tp-float tp-f1" aria-hidden="true">
+              <Timer size={18} />
+              <div>
+                <b>Timer starts after the recording</b>
+                <small>Each recording plays once</small>
+              </div>
+            </div>
+            <div className="tp-float tp-f2" aria-hidden="true">
+              <QrCode size={18} />
+              <div>
+                <b>{isLevel ? "Passed or not passed" : "Certificate anyone can check"}</b>
+                <small>{isLevel ? "With a score report for each skill" : "With a code and QR code"}</small>
+              </div>
+            </div>
+          </div>
+        }
       />
+
+      <section className="tp-numbers">
+        <div className="wrap tp-num-grid">
+          {[
+            [t.minutes.replace(/^About /, "~").replace(" minutes", " min"), "in one sitting, at your own computer"],
+            [String(t.skills.length), t.skills.length === 4 ? "skills: speaking, listening, reading, writing" : `skills: ${t.skills.join(", ").toLowerCase()}`],
+            [isLevel ? "1 level" : "A1–C2", isLevel ? "checked at a time, A1 to C2" : "reported for every skill"],
+            ["Minutes", "until most results are ready"],
+            ["1 play", "per recording, with the timer after it"],
+          ].map(([n, l]) => (
+            <div className="tp-num" key={l}>
+              <b>{n}</b>
+              <span>{l}</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {SAMPLES[t.slug] && (
         <section className="section">

@@ -1642,3 +1642,26 @@ body {
 .site .about-stats b { font-family: var(--font-display), sans-serif; font-size: 1.7rem; color: var(--clay-text); }
 .site .about-stats span { font-size: 0.88rem; color: var(--muted); }
 .site .about-tick { color: var(--moss-ink); }
+
+/* Test pages: richer top (trust points, floating highlights, numbers strip). */
+.site .tp-trust { list-style: none; padding: 0; margin: 26px 0 0; display: flex; flex-wrap: wrap; gap: 10px 22px; color: var(--muted); font-size: 0.92rem; }
+.site .tp-trust li { display: inline-flex; align-items: center; gap: 7px; }
+.site .tp-trust svg { color: var(--moss-ink); }
+.site .tp-visual { position: relative; padding: 34px 26px; }
+.site .tp-visual > .vcard { position: relative; z-index: 1; }
+.site .tp-glow { position: absolute; inset: 4% 0; border-radius: 40px; background: linear-gradient(140deg, #f3d7c6, #f8ead9 55%, #e6efdf); transform: rotate(-4deg); }
+.site .tp-float { position: absolute; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 11px 15px; border-radius: 16px; background: #fff; border: 1px solid var(--rule); box-shadow: var(--shadow); font-size: 0.84rem; animation: tp-float 6s ease-in-out infinite; max-width: 270px; }
+.site .tp-float svg { color: var(--clay); flex: none; }
+.site .tp-float small { display: block; color: var(--muted); font-size: 0.74rem; }
+.site .tp-f1 { top: -6px; left: -18px; }
+.site .tp-f2 { bottom: -8px; right: -14px; animation-delay: -3s; }
+@keyframes tp-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.site .tp-numbers { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); background: #fff; }
+.site .tp-num-grid { display: grid; grid-template-columns: repeat(5, 1fr); }
+.site .tp-num { padding: 28px 18px; border-left: 1px solid var(--rule); }
+.site .tp-num:first-child { border-left: none; }
+.site .tp-num b { display: block; font: 700 2.3rem/1 var(--font-display), sans-serif; color: var(--clay-deep); letter-spacing: -0.03em; }
+.site .tp-num span { display: block; margin-top: 8px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 900px) { .site .tp-num-grid { grid-template-columns: repeat(2, 1fr); } .site .tp-num { border-left: none; border-top: 1px solid var(--rule); } .site .tp-f1 { left: 0; } .site .tp-f2 { right: 0; } }
+@media (max-width: 560px) { .site .tp-float { display: none; } .site .tp-visual { padding: 10px 0; } }
+@media (prefers-reduced-motion: reduce) { .site .tp-float { animation: none; } }

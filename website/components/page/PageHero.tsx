@@ -14,6 +14,7 @@ export function PageHero({
   tone = "clay",
   actions,
   visual,
+  below,
   top,
 }: {
   crumbs: { href?: string; label: string }[];
@@ -24,6 +25,8 @@ export function PageHero({
   tone?: Tone;
   actions?: React.ReactNode;
   visual?: React.ReactNode;
+  /** Under the buttons, such as a row of trust points. */
+  below?: React.ReactNode;
   /** Align the text to the top, for a tall picture such as a form. */
   top?: boolean;
 }) {
@@ -50,6 +53,7 @@ export function PageHero({
           <h1>{title}</h1>
           <p className="lead">{lead}</p>
           {actions && <div className="ph-actions">{actions}</div>}
+          {below}
         </div>
         {visual && <div className="ph-visual">{visual}</div>}
       </div>
