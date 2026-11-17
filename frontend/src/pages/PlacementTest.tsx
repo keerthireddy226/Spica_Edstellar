@@ -174,15 +174,18 @@ function PlacementTestRun() {
     setPendingAudio(null);
     setAudioBlobUrl(null);
     setRecordingDurationMs(null);
-    setHasPlayed(false);
+    setHasPlayed(!!current && playedIds().includes(current.id));
     setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
   // Live countdown, display-only — purely a visual sense of urgency, it
   // doesn't gate or auto-submit anything (submission is still driven by
   // canSubmit/handleSubmit below).
+  // A listening question's countdown starts when its recording has finished.
+  const clockReady = !needsAudioFirst || hasPlayed;
   useEffect(() => {
-    if (!current?.timerSeconds) {
+    if (!current?.timerSeconds || !clockReady) {
       setRemainingSeconds(null);
       return;
     }
@@ -192,7 +195,7 @@ function PlacementTestRun() {
       setRemainingSeconds((prev) => (prev === null ? null : noiseHeldRef.current ? prev : Math.max(0, prev - 1)));
     }, 1000);
     return () => clearInterval(interval);
-  }, [current?.id, current?.timerSeconds]);
+  }, [current?.id, current?.timerSeconds, clockReady]);
 
   // Problems in the room: three warnings, then the test waits until fixed (useTestHold).
   const noiseHeldRef = useRef(false);
@@ -219,15 +222,45 @@ function PlacementTestRun() {
     }
   }
 
+  // Every recording plays once (from 17 Nov 2026); which ones were played is kept
+  // in this tab so a refresh doesn't give a second play.
+  function playedIds(): string[] {
+    try {
+      return JSON.parse(sessionStorage.getItem(`spica.placementPlayed.${sessionId}`) ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  }
+  function markPlayed(itemId: string) {
+    try {
+      sessionStorage.setItem(`spica.placementPlayed.${sessionId}`, JSON.stringify([...new Set([...playedIds(), itemId])]));
+    } catch {
+      // Not kept: a refresh could play it again.
+    }
+  }
+
   async function handlePlay() {
-    if (!current) return;
+    if (!current || hasPlayed) return;
     setPlaying(true);
     const result = await playSpokenAudio(current, getSpokenSegments(current));
     if (result === "stopped") return;
     setPlaying(false);
     setHasPlayed(true);
+    markPlayed(current.id);
     if (result === "missing") setError(NO_RECORDING_TEXT());
   }
+  // A listening question's recording plays by itself when the question opens.
+  const autoPlayRef = useRef<() => void>(() => {});
+  autoPlayRef.current = () => {
+    if (!playing && !hasPlayed) void handlePlay();
+  };
+  const questionOnScreen = !!sessionId && !!current && proctor.ready && !summary && !showTypeIntro && !finishing;
+  useEffect(() => {
+    if (!questionOnScreen || !needsAudioFirst || hasPlayed) return;
+    const id = setTimeout(() => autoPlayRef.current(), 300);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionOnScreen, current?.id]);
 
   async function handleToggleRecord() {
     setError(null);
@@ -618,14 +651,14 @@ function PlacementTestRun() {
                 <div className="relative rounded-card bg-paper-warm border border-rule text-ink min-h-[220px] flex flex-col items-center justify-center gap-3 overflow-hidden">
                   <button
                     onClick={handlePlay}
-                    disabled={playing || recording}
+                    disabled={playing || recording || hasPlayed}
                     className="h-16 w-16 rounded-full bg-navy text-white flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
                     aria-label={t("placementTest.play")}
                   >
                     <Volume2 size={26} />
                   </button>
                   <span className="text-sm text-muted">
-                    {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
+                    {playing ? t("placementTest.playing") : hasPlayed ? tr("This recording has been played.") : tr("This recording plays once. Listen carefully.")}
                   </span>
                 </div>
               ) : (

@@ -42,7 +42,15 @@ export function CoachQuestionCard({
   }
   const [answerText, setAnswerText] = useState(answered ?? "");
   const [playing, setPlaying] = useState(false);
-  const [hasPlayed, setHasPlayed] = useState(false);
+  // Every recording plays once (from 17 Nov 2026), kept in this tab across a refresh.
+  const playedKey = `spica.coachPlayed.${item.id}`;
+  const [hasPlayed, setHasPlayed] = useState(() => {
+    try {
+      return sessionStorage.getItem(playedKey) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [noAudio, setNoAudio] = useState(false);
   const [busy, setBusy] = useState(false);
   const shownAt = useRef(Date.now());
@@ -51,11 +59,19 @@ export function CoachQuestionCard({
   const locked = answered !== null;
 
   async function play() {
+    if (hasPlayed) return;
     setPlaying(true);
     const r = await playSpokenAudio(item, getSpokenSegments(item));
     setPlaying(false);
     if (r === "missing") setNoAudio(true);
-    else setHasPlayed(true);
+    else {
+      setHasPlayed(true);
+      try {
+        sessionStorage.setItem(playedKey, "1");
+      } catch {
+        // Not kept: a refresh could play it again.
+      }
+    }
   }
 
   async function submit() {
@@ -79,13 +95,13 @@ export function CoachQuestionCard({
         <div className="flex items-center gap-3">
           <button
             onClick={play}
-            disabled={playing || locked}
+            disabled={playing || locked || hasPlayed}
             aria-label={tr("Play the question")}
             className="h-11 w-11 rounded-full bg-navy text-white flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Volume2 size={18} />
           </button>
-          <span className="text-sm text-muted">{playing ? tr("Playing…") : hasPlayed ? tr("Play again") : tr("Play the question")}</span>
+          <span className="text-sm text-muted">{playing ? tr("Playing…") : hasPlayed ? tr("This recording has been played.") : tr("Play the question. It plays once.")}</span>
           {noAudio && <span className="text-xs text-error">{tr("This question's recording isn't available. Ask me for another one.")}</span>}
         </div>
       ) : pq ? (

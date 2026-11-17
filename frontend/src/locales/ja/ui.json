@@ -5613,5 +5613,7 @@
  "{{n}} questions in this section": "このセクションの問題数：{{n}}問",
  "Listening… the timer starts after the recording": "再生中… タイマーは音声の後に始まります",
  "The recording plays by itself, once. Listen carefully.": "音声は自動で1回だけ再生されます。よく聞いてください。",
- "The timer starts when the recording ends": "音声が終わるとタイマーが始まります"
+ "The timer starts when the recording ends": "音声が終わるとタイマーが始まります",
+ "Play the question. It plays once.": "質問を再生します。再生は1回だけです。",
+ "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "各録音は自動で1回だけ再生されます。再生が終わるとタイマーが始まります。画面に表示された時間内に答えてください。"
 }

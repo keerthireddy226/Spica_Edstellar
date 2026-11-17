@@ -5613,5 +5613,7 @@
  "{{n}} questions in this section": "{{n}} frågor i den här delen",
  "Listening… the timer starts after the recording": "Lyssnar … tiden startar efter inspelningen",
  "The recording plays by itself, once. Listen carefully.": "Inspelningen spelas upp automatiskt en gång. Lyssna noga.",
- "The timer starts when the recording ends": "Tiden startar när inspelningen är slut"
+ "The timer starts when the recording ends": "Tiden startar när inspelningen är slut",
+ "Play the question. It plays once.": "Spela upp frågan. Den spelas upp en gång.",
+ "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Varje inspelning spelas upp en gång av sig själv. Timern startar när den är slut. Svara inom tiden som visas på skärmen."
 }

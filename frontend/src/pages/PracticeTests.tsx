@@ -395,13 +395,13 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [answerText, setAnswerText] = useState("");
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playing, setPlaying] = useState(false);
-  // Real exam rule: audio plays at most twice per question. Keyed by index
+  // Play limit per question (once everywhere since 17 Nov 2026). Keyed by index
   // (not just a single counter) so navigating Back to an earlier, already
-  // fully-used question doesn't hand it two fresh plays.
+  // fully-used question doesn't hand it a fresh play.
   const playCountsRef = useRef<Record<number, number>>({});
   const [playCount, setPlayCount] = useState(0);
-  // Recordings play twice in practice and mock tests, once in a real test (set by the server).
-  const [maxPlays, setMaxPlays] = useState(2);
+  // Every recording plays once (set by the server; once is also the default).
+  const [maxPlays, setMaxPlays] = useState(1);
   // Real tests (Versant-style): the recording plays by itself and the answer
   // clock starts only when it has finished. awaitingAudio: the question is
   // open and its recording hasn't finished yet (no countdown shown).
@@ -730,8 +730,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   }, [index]);
 
   // Practice: a live countdown as a guide — doesn't gate or auto-submit anything.
+  // A listening question's countdown starts once its recording has played.
+  const practiceClockReady = !current || !AUDIO_FIRST_TYPES.has(current.itemTypeId) || hasPlayed;
   useEffect(() => {
-    if (isMock || !current?.timerSeconds) {
+    if (isMock || !current?.timerSeconds || !practiceClockReady) {
       setRemainingSeconds(null);
       return;
     }
@@ -742,7 +744,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, current?.timerSeconds, isMock]);
+  }, [index, current?.timerSeconds, isMock, practiceClockReady]);
 
   // Mock: a question's clock starts on the server the first time it shows
   // (after the overview and section instructions), so a reload or a closed
@@ -797,6 +799,16 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
   pausedRef.current = paused;
+  // Practice: a listening question's recording plays by itself when it opens
+  // (once; mock and real tests start theirs with the question's clock).
+  useEffect(() => {
+    if (isMock || !questionVisible || !current || paused || feedback) return;
+    if (!AUDIO_FIRST_TYPES.has(current.itemTypeId) || (playCountsRef.current[index] ?? 0) > 0) return;
+    const id = setTimeout(() => autoPlayRef.current(), 300);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMock, questionVisible, current?.id, paused]);
+
   const heldSecondsRef = useRef<number | null>(null);
   const hasSpokenItems = items.some((it) => it.inputMethod === "mic");
   const noise = useTestHold({

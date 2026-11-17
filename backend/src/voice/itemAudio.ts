@@ -17,10 +17,12 @@ export function voiceForQuestion(itemId: string): VoiceGender {
   return h % 2 === 0 ? "female" : "male";
 }
 
-// Attaches audioUrl (null if not recorded yet). Practice and mock tests use the
-// person's chosen voice; a real test (opts.mixVoices) uses each question's own
-// voice, falling back to the other voice if that recording is missing.
+// Attaches audioUrl (null if not recorded yet). Every question has its own fixed
+// voice, female or male (from 17 Nov 2026, everywhere in the app), falling back
+// to the other voice if that recording is missing. opts.mixVoices: false uses the
+// person's saved voice instead (kept for scripts and older callers).
 export async function withAudioUrls<T extends { id: string }>(userId: string, items: T[], opts: { mixVoices?: boolean } = {}): Promise<(T & { audioUrl: string | null })[]> {
+  const mix = opts.mixVoices ?? true;
   if (items.length === 0) return [];
   const chosen = await getPreferredVoice(userId);
   const result = await pool.query(`SELECT item_id, voice_id, uri FROM item_audio WHERE item_id = ANY($1::uuid[])`, [items.map((item) => item.id)]);
@@ -34,9 +36,9 @@ export async function withAudioUrls<T extends { id: string }>(userId: string, it
   for (const item of items) {
     const m = byItem.get(item.id);
     if (!m) continue;
-    const want = opts.mixVoices ? voiceForQuestion(item.id) : chosen;
+    const want = mix ? voiceForQuestion(item.id) : chosen;
     const other: VoiceGender = want === "female" ? "male" : "female";
-    const uri = m.get(want) ?? (opts.mixVoices ? m.get(other) : undefined);
+    const uri = m.get(want) ?? (mix ? m.get(other) : undefined);
     if (uri) uriByItemId.set(item.id, uri);
   }
   // The test's recordings are fetched to this server now, while the learner

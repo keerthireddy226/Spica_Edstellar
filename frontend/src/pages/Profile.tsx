@@ -23,7 +23,6 @@ import {
   Volume2,
   Clock,
   Globe,
-  Mic,
   Hash,
   MapPin,
   Briefcase,
@@ -31,7 +30,6 @@ import {
   CheckCircle2,
   Flame,
 } from "lucide-react";
-import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
@@ -692,10 +690,6 @@ export function Profile() {
             ],
             [
               <PreferencesSection key="pr" />,
-              <div key="v" className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
-                <SectionHeader icon={Mic} tint="bg-speaking/15 text-speaking" title={t("profile.voice.title")} />
-                <VoiceSection hideTitle />
-              </div>,
             ],
           ],
           security: [[<SecuritySection key="s" email={user?.email} />, <ActiveSessionsSection key="as" />], [<MfaCard key="m" />, <LoginHistorySection key="lh" />]],

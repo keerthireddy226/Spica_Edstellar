@@ -5613,5 +5613,7 @@
  "{{n}} questions in this section": "इस खंड में {{n}} प्रश्न",
  "Listening… the timer starts after the recording": "सुन रहे हैं… टाइमर रिकॉर्डिंग के बाद शुरू होगा",
  "The recording plays by itself, once. Listen carefully.": "रिकॉर्डिंग अपने आप एक बार चलेगी। ध्यान से सुनें।",
- "The timer starts when the recording ends": "रिकॉर्डिंग खत्म होने पर टाइमर शुरू होता है"
+ "The timer starts when the recording ends": "रिकॉर्डिंग खत्म होने पर टाइमर शुरू होता है",
+ "Play the question. It plays once.": "प्रश्न चलाएँ। यह केवल एक बार चलेगा।",
+ "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "हर रिकॉर्डिंग अपने आप एक बार चलती है। उसके खत्म होने पर टाइमर शुरू होता है। स्क्रीन पर दिखाए गए समय में जवाब दें।"
 }

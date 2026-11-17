@@ -180,8 +180,9 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
     }));
   // Sessions before 17 Nov 2026 have no realTest flag: a real attempt counts as one.
   const realTest = sessionRow.composition?.realTest === true || (sessionRow.composition?.realTest === undefined && sessionRow.delivery_mode === "certified");
-  const maxPlays = Number(sessionRow.composition?.maxPlays) || (realTest ? REAL_TEST_PLAYS : PLAYS);
-  return { partBoundaries, items: await withAudioUrls(userId, items, { mixVoices: realTest }), timing: mock ? mockTiming(mock) : null, maxPlays, mixedVoices: realTest };
+  // Every recording plays once and questions mix both voices, in every kind of test (from 17 Nov 2026).
+  void realTest;
+  return { partBoundaries, items: await withAudioUrls(userId, items), timing: mock ? mockTiming(mock) : null, maxPlays: REAL_TEST_PLAYS, mixedVoices: true };
 }
 
 function mockTiming(c: MockComposition) {
@@ -704,7 +705,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     // in a voice fixed by the question (female or male), from 17 Nov 2026. Time limits
     // stay as before (they still allow for two listens), so no question gets less time.
     const realTest = mode === "certified" || candidate;
-    const maxPlays = realTest ? REAL_TEST_PLAYS : PLAYS;
+    // Every recording plays once, in every kind of test (from 17 Nov 2026).
+    const maxPlays = REAL_TEST_PLAYS;
     // Every test taker gets the same time (extra time was removed on 16 Nov 2026).
     const mock: MockComposition | null =
       timed
@@ -762,7 +764,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
 
     await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
-    const payload = await withAudioUrls(req.user!.id, rows.map(toItemPayload), { mixVoices: realTest });
+    const payload = await withAudioUrls(req.user!.id, rows.map(toItemPayload));
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
       testCode,
@@ -774,7 +776,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       items: mock ? payload.map((it) => ({ ...it, limitSeconds: mock.limits?.[it.id] ?? null, secondsLeft: null })) : payload,
       timing: mock ? mockTiming(mock) : null,
       maxPlays,
-      mixedVoices: realTest,
+      mixedVoices: true,
     });
   } catch (err) {
     next(err);

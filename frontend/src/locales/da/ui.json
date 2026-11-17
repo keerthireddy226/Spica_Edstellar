@@ -5613,5 +5613,7 @@
  "{{n}} questions in this section": "{{n}} spørgsmål i denne del",
  "Listening… the timer starts after the recording": "Lytter … tiden starter efter optagelsen",
  "The recording plays by itself, once. Listen carefully.": "Optagelsen afspilles automatisk én gang. Lyt godt efter.",
- "The timer starts when the recording ends": "Tiden starter, når optagelsen slutter"
+ "The timer starts when the recording ends": "Tiden starter, når optagelsen slutter",
+ "Play the question. It plays once.": "Afspil spørgsmålet. Det afspilles én gang.",
+ "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Hver optagelse afspilles én gang af sig selv. Timeren starter, når den slutter. Svar inden for den tid, der vises på skærmen."
 }

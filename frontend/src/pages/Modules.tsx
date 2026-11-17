@@ -1176,7 +1176,7 @@ function ModulesPage() {
     setPendingAudio(cached?.audioBase64 ? { base64: cached.audioBase64, mimeType: cached.audioMimeType ?? "" } : null);
     setAudioBlobUrl(cached?.audioBlobUrl ?? null);
     setRecordingDurationMs(cached?.durationMs ?? null);
-    setHasPlayed(!!cached);
+    setHasPlayed(!!cached || (!!current && playedIds().includes(current.id)));
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
   }, [index]);
@@ -1190,8 +1190,10 @@ function ModulesPage() {
   // never runs behind the guide, the results or the pickers. The next question
   // starts its own full countdown.
   const questionOnScreen = !!sessionId && !summary && !showTypeIntro && !submitting && !feedback;
+  // A listening question's countdown starts when its recording has finished.
+  const clockReady = !current || !AUDIO_FIRST_TYPES.has(current.itemTypeId) || hasPlayed;
   useEffect(() => {
-    if (!questionSeconds || !questionOnScreen) {
+    if (!questionSeconds || !questionOnScreen || !clockReady) {
       if (!questionSeconds || summary || !sessionId) setRemainingSeconds(null);
       return;
     }
@@ -1201,7 +1203,7 @@ function ModulesPage() {
     }, 1000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index, questionSeconds, questionOnScreen]);
+  }, [index, questionSeconds, questionOnScreen, clockReady]);
   // A new question starts its own full countdown.
   useEffect(() => {
     setRemainingSeconds(questionSeconds);
@@ -1228,16 +1230,45 @@ function ModulesPage() {
     }, readSeconds * 1000);
   }
 
+  // Every recording plays once (from 17 Nov 2026); which ones were played is kept
+  // in this tab so a refresh doesn't give a second play.
+  function playedIds(): string[] {
+    try {
+      return JSON.parse(sessionStorage.getItem(`spica.modulePlayed.${sessionId}`) ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  }
+  function markPlayed(itemId: string) {
+    try {
+      sessionStorage.setItem(`spica.modulePlayed.${sessionId}`, JSON.stringify([...new Set([...playedIds(), itemId])]));
+    } catch {
+      // Not kept: a refresh could play it again.
+    }
+  }
+
   async function handlePlay() {
-    if (!current) return;
+    if (!current || hasPlayed) return;
     setPlaying(true);
     const result = await playSpokenAudio(current, getSpokenSegments(current));
     // Stopped by Skip or Back: the new question's state is already set.
     if (result === "stopped") return;
     setPlaying(false);
     setHasPlayed(true);
+    markPlayed(current.id);
     if (result === "missing") setError(NO_RECORDING_TEXT());
   }
+  // A listening question's recording plays by itself when the question opens.
+  const autoPlayRef = useRef<() => void>(() => {});
+  autoPlayRef.current = () => {
+    if (!playing && !hasPlayed) void handlePlay();
+  };
+  useEffect(() => {
+    if (!questionOnScreen || !current || !AUDIO_FIRST_TYPES.has(current.itemTypeId) || hasPlayed) return;
+    const id = setTimeout(() => autoPlayRef.current(), 300);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionOnScreen, current?.id]);
 
   async function handleToggleRecord() {
     setError(null);
@@ -1821,13 +1852,13 @@ function ModulesPage() {
           <div className={`flex flex-col items-center gap-3 ${current.inputMethod === "mic" ? "" : "self-center"}`}>
             <button
               onClick={handlePlay}
-              disabled={playing || recording}
+              disabled={playing || recording || hasPlayed}
               className={`h-14 w-14 rounded-full bg-${primarySkill} text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed`}
             >
               <Volume2 size={22} />
             </button>
             <span className="text-sm font-medium text-muted whitespace-nowrap">
-              {playing ? t("placementTest.playing") : hasPlayed ? t("placementTest.playAgain") : t("placementTest.play")}
+              {playing ? t("placementTest.playing") : hasPlayed ? tr("This recording has been played.") : tr("This recording plays once. Listen carefully.")}
             </span>
           </div>
           <AnswerInputControl

@@ -5613,5 +5613,7 @@
  "{{n}} questions in this section": "{{n}} kysymystä tässä osiossa",
  "Listening… the timer starts after the recording": "Kuunnellaan… ajastin käynnistyy tallenteen jälkeen",
  "The recording plays by itself, once. Listen carefully.": "Tallenne toistuu itsestään kerran. Kuuntele tarkasti.",
- "The timer starts when the recording ends": "Ajastin käynnistyy, kun tallenne päättyy"
+ "The timer starts when the recording ends": "Ajastin käynnistyy, kun tallenne päättyy",
+ "Play the question. It plays once.": "Toista kysymys. Se toistetaan kerran.",
+ "Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen.": "Jokainen tallenne toistuu kerran itsestään. Ajastin käynnistyy, kun se päättyy. Vastaa näytöllä näkyvässä ajassa."
 }

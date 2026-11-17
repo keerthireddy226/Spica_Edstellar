@@ -30,7 +30,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       () => tr("Practice Modules train one question type at a time and explain each answer."),
       () => tr("Practice tests are short tests on one test type. Mock tests are full tests, timed like the real one."),
       () => tr("Your plan sets how many practice tests and mock tests you can take each month."),
-      () => tr("Each recording plays twice. Answer within the time shown on the screen."),
+      () => tr("Each recording plays once, by itself. The timer starts when it ends. Answer within the time shown on the screen."),
       () => tr("Your reports are under My reports, with your score, level and what to work on."),
     ],
   },

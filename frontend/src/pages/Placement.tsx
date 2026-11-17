@@ -9,7 +9,6 @@ import { getCurrentSession } from "@/api/testSession";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
 import { FaceEnrollmentConsent } from "@/components/FaceEnrollmentConsent";
-import { VoiceSection } from "@/components/VoiceSection";
 import { Button } from "@/components/Button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ROUTES } from "@/constants/routes";
@@ -154,10 +153,6 @@ export function Placement() {
                 <p className="text-sm text-ink">{text}</p>
               </div>
             ))}
-          </div>
-
-          <div className="w-full bg-paper-warm rounded-input p-4 text-left">
-            <VoiceSection />
           </div>
 
           <label className="flex items-start gap-2.5 rounded-input border border-rule p-3.5 w-full text-left cursor-pointer">
