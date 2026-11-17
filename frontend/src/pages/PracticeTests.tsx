@@ -1575,7 +1575,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         )}
         <div className="flex flex-wrap items-center justify-between gap-2 px-1">
           {currentPart ? (
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="h-8 w-8 rounded-full bg-navy text-lime flex items-center justify-center text-sm font-bold shrink-0">
                 {String.fromCharCode(65 + currentPartIndex)}
               </span>
@@ -1583,32 +1583,31 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                 <span className="font-display font-bold text-base text-ink leading-tight">{currentPart.label}</span>
                 <span className="text-[11px] text-muted">
                   {tr("Section {{n}} of {{total}}", { n: currentPartIndex + 1, total: partBoundaries.length })}
-                  {" · "}
-                  <span className="font-semibold text-ink">
-                    {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
-                  </span>
                 </span>
               </div>
+              <span className="text-sm font-bold text-ink bg-surface border-2 border-navy/30 rounded-pill px-3 py-1">
+                {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
+              </span>
+              {shownSeconds !== null && (
+                <span
+                  role="timer"
+                  aria-live="off"
+                  title={isMock ? tr("Time left for this question") : tr("Suggested time")}
+                  className={`flex items-center gap-1.5 font-mono font-bold text-lg px-3.5 py-1 rounded-pill border-2 shadow-sm transition-colors ${
+                    shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5)
+                      ? "timer-warning bg-error text-white border-error"
+                      : "bg-warning text-ink border-warning"
+                  }`}
+                >
+                  {isMock ? <Timer size={18} /> : <Clock size={18} />}
+                  {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
+                </span>
+              )}
             </div>
           ) : (
             <span />
           )}
           <div className="flex items-center gap-2">
-            {shownSeconds !== null && (
-              <span
-                role="timer"
-                aria-live="off"
-                title={isMock ? tr("Time left for this question") : tr("Suggested time")}
-                className={`flex items-center gap-1.5 font-mono font-bold text-lg px-3.5 py-1.5 rounded-pill border-2 shadow-sm transition-colors ${
-                  shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5)
-                    ? "timer-warning bg-error text-white border-error"
-                    : "bg-warning text-ink border-warning"
-                }`}
-              >
-                {isMock ? <Timer size={18} /> : <Clock size={18} />}
-                {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
-              </span>
-            )}
             <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
               {isCandidate ? tr("Assessment") : deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
             </span>

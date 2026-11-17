@@ -701,13 +701,14 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const itemIds = rows.map((r) => r.id);
     const timers = builtTest?.timers ?? {};
     // A real test (a real attempt or a candidate's assessment) plays each recording once,
-    // in a voice fixed by the question (female or male), from 17 Nov 2026.
+    // in a voice fixed by the question (female or male), from 17 Nov 2026. Time limits
+    // stay as before (they still allow for two listens), so no question gets less time.
     const realTest = mode === "certified" || candidate;
     const maxPlays = realTest ? REAL_TEST_PLAYS : PLAYS;
     // Every test taker gets the same time (extra time was removed on 16 Nov 2026).
     const mock: MockComposition | null =
       timed
-        ? await mockLimits(itemIds, timers, maxPlays).then((raw) => {
+        ? await mockLimits(itemIds, timers).then((raw) => {
             const limits = raw;
             // A built mock's whole-test deadline follows its duration (never shorter than its questions need).
             const byQuestions = mockDeadline(limits, partBoundaries.length).getTime();

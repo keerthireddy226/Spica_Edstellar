@@ -13,9 +13,8 @@ describe("real-test voices and plays", () => {
     expect(female).toBeLessThan(140);
   });
 
-  it("allows time to hear a recording once in a real test and twice otherwise", () => {
+  it("keeps the time limit allowing two listens (real tests play once but get the same time)", () => {
     const row = { content: null, timer_seconds: 15, estimated_seconds: null, two_phase_read_seconds: null, prep_seconds: null, audio_ms: 4000 } as never;
     expect(allowedSeconds(row)).toBe(15 + 8 + 5);
-    expect(allowedSeconds(row, 1)).toBe(15 + 4 + 5);
   });
 });
