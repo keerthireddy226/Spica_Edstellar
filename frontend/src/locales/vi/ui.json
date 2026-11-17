@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "Trong {{total}} câu hỏi:",
  "{{n}} right": "{{n}} đúng",
  "{{n}} wrong": "{{n}} sai",
- "{{n}} not answered": "{{n}} chưa trả lời"
+ "{{n}} not answered": "{{n}} chưa trả lời",
+ "Question {{n}} of {{total}}": "Câu {{n}} / {{total}}",
+ "Recording… speak now": "Đang ghi âm… hãy nói",
+ "{{s}} s": "{{s}} giây",
+ "Two speakers: Speaker A and Speaker B": "Hai người nói: Người nói A và Người nói B",
+ "Speaker A": "Người nói A",
+ "Speaker B": "Người nói B",
+ "This recording has been played.": "Đoạn ghi âm đã được phát.",
+ "This recording plays once. Listen carefully.": "Đoạn ghi âm chỉ phát một lần. Hãy nghe kỹ.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "Câu hỏi trong bài thi này được đọc bằng cả giọng nữ và giọng nam. Mỗi đoạn ghi âm phát một lần.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "Các câu hỏi nghe trong bài đánh giá này được đọc bằng cả giọng nữ và giọng nam. Mỗi đoạn ghi âm chỉ phát một lần, vì vậy hãy nghe kỹ."
 }

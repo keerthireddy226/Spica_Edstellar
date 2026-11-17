@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "{{total}}問中：",
  "{{n}} right": "正解 {{n}}",
  "{{n}} wrong": "不正解 {{n}}",
- "{{n}} not answered": "未回答 {{n}}"
+ "{{n}} not answered": "未回答 {{n}}",
+ "Question {{n}} of {{total}}": "問題 {{n}} / {{total}}",
+ "Recording… speak now": "録音中… 話してください",
+ "{{s}} s": "{{s}} 秒",
+ "Two speakers: Speaker A and Speaker B": "2人の話者：話者 A と話者 B",
+ "Speaker A": "話者 A",
+ "Speaker B": "話者 B",
+ "This recording has been played.": "この音声は再生済みです。",
+ "This recording plays once. Listen carefully.": "この音声は1回だけ再生されます。よく聞いてください。",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "このテストの問題は女性と男性の両方の声で読まれます。各音声は1回だけ再生されます。",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "この評価のリスニング問題は女性と男性の両方の声で読まれます。各音声は1回だけ再生されるので、よく聞いてください。"
 }

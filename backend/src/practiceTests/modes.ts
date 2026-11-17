@@ -194,24 +194,26 @@ function wordCount(v: unknown): number {
   return 0;
 }
 
-// Recordings play twice, as in the real exam (and the player's limit).
-const PLAYS = 2;
+// Recordings play twice in practice and mock tests; once in real tests
+// (a real attempt and a candidate's assessment), from 17 Nov 2026.
+export const PLAYS = 2;
+export const REAL_TEST_PLAYS = 1;
 
 // Seconds a mock allows for one question: its answer time, plus listening
 // to its recording twice, reading time (two-phase items) and preparation
 // time (speaking). With measured recording lengths, LanguageCert A1-B1
 // Listening comes to 32 minutes (published: 30) and A1-C2 to 54 (published: 50).
-export function allowedSeconds(row: Omit<TimingRow, "id">): number {
+export function allowedSeconds(row: Omit<TimingRow, "id">, plays = PLAYS): number {
   const answer = row.timer_seconds ?? row.estimated_seconds ?? 60;
   const audioSeconds =
     row.audio_ms != null ? row.audio_ms / 1000 : row.content?.audio != null ? wordCount(row.content.audio) / WORDS_PER_SECOND : 0;
-  const listening = audioSeconds > 0 ? Math.ceil(PLAYS * audioSeconds) + 5 : 0;
+  const listening = audioSeconds > 0 ? Math.ceil(plays * audioSeconds) + 5 : 0;
   return answer + listening + (row.two_phase_read_seconds ?? 0) + (row.prep_seconds ?? 0);
 }
 
 // Each question's limit, by item id. `timers`: a built test's own answer
 // times for some questions (they replace the question's usual one).
-export async function mockLimits(itemIds: string[], timers: Record<string, number> = {}): Promise<Record<string, number>> {
+export async function mockLimits(itemIds: string[], timers: Record<string, number> = {}, plays = PLAYS): Promise<Record<string, number>> {
   const r = await pool.query(
     `SELECT i.id, i.content, COALESCE(i.timer_seconds, it.timer_seconds) AS timer_seconds, it.estimated_seconds,
        it.two_phase_read_seconds, it.prep_seconds,
@@ -220,7 +222,7 @@ export async function mockLimits(itemIds: string[], timers: Record<string, numbe
      WHERE i.id = ANY($1::uuid[])`,
     [itemIds],
   );
-  return Object.fromEntries((r.rows as TimingRow[]).map((row) => [row.id, allowedSeconds({ ...row, timer_seconds: timers[row.id] ?? row.timer_seconds })]));
+  return Object.fromEntries((r.rows as TimingRow[]).map((row) => [row.id, allowedSeconds({ ...row, timer_seconds: timers[row.id] ?? row.timer_seconds }, plays)]));
 }
 
 // When the whole mock must be finished.

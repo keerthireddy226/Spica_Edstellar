@@ -118,6 +118,10 @@ export interface ExamSessionData {
   // Mock tests: when the whole exam must be finished, and the server's time
   // (to correct for a wrong clock on the learner's computer).
   timing: { deadlineAt: string | null; serverNow: string } | null;
+  // Plays allowed per recording (1 in a real test, 2 otherwise) and whether the
+  // test mixes female and male voices (a real test).
+  maxPlays?: number;
+  mixedVoices?: boolean;
 }
 
 // Practice: one set. A candidate's assigned set always runs as a mock.

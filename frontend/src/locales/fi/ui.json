@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "{{total}} kysymyksestä:",
  "{{n}} right": "{{n}} oikein",
  "{{n}} wrong": "{{n}} väärin",
- "{{n}} not answered": "{{n}} vastaamatta"
+ "{{n}} not answered": "{{n}} vastaamatta",
+ "Question {{n}} of {{total}}": "Kysymys {{n}}/{{total}}",
+ "Recording… speak now": "Tallennetaan… puhu nyt",
+ "{{s}} s": "{{s}} s",
+ "Two speakers: Speaker A and Speaker B": "Kaksi puhujaa: puhuja A ja puhuja B",
+ "Speaker A": "Puhuja A",
+ "Speaker B": "Puhuja B",
+ "This recording has been played.": "Tallenne on toistettu.",
+ "This recording plays once. Listen carefully.": "Tallenne toistetaan vain kerran. Kuuntele tarkasti.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "Tämän testin kysymykset luetaan sekä nais- että miesäänellä. Jokainen tallenne toistetaan kerran.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "Tämän arvioinnin kuuntelukysymykset luetaan sekä nais- että miesäänellä. Jokainen tallenne toistetaan vain kerran, joten kuuntele tarkasti."
 }

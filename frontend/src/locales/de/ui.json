@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "Von {{total}} Fragen:",
  "{{n}} right": "{{n}} richtig",
  "{{n}} wrong": "{{n}} falsch",
- "{{n}} not answered": "{{n}} nicht beantwortet"
+ "{{n}} not answered": "{{n}} nicht beantwortet",
+ "Question {{n}} of {{total}}": "Frage {{n}} von {{total}}",
+ "Recording… speak now": "Aufnahme läuft … jetzt sprechen",
+ "{{s}} s": "{{s}} s",
+ "Two speakers: Speaker A and Speaker B": "Zwei Sprecher: Sprecher A und Sprecher B",
+ "Speaker A": "Sprecher A",
+ "Speaker B": "Sprecher B",
+ "This recording has been played.": "Die Aufnahme wurde abgespielt.",
+ "This recording plays once. Listen carefully.": "Die Aufnahme wird nur einmal abgespielt. Hören Sie genau zu.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "Die Fragen in diesem Test werden mit einer weiblichen und einer männlichen Stimme vorgelesen. Jede Aufnahme wird einmal abgespielt.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "Die Hörfragen in diesem Test werden mit einer weiblichen und einer männlichen Stimme vorgelesen. Jede Aufnahme wird nur einmal abgespielt, hören Sie also genau zu."
 }

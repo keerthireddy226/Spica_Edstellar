@@ -69,6 +69,7 @@ import {
 } from "@/api/practiceTests";
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
+import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
 import { NO_RECORDING_TEXT, playSpokenAudio, preloadSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
@@ -139,6 +140,9 @@ const MOCK_WARNING_SECONDS = 10;
 interface SessionProgress {
   started?: boolean;
   shownParts?: string[];
+  // How often each question's recording was played (by question index), so a
+  // refresh doesn't give a real test's one play back.
+  plays?: Record<string, number>;
 }
 const progressKey = (sessionId: string) => `spica.testProgress.${sessionId}`;
 function readProgress(sessionId: string): SessionProgress {
@@ -374,6 +378,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // fully-used question doesn't hand it two fresh plays.
   const playCountsRef = useRef<Record<number, number>>({});
   const [playCount, setPlayCount] = useState(0);
+  // Recordings play twice in practice and mock tests, once in a real test (set by the server).
+  const [maxPlays, setMaxPlays] = useState(2);
+  // A real test plays questions in both voices; the person doesn't choose.
+  const [mixedVoices, setMixedVoices] = useState(false);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [recordingDurationMs, setRecordingDurationMs] = useState<number | null>(null);
@@ -400,7 +408,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     (outcome) => showFaceCheckOutcome(proctor, outcome),
   );
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
-  const { recording, start: startRecording, stop: stopRecorder } = useVoiceRecorder();
+  const { recording, volumeLevel, start: startRecording, stop: stopRecorder } = useVoiceRecorder();
   const [silentAnswerAt, setSilentAnswerAt] = useState<number | null>(null);
   const silentStreakRef = useRef(0);
   const micCheckRef = useRef<() => void>(() => {});
@@ -518,6 +526,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setSessionId(res.sessionId);
     setTestCode(res.testCode);
     setDeliveryMode(res.deliveryMode ?? "practice");
+    setMaxPlays(res.maxPlays ?? 2);
+    setMixedVoices(!!res.mixedVoices);
+    playCountsRef.current = { ...(readProgress(res.sessionId).plays ?? {}) } as Record<number, number>;
     clockOffsetRef.current = res.timing ? Date.parse(res.timing.serverNow) - Date.now() : 0;
     mockDeadlineRef.current = res.timing?.deadlineAt ? Date.parse(res.timing.deadlineAt) : null;
     setFeedback(null);
@@ -682,7 +693,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setPendingAudio(cached?.audioBase64 ? { base64: cached.audioBase64, mimeType: cached.audioMimeType ?? "" } : null);
     setAudioBlobUrl(cached?.audioBlobUrl ?? null);
     setRecordingDurationMs(cached?.durationMs ?? null);
-    setHasPlayed(!!cached);
+    setHasPlayed(!!cached || (playCountsRef.current[index] ?? 0) > 0);
     setPlayCount(playCountsRef.current[index] ?? 0);
     setTwoPhaseStage(cached ? "writing" : "idle");
     setError(null);
@@ -823,10 +834,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     }, readSeconds * 1000);
   }
 
-  const MAX_PLAYS = 2;
-
   async function handlePlay() {
-    if (!current || playCount >= MAX_PLAYS) return;
+    if (!current || playCount >= maxPlays) return;
     setPlaying(true);
     const result = await playSpokenAudio(current, getSpokenSegments(current));
     // Stopped by Skip or Back: the new question's state is already set.
@@ -837,6 +846,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     const next = (playCountsRef.current[index] ?? 0) + 1;
     playCountsRef.current[index] = next;
     setPlayCount(next);
+    if (sessionId) saveProgress(sessionId, { plays: { ...playCountsRef.current } });
   }
 
   async function handleToggleRecord() {
@@ -1579,6 +1589,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                 <span className="font-display font-bold text-base text-ink leading-tight">{currentPart.label}</span>
                 <span className="text-[11px] text-muted">
                   {tr("Section {{n}} of {{total}}", { n: currentPartIndex + 1, total: partBoundaries.length })}
+                  {" · "}
+                  <span className="font-semibold text-ink">
+                    {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
+                  </span>
                 </span>
               </div>
             </div>
@@ -1586,6 +1600,21 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             <span />
           )}
           <div className="flex items-center gap-2">
+            {shownSeconds !== null && (
+              <span
+                role="timer"
+                aria-live="off"
+                title={isMock ? tr("Time left for this question") : tr("Suggested time")}
+                className={`flex items-center gap-1.5 font-mono font-bold text-lg px-3.5 py-1.5 rounded-pill border-2 shadow-sm transition-colors ${
+                  shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5)
+                    ? "timer-warning bg-error text-white border-error"
+                    : "bg-warning text-ink border-warning"
+                }`}
+              >
+                {isMock ? <Timer size={18} /> : <Clock size={18} />}
+                {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
+              </span>
+            )}
             <span className={`text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-pill ${isMock ? "bg-navy text-white" : "bg-success/15 text-success"}`}>
               {isCandidate ? tr("Assessment") : deliveryMode === "certified" ? tr("Real test") : deliveryMode === "sample" ? tr("Sample test") : isMock ? tr("Mock test") : tr("Practice")}
             </span>
@@ -1609,11 +1638,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         <p className="text-[11px] font-mono text-muted px-1 -mt-2">
           {[activeTestId ? `${tr("Test ID")} ${activeTestId}` : null, testCode ? `${tr("Attempt ID")} ${testCode}` : null].filter(Boolean).join(" · ")}
         </p>
+        {mixedVoices && (
+          <p className="text-[11px] text-muted px-1 -mt-2">{tr("Questions in this test are read in both a female and a male voice. Each recording plays once.")}</p>
+        )}
 
         {/* Mock: every question says how it moves on, since there are no
             Skip/Next buttons for spoken answers. */}
         {isMock && (
-          <div className="flex items-start gap-2 text-sm text-ink bg-navy/10 border border-navy/20 rounded-input px-4 py-2.5" role="note">
+          <div className="flex items-start gap-2 text-xs text-ink bg-navy/10 border border-navy/20 rounded-input px-3 py-1.5" role="note">
             <Timer size={16} className="text-navy-deep shrink-0 mt-0.5" />
             <span>
               {current.inputMethod === "mic"
@@ -1631,27 +1663,16 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             content. Only content past the ceiling scrolls internally. */}
         <div
           className="relative w-full bg-surface border border-rule rounded-card shadow-sm overflow-hidden flex flex-col"
-          style={{ minHeight: "420px", maxHeight: "min(780px, calc(100vh - 180px))" }}
+          style={{ minHeight: "400px", maxHeight: "min(780px, calc(100vh - 150px))" }}
         >
           <div
             className="absolute top-0 left-0 right-0 h-1.5 pointer-events-none"
             style={{ backgroundColor: `var(--color-${(meta?.skills ?? current.skills)[0]})` }}
           />
-          <div className="flex-1 p-8 pt-6 flex flex-col justify-start gap-5 overflow-y-auto">
+          <div className="flex-1 px-8 pb-6 pt-4 flex flex-col justify-start gap-4 overflow-y-auto">
             <div className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono uppercase tracking-wide text-ink font-semibold">{meta?.name}</span>
-                {shownSeconds !== null ? (
-                  <span
-                    title={isMock ? tr("Time left for this question") : tr("Suggested time")}
-                    className={`flex items-center gap-1 text-xs font-mono font-bold px-2.5 py-1 rounded-pill border transition-colors ${
-                      shownSeconds <= (isMock ? MOCK_WARNING_SECONDS : 5) ? "text-error border-error/30 bg-error/10" : "text-navy-deep border-navy/20 bg-navy/10"
-                    }`}
-                  >
-                    {isMock ? <Timer size={16} /> : <Clock size={16} />}
-                    {String(Math.floor(shownSeconds / 60)).padStart(1, "0")}:{String(shownSeconds % 60).padStart(2, "0")}
-                  </span>
-                ) : null}
               </div>
               <div className="flex items-center gap-1.5">
                 {(meta?.skills ?? current.skills).map((skill) => (
@@ -1691,24 +1712,37 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       <CheckCircle2 size={13} /> {tr("Played")}
                     </span>
                   )}
+                  {current.itemTypeId === "conversations" && <SpeakerAvatars active={playing} />}
                   <button
                     onClick={handlePlay}
-                    disabled={playing || recording || playCount >= MAX_PLAYS}
+                    disabled={playing || recording || playCount >= maxPlays}
                     className="h-14 w-14 rounded-full bg-lime text-navy flex items-center justify-center shadow-md transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Volume2 size={22} />
                   </button>
-                  <span className="text-xs text-lime/80">{playing ? t("placementTest.playing") : t("placementTest.play")}</span>
-                  {hasPlayed && (
+                  {playing ? (
+                    <span className="flex items-center gap-2 text-sm font-bold text-lime" role="status" aria-live="polite">
+                      <PlayingBars /> {t("placementTest.playing")}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-lime/80">{t("placementTest.play")}</span>
+                  )}
+                  {hasPlayed && maxPlays > 1 && (
                     <button
                       onClick={handlePlay}
-                      disabled={playing || recording || playCount >= MAX_PLAYS}
+                      disabled={playing || recording || playCount >= maxPlays}
                       className="flex items-center gap-1.5 text-xs font-semibold text-lime hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <RotateCcw size={13} /> {t("placementTest.replay")}
                     </button>
                   )}
-                  <span className="text-[10px] text-lime/60">{t("practiceTests.playsRemaining", { count: Math.max(0, MAX_PLAYS - playCount) })}</span>
+                  <span className={maxPlays === 1 ? "text-[11px] font-semibold text-lime" : "text-[10px] text-lime/60"}>
+                    {maxPlays === 1
+                      ? playCount >= 1
+                        ? tr("This recording has been played.")
+                        : tr("This recording plays once. Listen carefully.")
+                      : t("practiceTests.playsRemaining", { count: Math.max(0, maxPlays - playCount) })}
+                  </span>
                 </div>
                 <div
                   className={`relative rounded-card border p-5 pt-9 flex flex-col items-center justify-center gap-2 min-h-[160px] overflow-hidden transition-colors ${
@@ -1723,6 +1757,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   {hasPlayed && current.inputMethod === "mic" && !recording && !audioBlobUrl && (
                     <p className="text-xs text-navy-deep text-center">{tr("Press the microphone and answer in your own words.")}</p>
                   )}
+                  {recording && <RecordingIndicator level={volumeLevel} />}
                   <AnswerInputControl
                     item={current}
                     answerText={answerText}
@@ -1789,6 +1824,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                     />
                   )
                 ) : (
+                  <>
+                  {recording && (
+                    <div className="flex justify-center">
+                      <RecordingIndicator level={volumeLevel} />
+                    </div>
+                  )}
                   <AnswerInputControl
                     item={current}
                     answerText={answerText}
@@ -1802,6 +1843,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                     stopIconSize={18}
                     textareaRows={4}
                   />
+                  </>
                 )}
               </>
             )}

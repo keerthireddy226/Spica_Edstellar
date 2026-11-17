@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "{{total}} ప్రశ్నల్లో:",
  "{{n}} right": "{{n}} సరైనవి",
  "{{n}} wrong": "{{n}} తప్పు",
- "{{n}} not answered": "{{n}} సమాధానం ఇవ్వలేదు"
+ "{{n}} not answered": "{{n}} సమాధానం ఇవ్వలేదు",
+ "Question {{n}} of {{total}}": "ప్రశ్న {{n}} / {{total}}",
+ "Recording… speak now": "రికార్డ్ అవుతోంది… ఇప్పుడు మాట్లాడండి",
+ "{{s}} s": "{{s}} సె.",
+ "Two speakers: Speaker A and Speaker B": "ఇద్దరు వక్తలు: వక్త A మరియు వక్త B",
+ "Speaker A": "వక్త A",
+ "Speaker B": "వక్త B",
+ "This recording has been played.": "ఈ రికార్డింగ్ ప్లే అయింది.",
+ "This recording plays once. Listen carefully.": "ఈ రికార్డింగ్ ఒక్కసారి మాత్రమే ప్లే అవుతుంది. జాగ్రత్తగా వినండి.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "ఈ పరీక్షలోని ప్రశ్నలు స్త్రీ మరియు పురుష స్వరాలు రెండింటిలోనూ చదవబడతాయి. ప్రతి రికార్డింగ్ ఒక్కసారి ప్లే అవుతుంది.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "ఈ అంచనాలోని వినే ప్రశ్నలు స్త్రీ మరియు పురుష స్వరాలు రెండింటిలోనూ చదవబడతాయి. ప్రతి రికార్డింగ్ ఒక్కసారి మాత్రమే ప్లే అవుతుంది, కాబట్టి జాగ్రత్తగా వినండి."
 }

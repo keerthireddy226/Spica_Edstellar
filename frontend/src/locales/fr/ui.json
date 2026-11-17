@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "Sur {{total}} questions :",
  "{{n}} right": "{{n}} justes",
  "{{n}} wrong": "{{n}} fausses",
- "{{n}} not answered": "{{n}} sans réponse"
+ "{{n}} not answered": "{{n}} sans réponse",
+ "Question {{n}} of {{total}}": "Question {{n}} sur {{total}}",
+ "Recording… speak now": "Enregistrement… parlez maintenant",
+ "{{s}} s": "{{s}} s",
+ "Two speakers: Speaker A and Speaker B": "Deux personnes : Personne A et Personne B",
+ "Speaker A": "Personne A",
+ "Speaker B": "Personne B",
+ "This recording has been played.": "L'enregistrement a été lu.",
+ "This recording plays once. Listen carefully.": "L'enregistrement n'est lu qu'une fois. Écoutez attentivement.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "Les questions de ce test sont lues par une voix féminine et une voix masculine. Chaque enregistrement est lu une fois.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "Les questions d'écoute de cette évaluation sont lues par une voix féminine et une voix masculine. Chaque enregistrement n'est lu qu'une fois : écoutez attentivement."
 }

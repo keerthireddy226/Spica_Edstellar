@@ -9,15 +9,36 @@ export async function getPreferredVoice(userId: string): Promise<VoiceGender> {
   return (result.rows[0]?.preferred_voice as VoiceGender | null) ?? DEFAULT_VOICE;
 }
 
-// Attaches audioUrl (null if not generated yet) — frontend falls back to browser TTS when null.
-export async function withAudioUrls<T extends { id: string }>(userId: string, items: T[]): Promise<(T & { audioUrl: string | null })[]> {
+// The voice a real test uses for a question: fixed by the question (the same
+// for everyone), so a real test mixes female and male voices.
+export function voiceForQuestion(itemId: string): VoiceGender {
+  let h = 0;
+  for (const ch of itemId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return h % 2 === 0 ? "female" : "male";
+}
+
+// Attaches audioUrl (null if not recorded yet). Practice and mock tests use the
+// person's chosen voice; a real test (opts.mixVoices) uses each question's own
+// voice, falling back to the other voice if that recording is missing.
+export async function withAudioUrls<T extends { id: string }>(userId: string, items: T[], opts: { mixVoices?: boolean } = {}): Promise<(T & { audioUrl: string | null })[]> {
   if (items.length === 0) return [];
-  const voice = await getPreferredVoice(userId);
-  const result = await pool.query(`SELECT item_id, uri FROM item_audio WHERE item_id = ANY($1::uuid[]) AND voice_id = $2`, [
-    items.map((item) => item.id),
-    voice,
-  ]);
-  const uriByItemId = new Map<string, string>(result.rows.map((row) => [row.item_id as string, row.uri as string]));
+  const chosen = await getPreferredVoice(userId);
+  const result = await pool.query(`SELECT item_id, voice_id, uri FROM item_audio WHERE item_id = ANY($1::uuid[])`, [items.map((item) => item.id)]);
+  const byItem = new Map<string, Map<string, string>>();
+  for (const row of result.rows) {
+    const m = byItem.get(row.item_id) ?? new Map<string, string>();
+    m.set(row.voice_id, row.uri);
+    byItem.set(row.item_id, m);
+  }
+  const uriByItemId = new Map<string, string>();
+  for (const item of items) {
+    const m = byItem.get(item.id);
+    if (!m) continue;
+    const want = opts.mixVoices ? voiceForQuestion(item.id) : chosen;
+    const other: VoiceGender = want === "female" ? "male" : "female";
+    const uri = m.get(want) ?? (opts.mixVoices ? m.get(other) : undefined);
+    if (uri) uriByItemId.set(item.id, uri);
+  }
   // The test's recordings are fetched to this server now, while the learner
   // reads the instructions, so none waits for a download when it plays.
   warmFiles([...uriByItemId.values()]);

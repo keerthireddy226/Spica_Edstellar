@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "Van de {{total}} vragen:",
  "{{n}} right": "{{n}} goed",
  "{{n}} wrong": "{{n}} fout",
- "{{n}} not answered": "{{n}} niet beantwoord"
+ "{{n}} not answered": "{{n}} niet beantwoord",
+ "Question {{n}} of {{total}}": "Vraag {{n}} van {{total}}",
+ "Recording… speak now": "Opname loopt… spreek nu",
+ "{{s}} s": "{{s}} s",
+ "Two speakers: Speaker A and Speaker B": "Twee sprekers: Spreker A en Spreker B",
+ "Speaker A": "Spreker A",
+ "Speaker B": "Spreker B",
+ "This recording has been played.": "De opname is afgespeeld.",
+ "This recording plays once. Listen carefully.": "De opname wordt maar één keer afgespeeld. Luister goed.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "De vragen in deze toets worden voorgelezen door een vrouwen- en een mannenstem. Elke opname wordt één keer afgespeeld.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "De luistervragen in deze toets worden voorgelezen door een vrouwen- en een mannenstem. Elke opname wordt maar één keer afgespeeld, dus luister goed."
 }

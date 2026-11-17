@@ -307,3 +307,39 @@ html:lang(zh) {
   --font-display: "Outfit", "Noto Sans SC", sans-serif;
   --font-body: "Inter", "Noto Sans SC", sans-serif;
 }
+
+/* Test timer: blinks red in the last seconds of a question. */
+@keyframes timer-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.timer-warning {
+  animation: timer-blink 0.8s steps(2, jump-none) infinite;
+}
+
+/* "Playing" equaliser bars on the listening card. */
+@keyframes audio-bar {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.audio-bar {
+  transform-origin: bottom;
+  animation: audio-bar 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-warning,
+  .audio-bar {
+    animation: none;
+  }
+}

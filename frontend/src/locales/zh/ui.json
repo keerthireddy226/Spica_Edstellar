@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "共 {{total}} 题：",
  "{{n}} right": "答对 {{n}}",
  "{{n}} wrong": "答错 {{n}}",
- "{{n}} not answered": "未作答 {{n}}"
+ "{{n}} not answered": "未作答 {{n}}",
+ "Question {{n}} of {{total}}": "第 {{n}} 题，共 {{total}} 题",
+ "Recording… speak now": "正在录音……请开始说",
+ "{{s}} s": "{{s}} 秒",
+ "Two speakers: Speaker A and Speaker B": "两位说话人：说话人 A 和说话人 B",
+ "Speaker A": "说话人 A",
+ "Speaker B": "说话人 B",
+ "This recording has been played.": "这段录音已播放。",
+ "This recording plays once. Listen carefully.": "这段录音只播放一次，请仔细听。",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "本测试的题目由女声和男声朗读，每段录音只播放一次。",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "本测评的听力题由女声和男声朗读，每段录音只播放一次，请仔细听。"
 }

@@ -24,6 +24,8 @@ import {
   mockFormItemIds,
   candidateFormItemIds,
   mockLimits,
+  PLAYS,
+  REAL_TEST_PLAYS,
   mockTemplateExam,
   practiceFeedback,
   recordView,
@@ -176,7 +178,10 @@ async function loadExamSession(userId: string, sessionRow: { id: string; composi
       responseText: attemptByItem.get(row!.id) ?? null,
       ...(mock ? { limitSeconds: mock.limits?.[row!.id] ?? null, secondsLeft: secondsLeft(mock, row!.id, views!.get(row!.id)) } : {}),
     }));
-  return { partBoundaries, items: await withAudioUrls(userId, items), timing: mock ? mockTiming(mock) : null };
+  // Sessions before 17 Nov 2026 have no realTest flag: a real attempt counts as one.
+  const realTest = sessionRow.composition?.realTest === true || (sessionRow.composition?.realTest === undefined && sessionRow.delivery_mode === "certified");
+  const maxPlays = Number(sessionRow.composition?.maxPlays) || (realTest ? REAL_TEST_PLAYS : PLAYS);
+  return { partBoundaries, items: await withAudioUrls(userId, items, { mixVoices: realTest }), timing: mock ? mockTiming(mock) : null, maxPlays, mixedVoices: realTest };
 }
 
 function mockTiming(c: MockComposition) {
@@ -614,7 +619,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       if (timed && (existingType !== testTypeId || existing.delivery_mode !== mode)) {
         return res.status(409).json({ error: "mock_in_progress", sessionId: existing.id, testTypeId: existingType, deliveryMode: existing.delivery_mode });
       }
-      const { partBoundaries, items, timing } = await loadExamSession(req.user!.id, existing);
+      const { partBoundaries, items, timing, maxPlays, mixedVoices } = await loadExamSession(req.user!.id, existing);
       return res.json({
         sessionId: existing.id,
         testCode: existing.test_code,
@@ -625,6 +630,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
         partBoundaries,
         items,
         timing,
+        maxPlays,
+        mixedVoices,
       });
     }
 
@@ -693,10 +700,14 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     const partBoundaries = derivePartBoundaries(rows, formRows.length ? form?.partIdByOrder : undefined);
     const itemIds = rows.map((r) => r.id);
     const timers = builtTest?.timers ?? {};
+    // A real test (a real attempt or a candidate's assessment) plays each recording once,
+    // in a voice fixed by the question (female or male), from 17 Nov 2026.
+    const realTest = mode === "certified" || candidate;
+    const maxPlays = realTest ? REAL_TEST_PLAYS : PLAYS;
     // Every test taker gets the same time (extra time was removed on 16 Nov 2026).
     const mock: MockComposition | null =
       timed
-        ? await mockLimits(itemIds, timers).then((raw) => {
+        ? await mockLimits(itemIds, timers, maxPlays).then((raw) => {
             const limits = raw;
             // A built mock's whole-test deadline follows its duration (never shorter than its questions need).
             const byQuestions = mockDeadline(limits, partBoundaries.length).getTime();
@@ -727,6 +738,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
           itemIds,
           partBoundaries,
           randomized: !!formRows.length && !builtTest && !levelRows,
+          realTest,
+          maxPlays,
           ...(ownedLevel ? { levelTest: ownedLevel } : {}),
           ...(builtTest ? { formId: builtTest.id, formCode: builtTest.code, durationMinutes: builtTest.durationMinutes, shortForm: builtTest.shortForm, timers } : {}),
           ...mock,
@@ -748,7 +761,7 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
     }
 
     await auditTestStarted(sessionResult.rows[0].id, req.ip).catch(() => {});
-    const payload = await withAudioUrls(req.user!.id, rows.map(toItemPayload));
+    const payload = await withAudioUrls(req.user!.id, rows.map(toItemPayload), { mixVoices: realTest });
     res.status(201).json({
       sessionId: sessionResult.rows[0].id,
       testCode,
@@ -759,6 +772,8 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       partBoundaries,
       items: mock ? payload.map((it) => ({ ...it, limitSeconds: mock.limits?.[it.id] ?? null, secondsLeft: null })) : payload,
       timing: mock ? mockTiming(mock) : null,
+      maxPlays,
+      mixedVoices: realTest,
     });
   } catch (err) {
     next(err);
@@ -777,7 +792,7 @@ practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRe
     const session = sessionResult.rows[0];
     if (!session) return res.status(404).json({ error: "session_not_found" });
 
-    const { partBoundaries, items, timing } = await loadExamSession(req.user!.id, session);
+    const { partBoundaries, items, timing, maxPlays, mixedVoices } = await loadExamSession(req.user!.id, session);
     res.json({
       sessionId: session.id,
       testCode: session.test_code,
@@ -789,6 +804,8 @@ practiceTestsRouter.get("/session/:sessionId", requireAuth, async (req: AuthedRe
       partBoundaries,
       items,
       timing,
+      maxPlays,
+      mixedVoices,
     });
   } catch (err) {
     next(err);

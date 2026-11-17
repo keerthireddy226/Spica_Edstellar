@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "Av {{total}} frågor:",
  "{{n}} right": "{{n}} rätt",
  "{{n}} wrong": "{{n}} fel",
- "{{n}} not answered": "{{n}} obesvarade"
+ "{{n}} not answered": "{{n}} obesvarade",
+ "Question {{n}} of {{total}}": "Fråga {{n}} av {{total}}",
+ "Recording… speak now": "Spelar in … tala nu",
+ "{{s}} s": "{{s}} s",
+ "Two speakers: Speaker A and Speaker B": "Två talare: Talare A och Talare B",
+ "Speaker A": "Talare A",
+ "Speaker B": "Talare B",
+ "This recording has been played.": "Inspelningen har spelats upp.",
+ "This recording plays once. Listen carefully.": "Inspelningen spelas bara upp en gång. Lyssna noga.",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "Frågorna i det här testet läses av både en kvinno- och en mansröst. Varje inspelning spelas upp en gång.",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "Hörfrågorna i den här bedömningen läses av både en kvinno- och en mansröst. Varje inspelning spelas bara upp en gång, så lyssna noga."
 }

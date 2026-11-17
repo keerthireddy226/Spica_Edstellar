@@ -5566,5 +5566,15 @@
  "Out of {{total}} questions:": "{{total}} प्रश्नों में से:",
  "{{n}} right": "{{n}} सही",
  "{{n}} wrong": "{{n}} गलत",
- "{{n}} not answered": "{{n}} के उत्तर नहीं दिए"
+ "{{n}} not answered": "{{n}} के उत्तर नहीं दिए",
+ "Question {{n}} of {{total}}": "प्रश्न {{n}} / {{total}}",
+ "Recording… speak now": "रिकॉर्डिंग हो रही है… अब बोलें",
+ "{{s}} s": "{{s}} से.",
+ "Two speakers: Speaker A and Speaker B": "दो वक्ता: वक्ता A और वक्ता B",
+ "Speaker A": "वक्ता A",
+ "Speaker B": "वक्ता B",
+ "This recording has been played.": "यह रिकॉर्डिंग चलाई जा चुकी है।",
+ "This recording plays once. Listen carefully.": "यह रिकॉर्डिंग केवल एक बार चलेगी। ध्यान से सुनें।",
+ "Questions in this test are read in both a female and a male voice. Each recording plays once.": "इस टेस्ट के प्रश्न महिला और पुरुष, दोनों आवाज़ों में पढ़े जाते हैं। हर रिकॉर्डिंग एक बार चलती है।",
+ "Listening questions in this assessment are read in both a female and a male voice. Each recording plays once, so listen carefully.": "इस मूल्यांकन के सुनने वाले प्रश्न महिला और पुरुष, दोनों आवाज़ों में पढ़े जाते हैं। हर रिकॉर्डिंग केवल एक बार चलती है, इसलिए ध्यान से सुनें।"
 }
