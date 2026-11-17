@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "Du kan spela upp varje inspelning två gånger",
  "You cannot go back to an earlier question.": "Du kan inte gå tillbaka till en tidigare fråga.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "Ditt svar sparas när du stoppar eller när tiden tar slut, och nästa fråga öppnas.",
- "{{n}} questions in this section": "{{n}} frågor i den här delen"
+ "{{n}} questions in this section": "{{n}} frågor i den här delen",
+ "Listening… the timer starts after the recording": "Lyssnar … tiden startar efter inspelningen",
+ "The recording plays by itself, once. Listen carefully.": "Inspelningen spelas upp automatiskt en gång. Lyssna noga.",
+ "The timer starts when the recording ends": "Tiden startar när inspelningen är slut"
 }

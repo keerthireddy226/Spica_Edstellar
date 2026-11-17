@@ -24,6 +24,7 @@ import {
   CalendarClock,
   Pause,
   Loader2,
+  Headphones,
 } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
@@ -135,6 +136,25 @@ interface PendingStart {
 
 // Mock tests: how long the time-up warning shows red.
 const MOCK_WARNING_SECONDS = 10;
+// Long speaking tasks: a beep marks the start and the end of the answer (as in Versant).
+const BEEP_TYPES = new Set(["story_retelling", "open_questions"]);
+function playBeep() {
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+    osc.onended = () => void ctx.close();
+  } catch {
+    // No sound available: the timer still shows the start and end.
+  }
+}
 
 // Where a learner is in a test session, kept in this tab so a refresh comes
 // back to the same place: past the overview, and which sections' instructions
@@ -382,6 +402,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   const [playCount, setPlayCount] = useState(0);
   // Recordings play twice in practice and mock tests, once in a real test (set by the server).
   const [maxPlays, setMaxPlays] = useState(2);
+  // Real tests (Versant-style): the recording plays by itself and the answer
+  // clock starts only when it has finished. awaitingAudio: the question is
+  // open and its recording hasn't finished yet (no countdown shown).
+  const [awaitingAudio, setAwaitingAudio] = useState(false);
+  const serverEndsAtRef = useRef<number | null>(null);
+  const audioSecondsRef = useRef(0);
+  const startAnswerClockRef = useRef<() => void>(() => {});
+  const autoPlayRef = useRef<() => void>(() => {});
   // Conversations: which speaker is talking in the recording right now.
   const [speaking, setSpeaking] = useState<"A" | "B" | null>(null);
   const [pendingAudio, setPendingAudio] = useState<{ base64: string; mimeType: string } | null>(null);
@@ -734,6 +762,20 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     let cancelled = false;
     const startClock = (seconds: number | null | undefined) => {
       if (cancelled || seconds === null || seconds === undefined) return;
+      serverEndsAtRef.current = Date.now() + seconds * 1000;
+      // A real test's listening question: play the recording first, then count down.
+      if (maxPlays === 1 && AUDIO_FIRST_TYPES.has(current.itemTypeId) && (playCountsRef.current[index] ?? 0) === 0) {
+        questionEndsAtRef.current = null;
+        setMockSecondsLeft(null);
+        setAwaitingAudio(true);
+        autoPlayRef.current();
+        return;
+      }
+      setAwaitingAudio(false);
+      if (maxPlays === 1) {
+        startAnswerClockRef.current();
+        return;
+      }
       questionEndsAtRef.current = Date.now() + seconds * 1000;
       setMockSecondsLeft(seconds);
     };
@@ -789,6 +831,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   micCheckRef.current = noise.requestMicCheck;
 
   const timeUpRef = useRef<() => void>(() => {});
+  // Real tests: a beep marks the end of a long speaking answer (Story Retelling, Open Questions).
+  const endBeepRef = useRef<() => void>(() => {});
   useEffect(() => {
     if (!isMock) return;
     const timer = setInterval(() => {
@@ -798,6 +842,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       setMockSecondsLeft(left);
       if (left === 0 && !timeUpFiredRef.current) {
         timeUpFiredRef.current = true;
+        endBeepRef.current();
         timeUpRef.current();
       }
     }, 250);
@@ -839,8 +884,13 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     if (!current || playCount >= maxPlays) return;
     setPlaying(true);
     const playingItem = current;
-    const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => setSpeaking(speakerAt(playingItem, sec, dur)));
+    const result = await playSpokenAudio(current, getSpokenSegments(current), (sec, dur) => {
+      if (dur) audioSecondsRef.current = dur;
+      setSpeaking(speakerAt(playingItem, sec, dur));
+    });
     setSpeaking(null);
+    // Real test: the answer clock starts when the recording has finished (or couldn't play).
+    if (isMock && maxPlays === 1 && result !== "stopped") startAnswerClockRef.current();
     // Stopped by Skip or Back: the new question's state is already set.
     if (result === "stopped") return;
     setPlaying(false);
@@ -851,6 +901,30 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     setPlayCount(next);
     if (sessionId) saveProgress(sessionId, { plays: { ...playCountsRef.current } });
   }
+
+  // Real tests: when a recording has finished, the answer clock starts with
+  // the question's answer time (the server's limit allows two listens + 5 s,
+  // so it never runs past it). Long speaking tasks get a beep at the start.
+  startAnswerClockRef.current = () => {
+    const serverEnd = serverEndsAtRef.current;
+    if (serverEnd === null || !current || questionEndsAtRef.current !== null) return;
+    const now = Date.now();
+    let end = serverEnd;
+    if (AUDIO_FIRST_TYPES.has(current.itemTypeId)) {
+      const answer = current.timerSeconds ?? Math.max(5, Math.round((serverEnd - now) / 1000 - audioSecondsRef.current - 5));
+      end = Math.min(serverEnd, now + answer * 1000);
+    }
+    setAwaitingAudio(false);
+    questionEndsAtRef.current = end;
+    setMockSecondsLeft(Math.max(0, Math.ceil((end - now) / 1000)));
+    if (BEEP_TYPES.has(current.itemTypeId)) playBeep();
+  };
+  endBeepRef.current = () => {
+    if (isMock && maxPlays === 1 && current && BEEP_TYPES.has(current.itemTypeId)) playBeep();
+  };
+  autoPlayRef.current = () => {
+    if (!playing && (playCountsRef.current[index] ?? 0) === 0) void handlePlay();
+  };
 
   async function handleToggleRecord() {
     setError(null);
@@ -1661,6 +1735,11 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   {currentPart && (
                     <span className="text-xs font-bold text-ink bg-surface border border-navy/30 rounded-pill px-2.5 py-0.5 leading-5">
                       {tr("Question {{n}} of {{total}}", { n: index - currentPart.startIndex + 1, total: currentPart.count })}
+                    </span>
+                  )}
+                  {isMock && awaitingAudio && (
+                    <span className="flex items-center gap-1 text-xs font-bold leading-5 px-3 py-0.5 rounded-pill border border-navy/30 bg-navy/10 text-navy-deep" role="status">
+                      <Headphones size={14} /> {tr("Listening… the timer starts after the recording")}
                     </span>
                   )}
                   {shownSeconds !== null && (

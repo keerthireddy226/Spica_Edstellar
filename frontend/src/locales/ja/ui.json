@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "各音声は2回まで再生できます",
  "You cannot go back to an earlier question.": "前の問題に戻ることはできません。",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "停止するか時間切れになると答えが保存され、次の問題が開きます。",
- "{{n}} questions in this section": "このセクションの問題数：{{n}}問"
+ "{{n}} questions in this section": "このセクションの問題数：{{n}}問",
+ "Listening… the timer starts after the recording": "再生中… タイマーは音声の後に始まります",
+ "The recording plays by itself, once. Listen carefully.": "音声は自動で1回だけ再生されます。よく聞いてください。",
+ "The timer starts when the recording ends": "音声が終わるとタイマーが始まります"
 }

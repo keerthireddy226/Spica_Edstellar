@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "Voit toistaa jokaisen tallenteen kahdesti",
  "You cannot go back to an earlier question.": "Et voi palata aiempaan kysymykseen.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "Vastauksesi tallentuu, kun pysäytät tai aika loppuu, ja seuraava kysymys avautuu.",
- "{{n}} questions in this section": "{{n}} kysymystä tässä osiossa"
+ "{{n}} questions in this section": "{{n}} kysymystä tässä osiossa",
+ "Listening… the timer starts after the recording": "Kuunnellaan… ajastin käynnistyy tallenteen jälkeen",
+ "The recording plays by itself, once. Listen carefully.": "Tallenne toistuu itsestään kerran. Kuuntele tarkasti.",
+ "The timer starts when the recording ends": "Ajastin käynnistyy, kun tallenne päättyy"
 }

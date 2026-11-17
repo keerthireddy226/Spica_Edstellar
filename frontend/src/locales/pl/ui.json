@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "Każde nagranie możesz odtworzyć dwa razy",
  "You cannot go back to an earlier question.": "Nie można wrócić do wcześniejszego pytania.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "Odpowiedź zapisuje się po zatrzymaniu lub gdy skończy się czas, a następnie otwiera się kolejne pytanie.",
- "{{n}} questions in this section": "{{n}} pytań w tej części"
+ "{{n}} questions in this section": "{{n}} pytań w tej części",
+ "Listening… the timer starts after the recording": "Słuchanie… czas rusza po nagraniu",
+ "The recording plays by itself, once. Listen carefully.": "Nagranie odtworzy się samo, jeden raz. Słuchaj uważnie.",
+ "The timer starts when the recording ends": "Czas rusza, gdy nagranie się skończy"
 }

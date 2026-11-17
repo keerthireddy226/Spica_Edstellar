@@ -8,7 +8,7 @@ import { AUDIO_FIRST_TYPES, ITEM_TYPE_META, SKILL_BADGE_CLASS } from "@/lib/test
 // The steps a test taker follows in a section, by how its questions are answered.
 function steps(item: TestItem, plays: number, timed: boolean): string[] {
   const heard = AUDIO_FIRST_TYPES.has(item.itemTypeId);
-  const listen = plays === 1 ? tr("Press Play and listen carefully. The recording plays once.") : tr("Press Play and listen. You can play the recording twice.");
+  const listen = plays === 1 ? tr("The recording plays by itself, once. Listen carefully.") : tr("Press Play and listen. You can play the recording twice.");
   const done = timed ? tr("Your answer is saved when you stop or when the time runs out, and the next question opens.") : tr("Then press Next.");
   const next = (timedText: string) => (timed ? timedText : tr("Press Next when you are ready."));
   switch (item.inputMethod) {
@@ -80,7 +80,9 @@ export function SectionIntro({
     <div className="w-full flex flex-col gap-5 text-left">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <Fact icon={<Hash size={16} />}>{tr("{{n}} questions in this section", { n: count })}</Fact>
-        {timed && secs ? (
+        {timed && heard && plays === 1 ? (
+          <Fact icon={<Clock size={16} />}>{tr("The timer starts when the recording ends")}</Fact>
+        ) : timed && secs ? (
           <Fact icon={<Clock size={16} />}>
             {secs >= 120 ? tr("About {{m}} minutes for each question", { m: Math.round(secs / 60) }) : tr("About {{s}} seconds for each question", { s: secs })}
           </Fact>

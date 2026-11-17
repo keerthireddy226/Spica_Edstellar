@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "Du kan afspille hver optagelse to gange",
  "You cannot go back to an earlier question.": "Du kan ikke gå tilbage til et tidligere spørgsmål.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "Dit svar gemmes, når du stopper, eller når tiden er gået, og næste spørgsmål åbner.",
- "{{n}} questions in this section": "{{n}} spørgsmål i denne del"
+ "{{n}} questions in this section": "{{n}} spørgsmål i denne del",
+ "Listening… the timer starts after the recording": "Lytter … tiden starter efter optagelsen",
+ "The recording plays by itself, once. Listen carefully.": "Optagelsen afspilles automatisk én gang. Lyt godt efter.",
+ "The timer starts when the recording ends": "Tiden starter, når optagelsen slutter"
 }

@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "Bạn có thể phát mỗi đoạn ghi âm hai lần",
  "You cannot go back to an earlier question.": "Bạn không thể quay lại câu trước.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "Câu trả lời được lưu khi bạn dừng hoặc khi hết giờ, rồi câu tiếp theo sẽ mở.",
- "{{n}} questions in this section": "{{n}} câu trong phần này"
+ "{{n}} questions in this section": "{{n}} câu trong phần này",
+ "Listening… the timer starts after the recording": "Đang nghe… đồng hồ bắt đầu sau đoạn ghi âm",
+ "The recording plays by itself, once. Listen carefully.": "Đoạn ghi âm tự phát một lần. Hãy nghe kỹ.",
+ "The timer starts when the recording ends": "Đồng hồ bắt đầu khi đoạn ghi âm kết thúc"
 }

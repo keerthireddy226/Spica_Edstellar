@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "ప్రతి రికార్డింగ్‌ను రెండుసార్లు ప్లే చేయవచ్చు",
  "You cannot go back to an earlier question.": "మీరు మునుపటి ప్రశ్నకు తిరిగి వెళ్లలేరు.",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "మీరు ఆపినప్పుడు లేదా సమయం అయిపోయినప్పుడు సమాధానం సేవ్ అవుతుంది, తర్వాతి ప్రశ్న తెరుచుకుంటుంది.",
- "{{n}} questions in this section": "ఈ విభాగంలో {{n}} ప్రశ్నలు"
+ "{{n}} questions in this section": "ఈ విభాగంలో {{n}} ప్రశ్నలు",
+ "Listening… the timer starts after the recording": "వింటున్నారు… రికార్డింగ్ తర్వాత టైమర్ మొదలవుతుంది",
+ "The recording plays by itself, once. Listen carefully.": "రికార్డింగ్ దానంతట అదే ఒక్కసారి ప్లే అవుతుంది. జాగ్రత్తగా వినండి.",
+ "The timer starts when the recording ends": "రికార్డింగ్ ముగిసినప్పుడు టైమర్ మొదలవుతుంది"
 }

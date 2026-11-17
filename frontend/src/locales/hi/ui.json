@@ -5610,5 +5610,8 @@
  "You can play each recording twice": "आप हर रिकॉर्डिंग दो बार चला सकते हैं",
  "You cannot go back to an earlier question.": "आप पिछले प्रश्न पर वापस नहीं जा सकते।",
  "Your answer is saved when you stop or when the time runs out, and the next question opens.": "रोकने पर या समय खत्म होने पर आपका उत्तर सहेज लिया जाता है और अगला प्रश्न खुल जाता है।",
- "{{n}} questions in this section": "इस खंड में {{n}} प्रश्न"
+ "{{n}} questions in this section": "इस खंड में {{n}} प्रश्न",
+ "Listening… the timer starts after the recording": "सुन रहे हैं… टाइमर रिकॉर्डिंग के बाद शुरू होगा",
+ "The recording plays by itself, once. Listen carefully.": "रिकॉर्डिंग अपने आप एक बार चलेगी। ध्यान से सुनें।",
+ "The timer starts when the recording ends": "रिकॉर्डिंग खत्म होने पर टाइमर शुरू होता है"
 }
