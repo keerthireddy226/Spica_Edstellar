@@ -1,7 +1,8 @@
 // Gemini calls for the question pipeline: a stronger model writes questions
 // (decision D6), a different, cheaper one checks them, and embeddings find
 // near-duplicates.
-import { GoogleGenAI } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
+import { trackedGemini, withAiContext } from "../ai/usageLog.js";
 
 // The design asks for a stronger model to write questions. Pro models need
 // a paid Gemini plan (the free tier allows none), so the default is the
@@ -14,7 +15,7 @@ const EMBEDDING_MODEL = "gemini-embedding-001";
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
   if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not set");
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = trackedGemini("generation");
   return client;
 }
 
@@ -54,8 +55,10 @@ export async function generateJson<T>(opts: {
   schema: Record<string, unknown>;
   temperature: number;
   timeoutMs?: number;
+  // What the call is for, in the cost log (ai_calls): generation unless given.
+  purpose?: string;
 }): Promise<{ data: T; usage: Usage }> {
-  const response = await withRetries(async () => {
+  const response = await withAiContext(opts.purpose ? { purpose: opts.purpose } : {}, () => withRetries(async () => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       return await Promise.race([
@@ -71,7 +74,7 @@ export async function generateJson<T>(opts: {
     } finally {
       clearTimeout(timer);
     }
-  });
+  }));
   const meta = response.usageMetadata;
   return {
     data: JSON.parse(response.text ?? "") as T,

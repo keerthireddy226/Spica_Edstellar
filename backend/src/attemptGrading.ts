@@ -10,6 +10,7 @@ import { scoreAudioFluency } from "./placement/geminiFluency.js";
 import { enqueue } from "./queue/queue.js";
 import { measureAnswerNoise, recordNoisyAnswer, type AnswerNoise } from "./proctoring/answerAudio.js";
 import { passThresholdForLevel } from "./placement/cefr.js";
+import { noteAiSession } from "./ai/usageLog.js";
 
 export const UPLOADS_DIR = path.join(process.cwd(), "uploads", "attempts");
 
@@ -68,6 +69,8 @@ export interface GradedAttempt {
 // learner wait or falls back to the browser's transcript. Only for tests that
 // don't pick the next question from this answer (not the adaptive placement).
 export async function gradeAndSaveAttempt(sessionId: string, body: AttemptBody, opts: { deferSpeaking?: boolean } = {}): Promise<GradedAttempt | null> {
+  // AI calls below are logged against this test session (ai_calls).
+  noteAiSession(sessionId);
   const itemResult = await pool.query(
     `SELECT i.item_type_id, i.answer_set, i.content, i.cefr_level, it.min_words, it.input_method
      FROM items i JOIN item_types it ON it.id = i.item_type_id
@@ -245,6 +248,7 @@ export async function gradeSpeakingAttempt(attemptId: string, opts: { final: boo
   ).rows[0];
   // Waiting for a grade, or a grading that failed (usually a Gemini timeout).
   if (!r || (r.status !== "pending" && r.status !== "failed")) return;
+  noteAiSession(r.session_id);
   if (!r.response_uri) return gradeTypedAnswerAgain(attemptId, r, opts.final, opts.timeoutMs ?? BACKGROUND_TIMEOUT_MS);
 
   const file = path.join(UPLOADS_DIR, path.basename(r.response_uri));

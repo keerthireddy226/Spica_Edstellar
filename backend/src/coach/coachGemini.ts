@@ -1,13 +1,14 @@
 // Tutor (Coach Mode) — a learning coach that talks only about the learner's
 // level, progress and next steps in Spica, unlike aiGrading.ts's one-shot grading.
-import { GoogleGenAI } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
+import { trackedGemini } from "../ai/usageLog.js";
 
 const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI | null {
   if (!process.env.GEMINI_API_KEY) return null;
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = trackedGemini("coach");
   return client;
 }
 

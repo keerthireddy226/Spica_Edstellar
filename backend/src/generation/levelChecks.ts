@@ -117,7 +117,7 @@ ${JSON.stringify(content)}
 
 Rate the level a learner needs to understand and answer it: vocabulary, grammar, sentence length and, for recordings, how fast natural speech at that level is. List each grammar point the question uses with the CEFR level where learners usually master it. Grammar points by level (CEFR-J, for reference):
 ${GRAMMAR_GUIDE}`;
-  const r = await generateJson<{ estimatedLevel: string; grammar: { point: string; level: string }[]; reason: string }>({ model: CHECK_MODEL, prompt, schema: BLIND_SCHEMA, temperature: 0 });
+  const r = await generateJson<{ estimatedLevel: string; grammar: { point: string; level: string }[]; reason: string }>({ purpose: "question-check", model: CHECK_MODEL, prompt, schema: BLIND_SCHEMA, temperature: 0 });
   usage.inputTokens += r.usage.inputTokens;
   usage.outputTokens += r.usage.outputTokens;
   const target = rank(level);

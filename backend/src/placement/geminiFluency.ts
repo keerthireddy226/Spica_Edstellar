@@ -1,5 +1,6 @@
 // Real audio-based pronunciation/fluency scoring via Gemini — supplementary signal, fails closed.
-import { GoogleGenAI } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
+import { trackedGemini } from "../ai/usageLog.js";
 
 // "gemini-2.5-flash-lite" (still in Google's published price sheet) 404s for
 // new callers — this is the model Google's own error pointed to instead.
@@ -8,7 +9,7 @@ const GEMINI_MODEL = "gemini-3.5-flash-lite";
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI | null {
   if (!process.env.GEMINI_API_KEY) return null;
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = trackedGemini("speaking-audio");
   return client;
 }
 

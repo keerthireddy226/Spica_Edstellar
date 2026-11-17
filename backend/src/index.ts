@@ -59,6 +59,7 @@ import { PlanError } from "./plans/service.js";
 import { BatchStateError } from "./batches/lifecycle.js";
 import { DetailsError } from "./learners/details.js";
 import { requireAccess } from "./licenses/gate.js";
+import { aiContextMiddleware } from "./ai/usageLog.js";
 
 // Railway's network has no IPv6 egress — without this, Node's dual-stack DNS
 // resolution can still pick a host's IPv6 address (e.g. smtp.gmail.com) and
@@ -86,6 +87,8 @@ app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.post("/api/payments/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookHandler);
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
+// Each request's AI calls are logged with its user (ai_calls).
+app.use(aiContextMiddleware);
 app.use(morgan("dev"));
 // Voice enrollment samples and attempt recordings live here — requiring a
 // real session (not just an unguessable filename) before serving any of it.

@@ -58,7 +58,7 @@ ${source}
 
 QUESTIONS:
 ${qs.map((q, i) => `${i + 1}. ${q.stem}\n${q.options.map((o, j) => `   ${j}: ${o}`).join("\n")}`).join("\n")}`;
-  const r = await generateJson<{ answers: { chosen: number; alsoDefensible: number[]; note?: string }[] }>({ model: CHECK_MODEL, prompt, schema: KEY_SCHEMA, temperature: 0 });
+  const r = await generateJson<{ answers: { chosen: number; alsoDefensible: number[]; note?: string }[] }>({ purpose: "question-check", model: CHECK_MODEL, prompt, schema: KEY_SCHEMA, temperature: 0 });
   usage.inputTokens += r.usage.inputTokens;
   usage.outputTokens += r.usage.outputTokens;
   const notes: string[] = [];
@@ -91,7 +91,7 @@ QUESTION (JSON):
 ${JSON.stringify(content)}
 
 Estimate the CEFR level of the language a learner must understand (vocabulary, grammar, length, speed for recordings). List any sensitivity problems and any clarity problems; leave a list empty when there are none. British, American and Indian spellings are all acceptable.`;
-  const r = await generateJson<{ estimatedLevel: string; sensitivity: string[]; clarity: string[] }>({ model: CHECK_MODEL, prompt, schema: REVIEW_SCHEMA, temperature: 0 });
+  const r = await generateJson<{ estimatedLevel: string; sensitivity: string[]; clarity: string[] }>({ purpose: "question-check", model: CHECK_MODEL, prompt, schema: REVIEW_SCHEMA, temperature: 0 });
   usage.inputTokens += r.usage.inputTokens;
   usage.outputTokens += r.usage.outputTokens;
   void level;

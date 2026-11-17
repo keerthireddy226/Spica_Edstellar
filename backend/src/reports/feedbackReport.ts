@@ -9,6 +9,7 @@ import { activeProgramOf } from "../programs/service.js";
 import { wordDiff, diffSummary, type WordOp } from "./wordDiff.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
+import { noteAiSession } from "../ai/usageLog.js";
 
 export const REPORT_MODEL = process.env.GEMINI_REPORT_MODEL || "gemini-3.5-flash";
 const SKILLS = ["listening", "speaking", "reading", "writing"] as const;
@@ -284,7 +285,7 @@ ${r.content.audio ? "Recording script" : "Text"}: ${str(r.content.audio) || str(
 ${choices.map((q, i) => `Q${i + 1}: ${q.stem ?? ""} Options: ${q.options.map((o, j) => `${j}) ${o}`).join("; ")}. Correct: ${q.correct}`).join("\n")}`;
   })
   .join("\n\n")}`;
-  const r = await generateJson<{ items: { id: string; questions: { why: string; evidence: string }[] }[] }>({ model: REPORT_MODEL, prompt, schema: EXPLAIN_SCHEMA, temperature: 0.2 });
+  const r = await generateJson<{ items: { id: string; questions: { why: string; evidence: string }[] }[] }>({ purpose: "report", model: REPORT_MODEL, prompt, schema: EXPLAIN_SCHEMA, temperature: 0.2 });
   usage.inputTokens += r.usage.inputTokens;
   usage.outputTokens += r.usage.outputTokens;
   for (const e of r.data.items ?? []) {
@@ -334,7 +335,7 @@ Learner's answer:
 """${answer}"""
 
 List the errors (at most 15, most important first). "text" must be copied exactly from the answer. British, American, Indian and other standard spellings are all correct: never mark one as an error. Use type "task" for missing parts of the task. Then rewrite the answer correctly at the target level, keeping the learner's ideas, and add a two-sentence comment.`;
-  const res = await generateJson<{ errors: WritingError[]; modelAnswer: string; comment: string }>({ model: REPORT_MODEL, prompt, schema: WRITING_SCHEMA, temperature: 0.2 });
+  const res = await generateJson<{ errors: WritingError[]; modelAnswer: string; comment: string }>({ purpose: "report", model: REPORT_MODEL, prompt, schema: WRITING_SCHEMA, temperature: 0.2 });
   usage.inputTokens += res.usage.inputTokens;
   usage.outputTokens += res.usage.outputTokens;
   // Only errors whose words are really in the answer can be marked.
@@ -443,6 +444,7 @@ export async function reviewQuestions(sessionId: string, order: string[]): Promi
 export async function buildReport(sessionId: string): Promise<void> {
   const s = (await pool.query(`SELECT id, user_id, delivery_mode, composition, result, program_id FROM sessions WHERE id = $1`, [sessionId])).rows[0];
   if (!s) return;
+  noteAiSession(sessionId);
   const quota = await learnerQuota(s.user_id);
   const level: "summary" | "full" = quota?.reportLevel ?? "full";
   const usage: Usage = { inputTokens: 0, outputTokens: 0 };
@@ -498,7 +500,7 @@ Address the learner as "you". Be honest and encouraging, specific, and simple (B
     // from the numbers, so the learner still gets their report.
     let summaryData: { analysis: string; nextSteps: { title: string; why: string; skill: string }[] };
     try {
-      const summary = await generateJson<typeof summaryData>({ model: REPORT_MODEL, prompt: summaryPrompt, schema: SUMMARY_SCHEMA, temperature: 0.3 });
+      const summary = await generateJson<typeof summaryData>({ purpose: "report", model: REPORT_MODEL, prompt: summaryPrompt, schema: SUMMARY_SCHEMA, temperature: 0.3 });
       usage.inputTokens += summary.usage.inputTokens;
       usage.outputTokens += summary.usage.outputTokens;
       summaryData = summary.data;

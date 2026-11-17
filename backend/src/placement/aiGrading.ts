@@ -1,5 +1,6 @@
 // Rubric-based grading (Gemini), always from text — its own audio-quality judgment was tested and found to hallucinate. Fails closed: returns null, treated as "no verdict yet."
-import { GoogleGenAI } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
+import { trackedGemini } from "../ai/usageLog.js";
 import { canonicalSpelling } from "./spelling.js";
 
 export const GEMINI_GRADING_MODEL = "gemini-3.5-flash-lite";
@@ -7,7 +8,7 @@ export const GEMINI_GRADING_MODEL = "gemini-3.5-flash-lite";
 let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI | null {
   if (!process.env.GEMINI_API_KEY) return null;
-  if (!client) client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  if (!client) client = trackedGemini("grading");
   return client;
 }
 
