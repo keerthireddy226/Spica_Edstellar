@@ -98,7 +98,7 @@ const pct = (correct: number, graded: number) => Math.round((correct / graded) *
 // Pure — every line is optional, so missing data just drops its line.
 export function formatLearnerContext(f: LearnerFacts): string {
   const lines: string[] = [];
-  if (f.firstName) lines.push(`First name: ${f.firstName}.`);
+  // The learner's name is never sent to the AI provider: the coach doesn't need it.
 
   const level: string[] = [];
   if (f.currentLevel) level.push(`Current CEFR level: ${f.currentLevel} (latest placement)`);

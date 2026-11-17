@@ -59,7 +59,7 @@ export function buildSystemInstruction(learnerContext?: string): string {
     SYSTEM_INSTRUCTION +
     "\n\nWhat you know about this learner (facts from their Spica history):\n" +
     facts +
-    "\n\nUse these facts in your answers. Use their first name occasionally if you have it."
+    "\n\nUse these facts in your answers."
   );
 }
 

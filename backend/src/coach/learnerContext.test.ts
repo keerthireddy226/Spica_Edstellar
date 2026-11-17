@@ -18,6 +18,10 @@ const empty: LearnerFacts = {
 };
 
 describe("formatLearnerContext", () => {
+  it("never includes the learner's name", () => {
+    expect(formatLearnerContext({ ...empty, firstName: "Asha" })).not.toContain("Asha");
+  });
+
   it("returns an empty block when nothing is known", () => {
     expect(formatLearnerContext(empty)).toBe("");
   });
@@ -38,7 +42,6 @@ describe("formatLearnerContext", () => {
       lastTest: { kind: "mock test", testName: "English 4-Skills Essentials Test", date: "2026-10-10", level: "B1", percent: 52 },
     });
     expect(text.split("\n")).toEqual([
-      "First name: Asha.",
       "Current CEFR level: B1 (latest placement); goal level: B2.",
       "Preparing for Versant for a job.",
       "Exam date: 2026-12-01 (43 days left).",
