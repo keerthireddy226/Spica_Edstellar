@@ -70,6 +70,7 @@ import {
 import type { TestItem } from "@/api/testSession";
 import { useVoiceRecorder, blobToBase64 } from "@/hooks/useVoiceRecorder";
 import { PlayingBars, RecordingIndicator, SpeakerAvatars } from "@/components/TestIndicators";
+import { SectionIntro } from "@/components/SectionIntro";
 import { NO_RECORDING_TEXT, playSpokenAudio, preloadSpokenAudio, stopSpokenAudio } from "@/lib/playSpokenAudio";
 import { getFaceEnrollmentStatus } from "@/api/faceCheck";
 import { FaceCheck } from "@/components/FaceCheck";
@@ -1497,13 +1498,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         </span>
         <div>
           <h1 className="font-display font-bold text-xl text-ink">{currentPart.label}</h1>
-          <p className="text-sm text-ink mt-2 leading-relaxed">{current.instructionText}</p>
-          {isMock && (
-            <p className="text-sm text-muted mt-2 flex items-start gap-1.5 justify-center">
-              <Timer size={15} className="shrink-0 mt-0.5" /> {tr("Timed: each question moves on by itself when its timer reaches 0:00.")}
-            </p>
-          )}
+          <p className="text-base text-ink mt-2 leading-relaxed">{current.instructionText}</p>
         </div>
+        <SectionIntro item={current} count={currentPart.count} plays={maxPlays} timed={isMock} />
         <Button
           onClick={() => {
             setShowSectionIntro(false);
