@@ -1258,12 +1258,6 @@ main:has(.h) + .site .site-footer {
 .h-try .h-link { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
 @media (max-width: 900px) { .h-try { grid-template-columns: 1fr; gap: 24px; } }
 
-/* Platform block: pinned while the four parts take turns on scroll (large screens). */
-@media (min-width: 1021px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
-  .h-scrolly { height: 260vh; }
-  .h-scrolly-pin { position: sticky; top: 110px; }
-  .h-panel { animation: h-panel-in 0.35s ease; }
-}
 @keyframes h-panel-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* Journey: six steps. */
