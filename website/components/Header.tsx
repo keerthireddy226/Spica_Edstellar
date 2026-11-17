@@ -163,6 +163,28 @@ export function Header() {
     };
   }, []);
 
+  // On a computer with a mouse, the menus open on hover (and stay usable by
+  // keyboard and click); on touch screens they open with a tap.
+  const canHover = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const hoverOpen = (e: React.MouseEvent<HTMLDetailsElement>) => {
+    if (!canHover()) return;
+    const d = e.currentTarget;
+    header.current?.querySelectorAll("details[open]").forEach((x) => x !== d && x.removeAttribute("open"));
+    d.open = true;
+  };
+  const hoverClose = (e: React.MouseEvent<HTMLDetailsElement>) => {
+    if (!canHover()) return;
+    const d = e.currentTarget;
+    setTimeout(() => {
+      if (!d.matches(":hover")) d.open = false;
+    }, 150);
+  };
+  // A mouse click on an open (hovered) menu keeps it open; keyboard Enter still toggles.
+  const keepOpenOnClick = (e: React.MouseEvent<HTMLElement>) => {
+    const d = e.currentTarget.parentElement as HTMLDetailsElement | null;
+    if (e.detail > 0 && d?.open && canHover()) e.preventDefault();
+  };
+
   return (
     <header className="site-header" ref={header}>
       <a className="skip" href="#main">
@@ -174,8 +196,8 @@ export function Header() {
           {MENUS.map((m) => {
             const on = menuActive(path, m);
             return (
-              <details key={m.label} className={`drop${on ? " on" : ""}`}>
-                <summary aria-current={on ? "page" : undefined}>
+              <details key={m.label} className={`drop${on ? " on" : ""}`} onMouseEnter={hoverOpen} onMouseLeave={hoverClose}>
+                <summary aria-current={on ? "page" : undefined} onClick={keepOpenOnClick}>
                   {m.label} <ChevronDown size={15} aria-hidden="true" />
                 </summary>
                 <div className={`drop-menu${m.wide ? " wide" : ""}`}>
@@ -198,8 +220,8 @@ export function Header() {
           </Link>
         </nav>
         <div className="bar-actions">
-          <details className="signin">
-            <summary>Sign in</summary>
+          <details className="signin" onMouseEnter={hoverOpen} onMouseLeave={hoverClose}>
+            <summary onClick={keepOpenOnClick}>Sign in</summary>
             <div className="signin-menu">
               <SignInLinks />
             </div>

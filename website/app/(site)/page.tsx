@@ -9,6 +9,7 @@ import { CertificateForm } from "@/components/CertificateForm";
 import { app } from "@/lib/site";
 import { money } from "@/lib/prices";
 import { SampleQuestion } from "@/components/page/SampleQuestion";
+import { CefrExplorer, Journey, WhyCompare } from "@/components/home/Extras";
 import { SAMPLES } from "@/lib/samples";
 import "./home.css";
 
@@ -129,8 +130,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* AUDIENCES */}
+      {/* JOURNEY */}
       <section className="h-section h-tint">
+        <div className="h-wrap">
+          <div className="h-head" data-reveal>
+            <span className="h-kicker">The path</span>
+            <h2>Six steps from first level check to certificate</h2>
+            <p>Every learner follows the same clear path, whether they join on their own or through their company or college.</p>
+          </div>
+          <Journey />
+        </div>
+      </section>
+
+      {/* AUDIENCES */}
+      <section className="h-section">
         <div className="h-wrap">
           <div className="h-head" data-reveal>
             <span className="h-kicker">Solutions</span>
@@ -230,8 +243,52 @@ export default function Home() {
         </div>
       </section>
 
-      {/* INTEGRITY */}
+      {/* CEFR */}
       <section className="h-section h-tint">
+        <div className="h-wrap">
+          <div className="h-head" data-reveal>
+            <span className="h-kicker">Levels</span>
+            <h2>Every result on the international CEFR scale</h2>
+            <p>Each test gives a CEFR level from A1 to C2 and a Spica score from 10 to 90. Choose a level to see what it means.</p>
+          </div>
+          <div className="h-cefr-grid">
+            <div data-reveal>
+              <CefrExplorer />
+            </div>
+            <div className="h-cefr-side" data-reveal>
+              <h3>How people move up the scale</h3>
+              <ol className="h-mini-steps">
+                <li>A placement test sets the starting level.</li>
+                <li>The study plan and mock tests build toward the next level.</li>
+                <li>A proctored test certifies the level reached.</li>
+              </ol>
+              <h3>Level tests check one level at a time</h3>
+              <dl className="h-facts">
+                <div>
+                  <dt>Questions</dt>
+                  <dd>About 28, all at the chosen level</dd>
+                </div>
+                <div>
+                  <dt>Skills</dt>
+                  <dd>All four</dd>
+                </div>
+                <div>
+                  <dt>Pass mark</dt>
+                  <dd>70% overall, at least 50% in each skill</dd>
+                </div>
+                <div>
+                  <dt>Retake</dt>
+                  <dd>After 7 days</dd>
+                </div>
+              </dl>
+              <p className="h-small">A level test gives a passed or not-passed result with a score report. Certificates come only from a final proctored test.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* INTEGRITY */}
+      <section className="h-section">
         <div className="h-wrap">
           <div className="h-head" data-reveal>
             <span className="h-kicker">Integrity</span>
@@ -269,7 +326,7 @@ export default function Home() {
       </section>
 
       {/* VERIFY + REPORTS */}
-      <section className="h-section">
+      <section className="h-section h-tint">
         <div className="h-wrap h-split">
           <div data-reveal>
             <span className="h-kicker">Certificates</span>
@@ -325,7 +382,7 @@ export default function Home() {
       </section>
 
       {/* LANGUAGES AND EDSTELLAR */}
-      <section className="h-section">
+      <section className="h-section h-tint">
         <div className="h-wrap grid g2" style={{ alignItems: "start", gap: 40 }}>
           <div data-reveal>
             <span className="h-kicker">Online, anywhere</span>
@@ -355,6 +412,20 @@ export default function Home() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* WHY SPICA */}
+      <section className="h-section">
+        <div className="h-wrap">
+          <div className="h-head" data-reveal>
+            <span className="h-kicker">Why Spica</span>
+            <h2>Why teams choose Spica</h2>
+            <p>Spica brings together what usually takes two separate tools, and adds the checks that make a result worth trusting.</p>
+          </div>
+          <div data-reveal>
+            <WhyCompare />
           </div>
         </div>
       </section>

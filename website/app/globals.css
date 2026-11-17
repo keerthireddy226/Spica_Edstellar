@@ -1621,3 +1621,5 @@ body {
 .site .compare td:first-child, .site .compare th:first-child { text-align: left; }
 .site .compare .yes { color: var(--moss-ink); }
 .site .compare .no { color: rgba(46, 36, 25, 0.35); }
+/* Header menus open on hover: an invisible bridge over the gap under the menu name. */
+.site .drop-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }

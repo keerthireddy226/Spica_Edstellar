@@ -1257,3 +1257,58 @@ main:has(.h) + .site .site-footer {
 .h-try { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: center; }
 .h-try .h-link { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
 @media (max-width: 900px) { .h-try { grid-template-columns: 1fr; gap: 24px; } }
+
+/* Platform block: pinned while the four parts take turns on scroll (large screens). */
+.h-progress { display: none; }
+@media (min-width: 1021px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
+  .h-scrolly { height: 260vh; }
+  .h-scrolly-pin { position: sticky; top: 110px; }
+  .h-progress { display: flex; gap: 6px; margin-bottom: 14px; }
+  .h-progress span { flex: 1; height: 4px; border-radius: 4px; background: rgba(46, 36, 25, 0.12); transition: background 0.3s; }
+  .h-progress span.on { background: var(--h-clay); }
+  .h-panel { animation: h-panel-in 0.35s ease; }
+}
+@keyframes h-panel-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Journey: six steps. */
+.h-journey { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; counter-reset: none; }
+.h-journey li { background: #fff; border: 1px solid var(--rule, rgba(29, 23, 18, 0.1)); border-radius: 18px; padding: 18px 16px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.h-journey li:not(:last-child)::after { content: ""; position: absolute; top: 34px; right: -14px; width: 14px; height: 2px; background: var(--h-clay); opacity: 0.5; }
+.h-journey-num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--h-clay); color: #fff; font-weight: 800; margin-bottom: 4px; }
+.h-journey b { font-size: 1rem; }
+.h-journey small { color: var(--muted, #6b5d4e); font-size: 0.88rem; line-height: 1.45; }
+@media (max-width: 1020px) { .h-journey { grid-template-columns: repeat(3, 1fr); } .h-journey li::after { display: none; } }
+@media (max-width: 620px) { .h-journey { grid-template-columns: 1fr; } }
+
+/* CEFR explorer. */
+.h-cefr-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; align-items: start; }
+.h-cefr-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.h-cefr-band small { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted, #6b5d4e); margin-bottom: 6px; }
+.h-cefr-band div { display: flex; gap: 6px; }
+.h-cefr-band button { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid var(--rule, rgba(29, 23, 18, 0.12)); background: #fff; font-weight: 800; font-size: 1.05rem; cursor: pointer; color: inherit; transition: background 0.15s, color 0.15s; }
+.h-cefr-band button[aria-pressed="true"] { background: var(--h-clay); color: #fff; border-color: var(--h-clay); }
+.h-cefr-card { background: #fff; border: 1px solid var(--rule, rgba(29, 23, 18, 0.1)); border-radius: 20px; padding: 22px; animation: h-panel-in 0.3s ease; }
+.h-cefr-top { display: flex; align-items: baseline; gap: 10px; }
+.h-cefr-top b { font-size: 2rem; color: var(--h-clay); }
+.h-cefr-top span { font-weight: 600; color: var(--muted, #6b5d4e); }
+.h-cefr-card ul { padding-left: 18px; margin: 10px 0 14px; display: grid; gap: 6px; font-size: 0.93rem; }
+.h-cefr-side h3 { margin: 0 0 10px; }
+.h-mini-steps { padding-left: 20px; margin: 0 0 22px; display: grid; gap: 6px; }
+.h-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 12px; }
+.h-facts div { background: #fff; border: 1px solid var(--rule, rgba(29, 23, 18, 0.1)); border-radius: 14px; padding: 10px 12px; }
+.h-facts dt { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted, #6b5d4e); font-weight: 700; }
+.h-facts dd { margin: 2px 0 0; font-weight: 600; }
+.h-small { font-size: 0.88rem; color: var(--muted, #6b5d4e); }
+.h-cefr .h-link, .h-cefr-card .h-link { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 1020px) { .h-cefr-grid { grid-template-columns: 1fr; } }
+
+/* Why Spica table. */
+.h-why { overflow-x: auto; background: #fff; border: 1px solid var(--rule, rgba(29, 23, 18, 0.1)); border-radius: 20px; }
+.h-why table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.h-why th, .h-why td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--rule, rgba(29, 23, 18, 0.08)); font-size: 0.95rem; }
+.h-why th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted, #6b5d4e); }
+.h-why tr:last-child td { border-bottom: none; }
+.h-why .h-why-us { background: rgba(180, 98, 62, 0.07); font-weight: 700; }
+.h-yes { color: #4b6e3f; display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.h-meh { color: var(--muted, #6b5d4e); display: inline-flex; align-items: center; gap: 4px; }
+.h-why-note { font-size: 0.82rem; color: var(--muted, #6b5d4e); padding: 0 16px 14px; margin: 0; }
