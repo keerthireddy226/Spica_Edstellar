@@ -38,7 +38,7 @@ export default function TestRulesPage() {
               <li>Do not record, copy, photograph, share or publish any question, answer or part of a real test.</li>
               <li>Do not let anyone else take a test for you, and do not take a test for someone else.</li>
               <li>Use only the browser window of the test; leaving it is recorded.</li>
-              <li>Every question has its own timer, the same for every test taker. Recordings play at most twice. A question left blank counts as wrong.</li>
+              <li>Every question has its own timer, the same for every test taker. Each recording plays once, and the answer timer starts when it ends. A question left blank counts as wrong.</li>
             </ul>
           ),
         },

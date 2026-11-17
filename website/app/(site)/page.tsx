@@ -217,7 +217,7 @@ export default function Home() {
           <div className="h-timeline">
             {[
               [MonitorCheck, "Before the test", ["System check of camera, microphone and connection", "ID document and photo", "Face and voice matching, or a manual check by a person"]],
-              [Eye, "During the test", ["Camera snapshots and screen recording", "Leaving the test window is recorded", "Each recording plays at most twice; fresh questions each time"]],
+              [Eye, "During the test", ["Camera snapshots and screen recording", "Leaving the test window is recorded", "Each recording plays once; fresh questions each time"]],
               [FileCheck2, "After the test", ["Trained reviewers check every flag", "Certificate only when the checks are clear", "Anyone can ask for a person to review their score"]],
             ].map(([Icon, t, items], i) => {
               const I = Icon as typeof Eye;

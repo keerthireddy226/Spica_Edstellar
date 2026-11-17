@@ -271,7 +271,7 @@ export default function TestsPage() {
           <div className="icon-cards">
             {[
               { icon: Timer, title: "A timer on each question", text: "Every question has its own time limit, so each person gets the same conditions." },
-              { icon: Repeat, title: "Recordings play twice at most", text: "Listening questions can be replayed once. A question left blank counts as wrong." },
+              { icon: Repeat, title: "Each recording plays once", text: "Press Play when you are ready. The answer timer starts when the recording ends. A question left blank counts as wrong." },
               { icon: FlaskConical, title: "A free sample first", text: "A short sample with the same checks makes sure the camera, microphone and screen sharing work." },
               { icon: QrCode, title: "Results anyone can check", text: "Real tests end in a score report and a certificate with a QR code that anyone can check online." },
             ].map((c, i) => {

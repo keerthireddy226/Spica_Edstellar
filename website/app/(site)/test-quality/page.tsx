@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const POINTS: [React.ElementType, string, React.ReactNode][] = [
   [Layers, "Reported on the CEFR levels", <>Every result is a Spica score from 10 to 90 and a CEFR level, overall and for each skill. See <Link href="/levels">English levels</Link>.</>],
-  [Clock, "The same conditions for everyone", "Each question has its own timer, recordings play at most twice, and a question left blank counts as wrong."],
+  [Clock, "The same conditions for everyone", "Each question has its own timer, which starts when the recording ends; each recording plays once; a question left blank counts as wrong."],
   [Languages, "Fair to every speaker", "Speaking is scored on how clearly you are understood, not on your accent. British, American and Indian spellings are all accepted."],
   [Scale, "Clear rules for each task", "Spoken and written answers are scored against clear rules for each task. Multiple-choice answers are marked by fixed rules."],
   [RefreshCw, "Fresh questions", "Each attempt uses questions you have not seen where possible, and real test questions are never shown afterwards."],
