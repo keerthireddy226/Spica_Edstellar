@@ -1623,3 +1623,22 @@ body {
 .site .compare .no { color: rgba(46, 36, 25, 0.35); }
 /* Header menus open on hover: an invisible bridge over the gap under the menu name. */
 .site .drop-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }
+/* Solution pages: gains and price box. */
+.site .gain-num { font-family: var(--font-display), sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--clay-text); }
+.site .price-bands { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.site .price-bands div { background: var(--cream); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.site .price-bands small { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; color: var(--muted); }
+.site .price-bands b { font-size: 1.6rem; font-family: var(--font-display), sans-serif; }
+.site .price-bands span { font-size: 0.82rem; color: var(--muted); }
+@media (max-width: 560px) { .site .price-bands { grid-template-columns: 1fr; } }
+/* Level pages: Level Test facts. */
+.site .lv-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.site .lv-facts div { background: var(--cream); border-radius: 12px; padding: 8px 10px; }
+.site .lv-facts dt { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.site .lv-facts dd { margin: 2px 0 0; font-weight: 600; font-size: 0.92rem; }
+/* About: at-a-glance numbers. */
+.site .about-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.site .about-stats div { background: var(--cream); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.site .about-stats b { font-family: var(--font-display), sans-serif; font-size: 1.7rem; color: var(--clay-text); }
+.site .about-stats span { font-size: 0.88rem; color: var(--muted); }
+.site .about-tick { color: var(--moss-ink); }

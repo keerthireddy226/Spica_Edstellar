@@ -11,6 +11,7 @@ import { money } from "@/lib/prices";
 import { SampleQuestion } from "@/components/page/SampleQuestion";
 import { CefrExplorer, Journey, WhyCompare } from "@/components/home/Extras";
 import { SAMPLES } from "@/lib/samples";
+import { EDSTELLAR } from "@/lib/edstellar";
 import "./home.css";
 
 export const metadata: Metadata = {
@@ -29,12 +30,6 @@ const REPORTS: [React.ElementType, string, string, string[]][] = [
 // The languages of Spica's menus and instructions (frontend/src/i18n).
 const LANGUAGES = ["English", "हिन्दी Hindi", "తెలుగు Telugu", "中文 Chinese", "日本語 Japanese", "Tiếng Việt Vietnamese", "Français French", "Deutsch German", "Español Spanish", "Italiano Italian", "Nederlands Dutch", "Polski Polish", "Dansk Danish", "Suomi Finnish", "Norsk Norwegian", "Svenska Swedish"];
 
-const EDSTELLAR: [string, string][] = [
-  ["Capability OS", "Edstellar's main platform for building workforce capability"],
-  ["TNA/TNI Engine", "Find the training needs behind skills gaps"],
-  ["Spectra LMS", "Edstellar's learning management system"],
-  ["Corporate training", "Instructor-led programmes across 77 domains"],
-];
 
 const FAQ: [string, string][] = [
   ["Is a Spica certificate official or accredited?", "It is Spica's own certificate. It shows a CEFR level and anyone can check it online. It is not a government or visa certificate."],

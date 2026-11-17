@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, BookOpen, Headphones, Layers, Mic, PenLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Briefcase, BookOpen, Headphones, Layers, Mic, PenLine, TrendingUp } from "lucide-react";
+import { AT_WORK } from "@/lib/levelExtras";
+import { money } from "@/lib/prices";
 import { PageHero } from "@/components/page/PageHero";
 import { LEVELS } from "@/lib/levels";
 import { app } from "@/lib/site";
@@ -76,6 +78,93 @@ export default async function LevelPage({ params }: { params: Promise<{ level: s
           </p>
         </div>
       </section>
+      <section className="section alt">
+        <div className="wrap grid g2">
+          <div data-reveal>
+            <p className="eyebrow">
+              <Briefcase size={14} /> At work
+            </p>
+            <h2>What {l.code} looks like at work</h2>
+            <ul className="ticks">
+              {(AT_WORK[l.code] ?? []).map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="card" data-reveal>
+            <p className="eyebrow">
+              <BadgeCheck size={14} /> Prove it
+            </p>
+            <h3>The {l.code} Level Test</h3>
+            <dl className="lv-facts">
+              <div>
+                <dt>Questions</dt>
+                <dd>About 28, all at {l.code}</dd>
+              </div>
+              <div>
+                <dt>Skills</dt>
+                <dd>All four</dd>
+              </div>
+              <div>
+                <dt>Pass mark</dt>
+                <dd>70% overall, at least 50% in each skill</dd>
+              </div>
+              <div>
+                <dt>Price</dt>
+                <dd>
+                  {money("level", "INR")} / {money("level", "USD")}
+                </dd>
+              </div>
+            </dl>
+            <p className="muted" style={{ fontSize: "0.9rem" }}>
+              A passed or not-passed result with a score report; you can retake it after 7 days. For a certificate, take one of the full tests: every
+              test reports levels from A1 to C2.
+            </p>
+            <div className="actions">
+              <a className="btn primary small" href={app.signUp}>
+                Take the {l.code} Level Test
+              </a>
+              <Link className="btn ghost small" href="/tests">
+                Compare the tests
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {next && (
+        <section className="section">
+          <div className="wrap">
+            <div className="sec-head" data-reveal>
+              <p className="eyebrow">
+                <TrendingUp size={14} /> Next step
+              </p>
+              <h2>
+                From {l.code} to {next.code}
+              </h2>
+              <p className="muted">At {next.code}, a person {next.summary.charAt(0).toLowerCase() + next.summary.slice(1)}</p>
+            </div>
+            <div className="grid g3 steps">
+              {[
+                ["Find your weakest skill", "A free placement test shows your level in each skill, so you know where to start."],
+                ["Practise with a plan", `Spica sets weekly tasks toward ${next.code}, with Practice Modules for every question type and feedback on every answer.`],
+                ["Check you are ready", `Timed mock tests show how close you are; then take the ${next.code} Level Test or a full test to prove it.`],
+              ].map(([h, t], k) => (
+                <div className="card step" key={h} data-reveal style={{ ["--i" as string]: k }}>
+                  <h3>{h}</h3>
+                  <p className="muted">{t}</p>
+                </div>
+              ))}
+            </div>
+            <div className="actions" style={{ marginTop: 20 }}>
+              <a className="btn primary" href={app.signUp}>
+                Start free <ArrowRight size={17} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="section alt">
         <div className="wrap level-nav">
           {prev ? (
