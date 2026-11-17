@@ -86,15 +86,9 @@ export function Platform() {
     window.scrollTo({ top: window.scrollY + r.top - PIN_TOP + ((i + 0.5) / TABS.length) * total, behavior: "smooth" });
   }
 
-  const index = TABS.findIndex((x) => x.id === tab);
   return (
     <div className="h-scrolly" ref={outer}>
     <div className="h-scrolly-pin">
-    <div className="h-progress" aria-hidden="true">
-      {TABS.map((x, i) => (
-        <span key={x.id} className={i <= index ? "on" : ""} />
-      ))}
-    </div>
     <div className="h-platform">
       <div className="h-tablist" role="tablist" aria-label="What Spica does">
         {TABS.map((x) => {

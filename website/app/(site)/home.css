@@ -1259,13 +1259,9 @@ main:has(.h) + .site .site-footer {
 @media (max-width: 900px) { .h-try { grid-template-columns: 1fr; gap: 24px; } }
 
 /* Platform block: pinned while the four parts take turns on scroll (large screens). */
-.h-progress { display: none; }
 @media (min-width: 1021px) and (min-height: 760px) and (prefers-reduced-motion: no-preference) {
   .h-scrolly { height: 260vh; }
   .h-scrolly-pin { position: sticky; top: 110px; }
-  .h-progress { display: flex; gap: 6px; margin-bottom: 14px; }
-  .h-progress span { flex: 1; height: 4px; border-radius: 4px; background: rgba(46, 36, 25, 0.12); transition: background 0.3s; }
-  .h-progress span.on { background: var(--h-clay); }
   .h-panel { animation: h-panel-in 0.35s ease; }
 }
 @keyframes h-panel-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
