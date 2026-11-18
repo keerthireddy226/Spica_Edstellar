@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "{{n}} और डेमो लाइसेंस",
  "Your organisation now has {{n}} more demo licences.": "आपके संगठन के पास अब {{n}} और डेमो लाइसेंस हैं।",
  "New learners you add get a 7-day demo automatically.": "आप जो नए शिक्षार्थी जोड़ेंगे, उन्हें अपने आप 7 दिन का डेमो मिलेगा।",
- "Privacy Notice for Channel Partners": "चैनल पार्टनर के लिए प्राइवेसी नोटिस"
+ "Privacy Notice for Channel Partners": "चैनल पार्टनर के लिए प्राइवेसी नोटिस",
+ "1 month from when it starts": "शुरू होने से 1 महीना",
+ "{{n}} licences × 1 month": "{{n}} लाइसेंस × 1 महीना",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "1 महीने के {{l}} लाइसेंस · {{c}} क्रेडिट · {{d}} तक असाइन करें",
+ "Moved to a paid licence": "पेड लाइसेंस पर गए"
 }

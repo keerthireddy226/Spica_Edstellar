@@ -95,7 +95,7 @@ function Performance() {
             </option>
           ))}
         </select>
-        <Button variant="secondary" disabled={!rows?.length} onClick={csv}>
+        <Button variant="secondary" disabled={!rows?.length} onClick={csv} className="flex items-center gap-1.5">
           <Download size={15} /> {tr("Download CSV")}
         </Button>
       </div>

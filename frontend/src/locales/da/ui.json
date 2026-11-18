@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "{{n}} demolicenser mere",
  "Your organisation now has {{n}} more demo licences.": "Din organisation har nu {{n}} demolicenser mere.",
  "New learners you add get a 7-day demo automatically.": "Nye kursister, du tilføjer, får automatisk en 7-dages demo.",
- "Privacy Notice for Channel Partners": "Privatlivsmeddelelse for kanalpartnere"
+ "Privacy Notice for Channel Partners": "Privatlivsmeddelelse for kanalpartnere",
+ "1 month from when it starts": "1 måned fra start",
+ "{{n}} licences × 1 month": "{{n}} licenser × 1 måned",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} licenser à 1 måned · {{c}} kreditter · tildel senest {{d}}",
+ "Moved to a paid licence": "Skiftet til betalt licens"
 }

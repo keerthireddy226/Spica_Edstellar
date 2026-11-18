@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "再增加 {{n}} 个体验许可证",
  "Your organisation now has {{n}} more demo licences.": "你的组织现在多了 {{n}} 个体验许可证。",
  "New learners you add get a 7-day demo automatically.": "你新添加的学员会自动获得 7 天体验。",
- "Privacy Notice for Channel Partners": "渠道合作伙伴隐私声明"
+ "Privacy Notice for Channel Partners": "渠道合作伙伴隐私声明",
+ "1 month from when it starts": "从开始起 1 个月",
+ "{{n}} licences × 1 month": "{{n}} 个许可证 × 1 个月",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} 个 1 个月的许可证 · {{c}} 个点数 · 请在 {{d}} 前分配",
+ "Moved to a paid licence": "已改用付费许可证"
 }

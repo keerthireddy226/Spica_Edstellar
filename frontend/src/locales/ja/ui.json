@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "デモライセンス{{n}}件を追加",
  "Your organisation now has {{n}} more demo licences.": "組織のデモライセンスが{{n}}件増えました。",
  "New learners you add get a 7-day demo automatically.": "新しく追加した受講者には自動で7日間のデモが付与されます。",
- "Privacy Notice for Channel Partners": "チャネルパートナー向けプライバシー通知"
+ "Privacy Notice for Channel Partners": "チャネルパートナー向けプライバシー通知",
+ "1 month from when it starts": "開始から1か月",
+ "{{n}} licences × 1 month": "ライセンス{{n}}件 × 1か月",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "1か月のライセンス{{l}}件 · クレジット{{c}} · {{d}}までに割り当て",
+ "Moved to a paid licence": "有料ライセンスに移行済み"
 }

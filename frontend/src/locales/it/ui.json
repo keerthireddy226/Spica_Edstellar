@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "{{n}} licenze demo in più",
  "Your organisation now has {{n}} more demo licences.": "La tua organizzazione ora ha {{n}} licenze demo in più.",
  "New learners you add get a 7-day demo automatically.": "I nuovi studenti che aggiungi ricevono automaticamente una demo di 7 giorni.",
- "Privacy Notice for Channel Partners": "Informativa privacy per i partner di canale"
+ "Privacy Notice for Channel Partners": "Informativa privacy per i partner di canale",
+ "1 month from when it starts": "1 mese dal suo inizio",
+ "{{n}} licences × 1 month": "{{n}} licenze × 1 mese",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} licenze da 1 mese · {{c}} crediti · da assegnare entro il {{d}}",
+ "Moved to a paid licence": "Passato a una licenza a pagamento"
 }

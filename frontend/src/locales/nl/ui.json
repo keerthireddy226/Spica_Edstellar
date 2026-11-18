@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "{{n}} extra demolicenties",
  "Your organisation now has {{n}} more demo licences.": "Je organisatie heeft nu {{n}} extra demolicenties.",
  "New learners you add get a 7-day demo automatically.": "Nieuwe cursisten die je toevoegt, krijgen automatisch een demo van 7 dagen.",
- "Privacy Notice for Channel Partners": "Privacyverklaring voor kanaalpartners"
+ "Privacy Notice for Channel Partners": "Privacyverklaring voor kanaalpartners",
+ "1 month from when it starts": "1 maand vanaf de start",
+ "{{n}} licences × 1 month": "{{n}} licenties × 1 maand",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} licenties van 1 maand · {{c}} credits · toewijzen vóór {{d}}",
+ "Moved to a paid licence": "Overgestapt op een betaalde licentie"
 }

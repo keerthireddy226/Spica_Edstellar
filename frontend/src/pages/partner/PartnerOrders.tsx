@@ -328,7 +328,7 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
             {o.partner && <p><b>{tr("Partner")}:</b> {o.partner.name} ({o.partner.code})</p>}
             <p><b>{tr("Organisations")}:</b> {d.organisations.map((x) => x.name).join(", ")}</p>
             <p><b>{tr("Order ends")}:</b> {day(o.validUntil)}</p>
-            <p><b>{tr("Each licence lasts")}:</b> {tr("{{n}} months from when it starts", { n: o.licenceMonths })}</p>
+            <p><b>{tr("Each licence lasts")}:</b> {o.licenceMonths === 1 ? tr("1 month from when it starts") : tr("{{n}} months from when it starts", { n: o.licenceMonths })}</p>
             <p><b>{tr("Organisations allowed")}:</b> {o.maxOrganisations}</p>
             {d.effectivePerOrgCap != null && <p><b>{tr("Licences per organisation")}:</b> {tr("up to {{n}}", { n: d.effectivePerOrgCap })}</p>}
             <p><b>{tr("Billing")}:</b> {o.inIndia ? tr("India (INR, GST 18%)") : tr("Outside India (USD, no Indian GST)")}</p>
@@ -456,7 +456,7 @@ function LinesTable({ lines, currency, months }: { lines: Line[]; currency: stri
             </td>
             <td className="px-3 py-2">
               {l.kind === "full_access"
-                ? tr("{{n}} licences × {{m}} months", { n: l.quantity, m: months })
+                ? months === 1 ? tr("{{n}} licences × 1 month", { n: l.quantity }) : tr("{{n}} licences × {{m}} months", { n: l.quantity, m: months })
                 : l.kind === "credits"
                   ? tr("{{n}} credits", { n: l.quantity })
                   : tr("{{n}} learners · {{c}} credits", { n: l.quantity, c: l.credits ?? 0 })}
@@ -939,7 +939,7 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
             <select className={input} value={months} onChange={(e) => setMonths(Number(e.target.value) as 1 | 3 | 6)}>
               {[1, 3, 6].map((m) => (
                 <option key={m} value={m}>
-                  {tr("{{n}} months", { n: m })}
+                  {m === 1 ? tr("1 month") : tr("{{n}} months", { n: m })}
                 </option>
               ))}
             </select>

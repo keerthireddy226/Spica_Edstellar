@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "{{n}} demolisenssiä lisää",
  "Your organisation now has {{n}} more demo licences.": "Organisaatiollasi on nyt {{n}} demolisenssiä lisää.",
  "New learners you add get a 7-day demo automatically.": "Lisäämäsi uudet opiskelijat saavat automaattisesti 7 päivän demon.",
- "Privacy Notice for Channel Partners": "Tietosuojailmoitus jälleenmyyjäkumppaneille"
+ "Privacy Notice for Channel Partners": "Tietosuojailmoitus jälleenmyyjäkumppaneille",
+ "1 month from when it starts": "1 kk alkamisesta",
+ "{{n}} licences × 1 month": "{{n}} lisenssiä × 1 kk",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} lisenssiä à 1 kk · {{c}} krediittiä · määritä viimeistään {{d}}",
+ "Moved to a paid licence": "Siirretty maksulliseen lisenssiin"
 }

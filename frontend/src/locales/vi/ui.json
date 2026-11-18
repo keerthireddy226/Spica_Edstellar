@@ -6245,5 +6245,9 @@
  "{{n}} more demo licences": "Thêm {{n}} giấy phép dùng thử",
  "Your organisation now has {{n}} more demo licences.": "Tổ chức của bạn giờ có thêm {{n}} giấy phép dùng thử.",
  "New learners you add get a 7-day demo automatically.": "Học viên mới bạn thêm sẽ tự động có 7 ngày dùng thử.",
- "Privacy Notice for Channel Partners": "Thông báo quyền riêng tư cho đối tác kênh"
+ "Privacy Notice for Channel Partners": "Thông báo quyền riêng tư cho đối tác kênh",
+ "1 month from when it starts": "1 tháng từ khi bắt đầu",
+ "{{n}} licences × 1 month": "{{n}} giấy phép × 1 tháng",
+ "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} giấy phép 1 tháng · {{c}} tín dụng · cấp trước {{d}}",
+ "Moved to a paid licence": "Đã chuyển sang giấy phép trả phí"
 }

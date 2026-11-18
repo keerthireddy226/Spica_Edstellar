@@ -150,7 +150,8 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     const learners = await pool.query(
       `SELECT u.id, u.first_name, u.last_name, u.email,
          e.starts_at, e.ends_at,
-         EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND e.starts_at IS NOT NULL AND s.started_at >= e.starts_at) AS started
+         EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = u.id AND e.starts_at IS NOT NULL AND s.started_at >= e.starts_at) AS started,
+         EXISTS (SELECT 1 FROM license_assignments la WHERE la.user_id = u.id AND la.reclaimed_at IS NULL AND la.ends_at > now()) AS paid
        FROM users u
        LEFT JOIN LATERAL (SELECT * FROM entitlements x WHERE x.user_id = u.id AND x.source = 'partner_demo' AND x.revoked_at IS NULL ORDER BY x.ends_at DESC LIMIT 1) e ON true
        WHERE u.tenant_id = $1 AND u.role = 'learner' AND u.deleted_at IS NULL ORDER BY u.created_at DESC`,
@@ -170,6 +171,7 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
         demoEndsAt: l.ends_at,
         status: !l.ends_at ? "none" : new Date(l.ends_at) > new Date() ? "active" : "ended",
         started: l.started,
+        paid: l.paid,
       })),
     });
   } catch (err) {

@@ -55,7 +55,7 @@ export function OrgOrdersPanel() {
                 {o.orderNumber} · {money(o.total, o.currency)}
               </b>
               <span className="text-muted">
-                {tr("{{l}} licences of {{m}} months · {{c}} credits · assign by {{d}}", { l: o.licences, m: o.licenceMonths, c: o.credits, d: day(o.validUntil) })}
+                {o.licenceMonths === 1 ? tr("{{l}} licences of 1 month · {{c}} credits · assign by {{d}}", { l: o.licences, c: o.credits, d: day(o.validUntil) }) : tr("{{l}} licences of {{m}} months · {{c}} credits · assign by {{d}}", { l: o.licences, m: o.licenceMonths, c: o.credits, d: day(o.validUntil) })}
               </span>
               {o.allocated.licences + o.allocated.credits > 0 && (
                 <span className="text-success font-semibold">

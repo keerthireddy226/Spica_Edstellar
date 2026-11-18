@@ -9,7 +9,7 @@ import { tr } from "@/i18n/tr";
 interface Data {
   partnerOrganisation: boolean;
   demo?: { given: number; used: number; left: number; windowOpen: boolean; windowEndsAt: string | null; days: number };
-  learners?: { id: string; name: string; email: string; demoEndsAt: string | null; status: "none" | "active" | "ended"; started: boolean }[];
+  learners?: { id: string; name: string; email: string; demoEndsAt: string | null; status: "none" | "active" | "ended"; started: boolean; paid?: boolean }[];
   upgrade?: { demoLearners: number; paidLicencesFree: number; licenceMonths: number };
 }
 const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—");
@@ -84,8 +84,8 @@ export function OrgDemoPanel() {
                 <b>{l.name || l.email}</b> <span className="text-muted">{l.email}</span>
               </span>
               <span className="flex items-center gap-3">
-                <span className="text-muted">{l.status === "active" ? tr("Demo until {{d}}", { d: day(l.demoEndsAt) }) : l.status === "ended" ? tr("Demo ended") : tr("No demo licence")}</span>
-                {l.status === "none" && (
+                <span className="text-muted">{l.paid ? tr("Moved to a paid licence") : l.status === "active" ? tr("Demo until {{d}}", { d: day(l.demoEndsAt) }) : l.status === "ended" ? tr("Demo ended") : tr("No demo licence")}</span>
+                {l.status === "none" && !l.paid && (
                   <button className="font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={busy === l.id || x.left <= 0 || !x.windowOpen} onClick={() => act(l.id, "POST")}>
                     {tr("Give a demo licence")}
                   </button>
