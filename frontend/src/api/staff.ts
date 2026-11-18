@@ -14,6 +14,7 @@ export interface StaffPermissions {
   scoreReview: boolean;
   viewReports: boolean;
   manageAdmins: boolean;
+  finance: boolean;
 }
 
 export interface Money {

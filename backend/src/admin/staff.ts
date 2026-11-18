@@ -6,7 +6,7 @@ import type { AuthedRequest } from "../auth/middleware.js";
 // the organizations they own (onboarded, or are account manager for), within
 // the permissions the Super Admin gave them.
 
-export const STAFF_PERMISSIONS = ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "contentReview", "scoreReview", "viewReports", "manageAdmins"] as const;
+export const STAFF_PERMISSIONS = ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "contentReview", "scoreReview", "viewReports", "manageAdmins", "finance"] as const;
 export type StaffPermission = (typeof STAFF_PERMISSIONS)[number];
 
 export const isSuperAdmin = (req: AuthedRequest) => req.user?.role === "super_admin";

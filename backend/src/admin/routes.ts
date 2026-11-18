@@ -51,6 +51,7 @@ const PERMISSION_KEYS = [
   "scoreReview",
   "viewReports",
   "manageAdmins",
+  "finance",
 ] as const;
 
 const onboardAdminSchema = z.object({

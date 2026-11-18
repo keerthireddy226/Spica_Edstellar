@@ -16,6 +16,7 @@ const ALL: StaffPermissions = {
   scoreReview: true,
   viewReports: true,
   manageAdmins: true,
+  finance: true,
 };
 
 // What this staff member may do: everything for a Super Admin, the granted
@@ -32,6 +33,7 @@ export function useStaffPermissions(): StaffPermissions & { isSuper: boolean } {
     scoreReview: !!p.scoreReview,
     viewReports: !!p.viewReports,
     manageAdmins: !!p.manageAdmins,
+    finance: !!p.finance,
     isSuper: false,
   };
 }

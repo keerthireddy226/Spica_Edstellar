@@ -25,6 +25,7 @@ const PRESETS: { label: string; perms: (keyof AdminPermissions)[] }[] = [
   { label: tr("Sales / Account manager"), perms: ["manageOrganizations", "inviteLearners", "viewReports"] },
   { label: tr("Delivery / L&D"), perms: ["inviteLearners", "viewLearnerInfo", "viewReports", "contentReview"] },
   { label: tr("Assessment reviewer"), perms: ["viewLearnerInfo", "scoreReview", "contentReview"] },
+  { label: tr("Finance"), perms: ["finance"] },
   { label: tr("Team lead"), perms: ["manageOrganizations", "inviteLearners", "viewLearnerInfo", "viewReports", "manageAdmins"] },
   { label: tr("Full access"), perms: Object.keys(PERMISSION_LABELS) as (keyof AdminPermissions)[] },
 ];
@@ -37,6 +38,7 @@ const PERMISSION_HELP: Record<keyof AdminPermissions, string> = {
   scoreReview: tr("Decide flagged placement tests"),
   viewReports: tr("Analytics, insights and reports"),
   manageAdmins: tr("Onboard and edit other Admins (team lead)"),
+  finance: tr("Proforma invoices, payments and final invoices for partner orders"),
 };
 
 const input = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";

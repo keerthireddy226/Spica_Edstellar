@@ -40,6 +40,7 @@ export const ROUTES = {
   CERTIFICATE: "/certificate/:code",
   INVOICE: "/invoice/:id",
   QUOTE: "/quote/:id",
+  ORDER_DOCUMENT: "/order-document/:orderId/:kind",
   ADMIN_REVIEW: "/admin/review",
   // Super Admin's own console — exclusively theirs, never reachable by an
   // Admin (see SUPER_ADMIN_ONLY_ROLES below). Sees every organization,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stripePartnerOrderPaid } from "../channelPartners/financeOrders.js";
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -328,6 +329,11 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
     const event = JSON.parse(raw) as { type: string; data: { object: Record<string, any> } };
     // Monthly renewals: subscriptions, their invoices and cancellations.
     if (await handleStripeSubscriptionEvent(event)) return res.json({ received: true });
+    if (event.type === "checkout.session.completed" && event.data.object.payment_status === "paid" && event.data.object.metadata?.partner_order_id) {
+      // A Channel Partner order paid by its Stripe link (stage 6).
+      await stripePartnerOrderPaid(String(event.data.object.metadata.partner_order_id), (event.data.object.payment_intent as string) ?? null, Number(event.data.object.amount_total ?? 0) || null);
+      return res.json({ received: true });
+    }
     if (event.type === "checkout.session.completed" && event.data.object.payment_status === "paid") {
       const orderId = event.data.object.metadata?.order_id as string | undefined;
       if (orderId) await fulfillOrder(orderId, (event.data.object.payment_intent as string) ?? null);

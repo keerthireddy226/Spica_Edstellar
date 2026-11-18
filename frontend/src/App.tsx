@@ -63,6 +63,7 @@ import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
 import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
+import { OrderDocument } from "@/pages/OrderDocument";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -158,6 +159,14 @@ function App() {
           element={
             <ProtectedRoute>
               <QuoteView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ORDER_DOCUMENT}
+          element={
+            <ProtectedRoute>
+              <OrderDocument />
             </ProtectedRoute>
           }
         />

@@ -203,15 +203,19 @@ async function loadOrder(orderId: string, partnerId: string | null) {
 }
 
 // Allowed moves. Partners submit and cancel their own drafts / submitted
-// orders; Spica moves an order through the payment steps (stage 6 gives these
-// to Finance) and can cancel it until it's allocated.
-const NEXT: Record<string, { to: OrderStatus; staff: boolean; partner: boolean }[]> = {
-  draft: [{ to: "submitted", staff: true, partner: true }, { to: "cancelled", staff: true, partner: true }],
-  submitted: [{ to: "proforma_sent", staff: true, partner: false }, { to: "cancelled", staff: true, partner: true }],
-  proforma_sent: [{ to: "payment_received", staff: true, partner: false }, { to: "cancelled", staff: true, partner: false }],
-  payment_received: [{ to: "confirmed", staff: true, partner: false }, { to: "cancelled", staff: true, partner: false }],
-  confirmed: [{ to: "cancelled", staff: true, partner: false }],
+// orders. Finance sends the proforma and records the payment (financeOrders.ts);
+// a Super Admin or Admin confirms the order and can cancel it until it's allocated.
+type Who = "partner" | "staff" | "finance";
+const NEXT: Record<string, { to: OrderStatus; who: Who[] }[]> = {
+  draft: [{ to: "submitted", who: ["partner", "staff"] }, { to: "cancelled", who: ["partner", "staff"] }],
+  submitted: [{ to: "proforma_sent", who: ["finance"] }, { to: "cancelled", who: ["partner", "staff"] }],
+  proforma_sent: [{ to: "payment_received", who: ["finance"] }, { to: "cancelled", who: ["staff"] }],
+  payment_received: [{ to: "confirmed", who: ["staff"] }, { to: "cancelled", who: ["staff"] }],
+  confirmed: [{ to: "cancelled", who: ["staff"] }],
 };
+
+// Columns Finance's steps set together with the status change.
+const SETTABLE = ["bill_to", "proforma_number", "proforma_sent_at", "payment_method", "payment_reference", "payment_amount", "payment_received_on", "invoice_number", "invoice_issued_at"] as const;
 
 const STATUS_TEXT: Record<string, string> = {
   submitted: "submitted",
@@ -221,16 +225,29 @@ const STATUS_TEXT: Record<string, string> = {
   cancelled: "cancelled",
 };
 
-export async function changeStatus(args: { orderId: string; to: OrderStatus; actor: Actor; partnerId?: string | null; note?: string | null }) {
+export async function changeStatus(args: {
+  orderId: string;
+  to: OrderStatus;
+  actor: Actor;
+  partnerId?: string | null;
+  note?: string | null;
+  // Finance's steps: checked by the caller, with the columns they set.
+  finance?: { set: Partial<Record<(typeof SETTABLE)[number], unknown>> };
+}) {
   const o = await loadOrder(args.orderId, args.partnerId ?? null);
-  const staff = isStaff(args.actor);
-  const move = (NEXT[o.status] ?? []).find((m) => m.to === args.to && (staff ? m.staff : m.partner));
+  const who: Who = args.finance ? "finance" : isStaff(args.actor) ? "staff" : "partner";
+  const staff = who !== "partner";
+  const move = (NEXT[o.status] ?? []).find((m) => m.to === args.to && m.who.includes(who));
   if (!move) throw new PartnerError("status_change_not_allowed", 409, { status: o.status });
   if (args.to === "cancelled" && staff && !args.note?.trim()) throw new PartnerError("reason_required");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const u = await client.query(`UPDATE partner_orders SET status = $2, cancel_reason = CASE WHEN $2 = 'cancelled' THEN $3 ELSE cancel_reason END, updated_at = now() WHERE id = $1 AND status = $4`, [o.id, args.to, args.note?.trim() || null, o.status]);
+    const extra = Object.entries(args.finance?.set ?? {}).filter(([k]) => (SETTABLE as readonly string[]).includes(k));
+    const u = await client.query(
+      `UPDATE partner_orders SET status = $2, cancel_reason = CASE WHEN $2 = 'cancelled' THEN $3 ELSE cancel_reason END, updated_at = now()${extra.map(([k], i) => `, ${k} = $${i + 5}`).join("")} WHERE id = $1 AND status = $4`,
+      [o.id, args.to, args.note?.trim() || null, o.status, ...extra.map(([, v]) => (v !== null && typeof v === "object" && !(v instanceof Date) ? JSON.stringify(v) : v))],
+    );
     if (!u.rowCount) throw new PartnerError("status_change_not_allowed", 409, { status: o.status });
     await recordEvent(client, o.id, o.status, args.to, args.actor.id, args.note);
     await client.query("COMMIT");
@@ -244,28 +261,30 @@ export async function changeStatus(args: { orderId: string; to: OrderStatus; act
   await notifyOrder(o, args.to, args.actor);
 }
 
-// Submitted: Super Admins and the Admin who looks after the partner. Spica's
-// later steps: the partner. (Finance joins in stage 6.)
+// Submitted: Super Admins, the Admin who looks after the partner and Finance.
+// Payment received: Super Admins and that Admin, to confirm. Each Spica step:
+// the partner.
 async function notifyOrder(o: { id: string; order_number: string; partner_id: string | null; total: number; currency: string }, to: OrderStatus, actor: Actor) {
   const money = `${o.currency} ${(o.total / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const p = o.partner_id ? (await pool.query(`SELECT user_id, full_name, created_by FROM channel_partners WHERE id = $1`, [o.partner_id])).rows[0] : null;
-  if (to === "submitted") {
+  if (to === "submitted" || to === "payment_received") {
     const staff = await pool.query(
-      `SELECT id, role FROM users WHERE deleted_at IS NULL AND (role = 'super_admin' OR (role = 'admin' AND id = $1)) AND id <> $2`,
-      [p?.created_by ?? null, actor.id],
+      `SELECT id, role FROM users WHERE deleted_at IS NULL AND (role = 'super_admin' OR (role = 'admin' AND (id = $1 OR ($3 AND permissions->>'finance' = 'true')))) AND ($2::uuid IS NULL OR id <> $2)`,
+      [p?.created_by ?? null, actor.id, to === "submitted"],
     );
     for (const s of staff.rows) {
       await notify({
         userId: s.id,
         kind: "partner_order",
-        title: `New order ${o.order_number}`,
-        body: `${p ? p.full_name : "Spica"} submitted order ${o.order_number} for ${money}.`,
+        title: to === "submitted" ? `New order ${o.order_number}` : `Payment received for order ${o.order_number}`,
+        body: to === "submitted" ? `${p ? p.full_name : "Spica"} submitted order ${o.order_number} for ${money}.` : "Confirm the order so the licences can be allocated.",
         link: s.role === "super_admin" ? "/superadmin/partner-orders" : "/admin/partner-orders",
-        dedupeKey: `porder:${o.id}:submitted:${s.id}`,
+        dedupeKey: `porder:${o.id}:${to}:${s.id}`,
         email: true,
       });
     }
-  } else if (p && actor.id !== p.user_id && STATUS_TEXT[to]) {
+  }
+  if (to !== "submitted" && (p && actor.id !== p.user_id && STATUS_TEXT[to])) {
     await notify({
       userId: p.user_id,
       kind: "partner_order",
@@ -280,7 +299,7 @@ async function notifyOrder(o: { id: string; order_number: string; partner_id: st
 
 export async function listOrders(f: { partnerId?: string | null; status?: string | null; id?: string | null }) {
   const r = await pool.query(
-    `SELECT o.*, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until_text, p.full_name AS partner_name, p.code AS partner_code,
+    `SELECT o.*, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until_text, to_char(o.payment_received_on, 'YYYY-MM-DD') AS payment_received_on_text, p.full_name AS partner_name, p.code AS partner_code,
        (SELECT coalesce(sum(quantity), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id AND l.kind = 'full_access') AS licences,
        (SELECT coalesce(sum(credits), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id) AS credits,
        (SELECT array_agg(t.name ORDER BY t.name) FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id WHERE x.order_id = o.id) AS organisations
@@ -313,6 +332,16 @@ function orderRow(o: any) {
     commissionAmount: o.commission_amount,
     notes: o.notes,
     cancelReason: o.cancel_reason,
+    billTo: o.bill_to ?? null,
+    proformaNumber: o.proforma_number ?? null,
+    proformaSentAt: o.proforma_sent_at ?? null,
+    paymentLinkUrl: o.payment_link_url ?? null,
+    paymentMethod: o.payment_method ?? null,
+    paymentReference: o.payment_reference ?? null,
+    paymentAmount: o.payment_amount ?? null,
+    paymentReceivedOn: o.payment_received_on_text ?? null,
+    invoiceNumber: o.invoice_number ?? null,
+    invoiceIssuedAt: o.invoice_issued_at ?? null,
     licences: o.licences ?? 0,
     credits: o.credits ?? 0,
     organisations: (o.organisations ?? []) as string[],

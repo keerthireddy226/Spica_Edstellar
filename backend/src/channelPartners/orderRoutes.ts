@@ -4,7 +4,8 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
-import { requirePermission } from "../admin/staff.js";
+import { requirePermission, staffPermissions, requireStaff, isSuperAdmin } from "../admin/staff.js";
+import { createPaymentLink, orderDocument, recordPayment, sendProforma, suggestedBillTo } from "./financeOrders.js";
 import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
 import { sendPartnerError } from "./portalRoutes.js";
 
@@ -114,13 +115,23 @@ partnerOrdersRouter.post("/:orderId/status", async (req: AuthedRequest, res, nex
 export const staffOrdersRouter = Router();
 staffOrdersRouter.use(requireAuth);
 
+// Seeing orders: Admins who manage organisations, and Finance.
+async function canSeeOrders(req: AuthedRequest, res: Response): Promise<boolean> {
+  if (!requireStaff(req, res)) return false;
+  if (isSuperAdmin(req)) return true;
+  const p = await staffPermissions(req);
+  if (p.manageOrganizations || p.finance) return true;
+  res.status(403).json({ error: "permission_required", permission: "finance" });
+  return false;
+}
+
 staffOrdersRouter.get("/products", async (req: AuthedRequest, res, next) => {
-  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await canSeeOrders(req, res))) return;
   orderProducts().then((products) => res.json({ products }), next);
 });
 // Organisations an order can name: the partner's, or all for a direct order.
 staffOrdersRouter.get("/organisations", async (req: AuthedRequest, res, next) => {
-  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await canSeeOrders(req, res))) return;
   const partnerId = typeof req.query.partnerId === "string" && req.query.partnerId ? req.query.partnerId : null;
   pool
     .query(`SELECT id, name, category FROM tenants WHERE type = 'cohort' AND deactivated_at IS NULL AND ($1::uuid IS NULL OR channel_partner_id = $1) ORDER BY name LIMIT 1000`, [partnerId])
@@ -135,13 +146,13 @@ staffOrdersRouter.post("/quote", async (req: AuthedRequest, res, next) => {
   }
 });
 staffOrdersRouter.get("/", async (req: AuthedRequest, res, next) => {
-  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await canSeeOrders(req, res))) return;
   const status = typeof req.query.status === "string" && (ORDER_STATUSES as readonly string[]).includes(req.query.status) ? req.query.status : null;
   const partnerId = typeof req.query.partnerId === "string" && /^[0-9a-f-]{36}$/.test(req.query.partnerId) ? req.query.partnerId : null;
   listOrders({ status, partnerId }).then((orders) => res.json({ orders }), next);
 });
 staffOrdersRouter.get("/:orderId", async (req: AuthedRequest, res, next) => {
-  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  if (!(await canSeeOrders(req, res))) return;
   getOrder(req.params.orderId as string, null).then((o) => res.json(o), (err) => fail(err, res, next));
 });
 staffOrdersRouter.post("/", async (req: AuthedRequest, res, next) => {
@@ -170,5 +181,71 @@ staffOrdersRouter.post("/:orderId/status", async (req: AuthedRequest, res, next)
     res.json({ ok: true });
   } catch (err) {
     fail(err, res, next);
+  }
+});
+
+// ---- Finance ----
+const billToSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  attention: z.string().trim().max(200).nullish(),
+  address: z.string().trim().max(600).nullish(),
+  email: z.string().trim().email().max(200),
+  gstin: z.string().trim().max(20).nullish(),
+  country: z.string().trim().max(2).nullish(),
+});
+const paymentSchema = z.object({
+  method: z.enum(["bank", "stripe", "other"]),
+  reference: z.string().trim().max(200).nullish(),
+  amount: z.coerce.number().int().min(1).max(10_000_000_000),
+  receivedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
+staffOrdersRouter.get("/:orderId/bill-to", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "finance"))) return;
+  suggestedBillTo(req.params.orderId as string).then((billTo) => res.json({ billTo }), (err) => fail(err, res, next));
+});
+staffOrdersRouter.post("/:orderId/proforma", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "finance"))) return;
+  try {
+    res.json(await sendProforma({ orderId: req.params.orderId as string, actor: actorOf(req), billTo: billToSchema.parse(req.body?.billTo) }));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+staffOrdersRouter.post("/:orderId/payment-link", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "finance"))) return;
+  try {
+    res.json(await createPaymentLink({ orderId: req.params.orderId as string, actor: actorOf(req) }));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+staffOrdersRouter.post("/:orderId/payment", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "finance"))) return;
+  try {
+    const b = paymentSchema.parse(req.body);
+    res.json(await recordPayment({ orderId: req.params.orderId as string, actor: actorOf(req), method: b.method, reference: b.reference ?? null, amount: b.amount, receivedOn: b.receivedOn }));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// ---- The proforma and the final invoice (staff, the partner, the organisations' admins) ----
+export const orderDocumentsRouter = Router();
+orderDocumentsRouter.get("/:orderId/:kind", requireAuth, async (req: AuthedRequest, res, next) => {
+  const kind = req.params.kind === "invoice" ? "invoice" : req.params.kind === "proforma" ? "proforma" : null;
+  if (!kind || !/^[0-9a-f-]{36}$/.test(String(req.params.orderId))) return res.status(404).json({ error: "not_found" });
+  try {
+    const u = req.user!;
+    let staffOk = u.role === "super_admin";
+    if (u.role === "admin") {
+      const p = await staffPermissions(req);
+      staffOk = p.manageOrganizations || p.finance;
+    }
+    const doc = await orderDocument(String(req.params.orderId), kind, { id: u.id, role: u.role, tenantId: u.tenantId ?? null, staffOk });
+    if (!doc) return res.status(404).json({ error: "not_found" });
+    res.json(doc);
+  } catch (err) {
+    next(err);
   }
 });

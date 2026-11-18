@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Receipt, Trash2 } from "lucide-react";
+import { Copy, FileText, Plus, Receipt, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/Button";
-import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatusPill } from "@/components/staff/StaffKit";
+import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 import { DetailModal } from "@/components/DetailModal";
 import { tr } from "@/i18n/tr";
 
@@ -34,10 +34,28 @@ export interface OrderRow {
   commissionAmount: number;
   notes: string | null;
   cancelReason: string | null;
+  billTo: BillTo | null;
+  proformaNumber: string | null;
+  proformaSentAt: string | null;
+  paymentLinkUrl: string | null;
+  paymentMethod: "stripe" | "bank" | "other" | null;
+  paymentReference: string | null;
+  paymentAmount: number | null;
+  paymentReceivedOn: string | null;
+  invoiceNumber: string | null;
+  invoiceIssuedAt: string | null;
   licences: number;
   credits: number;
   organisations: string[];
   createdAt: string;
+}
+interface BillTo {
+  name: string;
+  attention?: string | null;
+  address?: string | null;
+  email: string;
+  gstin?: string | null;
+  country?: string | null;
 }
 interface Line {
   kind: LineKind;
@@ -56,7 +74,7 @@ interface OrderDetail {
   lines: Line[];
   organisations: { id: string; name: string; category: string }[];
   history: { from: string | null; to: Status; note: string | null; at: string; by: { name: string; email: string; role: string } | null }[];
-  nextSteps: { to: Status; staff: boolean; partner: boolean }[];
+  nextSteps: { to: Status; who: ("partner" | "staff" | "finance")[] }[];
 }
 interface Quote {
   currency: "INR" | "USD";
@@ -129,6 +147,7 @@ const ERRORS: Record<string, string> = {
   order_locked: tr("This order can't be changed any more."),
   status_change_not_allowed: tr("This step isn't possible for the order's current status. Refresh and try again."),
   reason_required: tr("Write the reason for cancelling."),
+  stripe_not_configured: tr("Stripe isn't set up yet. Ask the organisation to pay by bank transfer."),
   partner_deactivated: tr("This partner is deactivated."),
 };
 const errText = (e: unknown) => {
@@ -144,6 +163,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<OrderDetail | "new" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const perms = useStaffPermissions();
   const load = () => {
     const q = new URLSearchParams();
     if (status) q.set("status", status);
@@ -172,9 +192,11 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
             </option>
           ))}
         </select>
-        <Button onClick={() => setEditing("new")}>
-          <Plus size={16} /> {tr("New order")}
-        </Button>
+        {(mode === "partner" || perms.manageOrganizations) && (
+          <Button onClick={() => setEditing("new")}>
+            <Plus size={16} /> {tr("New order")}
+          </Button>
+        )}
       </div>
       {shown.length === 0 ? (
         <EmptyNote>{tr("No orders yet. A new order lists the organisations, the products and how long the licences last.")}</EmptyNote>
@@ -244,6 +266,22 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [reason, setReason] = useState("");
+  const [finance, setFinance] = useState<"proforma" | "payment" | null>(null);
+  const perms = useStaffPermissions();
+  const canManage = mode === "staff" && perms.manageOrganizations;
+  const canFinance = mode === "staff" && perms.finance;
+  const paymentLink = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await api(`${base(mode)}/${orderId}/payment-link`, post({}));
+      await load();
+    } catch (e) {
+      setErr(errText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
   const load = () => api<OrderDetail>(`${base(mode)}/${orderId}`).then(setD).catch(() => setErr(tr("Could not load this order.")));
   useEffect(() => {
     load();
@@ -263,8 +301,8 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
     }
   };
   const o = d?.order;
-  const steps = (d?.nextSteps ?? []).filter((s) => (mode === "staff" ? s.staff : s.partner));
-  const canEdit = !!o && (mode === "staff" ? ["draft", "submitted", "proforma_sent", "payment_received"] : ["draft"]).includes(o.status);
+  const steps = (d?.nextSteps ?? []).filter((s) => (mode === "staff" ? canManage && s.who.includes("staff") : s.who.includes("partner")));
+  const canEdit = !!o && (mode === "staff" ? canManage && ["draft", "submitted", "proforma_sent", "payment_received"].includes(o.status) : o.status === "draft");
   return (
     <DetailModal title={o ? o.orderNumber : tr("Order")} subtitle={o ? STATUS_LABEL[o.status] : ""} icon={Receipt} onClose={onClose} wide>
       {!d || !o ? (
@@ -286,6 +324,33 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
           {o.partner && <p className="text-muted">{tr("Commission: {{p}}% · {{a}}", { p: o.commissionPercent, a: money(o.commissionAmount, o.currency) })}</p>}
           {o.notes && <p className="text-muted whitespace-pre-line">{o.notes}</p>}
           {o.cancelReason && <Notice tone="error">{tr("Cancelled: {{r}}", { r: o.cancelReason })}</Notice>}
+          {(o.proformaNumber || o.invoiceNumber || o.paymentLinkUrl) && (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border border-rule rounded-input p-3">
+              {o.proformaNumber && (
+                <a className="flex items-center gap-1.5 font-semibold text-navy" href={`/order-document/${o.id}/proforma`} target="_blank" rel="noreferrer">
+                  <FileText size={15} /> {tr("Proforma {{n}}", { n: o.proformaNumber })}
+                </a>
+              )}
+              {o.invoiceNumber && (
+                <a className="flex items-center gap-1.5 font-semibold text-navy" href={`/order-document/${o.id}/invoice`} target="_blank" rel="noreferrer">
+                  <FileText size={15} /> {tr("Tax invoice {{n}}", { n: o.invoiceNumber })}
+                </a>
+              )}
+              {o.paymentLinkUrl && o.status === "proforma_sent" && (
+                <button className="flex items-center gap-1.5 font-semibold text-navy cursor-pointer" onClick={() => navigator.clipboard?.writeText(o.paymentLinkUrl!)}>
+                  <Copy size={15} /> {tr("Copy the payment link")}
+                </button>
+              )}
+              {o.paymentReceivedOn && o.paymentAmount != null && (
+                <span className="text-muted">
+                  {tr("Paid {{a}} on {{d}}", { a: money(o.paymentAmount, o.currency), d: day(o.paymentReceivedOn) })}
+                  {o.paymentReference ? ` · ${o.paymentReference}` : ""}
+                </span>
+              )}
+            </div>
+          )}
+          {finance === "proforma" && <ProformaForm orderId={o.id} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
+          {finance === "payment" && <PaymentForm order={o} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
           <div>
             <p className={label}>{tr("History")}</p>
             <ul className="mt-1 flex flex-col gap-1">
@@ -318,6 +383,21 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
                 <Button variant="secondary" onClick={() => onEdit(d)}>
                   {tr("Change order")}
                 </Button>
+              )}
+              {canFinance && o.status === "submitted" && !finance && (
+                <Button disabled={busy} onClick={() => setFinance("proforma")}>
+                  {tr("Send the proforma invoice")}
+                </Button>
+              )}
+              {canFinance && o.status === "proforma_sent" && !finance && (
+                <>
+                  <Button variant="secondary" disabled={busy} onClick={paymentLink}>
+                    {o.paymentLinkUrl ? tr("New payment link") : tr("Create a Stripe payment link")}
+                  </Button>
+                  <Button disabled={busy} onClick={() => setFinance("payment")}>
+                    {tr("Record the payment")}
+                  </Button>
+                </>
               )}
               {steps.some((s) => s.to === "cancelled") && (
                 <Button variant="secondary" onClick={() => setCancelling(true)}>
@@ -387,6 +467,128 @@ function Totals({ subtotal, taxRate, taxAmount, total, currency }: { subtotal: n
       <b className="text-base">
         {tr("Total")}: {money(total, currency)}
       </b>
+    </div>
+  );
+}
+
+// Finance: who the proforma is billed to (suggested from the first organisation).
+function ProformaForm({ orderId, onCancel, onDone }: { orderId: string; onCancel: () => void; onDone: () => void }) {
+  const [b, setB] = useState<BillTo | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    api<{ billTo: BillTo }>(`/admin/partner-orders/${orderId}/bill-to`).then((r) => setB(r.billTo)).catch(() => setErr(tr("Could not load the billing details.")));
+  }, [orderId]);
+  if (!b) return err ? <Notice tone="error">{err}</Notice> : <PageLoading />;
+  const set = (k: keyof BillTo) => (e: { target: { value: string } }) => setB({ ...b, [k]: e.target.value });
+  const send = async () => {
+    if (!b.name.trim() || !/^\S+@\S+\.\S+$/.test(b.email.trim())) return setErr(tr("Enter the name and a valid email to bill."));
+    setBusy(true);
+    setErr(null);
+    try {
+      await api(`/admin/partner-orders/${orderId}/proforma`, post({ billTo: b }));
+      onDone();
+    } catch (e) {
+      setErr(errText(e));
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-3 border border-rule rounded-input p-3">
+      <p className="font-semibold">{tr("Send the proforma invoice")}</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Bill to (organisation)")}</span>
+          <input className={input} value={b.name} onChange={set("name")} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("For the attention of")}</span>
+          <input className={input} value={b.attention ?? ""} onChange={set("attention")} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Billing email")}</span>
+          <input className={input} type="email" value={b.email} onChange={set("email")} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("GSTIN (optional)")}</span>
+          <input className={input} value={b.gstin ?? ""} onChange={set("gstin")} />
+        </label>
+      </div>
+      <label className="flex flex-col gap-1">
+        <span className={label}>{tr("Billing address")}</span>
+        <textarea className={input} rows={2} value={b.address ?? ""} onChange={set("address")} />
+      </label>
+      <p className="text-muted">{tr("The proforma goes to this email, the organisations' admins and the partner.")}</p>
+      {err && <Notice tone="error">{err}</Notice>}
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onCancel}>
+          {tr("Cancel")}
+        </Button>
+        <Button disabled={busy} onClick={send}>
+          {tr("Send proforma")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Finance: a payment that arrived (bank transfer or other). Issues the tax invoice.
+function PaymentForm({ order, onCancel, onDone }: { order: OrderRow; onCancel: () => void; onDone: () => void }) {
+  const [method, setMethod] = useState<"bank" | "stripe" | "other">("bank");
+  const [reference, setReference] = useState("");
+  const [amount, setAmount] = useState(String(order.total / 100));
+  const [receivedOn, setReceivedOn] = useState(iso(new Date()));
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const minor = Math.round(Number(amount) * 100);
+  const save = async () => {
+    if (!(minor > 0)) return setErr(tr("Enter the amount received."));
+    setBusy(true);
+    setErr(null);
+    try {
+      await api(`/admin/partner-orders/${order.id}/payment`, post({ method, reference: reference.trim() || null, amount: minor, receivedOn }));
+      onDone();
+    } catch (e) {
+      setErr(errText(e));
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-3 border border-rule rounded-input p-3">
+      <p className="font-semibold">{tr("Record the payment")}</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Paid by")}</span>
+          <select className={input} value={method} onChange={(e) => setMethod(e.target.value as "bank" | "stripe" | "other")}>
+            <option value="bank">{tr("Bank transfer")}</option>
+            <option value="stripe">{tr("Stripe")}</option>
+            <option value="other">{tr("Other")}</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Reference (UTR or transaction ID)")}</span>
+          <input className={input} value={reference} maxLength={200} onChange={(e) => setReference(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Amount received ({{c}})", { c: order.currency })}</span>
+          <input className={input} type="number" min={0} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className={label}>{tr("Received on")}</span>
+          <input className={input} type="date" max={iso(new Date())} value={receivedOn} onChange={(e) => setReceivedOn(e.target.value)} />
+        </label>
+      </div>
+      {minor > 0 && minor !== order.total && <Notice tone="info">{tr("This is different from the order total of {{t}}.", { t: money(order.total, order.currency) })}</Notice>}
+      <p className="text-muted">{tr("Saving issues the tax invoice and tells the organisations, the partner and Spica's admins.")}</p>
+      {err && <Notice tone="error">{err}</Notice>}
+      <div className="flex justify-end gap-2">
+        <Button variant="secondary" onClick={onCancel}>
+          {tr("Cancel")}
+        </Button>
+        <Button disabled={busy} onClick={save}>
+          {tr("Save the payment")}
+        </Button>
+      </div>
     </div>
   );
 }

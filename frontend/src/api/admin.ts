@@ -21,6 +21,7 @@ export interface AdminPermissions {
   scoreReview?: boolean;
   viewReports?: boolean;
   manageAdmins?: boolean;
+  finance?: boolean;
 }
 
 export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
@@ -31,6 +32,7 @@ export const PERMISSION_LABELS: Record<keyof AdminPermissions, string> = {
   scoreReview: tr("Score review"),
   viewReports: tr("View reports"),
   manageAdmins: tr("Manage Admins"),
+  finance: tr("Finance"),
 };
 
 export interface AdminAccount {

@@ -15,7 +15,7 @@ import { tr } from "@/i18n/tr";
 // Admin only their one organization (every batch, every Manager); a Manager
 // only the batch(es) assigned to them, never the whole organization.
 // `product`: shown only when the organization bought that product.
-type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions; product?: "skills" | "recruitment" };
+type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions | (keyof StaffPermissions)[]; product?: "skills" | "recruitment" };
 
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
@@ -44,7 +44,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
   { to: ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners"), permission: "manageOrganizations" },
-  { to: ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders"), permission: "manageOrganizations" },
+  { to: ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders"), permission: ["manageOrganizations", "finance"] },
   { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: tr("Admins"), permission: "manageAdmins" },
   { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: tr("Managers") },
@@ -155,7 +155,7 @@ export function AdminSidebar({ open, onClose, onNavigate }: { open: boolean; onC
   // An Admin only sees pages their permissions allow; an organization only
   // the products it bought.
   const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS)
-    .filter((n) => (!n.permission || user?.role !== "admin" || perms[n.permission]) && (!n.product || !products || products.includes(n.product)))
+    .filter((n) => (!n.permission || user?.role !== "admin" || (Array.isArray(n.permission) ? n.permission.some((k) => perms[k]) : perms[n.permission])) && (!n.product || !products || products.includes(n.product)))
     .map((n) => (admissions && n.to === ROUTES.ORG_ADMIN_RECRUITMENT ? { ...n, label: tr("Admissions") } : n));
   const integrityPath = navItems.find((n) => INTEGRITY_PATHS.has(n.to))?.to ?? null;
   const pendingReviews = usePendingReviewCount(Boolean(integrityPath), location.pathname);
