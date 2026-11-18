@@ -263,6 +263,8 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
   const [d, setD] = useState<ChannelPartnerDetail | null>(null);
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState("overview");
+  // A normal popup (not the browser's) to confirm ending the window or deactivating.
+  const [ask, setAsk] = useState<{ text: string; label: string; go: () => void } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [edit, setEdit] = useState<{ fullName: string; demoLicences: string; commissionPercent: string; notes: string } | null>(null);
@@ -423,7 +425,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                     <Button disabled={busy} onClick={() => run(() => extendDemo(p.id, endOfDayIso(endDate)), tr("Demo window changed."))}>
                       {tr("Change end date")}
                     </Button>
-                    <Button variant="secondary" disabled={busy} onClick={() => window.confirm(tr("End the demo window now? The partner can't give out more demo licences.")) && run(() => endDemo(p.id), tr("Demo window ended."))}>
+                    <Button variant="secondary" disabled={busy} onClick={() => setAsk({ text: tr("End the demo window now? The partner can't give out more demo licences."), label: tr("End now"), go: () => run(() => endDemo(p.id), tr("Demo window ended.")) })}>
                       {tr("End now")}
                     </Button>
                   </>
@@ -453,7 +455,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                   </Button>
                 )}
                 {p.active ? (
-                  <Button variant="secondary" disabled={busy} onClick={() => window.confirm(tr("Deactivate this partner? They're signed out and can't sign in. Their organisations stay.")) && run(() => deactivatePartner(p.id), tr("Partner deactivated."))}>
+                  <Button variant="secondary" disabled={busy} onClick={() => setAsk({ text: tr("Deactivate this partner? They're signed out and can't sign in. Their organisations stay."), label: tr("Deactivate partner"), go: () => run(() => deactivatePartner(p.id), tr("Partner deactivated.")) })}>
                     {tr("Deactivate partner")}
                   </Button>
                 ) : (
@@ -464,6 +466,27 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
               </div>
             </ModalSection>
           </>
+        )}
+        {ask && (
+          <DetailModal title={tr("Are you sure?")} subtitle={p.fullName} icon={Handshake} onClose={() => setAsk(null)}>
+            <div className="flex flex-col gap-4 text-sm">
+              <p>{ask.text}</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setAsk(null)}>
+                  {tr("Cancel")}
+                </Button>
+                <Button
+                  onClick={() => {
+                    const go = ask.go;
+                    setAsk(null);
+                    go();
+                  }}
+                >
+                  {ask.label}
+                </Button>
+              </div>
+            </div>
+          </DetailModal>
         )}
         {tab === "orgs" && (
           <ModalSection

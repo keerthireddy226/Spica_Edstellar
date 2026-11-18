@@ -123,13 +123,15 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
   }
   // The organisations' admins and the partner.
   for (const i of items) {
-    const parts = [i.licences ? `${i.licences} licences (${o.licence_months} months each)` : null, i.credits ? `${i.credits} credits` : null].filter(Boolean).join(" and ");
+    // Whole sentences with the numbers in them, so they translate.
+    const got = i.licences && i.credits ? `Order ${o.order_number}: ${i.licences} licences of ${o.licence_months} months and ${i.credits} credits are now in your organisation.` : i.licences ? `Order ${o.order_number}: ${i.licences} licences of ${o.licence_months} months are now in your organisation.` : `Order ${o.order_number}: ${i.credits} credits are now in your organisation.`;
+    const up = upgraded.get(i.tenantId);
     for (const id of await orgAdminIds(i.tenantId)) {
       await notify({
         userId: id,
         kind: "partner_order",
-        title: `${parts} are ready to assign`,
-        body: `Order ${o.order_number}: ${parts} are now in your organisation. Add your learners and assign them by ${shortDate(o.valid_until)}. Licences assigned in the next ${SETUP_GRACE_DAYS} days start counting on ${shortDate(graceEnds)}.${upgraded.get(i.tenantId) ? ` ${upgraded.get(i.tenantId)} demo learners already have a paid licence and keep their history.` : ""}`,
+        title: "Licences and credits ready to assign",
+        body: [got, `Add your learners and assign them by ${shortDate(o.valid_until)}.`, i.licences ? `Licences assigned in the next 3 days start counting on ${shortDate(graceEnds)}.` : null, up ? `${up} demo learners already have a paid licence and keep their history.` : null].filter(Boolean).join(" "),
         link: "/orgadmin/dashboard",
         email: true,
       });
