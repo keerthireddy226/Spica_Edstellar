@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica: bài đánh giá cuối khóa",
  "Final assessment": "Bài đánh giá cuối khóa",
  "Your code for the English assessment for {{jobTitle}}": "Mã của bạn cho bài đánh giá tiếng Anh vị trí {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Mã để bắt đầu bài đánh giá tiếng Anh cho vị trí {{jobTitle}} tại {{orgName}} của bạn là:\n\n{{code}}\n\nMã có hiệu lực trong {{minutes}} phút. Nếu bạn không yêu cầu mã này, bạn có thể bỏ qua tin nhắn này."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Mã để bắt đầu bài đánh giá tiếng Anh cho vị trí {{jobTitle}} tại {{orgName}} của bạn là:\n\n{{code}}\n\nMã có hiệu lực trong {{minutes}} phút. Nếu bạn không yêu cầu mã này, bạn có thể bỏ qua tin nhắn này.",
+ "Your demo period has ended": "Thời gian dùng thử của bạn đã kết thúc",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "Bạn không thể cấp thêm giấy phép dùng thử. Học viên vẫn giữ số ngày dùng thử đã có. Hãy trao đổi với Spica về bước tiếp theo.",
+ "Your demo period ends on {{shortDate}}": "Thời gian dùng thử của bạn kết thúc ngày {{shortDate}}",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "Hãy cấp số giấy phép dùng thử còn lại cho các tổ chức của bạn trước ngày đó. Giấy phép chưa được cấp trước ngày đó sẽ không thể sử dụng.",
+ "{{full_name}}: demo period ended": "{{full_name}}: thời gian dùng thử đã kết thúc",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "Thời gian dùng thử của đối tác đã kết thúc. Hãy gia hạn hoặc lên kế hoạch mô hình trả phí cùng đối tác.",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}: thời gian dùng thử kết thúc ngày {{shortDate}}",
+ "Extend it from Channel Partners if the partner needs more time.": "Gia hạn trong mục Đối tác kênh nếu đối tác cần thêm thời gian.",
+ "The demo period has ended": "Thời gian dùng thử đã kết thúc",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "Học viên mới sẽ không còn nhận giấy phép dùng thử. Ai đã có thì giữ đến khi hết hạn.",
+ "Demo licences can be given until {{shortDate}}": "Có thể cấp giấy phép dùng thử đến {{shortDate}}",
+ "New learners you add before then get a 7-day demo automatically.": "Học viên mới bạn thêm trước ngày đó sẽ tự động nhận bản dùng thử 7 ngày.",
+ "Your 7-day demo has ended": "Bản dùng thử 7 ngày của bạn đã kết thúc",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "Báo cáo của bạn đã được lưu. Hãy hỏi quản trị viên tổ chức của bạn về quyền truy cập đầy đủ để tiếp tục luyện tập và làm bài đánh giá cuối cùng.",
+ "Your demo ends tomorrow": "Bản dùng thử của bạn kết thúc vào ngày mai",
+ "Your demo ends in 2 days": "Bản dùng thử của bạn kết thúc sau 2 ngày",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "Bản dùng thử của bạn kết thúc ngày {{shortDate}}. Hãy hoàn thành các bài kiểm tra luyện tập và bài thi thử trước ngày đó."
 }

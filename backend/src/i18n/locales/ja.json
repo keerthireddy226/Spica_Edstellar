@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica：最終アセスメント",
  "Final assessment": "最終アセスメント",
  "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}}の英語アセスメントのコード",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}の{{jobTitle}}の英語アセスメントを開始するためのコードは次のとおりです。\n\n{{code}}\n\nこのコードは{{minutes}}分間有効です。心当たりがない場合は、このメッセージを無視してください。"
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}}の{{jobTitle}}の英語アセスメントを開始するためのコードは次のとおりです。\n\n{{code}}\n\nこのコードは{{minutes}}分間有効です。心当たりがない場合は、このメッセージを無視してください。",
+ "Your demo period has ended": "デモ期間が終了しました",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "これ以上デモライセンスを付与できません。受講者はすでにあるデモ日数をそのまま使えます。次のステップについてSpicaにご相談ください。",
+ "Your demo period ends on {{shortDate}}": "デモ期間は{{shortDate}}に終了します",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "それまでに残りのデモライセンスを組織に付与してください。その日までに付与されなかったライセンスは使用できません。",
+ "{{full_name}}: demo period ended": "{{full_name}}：デモ期間が終了しました",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "パートナーのデモ期間が終了しました。延長するか、有料モデルについてパートナーと計画してください。",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}：デモ期間は{{shortDate}}に終了します",
+ "Extend it from Channel Partners if the partner needs more time.": "パートナーにもっと時間が必要な場合は、チャネルパートナーから延長してください。",
+ "The demo period has ended": "デモ期間が終了しました",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "新しい受講者にはデモライセンスが付与されなくなりました。すでにお持ちの方は、終了するまで利用できます。",
+ "Demo licences can be given until {{shortDate}}": "デモライセンスは{{shortDate}}まで付与できます",
+ "New learners you add before then get a 7-day demo automatically.": "それまでに追加した新しい受講者には、7日間のデモが自動で付与されます。",
+ "Your 7-day demo has ended": "7日間のデモが終了しました",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "レポートは保存されています。練習を続けて最終アセスメントを受けるには、所属組織の管理者にフルアクセスについてお問い合わせください。",
+ "Your demo ends tomorrow": "デモは明日終了します",
+ "Your demo ends in 2 days": "デモはあと2日で終了します",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "デモは{{shortDate}}に終了します。それまでに練習テストと模擬テストを終えてください。"
 }

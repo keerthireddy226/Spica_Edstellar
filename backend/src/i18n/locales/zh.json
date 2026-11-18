@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica：结业测评",
  "Final assessment": "结业测评",
  "Your code for the English assessment for {{jobTitle}}": "你的 {{jobTitle}} 英语测评验证码",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "你在 {{orgName}} 开始 {{jobTitle}} 英语测评的验证码是：\n\n{{code}}\n\n验证码 {{minutes}} 分钟内有效。如果这不是你本人的操作，请忽略此邮件。"
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "你在 {{orgName}} 开始 {{jobTitle}} 英语测评的验证码是：\n\n{{code}}\n\n验证码 {{minutes}} 分钟内有效。如果这不是你本人的操作，请忽略此邮件。",
+ "Your demo period has ended": "你的体验期已结束",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "你无法再分配体验许可证。学员会保留已获得的体验天数。请与 Spica 商讨下一步。",
+ "Your demo period ends on {{shortDate}}": "你的体验期将于 {{shortDate}} 结束",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "请在此之前把剩余的体验许可证分配给你的组织。届时仍未分配的许可证将无法使用。",
+ "{{full_name}}: demo period ended": "{{full_name}}：体验期已结束",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "该合作伙伴的体验期已结束。请延长体验期，或与对方规划付费模式。",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}：体验期将于 {{shortDate}} 结束",
+ "Extend it from Channel Partners if the partner needs more time.": "如果合作伙伴需要更多时间，请在“渠道合作伙伴”中延长。",
+ "The demo period has ended": "体验期已结束",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "新学员将不再获得体验许可证。已有许可证的学员可使用到期为止。",
+ "Demo licences can be given until {{shortDate}}": "体验许可证可分配至 {{shortDate}}",
+ "New learners you add before then get a 7-day demo automatically.": "在此之前添加的新学员会自动获得 7 天体验。",
+ "Your 7-day demo has ended": "你的 7 天体验已结束",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "你的报告已保存。如需继续练习并参加最终评估，请向你所在组织的管理员咨询完整权限。",
+ "Your demo ends tomorrow": "你的体验明天结束",
+ "Your demo ends in 2 days": "你的体验将在 2 天后结束",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "你的体验将于 {{shortDate}} 结束。请在此之前完成练习测试和模拟测试。"
 }

@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica: Abschlusstest",
  "Final assessment": "Abschlusstest",
  "Your code for the English assessment for {{jobTitle}}": "Dein Code für den Englischtest für {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Dein Code, um den Englischtest für {{jobTitle}} bei {{orgName}} zu starten, lautet:\n\n{{code}}\n\nEr gilt {{minutes}} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese Nachricht ignorieren."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Dein Code, um den Englischtest für {{jobTitle}} bei {{orgName}} zu starten, lautet:\n\n{{code}}\n\nEr gilt {{minutes}} Minuten. Wenn du ihn nicht angefordert hast, kannst du diese Nachricht ignorieren.",
+ "Your demo period has ended": "Dein Demo-Zeitraum ist beendet",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "Du kannst keine Demo-Lizenzen mehr vergeben. Lernende behalten die Demo-Tage, die sie schon haben. Sprich mit Spica über den nächsten Schritt.",
+ "Your demo period ends on {{shortDate}}": "Dein Demo-Zeitraum endet am {{shortDate}}",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "Vergib deine restlichen Demo-Lizenzen vorher an deine Organisationen. Lizenzen, die bis dahin nicht vergeben sind, können nicht genutzt werden.",
+ "{{full_name}}: demo period ended": "{{full_name}}: Demo-Zeitraum beendet",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "Der Demo-Zeitraum des Partners ist beendet. Verlängere ihn oder plane mit ihm das bezahlte Modell.",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}: Demo-Zeitraum endet am {{shortDate}}",
+ "Extend it from Channel Partners if the partner needs more time.": "Verlängere ihn unter Vertriebspartner, wenn der Partner mehr Zeit braucht.",
+ "The demo period has ended": "Der Demo-Zeitraum ist beendet",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "Neue Lernende erhalten keine Demo-Lizenz mehr. Wer eine hat, behält sie bis zu ihrem Ende.",
+ "Demo licences can be given until {{shortDate}}": "Demo-Lizenzen können bis {{shortDate}} vergeben werden",
+ "New learners you add before then get a 7-day demo automatically.": "Neue Lernende, die du vorher hinzufügst, erhalten automatisch eine 7-Tage-Demo.",
+ "Your 7-day demo has ended": "Deine 7-Tage-Demo ist beendet",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "Deine Berichte sind gespeichert. Frag die Admin-Person deiner Organisation nach vollem Zugang, um weiter zu üben und die Abschlussprüfung zu machen.",
+ "Your demo ends tomorrow": "Deine Demo endet morgen",
+ "Your demo ends in 2 days": "Deine Demo endet in 2 Tagen",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "Deine Demo endet am {{shortDate}}. Schließe deine Übungstests und den Probetest vorher ab."
 }

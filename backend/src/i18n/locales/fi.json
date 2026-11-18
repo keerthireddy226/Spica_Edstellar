@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica: loppukoe",
  "Final assessment": "Loppukoe",
  "Your code for the English assessment for {{jobTitle}}": "Koodisi englannin testiin tehtävään {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koodisi englannin testin aloittamiseen tehtävään {{jobTitle}} organisaatiossa {{orgName}} on:\n\n{{code}}\n\nSe on voimassa {{minutes}} minuuttia. Jos et pyytänyt sitä, voit jättää tämän viestin huomiotta."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Koodisi englannin testin aloittamiseen tehtävään {{jobTitle}} organisaatiossa {{orgName}} on:\n\n{{code}}\n\nSe on voimassa {{minutes}} minuuttia. Jos et pyytänyt sitä, voit jättää tämän viestin huomiotta.",
+ "Your demo period has ended": "Demojaksosi on päättynyt",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "Et voi enää jakaa demolisenssejä. Opiskelijat säilyttävät jo saamansa demopäivät. Keskustele Spican kanssa seuraavasta vaiheesta.",
+ "Your demo period ends on {{shortDate}}": "Demojaksosi päättyy {{shortDate}}",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "Anna jäljellä olevat demolisenssisi organisaatioillesi ennen sitä. Lisenssejä, joita ei ole jaettu siihen mennessä, ei voi käyttää.",
+ "{{full_name}}: demo period ended": "{{full_name}}: demojakso päättynyt",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "Kumppanin demojakso on päättynyt. Pidennä sitä tai suunnittele maksullinen malli yhdessä kumppanin kanssa.",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}: demojakso päättyy {{shortDate}}",
+ "Extend it from Channel Partners if the partner needs more time.": "Pidennä sitä kohdassa Jälleenmyyjäkumppanit, jos kumppani tarvitsee lisää aikaa.",
+ "The demo period has ended": "Demojakso on päättynyt",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "Uudet opiskelijat eivät enää saa demolisenssiä. Ne, joilla on lisenssi, säilyttävät sen sen päättymiseen asti.",
+ "Demo licences can be given until {{shortDate}}": "Demolisenssejä voi antaa {{shortDate}} asti",
+ "New learners you add before then get a 7-day demo automatically.": "Uudet opiskelijat, jotka lisäät ennen sitä, saavat automaattisesti 7 päivän demon.",
+ "Your 7-day demo has ended": "7 päivän demosi on päättynyt",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "Raporttisi on tallennettu. Kysy organisaatiosi ylläpitäjältä täyttä käyttöoikeutta, jotta voit jatkaa harjoittelua ja tehdä loppuarvioinnin.",
+ "Your demo ends tomorrow": "Demosi päättyy huomenna",
+ "Your demo ends in 2 days": "Demosi päättyy 2 päivän kuluttua",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "Demosi päättyy {{shortDate}}. Suorita harjoituskokeesi ja harjoitustesti ennen sitä."
 }

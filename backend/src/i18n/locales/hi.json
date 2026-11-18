@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica: अंतिम आकलन",
  "Final assessment": "अंतिम आकलन",
  "Your code for the English assessment for {{jobTitle}}": "{{jobTitle}} के लिए अंग्रेज़ी आकलन का आपका कोड",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}} में {{jobTitle}} के लिए अंग्रेज़ी आकलन शुरू करने का आपका कोड है:\n\n{{code}}\n\nयह {{minutes}} मिनट तक काम करेगा। अगर आपने इसे नहीं माँगा था, तो इस संदेश को अनदेखा कर सकते हैं।"
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "{{orgName}} में {{jobTitle}} के लिए अंग्रेज़ी आकलन शुरू करने का आपका कोड है:\n\n{{code}}\n\nयह {{minutes}} मिनट तक काम करेगा। अगर आपने इसे नहीं माँगा था, तो इस संदेश को अनदेखा कर सकते हैं।",
+ "Your demo period has ended": "आपकी डेमो अवधि खत्म हो गई है",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "आप अब और डेमो लाइसेंस नहीं बाँट सकते। शिक्षार्थियों के पास पहले से मिले डेमो दिन बने रहेंगे। अगले कदम के बारे में Spica से बात करें।",
+ "Your demo period ends on {{shortDate}}": "आपकी डेमो अवधि {{shortDate}} को खत्म होगी",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "उससे पहले बचे हुए डेमो लाइसेंस अपने संगठनों को दे दें। उस तारीख तक न बाँटे गए लाइसेंस इस्तेमाल नहीं किए जा सकेंगे।",
+ "{{full_name}}: demo period ended": "{{full_name}}: डेमो अवधि खत्म",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "पार्टनर की डेमो अवधि खत्म हो गई है। इसे बढ़ाएँ या उनके साथ पेड मॉडल की योजना बनाएँ।",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}: डेमो अवधि {{shortDate}} को खत्म होगी",
+ "Extend it from Channel Partners if the partner needs more time.": "अगर पार्टनर को और समय चाहिए तो चैनल पार्टनर से इसे बढ़ाएँ।",
+ "The demo period has ended": "डेमो अवधि खत्म हो गई है",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "नए शिक्षार्थियों को अब डेमो लाइसेंस नहीं मिलता। जिनके पास है, उनके पास वह खत्म होने तक रहेगा।",
+ "Demo licences can be given until {{shortDate}}": "डेमो लाइसेंस {{shortDate}} तक दिए जा सकते हैं",
+ "New learners you add before then get a 7-day demo automatically.": "उससे पहले जोड़े गए नए शिक्षार्थियों को अपने आप 7 दिन का डेमो मिलता है।",
+ "Your 7-day demo has ended": "आपका 7 दिन का डेमो खत्म हो गया है",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "आपकी रिपोर्ट सेव हैं। अभ्यास जारी रखने और अंतिम मूल्यांकन देने के लिए अपने संगठन के एडमिन से पूरी पहुँच के बारे में पूछें।",
+ "Your demo ends tomorrow": "आपका डेमो कल खत्म होगा",
+ "Your demo ends in 2 days": "आपका डेमो 2 दिन में खत्म होगा",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "आपका डेमो {{shortDate}} को खत्म होगा। उससे पहले अपने प्रैक्टिस टेस्ट और मॉक टेस्ट पूरे कर लें।"
 }

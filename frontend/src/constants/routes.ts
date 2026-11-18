@@ -63,6 +63,7 @@ export const ROUTES = {
   SUPER_CERTIFICATES: "/superadmin/certificates",
   SUPER_CHANNEL_PARTNERS: "/superadmin/channel-partners",
   PARTNER_LOGIN: "/partner/login",
+  PARTNER_PROFILE: "/partner/profile",
   PARTNER_DASHBOARD: "/partner/dashboard",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
@@ -177,7 +178,7 @@ export const PROFILE_ROUTE_BY_ROLE: Record<Role, string> = {
   super_admin: ROUTES.ADMIN_PROFILE,
   recruiter: ROUTES.RECRUITER_PROFILE,
   candidate: ROUTES.CANDIDATE,
-  channel_partner: ROUTES.PARTNER_DASHBOARD,
+  channel_partner: ROUTES.PARTNER_PROFILE,
 };
 
 // The Privacy Notices (static pages in public/legal), one per kind of user,

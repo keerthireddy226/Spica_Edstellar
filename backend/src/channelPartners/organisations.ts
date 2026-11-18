@@ -117,6 +117,14 @@ export async function partnerOrganisations(partnerId: string) {
     `SELECT t.id, t.name, t.category, t.created_at, t.deactivated_at,
        (SELECT coalesce(sum(a.licences), 0)::int FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS demo_licences,
        (SELECT count(*)::int FROM users l WHERE l.tenant_id = t.id AND l.role = 'learner' AND l.deleted_at IS NULL) AS learners,
+       (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL) AS demo_used,
+       (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND e.ends_at > now()) AS demo_active,
+       (SELECT count(DISTINCT e.user_id)::int FROM entitlements e JOIN sessions s ON s.user_id = e.user_id AND s.started_at >= e.starts_at
+          WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL) AS demo_started,
+       (SELECT count(*)::int FROM entitlements e JOIN sessions s ON s.user_id = e.user_id AND s.started_at >= e.starts_at AND s.started_at < e.ends_at
+          WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL) AS demo_practice_done,
+       (SELECT count(*)::int FROM entitlements e JOIN sessions s ON s.user_id = e.user_id AND s.started_at >= e.starts_at AND s.started_at < e.ends_at
+          WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NOT NULL) AS demo_mocks_done,
        oa.first_name AS admin_first, oa.last_name AS admin_last, oa.email AS admin_email,
        (SELECT max(s.created_at) FROM auth_sessions s WHERE s.user_id = oa.id) AS admin_signed_in
      FROM tenants t
@@ -132,6 +140,12 @@ export async function partnerOrganisations(partnerId: string) {
     active: !o.deactivated_at,
     demoLicences: o.demo_licences,
     learners: o.learners,
+    // Usage of the demo licences: counts only, never scores.
+    demoUsed: o.demo_used,
+    demoActive: o.demo_active,
+    demoStarted: o.demo_started,
+    practiceDone: o.demo_practice_done,
+    mocksDone: o.demo_mocks_done,
     admin: { name: [o.admin_first, o.admin_last].filter(Boolean).join(" "), email: o.admin_email, invitePending: !o.admin_signed_in },
   }));
 }

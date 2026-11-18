@@ -17,6 +17,11 @@ export interface PartnerOrg {
   active: boolean;
   demoLicences: number;
   learners: number;
+  demoUsed: number;
+  demoActive: number;
+  demoStarted: number;
+  practiceDone: number;
+  mocksDone: number;
   admin: { name: string; email: string; invitePending: boolean };
 }
 interface Me {
@@ -108,7 +113,10 @@ export function PartnerDashboard() {
                       <p className="text-xs text-muted">{o.admin.email}</p>
                       {o.admin.invitePending && <StatusPill tone="warning">{tr("Invite pending")}</StatusPill>}
                     </td>
-                    <td className="px-4 py-3">{o.demoLicences}</td>
+                    <td className="px-4 py-3">
+                      <p>{tr("{{used}} of {{n}} used", { used: o.demoUsed, n: o.demoLicences })}</p>
+                      <p className="text-xs text-muted">{tr("{{n}} learners started", { n: o.demoStarted })}</p>
+                    </td>
                     <td className="px-4 py-3">{o.learners}</td>
                     <td className="px-4 py-3 text-muted">{day(o.createdAt)}</td>
                     <td className="px-4 py-3 text-right">

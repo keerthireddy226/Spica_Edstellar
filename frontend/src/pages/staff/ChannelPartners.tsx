@@ -315,6 +315,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
         { label: tr("Demo licences"), value: tr("{{given}} of {{total}}", { given: p.demoLicencesGiven, total: p.demoLicences }), hint: tr("Given out") },
         { label: tr("Demo window"), value: p.demoStatus === "not_started" ? tr("Not started") : day(p.demoEndedAt ?? p.demoEndsAt), hint: p.demoStatus === "active" ? tr("Ends") : p.demoStatus === "ended" ? tr("Ended") : undefined },
         { label: tr("Organisations"), value: p.organisations },
+        { label: tr("Learners on a demo"), value: d.organisations.reduce((n, o) => n + o.demoUsed, 0), hint: tr("{{n}} started a test", { n: d.organisations.reduce((n, o) => n + o.demoStarted, 0) }) },
         { label: tr("Commission"), value: `${p.commissionPercent}%` },
       ]}
       tabs={[
@@ -483,7 +484,11 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                       <span className="text-muted"> · {o.admin.name} ({o.admin.email}){o.admin.invitePending ? ` · ${tr("Invite pending")}` : ""}</span>
                     </span>
                     <span className="flex items-center gap-3">
-                      <span className="text-muted">{tr("{{n}} demo licences · {{l}} learners", { n: o.demoLicences, l: o.learners })}</span>
+                      <span className="text-muted">
+                        {tr("{{used}} of {{n}} demo licences used · {{l}} learners", { used: o.demoUsed, n: o.demoLicences, l: o.learners })}
+                        <br />
+                        {tr("{{s}} started · {{p}} practice tests and {{m}} mock tests finished", { s: o.demoStarted, p: o.practiceDone, m: o.mocksDone })}
+                      </span>
                       <button className="text-sm font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={p.demoStatus !== "active"} onClick={() => setGiving(o)}>
                         {tr("Give licences")}
                       </button>

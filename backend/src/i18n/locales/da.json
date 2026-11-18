@@ -376,5 +376,22 @@
  "Spica: final assessment": "Spica: afsluttende test",
  "Final assessment": "Afsluttende test",
  "Your code for the English assessment for {{jobTitle}}": "Din kode til engelsktesten til {{jobTitle}}",
- "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Din kode til at starte engelsktesten til {{jobTitle}} hos {{orgName}} er:\n\n{{code}}\n\nDen gælder i {{minutes}} minutter. Hvis du ikke har bedt om den, kan du ignorere denne besked."
+ "Your code to start the English assessment for {{jobTitle}} at {{orgName}} is:\n\n{{code}}\n\nIt works for {{minutes}} minutes. If you didn't ask for it, you can ignore this message.": "Din kode til at starte engelsktesten til {{jobTitle}} hos {{orgName}} er:\n\n{{code}}\n\nDen gælder i {{minutes}} minutter. Hvis du ikke har bedt om den, kan du ignorere denne besked.",
+ "Your demo period has ended": "Din demoperiode er slut",
+ "You can't give out more demo licences. Learners keep the demo days they already have. Talk to Spica about the next step.": "Du kan ikke give flere demolicenser ud. Kursister beholder de demodage, de allerede har. Tal med Spica om næste skridt.",
+ "Your demo period ends on {{shortDate}}": "Din demoperiode slutter {{shortDate}}",
+ "Give your remaining demo licences to your organisations before then. Licences not given out by that date can't be used.": "Giv dine resterende demolicenser til dine organisationer inden da. Licenser, der ikke er givet ud til den dato, kan ikke bruges.",
+ "{{full_name}}: demo period ended": "{{full_name}}: demoperiode slut",
+ "The partner's demo period has ended. Extend it or plan the paid model with them.": "Partnerens demoperiode er slut. Forlæng den, eller planlæg den betalte model sammen med partneren.",
+ "{{full_name}}: demo period ends on {{shortDate}}": "{{full_name}}: demoperioden slutter {{shortDate}}",
+ "Extend it from Channel Partners if the partner needs more time.": "Forlæng den under Kanalpartnere, hvis partneren har brug for mere tid.",
+ "The demo period has ended": "Demoperioden er slut",
+ "New learners no longer get a demo licence. Learners who have one keep it until it ends.": "Nye kursister får ikke længere en demolicens. Dem, der har en, beholder den, til den udløber.",
+ "Demo licences can be given until {{shortDate}}": "Demolicenser kan gives indtil {{shortDate}}",
+ "New learners you add before then get a 7-day demo automatically.": "Nye kursister, du tilføjer inden da, får automatisk en 7-dages demo.",
+ "Your 7-day demo has ended": "Din 7-dages demo er slut",
+ "Your reports are saved. Ask your organisation's admin about full access to keep practising and take the final assessment.": "Dine rapporter er gemt. Spørg din organisations administrator om fuld adgang, så du kan øve videre og tage den afsluttende test.",
+ "Your demo ends tomorrow": "Din demo slutter i morgen",
+ "Your demo ends in 2 days": "Din demo slutter om 2 dage",
+ "Your demo ends on {{shortDate}}. Finish your practice tests and the mock test before then.": "Din demo slutter {{shortDate}}. Gennemfør dine øvetests og prøvetesten inden da."
 }

@@ -285,6 +285,7 @@ function App() {
           }
         >
           <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
+          <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route
