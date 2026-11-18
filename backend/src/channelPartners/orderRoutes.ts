@@ -249,3 +249,37 @@ orderDocumentsRouter.get("/:orderId/:kind", requireAuth, async (req: AuthedReque
     next(err);
   }
 });
+
+// ---- Org Admin: orders for their organisation (not drafts) ----
+export const orgOrdersRouter = Router();
+orgOrdersRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "org_admin" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
+  try {
+    const r = await pool.query(
+      `SELECT o.id, o.order_number, o.status, o.total, o.currency, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until, o.licence_months, o.proforma_number, o.invoice_number, o.payment_link_url,
+         (SELECT coalesce(sum(quantity), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id AND l.kind = 'full_access') AS licences,
+         (SELECT coalesce(sum(credits), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id) AS credits
+       FROM partner_order_organisations x JOIN partner_orders o ON o.id = x.order_id
+       WHERE x.tenant_id = $1 AND o.status <> 'draft' ORDER BY o.created_at DESC`,
+      [req.user!.tenantId],
+    );
+    res.json({
+      orders: r.rows.map((o) => ({
+        id: o.id,
+        orderNumber: o.order_number,
+        status: o.status,
+        total: o.total,
+        currency: o.currency,
+        validUntil: o.valid_until,
+        licenceMonths: o.licence_months,
+        licences: o.licences,
+        credits: o.credits,
+        proformaNumber: o.proforma_number,
+        invoiceNumber: o.invoice_number,
+        paymentLinkUrl: o.status === "proforma_sent" ? o.payment_link_url : null,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});

@@ -61,13 +61,13 @@ export async function suggestedBillTo(orderId: string): Promise<BillTo> {
   if (o.bill_to) return o.bill_to;
   const t = (
     await pool.query(
-      `SELECT t.name, u.email, u.first_name, u.last_name FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id
+      `SELECT t.name, t.tax_id, u.email, u.first_name, u.last_name FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id
        LEFT JOIN LATERAL (SELECT * FROM users a WHERE a.tenant_id = t.id AND a.role = 'org_admin' AND a.deleted_at IS NULL ORDER BY a.created_at LIMIT 1) u ON true
        WHERE x.order_id = $1 ORDER BY t.name LIMIT 1`,
       [orderId],
     )
   ).rows[0];
-  return { name: t?.name ?? "", attention: [t?.first_name, t?.last_name].filter(Boolean).join(" ") || null, address: null, email: t?.email ?? "", gstin: o.gstin, country: o.in_india ? "IN" : null };
+  return { name: t?.name ?? "", attention: [t?.first_name, t?.last_name].filter(Boolean).join(" ") || null, address: null, email: t?.email ?? "", gstin: o.gstin ?? t?.tax_id ?? null, country: o.in_india ? "IN" : null };
 }
 
 export async function sendProforma(args: { orderId: string; actor: Actor; billTo: BillTo }) {

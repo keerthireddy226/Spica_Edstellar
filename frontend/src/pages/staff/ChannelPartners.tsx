@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Gift, Handshake, KeyRound, Mail, Plus, Power, Building2, History } from "lucide-react";
+import { OrdersPanel } from "@/pages/partner/PartnerOrders";
+import { CalendarClock, Gift, Handshake, KeyRound, Mail, Plus, Power, Building2, History, Receipt } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { Badge, DetailModal, InfoGrid, ModalEmpty, ModalSection } from "@/components/DetailModal";
@@ -321,6 +322,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
       tabs={[
         { key: "overview", label: tr("Overview") },
         { key: "orgs", label: tr("Organisations"), count: d.organisations.length },
+        { key: "orders", label: tr("Orders") },
         { key: "history", label: tr("History"), count: d.history.length },
       ]}
       tab={tab}
@@ -499,6 +501,11 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
             )}
             {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
             {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
+          </ModalSection>
+        )}
+        {tab === "orders" && (
+          <ModalSection title={tr("Orders from this partner")} icon={Receipt}>
+            <OrdersPanel mode="staff" partnerId={p.id} />
           </ModalSection>
         )}
         {tab === "history" && (

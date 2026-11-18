@@ -6,6 +6,7 @@ import { pool } from "../db.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { recordAudit } from "../audit/service.js";
+import { notify, orgAdminIds } from "../notifications/service.js";
 import { demoStatus } from "./staffRoutes.js";
 
 // Public email providers: a shared domain says nothing about the organisation.
@@ -58,6 +59,7 @@ export async function createPartnerOrganisation(args: {
   adminFullName: string;
   adminEmail: string;
   demoLicences: number;
+  gstin?: string | null;
   // The partner confirmed after seeing the same-domain warning.
   confirmDuplicate?: boolean;
 }) {
@@ -71,9 +73,9 @@ export async function createPartnerOrganisation(args: {
     await client.query("BEGIN");
     // An Admin owner keeps it visible in that Admin's console: the one who registered the partner.
     const t = await client.query(
-      `INSERT INTO tenants (name, type, category, managed_by, products, channel_partner_id)
-       VALUES ($1, 'cohort', $2, (SELECT u.id FROM users u WHERE u.id = $3 AND u.role = 'admin'), ARRAY['skills'], $4) RETURNING id`,
-      [args.name.trim(), args.category, b.partner.created_by, args.partnerId],
+      `INSERT INTO tenants (name, type, category, managed_by, products, channel_partner_id, tax_id)
+       VALUES ($1, 'cohort', $2, (SELECT u.id FROM users u WHERE u.id = $3 AND u.role = 'admin'), ARRAY['skills'], $4, $5) RETURNING id`,
+      [args.name.trim(), args.category, b.partner.created_by, args.partnerId, args.gstin?.trim().toUpperCase() || null],
     );
     const tenantId = t.rows[0].id;
     const u = await client.query(
@@ -108,6 +110,16 @@ export async function giveDemoLicences(args: { partnerId: string; tenantId: stri
   const t = await pool.query(`SELECT name FROM tenants WHERE id = $1 AND channel_partner_id = $2`, [args.tenantId, args.partnerId]);
   if (!t.rowCount) throw new PartnerError("organisation_not_found", 404);
   await pool.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by) VALUES ($1, $2, 'demo', $3, $4)`, [args.partnerId, args.tenantId, args.licences, args.actor.id]);
+  for (const id of await orgAdminIds(args.tenantId)) {
+    await notify({
+      userId: id,
+      kind: "partner_demo",
+      title: `${args.licences} more demo licences`,
+      body: `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically.`,
+      link: "/orgadmin/dashboard",
+      email: true,
+    });
+  }
   await recordAudit({ tenantId: args.tenantId, actorId: args.actor.id, actorRole: args.actor.role, action: "channel_partner.licences_given", targetType: "channel_partner", targetId: args.partnerId, targetLabel: b.partner.full_name, details: { organisation: t.rows[0].name, licences: args.licences }, ip: args.actor.ip ?? null });
 }
 

@@ -37,7 +37,7 @@ partnerPortalRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next
     const b = await partnerBalance(id);
     const p = b.partner;
     res.json({
-      partner: { id: p.id, fullName: p.full_name, email: p.email, code: p.code, ownLicenceEnabled: p.own_licence_enabled },
+      partner: { id: p.id, fullName: p.full_name, email: p.email, code: p.code, ownLicenceEnabled: p.own_licence_enabled, commissionPercent: Number(p.commission_percent ?? 0) },
       demo: { total: p.demo_licences, given: b.given, left: b.left, status: b.status, startsAt: p.demo_starts_at, endsAt: p.demo_ended_at ?? p.demo_ends_at },
     });
   } catch (err) {
@@ -72,6 +72,7 @@ export const orgSchema = z.object({
   adminFullName: z.string().trim().min(2).max(120),
   adminEmail: z.string().trim().toLowerCase().email(),
   demoLicences: z.number().int().min(0).max(100000),
+  gstin: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/).optional(),
   confirmDuplicate: z.boolean().optional(),
 });
 

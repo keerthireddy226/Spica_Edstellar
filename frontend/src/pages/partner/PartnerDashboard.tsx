@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Building2, CalendarClock, Gift, Handshake, KeyRound, Plus, Users } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCheck, Coins, Gift, Handshake, KeyRound, Plus, Receipt, UserCheck, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatCard } from "@/components/staff/StaffKit";
@@ -8,6 +8,7 @@ import { tr } from "@/i18n/tr";
 import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { OrganisationDetail, OrganisationsTable } from "@/pages/partner/PartnerOrganisations";
+import { money } from "@/pages/partner/PartnerOrders";
 
 // Channel Partner portal (stage 2): the partner's demo licences, the
 // organisations they brought, and adding organisations / giving licences.
@@ -31,15 +32,17 @@ export interface PartnerOrg {
   admin: { name: string; email: string; invitePending: boolean };
 }
 interface Me {
-  partner: { id: string; fullName: string; email: string; code: string; ownLicenceEnabled: boolean };
+  partner: { id: string; fullName: string; email: string; code: string; ownLicenceEnabled: boolean; commissionPercent?: number };
   demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended"; startsAt: string | null; endsAt: string | null };
 }
+const cardLink = "block rounded-card transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-navy";
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
 
 export function PartnerDashboard() {
   const [me, setMe] = useState<Me | null>(null);
   const [orgs, setOrgs] = useState<PartnerOrg[] | null>(null);
+  const [orders, setOrders] = useState<{ status: string; validUntil: string; commissionAmount: number; currency: string }[]>([]);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [giving, setGiving] = useState<PartnerOrg | null>(null);
@@ -53,6 +56,9 @@ export function PartnerDashboard() {
         setOrgs(o.organisations);
       })
       .catch(() => setFailed(true));
+    api<{ orders: { status: string; validUntil: string; commissionAmount: number; currency: string }[] }>("/partner/orders")
+      .then((r) => setOrders(r.orders))
+      .catch(() => setOrders([]));
   };
   useEffect(load, []);
   if (failed) return <PageError message={tr("Could not load your partner account.")} onRetry={load} />;
@@ -60,6 +66,18 @@ export function PartnerDashboard() {
   const d = me.demo;
   const open = d.status === "active";
   const left = d.endsAt ? Math.max(0, Math.ceil((new Date(d.endsAt).getTime() - Date.now()) / 86400000)) : null;
+  const demoUsed = orgs.reduce((n, o) => n + o.demoUsed, 0);
+  const demoStarted = orgs.reduce((n, o) => n + o.demoStarted, 0);
+  const practiceDone = orgs.reduce((n, o) => n + o.practiceDone, 0);
+  const mocksDone = orgs.reduce((n, o) => n + o.mocksDone, 0);
+  const liveOrders = orders.filter((o) => o.status !== "cancelled");
+  const confirmed = liveOrders.filter((o) => ["confirmed", "allocated", "active"].includes(o.status));
+  const needAction = liveOrders.filter((o) => o.status === "draft" || o.status === "proforma_sent").length;
+  const today = new Date().toISOString().slice(0, 10);
+  const nextEnd = confirmed.map((o) => o.validUntil).filter((v) => v >= today).sort()[0] ?? null;
+  const byCurrency = new Map<string, number>();
+  for (const o of confirmed) byCurrency.set(o.currency, (byCurrency.get(o.currency) ?? 0) + o.commissionAmount);
+  const commission = [...byCurrency.entries()].map(([c, v]) => money(v, c)).join(" + ");
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
@@ -84,10 +102,25 @@ export function PartnerDashboard() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="ledger" palette="terracotta" index={0} icon={Gift} value={d.total} label={tr("Free demo licences")} sub={tr("Your allocation from Spica")} progress={1} />
         <StatCard variant="ledger" palette="terracotta" index={1} icon={KeyRound} value={d.left} label={tr("Left to give")} sub={tr("{{n}} given so far", { n: d.given })} progress={d.total ? d.left / d.total : 0} />
-        <StatCard variant="ledger" palette="terracotta" index={2} icon={CalendarClock} value={open ? tr("{{n}} days", { n: left ?? 0 }) : "—"} label={tr("Demo window")} sub={open ? tr("Until {{d}}", { d: day(d.endsAt) }) : d.status === "ended" ? tr("Ended {{d}}", { d: day(d.endsAt) }) : tr("Not started")} progress={open && left !== null ? Math.min(1, left / 90) : 0} />
-        <Link to={ROUTES.PARTNER_ORGANISATIONS} aria-label={tr("See all organisations ({{n}})", { n: orgs.length })} className="block rounded-card transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-navy">
-          <StatCard variant="ledger" palette="terracotta" index={3} icon={Building2} value={orgs.length} label={tr("Organisations")} sub={tr("{{n}} learners added", { n: orgs.reduce((n, o) => n + o.learners, 0) })} progress={0.4} />
+        <StatCard variant="ledger" palette="terracotta" index={2} icon={UserCheck} value={demoUsed} label={tr("Used by learners")} sub={tr("of {{n}} given to organisations · {{s}} started", { n: d.given, s: demoStarted })} progress={d.given ? demoUsed / d.given : 0} />
+        <StatCard variant="ledger" palette="terracotta" index={3} icon={CalendarClock} value={open ? tr("{{n}} days", { n: left ?? 0 }) : "—"} label={tr("Demo window")} sub={open ? tr("Until {{d}}", { d: day(d.endsAt) }) : d.status === "ended" ? tr("Ended {{d}}", { d: day(d.endsAt) }) : tr("Not started")} progress={open && left !== null ? Math.min(1, left / 90) : 0} />
+        <Link to={ROUTES.PARTNER_ORGANISATIONS} aria-label={tr("See all organisations ({{n}})", { n: orgs.length })} className={cardLink}>
+          <StatCard variant="ledger" palette="terracotta" index={4} icon={Building2} value={orgs.length} label={tr("Organisations")} sub={tr("{{n}} learners added", { n: orgs.reduce((n, o) => n + o.learners, 0) })} progress={0.4} />
         </Link>
+        <Link to={ROUTES.PARTNER_ORDERS} aria-label={tr("Orders")} className={cardLink}>
+          <StatCard
+            variant="ledger"
+            palette="terracotta"
+            index={5}
+            icon={Receipt}
+            value={liveOrders.length}
+            label={tr("Orders")}
+            sub={needAction ? tr("{{n}} need action · see all", { n: needAction }) : nextEnd ? tr("Next order ends {{d}}", { d: day(nextEnd) }) : tr("See all orders")}
+            progress={liveOrders.length ? confirmed.length / liveOrders.length : 0}
+          />
+        </Link>
+        <StatCard variant="ledger" palette="terracotta" index={6} icon={Coins} value={commission || "—"} label={tr("Commission")} sub={tr("On confirmed orders · {{n}}%", { n: me.partner.commissionPercent ?? 0 })} progress={0} />
+        <StatCard variant="ledger" palette="terracotta" index={7} icon={ClipboardCheck} value={mocksDone} label={tr("Mock tests finished")} sub={tr("{{n}} practice tests finished", { n: practiceDone })} progress={demoStarted ? Math.min(1, mocksDone / demoStarted) : 0} />
       </div>
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
         <div className="p-4 border-b border-rule flex items-center gap-2">
@@ -143,7 +176,7 @@ const label = "text-xs font-semibold text-muted uppercase tracking-wide";
 
 // Shared with the staff console (adding an organisation for a partner).
 export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: number; endpoint: string; onClose: () => void; onDone: (name: string, emailSent: boolean) => void }) {
-  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", demoLicences: String(Math.min(25, left)) });
+  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", gstin: "", demoLicences: String(Math.min(25, left)) });
   const [dup, setDup] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -156,7 +189,7 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
     if (n < 0 || n > left) return setErr(tr("You can give up to {{n}} licences.", { n: left }));
     setBusy(true);
     try {
-      const r = await api<{ emailSent: boolean }>(endpoint, json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), demoLicences: n, confirmDuplicate }));
+      const r = await api<{ emailSent: boolean }>(endpoint, json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), ...(f.gstin ? { gstin: f.gstin } : {}), demoLicences: n, confirmDuplicate }));
       onDone(f.name.trim(), r.emailSent);
     } catch (e) {
       const m = String((e as Error).message ?? "");
@@ -199,6 +232,10 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Admin's email")}</span>
             <input className={input} type="email" value={f.adminEmail} onChange={(e) => { setDup(null); setF({ ...f, adminEmail: e.target.value }); }} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={label}>{tr("GSTIN (optional)")}</span>
+            <input className={input} value={f.gstin} maxLength={15} onChange={(e) => setF({ ...f, gstin: e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, "") })} placeholder={tr("For Indian organisations")} />
           </label>
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Demo licences to give")}</span>
