@@ -140,7 +140,10 @@ export function PartnerDashboard() {
         )}
       </div>
       <p className="text-xs text-muted flex items-center gap-1.5">
-        <Users size={13} /> {tr("You see learners' names and licence status only. Scores and reports stay with each organisation.")}
+        <Users size={13} /> {tr("You see learners' names and licence status only. Scores and reports stay with each organisation.")}{" "}
+        <a href="/legal/privacy-channel-partners.html" target="_blank" rel="noreferrer" className="underline">
+          {tr("Privacy Notice for Channel Partners")}
+        </a>
       </p>
       {adding && (
         <AddOrganisation
