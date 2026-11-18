@@ -27,6 +27,17 @@ export interface MyAccess {
   attempts: Owned[];
   // Practice Modules question types open to the learner (null = all).
   itemTypes: string[] | null;
+  // A Channel Partner demo licence (7 days, 4 Skills, 2 practice tests, 1 mock).
+  demo?: DemoState | null;
+  demoEnded?: boolean;
+}
+
+export interface DemoState {
+  startsAt: string;
+  endsAt: string;
+  practiceLeft: number;
+  mocksLeft: number;
+  mockUnlocked: boolean;
 }
 
 export function getMyAccess(): Promise<MyAccess> {

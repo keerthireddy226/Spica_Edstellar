@@ -7,6 +7,7 @@ import { useTestOnly } from "@/components/learner/useTestOnly";
 import { Sidebar } from "@/components/AppShell/Sidebar";
 import { Header } from "@/components/AppShell/Header";
 import { TestFocusBar, TestFocusProvider, type TestFocus } from "@/components/AppShell/testFocus";
+import { DemoBanner } from "@/components/DemoBanner";
 
 // The learning pages someone who bought only a test doesn't have: a link or
 // an old bookmark to one of them opens Assessment instead.
@@ -46,6 +47,7 @@ export function AppLayout() {
         <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
           <div className={focus ? "hidden" : "print:hidden"}>
             <LicenseBanner />
+            <DemoBanner />
           </div>
           <TestFocusProvider value={setFocus}>
             {testOnly && hiddenForTestOnly(pathname) ? <Navigate to={ROUTES.MY_TESTS} replace /> : <Outlet key={navKey} />}

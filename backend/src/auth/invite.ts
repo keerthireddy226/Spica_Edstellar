@@ -8,6 +8,7 @@ import { inviteExpiryMs } from "./policy.js";
 import { emitEvent } from "../webhooks/service.js";
 import { DetailsError, saveLearnerDetails, type LearnerDetails } from "../learners/details.js";
 import { assertBatchCapacity } from "../batches/fields.js";
+import { assignDemoLicence, orgDemoBalance } from "../channelPartners/demoLicences.js";
 
 const BCRYPT_ROUNDS = 12;
 // How long an invite link works is the organization's choice (24 hours by default).
@@ -50,6 +51,11 @@ export async function createAndInviteUser(row: {
     if (row.details) await saveLearnerDetails(userId, row.details);
     await applyLearnerDefaults(row.tenantId, userId);
     await emitEvent(row.tenantId, "learner.created", { learnerId: userId, email: row.email, firstName: row.firstName, lastName: row.lastName, batchId: row.batchId ?? null });
+    // A Channel Partner's organisation: the new learner gets a 7-day demo licence while any are left.
+    const demo = await orgDemoBalance(row.tenantId).catch(() => null);
+    if (demo && demo.windowOpen && demo.left > 0) {
+      await assignDemoLicence({ tenantId: row.tenantId, userId, actorId: row.invitedBy ?? null }).catch((err) => console.error("demo licence on invite failed:", err));
+    }
   }
 
   const inviteToken = generateToken();

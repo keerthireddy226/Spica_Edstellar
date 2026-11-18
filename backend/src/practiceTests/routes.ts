@@ -46,6 +46,7 @@ import { learnerQuota } from "../programs/quotas.js";
 import { AttemptError, checkStart, samplePick, useAttempt } from "../assessment/service.js";
 import { qualitySettings } from "../quality/settings.js";
 import { completeSession } from "./complete.js";
+import { demoBlock, demoState } from "../channelPartners/demoLicences.js";
 
 export const practiceTestsRouter = Router();
 
@@ -638,7 +639,13 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
 
     // Monthly limits apply to each new practice test or mock (candidates
     // take their one assessment; real attempts and samples are bought).
-    if (!candidate && !owned) {
+    // A Channel Partner demo licence: 2 practice tests, 1 mock (after a practice test), no real test.
+    const demo = candidate ? null : await demoState(req.user!.id);
+    if (demo) {
+      const blocked = demoBlock(demo, mode, testTypeId);
+      if (blocked) return res.status(403).json({ error: blocked, demo });
+    }
+    if (!candidate && !owned && !demo) {
       try {
         await assertQuota(req.user!.id, mode, testTypeId);
       } catch (err) {

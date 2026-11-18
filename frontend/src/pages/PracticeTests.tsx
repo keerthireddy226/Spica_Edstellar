@@ -635,6 +635,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             ? tr("You have another timed test in progress. Finish it first.")
             : code?.startsWith("attempt_")
               ? tr("This test can't start now. Go back to the Assessment page to see why.")
+            : code === "demo_practice_used"
+              ? tr("Your demo includes 2 practice tests, and you've used both. Take your mock test next.")
+            : code === "demo_mock_used"
+              ? tr("Your demo includes 1 mock test, and you've taken it. Your report is in My reports.")
+            : code === "demo_mock_locked"
+              ? tr("The mock test opens after you finish a practice test.")
+            : code === "demo_no_real_test" || code === "demo_test_not_included"
+              ? tr("Your demo includes English 4 Skills Essentials practice tests and one mock test only.")
             : code === "quota_reached"
               ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
               : t("practiceTests.loadError"),

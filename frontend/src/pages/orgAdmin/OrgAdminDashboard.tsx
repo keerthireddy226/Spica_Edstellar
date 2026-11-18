@@ -11,6 +11,7 @@ import { OrgDashboardPanels } from "@/components/OrgDashboardPanels";
 import type { ActivityKind } from "@/api/admin";
 
 import { tr } from "@/i18n/tr";
+import { OrgDemoPanel } from "@/components/OrgDemoPanel";
 const SESSION_TYPE_LABEL: Record<string, string> = {
   practice: tr("Practice"),
   mocktest: tr("Mock Test"),
@@ -174,6 +175,8 @@ export function OrgAdminDashboard() {
           )}
         </div>
       </div>
+
+      <OrgDemoPanel />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <OrgStatTile label={tr("Batches")} value={overview.totalBatches} icon={Layers} index={0} to={ROUTES.ORG_ADMIN_BATCHES} />

@@ -62,6 +62,7 @@ import { BatchStateError } from "./batches/lifecycle.js";
 import { DetailsError } from "./learners/details.js";
 import { requireAccess } from "./licenses/gate.js";
 import { aiContextMiddleware } from "./ai/usageLog.js";
+import { orgDemoRouter } from "./channelPartners/demoLicences.js";
 
 // Railway's network has no IPv6 egress — without this, Node's dual-stack DNS
 // resolution can still pick a host's IPv6 address (e.g. smtp.gmail.com) and
@@ -123,6 +124,7 @@ app.use("/api/admin", auditTrail(STAFF_AUDIT), adminRouter);
 app.use("/api/admin", commercialRouter);
 app.use("/api/admin", channelPartnerStaffRouter);
 app.use("/api/partner", partnerPortalRouter);
+app.use("/api/org-demo", orgDemoRouter);
 app.use("/api/admin", staffConsoleRouter);
 app.use("/api/admin", quotasAdminRouter);
 app.use("/api/admin", contentRouter);

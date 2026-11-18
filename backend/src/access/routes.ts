@@ -6,6 +6,7 @@ import { requireStaff } from "../admin/staff.js";
 import { includeFinalAssessment } from "../assessment/service.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { accessOf, allowedItemTypes } from "./entitlements.js";
+import { demoEnded, demoState } from "../channelPartners/demoLicences.js";
 
 // What a learner owns (for the app's menus, home page and locks), the product
 // list, and Spica staff's tools: prices, and granting a product by hand.
@@ -14,7 +15,8 @@ export const accessRouter = Router();
 accessRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const a = await accessOf(req.user!.id);
-    res.json({ ...a, itemTypes: await allowedItemTypes(a) });
+    const demo = await demoState(req.user!.id);
+    res.json({ ...a, itemTypes: await allowedItemTypes(a), demo, demoEnded: !demo && (await demoEnded(req.user!.id)) });
   } catch (err) {
     next(err);
   }
