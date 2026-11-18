@@ -5,7 +5,7 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
-import { createPartnerOrganisation, giveDemoLicences, partnerBalance, partnerOrganisations, PartnerError } from "./organisations.js";
+import { createPartnerOrganisation, giveDemoLicences, partnerBalance, partnerOrganisationDetail, partnerOrganisations, PartnerError } from "./organisations.js";
 
 export const partnerPortalRouter = Router();
 
@@ -52,6 +52,17 @@ partnerPortalRouter.get("/organisations", requireAuth, async (req: AuthedRequest
     res.json({ organisations: await partnerOrganisations(id) });
   } catch (err) {
     next(err);
+  }
+});
+
+partnerPortalRouter.get("/organisations/:tenantId", requireAuth, async (req: AuthedRequest, res, next) => {
+  const id = await myPartnerId(req, res);
+  if (!id) return;
+  if (!/^[0-9a-f-]{36}$/.test(String(req.params.tenantId))) return res.status(404).json({ error: "organisation_not_found" });
+  try {
+    res.json(await partnerOrganisationDetail(id, String(req.params.tenantId)));
+  } catch (err) {
+    if (!sendPartnerError(err, res)) next(err);
   }
 });
 

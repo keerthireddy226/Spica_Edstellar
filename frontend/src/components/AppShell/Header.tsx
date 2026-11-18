@@ -80,6 +80,7 @@ const CONSOLE_TITLE_BY_ROUTE: Record<string, string> = {
   [ROUTES.PARTNER_DASHBOARD]: tr("Partner dashboard"),
   [ROUTES.PARTNER_PROFILE]: tr("Profile"),
   [ROUTES.PARTNER_ORDERS]: tr("Orders"),
+  [ROUTES.PARTNER_ORGANISATIONS]: tr("Organisations"),
   [ROUTES.SUPER_PARTNER_ORDERS]: tr("Partner orders"),
   [ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS]: tr("Partner orders"),
   [ROUTES.SUPER_SYSTEM]: tr("System"),

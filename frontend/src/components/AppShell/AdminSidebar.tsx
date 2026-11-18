@@ -101,6 +101,7 @@ const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
 
 const PARTNER_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.PARTNER_DASHBOARD, icon: Handshake, label: tr("Partner dashboard") },
+  { to: ROUTES.PARTNER_ORGANISATIONS, icon: Building2, label: tr("Organisations") },
   { to: ROUTES.PARTNER_ORDERS, icon: Receipt, label: tr("Orders") },
 ];
 

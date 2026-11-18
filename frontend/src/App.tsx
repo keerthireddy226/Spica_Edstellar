@@ -64,6 +64,7 @@ import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
 import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
 import { OrderDocument } from "@/pages/OrderDocument";
+import { PartnerOrganisations } from "@/pages/partner/PartnerOrganisations";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -296,6 +297,7 @@ function App() {
         >
           <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
           <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.PARTNER_ORGANISATIONS} element={<PartnerOrganisations />} />
           <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}

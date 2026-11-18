@@ -2,9 +2,12 @@ import { useEffect, useState } from "react";
 import { Building2, CalendarClock, Gift, Handshake, KeyRound, Plus, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/Button";
-import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatCard, StatusPill } from "@/components/staff/StaffKit";
+import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatCard } from "@/components/staff/StaffKit";
 import { DetailModal } from "@/components/DetailModal";
 import { tr } from "@/i18n/tr";
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+import { OrganisationDetail, OrganisationsTable } from "@/pages/partner/PartnerOrganisations";
 
 // Channel Partner portal (stage 2): the partner's demo licences, the
 // organisations they brought, and adding organisations / giving licences.
@@ -22,6 +25,9 @@ export interface PartnerOrg {
   demoStarted: number;
   practiceDone: number;
   mocksDone: number;
+  paidAssigned?: number;
+  orders?: number;
+  ordersConfirmed?: number;
   admin: { name: string; email: string; invitePending: boolean };
 }
 interface Me {
@@ -37,6 +43,7 @@ export function PartnerDashboard() {
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [giving, setGiving] = useState<PartnerOrg | null>(null);
+  const [openOrg, setOpenOrg] = useState<PartnerOrg | null>(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const load = () => {
     setFailed(false);
@@ -83,52 +90,17 @@ export function PartnerDashboard() {
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
         <div className="p-4 border-b border-rule flex items-center gap-2">
           <Handshake size={18} className="text-navy" />
-          <h2 className="font-display font-bold text-lg">{tr("Your organisations")}</h2>
+          <h2 className="font-display font-bold text-lg">{orgs.length > 5 ? tr("Latest organisations") : tr("Your organisations")}</h2>
+          <Link to={ROUTES.PARTNER_ORGANISATIONS} className="ml-auto text-sm font-semibold text-navy">
+            {tr("See all organisations ({{n}})", { n: orgs.length })}
+          </Link>
         </div>
         {orgs.length === 0 ? (
           <div className="p-6">
             <EmptyNote>{tr("No organisations yet. Add a university, college or company to give them demo licences.")}</EmptyNote>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-paper-warm text-xs text-muted uppercase tracking-wide">
-                <tr>
-                  {[tr("Organisation"), tr("Admin"), tr("Demo licences"), tr("Learners"), tr("Added"), ""].map((h, i) => (
-                    <th key={i} className="text-left font-semibold px-4 py-2.5 whitespace-nowrap">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {orgs.map((o) => (
-                  <tr key={o.id} className="border-t border-rule">
-                    <td className="px-4 py-3">
-                      <p className="font-semibold">{o.name}</p>
-                      <p className="text-xs text-muted">{o.category === "company" ? tr("Company") : tr("University or college")}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p>{o.admin.name || "—"}</p>
-                      <p className="text-xs text-muted">{o.admin.email}</p>
-                      {o.admin.invitePending && <StatusPill tone="warning">{tr("Invite pending")}</StatusPill>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p>{tr("{{used}} of {{n}} used", { used: o.demoUsed, n: o.demoLicences })}</p>
-                      <p className="text-xs text-muted">{tr("{{n}} learners started", { n: o.demoStarted })}</p>
-                    </td>
-                    <td className="px-4 py-3">{o.learners}</td>
-                    <td className="px-4 py-3 text-muted">{day(o.createdAt)}</td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="secondary" disabled={!open || d.left === 0 || !o.active} onClick={() => setGiving(o)} className="!px-3 !py-1.5 whitespace-nowrap">
-                        {tr("Give licences")}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <OrganisationsTable orgs={orgs.slice(0, 5)} onOpen={setOpenOrg} onGive={setGiving} canGive={open && d.left > 0} />
         )}
       </div>
       <p className="text-xs text-muted flex items-center gap-1.5">
@@ -146,6 +118,7 @@ export function PartnerDashboard() {
           }}
         />
       )}
+      {openOrg && <OrganisationDetail org={openOrg} canGive={open && d.left > 0} onClose={() => setOpenOrg(null)} onGive={() => { setGiving(openOrg); setOpenOrg(null); }} />}
       {giving && (
         <GiveLicences
           org={giving}

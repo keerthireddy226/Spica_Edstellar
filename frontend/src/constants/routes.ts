@@ -67,6 +67,7 @@ export const ROUTES = {
   PARTNER_LOGIN: "/partner/login",
   PARTNER_PROFILE: "/partner/profile",
   PARTNER_ORDERS: "/partner/orders",
+  PARTNER_ORGANISATIONS: "/partner/organisations",
   PARTNER_DASHBOARD: "/partner/dashboard",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
