@@ -270,7 +270,7 @@ async function lockAvailableLots(client: PoolClient, tenantId: string) {
   // spend the same last license.
   await client.query(`SELECT id FROM license_purchases WHERE tenant_id = $1 FOR UPDATE`, [tenantId]);
   const lots = await client.query(
-    `SELECT p.id, p.quantity - count(a.id) FILTER (WHERE a.reclaimed_at IS NULL)::int AS remaining
+    `SELECT p.id, p.quantity - count(a.id) FILTER (WHERE a.reclaimed_at IS NULL)::int AS remaining, p.starts_not_before
      FROM license_purchases p LEFT JOIN license_assignments a ON a.purchase_id = p.id
      WHERE p.tenant_id = $1 AND p.pool_expires_at > now()
      GROUP BY p.id
@@ -278,7 +278,7 @@ async function lockAvailableLots(client: PoolClient, tenantId: string) {
      ORDER BY p.pool_expires_at, p.purchased_at`,
     [tenantId],
   );
-  return lots.rows as { id: string; remaining: number }[];
+  return lots.rows as { id: string; remaining: number; starts_not_before: Date | null }[];
 }
 
 // Assign (first time) or extend (already has months) — same operation: add N
@@ -349,19 +349,29 @@ export async function assignMonths(args: {
     const startAt = chain.rows[0].start_at;
     const kind = chain.rows[0].prior > 0 ? "extend" : "assign";
 
-    let lotIndex = 0;
-    let lotLeft = lots[0].remaining;
-    for (let i = 0; i < args.months; i++) {
-      while (lotLeft === 0) {
-        lotIndex++;
-        lotLeft = lots[lotIndex].remaining;
+    // Which lot each month comes from; a Channel Partner order's lot may still
+    // be in its 3-day setup grace: access starts now, the clock when it ends.
+    const picks: number[] = [];
+    {
+      let idx = 0;
+      let left = lots[0].remaining;
+      for (let i = 0; i < args.months; i++) {
+        while (left === 0) {
+          idx++;
+          left = lots[idx].remaining;
+        }
+        picks.push(idx);
+        left--;
       }
+    }
+    const graceEnd = Math.max(0, ...picks.map((x) => (lots[x].starts_not_before ? new Date(lots[x].starts_not_before!).getTime() : 0)));
+    const clockStart = new Date(Math.max(new Date(startAt).getTime(), graceEnd));
+    for (let i = 0; i < args.months; i++) {
       await client.query(
         `INSERT INTO license_assignments (tenant_id, purchase_id, user_id, batch_id, starts_at, ends_at, assigned_by, source, source_manager_id)
-         VALUES ($1, $2, $3, $4, $5::timestamptz + make_interval(months => $6), $5::timestamptz + make_interval(months => $6 + 1), $7, $8, $9)`,
-        [args.tenantId, lots[lotIndex].id, args.userId, l.batch_id, startAt, i, args.actorId, source, sourceManagerId],
+         VALUES ($1, $2, $3, $4, CASE WHEN $6 = 0 THEN $5::timestamptz ELSE $10::timestamptz + make_interval(months => $6) END, $10::timestamptz + make_interval(months => $6 + 1), $7, $8, $9)`,
+        [args.tenantId, lots[picks[i]].id, args.userId, l.batch_id, startAt, i, args.actorId, source, sourceManagerId, clockStart],
       );
-      lotLeft--;
     }
 
     await client.query(
@@ -402,9 +412,13 @@ export async function reclaimMonths(args: { tenantId: string; userId: string; mo
     );
     if (learner.rowCount === 0) throw new LicenseError("learner_not_found");
     const rows = await client.query(
-      `SELECT id FROM license_assignments
-       WHERE user_id = $1 AND reclaimed_at IS NULL AND starts_at > now()
-       ORDER BY starts_at DESC LIMIT $2 FOR UPDATE`,
+      // Months not started yet; for a Channel Partner order also the running
+      // month while the learner hasn't started any test or practice in it.
+      `SELECT a.id FROM license_assignments a JOIN license_purchases p ON p.id = a.purchase_id
+       WHERE a.user_id = $1 AND a.reclaimed_at IS NULL
+         AND (a.starts_at > now() OR (p.partner_order_id IS NOT NULL AND a.ends_at > now()
+              AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.user_id = a.user_id AND s.started_at >= a.starts_at)))
+       ORDER BY a.starts_at DESC LIMIT $2 FOR UPDATE OF a`,
       [args.userId, args.months],
     );
     if (rows.rowCount === 0) throw new LicenseError("nothing_to_reclaim");

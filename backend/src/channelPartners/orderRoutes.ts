@@ -6,6 +6,7 @@ import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { requirePermission, staffPermissions, requireStaff, isSuperAdmin } from "../admin/staff.js";
 import { createPaymentLink, orderDocument, recordPayment, sendProforma, suggestedBillTo } from "./financeOrders.js";
+import { allocateOrder, changeOrderEnd } from "./allocations.js";
 import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
 import { sendPartnerError } from "./portalRoutes.js";
 
@@ -184,6 +185,33 @@ staffOrdersRouter.post("/:orderId/status", async (req: AuthedRequest, res, next)
   }
 });
 
+// ---- Allocation (Super Admin / Admin) ----
+const allocateSchema = z.object({
+  items: z
+    .array(z.object({ tenantId: z.string().uuid(), licences: z.coerce.number().int().min(0).max(100000), credits: z.coerce.number().int().min(0).max(1000000) }))
+    .min(1)
+    .max(500),
+});
+staffOrdersRouter.post("/:orderId/allocate", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  try {
+    await allocateOrder({ orderId: req.params.orderId as string, actor: actorOf(req), items: allocateSchema.parse(req.body).items });
+    res.json({ ok: true });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+staffOrdersRouter.post("/:orderId/end-date", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  try {
+    const b = z.object({ validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(req.body);
+    await changeOrderEnd({ orderId: req.params.orderId as string, actor: actorOf(req), validUntil: b.validUntil });
+    res.json({ ok: true });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
 // ---- Finance ----
 const billToSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -258,7 +286,10 @@ orgOrdersRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     const r = await pool.query(
       `SELECT o.id, o.order_number, o.status, o.total, o.currency, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until, o.licence_months, o.proforma_number, o.invoice_number, o.payment_link_url,
          (SELECT coalesce(sum(quantity), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id AND l.kind = 'full_access') AS licences,
-         (SELECT coalesce(sum(credits), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id) AS credits
+         (SELECT coalesce(sum(credits), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id) AS credits,
+         (SELECT coalesce(sum(a.licences), 0)::int FROM partner_order_allocations a WHERE a.order_id = o.id AND a.tenant_id = x.tenant_id) AS my_licences,
+         (SELECT coalesce(sum(a.credits), 0)::int FROM partner_order_allocations a WHERE a.order_id = o.id AND a.tenant_id = x.tenant_id) AS my_credits,
+         (SELECT max(a.grace_ends_at) FROM partner_order_allocations a WHERE a.order_id = o.id AND a.tenant_id = x.tenant_id) AS my_grace_ends
        FROM partner_order_organisations x JOIN partner_orders o ON o.id = x.order_id
        WHERE x.tenant_id = $1 AND o.status <> 'draft' ORDER BY o.created_at DESC`,
       [req.user!.tenantId],
@@ -277,6 +308,7 @@ orgOrdersRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
         proformaNumber: o.proforma_number,
         invoiceNumber: o.invoice_number,
         paymentLinkUrl: o.status === "proforma_sent" ? o.payment_link_url : null,
+        allocated: { licences: o.my_licences, credits: o.my_credits, graceEndsAt: o.my_grace_ends },
       })),
     });
   } catch (err) {

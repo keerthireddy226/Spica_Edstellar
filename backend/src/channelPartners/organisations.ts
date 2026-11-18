@@ -137,7 +137,7 @@ export async function partnerOrganisations(partnerId: string) {
           WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND s.session_type = 'mocktest' AND s.delivery_mode = 'practice' AND s.completed_at IS NOT NULL) AS demo_practice_done,
        (SELECT count(*)::int FROM entitlements e JOIN sessions s ON s.user_id = e.user_id AND s.started_at >= e.starts_at AND s.started_at < e.ends_at
           WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND s.session_type = 'mocktest' AND s.delivery_mode = 'mock' AND s.completed_at IS NOT NULL) AS demo_mocks_done,
-       (SELECT count(*)::int FROM license_assignments la WHERE la.tenant_id = t.id AND la.reclaimed_at IS NULL AND (la.ends_at IS NULL OR la.ends_at > now())) AS paid_assigned,
+       (SELECT count(DISTINCT la.user_id)::int FROM license_assignments la WHERE la.tenant_id = t.id AND la.reclaimed_at IS NULL AND (la.ends_at IS NULL OR la.ends_at > now())) AS paid_assigned,
        (SELECT count(*)::int FROM partner_order_organisations po JOIN partner_orders o ON o.id = po.order_id WHERE po.tenant_id = t.id AND o.status <> 'cancelled') AS orders,
        (SELECT count(*)::int FROM partner_order_organisations po JOIN partner_orders o ON o.id = po.order_id WHERE po.tenant_id = t.id AND o.status IN ('confirmed', 'allocated', 'active')) AS orders_confirmed,
        oa.first_name AS admin_first, oa.last_name AS admin_last, oa.email AS admin_email,

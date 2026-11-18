@@ -17,6 +17,7 @@ import { VOLUME_BANDS, EDUCATION_DISCOUNT_PERCENT } from "../plans/config.js";
 import { ASSESSMENT_BANDS } from "../recruitment/service.js";
 import { PAYMENT_CONFIG } from "../payments/providers.js";
 import { PartnerError } from "./organisations.js";
+import { allocationSummary } from "./allocations.js";
 
 export const ORDER_STATUSES = ["draft", "submitted", "proforma_sent", "payment_received", "confirmed", "allocated", "active", "expired", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -302,6 +303,9 @@ export async function listOrders(f: { partnerId?: string | null; status?: string
     `SELECT o.*, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until_text, to_char(o.payment_received_on, 'YYYY-MM-DD') AS payment_received_on_text, p.full_name AS partner_name, p.code AS partner_code,
        (SELECT coalesce(sum(quantity), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id AND l.kind = 'full_access') AS licences,
        (SELECT coalesce(sum(credits), 0)::int FROM partner_order_lines l WHERE l.order_id = o.id) AS credits,
+       (SELECT coalesce(sum(a.licences), 0)::int FROM partner_order_allocations a WHERE a.order_id = o.id) AS allocated_licences,
+       (SELECT coalesce(sum(a.credits), 0)::int FROM partner_order_allocations a WHERE a.order_id = o.id) AS allocated_credits,
+       (SELECT count(DISTINCT la.user_id)::int FROM license_assignments la JOIN license_purchases lp ON lp.id = la.purchase_id WHERE lp.partner_order_id = o.id AND la.reclaimed_at IS NULL) AS assigned_learners,
        (SELECT array_agg(t.name ORDER BY t.name) FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id WHERE x.order_id = o.id) AS organisations
      FROM partner_orders o LEFT JOIN channel_partners p ON p.id = o.partner_id
      WHERE ($1::uuid IS NULL OR o.partner_id = $1) AND ($2::text IS NULL OR o.status = $2) AND ($3::uuid IS NULL OR o.id = $3)
@@ -344,6 +348,9 @@ function orderRow(o: any) {
     invoiceIssuedAt: o.invoice_issued_at ?? null,
     licences: o.licences ?? 0,
     credits: o.credits ?? 0,
+    allocatedLicences: o.allocated_licences ?? 0,
+    allocatedCredits: o.allocated_credits ?? 0,
+    assignedLearners: o.assigned_learners ?? 0,
     organisations: (o.organisations ?? []) as string[],
     createdAt: o.created_at,
   };
@@ -368,6 +375,7 @@ export async function getOrder(orderId: string, partnerId: string | null) {
     organisations: orgs.rows.map((t) => ({ id: t.id, name: t.name, category: t.category })),
     history: events.rows.map((e) => ({ from: e.from_status, to: e.to_status, note: e.note, at: e.created_at, by: e.email ? { name: [e.first_name, e.last_name].filter(Boolean).join(" "), email: e.email, role: e.role } : null })),
     nextSteps: NEXT[row.status] ?? [],
+    allocation: ["confirmed", "allocated", "active", "expired"].includes(row.status) ? await allocationSummary(orderId).then(({ order: _o, ...rest }) => rest) : null,
   };
 }
 

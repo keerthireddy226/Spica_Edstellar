@@ -19,6 +19,7 @@ interface Order {
   proformaNumber: string | null;
   invoiceNumber: string | null;
   paymentLinkUrl: string | null;
+  allocated: { licences: number; credits: number; graceEndsAt: string | null };
 }
 const STATUS: Record<string, string> = {
   submitted: tr("Waiting for the proforma invoice"),
@@ -56,6 +57,12 @@ export function OrgOrdersPanel() {
               <span className="text-muted">
                 {tr("{{l}} licences of {{m}} months · {{c}} credits · assign by {{d}}", { l: o.licences, m: o.licenceMonths, c: o.credits, d: day(o.validUntil) })}
               </span>
+              {o.allocated.licences + o.allocated.credits > 0 && (
+                <span className="text-success font-semibold">
+                  {tr("Yours: {{l}} licences and {{c}} credits, in your pool", { l: o.allocated.licences, c: o.allocated.credits })}
+                  {o.allocated.graceEndsAt && new Date(o.allocated.graceEndsAt) > new Date() ? ` · ${tr("licences start counting on {{d}}", { d: new Date(o.allocated.graceEndsAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) })}` : ""}
+                </span>
+              )}
             </span>
             <span className="flex flex-wrap items-center gap-3">
               <span className={o.status === "cancelled" ? "text-error font-semibold" : "font-semibold"}>{STATUS[o.status] ?? o.status}</span>

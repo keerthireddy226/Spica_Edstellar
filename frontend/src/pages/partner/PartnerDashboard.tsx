@@ -42,7 +42,7 @@ const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined,
 export function PartnerDashboard() {
   const [me, setMe] = useState<Me | null>(null);
   const [orgs, setOrgs] = useState<PartnerOrg[] | null>(null);
-  const [orders, setOrders] = useState<{ status: string; validUntil: string; commissionAmount: number; currency: string }[]>([]);
+  const [orders, setOrders] = useState<{ status: string; validUntil: string; commissionAmount: number; currency: string; licences: number; allocatedLicences: number; assignedLearners: number }[]>([]);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
   const [giving, setGiving] = useState<PartnerOrg | null>(null);
@@ -56,7 +56,7 @@ export function PartnerDashboard() {
         setOrgs(o.organisations);
       })
       .catch(() => setFailed(true));
-    api<{ orders: { status: string; validUntil: string; commissionAmount: number; currency: string }[] }>("/partner/orders")
+    api<{ orders: { status: string; validUntil: string; commissionAmount: number; currency: string; licences: number; allocatedLicences: number; assignedLearners: number }[] }>("/partner/orders")
       .then((r) => setOrders(r.orders))
       .catch(() => setOrders([]));
   };
@@ -68,15 +68,16 @@ export function PartnerDashboard() {
   const left = d.endsAt ? Math.max(0, Math.ceil((new Date(d.endsAt).getTime() - Date.now()) / 86400000)) : null;
   const demoUsed = orgs.reduce((n, o) => n + o.demoUsed, 0);
   const demoStarted = orgs.reduce((n, o) => n + o.demoStarted, 0);
-  const practiceDone = orgs.reduce((n, o) => n + o.practiceDone, 0);
-  const mocksDone = orgs.reduce((n, o) => n + o.mocksDone, 0);
   const liveOrders = orders.filter((o) => o.status !== "cancelled");
-  const confirmed = liveOrders.filter((o) => ["confirmed", "allocated", "active"].includes(o.status));
+  const confirmed = liveOrders.filter((o) => ["confirmed", "allocated", "active", "expired"].includes(o.status));
   const needAction = liveOrders.filter((o) => o.status === "draft" || o.status === "proforma_sent").length;
   const today = new Date().toISOString().slice(0, 10);
   const nextEnd = confirmed.map((o) => o.validUntil).filter((v) => v >= today).sort()[0] ?? null;
   const byCurrency = new Map<string, number>();
   for (const o of confirmed) byCurrency.set(o.currency, (byCurrency.get(o.currency) ?? 0) + o.commissionAmount);
+  const paidOrdered = confirmed.reduce((n, o) => n + o.licences, 0);
+  const paidAllocated = liveOrders.reduce((n, o) => n + o.allocatedLicences, 0);
+  const paidAssigned = liveOrders.reduce((n, o) => n + o.assignedLearners, 0);
   const commission = [...byCurrency.entries()].map(([c, v]) => money(v, c)).join(" + ");
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -120,7 +121,7 @@ export function PartnerDashboard() {
           />
         </Link>
         <StatCard variant="ledger" palette="terracotta" index={6} icon={Coins} value={commission || "—"} label={tr("Commission")} sub={tr("On confirmed orders · {{n}}%", { n: me.partner.commissionPercent ?? 0 })} progress={0} />
-        <StatCard variant="ledger" palette="terracotta" index={7} icon={ClipboardCheck} value={mocksDone} label={tr("Mock tests finished")} sub={tr("{{n}} practice tests finished", { n: practiceDone })} progress={demoStarted ? Math.min(1, mocksDone / demoStarted) : 0} />
+        <StatCard variant="ledger" palette="terracotta" index={7} icon={ClipboardCheck} value={paidAssigned} label={tr("Paid licences assigned")} sub={tr("of {{a}} allocated · {{o}} on confirmed orders", { a: paidAllocated, o: paidOrdered })} progress={paidAllocated ? paidAssigned / paidAllocated : 0} />
       </div>
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
         <div className="p-4 border-b border-rule flex items-center gap-2">

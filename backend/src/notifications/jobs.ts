@@ -5,6 +5,7 @@ import { learnerEngagement } from "./engagement.js";
 import { batchManagerIds, notify, orgAdminIds } from "./service.js";
 import { endPilot } from "../plans/service.js";
 import { runPartnerDemoAlerts } from "../channelPartners/reminders.js";
+import { runPartnerOrderJobs } from "../channelPartners/allocations.js";
 
 const DAY = 86400000;
 const JOB_LOCK_ID = 917_004; // arbitrary, unique to this job runner
@@ -465,6 +466,7 @@ export async function runAllJobs(): Promise<Record<string, number> | null> {
         pilot: await runPilotAlerts(),
         managers: await runManagerAlerts(),
         partnerDemo: await runPartnerDemoAlerts(),
+        partnerOrders: await runPartnerOrderJobs(),
       };
     } finally {
       await client.query(`SELECT pg_advisory_unlock($1)`, [JOB_LOCK_ID]);

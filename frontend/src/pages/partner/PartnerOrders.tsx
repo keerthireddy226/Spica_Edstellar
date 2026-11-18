@@ -46,8 +46,19 @@ export interface OrderRow {
   invoiceIssuedAt: string | null;
   licences: number;
   credits: number;
+  allocatedLicences: number;
+  allocatedCredits: number;
+  assignedLearners: number;
   organisations: string[];
   createdAt: string;
+}
+interface Allocation {
+  licences: number;
+  credits: number;
+  allocatedLicences: number;
+  allocatedCredits: number;
+  perOrgCap: number;
+  organisations: { id: string; name: string; licences: number; credits: number; graceEndsAt: string | null; assigned: number }[];
 }
 interface BillTo {
   name: string;
@@ -75,6 +86,7 @@ interface OrderDetail {
   organisations: { id: string; name: string; category: string }[];
   history: { from: string | null; to: Status; note: string | null; at: string; by: { name: string; email: string; role: string } | null }[];
   nextSteps: { to: Status; who: ("partner" | "staff" | "finance")[] }[];
+  allocation: Allocation | null;
 }
 interface Quote {
   currency: "INR" | "USD";
@@ -218,7 +230,10 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
                   <td className="px-4 py-3 font-semibold text-navy whitespace-nowrap">{o.orderNumber}</td>
                   {mode === "staff" && <td className="px-4 py-3">{o.partner ? `${o.partner.name} (${o.partner.code})` : tr("Direct (no partner)")}</td>}
                   <td className="px-4 py-3">{o.organisations.join(", ")}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">{tr("{{l}} licences · {{c}} credits", { l: o.licences, c: o.credits })}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {tr("{{l}} licences · {{c}} credits", { l: o.licences, c: o.credits })}
+                    {o.allocatedLicences + o.allocatedCredits > 0 && <p className="text-xs text-muted">{tr("{{a}} allocated · {{s}} learners assigned", { a: o.allocatedLicences, s: o.assignedLearners })}</p>}
+                  </td>
                   <td className="px-4 py-3 whitespace-nowrap">{money(o.total, o.currency)}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-muted">{day(o.validUntil)}</td>
                   <td className="px-4 py-3">
@@ -349,6 +364,7 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
               )}
             </div>
           )}
+          {d.allocation && <AllocationSection orderId={o.id} status={o.status} validUntil={o.validUntil} a={d.allocation} canManage={canManage} onChanged={() => { load(); onChanged(); }} />}
           {finance === "proforma" && <ProformaForm orderId={o.id} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
           {finance === "payment" && <PaymentForm order={o} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
           <div>
@@ -358,7 +374,7 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
                 <li key={i} className="text-muted">
                   {new Date(h.at).toLocaleString()} · <b className="text-ink">{h.from === h.to ? tr("Order changed") : STATUS_LABEL[h.to]}</b>
                   {h.by ? ` · ${h.by.name || h.by.email}` : ""}
-                  {h.note && h.from !== h.to ? ` · ${h.note}` : ""}
+                  {h.note ? ` · ${h.note}` : ""}
                 </li>
               ))}
             </ul>
@@ -467,6 +483,135 @@ function Totals({ subtotal, taxRate, taxAmount, total, currency }: { subtotal: n
       <b className="text-base">
         {tr("Total")}: {money(total, currency)}
       </b>
+    </div>
+  );
+}
+
+// Allocation (stage 7): each organisation's share of a confirmed order. Spica
+// allocates; everyone sees what each organisation has and has assigned.
+function AllocationSection({ orderId, status, validUntil, a, canManage, onChanged }: { orderId: string; status: Status; validUntil: string; a: Allocation; canManage: boolean; onChanged: () => void }) {
+  const leftL = a.licences - a.allocatedLicences;
+  const leftC = a.credits - a.allocatedCredits;
+  const open = ["confirmed", "allocated", "active"].includes(status);
+  const [form, setForm] = useState<Record<string, { licences: string; credits: string }> | null>(null);
+  const [end, setEnd] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const startForm = () => {
+    const n = a.organisations.length || 1;
+    setForm(
+      Object.fromEntries(
+        a.organisations.map((o, i) => {
+          const l = Math.max(0, Math.min(a.perOrgCap - o.licences, Math.floor(leftL / n) + (i < leftL % n ? 1 : 0)));
+          const c = Math.floor(leftC / n) + (i < leftC % n ? 1 : 0);
+          return [o.id, { licences: String(l), credits: String(c) }];
+        }),
+      ),
+    );
+  };
+  const allocate = async () => {
+    if (!form) return;
+    const items = Object.entries(form).map(([tenantId, v]) => ({ tenantId, licences: Math.max(0, Math.round(Number(v.licences) || 0)), credits: Math.max(0, Math.round(Number(v.credits) || 0)) }));
+    setBusy(true);
+    setErr(null);
+    try {
+      await api(`/admin/partner-orders/${orderId}/allocate`, post({ items }));
+      setForm(null);
+      onChanged();
+    } catch (e) {
+      const m = String((e as Error)?.message ?? "");
+      setErr(m.includes("over_org_cap") ? tr("One organisation would get more than its cap of {{n}} licences.", { n: a.perOrgCap }) : m.includes("over_order") ? tr("That's more than the order has left.") : m.includes("nothing_to_allocate") ? tr("Enter at least one licence or credit.") : m.includes("order_ended") ? tr("The order has ended. Change its end date first.") : errText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const saveEnd = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await api(`/admin/partner-orders/${orderId}/end-date`, post({ validUntil: end }));
+      setEnd(null);
+      onChanged();
+    } catch (e) {
+      setErr(errText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-2 border border-rule rounded-input p-3">
+      <p className={label}>{tr("Allocation")}</p>
+      <p>
+        {tr("{{a}} of {{l}} licences and {{c}} of {{t}} credits allocated.", { a: a.allocatedLicences, l: a.licences, c: a.allocatedCredits, t: a.credits })}{" "}
+        {a.licences > 0 && <span className="text-muted">{tr("Up to {{n}} licences per organisation.", { n: a.perOrgCap })}</span>}
+      </p>
+      <table className="w-full text-sm">
+        <thead className="text-xs text-muted uppercase tracking-wide">
+          <tr>
+            {[tr("Organisation"), tr("Licences"), tr("Credits"), tr("Learners assigned"), tr("Licences start counting")].map((h) => (
+              <th key={h} className="text-left font-semibold py-1.5 pr-3">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {a.organisations.map((o) => (
+            <tr key={o.id} className="border-t border-rule">
+              <td className="py-1.5 pr-3">{o.name}</td>
+              <td className="py-1.5 pr-3">
+                {form ? (
+                  <input className={`${input} !w-24 !py-1`} type="number" min={0} value={form[o.id]?.licences ?? "0"} onChange={(e) => setForm({ ...form, [o.id]: { ...form[o.id], licences: e.target.value } })} />
+                ) : (
+                  o.licences
+                )}
+              </td>
+              <td className="py-1.5 pr-3">
+                {form ? (
+                  <input className={`${input} !w-24 !py-1`} type="number" min={0} value={form[o.id]?.credits ?? "0"} onChange={(e) => setForm({ ...form, [o.id]: { ...form[o.id], credits: e.target.value } })} />
+                ) : (
+                  o.credits
+                )}
+              </td>
+              <td className="py-1.5 pr-3">{o.licences ? tr("{{a}} of {{l}}", { a: o.assigned, l: o.licences }) : "—"}</td>
+              <td className="py-1.5 pr-3 text-muted">{o.graceEndsAt ? day(o.graceEndsAt) : "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {form && <p className="text-xs text-muted">{tr("Adding now: licences on top of what each organisation already has. Each organisation gets {{d}} setup days before the licences start counting.", { d: 3 })}</p>}
+      {err && <Notice tone="error">{err}</Notice>}
+      {canManage && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {end !== null ? (
+            <>
+              <input className={`${input} !w-auto`} type="date" min={plus(1)} value={end} onChange={(e) => setEnd(e.target.value)} />
+              <Button variant="secondary" onClick={() => setEnd(null)}>
+                {tr("Cancel")}
+              </Button>
+              <Button disabled={busy || !end} onClick={saveEnd}>
+                {tr("Save the end date")}
+              </Button>
+            </>
+          ) : form ? (
+            <>
+              <Button variant="secondary" onClick={() => setForm(null)}>
+                {tr("Cancel")}
+              </Button>
+              <Button disabled={busy} onClick={allocate}>
+                {tr("Allocate")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="secondary" onClick={() => setEnd(validUntil)}>
+                {status === "expired" ? tr("Reopen with a new end date") : tr("Change the order end date")}
+              </Button>
+              {open && (leftL > 0 || leftC > 0) && <Button onClick={startForm}>{a.allocatedLicences + a.allocatedCredits ? tr("Allocate the rest") : tr("Allocate to organisations")}</Button>}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
