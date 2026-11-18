@@ -60,6 +60,7 @@ import { StaffDashboard } from "@/pages/staff/StaffDashboard";
 import { StaffLearners } from "@/pages/staff/StaffLearners";
 import { StaffBilling } from "@/pages/staff/StaffBilling";
 import { StaffAudit } from "@/pages/staff/StaffAudit";
+import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -299,6 +300,7 @@ function App() {
           <Route path={ROUTES.ADMIN_REVIEW} element={<AdminReview />} />
           <Route path={ROUTES.SUPER_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.SUPER_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
+          <Route path={ROUTES.SUPER_CHANNEL_PARTNERS} element={<ChannelPartners />} />
         </Route>
         {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
         <Route
@@ -315,6 +317,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_REVIEWS} element={<AdminReview />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.ADMIN_CONSOLE_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS} element={<ChannelPartners />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />

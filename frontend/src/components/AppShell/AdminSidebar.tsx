@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags, Handshake } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -20,6 +20,7 @@ type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
+  { to: ROUTES.SUPER_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners") },
   { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: tr("Admins") },
   { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
   { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: tr("Managers") },
@@ -41,6 +42,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
 const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
+  { to: ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners"), permission: "manageOrganizations" },
   { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: tr("Admins"), permission: "manageAdmins" },
   { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: tr("Managers") },

@@ -61,6 +61,7 @@ export const ROUTES = {
   SUPER_CONTENT: "/superadmin/content",
   SUPER_INTEGRITY: "/superadmin/integrity",
   SUPER_CERTIFICATES: "/superadmin/certificates",
+  SUPER_CHANNEL_PARTNERS: "/superadmin/channel-partners",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -81,6 +82,7 @@ export const ROUTES = {
   ADMIN_CONSOLE_CONTENT: "/admin/content",
   ADMIN_CONSOLE_INTEGRITY: "/admin/integrity",
   ADMIN_CONSOLE_CERTIFICATES: "/admin/certificates",
+  ADMIN_CONSOLE_CHANNEL_PARTNERS: "/admin/channel-partners",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",
@@ -146,6 +148,8 @@ export const LOGIN_ROUTE_BY_ROLE: Record<Role, string> = {
   recruiter: ROUTES.ORG_ADMIN_LOGIN,
   // A candidate signs in only through their emailed link.
   candidate: ROUTES.CANDIDATE,
+  // Channel Partner portal: stage 2 of the Channel Partner programme.
+  channel_partner: "/partner/login",
 };
 
 // Every role now lands on its own real console — none of these share a URL
@@ -158,6 +162,7 @@ export const LANDING_ROUTE_BY_ROLE: Record<Role, string> = {
   super_admin: ROUTES.ADMIN_DASHBOARD,
   recruiter: ROUTES.RECRUITER_JOBS,
   candidate: ROUTES.CANDIDATE,
+  channel_partner: "/partner/dashboard",
 };
 
 // Lets the header's user-menu send "Profile" to the right console's own page.
@@ -169,6 +174,7 @@ export const PROFILE_ROUTE_BY_ROLE: Record<Role, string> = {
   super_admin: ROUTES.ADMIN_PROFILE,
   recruiter: ROUTES.RECRUITER_PROFILE,
   candidate: ROUTES.CANDIDATE,
+  channel_partner: "/partner/profile",
 };
 
 // The Privacy Notices (static pages in public/legal), one per kind of user,

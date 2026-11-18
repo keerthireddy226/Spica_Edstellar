@@ -4,7 +4,7 @@ import { changeAppLanguage, isSupportedLanguage } from "@/i18n";
 import { api, isTransientError } from "@/lib/api";
 import { forgetCandidateLink } from "@/components/CandidateSignedOut";
 
-export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager" | "recruiter" | "candidate";
+export type Role = "learner" | "org_admin" | "admin" | "super_admin" | "manager" | "recruiter" | "candidate" | "channel_partner";
 
 type AuthUser = {
   id: string;
