@@ -62,8 +62,10 @@ export const ROUTES = {
   SUPER_INTEGRITY: "/superadmin/integrity",
   SUPER_CERTIFICATES: "/superadmin/certificates",
   SUPER_CHANNEL_PARTNERS: "/superadmin/channel-partners",
+  SUPER_PARTNER_ORDERS: "/superadmin/partner-orders",
   PARTNER_LOGIN: "/partner/login",
   PARTNER_PROFILE: "/partner/profile",
+  PARTNER_ORDERS: "/partner/orders",
   PARTNER_DASHBOARD: "/partner/dashboard",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
@@ -86,6 +88,7 @@ export const ROUTES = {
   ADMIN_CONSOLE_INTEGRITY: "/admin/integrity",
   ADMIN_CONSOLE_CERTIFICATES: "/admin/certificates",
   ADMIN_CONSOLE_CHANNEL_PARTNERS: "/admin/channel-partners",
+  ADMIN_CONSOLE_PARTNER_ORDERS: "/admin/partner-orders",
   // Org Admin's own console — their one organization only: every batch,
   // every Manager, every learner in it.
   ORG_ADMIN_DASHBOARD: "/orgadmin/dashboard",

@@ -62,6 +62,7 @@ import { StaffBilling } from "@/pages/staff/StaffBilling";
 import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
+import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -286,6 +287,7 @@ function App() {
         >
           <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
           <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
+          <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route
@@ -314,6 +316,7 @@ function App() {
           <Route path={ROUTES.SUPER_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.SUPER_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
           <Route path={ROUTES.SUPER_CHANNEL_PARTNERS} element={<ChannelPartners />} />
+          <Route path={ROUTES.SUPER_PARTNER_ORDERS} element={<StaffPartnerOrders />} />
         </Route>
         {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
         <Route
@@ -331,6 +334,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_INTEGRITY} element={<IntegrityReviews />} />
           <Route path={ROUTES.ADMIN_CONSOLE_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
           <Route path={ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS} element={<ChannelPartners />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS} element={<StaffPartnerOrders />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />
