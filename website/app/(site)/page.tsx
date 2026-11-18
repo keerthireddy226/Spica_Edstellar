@@ -9,7 +9,7 @@ import { CertificateForm } from "@/components/CertificateForm";
 import { app } from "@/lib/site";
 import { money } from "@/lib/prices";
 import { SampleQuestion } from "@/components/page/SampleQuestion";
-import { CefrExplorer, Journey, WhyCompare } from "@/components/home/Extras";
+import { CefrExplorer, Journey, Routes, WhyCompare } from "@/components/home/Extras";
 import { SAMPLES } from "@/lib/samples";
 import { EDSTELLAR } from "@/lib/edstellar";
 import "./home.css";
@@ -129,9 +129,14 @@ export default function Home() {
       <section className="h-section h-tint">
         <div className="h-wrap">
           <div className="h-head" data-reveal>
-            <span className="h-kicker">The path</span>
-            <h2>Six steps from first level check to certificate</h2>
-            <p>Every learner follows the same clear path, whether they join on their own or through their company or college.</p>
+            <span className="h-kicker">Get certified your way</span>
+            <h2>Go straight to your certificate, or prepare first</h2>
+            <p>Spica is not only for practice. Take the real test today, prepare for it first, or check one level at a time.</p>
+          </div>
+          <Routes />
+          <div className="h-head" data-reveal style={{ marginTop: 44 }}>
+            <span className="h-kicker">The full path</span>
+            <h3 className="h-sub">With preparation: six steps from first level check to certificate</h3>
           </div>
           <Journey />
         </div>

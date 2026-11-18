@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Eye, Headphones, Mic, Timer, Volume2 } from "lucide-react";
+import { Check, Eye, Headphones, Mic, Square, Timer, Volume2 } from "lucide-react";
 
 // A real practice question, played the way the Spica test plays it: press Play
 // when ready, the recording plays once, and the answer timer starts when it ends.
@@ -24,6 +24,17 @@ export function SampleQuestion({ s }: { s: Sample }) {
   const [left, setLeft] = useState(s.seconds);
   const [typed, setTyped] = useState("");
   const [shown, setShown] = useState(false);
+  // Speaking answers: press the microphone to record, Stop to finish (a demo: nothing is saved).
+  const [rec, setRec] = useState<"idle" | "on" | "done">("idle");
+  const [recSecs, setRecSecs] = useState(0);
+  useEffect(() => {
+    if (rec !== "on") return;
+    const id = setInterval(() => setRecSecs((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [rec]);
+  useEffect(() => {
+    if (stage === "done" && rec === "on") setRec("done");
+  }, [stage, rec]);
 
   useEffect(() => {
     if (stage !== "answer") return;
@@ -102,9 +113,30 @@ export function SampleQuestion({ s }: { s: Sample }) {
           {stage === "ready" || stage === "playing" ? (
             <p className="muted">Play the question first, then answer here.</p>
           ) : s.answerBy === "speak" ? (
-            <p className="sq-mic">
-              <Mic size={18} aria-hidden="true" /> In the test you press the microphone and speak. Here, say your answer out loud, then check it.
-            </p>
+            <>
+              {rec === "on" && (
+                <div className="sq-rec" role="status">
+                  <span>
+                    <i /> Recording… speak now
+                  </span>
+                  <em>{recSecs} s</em>
+                </div>
+              )}
+              {rec === "done" ? (
+                <p className="sq-ok">
+                  <Check size={16} aria-hidden="true" /> Answer recorded.
+                </p>
+              ) : (
+                <button
+                  className={`sq-micbtn${rec === "on" ? " on" : ""}`}
+                  onClick={() => (rec === "on" ? setRec("done") : (setRecSecs(0), setRec("on")))}
+                  aria-label={rec === "on" ? "Stop recording" : "Start recording"}
+                >
+                  {rec === "on" ? <Square size={18} aria-hidden="true" /> : <Mic size={20} aria-hidden="true" />}
+                </button>
+              )}
+              <small className="muted">{rec === "on" ? "Press Stop when you have finished." : rec === "done" ? "In the test, your answer is saved and scored." : "Press the microphone and say your answer."}</small>
+            </>
           ) : (
             <>
               <input className="sq-input" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Type the sentence…" aria-label="Your answer" />

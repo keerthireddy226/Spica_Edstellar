@@ -1665,3 +1665,10 @@ body {
 @media (max-width: 900px) { .site .tp-num-grid { grid-template-columns: repeat(2, 1fr); } .site .tp-num { border-left: none; border-top: 1px solid var(--rule); } .site .tp-f1 { left: 0; } .site .tp-f2 { right: 0; } }
 @media (max-width: 560px) { .site .tp-float { display: none; } .site .tp-visual { padding: 10px 0; } }
 @media (prefers-reduced-motion: reduce) { .site .tp-float { animation: none; } }
+
+/* Sample question: microphone and Stop. */
+.site .sq-micbtn { width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--clay); color: #fff; display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 18px -8px rgba(0,0,0,.35); }
+.site .sq-micbtn.on { background: #c0392b; }
+.site .sq-rec { width: 100%; display: flex; justify-content: space-between; align-items: center; border: 2px solid rgba(192,57,43,.4); background: rgba(192,57,43,.1); border-radius: 10px; padding: 6px 10px; font-weight: 700; color: #c0392b; font-size: .85rem; }
+.site .sq-rec i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #c0392b; margin-right: 6px; animation: sq-blink 1s steps(2, start) infinite; }
+.site .sq-rec em { font-style: normal; font-family: ui-monospace, monospace; }

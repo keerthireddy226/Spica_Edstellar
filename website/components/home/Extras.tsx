@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Minus } from "lucide-react";
 import { LEVELS } from "@/lib/levels";
+import { money } from "@/lib/prices";
+import { app } from "@/lib/site";
 
 // Home sections added from the reference design (17 Nov 2026): the learner's
 // journey, the CEFR scale explorer with level-test facts, and why teams choose Spica.
@@ -137,6 +139,31 @@ export function WhyCompare() {
         </tbody>
       </table>
       <p className="h-why-note">A general comparison of typical product categories, not of named products.</p>
+    </div>
+  );
+}
+
+// Ways to a result: a direct certificate, preparation then certificate, Full access, or a level test.
+export function Routes() {
+  const R = [
+    { tag: "Certificate now", title: "Take the real test", price: `from ${money("assessment:placement", "INR")} / ${money("assessment:placement", "USD")}`, text: "Already confident? Take one proctored test now and get your score report and certificate. A free sample first.", cert: true },
+    { tag: "Prepare, then certify", title: "Preparation + real test", price: `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, text: "30 days of practice and mock tests for one test, then the real test with a certificate.", cert: true, featured: true },
+    { tag: "Everything", title: "Full access", price: `${money("full", "INR")} / ${money("full", "USD")} a month`, text: "Every test, unlimited practice tests, 2 mock tests a month in each test, and one final assessment with a certificate.", cert: true },
+    { tag: "One level", title: "Level test (A1–C2)", price: `${money("level", "INR")} / ${money("level", "USD")}`, text: "Check one level at a time: a passed or not-passed result with a score report.", cert: false },
+  ];
+  return (
+    <div className="h-routes">
+      {R.map((r) => (
+        <a key={r.title} href={app.signUp} className={`h-route${r.featured ? " feat" : ""}`} data-reveal>
+          <span className="h-route-tag">{r.tag}</span>
+          <b>{r.title}</b>
+          <small>{r.text}</small>
+          <span className="h-route-foot">
+            <em>{r.price}</em>
+            <span className={r.cert ? "yes" : "no"}>{r.cert ? <><Check size={14} aria-hidden="true" /> Certificate</> : "Score report"}</span>
+          </span>
+        </a>
+      ))}
     </div>
   );
 }
