@@ -88,7 +88,7 @@ function OrgCertificates() {
       <OrgEmptyState
         icon={Award}
         title={tr("Final assessment certificates")}
-        text={tr("No learner is certified yet. Certificates come from the final assessment, given on Tests & credits or at the end of a program.")}
+        text={tr("No learner is certified yet. Certificates come from real tests: the final assessment, a passed level test, or a test given on Tests & credits.")}
         action={
           <div className="flex flex-wrap justify-center gap-4 text-sm font-semibold">
             <Link to={ROUTES.ORG_ADMIN_TESTS} className="text-navy hover:underline">

@@ -256,7 +256,7 @@ export default function TestsPage() {
             </table>
           </div>
           <p className="muted" style={{ marginTop: 14, fontSize: "0.9rem" }}>
-            Prices are for one real test with a score report (and a certificate, except Level Tests). Organisations pay with credits; see{" "}
+            Prices are for one real test with a score report and a certificate (Level Tests: a certificate when you pass). Organisations pay with credits; see{" "}
             <Link href="/pricing">Pricing</Link>.
           </p>
         </div>

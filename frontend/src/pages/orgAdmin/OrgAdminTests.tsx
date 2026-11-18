@@ -10,7 +10,7 @@ import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
 
 // Tests & credits: give learners a real test (strictly proctored, with a
-// certificate), a level test, or preparation for one test, paid with the
+// certificate), a level test (certificate on a pass), or preparation for one test, paid with the
 // organization's credits. Full access stays on the Licenses page. Programs
 // with a final assessment give theirs here automatically.
 
@@ -149,7 +149,7 @@ export function OrgAdminTests() {
   const allShownPicked = shown.length > 0 && shown.every((l) => picked.has(l.id));
   const groups = [
     { kind: "assessment" as const, label: tr("Real test (with a certificate)") },
-    { kind: "level" as const, label: tr("Level test (no certificate)") },
+    { kind: "level" as const, label: tr("Level test (certificate on a pass)") },
     { kind: "prep" as const, label: tr("Prepare for one test, then a real test") },
     { kind: "pack" as const, label: tr("Practice pack (Practice Modules only)") },
   ];
@@ -224,7 +224,7 @@ export function OrgAdminTests() {
                   </option>
                 ))}
               </select>
-              <span className="text-xs font-normal normal-case tracking-normal text-muted">{tr("Checks one level: a pass is 70% overall and at least 50% in each skill. No certificate; certificates come from the final assessment. Unused tests give their credit back.")}</span>
+              <span className="text-xs font-normal normal-case tracking-normal text-muted">{tr("Checks one level: a pass is 70% overall and at least 50% in each skill, and gives a level certificate. Unused tests give their credit back.")}</span>
             </label>
           )}
           {product?.kind === "pack" && (

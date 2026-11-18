@@ -281,7 +281,7 @@ export default function Home() {
                   <dd>After 7 days</dd>
                 </div>
               </dl>
-              <p className="h-small">A level test gives a passed or not-passed result with a score report. Certificates come only from a final proctored test.</p>
+              <p className="h-small">A level test gives a passed or not-passed result with a score report, and a level certificate when you pass.</p>
             </div>
           </div>
         </div>

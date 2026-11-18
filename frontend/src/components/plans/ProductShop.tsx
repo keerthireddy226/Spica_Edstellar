@@ -40,7 +40,7 @@ const GROUPS: { kind: PricedProduct["kind"]; title: () => string; note: () => st
   {
     kind: "level",
     title: () => tr("Level test"),
-    note: () => tr("One test at the level you choose, to check where you are (a pass is 70% overall and at least 50% in each skill). No certificate: certificates come from the final assessment."),
+    note: () => tr("One proctored test at the level you choose (a pass is 70% overall and at least 50% in each skill). A pass gives a level certificate."),
     icon: ClipboardCheck,
   },
   {

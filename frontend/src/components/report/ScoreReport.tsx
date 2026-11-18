@@ -165,7 +165,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
   const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
   const test = about?.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
   // A level test is a real attempt too, but a pass or not-passed check with no
-  // certificate; only the final assessment certifies.
+  // certificate; real tests (final assessment, a passed level test, a recruitment test) certify.
   const levelTest = about?.deliveryMode === "certified" ? (about.levelTest ?? null) : null;
   const finalAssessment = about?.deliveryMode === "certified" && !levelTest;
   const missing = score.missingSkills ?? [];
@@ -286,7 +286,7 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
               {tr("CEFR {{level}}", { level: score.overall.level })}
               {subBandLabel(score.overall.score) ? ` · ${subBandLabel(score.overall.score)}` : ""}
             </span>
-            {/* Practice and mock results predict; only the final assessment certifies. */}
+            {/* Practice and mock results predict; real tests certify. */}
             {about && !finalAssessment && !levelTest && <span className="text-[11px] font-semibold text-muted text-center">{tr("Predicted level, not a certificate")}</span>}
             {levelTest && (
               <>
@@ -302,11 +302,11 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
           <div className="flex flex-col gap-3 min-w-0">
             {analysis && !org && <p className="text-sm text-ink leading-relaxed">{analysis}</p>}
             {about && !finalAssessment && !levelTest && !org && (
-              <p className="text-xs text-muted print:hidden">{tr("This is a practice result: it predicts the level your final assessment is likely to show. Only the final assessment gives a certificate.")}</p>
+              <p className="text-xs text-muted print:hidden">{tr("This is a practice result: it predicts the level your final assessment is likely to show. Practice and mock tests give no certificate; real tests do.")}</p>
             )}
             {levelTest && !org && (
               <p className="text-xs text-muted print:hidden">
-                {tr("This level test checks whether you're working at level {{level}}: passed or not passed. It gives no certificate: only the final assessment does.", { level: levelTest })}
+                {tr("This level test checks whether you're working at level {{level}}: passed or not passed. A pass gives a Level {{level}} certificate.", { level: levelTest })}
               </p>
             )}
             <div>

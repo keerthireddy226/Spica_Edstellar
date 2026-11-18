@@ -87,7 +87,7 @@ export function OwnedIntro({
 }
 
 // After a real attempt (scored and checked before its result shows) or a sample.
-// level: a level test's level. It's a pass or not-passed check: no certificate.
+// level: a level test's level. A pass gives a level certificate.
 export function OwnedFinished({ mode, level = null, onDone }: { mode: "certified" | "sample"; level?: string | null; onDone: () => void }) {
   return (
     <div className="max-w-lg w-full mx-auto bg-surface border border-rule rounded-card shadow-sm p-8 flex flex-col gap-4 items-center text-center">
@@ -97,7 +97,7 @@ export function OwnedFinished({ mode, level = null, onDone }: { mode: "certified
       <h1 className="font-display font-bold text-2xl text-ink">{mode === "certified" ? tr("Test finished") : tr("Sample finished")}</h1>
       <p className="text-sm text-muted">
         {mode === "certified" && level
-          ? tr("We're scoring your answers. Whether you passed the Level {{level}} test will be on the Assessment page, usually within the hour. A level test gives no certificate: only the final assessment does.", { level })
+          ? tr("We're scoring your answers. Whether you passed the Level {{level}} test will be on the Assessment page, usually within the hour. A pass gives you a Level {{level}} certificate.", { level })
           : mode === "certified"
           ? tr("We're scoring your answers and checking the proctoring record. Your score report and certificate will be on the Assessment page, usually within the hour, and we'll email you.")
           : tr("Your real test is now open on the Assessment page, whenever you're ready.")}

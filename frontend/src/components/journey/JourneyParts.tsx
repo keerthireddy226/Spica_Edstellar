@@ -128,7 +128,7 @@ export function PathToGoal({ j }: { j: Journey }) {
         {j.steps.map((step, i) => {
           const done = step.skills.every((s) => s.state === "done");
           const active = !done && step.skills.some((s) => s.state === "now");
-          // The level just finished in Practice Modules: a level test checks it (no certificate).
+          // The level just finished in Practice Modules: a level check (practice, no certificate).
           const justDone = done && !j.steps[i + 1]?.skills.every((s) => s.state === "done");
           return (
             <li key={step.level} className="relative">

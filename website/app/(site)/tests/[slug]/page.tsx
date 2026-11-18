@@ -153,7 +153,7 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             <ul className="ticks">
               <li>
                 <b>{isLevel ? "Level test" : "Real test only"}:</b> {money(t.priceKey, "INR")} / {money(t.priceKey, "USD")}
-                {isLevel ? ", for one level from A1 to C2. No certificate." : ", with a score report and certificate. A free sample first."}
+                {isLevel ? ", for one level from A1 to C2, with a level certificate when you pass." : ", with a score report and certificate. A free sample first."}
               </li>
               {t.prepKey && (
                 <li>

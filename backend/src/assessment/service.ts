@@ -554,17 +554,14 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
        FROM sessions s JOIN users u ON u.id = s.user_id JOIN tenants t ON t.id = u.tenant_id LEFT JOIN batches b ON b.id = u.batch_id
        LEFT JOIN exams x ON x.id::text = s.composition->>'examId' LEFT JOIN test_types tt ON tt.id = coalesce(s.composition->>'testTypeId', x.test_type_id)
        WHERE s.id = $1 AND s.completed_at IS NOT NULL
+         -- Every paid assessment gives a certificate (user, 18 Nov 2026): a real
+         -- test, a passed level test, and every recruitment / admissions test.
          AND (s.delivery_mode = 'certified' OR (u.role = 'candidate' AND EXISTS (
-           SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
-           WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)
-           -- A candidate's certificate only for a test of all four skills, not the shorter ones.
-           AND tt.skills @> '{speaking,listening,reading,writing}'))`,
+           SELECT 1 FROM recruitment_assessments ra WHERE ra.session_id = s.id AND ra.status = 'completed')))`,
       [sessionId],
     )
   ).rows[0];
   if (!s) return null;
-  // Only the final assessment gives a certificate: a level test is a check, with none.
-  if (s.composition?.levelTest) return null;
   // Every answer given must be scored first: an answer whose AI scoring failed
   // or is still waiting would otherwise drop out of the score (a reviewer
   // clearing the proctoring record calls this directly, not via the sweep).
@@ -577,12 +574,12 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
   // A candidate: their name and email are on the invitation.
   const cand = (
     await pool.query(
-      `SELECT ra.email, ra.first_name, ra.last_name, j.title FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id WHERE ra.session_id = $1`,
+      `SELECT ra.email, ra.first_name, ra.last_name, j.title, j.show_result_to_candidate AS show FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id WHERE ra.session_id = $1`,
       [sessionId],
     )
   ).rows[0];
   if (cand) s.name = [cand.first_name, cand.last_name].filter(Boolean).join(" ") || cand.email;
-  // A level test (no certificate is issued for one, see above): the level, each skill's share right.
+  // A level test: a level certificate on a pass, with each skill's share right.
   const levelTest = s.composition?.levelTest as string | undefined;
   let level: string;
   let spica: number | null;
@@ -629,13 +626,13 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
         ],
       );
       const { code, created } = r.rows[0];
-      if (created && cand) {
+      if (created && cand && cand.show) {
         await sendNotificationEmail({
           to: cand.email,
           subject: `Your English certificate from ${s.org}`,
           text: `Hello ${cand.first_name ?? ""},\n\nYour English test for ${cand.title} is scored. Your certificate (${testName ?? "Spica"}: level ${level}${spica !== null ? `, Spica score ${spica}` : ""}) is here:\n${APP_URL}/certificate/${code}\n\nAnyone can check it with this link or its QR code.`,
         }).catch((err) => console.error("candidate certificate email failed:", err));
-      } else if (created) {
+      } else if (created && !cand) {
         await notify({
           userId: s.user_id,
           kind: "result_certificate",
@@ -689,18 +686,13 @@ export async function issueDueResultCertificates(): Promise<number> {
   const due = (
     await pool.query(
       `SELECT s.id FROM sessions s JOIN session_integrity si ON si.session_id = s.id
-       WHERE (s.delivery_mode = 'certified' OR (EXISTS (
-               SELECT 1 FROM recruitment_assessments ra JOIN recruitment_jobs j ON j.id = ra.job_id
-               WHERE ra.session_id = s.id AND ra.status = 'completed' AND j.show_result_to_candidate)
-             -- A candidate's certificate only for a test of all four skills.
-             AND (SELECT tt.skills FROM test_types tt
-                  WHERE tt.id = coalesce(s.composition->>'testTypeId', (SELECT x.test_type_id FROM exams x WHERE x.id::text = s.composition->>'examId')))
-                 @> '{speaking,listening,reading,writing}'))
+       WHERE (s.delivery_mode = 'certified' OR EXISTS (
+               SELECT 1 FROM recruitment_assessments ra WHERE ra.session_id = s.id AND ra.status = 'completed'))
          AND s.completed_at IS NOT NULL AND s.completed_at < now() - make_interval(mins => $1)
          AND NOT coalesce((s.composition->>'abandoned')::boolean, false)
          AND si.status IN ('clear', 'cleared')
-         -- Only the final assessment gives a certificate: level tests have none.
-         AND s.composition->>'levelTest' IS NULL
+         -- A level test only on a pass (issueResultCertificate checks it).
+         AND (s.composition->>'levelTest' IS NULL OR (s.result->'levelTest'->>'passed')::boolean IS TRUE)
          AND NOT EXISTS (SELECT 1 FROM certificates c WHERE c.session_id = s.id)
          AND NOT EXISTS (SELECT 1 FROM attempts a LEFT JOIN scores sc ON sc.attempt_id = a.id
                          WHERE a.session_id = s.id AND (a.response_text IS NOT NULL OR a.response_uri IS NOT NULL) AND coalesce(sc.status, 'pending') IN ('pending', 'failed'))

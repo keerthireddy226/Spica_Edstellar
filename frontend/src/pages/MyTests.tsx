@@ -324,7 +324,14 @@ function TestCard({ t, onChanged, shop }: { t: OwnedTest; onChanged: () => void;
               )}
               {a.status === "under_review" && <span className="text-xs text-muted">{tr("A reviewer is checking the proctoring record. We'll email you when it's done.")}</span>}
               {a.status === "void" && <span className="text-xs text-muted">{tr("The proctoring review found a problem, so this attempt doesn't count.")}</span>}
-              {a.status === "passed" && <span className="text-xs text-muted">{tr("You showed this level. Your certificate comes from your final assessment.")}</span>}
+              {a.status === "passed" &&
+                (a.certificateCode ? (
+                  <Link to={`/certificate/${a.certificateCode}`} className="flex items-center gap-1.5 font-semibold text-navy-deep hover:underline">
+                    <Award size={15} /> {tr("Level certificate")}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted">{tr("You showed this level. Your level certificate arrives once the proctoring checks are done.")}</span>
+                ))}
               {a.status === "not_passed" && (
                 <span className="text-xs text-muted">{tr("A pass needs 70% overall and at least 50% in each skill. A retake of this level is half price.")}</span>
               )}
@@ -396,7 +403,7 @@ export function MyTests() {
                 [BookOpen, tr("With Preparation + real test + certificate, it opens after your first mock test, or in the last 7 days of your preparation.")],
                 [Award, tr("Full access includes one: choose its test here, then it opens after a mock test of that test.")],
                 [ShieldCheck, tr("With Real test + certificate, it opens after a free sample.")],
-                [Target, tr("A level test checks one level (A1 to C2). It gives no certificate.")],
+                [Target, tr("A level test checks one level (A1 to C2). A pass gives a level certificate.")],
               ] as const
             ).map(([Icon, text]) => (
               <li key={text} className="flex items-start gap-3 rounded-input bg-paper-warm/60 border border-rule px-4 py-3 text-sm text-ink">

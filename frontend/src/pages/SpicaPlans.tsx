@@ -151,7 +151,7 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
         <Card eyebrow={tr("One level, A1 to C2")} title={tr("Level test")} price={price(by("level")[0])} action={buy}>
           <Item ok>{tr("Questions at the level you choose, all four skills")}</Item>
           <Item ok>{tr("Pass at 70% overall and 50% in each skill")}</Item>
-          <Item ok={false}>{tr("No certificate included")}</Item>
+          <Item ok>{tr("A level certificate when you pass")}</Item>
         </Card>
         <Card eyebrow={tr("Just practice")} title={tr("Practice pack")} price={<>{price(by("pack")[0])} <small className="text-sm font-medium text-muted">{tr("30 days")}</small></>} action={buy}>
           <Item ok>{tr("Practice Modules in every question type")}</Item>
