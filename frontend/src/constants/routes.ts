@@ -62,6 +62,8 @@ export const ROUTES = {
   SUPER_INTEGRITY: "/superadmin/integrity",
   SUPER_CERTIFICATES: "/superadmin/certificates",
   SUPER_CHANNEL_PARTNERS: "/superadmin/channel-partners",
+  PARTNER_LOGIN: "/partner/login",
+  PARTNER_DASHBOARD: "/partner/dashboard",
   // An Admin's own, separate console — no "manage other Admins" screen,
   // no bulk-onboard-admin, no unscoped individual-learners list. Just the
   // organizations assigned to them and their own profile.
@@ -127,6 +129,7 @@ export const ROUTES = {
 // gets redirected to their own console, not shown the other role's data.
 export const SUPER_ADMIN_ONLY_ROLES: Role[] = ["super_admin"];
 export const ADMIN_CONSOLE_ONLY_ROLES: Role[] = ["admin"];
+export const CHANNEL_PARTNER_ROLES: Role[] = ["channel_partner"];
 export const ORG_ADMIN_ONLY_ROLES: Role[] = ["org_admin"];
 export const MANAGER_ONLY_ROLES: Role[] = ["manager"];
 export const RECRUITER_ONLY_ROLES: Role[] = ["recruiter"];
@@ -149,7 +152,7 @@ export const LOGIN_ROUTE_BY_ROLE: Record<Role, string> = {
   // A candidate signs in only through their emailed link.
   candidate: ROUTES.CANDIDATE,
   // Channel Partner portal: stage 2 of the Channel Partner programme.
-  channel_partner: "/partner/login",
+  channel_partner: ROUTES.PARTNER_LOGIN,
 };
 
 // Every role now lands on its own real console — none of these share a URL
@@ -162,7 +165,7 @@ export const LANDING_ROUTE_BY_ROLE: Record<Role, string> = {
   super_admin: ROUTES.ADMIN_DASHBOARD,
   recruiter: ROUTES.RECRUITER_JOBS,
   candidate: ROUTES.CANDIDATE,
-  channel_partner: "/partner/dashboard",
+  channel_partner: ROUTES.PARTNER_DASHBOARD,
 };
 
 // Lets the header's user-menu send "Profile" to the right console's own page.
@@ -174,7 +177,7 @@ export const PROFILE_ROUTE_BY_ROLE: Record<Role, string> = {
   super_admin: ROUTES.ADMIN_PROFILE,
   recruiter: ROUTES.RECRUITER_PROFILE,
   candidate: ROUTES.CANDIDATE,
-  channel_partner: "/partner/profile",
+  channel_partner: ROUTES.PARTNER_DASHBOARD,
 };
 
 // The Privacy Notices (static pages in public/legal), one per kind of user,

@@ -18,6 +18,7 @@ import {
   type ChannelPartnerDetail,
 } from "@/api/channelPartners";
 import { tr } from "@/i18n/tr";
+import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/PartnerDashboard";
 
 // Channel Partners (stage 1): register partners, their code, commission and
 // free demo allocation, and the demo window. Partners can't sign themselves up.
@@ -50,6 +51,8 @@ const actionLabel = (a: string) =>
     "channel_partner.deactivated": tr("Partner deactivated"),
     "channel_partner.reactivated": tr("Partner reactivated"),
     "channel_partner.invite_resent": tr("Invitation sent again"),
+    "channel_partner.organisation_added": tr("Organisation added"),
+    "channel_partner.licences_given": tr("Demo licences given"),
   })[a] ?? a;
 
 export function ChannelPartners() {
@@ -263,6 +266,8 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [edit, setEdit] = useState<{ fullName: string; demoLicences: string; commissionPercent: string; notes: string } | null>(null);
   const [endDate, setEndDate] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [giving, setGiving] = useState<PartnerOrg | null>(null);
   const load = () =>
     getChannelPartner(id)
       .then((r) => {
@@ -458,19 +463,37 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
           </>
         )}
         {tab === "orgs" && (
-          <ModalSection title={tr("Organisations brought by this partner")} icon={Building2}>
+          <ModalSection
+            title={tr("Organisations brought by this partner")}
+            icon={Building2}
+            action={
+              <Button onClick={() => setAdding(true)} disabled={p.demoStatus !== "active" || !p.active} className="!px-3 !py-1.5 flex items-center gap-1">
+                <Plus size={14} /> {tr("Add for this partner")}
+              </Button>
+            }
+          >
             {d.organisations.length === 0 ? (
-              <ModalEmpty>{tr("None yet. The partner adds universities, colleges and companies from their portal (coming in the next stage).")}</ModalEmpty>
+              <ModalEmpty>{tr("None yet. The partner adds them from their portal, or you can add one for them.")}</ModalEmpty>
             ) : (
               <ul className="flex flex-col gap-2">
                 {d.organisations.map((o) => (
-                  <li key={o.id} className="flex justify-between border border-rule rounded-input px-3 py-2 text-sm">
-                    <span className="font-semibold">{o.name}</span>
-                    <span className="text-muted">{day(o.createdAt)}</span>
+                  <li key={o.id} className="flex flex-wrap items-center justify-between gap-3 border border-rule rounded-input px-3 py-2 text-sm">
+                    <span>
+                      <b>{o.name}</b>
+                      <span className="text-muted"> · {o.admin.name} ({o.admin.email}){o.admin.invitePending ? ` · ${tr("Invite pending")}` : ""}</span>
+                    </span>
+                    <span className="flex items-center gap-3">
+                      <span className="text-muted">{tr("{{n}} demo licences · {{l}} learners", { n: o.demoLicences, l: o.learners })}</span>
+                      <button className="text-sm font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={p.demoStatus !== "active"} onClick={() => setGiving(o)}>
+                        {tr("Give licences")}
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>
             )}
+            {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
+            {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
           </ModalSection>
         )}
         {tab === "history" && (

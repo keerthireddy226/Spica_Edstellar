@@ -8,7 +8,7 @@ import { CertificateReport } from "@/pages/CertificateReport";
 import { Help } from "@/pages/Help";
 import { CertificateRequests } from "@/pages/CertificateRequests";
 import { QuoteView } from "@/pages/QuoteView";
-import {
+import { CHANNEL_PARTNER_ROLES,
   ADMIN_CONSOLE_ONLY_ROLES,
   ADMIN_LOGIN_ALLOWED_ROLES,
   LANDING_ROUTE_BY_ROLE,
@@ -61,6 +61,7 @@ import { StaffLearners } from "@/pages/staff/StaffLearners";
 import { StaffBilling } from "@/pages/staff/StaffBilling";
 import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { ChannelPartners } from "@/pages/staff/ChannelPartners";
+import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -117,6 +118,7 @@ function App() {
           element={<Login allowedRoles={ORG_ADMIN_LOGIN_ALLOWED_ROLES} />}
         />
         <Route path={ROUTES.MANAGER_LOGIN} element={<Login allowedRoles={MANAGER_LOGIN_ALLOWED_ROLES} />} />
+        <Route path={ROUTES.PARTNER_LOGIN} element={<Login allowedRoles={CHANNEL_PARTNER_ROLES} />} />
         <Route path={ROUTES.ADMIN_LOGIN} element={<Login allowedRoles={ADMIN_LOGIN_ALLOWED_ROLES} />} />
         <Route path="/superadmin/login" element={<Navigate to={ROUTES.ADMIN_LOGIN} replace />} />
         <Route path="/login" element={<Navigate to={ROUTES.LOGIN} replace />} />
@@ -273,6 +275,16 @@ function App() {
           <Route path={ROUTES.PROFILE} element={<Profile />} />
           <Route path={ROUTES.PLANS} element={<Plans />} />
           <Route path={ROUTES.SPICA_PLANS} element={<SpicaPlans />} />
+        </Route>
+        {/* Channel Partner portal. */}
+        <Route
+          element={
+            <ProtectedRoute>
+              <AdminLayout allowedRoles={CHANNEL_PARTNER_ROLES} />
+            </ProtectedRoute>
+          }
+        >
+          <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route

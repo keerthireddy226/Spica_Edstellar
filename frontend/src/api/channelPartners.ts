@@ -27,7 +27,7 @@ export interface ChannelPartner {
 
 export interface ChannelPartnerDetail {
   partner: ChannelPartner;
-  organisations: { id: string; name: string; category: string | null; createdAt: string }[];
+  organisations: import("@/pages/partner/PartnerDashboard").PartnerOrg[];
   history: { action: string; by: string | null; details: Record<string, unknown>; at: string }[];
 }
 

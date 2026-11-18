@@ -97,7 +97,10 @@ const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_PROFILE, icon: User, label: tr("Profile") },
 ];
 
+const PARTNER_NAV_ITEMS: NavItem[] = [{ to: ROUTES.PARTNER_DASHBOARD, icon: Handshake, label: tr("Partner dashboard") }];
+
 const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
+  channel_partner: PARTNER_NAV_ITEMS,
   super_admin: SUPER_ADMIN_NAV_ITEMS,
   admin: ADMIN_CONSOLE_NAV_ITEMS,
   org_admin: ORG_ADMIN_NAV_ITEMS,

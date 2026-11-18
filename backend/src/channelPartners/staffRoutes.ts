@@ -14,6 +14,8 @@ import { requirePermission } from "../admin/staff.js";
 import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { recordAudit } from "../audit/service.js";
+import { createPartnerOrganisation, giveDemoLicences, partnerOrganisations } from "./organisations.js";
+import { orgSchema, sendPartnerError } from "./portalRoutes.js";
 
 export const channelPartnerStaffRouter = Router();
 
@@ -67,6 +69,7 @@ const SELECT = `
   SELECT cp.*, u.deleted_at AS user_deleted_at,
     (SELECT max(s.created_at) FROM auth_sessions s WHERE s.user_id = cp.user_id) AS last_sign_in,
     (SELECT count(*)::int FROM tenants t WHERE t.channel_partner_id = cp.id) AS organisations,
+    (SELECT coalesce(sum(a.licences), 0)::int FROM partner_allocations a WHERE a.partner_id = cp.id AND a.kind = 'demo') AS demo_given,
     (SELECT coalesce(nullif(concat_ws(' ', c.first_name, c.last_name), ''), c.email) FROM users c WHERE c.id = cp.created_by) AS created_by_name
   FROM channel_partners cp JOIN users u ON u.id = cp.user_id`;
 
@@ -78,8 +81,7 @@ function shape(r: Record<string, any>) {
     code: r.code,
     commissionPercent: Number(r.commission_percent),
     demoLicences: r.demo_licences,
-    // Demo licences given to organisations arrive in stage 2.
-    demoLicencesGiven: 0,
+    demoLicencesGiven: r.demo_given ?? 0,
     demoStartsAt: r.demo_starts_at,
     demoEndsAt: r.demo_ends_at,
     demoEndedAt: r.demo_ended_at,
@@ -111,17 +113,14 @@ channelPartnerStaffRouter.get("/channel-partners/:id", requireAuth, async (req: 
   try {
     const r = await pool.query(`${SELECT} WHERE cp.id = $1`, [req.params.id]);
     if (!r.rowCount) return res.status(404).json({ error: "partner_not_found" });
-    const orgs = await pool.query(
-      `SELECT t.id, t.name, t.category, t.created_at FROM tenants t WHERE t.channel_partner_id = $1 ORDER BY t.created_at DESC`,
-      [req.params.id],
-    );
+    const orgs = await partnerOrganisations(req.params.id as string);
     const history = await pool.query(
       `SELECT action, actor_label, details, created_at FROM audit_log WHERE target_type = 'channel_partner' AND target_id = $1 ORDER BY created_at DESC LIMIT 50`,
       [req.params.id],
     );
     res.json({
       partner: shape(r.rows[0]),
-      organisations: orgs.rows.map((o) => ({ id: o.id, name: o.name, category: o.category, createdAt: o.created_at })),
+      organisations: orgs,
       history: history.rows.map((h) => ({ action: h.action, by: h.actor_label, details: h.details, at: h.created_at })),
     });
   } catch (err) {
@@ -331,5 +330,29 @@ channelPartnerStaffRouter.post("/channel-partners/:id/resend-invite", requireAut
     res.json({ id: p.id });
   } catch (err) {
     next(err);
+  }
+});
+
+// Spica staff adding an organisation for a partner, or giving it more demo licences.
+channelPartnerStaffRouter.post("/channel-partners/:id/organisations", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  const parsed = orgSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
+  try {
+    res.status(201).json(await createPartnerOrganisation({ partnerId: req.params.id as string, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null }, ...parsed.data }));
+  } catch (err) {
+    if (!sendPartnerError(err, res)) next(err);
+  }
+});
+
+channelPartnerStaffRouter.post("/channel-partners/:id/organisations/:tenantId/licences", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  const parsed = z.object({ licences: z.number().int().min(1).max(100000) }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
+  try {
+    await giveDemoLicences({ partnerId: req.params.id as string, tenantId: req.params.tenantId as string, licences: parsed.data.licences, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
+    res.json({ ok: true });
+  } catch (err) {
+    if (!sendPartnerError(err, res)) next(err);
   }
 });
