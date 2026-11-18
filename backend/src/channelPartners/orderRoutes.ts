@@ -7,6 +7,7 @@ import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { requirePermission, staffPermissions, requireStaff, isSuperAdmin } from "../admin/staff.js";
 import { createPaymentLink, orderDocument, recordPayment, sendProforma, suggestedBillTo } from "./financeOrders.js";
 import { allocateOrder, changeOrderEnd } from "./allocations.js";
+import { commissionRows, markCommissionPaid, partnerPerformance } from "./reports.js";
 import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
 import { sendPartnerError } from "./portalRoutes.js";
 
@@ -74,11 +75,6 @@ partnerOrdersRouter.get("/", async (req: AuthedRequest, res, next) => {
   const id = await myPartnerId(req, res);
   if (!id) return;
   listOrders({ partnerId: id }).then((orders) => res.json({ orders }), next);
-});
-partnerOrdersRouter.get("/:orderId", async (req: AuthedRequest, res, next) => {
-  const id = await myPartnerId(req, res);
-  if (!id) return;
-  getOrder(req.params.orderId as string, id).then((o) => res.json(o), (err) => fail(err, res, next));
 });
 partnerOrdersRouter.post("/", async (req: AuthedRequest, res, next) => {
   const id = await myPartnerId(req, res);
@@ -191,11 +187,13 @@ const allocateSchema = z.object({
     .array(z.object({ tenantId: z.string().uuid(), licences: z.coerce.number().int().min(0).max(100000), credits: z.coerce.number().int().min(0).max(1000000) }))
     .min(1)
     .max(500),
+  upgradeDemo: z.boolean().optional(),
 });
 staffOrdersRouter.post("/:orderId/allocate", async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
-    await allocateOrder({ orderId: req.params.orderId as string, actor: actorOf(req), items: allocateSchema.parse(req.body).items });
+    const b = allocateSchema.parse(req.body);
+    await allocateOrder({ orderId: req.params.orderId as string, actor: actorOf(req), items: b.items, upgradeDemo: b.upgradeDemo === true });
     res.json({ ok: true });
   } catch (err) {
     fail(err, res, next);
@@ -314,4 +312,41 @@ orgOrdersRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// ---- Reports (stage 9): partner performance and commission ----
+export const partnerReportsRouter = Router();
+partnerReportsRouter.use(requireAuth);
+const dateQ = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+
+partnerReportsRouter.get("/performance", async (req: AuthedRequest, res, next) => {
+  if (!(await canSeeOrders(req, res))) return;
+  partnerPerformance({ from: dateQ(req.query.from), to: dateQ(req.query.to) }).then((partners) => res.json({ partners }), next);
+});
+partnerReportsRouter.get("/commission", async (req: AuthedRequest, res, next) => {
+  if (!(await canSeeOrders(req, res))) return;
+  const partnerId = typeof req.query.partnerId === "string" && /^[0-9a-f-]{36}$/.test(req.query.partnerId) ? req.query.partnerId : null;
+  commissionRows({ partnerId, unpaidOnly: req.query.unpaid === "1" }).then((rows) => res.json({ rows }), next);
+});
+partnerReportsRouter.post("/commission/paid", async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "finance"))) return;
+  try {
+    const b = z.object({ orderIds: z.array(z.string().uuid()).min(1).max(500), reference: z.string().trim().min(1).max(200) }).parse(req.body);
+    res.json(await markCommissionPaid({ orderIds: b.orderIds, reference: b.reference, actor: actorOf(req) }));
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// The partner's own commission.
+partnerOrdersRouter.get("/commission/list", async (req: AuthedRequest, res, next) => {
+  const id = await myPartnerId(req, res);
+  if (!id) return;
+  commissionRows({ partnerId: id }).then((rows) => res.json({ rows }), next);
+});
+
+partnerOrdersRouter.get("/:orderId", async (req: AuthedRequest, res, next) => {
+  const id = await myPartnerId(req, res);
+  if (!id) return;
+  getOrder(req.params.orderId as string, id).then((o) => res.json(o), (err) => fail(err, res, next));
 });

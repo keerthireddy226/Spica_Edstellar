@@ -32,7 +32,10 @@ export interface DemoState {
 export async function demoState(userId: string): Promise<DemoState | null> {
   const e = (
     await pool.query(
-      `SELECT id, starts_at, ends_at FROM entitlements WHERE user_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL AND starts_at <= now() AND ends_at > now() ORDER BY ends_at DESC LIMIT 1`,
+      `SELECT id, starts_at, ends_at FROM entitlements WHERE user_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL AND starts_at <= now() AND ends_at > now()
+         -- A paid licence running replaces the demo and its limits.
+         AND NOT EXISTS (SELECT 1 FROM license_assignments a WHERE a.user_id = $1 AND a.reclaimed_at IS NULL AND a.starts_at <= now() AND a.ends_at > now())
+       ORDER BY ends_at DESC LIMIT 1`,
       [userId],
     )
   ).rows[0];
@@ -61,7 +64,11 @@ export async function demoState(userId: string): Promise<DemoState | null> {
 
 // Had a demo licence that has ended, with nothing else open (for "talk to us").
 export async function demoEnded(userId: string): Promise<boolean> {
-  const r = await pool.query(`SELECT 1 FROM entitlements WHERE user_id = $1 AND source = 'partner_demo' AND ends_at <= now() LIMIT 1`, [userId]);
+  const r = await pool.query(
+    `SELECT 1 FROM entitlements WHERE user_id = $1 AND source = 'partner_demo' AND ends_at <= now()
+       AND NOT EXISTS (SELECT 1 FROM license_assignments a WHERE a.user_id = $1 AND a.reclaimed_at IS NULL AND a.ends_at > now()) LIMIT 1`,
+    [userId],
+  );
   return !!r.rowCount;
 }
 
@@ -152,6 +159,10 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     res.json({
       partnerOrganisation: true,
       demo: { given: b.given, used: b.used, left: b.left, windowOpen: b.windowOpen, windowEndsAt: b.windowEndsAt, days: DEMO_DAYS },
+      upgrade: await (async () => {
+        const [ids, p] = await Promise.all([demoLearnersToUpgrade(req.user!.tenantId!), partnerOrderPool(req.user!.tenantId!)]);
+        return { demoLearners: ids.length, paidLicencesFree: Math.floor(p.freeMonths / p.licenceMonths), licenceMonths: p.licenceMonths };
+      })(),
       learners: learners.rows.map((l) => ({
         id: l.id,
         name: [l.first_name, l.last_name].filter(Boolean).join(" "),
@@ -167,6 +178,15 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
 });
 
 const demoErrorStatus = (code: string) => (["learner_not_found", "no_demo_licence"].includes(code) ? 404 : 409);
+
+orgDemoRouter.post("/upgrade", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (req.user!.role !== "org_admin" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
+  try {
+    res.json(await upgradeDemoLearners({ tenantId: req.user!.tenantId, actorId: req.user!.id, actorRole: "org_admin" }));
+  } catch (err) {
+    next(err);
+  }
+});
 
 orgDemoRouter.post("/:userId", requireAuth, async (req: AuthedRequest, res, next) => {
   if (req.user!.role !== "org_admin" || !req.user!.tenantId) return res.status(403).json({ error: "forbidden" });
@@ -188,3 +208,49 @@ orgDemoRouter.delete("/:userId", requireAuth, async (req: AuthedRequest, res, ne
     next(err);
   }
 });
+
+// Demo to paid (stage 9): give a paid licence of the order's length to each
+// demo learner who has none, oldest demo first, while the organisation has
+// Channel Partner order licences free. They keep their history; their demo ends.
+export async function demoLearnersToUpgrade(tenantId: string) {
+  const r = await pool.query(
+    `SELECT DISTINCT ON (e.user_id) e.user_id, e.starts_at FROM entitlements e JOIN users u ON u.id = e.user_id AND u.deleted_at IS NULL AND u.tenant_id = $1
+     WHERE e.source = 'partner_demo' AND e.revoked_at IS NULL
+       AND NOT EXISTS (SELECT 1 FROM license_assignments a WHERE a.user_id = e.user_id AND a.reclaimed_at IS NULL AND a.ends_at > now())
+     ORDER BY e.user_id, e.starts_at`,
+    [tenantId],
+  );
+  return r.rows.sort((a, b) => +new Date(a.starts_at) - +new Date(b.starts_at)).map((x) => x.user_id as string);
+}
+
+// Learner-months free in the organisation's Channel Partner order lots, and the
+// licence length of the order with the most free.
+export async function partnerOrderPool(tenantId: string) {
+  const r = await pool.query(
+    `SELECT o.licence_months, sum(p.quantity - (SELECT count(*) FROM license_assignments a WHERE a.purchase_id = p.id AND a.reclaimed_at IS NULL))::int AS free
+     FROM license_purchases p JOIN partner_orders o ON o.id = p.partner_order_id
+     WHERE p.tenant_id = $1 AND p.pool_expires_at > now() GROUP BY o.licence_months ORDER BY free DESC`,
+    [tenantId],
+  );
+  const free = r.rows.reduce((n, x) => n + x.free, 0);
+  return { freeMonths: free, licenceMonths: (r.rows[0]?.licence_months as number) ?? 3 };
+}
+
+export async function upgradeDemoLearners(args: { tenantId: string; actorId: string; actorRole: "org_admin" | "system" }): Promise<{ upgraded: number; left: number }> {
+  const { assignMonths } = await import("../licenses/service.js");
+  const ids = await demoLearnersToUpgrade(args.tenantId);
+  let upgraded = 0;
+  for (const userId of ids) {
+    const p = await partnerOrderPool(args.tenantId);
+    if (p.freeMonths < p.licenceMonths) break;
+    try {
+      await assignMonths({ tenantId: args.tenantId, userId, months: p.licenceMonths, actorId: args.actorId, actorRole: args.actorRole });
+    } catch {
+      break; // pool used up (or reserved for batches / managers)
+    }
+    await pool.query(`UPDATE entitlements SET ends_at = least(ends_at, now()) WHERE user_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL`, [userId]);
+    upgraded++;
+  }
+  if (upgraded) await recordAudit({ tenantId: args.tenantId, actorId: args.actorId, action: "demo_licence.upgraded", targetType: "tenant", targetId: args.tenantId, details: { learners: upgraded } });
+  return { upgraded, left: ids.length - upgraded };
+}

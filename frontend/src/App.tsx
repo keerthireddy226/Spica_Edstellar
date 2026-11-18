@@ -65,6 +65,7 @@ import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
 import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
 import { OrderDocument } from "@/pages/OrderDocument";
 import { PartnerOrganisations } from "@/pages/partner/PartnerOrganisations";
+import { PartnerCommission, StaffPartnerReports } from "@/pages/partner/PartnerReports";
 import { SystemPage } from "@/pages/staff/SystemPage";
 import { StaffInsights } from "@/pages/staff/StaffInsights";
 import { PlansCatalog } from "@/pages/staff/PlansCatalog";
@@ -299,6 +300,7 @@ function App() {
           <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
           <Route path={ROUTES.PARTNER_ORGANISATIONS} element={<PartnerOrganisations />} />
           <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
+          <Route path={ROUTES.PARTNER_COMMISSION} element={<PartnerCommission />} />
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route
@@ -328,6 +330,7 @@ function App() {
           <Route path={ROUTES.SUPER_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
           <Route path={ROUTES.SUPER_CHANNEL_PARTNERS} element={<ChannelPartners />} />
           <Route path={ROUTES.SUPER_PARTNER_ORDERS} element={<StaffPartnerOrders />} />
+          <Route path={ROUTES.SUPER_PARTNER_REPORTS} element={<StaffPartnerReports />} />
         </Route>
         {/* An Admin's own, separate console — never the same URLs or nav as Super Admin's. */}
         <Route
@@ -346,6 +349,7 @@ function App() {
           <Route path={ROUTES.ADMIN_CONSOLE_CERTIFICATES} element={<CertificateRequests viewer="staff" />} />
           <Route path={ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS} element={<ChannelPartners />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS} element={<StaffPartnerOrders />} />
+          <Route path={ROUTES.ADMIN_CONSOLE_PARTNER_REPORTS} element={<StaffPartnerReports />} />
           <Route path={ROUTES.ADMIN_CONSOLE_ADMINS} element={<AdminsList />} />
           <Route path={ROUTES.ADMIN_CONSOLE_INSIGHTS} element={<StaffInsights />} />
           <Route path={ROUTES.ADMIN_CONSOLE_PLANS} element={<PlansCatalog />} />

@@ -53,7 +53,7 @@ export async function allocationSummary(orderId: string) {
   };
 }
 
-export async function allocateOrder(args: { orderId: string; actor: Actor; items: { tenantId: string; licences: number; credits: number }[] }) {
+export async function allocateOrder(args: { orderId: string; actor: Actor; items: { tenantId: string; licences: number; credits: number }[]; upgradeDemo?: boolean }) {
   const items = args.items.filter((i) => i.licences > 0 || i.credits > 0);
   if (!items.length) throw new PartnerError("nothing_to_allocate");
   const client = await pool.connect();
@@ -113,6 +113,14 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
     client.release();
   }
   await recordAudit({ tenantId: null, actorId: args.actor.id, actorRole: args.actor.role, action: "partner_order.allocated", targetType: "partner_order", targetId: o.id, targetLabel: o.order_number, details: { items } });
+  // Demo to paid: the organisations' demo learners get paid licences now.
+  const upgraded = new Map<string, number>();
+  if (args.upgradeDemo) {
+    const { upgradeDemoLearners } = await import("./demoLicences.js");
+    for (const i of items) {
+      if (i.licences > 0) upgraded.set(i.tenantId, (await upgradeDemoLearners({ tenantId: i.tenantId, actorId: args.actor.id!, actorRole: "system" })).upgraded);
+    }
+  }
   // The organisations' admins and the partner.
   for (const i of items) {
     const parts = [i.licences ? `${i.licences} licences (${o.licence_months} months each)` : null, i.credits ? `${i.credits} credits` : null].filter(Boolean).join(" and ");
@@ -121,7 +129,7 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
         userId: id,
         kind: "partner_order",
         title: `${parts} are ready to assign`,
-        body: `Order ${o.order_number}: ${parts} are now in your organisation. Add your learners and assign them by ${shortDate(o.valid_until)}. Licences assigned in the next ${SETUP_GRACE_DAYS} days start counting on ${shortDate(graceEnds)}.`,
+        body: `Order ${o.order_number}: ${parts} are now in your organisation. Add your learners and assign them by ${shortDate(o.valid_until)}. Licences assigned in the next ${SETUP_GRACE_DAYS} days start counting on ${shortDate(graceEnds)}.${upgraded.get(i.tenantId) ? ` ${upgraded.get(i.tenantId)} demo learners already have a paid licence and keep their history.` : ""}`,
         link: "/orgadmin/dashboard",
         email: true,
       });

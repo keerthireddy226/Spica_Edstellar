@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags, Handshake, Receipt } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags, Handshake, Receipt, TrendingUp, Wallet } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -22,6 +22,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
   { to: ROUTES.SUPER_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners") },
   { to: ROUTES.SUPER_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders") },
+  { to: ROUTES.SUPER_PARTNER_REPORTS, icon: TrendingUp, label: tr("Partner reports") },
   { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: tr("Admins") },
   { to: ROUTES.ADMIN_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
   { to: ROUTES.ADMIN_MANAGERS, icon: UserCog, label: tr("Managers") },
@@ -45,6 +46,7 @@ const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
   { to: ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners"), permission: "manageOrganizations" },
   { to: ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders"), permission: ["manageOrganizations", "finance"] },
+  { to: ROUTES.ADMIN_CONSOLE_PARTNER_REPORTS, icon: TrendingUp, label: tr("Partner reports"), permission: ["manageOrganizations", "finance"] },
   { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: tr("Admins"), permission: "manageAdmins" },
   { to: ROUTES.ADMIN_CONSOLE_ORG_ADMINS, icon: Briefcase, label: tr("Org Admins") },
   { to: ROUTES.ADMIN_CONSOLE_MANAGERS, icon: UserCog, label: tr("Managers") },
@@ -103,6 +105,7 @@ const PARTNER_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.PARTNER_DASHBOARD, icon: Handshake, label: tr("Partner dashboard") },
   { to: ROUTES.PARTNER_ORGANISATIONS, icon: Building2, label: tr("Organisations") },
   { to: ROUTES.PARTNER_ORDERS, icon: Receipt, label: tr("Orders") },
+  { to: ROUTES.PARTNER_COMMISSION, icon: Wallet, label: tr("Commission") },
 ];
 
 const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {

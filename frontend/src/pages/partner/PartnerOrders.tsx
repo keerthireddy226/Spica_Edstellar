@@ -495,6 +495,7 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
   const open = ["confirmed", "allocated", "active"].includes(status);
   const [form, setForm] = useState<Record<string, { licences: string; credits: string }> | null>(null);
   const [end, setEnd] = useState<string | null>(null);
+  const [upgradeDemo, setUpgradeDemo] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const startForm = () => {
@@ -515,7 +516,7 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
     setBusy(true);
     setErr(null);
     try {
-      await api(`/admin/partner-orders/${orderId}/allocate`, post({ items }));
+      await api(`/admin/partner-orders/${orderId}/allocate`, post({ items, upgradeDemo }));
       setForm(null);
       onChanged();
     } catch (e) {
@@ -580,6 +581,12 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
         </tbody>
       </table>
       {form && <p className="text-xs text-muted">{tr("Adding now: licences on top of what each organisation already has. Each organisation gets {{d}} setup days before the licences start counting.", { d: 3 })}</p>}
+      {form && (
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input type="checkbox" checked={upgradeDemo} onChange={(e) => setUpgradeDemo(e.target.checked)} />
+          {tr("Give paid licences to each organisation's demo learners now (they keep their history)")}
+        </label>
+      )}
       {err && <Notice tone="error">{err}</Notice>}
       {canManage && (
         <div className="flex flex-wrap justify-end gap-2">

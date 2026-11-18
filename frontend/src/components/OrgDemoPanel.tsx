@@ -10,6 +10,7 @@ interface Data {
   partnerOrganisation: boolean;
   demo?: { given: number; used: number; left: number; windowOpen: boolean; windowEndsAt: string | null; days: number };
   learners?: { id: string; name: string; email: string; demoEndsAt: string | null; status: "none" | "active" | "ended"; started: boolean }[];
+  upgrade?: { demoLearners: number; paidLicencesFree: number; licenceMonths: number };
 }
 const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—");
 
@@ -17,6 +18,7 @@ export function OrgDemoPanel() {
   const [d, setD] = useState<Data | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const load = () => api<Data>("/org-demo").then(setD).catch(() => setD(null));
   useEffect(() => {
     load();
@@ -36,6 +38,20 @@ export function OrgDemoPanel() {
     }
   };
   const x = d.demo;
+  const up = d.upgrade;
+  const upgrade = async () => {
+    setBusy("upgrade");
+    setErr(null);
+    try {
+      const r = await api<{ upgraded: number; left: number }>("/org-demo/upgrade", { method: "POST" });
+      setNote(r.left ? tr("{{n}} demo learners now have a paid licence. {{l}} still need one: add licences and try again.", { n: r.upgraded, l: r.left }) : tr("{{n}} demo learners now have a paid licence. Their practice history stays.", { n: r.upgraded }));
+      await load();
+    } catch {
+      setErr(tr("That didn't work. Try again."));
+    } finally {
+      setBusy(null);
+    }
+  };
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -50,6 +66,15 @@ export function OrgDemoPanel() {
       <p className="text-sm text-muted">
         {tr("Each learner you add gets a {{n}}-day demo of English 4 Skills Essentials automatically: Practice Modules, 2 practice tests and 1 mock test. There is no final assessment or certificate in the demo.", { n: x.days })}
       </p>
+      {up && up.demoLearners > 0 && up.paidLicencesFree > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 border border-rule rounded-input p-3 text-sm">
+          <span>{tr("{{n}} demo learners can move to paid licences ({{m}} months each). {{f}} paid licences are free.", { n: up.demoLearners, m: up.licenceMonths, f: up.paidLicencesFree })}</span>
+          <button className="font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={busy === "upgrade"} onClick={upgrade}>
+            {tr("Give them paid licences")}
+          </button>
+        </div>
+      )}
+      {note && <p className="text-sm text-success">{note}</p>}
       {err && <p className="text-sm text-error">{err}</p>}
       {d.learners && d.learners.length > 0 && (
         <ul className="flex flex-col divide-y divide-rule border border-rule rounded-input">
