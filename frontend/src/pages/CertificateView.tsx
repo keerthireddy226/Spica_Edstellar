@@ -128,6 +128,8 @@ export function CertificateView() {
   const result = cert.kind === "result";
   const levels = result
     ? [
+        // Only a Full access certificate carries the learner's goal level.
+        cert.goalLevel ? { label: tr("Goal"), value: cert.goalLevel, note: null } : null,
         cert.spicaScore != null ? { label: tr("Spica score"), value: String(cert.spicaScore), note: tr("out of 90") } : null,
         cert.cefrLevel
           ? { label: tr("CEFR level"), value: `${cert.cefrLevel}${subBandLabel(cert.spicaScore) ? ` · ${subBandLabel(cert.spicaScore)}` : ""}`, note: cert.spicaScore == null ? tr("Passed") : null }
@@ -143,7 +145,7 @@ export function CertificateView() {
       ].filter((x): x is { label: string; value: string; note: string | null } => !!x)
     : [
     cert.goalLevel ? { label: tr("Goal"), value: cert.goalLevel, note: null } : null,
-    cert.cefrLevel ? { label: course ? tr("Level reached in Spica") : tr("Level"), value: cert.cefrLevel, note: null } : null,
+    cert.cefrLevel ? { label: tr("Level"), value: cert.cefrLevel, note: null } : null,
     cert.versantLevel
       ? {
           label: tr("Official test result"),

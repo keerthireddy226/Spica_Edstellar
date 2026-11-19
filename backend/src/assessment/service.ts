@@ -599,12 +599,18 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
     spica = score.overall.score;
     skills = Object.fromEntries(score.skills.map((k) => [k.skill, { level: k.level, score: k.score }]));
   }
+  // Full access (its included final assessment) shows the learner's goal level;
+  // a real test bought on its own, preparation, a level test or a candidate test doesn't.
+  const viaFull = (
+    await pool.query(`SELECT p.kind FROM sessions x JOIN entitlements e ON e.id = x.entitlement_id JOIN products p ON p.id = e.product_id WHERE x.id = $1`, [sessionId])
+  ).rows[0]?.kind === "final";
+  const goal = viaFull && !cand ? ((await pool.query(`SELECT goal_level FROM participant_profiles WHERE user_id = $1`, [s.user_id])).rows[0]?.goal_level ?? null) : null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await pool.query(
         `INSERT INTO certificates (code, kind, user_id, tenant_id, batch_id, learner_name, participant_id, organization_name, batch_name,
-           cefr_level, session_id, test_type_id, test_name, spica_score, skill_scores, valid_until)
-         VALUES ($1, 'result', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, (now() + make_interval(months => $15))::date)
+           cefr_level, session_id, test_type_id, test_name, spica_score, skill_scores, valid_until, goal_level)
+         VALUES ($1, 'result', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, (now() + make_interval(months => $15))::date, $16)
          ON CONFLICT (session_id) DO UPDATE SET revoked_at = NULL
          RETURNING code, (xmax = 0) AS created`,
         [
@@ -623,6 +629,7 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
           spica,
           JSON.stringify(skills),
           VALID_MONTHS,
+          goal,
         ],
       );
       const { code, created } = r.rows[0];
