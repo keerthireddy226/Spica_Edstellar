@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "演示于 {{date}} 结束",
  "Mocks left in your demo": "演示中剩余的模拟测试",
  "No mocks left in your demo": "演示中已无模拟测试",
- "Your demo has 2 practice sets, both open. Take them in any order.": "您的演示有 2 套练习题，均已开放，可按任意顺序完成。"
+ "Your demo has 2 practice sets, both open. Take them in any order.": "您的演示有 2 套练习题，均已开放，可按任意顺序完成。",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "English 4 Skills Essentials 的 Practice Modules、2 次练习测试和 1 次模拟测试。演示不含正式测试或证书。",
+ "Your demo test": "您的演示测试",
+ "7-day demo until {{date}}": "7 天演示，至 {{date}}",
+ "7-day demo: English 4 Skills Essentials": "7 天演示：English 4 Skills Essentials"
 }

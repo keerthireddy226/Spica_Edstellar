@@ -68,7 +68,8 @@ export function resolveAccess(licence: Pick<LearnerAccess, "status" | "accessEnd
     startsAt: iso(r.starts_at),
     endsAt: iso(r.ends_at),
     canSwitchUntil:
-      r.kind === "prep" && r.attempts_used === 0 && !r.switched_at && new Date(r.starts_at).getTime() + SWITCH_DAYS * 86_400_000 > now.getTime()
+      // A Channel Partner demo (product partner_demo) can't be moved to another test.
+      r.kind === "prep" && r.product_id !== "partner_demo" && r.attempts_used === 0 && !r.switched_at && new Date(r.starts_at).getTime() + SWITCH_DAYS * 86_400_000 > now.getTime()
         ? new Date(new Date(r.starts_at).getTime() + SWITCH_DAYS * 86_400_000).toISOString()
         : null,
   }));

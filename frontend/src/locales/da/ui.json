@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "Demoen slutter {{date}}",
  "Mocks left in your demo": "Prøvetests tilbage i din demo",
  "No mocks left in your demo": "Ingen prøvetests tilbage i din demo",
- "Your demo has 2 practice sets, both open. Take them in any order.": "Din demo har 2 øvesæt, begge åbne. Tag dem i den rækkefølge, du vil."
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Din demo har 2 øvesæt, begge åbne. Tag dem i den rækkefølge, du vil.",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "Practice Modules, 2 øvetests og 1 prøvetest i English 4 Skills Essentials. Ingen rigtig test eller certifikat i demoen.",
+ "Your demo test": "Din demotest",
+ "7-day demo until {{date}}": "7-dages demo til {{date}}",
+ "7-day demo: English 4 Skills Essentials": "7-dages demo: English 4 Skills Essentials"
 }

@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "Bản demo kết thúc vào {{date}}",
  "Mocks left in your demo": "Bài thi thử còn lại trong bản demo",
  "No mocks left in your demo": "Không còn bài thi thử nào trong bản demo",
- "Your demo has 2 practice sets, both open. Take them in any order.": "Bản demo của bạn có 2 bộ luyện tập, cả hai đều đã mở. Làm theo thứ tự bạn muốn."
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Bản demo của bạn có 2 bộ luyện tập, cả hai đều đã mở. Làm theo thứ tự bạn muốn.",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "Practice Modules, 2 bài kiểm tra luyện tập và 1 bài thi thử English 4 Skills Essentials. Bản demo không có bài thi thật hay chứng chỉ.",
+ "Your demo test": "Bài kiểm tra trong bản demo",
+ "7-day demo until {{date}}": "Bản demo 7 ngày đến {{date}}",
+ "7-day demo: English 4 Skills Essentials": "Bản demo 7 ngày: English 4 Skills Essentials"
 }

@@ -21,7 +21,11 @@ export function useMyAccess(): MyAccess | null {
   return a;
 }
 
+// A Channel Partner 7-day demo (its own product).
+const isDemo = (o: Owned) => o.productId === "partner_demo";
+
 function opens(o: Owned): string {
+  if (isDemo(o)) return tr("Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.");
   if (o.kind === "prep") return tr("Practice tests, mock tests and Practice Modules for this test, then one real test with a certificate.");
   if (o.kind === "assessment") return tr("One real test, strictly proctored, with a score report and a certificate.");
   if (o.kind === "level") return tr("One level test at {{level}}, to check where you are.", { level: o.level ?? "—" });
@@ -142,11 +146,11 @@ export function OwnedList({ access }: { access: MyAccess }) {
               <span className="text-xs text-muted">{opens(o)}</span>
               <span className="text-xs text-ink">
                 {tr("Until {{date}}", { date: formatShortDate(o.endsAt) })}
-                {o.kind !== "full" && o.kind !== "pack" &&
+                {o.kind !== "full" && o.kind !== "pack" && !isDemo(o) &&
                   // A level test is a check, not a real test.
                   ` · ${o.kind === "level" ? (o.attemptsLeft === 1 ? tr("1 attempt left") : tr("{{n}} attempts left", { n: o.attemptsLeft })) : o.attemptsLeft === 1 ? tr("1 real test left") : tr("{{n}} real tests left", { n: o.attemptsLeft })}`}
               </span>
-              <SwitchTest o={o} />
+              {!isDemo(o) && <SwitchTest o={o} />}
             </div>
           </div>
         );

@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "Demo päättyy {{date}}",
  "Mocks left in your demo": "Harjoitustestejä jäljellä demossasi",
  "No mocks left in your demo": "Demossasi ei ole harjoitustestejä jäljellä",
- "Your demo has 2 practice sets, both open. Take them in any order.": "Demossasi on 2 harjoitussarjaa, molemmat avoinna. Tee ne haluamassasi järjestyksessä."
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Demossasi on 2 harjoitussarjaa, molemmat avoinna. Tee ne haluamassasi järjestyksessä.",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "Practice Modules, 2 harjoituskoetta ja 1 harjoitustesti kokeesta English 4 Skills Essentials. Demossa ei ole oikeaa koetta eikä todistusta.",
+ "Your demo test": "Demosi koe",
+ "7-day demo until {{date}}": "7 päivän demo {{date}} asti",
+ "7-day demo: English 4 Skills Essentials": "7 päivän demo: English 4 Skills Essentials"
 }

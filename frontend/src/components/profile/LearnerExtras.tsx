@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDemo } from "@/components/learner/useTestOnly";
 import { HIDDEN_EXAM_REASONS, SHOWN_EXAM_PREFERENCES } from "@/lib/focus";
 import { Building2, Flame, Mail, Pencil, Target, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/Button";
@@ -159,6 +160,8 @@ const REASONS: [string, string][] = [
 // testOnly: bought only a test, so just the test and goal (no exam date or
 // study plan). testName: that test, or for a plan the final assessment's test.
 export function LearningGoals({ data, onSaved, testOnly = false, testName = null }: { data: MyLearning; onSaved: () => void; testOnly?: boolean; testName?: string | null }) {
+  // A Channel Partner 7-day demo has no final assessment: it names the demo's test.
+  const demo = useDemo();
   const g = data.goals;
   const [editing, setEditing] = useState(false);
   const [d, setD] = useState({
@@ -200,7 +203,9 @@ export function LearningGoals({ data, onSaved, testOnly = false, testName = null
                   ] as const)
                 : ([
                     // Spica's own final assessment: name the test it's on, once chosen.
-                    g.examPreference === "versant"
+                    demo
+                      ? [tr("Your demo test"), tr("English 4 Skills Essentials")]
+                      : g.examPreference === "versant"
                       ? [tr("Final assessment"), testName ?? tr("Test not chosen yet")]
                       : [tr("Exam"), EXAMS.find(([k]) => k === g.examPreference)?.[1] ?? "—"],
                     [tr("Goal level"), g.goalLevel === "unsure" ? tr("Not sure yet") : (g.goalLevel ?? "—")],

@@ -344,7 +344,8 @@ async function switchPlan(userId: string, entitlementId: string, testTypeId: str
       [entitlementId, userId],
     )
   ).rows[0];
-  if (!e || !switchOpen(e)) throw new AttemptError("switch_not_allowed");
+  // A Channel Partner 7-day demo is for its one test and can't be moved.
+  if (!e || e.source === "partner_demo" || !switchOpen(e)) throw new AttemptError("switch_not_allowed");
   if (e.test_type_id === testTypeId) throw new AttemptError("same_test");
   const p = (await pool.query(`SELECT id FROM products WHERE kind = 'prep' AND active AND test_type_id = $1 ORDER BY sort_order LIMIT 1`, [testTypeId])).rows[0];
   if (!p) throw new AttemptError("unknown_test_type");
@@ -604,7 +605,9 @@ export async function issueResultCertificate(sessionId: string): Promise<string 
   const viaFull = (
     await pool.query(`SELECT p.kind FROM sessions x JOIN entitlements e ON e.id = x.entitlement_id JOIN products p ON p.id = e.product_id WHERE x.id = $1`, [sessionId])
   ).rows[0]?.kind === "final";
-  const goal = viaFull && !cand ? ((await pool.query(`SELECT goal_level FROM participant_profiles WHERE user_id = $1`, [s.user_id])).rows[0]?.goal_level ?? null) : null;
+  const goalRaw = viaFull && !cand ? ((await pool.query(`SELECT goal_level FROM participant_profiles WHERE user_id = $1`, [s.user_id])).rows[0]?.goal_level ?? null) : null;
+  // "Not sure yet" isn't a level, so the certificate shows no goal.
+  const goal = goalRaw && goalRaw !== "unsure" ? goalRaw : null;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await pool.query(

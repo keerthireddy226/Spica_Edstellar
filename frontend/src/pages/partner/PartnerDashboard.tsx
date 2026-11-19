@@ -22,6 +22,9 @@ export interface PartnerOrg {
   demoLicences: number;
   learners: number;
   demoUsed: number;
+  // Not used yet and still valid; unused past their "valid until" date.
+  demoLeft?: number;
+  demoExpired?: number;
   demoActive: number;
   demoStarted: number;
   practiceDone: number;
@@ -352,7 +355,7 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
     }
   };
   const add = Math.max(0, Math.round(Number(n) || 0));
-  const unused = Math.max(0, org.demoLicences - org.demoUsed);
+  const unused = org.demoLeft ?? Math.max(0, org.demoLicences - org.demoUsed);
   const tile = "border border-rule rounded-input p-3 bg-surface";
   return (
     <DetailModal title={tr("Give demo licences")} subtitle={org.name} icon={KeyRound} onClose={onClose} wide>
@@ -372,7 +375,7 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
           <div className={tile}>
             <p className={label}>{tr("Not used yet")}</p>
             <p className="text-2xl font-display font-bold">{unused}</p>
-            <p className="text-xs text-muted">{tr("waiting for learners")}</p>
+            <p className="text-xs text-muted">{org.demoExpired ? tr("{{n}} expired unused", { n: org.demoExpired }) : tr("waiting for learners")}</p>
           </div>
           <div className={tile}>
             <p className={label}>{tr("Learners")}</p>

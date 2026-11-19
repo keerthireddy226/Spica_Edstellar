@@ -8,6 +8,7 @@ import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { recordAudit } from "../audit/service.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { demoStatus } from "./staffRoutes.js";
+import { orgDemoBalance } from "./demoLicences.js";
 
 // Public email providers: a shared domain says nothing about the organisation.
 const FREE_MAIL = new Set(["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "icloud.com", "proton.me", "protonmail.com", "rediffmail.com", "aol.com", "zoho.com"]);
@@ -173,7 +174,9 @@ export async function partnerOrganisations(partnerId: string) {
      WHERE t.channel_partner_id = $1 ORDER BY t.created_at DESC`,
     [partnerId],
   );
-  return r.rows.map((o) => ({
+  // Licences not used yet and those past their "valid until" date, per organisation.
+  const balances = await Promise.all(r.rows.map((o) => orgDemoBalance(o.id)));
+  return r.rows.map((o, i) => ({
     id: o.id,
     name: o.name,
     category: o.category,
@@ -185,6 +188,8 @@ export async function partnerOrganisations(partnerId: string) {
     learners: o.learners,
     // Usage of the demo licences: counts only, never scores.
     demoUsed: o.demo_used,
+    demoLeft: balances[i]?.left ?? Math.max(0, o.demo_licences - o.demo_used),
+    demoExpired: balances[i]?.expired ?? 0,
     demoActive: o.demo_active,
     demoStarted: o.demo_started,
     practiceDone: o.demo_practice_done,

@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "डेमो {{date}} को समाप्त होगा",
  "Mocks left in your demo": "आपके डेमो में बचे मॉक",
  "No mocks left in your demo": "आपके डेमो में कोई मॉक नहीं बचा",
- "Your demo has 2 practice sets, both open. Take them in any order.": "आपके डेमो में 2 प्रैक्टिस सेट हैं, दोनों खुले हैं। इन्हें किसी भी क्रम में दें।"
+ "Your demo has 2 practice sets, both open. Take them in any order.": "आपके डेमो में 2 प्रैक्टिस सेट हैं, दोनों खुले हैं। इन्हें किसी भी क्रम में दें।",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "English 4 Skills Essentials के Practice Modules, 2 प्रैक्टिस टेस्ट और 1 मॉक टेस्ट। डेमो में कोई वास्तविक टेस्ट या प्रमाणपत्र नहीं।",
+ "Your demo test": "आपका डेमो टेस्ट",
+ "7-day demo until {{date}}": "7-दिन का डेमो {{date}} तक",
+ "7-day demo: English 4 Skills Essentials": "7-दिन का डेमो: English 4 Skills Essentials"
 }

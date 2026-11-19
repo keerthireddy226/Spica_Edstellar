@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "デモ終了日：{{date}}",
  "Mocks left in your demo": "デモで残っている模擬テスト",
  "No mocks left in your demo": "デモの模擬テストは残っていません",
- "Your demo has 2 practice sets, both open. Take them in any order.": "デモには練習セットが 2 つあり、どちらも開いています。好きな順に受けられます。"
+ "Your demo has 2 practice sets, both open. Take them in any order.": "デモには練習セットが 2 つあり、どちらも開いています。好きな順に受けられます。",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "English 4 Skills Essentials の Practice Modules、練習テスト 2 回、模擬テスト 1 回。デモには本番テストや証明書はありません。",
+ "Your demo test": "デモのテスト",
+ "7-day demo until {{date}}": "7 日間デモ（{{date}} まで）",
+ "7-day demo: English 4 Skills Essentials": "7 日間デモ：English 4 Skills Essentials"
 }

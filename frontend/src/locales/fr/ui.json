@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "La démo se termine le {{date}}",
  "Mocks left in your demo": "Tests blancs restants dans votre démo",
  "No mocks left in your demo": "Plus de test blanc dans votre démo",
- "Your demo has 2 practice sets, both open. Take them in any order.": "Votre démo comprend 2 séries d'entraînement, toutes deux ouvertes. Faites-les dans l'ordre que vous voulez."
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Votre démo comprend 2 séries d'entraînement, toutes deux ouvertes. Faites-les dans l'ordre que vous voulez.",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "Practice Modules, 2 tests d'entraînement et 1 test blanc d'English 4 Skills Essentials. Pas de vrai test ni de certificat dans la démo.",
+ "Your demo test": "Votre test de démo",
+ "7-day demo until {{date}}": "Démo de 7 jours jusqu'au {{date}}",
+ "7-day demo: English 4 Skills Essentials": "Démo de 7 jours : English 4 Skills Essentials"
 }

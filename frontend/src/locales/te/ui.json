@@ -6286,5 +6286,9 @@
  "Demo ends on {{date}}": "డెమో {{date}}న ముగుస్తుంది",
  "Mocks left in your demo": "మీ డెమోలో మిగిలిన మాక్‌లు",
  "No mocks left in your demo": "మీ డెమోలో మాక్‌లు మిగలలేదు",
- "Your demo has 2 practice sets, both open. Take them in any order.": "మీ డెమోలో 2 ప్రాక్టీస్ సెట్‌లు ఉన్నాయి, రెండూ తెరిచి ఉన్నాయి. వాటిని ఏ క్రమంలోనైనా రాయండి."
+ "Your demo has 2 practice sets, both open. Take them in any order.": "మీ డెమోలో 2 ప్రాక్టీస్ సెట్‌లు ఉన్నాయి, రెండూ తెరిచి ఉన్నాయి. వాటిని ఏ క్రమంలోనైనా రాయండి.",
+ "Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials. No real test or certificate in the demo.": "English 4 Skills Essentials లో Practice Modules, 2 ప్రాక్టీస్ టెస్ట్‌లు మరియు 1 మాక్ టెస్ట్. డెమోలో అసలు టెస్ట్ లేదా సర్టిఫికేట్ లేదు.",
+ "Your demo test": "మీ డెమో టెస్ట్",
+ "7-day demo until {{date}}": "7 రోజుల డెమో {{date}} వరకు",
+ "7-day demo: English 4 Skills Essentials": "7 రోజుల డెమో: English 4 Skills Essentials"
 }

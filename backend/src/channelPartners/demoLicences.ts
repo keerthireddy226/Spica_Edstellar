@@ -84,6 +84,34 @@ export function demoBlock(d: DemoState, mode: string, testTypeId: string | null)
   return null;
 }
 
+// How an organisation's demo licences stand: each learner's demo comes out of
+// a gift that was already given and still valid that day, the earliest-ending
+// first. Older data that fits no gift takes the first gift with any left.
+// Unused licences of a gift past its date are expired, the rest are left.
+export function splitDemoUse(
+  gifts: { licences: number; createdAt: number; expired: boolean; vu: string | null }[],
+  uses: { at: number; day: string }[],
+): { left: number; expired: number; useBy: string | null } {
+  const sorted = gifts
+    .map((g, i) => ({ ...g, rest: g.licences, i }))
+    .sort((a, b) => (a.vu ?? "9999").localeCompare(b.vu ?? "9999") || a.createdAt - b.createdAt || a.i - b.i);
+  for (const u of [...uses].sort((a, b) => a.at - b.at)) {
+    const g = sorted.find((x) => x.rest > 0 && x.createdAt <= u.at && (!x.vu || x.vu >= u.day)) ?? sorted.find((x) => x.rest > 0);
+    if (g) g.rest -= 1;
+  }
+  let left = 0;
+  let expired = 0;
+  let useBy: string | null = null;
+  for (const g of sorted) {
+    if (g.expired) expired += g.rest;
+    else if (g.rest > 0) {
+      left += g.rest;
+      if (g.vu && (!useBy || g.vu < useBy)) useBy = g.vu;
+    }
+  }
+  return { left, expired, useBy };
+}
+
 // Demo licences a partner organisation has been given, and how many are used.
 export async function orgDemoBalance(tenantId: string) {
   const t = (await pool.query(`SELECT channel_partner_id FROM tenants WHERE id = $1`, [tenantId])).rows[0];
@@ -91,28 +119,22 @@ export async function orgDemoBalance(tenantId: string) {
   const p = (await pool.query(`SELECT * FROM channel_partners WHERE id = $1`, [t.channel_partner_id])).rows[0];
   const gifts = (
     await pool.query(
-      `SELECT licences, valid_until, (valid_until IS NOT NULL AND valid_until < current_date) AS expired, to_char(valid_until, 'YYYY-MM-DD') AS vu
+      `SELECT licences, created_at, (valid_until IS NOT NULL AND valid_until < current_date) AS expired, to_char(valid_until, 'YYYY-MM-DD') AS vu
        FROM partner_allocations WHERE tenant_id = $1 AND kind = 'demo' ORDER BY valid_until NULLS LAST, created_at`,
       [tenantId],
     )
-  ).rows;
+  ).rows.map((g) => ({ licences: g.licences as number, createdAt: new Date(g.created_at).getTime(), expired: g.expired as boolean, vu: g.vu as string | null }));
   const given = gifts.reduce((n, g) => n + g.licences, 0);
-  const used = Number((await pool.query(`SELECT count(*) AS n FROM entitlements WHERE tenant_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL`, [tenantId])).rows[0].n);
-  // Used licences come out of the earliest-ending gift first.
-  let toTake = used;
-  let left = 0;
-  let expired = 0;
-  let useBy: string | null = null;
-  for (const g of gifts) {
-    const take = Math.min(toTake, g.licences);
-    toTake -= take;
-    const rest = g.licences - take;
-    if (g.expired) expired += rest;
-    else if (rest > 0) {
-      left += rest;
-      if (g.vu && (!useBy || g.vu < useBy)) useBy = g.vu;
-    }
-  }
+  // Each demo a learner got (not taken back), oldest first, with the day it was given.
+  const uses = (
+    await pool.query(
+      `SELECT created_at, to_char(created_at AT TIME ZONE current_setting('TimeZone'), 'YYYY-MM-DD') AS day
+       FROM entitlements WHERE tenant_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL ORDER BY created_at`,
+      [tenantId],
+    )
+  ).rows;
+  const used = uses.length;
+  const { left, expired, useBy } = splitDemoUse(gifts, uses.map((u) => ({ at: new Date(u.created_at).getTime(), day: u.day as string })));
   return { partnerId: p.id as string, windowOpen: demoStatus(p) === "active" && !p.deactivated_at, windowEndsAt: (p.demo_ended_at ?? p.demo_ends_at) as Date | null, given, used, left, expired, useBy };
 }
 

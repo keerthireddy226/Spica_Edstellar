@@ -51,7 +51,7 @@ import { ActiveSessionsSection, LoginHistorySection, SecuritySection } from "@/p
 import { MfaCard } from "@/components/MfaCard";
 import { formatShortDate } from "@/api/licenses";
 import { CitySelect } from "@/components/CitySelect";
-import { useTestOnly } from "@/components/learner/useTestOnly";
+import { useDemo, useTestOnly } from "@/components/learner/useTestOnly";
 import { getMyTests, type OwnedTest } from "@/api/assessment";
 import { getHistory, type HistoryEntry } from "@/api/practiceTests";
 
@@ -82,11 +82,14 @@ function AccessSection({ testOnly = false }: { testOnly?: boolean }) {
   const { t } = useTranslation();
   const license = useMyLicense();
   const access = useMyAccess();
+  const demo = access?.demo ?? null;
   const ownsMore = !!access && access.owned.some((o) => o.kind !== "full");
   if (!license || (!license.required && !license.individual && !ownsMore)) return null;
   const onFreePlan = license.individual && license.status !== "active" && license.status !== "grace";
   // Bought only a test: no plan to describe, just what they bought.
-  const status = testOnly
+  const status = demo && license.status !== "active" && license.status !== "grace"
+    ? tr("7-day demo until {{date}}", { date: formatShortDate(demo.endsAt) })
+    : testOnly
     ? tr("You bought a test, without a study plan.")
     : license.status === "active"
       ? t("profile.access.activeUntil", { date: formatShortDate(license.accessEndsAt) })
@@ -98,7 +101,7 @@ function AccessSection({ testOnly = false }: { testOnly?: boolean }) {
             ? t("profile.access.expired", { date: formatShortDate(license.accessEndsAt) })
             : t("profile.access.none");
   const tone =
-    license.status === "active" ? "text-success" : license.status === "grace" ? "text-navy-deep" : onFreePlan ? "text-ink" : "text-error";
+    license.status === "active" ? "text-success" : license.status === "grace" || demo ? "text-navy-deep" : onFreePlan ? "text-ink" : "text-error";
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-6 flex flex-col gap-3">
       <SectionHeader icon={KeyRound} tint="bg-navy/15 text-navy" title={t("profile.access.title")} />
@@ -533,6 +536,7 @@ export function Profile() {
   const [tab, setTab] = useState("learning");
   // A test-only buyer's profile shows their test and its result, not a study plan.
   const testOnly = useTestOnly() === true;
+  const demo = useDemo();
   const [myTests, setMyTests] = useState<OwnedTest[] | null>(null);
   const [history, setHistory] = useState<HistoryEntry[] | null>(null);
   useEffect(() => {
@@ -597,6 +601,11 @@ export function Profile() {
               {testOnly ? (
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
                   {tr("Your test: {{test}}", { test: testName ?? "—" })}
+                  {learning?.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
+                </span>
+              ) : demo ? (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-white/20 text-white border border-white/30">
+                  {tr("7-day demo: English 4 Skills Essentials")}
                   {learning?.goals.goalLevel && learning.goals.goalLevel !== "unsure" ? tr(" · goal {{goalLevel}}", { goalLevel: learning.goals.goalLevel }) : ""}
                 </span>
               ) : learning?.goals.examPreference && (
