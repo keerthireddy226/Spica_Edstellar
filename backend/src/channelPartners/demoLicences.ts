@@ -89,9 +89,31 @@ export async function orgDemoBalance(tenantId: string) {
   const t = (await pool.query(`SELECT channel_partner_id FROM tenants WHERE id = $1`, [tenantId])).rows[0];
   if (!t?.channel_partner_id) return null;
   const p = (await pool.query(`SELECT * FROM channel_partners WHERE id = $1`, [t.channel_partner_id])).rows[0];
-  const given = Number((await pool.query(`SELECT coalesce(sum(licences), 0) AS n FROM partner_allocations WHERE tenant_id = $1 AND kind = 'demo'`, [tenantId])).rows[0].n);
+  const gifts = (
+    await pool.query(
+      `SELECT licences, valid_until, (valid_until IS NOT NULL AND valid_until < current_date) AS expired, to_char(valid_until, 'YYYY-MM-DD') AS vu
+       FROM partner_allocations WHERE tenant_id = $1 AND kind = 'demo' ORDER BY valid_until NULLS LAST, created_at`,
+      [tenantId],
+    )
+  ).rows;
+  const given = gifts.reduce((n, g) => n + g.licences, 0);
   const used = Number((await pool.query(`SELECT count(*) AS n FROM entitlements WHERE tenant_id = $1 AND source = 'partner_demo' AND revoked_at IS NULL`, [tenantId])).rows[0].n);
-  return { partnerId: p.id as string, windowOpen: demoStatus(p) === "active" && !p.deactivated_at, windowEndsAt: (p.demo_ended_at ?? p.demo_ends_at) as Date | null, given, used, left: Math.max(0, given - used) };
+  // Used licences come out of the earliest-ending gift first.
+  let toTake = used;
+  let left = 0;
+  let expired = 0;
+  let useBy: string | null = null;
+  for (const g of gifts) {
+    const take = Math.min(toTake, g.licences);
+    toTake -= take;
+    const rest = g.licences - take;
+    if (g.expired) expired += rest;
+    else if (rest > 0) {
+      left += rest;
+      if (g.vu && (!useBy || g.vu < useBy)) useBy = g.vu;
+    }
+  }
+  return { partnerId: p.id as string, windowOpen: demoStatus(p) === "active" && !p.deactivated_at, windowEndsAt: (p.demo_ended_at ?? p.demo_ends_at) as Date | null, given, used, left, expired, useBy };
 }
 
 export class DemoError extends Error {}
@@ -159,7 +181,7 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     );
     res.json({
       partnerOrganisation: true,
-      demo: { given: b.given, used: b.used, left: b.left, windowOpen: b.windowOpen, windowEndsAt: b.windowEndsAt, days: DEMO_DAYS },
+      demo: { given: b.given, used: b.used, left: b.left, expired: b.expired, useBy: b.useBy, windowOpen: b.windowOpen, windowEndsAt: b.windowEndsAt, days: DEMO_DAYS },
       upgrade: await (async () => {
         const [ids, p] = await Promise.all([demoLearnersToUpgrade(req.user!.tenantId!), partnerOrderPool(req.user!.tenantId!)]);
         return { demoLearners: ids.length, paidLicencesFree: Math.floor(p.freeMonths / p.licenceMonths), licenceMonths: p.licenceMonths };

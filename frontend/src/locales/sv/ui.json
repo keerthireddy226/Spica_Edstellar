@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "1 månad från start",
  "{{n}} licences × 1 month": "{{n}} licenser × 1 månad",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} licenser à 1 månad · {{c}} krediter · tilldela senast {{d}}",
- "Moved to a paid licence": "Bytt till betald licens"
+ "Moved to a paid licence": "Bytt till betald licens",
+ "{{n}} expired unused": "{{n}} gick ut oanvända",
+ "Choose a date from tomorrow up to the end of your demo window.": "Välj ett datum från i morgon till slutet av din demoperiod.",
+ "More details (optional): location, contact, expected learners": "Fler uppgifter (valfritt): plats, kontakt, förväntade deltagare",
+ "State": "Delstat eller län",
+ "Organisation phone": "Organisationens telefon",
+ "Admin's phone": "Administratörens telefon",
+ "Expected number of learners": "Förväntat antal deltagare",
+ "Valid until (optional)": "Giltiga till (valfritt)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "Deltagarna måste få dem senast detta datum. Tomt: tills din demoperiod slutar {{d}}.",
+ "Learners must get them by this date.": "Deltagarna måste få dem senast detta datum.",
+ "{{n}} given {{g}} · valid until {{d}}": "{{n}} givna {{g}} · giltiga till {{d}}",
+ "{{n}} given {{g}}": "{{n}} givna {{g}}",
+ "Give them out by {{date}}.": "Dela ut dem senast {{date}}."
 }

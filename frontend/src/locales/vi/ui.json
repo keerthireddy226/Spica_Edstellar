@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "1 tháng từ khi bắt đầu",
  "{{n}} licences × 1 month": "{{n}} giấy phép × 1 tháng",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} giấy phép 1 tháng · {{c}} tín dụng · cấp trước {{d}}",
- "Moved to a paid licence": "Đã chuyển sang giấy phép trả phí"
+ "Moved to a paid licence": "Đã chuyển sang giấy phép trả phí",
+ "{{n}} expired unused": "{{n}} đã hết hạn chưa dùng",
+ "Choose a date from tomorrow up to the end of your demo window.": "Chọn ngày từ ngày mai đến hết thời gian dùng thử của bạn.",
+ "More details (optional): location, contact, expected learners": "Thêm thông tin (tùy chọn): địa điểm, liên hệ, số học viên dự kiến",
+ "State": "Bang hoặc tỉnh",
+ "Organisation phone": "Điện thoại tổ chức",
+ "Admin's phone": "Điện thoại quản trị viên",
+ "Expected number of learners": "Số học viên dự kiến",
+ "Valid until (optional)": "Hiệu lực đến (tùy chọn)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "Học viên phải được cấp trước ngày này. Để trống: đến khi thời gian dùng thử kết thúc ngày {{d}}.",
+ "Learners must get them by this date.": "Học viên phải được cấp trước ngày này.",
+ "{{n}} given {{g}} · valid until {{d}}": "Đã cấp {{n}} ngày {{g}} · hiệu lực đến {{d}}",
+ "{{n}} given {{g}}": "Đã cấp {{n}} ngày {{g}}",
+ "Give them out by {{date}}.": "Hãy cấp trước {{date}}."
 }

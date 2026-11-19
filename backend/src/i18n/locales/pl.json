@@ -442,5 +442,6 @@
  "Reference: {{ref}}.": "Numer referencyjny: {{ref}}.",
  "{{n}} more demo licences": "Dodatkowe licencje demo: {{n}}",
  "Your organisation now has {{n}} more demo licences.": "Twoja organizacja ma teraz o {{n}} licencji demo więcej.",
- "New learners you add get a 7-day demo automatically.": "Nowi uczestnicy, których dodasz, automatycznie dostają 7-dniowe demo."
+ "New learners you add get a 7-day demo automatically.": "Nowi uczestnicy, których dodasz, automatycznie dostają 7-dniowe demo.",
+ "Give them out by {{date}}.": "Przydziel je do {{date}}."
 }

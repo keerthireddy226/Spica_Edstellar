@@ -522,8 +522,8 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                 ))}
               </ul>
             )}
-            {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
-            {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
+            {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} windowEndsAt={p.demoEndedAt ?? p.demoEndsAt} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
+            {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} windowEndsAt={p.demoEndedAt ?? p.demoEndsAt} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
           </ModalSection>
         )}
         {tab === "orders" && (

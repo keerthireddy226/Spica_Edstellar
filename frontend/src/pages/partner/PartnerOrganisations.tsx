@@ -12,11 +12,11 @@ import { tr } from "@/i18n/tr";
 // organisation's admin, learners (licence and whether they finished the mock
 // test / a real test — never scores) and orders.
 interface Me {
-  demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended" };
+  demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended"; endsAt: string | null };
 }
 interface Detail {
   organisation: PartnerOrg;
-  admin: { name: string; email: string; invitePending: boolean; lastSignIn: string | null } | null;
+  admin: { name: string; email: string; phone?: string | null; invitePending: boolean; lastSignIn: string | null } | null;
   learners: { id: string; name: string; email: string; addedAt: string; licence: "demo" | "paid" | "none"; licenceEndsAt: string | null; licenceActive: boolean; started: boolean; mockDone: boolean; finalDone: boolean }[];
   orders: { id: string; orderNumber: string; status: string; total: number; currency: string; validUntil: string; licences: number }[];
 }
@@ -105,6 +105,7 @@ export function OrganisationDetail({ org, canGive, onGive, onClose }: { org: Par
                 <>
                   <p className="font-semibold">{d.admin.name || "—"}</p>
                   <p className="text-muted">{d.admin.email}</p>
+                  {d.admin.phone && <p className="text-muted">{d.admin.phone}</p>}
                   <p className="text-xs mt-1">{d.admin.invitePending ? <StatusPill tone="warning">{tr("Invite pending")}</StatusPill> : tr("Last sign-in {{d}}", { d: day(d.admin.lastSignIn) })}</p>
                 </>
               ) : (
@@ -115,6 +116,11 @@ export function OrganisationDetail({ org, canGive, onGive, onClose }: { org: Par
               <p className="text-xs text-muted uppercase tracking-wide font-semibold">{tr("Demo licences")}</p>
               <p className="font-semibold">{tr("{{used}} of {{n}} used", { used: org.demoUsed, n: org.demoLicences })}</p>
               <p className="text-muted">{tr("{{s}} started · {{p}} practice tests and {{m}} mock tests finished", { s: org.demoStarted, p: org.practiceDone, m: org.mocksDone })}</p>
+              {(org.allocations ?? []).map((a, i) => (
+                <p key={i} className="text-xs text-muted">
+                  {a.validUntil ? tr("{{n}} given {{g}} · valid until {{d}}", { n: a.licences, g: day(a.givenAt), d: day(a.validUntil) }) : tr("{{n}} given {{g}}", { n: a.licences, g: day(a.givenAt) })}
+                </p>
+              ))}
             </div>
             <div className="border border-rule rounded-input p-3">
               <p className="text-xs text-muted uppercase tracking-wide font-semibold">{tr("Learners")}</p>
@@ -123,6 +129,17 @@ export function OrganisationDetail({ org, canGive, onGive, onClose }: { org: Par
             </div>
           </div>
 
+          {org.details && Object.values(org.details).some((v) => v !== null && v !== "") && (
+            <div className="border border-rule rounded-input p-3 grid sm:grid-cols-2 gap-x-6 gap-y-1">
+              {[org.details.address, org.details.city, org.details.state, org.details.postalCode, org.details.country].some(Boolean) && (
+                <p><b>{tr("Location")}:</b> {[org.details.address, org.details.city, org.details.state, org.details.postalCode, org.details.country].filter(Boolean).join(", ")}</p>
+              )}
+              {org.details.website && <p><b>{tr("Website")}:</b> {org.details.website}</p>}
+              {org.details.phone && <p><b>{tr("Organisation phone")}:</b> {org.details.phone}</p>}
+              {org.details.expectedLearners != null && <p><b>{tr("Expected number of learners")}:</b> {org.details.expectedLearners}</p>}
+              {org.details.gstin && <p><b>GSTIN:</b> {org.details.gstin}</p>}
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-display font-bold text-base flex items-center gap-2">
@@ -272,6 +289,7 @@ export function PartnerOrganisations() {
         <AddOrganisation
           left={me.demo.left}
           endpoint="/partner/organisations"
+          windowEndsAt={me.demo.endsAt}
           onClose={() => setAdding(false)}
           onDone={(name, emailSent) => {
             setAdding(false);
@@ -284,6 +302,7 @@ export function PartnerOrganisations() {
         <GiveLicences
           org={giving}
           left={me.demo.left}
+          windowEndsAt={me.demo.endsAt}
           endpoint={`/partner/organisations/${giving.id}/licences`}
           onClose={() => setGiving(null)}
           onDone={(n) => {

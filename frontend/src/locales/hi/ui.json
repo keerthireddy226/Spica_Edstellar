@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "शुरू होने से 1 महीना",
  "{{n}} licences × 1 month": "{{n}} लाइसेंस × 1 महीना",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "1 महीने के {{l}} लाइसेंस · {{c}} क्रेडिट · {{d}} तक असाइन करें",
- "Moved to a paid licence": "पेड लाइसेंस पर गए"
+ "Moved to a paid licence": "पेड लाइसेंस पर गए",
+ "{{n}} expired unused": "{{n}} बिना इस्तेमाल खत्म हुए",
+ "Choose a date from tomorrow up to the end of your demo window.": "कल से अपनी डेमो अवधि के अंत तक की तारीख चुनें।",
+ "More details (optional): location, contact, expected learners": "और जानकारी (वैकल्पिक): स्थान, संपर्क, अनुमानित शिक्षार्थी",
+ "State": "राज्य",
+ "Organisation phone": "संगठन का फ़ोन",
+ "Admin's phone": "एडमिन का फ़ोन",
+ "Expected number of learners": "अनुमानित शिक्षार्थियों की संख्या",
+ "Valid until (optional)": "तब तक मान्य (वैकल्पिक)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "शिक्षार्थियों को ये इस तारीख तक मिलने चाहिए। खाली: आपकी डेमो अवधि {{d}} को खत्म होने तक।",
+ "Learners must get them by this date.": "शिक्षार्थियों को ये इस तारीख तक मिलने चाहिए।",
+ "{{n}} given {{g}} · valid until {{d}}": "{{g}} को {{n}} दिए · {{d}} तक मान्य",
+ "{{n}} given {{g}}": "{{g}} को {{n}} दिए",
+ "Give them out by {{date}}.": "इन्हें {{date}} तक दें।"
 }

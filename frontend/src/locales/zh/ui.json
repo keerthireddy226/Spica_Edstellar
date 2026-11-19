@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "从开始起 1 个月",
  "{{n}} licences × 1 month": "{{n}} 个许可证 × 1 个月",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} 个 1 个月的许可证 · {{c}} 个点数 · 请在 {{d}} 前分配",
- "Moved to a paid licence": "已改用付费许可证"
+ "Moved to a paid licence": "已改用付费许可证",
+ "{{n}} expired unused": "{{n}} 个未使用已过期",
+ "Choose a date from tomorrow up to the end of your demo window.": "请选择从明天到你的体验期结束之间的日期。",
+ "More details (optional): location, contact, expected learners": "更多信息（可选）：地点、联系方式、预计学员人数",
+ "State": "州/省",
+ "Organisation phone": "组织电话",
+ "Admin's phone": "管理员电话",
+ "Expected number of learners": "预计学员人数",
+ "Valid until (optional)": "有效期至（可选）",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "须在此日期前分配给学员。留空：至你的体验期结束（{{d}}）。",
+ "Learners must get them by this date.": "须在此日期前分配给学员。",
+ "{{n}} given {{g}} · valid until {{d}}": "{{g}} 发放 {{n}} 个 · 有效期至 {{d}}",
+ "{{n}} given {{g}}": "{{g}} 发放 {{n}} 个",
+ "Give them out by {{date}}.": "请在 {{date}} 前分配。"
 }

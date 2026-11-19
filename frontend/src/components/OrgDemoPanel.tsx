@@ -8,7 +8,7 @@ import { tr } from "@/i18n/tr";
 // a licence can be taken back from a learner who hasn't started a test.
 interface Data {
   partnerOrganisation: boolean;
-  demo?: { given: number; used: number; left: number; windowOpen: boolean; windowEndsAt: string | null; days: number };
+  demo?: { given: number; used: number; left: number; expired?: number; useBy?: string | null; windowOpen: boolean; windowEndsAt: string | null; days: number };
   learners?: { id: string; name: string; email: string; demoEndsAt: string | null; status: "none" | "active" | "ended"; started: boolean; paid?: boolean }[];
   upgrade?: { demoLearners: number; paidLicencesFree: number; licenceMonths: number };
 }
@@ -60,7 +60,8 @@ export function OrgDemoPanel() {
         </h2>
         <span className="text-sm">
           <b>{tr("{{used}} of {{given}} used", { used: x.used, given: x.given })}</b> · {tr("{{n}} left", { n: x.left })}
-          {x.windowEndsAt ? ` · ${x.windowOpen ? tr("give them out by {{d}}", { d: day(x.windowEndsAt) }) : tr("demo period ended")}` : ""}
+          {x.useBy && x.windowOpen ? ` · ${tr("give them out by {{d}}", { d: day(x.useBy) })}` : x.windowEndsAt ? ` · ${x.windowOpen ? tr("give them out by {{d}}", { d: day(x.windowEndsAt) }) : tr("demo period ended")}` : ""}
+          {x.expired ? ` · ${tr("{{n}} expired unused", { n: x.expired })}` : ""}
         </span>
       </div>
       <p className="text-sm text-muted">

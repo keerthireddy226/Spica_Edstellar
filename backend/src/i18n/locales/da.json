@@ -442,5 +442,6 @@
  "Reference: {{ref}}.": "Reference: {{ref}}.",
  "{{n}} more demo licences": "{{n}} demolicenser mere",
  "Your organisation now has {{n}} more demo licences.": "Din organisation har nu {{n}} demolicenser mere.",
- "New learners you add get a 7-day demo automatically.": "Nye kursister, du tilføjer, får automatisk en 7-dages demo."
+ "New learners you add get a 7-day demo automatically.": "Nye kursister, du tilføjer, får automatisk en 7-dages demo.",
+ "Give them out by {{date}}.": "Giv dem ud senest {{date}}."
 }

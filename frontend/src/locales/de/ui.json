@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "1 Monat ab Beginn",
  "{{n}} licences × 1 month": "{{n}} Lizenzen × 1 Monat",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} Lizenzen zu 1 Monat · {{c}} Credits · zuweisen bis {{d}}",
- "Moved to a paid licence": "Zu bezahlter Lizenz gewechselt"
+ "Moved to a paid licence": "Zu bezahlter Lizenz gewechselt",
+ "{{n}} expired unused": "{{n}} ungenutzt abgelaufen",
+ "Choose a date from tomorrow up to the end of your demo window.": "Wähle ein Datum ab morgen bis zum Ende deines Demo-Zeitraums.",
+ "More details (optional): location, contact, expected learners": "Weitere Angaben (optional): Standort, Kontakt, erwartete Lernende",
+ "State": "Bundesland",
+ "Organisation phone": "Telefon der Organisation",
+ "Admin's phone": "Telefon der Admin-Person",
+ "Expected number of learners": "Erwartete Zahl der Lernenden",
+ "Valid until (optional)": "Gültig bis (optional)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "Lernende müssen sie bis zu diesem Datum bekommen. Leer: bis dein Demo-Zeitraum am {{d}} endet.",
+ "Learners must get them by this date.": "Lernende müssen sie bis zu diesem Datum bekommen.",
+ "{{n}} given {{g}} · valid until {{d}}": "{{n}} vergeben am {{g}} · gültig bis {{d}}",
+ "{{n}} given {{g}}": "{{n}} vergeben am {{g}}",
+ "Give them out by {{date}}.": "Vergib sie bis {{date}}."
 }

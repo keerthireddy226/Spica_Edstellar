@@ -15,7 +15,7 @@ import { generateToken, hashToken } from "../auth/tokens.js";
 import { sendAdminInviteEmail } from "../auth/mailer.js";
 import { recordAudit } from "../audit/service.js";
 import { createPartnerOrganisation, giveDemoLicences, partnerOrganisations } from "./organisations.js";
-import { orgSchema, sendPartnerError } from "./portalRoutes.js";
+import { licencesSchema, orgSchema, sendPartnerError } from "./portalRoutes.js";
 
 export const channelPartnerStaffRouter = Router();
 
@@ -347,10 +347,10 @@ channelPartnerStaffRouter.post("/channel-partners/:id/organisations", requireAut
 
 channelPartnerStaffRouter.post("/channel-partners/:id/organisations/:tenantId/licences", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
-  const parsed = z.object({ licences: z.number().int().min(1).max(100000) }).safeParse(req.body);
+  const parsed = licencesSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
   try {
-    await giveDemoLicences({ partnerId: req.params.id as string, tenantId: req.params.tenantId as string, licences: parsed.data.licences, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
+    await giveDemoLicences({ partnerId: req.params.id as string, tenantId: req.params.tenantId as string, licences: parsed.data.licences, validUntil: parsed.data.validUntil ?? null, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
     res.json({ ok: true });
   } catch (err) {
     if (!sendPartnerError(err, res)) next(err);

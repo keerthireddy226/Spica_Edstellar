@@ -43,12 +43,31 @@ export async function duplicateCheck(adminEmail: string): Promise<{ emailTaken: 
   return { emailTaken, sameDomainOrgs };
 }
 
-async function assertCanGive(partnerId: string, licences: number) {
+async function assertCanGive(partnerId: string, licences: number, validUntil?: string | null) {
   const b = await partnerBalance(partnerId);
   if (b.partner.deactivated_at) throw new PartnerError("partner_deactivated", 409);
   if (b.status !== "active") throw new PartnerError("demo_window_not_open", 409);
   if (licences > b.left) throw new PartnerError("not_enough_licences", 409, { left: b.left });
+  // An optional "use by" date: from tomorrow, and not after the partner's demo window.
+  if (validUntil) {
+    const end = b.partner.demo_ended_at ?? b.partner.demo_ends_at;
+    const d = new Date(validUntil + "T23:59:59");
+    if (!(d.getTime() > Date.now()) || (end && d.getTime() > new Date(end).getTime() + 86400000)) throw new PartnerError("invalid_valid_until", 400, { max: end });
+  }
   return b;
+}
+
+// Optional details about the organisation, asked when it is added.
+export interface OrgDetails {
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  address?: string | null;
+  postalCode?: string | null;
+  website?: string | null;
+  phone?: string | null;
+  expectedLearners?: number | null;
+  adminPhone?: string | null;
 }
 
 export async function createPartnerOrganisation(args: {
@@ -60,10 +79,13 @@ export async function createPartnerOrganisation(args: {
   adminEmail: string;
   demoLicences: number;
   gstin?: string | null;
+  validUntil?: string | null;
+  details?: OrgDetails;
   // The partner confirmed after seeing the same-domain warning.
   confirmDuplicate?: boolean;
 }) {
-  const b = await assertCanGive(args.partnerId, args.demoLicences);
+  const b = await assertCanGive(args.partnerId, args.demoLicences, args.validUntil);
+  const x = args.details ?? {};
   const dup = await duplicateCheck(args.adminEmail);
   if (dup.emailTaken) throw new PartnerError("email_already_registered", 409);
   if (dup.sameDomainOrgs.length && !args.confirmDuplicate) throw new PartnerError("possible_duplicate", 409, { organisations: dup.sameDomainOrgs });
@@ -73,18 +95,18 @@ export async function createPartnerOrganisation(args: {
     await client.query("BEGIN");
     // An Admin owner keeps it visible in that Admin's console: the one who registered the partner.
     const t = await client.query(
-      `INSERT INTO tenants (name, type, category, managed_by, products, channel_partner_id, tax_id)
-       VALUES ($1, 'cohort', $2, (SELECT u.id FROM users u WHERE u.id = $3 AND u.role = 'admin'), ARRAY['skills'], $4, $5) RETURNING id`,
-      [args.name.trim(), args.category, b.partner.created_by, args.partnerId, args.gstin?.trim().toUpperCase() || null],
+      `INSERT INTO tenants (name, type, category, managed_by, products, channel_partner_id, tax_id, city, state, country, address_line, postal_code, website, phone, expected_learner_count)
+       VALUES ($1, 'cohort', $2, (SELECT u.id FROM users u WHERE u.id = $3 AND u.role = 'admin'), ARRAY['skills'], $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+      [args.name.trim(), args.category, b.partner.created_by, args.partnerId, args.gstin?.trim().toUpperCase() || null, x.city?.trim() || null, x.state?.trim() || null, x.country?.trim() || null, x.address?.trim() || null, x.postalCode?.trim() || null, x.website?.trim() || null, x.phone?.trim() || null, x.expectedLearners ?? null],
     );
     const tenantId = t.rows[0].id;
     const u = await client.query(
-      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, invited_by, email_verified)
-       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, true) RETURNING id`,
-      [tenantId, args.adminEmail.trim().toLowerCase(), await bcrypt.hash(randomUUID(), 12), parts[0], parts.slice(1).join(" "), args.actor.id],
+      `INSERT INTO users (role, tenant_id, email, password_hash, first_name, last_name, invited_by, email_verified, phone)
+       VALUES ('org_admin', $1, $2, $3, $4, $5, $6, true, $7) RETURNING id`,
+      [tenantId, args.adminEmail.trim().toLowerCase(), await bcrypt.hash(randomUUID(), 12), parts[0], parts.slice(1).join(" "), args.actor.id, x.adminPhone?.trim() || null],
     );
     if (args.demoLicences > 0) {
-      await client.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by) VALUES ($1, $2, 'demo', $3, $4)`, [args.partnerId, tenantId, args.demoLicences, args.actor.id]);
+      await client.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, $5)`, [args.partnerId, tenantId, args.demoLicences, args.actor.id, args.validUntil || null]);
     }
     await client.query("COMMIT");
     const token = generateToken();
@@ -105,17 +127,19 @@ export async function createPartnerOrganisation(args: {
   }
 }
 
-export async function giveDemoLicences(args: { partnerId: string; tenantId: string; licences: number; actor: { id: string; role: string; ip?: string | null } }) {
-  const b = await assertCanGive(args.partnerId, args.licences);
+export async function giveDemoLicences(args: { partnerId: string; tenantId: string; licences: number; validUntil?: string | null; actor: { id: string; role: string; ip?: string | null } }) {
+  const b = await assertCanGive(args.partnerId, args.licences, args.validUntil);
   const t = await pool.query(`SELECT name FROM tenants WHERE id = $1 AND channel_partner_id = $2`, [args.tenantId, args.partnerId]);
   if (!t.rowCount) throw new PartnerError("organisation_not_found", 404);
-  await pool.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by) VALUES ($1, $2, 'demo', $3, $4)`, [args.partnerId, args.tenantId, args.licences, args.actor.id]);
+  await pool.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, $5)`, [args.partnerId, args.tenantId, args.licences, args.actor.id, args.validUntil || null]);
   for (const id of await orgAdminIds(args.tenantId)) {
     await notify({
       userId: id,
       kind: "partner_demo",
       title: `${args.licences} more demo licences`,
-      body: `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically.`,
+      body: args.validUntil
+        ? `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically. Give them out by ${new Date(args.validUntil + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`
+        : `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically.`,
       link: "/orgadmin/dashboard",
       email: true,
     });
@@ -126,7 +150,8 @@ export async function giveDemoLicences(args: { partnerId: string; tenantId: stri
 // Organisations with their admin, licences given and learners (no scores).
 export async function partnerOrganisations(partnerId: string) {
   const r = await pool.query(
-    `SELECT t.id, t.name, t.category, t.created_at, t.deactivated_at,
+    `SELECT t.id, t.name, t.category, t.created_at, t.deactivated_at, t.city, t.state, t.country, t.website, t.phone, t.expected_learner_count, t.address_line, t.postal_code, t.tax_id,
+       (SELECT coalesce(json_agg(json_build_object('licences', a.licences, 'validUntil', to_char(a.valid_until, 'YYYY-MM-DD'), 'givenAt', a.created_at) ORDER BY a.created_at), '[]') FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS allocations,
        (SELECT coalesce(sum(a.licences), 0)::int FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS demo_licences,
        (SELECT count(*)::int FROM users l WHERE l.tenant_id = t.id AND l.role = 'learner' AND l.deleted_at IS NULL) AS learners,
        (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL) AS demo_used,
@@ -154,6 +179,8 @@ export async function partnerOrganisations(partnerId: string) {
     createdAt: o.created_at,
     active: !o.deactivated_at,
     demoLicences: o.demo_licences,
+    allocations: o.allocations as { licences: number; validUntil: string | null; givenAt: string }[],
+    details: { city: o.city, state: o.state, country: o.country, website: o.website, phone: o.phone, expectedLearners: o.expected_learner_count, address: o.address_line, postalCode: o.postal_code, gstin: o.tax_id },
     learners: o.learners,
     // Usage of the demo licences: counts only, never scores.
     demoUsed: o.demo_used,
@@ -177,7 +204,7 @@ export async function partnerOrganisationDetail(partnerId: string, tenantId: str
   const [summary] = (await partnerOrganisations(partnerId)).filter((o) => o.id === tenantId);
   const admin = (
     await pool.query(
-      `SELECT u.first_name, u.last_name, u.email, (SELECT max(e.created_at) FROM login_events e WHERE e.user_id = u.id) AS signed_in
+      `SELECT u.first_name, u.last_name, u.email, u.phone, (SELECT max(e.created_at) FROM login_events e WHERE e.user_id = u.id) AS signed_in
        FROM users u WHERE u.tenant_id = $1 AND u.role = 'org_admin' AND u.deleted_at IS NULL ORDER BY u.created_at LIMIT 1`,
       [tenantId],
     )
@@ -205,7 +232,7 @@ export async function partnerOrganisationDetail(partnerId: string, tenantId: str
   return {
     organisation: summary,
     admin: admin
-      ? { name: [admin.first_name, admin.last_name].filter(Boolean).join(" "), email: admin.email, invitePending: !admin.signed_in, lastSignIn: admin.signed_in ?? null }
+      ? { name: [admin.first_name, admin.last_name].filter(Boolean).join(" "), email: admin.email, phone: admin.phone ?? null, invitePending: !admin.signed_in, lastSignIn: admin.signed_in ?? null }
       : null,
     learners: learners.rows.map((l) => {
       const paidEnds = l.paid_ends ? new Date(l.paid_ends) : null;

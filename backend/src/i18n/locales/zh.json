@@ -442,5 +442,6 @@
  "Reference: {{ref}}.": "参考号：{{ref}}。",
  "{{n}} more demo licences": "再增加 {{n}} 个体验许可证",
  "Your organisation now has {{n}} more demo licences.": "你的组织现在多了 {{n}} 个体验许可证。",
- "New learners you add get a 7-day demo automatically.": "你新添加的学员会自动获得 7 天体验。"
+ "New learners you add get a 7-day demo automatically.": "你新添加的学员会自动获得 7 天体验。",
+ "Give them out by {{date}}.": "请在 {{date}} 前分配。"
 }

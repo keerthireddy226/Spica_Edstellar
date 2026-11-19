@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "開始から1か月",
  "{{n}} licences × 1 month": "ライセンス{{n}}件 × 1か月",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "1か月のライセンス{{l}}件 · クレジット{{c}} · {{d}}までに割り当て",
- "Moved to a paid licence": "有料ライセンスに移行済み"
+ "Moved to a paid licence": "有料ライセンスに移行済み",
+ "{{n}} expired unused": "未使用のまま{{n}}件失効",
+ "Choose a date from tomorrow up to the end of your demo window.": "明日からデモ期間の終了日までの日付を選んでください。",
+ "More details (optional): location, contact, expected learners": "詳細（任意）：所在地、連絡先、受講者の予定人数",
+ "State": "州・都道府県",
+ "Organisation phone": "組織の電話番号",
+ "Admin's phone": "管理者の電話番号",
+ "Expected number of learners": "受講者の予定人数",
+ "Valid until (optional)": "有効期限（任意）",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "この日までに受講者に割り当ててください。空欄の場合はデモ期間の終了日（{{d}}）まで。",
+ "Learners must get them by this date.": "この日までに受講者に割り当ててください。",
+ "{{n}} given {{g}} · valid until {{d}}": "{{g}}に{{n}}件付与 · {{d}}まで有効",
+ "{{n}} given {{g}}": "{{g}}に{{n}}件付与",
+ "Give them out by {{date}}.": "{{date}}までに割り当ててください。"
 }

@@ -442,5 +442,6 @@
  "Reference: {{ref}}.": "Tham chiếu: {{ref}}.",
  "{{n}} more demo licences": "Thêm {{n}} giấy phép dùng thử",
  "Your organisation now has {{n}} more demo licences.": "Tổ chức của bạn giờ có thêm {{n}} giấy phép dùng thử.",
- "New learners you add get a 7-day demo automatically.": "Học viên mới bạn thêm sẽ tự động có 7 ngày dùng thử."
+ "New learners you add get a 7-day demo automatically.": "Học viên mới bạn thêm sẽ tự động có 7 ngày dùng thử.",
+ "Give them out by {{date}}.": "Hãy cấp trước {{date}}."
 }

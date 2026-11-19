@@ -29,6 +29,8 @@ export interface PartnerOrg {
   paidAssigned?: number;
   orders?: number;
   ordersConfirmed?: number;
+  allocations?: { licences: number; validUntil: string | null; givenAt: string }[];
+  details?: { city: string | null; state: string | null; country: string | null; website: string | null; phone: string | null; expectedLearners: number | null; address: string | null; postalCode: string | null; gstin: string | null };
   admin: { name: string; email: string; invitePending: boolean };
 }
 interface Me {
@@ -149,6 +151,7 @@ export function PartnerDashboard() {
         <AddOrganisation
           left={d.left}
           endpoint="/partner/organisations"
+          windowEndsAt={d.endsAt}
           onClose={() => setAdding(false)}
           onDone={(name, emailSent) => {
             setAdding(false);
@@ -162,6 +165,7 @@ export function PartnerDashboard() {
         <GiveLicences
           org={giving}
           left={d.left}
+          windowEndsAt={d.endsAt}
           endpoint={`/partner/organisations/${giving.id}/licences`}
           onClose={() => setGiving(null)}
           onDone={(n) => {
@@ -179,8 +183,11 @@ const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text
 const label = "text-xs font-semibold text-muted uppercase tracking-wide";
 
 // Shared with the staff console (adding an organisation for a partner).
-export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: number; endpoint: string; onClose: () => void; onDone: (name: string, emailSent: boolean) => void }) {
-  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", gstin: "", demoLicences: String(Math.min(25, left)) });
+export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone }: { left: number; endpoint: string; windowEndsAt?: string | null; onClose: () => void; onDone: (name: string, emailSent: boolean) => void }) {
+  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", gstin: "", demoLicences: String(Math.min(25, left)), validUntil: "" });
+  const [more, setMore] = useState(false);
+  const [x, setX] = useState({ city: "", state: "", country: "India", address: "", postalCode: "", website: "", phone: "", expectedLearners: "", adminPhone: "" });
+  const setD = (k: keyof typeof x) => (e: { target: { value: string } }) => setX({ ...x, [k]: e.target.value });
   const [dup, setDup] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -193,7 +200,15 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
     if (n < 0 || n > left) return setErr(tr("You can give up to {{n}} licences.", { n: left }));
     setBusy(true);
     try {
-      const r = await api<{ emailSent: boolean }>(endpoint, json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), ...(f.gstin ? { gstin: f.gstin } : {}), demoLicences: n, confirmDuplicate }));
+      const details = Object.fromEntries(
+        Object.entries(x)
+          .map(([k, v]) => [k, k === "expectedLearners" ? (v.trim() ? Math.max(0, Math.round(Number(v) || 0)) : null) : v.trim() || null])
+          .filter(([, v]) => v !== null),
+      );
+      const r = await api<{ emailSent: boolean }>(
+        endpoint,
+        json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), ...(f.gstin ? { gstin: f.gstin } : {}), demoLicences: n, validUntil: f.validUntil || null, details, confirmDuplicate }),
+      );
       onDone(f.name.trim(), r.emailSent);
     } catch (e) {
       const m = String((e as Error).message ?? "");
@@ -209,7 +224,9 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
             ? tr("You don't have that many licences left.")
             : m.includes("demo_window_not_open")
               ? tr("Your demo window isn't open.")
-              : tr("Could not add the organisation. Try again."),
+              : m.includes("invalid_valid_until")
+                ? tr("Choose a date from tomorrow up to the end of your demo window.")
+                : tr("Could not add the organisation. Try again."),
       );
       setBusy(false);
     }
@@ -246,7 +263,52 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
             <input className={input} type="number" min={0} max={left} value={f.demoLicences} onChange={(e) => setF({ ...f, demoLicences: e.target.value })} />
             <span className="text-xs text-muted">{tr("{{n}} left. Each learner gets 7 days from when the licence is assigned.", { n: left })}</span>
           </label>
+          <ValidUntil value={f.validUntil} onChange={(v) => setF({ ...f, validUntil: v })} windowEndsAt={windowEndsAt} />
         </div>
+        <button type="button" className="self-start text-sm font-semibold text-navy cursor-pointer" onClick={() => setMore(!more)}>
+          {more ? "− " : "+ "}
+          {tr("More details (optional): location, contact, expected learners")}
+        </button>
+        {more && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("City")}</span>
+              <input className={input} value={x.city} maxLength={100} onChange={setD("city")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("State")}</span>
+              <input className={input} value={x.state} maxLength={100} onChange={setD("state")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Country")}</span>
+              <input className={input} value={x.country} maxLength={100} onChange={setD("country")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Postal code")}</span>
+              <input className={input} value={x.postalCode} maxLength={20} onChange={setD("postalCode")} />
+            </label>
+            <label className="flex flex-col gap-1 sm:col-span-2">
+              <span className={label}>{tr("Address")}</span>
+              <input className={input} value={x.address} maxLength={300} onChange={setD("address")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Website")}</span>
+              <input className={input} value={x.website} maxLength={200} placeholder="https://" onChange={setD("website")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Organisation phone")}</span>
+              <input className={input} value={x.phone} maxLength={30} onChange={setD("phone")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Admin's phone")}</span>
+              <input className={input} value={x.adminPhone} maxLength={30} onChange={setD("adminPhone")} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Expected number of learners")}</span>
+              <input className={input} type="number" min={0} value={x.expectedLearners} onChange={setD("expectedLearners")} />
+            </label>
+          </div>
+        )}
         {dup && (
           <Notice tone="error">
             {tr("Another Spica customer already uses this email domain. Check it isn't the same organisation before adding it.")}
@@ -271,8 +333,9 @@ export function AddOrganisation({ left, endpoint, onClose, onDone }: { left: num
   );
 }
 
-export function GiveLicences({ org, left, endpoint, onClose, onDone }: { org: PartnerOrg; left: number; endpoint: string; onClose: () => void; onDone: (n: number) => void }) {
+export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDone }: { org: PartnerOrg; left: number; endpoint: string; windowEndsAt?: string | null; onClose: () => void; onDone: (n: number) => void }) {
   const [n, setN] = useState(String(Math.min(10, left)));
+  const [validUntil, setValidUntil] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const submit = async () => {
@@ -280,10 +343,10 @@ export function GiveLicences({ org, left, endpoint, onClose, onDone }: { org: Pa
     if (v < 1 || v > left) return setErr(tr("You can give between 1 and {{n}} licences.", { n: left }));
     setBusy(true);
     try {
-      await api(endpoint, json({ licences: v }));
+      await api(endpoint, json({ licences: v, validUntil: validUntil || null }));
       onDone(v);
-    } catch {
-      setErr(tr("Could not give the licences. Try again."));
+    } catch (e) {
+      setErr(String((e as Error).message ?? "").includes("invalid_valid_until") ? tr("Choose a date from tomorrow up to the end of your demo window.") : tr("Could not give the licences. Try again."));
       setBusy(false);
     }
   };
@@ -291,10 +354,13 @@ export function GiveLicences({ org, left, endpoint, onClose, onDone }: { org: Pa
     <DetailModal title={tr("Give demo licences")} subtitle={org.name} icon={KeyRound} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <p className="text-sm">{tr("{{name}} has {{n}} demo licences now. You have {{left}} left to give.", { name: org.name, n: org.demoLicences, left })}</p>
-        <label className="flex flex-col gap-1 max-w-xs">
-          <span className={label}>{tr("Licences to add")}</span>
-          <input className={input} type="number" min={1} max={left} value={n} onChange={(e) => setN(e.target.value)} />
-        </label>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <label className="flex flex-col gap-1">
+            <span className={label}>{tr("Licences to add")}</span>
+            <input className={input} type="number" min={1} max={left} value={n} onChange={(e) => setN(e.target.value)} />
+          </label>
+          <ValidUntil value={validUntil} onChange={setValidUntil} windowEndsAt={windowEndsAt} />
+        </div>
         {err && <Notice tone="error">{err}</Notice>}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
@@ -306,5 +372,21 @@ export function GiveLicences({ org, left, endpoint, onClose, onDone }: { org: Pa
         </div>
       </div>
     </DetailModal>
+  );
+}
+
+// Optional "give them out by" date for demo licences given to an organisation:
+// from tomorrow, at the latest the end of the partner's demo window.
+function ValidUntil({ value, onChange, windowEndsAt }: { value: string; onChange: (v: string) => void; windowEndsAt?: string | null }) {
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const max = windowEndsAt ? new Date(windowEndsAt).toISOString().slice(0, 10) : undefined;
+  return (
+    <label className="flex flex-col gap-1">
+      <span className={label}>{tr("Valid until (optional)")}</span>
+      <input className={input} type="date" min={tomorrow} max={max} value={value} onChange={(e) => onChange(e.target.value)} />
+      <span className="text-xs text-muted">
+        {windowEndsAt ? tr("Learners must get them by this date. Empty: until your demo window ends on {{d}}.", { d: day(windowEndsAt) }) : tr("Learners must get them by this date.")}
+      </span>
+    </label>
   );
 }

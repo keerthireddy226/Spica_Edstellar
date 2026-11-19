@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "1 kk alkamisesta",
  "{{n}} licences × 1 month": "{{n}} lisenssiä × 1 kk",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "{{l}} lisenssiä à 1 kk · {{c}} krediittiä · määritä viimeistään {{d}}",
- "Moved to a paid licence": "Siirretty maksulliseen lisenssiin"
+ "Moved to a paid licence": "Siirretty maksulliseen lisenssiin",
+ "{{n}} expired unused": "{{n}} vanheni käyttämättä",
+ "Choose a date from tomorrow up to the end of your demo window.": "Valitse päivä huomisesta demojaksosi loppuun.",
+ "More details (optional): location, contact, expected learners": "Lisätietoja (valinnainen): sijainti, yhteystiedot, odotetut opiskelijat",
+ "State": "Osavaltio tai maakunta",
+ "Organisation phone": "Organisaation puhelin",
+ "Admin's phone": "Ylläpitäjän puhelin",
+ "Expected number of learners": "Odotettu opiskelijamäärä",
+ "Valid until (optional)": "Voimassa asti (valinnainen)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "Opiskelijoiden on saatava ne viimeistään tänä päivänä. Tyhjä: demojaksosi loppuun {{d}}.",
+ "Learners must get them by this date.": "Opiskelijoiden on saatava ne viimeistään tänä päivänä.",
+ "{{n}} given {{g}} · valid until {{d}}": "{{n}} annettu {{g}} · voimassa {{d}} asti",
+ "{{n}} given {{g}}": "{{n}} annettu {{g}}",
+ "Give them out by {{date}}.": "Jaa ne viimeistään {{date}}."
 }

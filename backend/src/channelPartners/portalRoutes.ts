@@ -66,6 +66,8 @@ partnerPortalRouter.get("/organisations/:tenantId", requireAuth, async (req: Aut
   }
 });
 
+export const licencesSchema = z.object({ licences: z.number().int().min(1).max(100000), validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish() });
+
 export const orgSchema = z.object({
   name: z.string().trim().min(2).max(160),
   category: z.enum(["university", "company"]),
@@ -73,6 +75,20 @@ export const orgSchema = z.object({
   adminEmail: z.string().trim().toLowerCase().email(),
   demoLicences: z.number().int().min(0).max(100000),
   gstin: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/).optional(),
+  validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  details: z
+    .object({
+      city: z.string().trim().max(100).nullish(),
+      state: z.string().trim().max(100).nullish(),
+      country: z.string().trim().max(100).nullish(),
+      address: z.string().trim().max(300).nullish(),
+      postalCode: z.string().trim().max(20).nullish(),
+      website: z.string().trim().max(200).nullish(),
+      phone: z.string().trim().max(30).nullish(),
+      expectedLearners: z.number().int().min(0).max(1000000).nullish(),
+      adminPhone: z.string().trim().max(30).nullish(),
+    })
+    .optional(),
   confirmDuplicate: z.boolean().optional(),
 });
 
@@ -92,10 +108,10 @@ partnerPortalRouter.post("/organisations", requireAuth, async (req: AuthedReques
 partnerPortalRouter.post("/organisations/:tenantId/licences", requireAuth, async (req: AuthedRequest, res, next) => {
   const id = await myPartnerId(req, res);
   if (!id) return;
-  const parsed = z.object({ licences: z.number().int().min(1).max(100000) }).safeParse(req.body);
+  const parsed = licencesSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
   try {
-    await giveDemoLicences({ partnerId: id, tenantId: req.params.tenantId as string, licences: parsed.data.licences, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
+    await giveDemoLicences({ partnerId: id, tenantId: req.params.tenantId as string, licences: parsed.data.licences, validUntil: parsed.data.validUntil ?? null, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
     res.json({ ok: true });
   } catch (err) {
     if (!sendPartnerError(err, res)) next(err);

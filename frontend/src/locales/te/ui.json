@@ -6249,5 +6249,18 @@
  "1 month from when it starts": "ప్రారంభం నుండి 1 నెల",
  "{{n}} licences × 1 month": "{{n}} లైసెన్స్‌లు × 1 నెల",
  "{{l}} licences of 1 month · {{c}} credits · assign by {{d}}": "1 నెల {{l}} లైసెన్స్‌లు · {{c}} క్రెడిట్‌లు · {{d}} లోపు కేటాయించండి",
- "Moved to a paid licence": "చెల్లింపు లైసెన్స్‌కు మారారు"
+ "Moved to a paid licence": "చెల్లింపు లైసెన్స్‌కు మారారు",
+ "{{n}} expired unused": "{{n}} వాడకుండానే గడువు ముగిశాయి",
+ "Choose a date from tomorrow up to the end of your demo window.": "రేపటి నుండి మీ డెమో వ్యవధి ముగింపు వరకు తేదీ ఎంచుకోండి.",
+ "More details (optional): location, contact, expected learners": "మరిన్ని వివరాలు (ఐచ్ఛికం): ప్రదేశం, సంప్రదింపు, అంచనా అభ్యాసకులు",
+ "State": "రాష్ట్రం",
+ "Organisation phone": "సంస్థ ఫోన్",
+ "Admin's phone": "అడ్మిన్ ఫోన్",
+ "Expected number of learners": "అంచనా అభ్యాసకుల సంఖ్య",
+ "Valid until (optional)": "వరకు చెల్లుతాయి (ఐచ్ఛికం)",
+ "Learners must get them by this date. Empty: until your demo window ends on {{d}}.": "అభ్యాసకులకు ఈ తేదీలోపు ఇవ్వాలి. ఖాళీ: మీ డెమో వ్యవధి {{d}}న ముగిసే వరకు.",
+ "Learners must get them by this date.": "అభ్యాసకులకు ఈ తేదీలోపు ఇవ్వాలి.",
+ "{{n}} given {{g}} · valid until {{d}}": "{{g}}న {{n}} ఇచ్చారు · {{d}} వరకు చెల్లుతాయి",
+ "{{n}} given {{g}}": "{{g}}న {{n}} ఇచ్చారు",
+ "Give them out by {{date}}.": "వీటిని {{date}} లోపు ఇవ్వండి."
 }
