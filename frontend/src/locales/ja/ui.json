@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "この日までに受講者に割り当ててください。",
  "{{n}} given {{g}} · valid until {{d}}": "{{g}}に{{n}}件付与 · {{d}}まで有効",
  "{{n}} given {{g}}": "{{g}}に{{n}}件付与",
- "Give them out by {{date}}.": "{{date}}までに割り当ててください。"
+ "Give them out by {{date}}.": "{{date}}までに割り当ててください。",
+ "Enter the city, state and country.": "市区町村、州・都道府県、国を入力してください。",
+ "More details (optional): address, contact, expected learners": "詳細（任意）：住所、連絡先、受講者の予定人数",
+ "Given so far": "これまでの付与数",
+ "demo licences": "デモライセンス",
+ "Not used yet": "未使用",
+ "waiting for learners": "受講者待ち",
+ "{{p}} practice tests and {{m}} mock tests finished": "練習テスト{{p}}回、模擬テスト{{m}}回完了",
+ "Organisation admin": "組織の管理者",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "ライセンスを付与するとメールで通知されます。追加された受講者には、English 4 Skills Essentialsの7日間デモ（練習モジュール、練習テスト2回、模擬テスト1回）が付与されます。",
+ "Earlier gifts": "過去の付与",
+ "You have {{left}} left to give.": "付与できる残りは{{left}}件です。",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "付与後、{{name}}のデモライセンスは{{n}}件、あなたの残りは{{left}}件になります。"
 }

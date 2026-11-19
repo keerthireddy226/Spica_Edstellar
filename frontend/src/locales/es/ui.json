@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "Los alumnos deben recibirlas antes de esta fecha.",
  "{{n}} given {{g}} · valid until {{d}}": "{{n}} dadas el {{g}} · válidas hasta el {{d}}",
  "{{n}} given {{g}}": "{{n}} dadas el {{g}}",
- "Give them out by {{date}}.": "Dalas antes del {{date}}."
+ "Give them out by {{date}}.": "Dalas antes del {{date}}.",
+ "Enter the city, state and country.": "Escribe la ciudad, el estado y el país.",
+ "More details (optional): address, contact, expected learners": "Más datos (opcional): dirección, contacto, alumnos previstos",
+ "Given so far": "Dadas hasta ahora",
+ "demo licences": "licencias de demo",
+ "Not used yet": "Sin usar aún",
+ "waiting for learners": "esperando alumnos",
+ "{{p}} practice tests and {{m}} mock tests finished": "{{p}} pruebas de práctica y {{m}} simulacros terminados",
+ "Organisation admin": "Administrador de la organización",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Se le avisa por correo cuando das licencias. Cada alumno que añada recibe una demo de 7 días de English 4 Skills Essentials: Módulos de práctica, 2 pruebas de práctica y 1 simulacro.",
+ "Earlier gifts": "Entregas anteriores",
+ "You have {{left}} left to give.": "Te quedan {{left}} por dar.",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Después, {{name}} tendrá {{n}} licencias de demo y a ti te quedarán {{left}} por dar."
 }

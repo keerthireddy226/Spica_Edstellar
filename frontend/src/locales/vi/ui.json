@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "Học viên phải được cấp trước ngày này.",
  "{{n}} given {{g}} · valid until {{d}}": "Đã cấp {{n}} ngày {{g}} · hiệu lực đến {{d}}",
  "{{n}} given {{g}}": "Đã cấp {{n}} ngày {{g}}",
- "Give them out by {{date}}.": "Hãy cấp trước {{date}}."
+ "Give them out by {{date}}.": "Hãy cấp trước {{date}}.",
+ "Enter the city, state and country.": "Nhập thành phố, bang hoặc tỉnh và quốc gia.",
+ "More details (optional): address, contact, expected learners": "Thêm thông tin (tùy chọn): địa chỉ, liên hệ, số học viên dự kiến",
+ "Given so far": "Đã cấp đến nay",
+ "demo licences": "giấy phép dùng thử",
+ "Not used yet": "Chưa dùng",
+ "waiting for learners": "đang chờ học viên",
+ "{{p}} practice tests and {{m}} mock tests finished": "Đã hoàn thành {{p}} bài luyện tập và {{m}} bài thi thử",
+ "Organisation admin": "Quản trị viên tổ chức",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Họ được báo qua email khi bạn cấp giấy phép. Mỗi học viên họ thêm sẽ có 7 ngày dùng thử English 4 Skills Essentials: Học phần luyện tập, 2 bài luyện tập và 1 bài thi thử.",
+ "Earlier gifts": "Các lần cấp trước",
+ "You have {{left}} left to give.": "Bạn còn {{left}} để cấp.",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Sau đó, {{name}} sẽ có {{n}} giấy phép dùng thử và bạn còn {{left}} để cấp."
 }

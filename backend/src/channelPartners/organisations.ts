@@ -86,6 +86,7 @@ export async function createPartnerOrganisation(args: {
 }) {
   const b = await assertCanGive(args.partnerId, args.demoLicences, args.validUntil);
   const x = args.details ?? {};
+  if (!x.city?.trim() || !x.state?.trim() || !x.country?.trim()) throw new PartnerError("location_required", 400);
   const dup = await duplicateCheck(args.adminEmail);
   if (dup.emailTaken) throw new PartnerError("email_already_registered", 409);
   if (dup.sameDomainOrgs.length && !args.confirmDuplicate) throw new PartnerError("possible_duplicate", 409, { organisations: dup.sameDomainOrgs });

@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "शिक्षार्थियों को ये इस तारीख तक मिलने चाहिए।",
  "{{n}} given {{g}} · valid until {{d}}": "{{g}} को {{n}} दिए · {{d}} तक मान्य",
  "{{n}} given {{g}}": "{{g}} को {{n}} दिए",
- "Give them out by {{date}}.": "इन्हें {{date}} तक दें।"
+ "Give them out by {{date}}.": "इन्हें {{date}} तक दें।",
+ "Enter the city, state and country.": "शहर, राज्य और देश लिखें।",
+ "More details (optional): address, contact, expected learners": "और जानकारी (वैकल्पिक): पता, संपर्क, अनुमानित शिक्षार्थी",
+ "Given so far": "अब तक दिए गए",
+ "demo licences": "डेमो लाइसेंस",
+ "Not used yet": "अभी इस्तेमाल नहीं हुए",
+ "waiting for learners": "शिक्षार्थियों का इंतज़ार",
+ "{{p}} practice tests and {{m}} mock tests finished": "{{p}} प्रैक्टिस टेस्ट और {{m}} मॉक टेस्ट पूरे",
+ "Organisation admin": "संगठन के एडमिन",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "लाइसेंस देने पर उन्हें ईमेल से बताया जाता है। उनके जोड़े हर शिक्षार्थी को English 4 Skills Essentials का 7 दिन का डेमो मिलता है: प्रैक्टिस मॉड्यूल, 2 प्रैक्टिस टेस्ट और 1 मॉक टेस्ट।",
+ "Earlier gifts": "पहले दिए गए",
+ "You have {{left}} left to give.": "आपके पास देने के लिए {{left}} बाकी हैं।",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "इसके बाद {{name}} के पास {{n}} डेमो लाइसेंस होंगे और आपके पास देने के लिए {{left}} बचेंगे।"
 }

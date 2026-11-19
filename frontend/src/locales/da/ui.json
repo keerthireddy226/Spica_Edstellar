@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "Kursister skal have dem senest denne dato.",
  "{{n}} given {{g}} · valid until {{d}}": "{{n}} givet {{g}} · gyldige til {{d}}",
  "{{n}} given {{g}}": "{{n}} givet {{g}}",
- "Give them out by {{date}}.": "Giv dem ud senest {{date}}."
+ "Give them out by {{date}}.": "Giv dem ud senest {{date}}.",
+ "Enter the city, state and country.": "Angiv by, stat eller region og land.",
+ "More details (optional): address, contact, expected learners": "Flere oplysninger (valgfrit): adresse, kontakt, forventede kursister",
+ "Given so far": "Givet indtil nu",
+ "demo licences": "demolicenser",
+ "Not used yet": "Ikke brugt endnu",
+ "waiting for learners": "venter på kursister",
+ "{{p}} practice tests and {{m}} mock tests finished": "{{p}} øvetests og {{m}} prøvetests gennemført",
+ "Organisation admin": "Organisationens administrator",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Får besked på mail, når du giver licenser. Hver kursist, der tilføjes, får en 7-dages demo af English 4 Skills Essentials: Øvemoduler, 2 øvetests og 1 prøvetest.",
+ "Earlier gifts": "Tidligere tildelinger",
+ "You have {{left}} left to give.": "Du har {{left}} tilbage at give.",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Bagefter har {{name}} {{n}} demolicenser, og du har {{left}} tilbage at give."
 }

@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "Cursisten moeten ze vóór deze datum krijgen.",
  "{{n}} given {{g}} · valid until {{d}}": "{{n}} gegeven op {{g}} · geldig tot {{d}}",
  "{{n}} given {{g}}": "{{n}} gegeven op {{g}}",
- "Give them out by {{date}}.": "Geef ze uit vóór {{date}}."
+ "Give them out by {{date}}.": "Geef ze uit vóór {{date}}.",
+ "Enter the city, state and country.": "Vul de plaats, staat of provincie en het land in.",
+ "More details (optional): address, contact, expected learners": "Meer gegevens (optioneel): adres, contact, verwachte cursisten",
+ "Given so far": "Tot nu toe gegeven",
+ "demo licences": "demolicenties",
+ "Not used yet": "Nog niet gebruikt",
+ "waiting for learners": "wachten op cursisten",
+ "{{p}} practice tests and {{m}} mock tests finished": "{{p}} oefentoetsen en {{m}} proeftoetsen afgerond",
+ "Organisation admin": "Beheerder van de organisatie",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Krijgt een e-mail als je licenties geeft. Elke cursist die wordt toegevoegd krijgt een demo van 7 dagen van English 4 Skills Essentials: Oefenmodules, 2 oefentoetsen en 1 proeftoets.",
+ "Earlier gifts": "Eerdere uitgiftes",
+ "You have {{left}} left to give.": "Je hebt er nog {{left}} om te geven.",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Daarna heeft {{name}} {{n}} demolicenties en heb jij er nog {{left}} om te geven."
 }

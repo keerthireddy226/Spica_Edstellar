@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "Opiskelijoiden on saatava ne viimeistään tänä päivänä.",
  "{{n}} given {{g}} · valid until {{d}}": "{{n}} annettu {{g}} · voimassa {{d}} asti",
  "{{n}} given {{g}}": "{{n}} annettu {{g}}",
- "Give them out by {{date}}.": "Jaa ne viimeistään {{date}}."
+ "Give them out by {{date}}.": "Jaa ne viimeistään {{date}}.",
+ "Enter the city, state and country.": "Anna kaupunki, osavaltio tai maakunta ja maa.",
+ "More details (optional): address, contact, expected learners": "Lisätietoja (valinnainen): osoite, yhteystiedot, odotetut opiskelijat",
+ "Given so far": "Annettu tähän mennessä",
+ "demo licences": "demolisenssiä",
+ "Not used yet": "Käyttämättä",
+ "waiting for learners": "odottaa opiskelijoita",
+ "{{p}} practice tests and {{m}} mock tests finished": "{{p}} harjoituskoetta ja {{m}} harjoitustestiä suoritettu",
+ "Organisation admin": "Organisaation ylläpitäjä",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Saa sähköpostin, kun annat lisenssejä. Jokainen lisätty opiskelija saa 7 päivän demon English 4 Skills Essentialsista: Harjoitusmoduulit, 2 harjoituskoetta ja 1 harjoitustesti.",
+ "Earlier gifts": "Aiemmat annot",
+ "You have {{left}} left to give.": "Sinulla on {{left}} jäljellä annettavaksi.",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Tämän jälkeen organisaatiolla {{name}} on {{n}} demolisenssiä ja sinulla {{left}} jäljellä annettavaksi."
 }

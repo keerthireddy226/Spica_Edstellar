@@ -6262,5 +6262,17 @@
  "Learners must get them by this date.": "须在此日期前分配给学员。",
  "{{n}} given {{g}} · valid until {{d}}": "{{g}} 发放 {{n}} 个 · 有效期至 {{d}}",
  "{{n}} given {{g}}": "{{g}} 发放 {{n}} 个",
- "Give them out by {{date}}.": "请在 {{date}} 前分配。"
+ "Give them out by {{date}}.": "请在 {{date}} 前分配。",
+ "Enter the city, state and country.": "请填写城市、州/省和国家。",
+ "More details (optional): address, contact, expected learners": "更多信息（可选）：地址、联系方式、预计学员人数",
+ "Given so far": "已发放",
+ "demo licences": "个体验许可证",
+ "Not used yet": "尚未使用",
+ "waiting for learners": "等待学员",
+ "{{p}} practice tests and {{m}} mock tests finished": "完成 {{p}} 次练习测试和 {{m}} 次模拟测试",
+ "Organisation admin": "组织管理员",
+ "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "你发放许可证时，对方会收到邮件。其添加的每位学员都会获得 7 天的 English 4 Skills Essentials 体验：练习模块、2 次练习测试和 1 次模拟测试。",
+ "Earlier gifts": "以往发放",
+ "You have {{left}} left to give.": "你还有 {{left}} 个可发放。",
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "发放后，{{name}} 将有 {{n}} 个体验许可证，你还剩 {{left}} 个可发放。"
 }

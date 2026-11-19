@@ -197,6 +197,7 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
     if (f.name.trim().length < 2) return setErr(tr("Enter the organisation's name."));
     if (f.adminFullName.trim().length < 2) return setErr(tr("Enter the admin's full name."));
     if (!/^\S+@\S+\.\S+$/.test(f.adminEmail.trim())) return setErr(tr("Enter a valid email address."));
+    if (x.city.trim().length < 2 || x.state.trim().length < 2 || x.country.trim().length < 2) return setErr(tr("Enter the city, state and country."));
     if (n < 0 || n > left) return setErr(tr("You can give up to {{n}} licences.", { n: left }));
     setBusy(true);
     try {
@@ -255,6 +256,18 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
             <input className={input} type="email" value={f.adminEmail} onChange={(e) => { setDup(null); setF({ ...f, adminEmail: e.target.value }); }} />
           </label>
           <label className="flex flex-col gap-1">
+            <span className={label}>{tr("City")}</span>
+            <input className={input} value={x.city} maxLength={100} onChange={setD("city")} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={label}>{tr("State")}</span>
+            <input className={input} value={x.state} maxLength={100} onChange={setD("state")} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className={label}>{tr("Country")}</span>
+            <input className={input} value={x.country} maxLength={100} onChange={setD("country")} />
+          </label>
+          <label className="flex flex-col gap-1">
             <span className={label}>{tr("GSTIN (optional)")}</span>
             <input className={input} value={f.gstin} maxLength={15} onChange={(e) => setF({ ...f, gstin: e.target.value.toUpperCase().replace(/[^0-9A-Z]/g, "") })} placeholder={tr("For Indian organisations")} />
           </label>
@@ -267,22 +280,10 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
         </div>
         <button type="button" className="self-start text-sm font-semibold text-navy cursor-pointer" onClick={() => setMore(!more)}>
           {more ? "− " : "+ "}
-          {tr("More details (optional): location, contact, expected learners")}
+          {tr("More details (optional): address, contact, expected learners")}
         </button>
         {more && (
           <div className="grid sm:grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1">
-              <span className={label}>{tr("City")}</span>
-              <input className={input} value={x.city} maxLength={100} onChange={setD("city")} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={label}>{tr("State")}</span>
-              <input className={input} value={x.state} maxLength={100} onChange={setD("state")} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className={label}>{tr("Country")}</span>
-              <input className={input} value={x.country} maxLength={100} onChange={setD("country")} />
-            </label>
             <label className="flex flex-col gap-1">
               <span className={label}>{tr("Postal code")}</span>
               <input className={input} value={x.postalCode} maxLength={20} onChange={setD("postalCode")} />
@@ -350,17 +351,79 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
       setBusy(false);
     }
   };
+  const add = Math.max(0, Math.round(Number(n) || 0));
+  const unused = Math.max(0, org.demoLicences - org.demoUsed);
+  const tile = "border border-rule rounded-input p-3 bg-surface";
   return (
-    <DetailModal title={tr("Give demo licences")} subtitle={org.name} icon={KeyRound} onClose={onClose}>
-      <div className="flex flex-col gap-4">
-        <p className="text-sm">{tr("{{name}} has {{n}} demo licences now. You have {{left}} left to give.", { name: org.name, n: org.demoLicences, left })}</p>
+    <DetailModal title={tr("Give demo licences")} subtitle={org.name} icon={KeyRound} onClose={onClose} wide>
+      <div className="flex flex-col gap-5 text-sm">
+        {/* Where the organisation stands now */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className={tile}>
+            <p className={label}>{tr("Given so far")}</p>
+            <p className="text-2xl font-display font-bold">{org.demoLicences}</p>
+            <p className="text-xs text-muted">{tr("demo licences")}</p>
+          </div>
+          <div className={tile}>
+            <p className={label}>{tr("Used by learners")}</p>
+            <p className="text-2xl font-display font-bold">{org.demoUsed}</p>
+            <p className="text-xs text-muted">{tr("{{n}} learners started", { n: org.demoStarted })}</p>
+          </div>
+          <div className={tile}>
+            <p className={label}>{tr("Not used yet")}</p>
+            <p className="text-2xl font-display font-bold">{unused}</p>
+            <p className="text-xs text-muted">{tr("waiting for learners")}</p>
+          </div>
+          <div className={tile}>
+            <p className={label}>{tr("Learners")}</p>
+            <p className="text-2xl font-display font-bold">{org.learners}</p>
+            <p className="text-xs text-muted">{tr("{{p}} practice tests and {{m}} mock tests finished", { p: org.practiceDone, m: org.mocksDone })}</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="border border-rule rounded-input p-3 flex flex-col gap-1">
+            <p className={label}>{tr("Organisation admin")}</p>
+            <p className="font-semibold">{org.admin.name || "—"}</p>
+            <p className="text-muted">{org.admin.email}</p>
+            <p className="text-xs text-muted">{tr("They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.")}</p>
+          </div>
+          <div className="border border-rule rounded-input p-3 flex flex-col gap-1">
+            <p className={label}>{tr("Earlier gifts")}</p>
+            {(org.allocations ?? []).length === 0 ? (
+              <p className="text-muted">—</p>
+            ) : (
+              <ul className="flex flex-col gap-0.5 max-h-28 overflow-y-auto">
+                {(org.allocations ?? []).map((a, i) => (
+                  <li key={i} className="text-muted">
+                    {a.validUntil ? tr("{{n}} given {{g}} · valid until {{d}}", { n: a.licences, g: day(a.givenAt), d: day(a.validUntil) }) : tr("{{n}} given {{g}}", { n: a.licences, g: day(a.givenAt) })}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* What to give */}
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Licences to add")}</span>
             <input className={input} type="number" min={1} max={left} value={n} onChange={(e) => setN(e.target.value)} />
+            <span className="flex flex-wrap gap-2 mt-1">
+              {[5, 10, 25, 50, 100].filter((q) => q <= left).map((q) => (
+                <button key={q} type="button" className={`px-3 py-1 rounded-pill border text-xs font-semibold cursor-pointer ${add === q ? "bg-navy text-white border-navy" : "border-rule text-ink"}`} onClick={() => setN(String(q))}>
+                  {q}
+                </button>
+              ))}
+            </span>
+            <span className="text-xs text-muted">{tr("You have {{left}} left to give.", { left })}</span>
           </label>
           <ValidUntil value={validUntil} onChange={setValidUntil} windowEndsAt={windowEndsAt} />
         </div>
+
+        {add > 0 && add <= left && (
+          <Notice tone="info">{tr("After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.", { name: org.name, n: org.demoLicences + add, left: left - add })}</Notice>
+        )}
         {err && <Notice tone="error">{err}</Notice>}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>

@@ -78,17 +78,17 @@ export const orgSchema = z.object({
   validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   details: z
     .object({
-      city: z.string().trim().max(100).nullish(),
-      state: z.string().trim().max(100).nullish(),
-      country: z.string().trim().max(100).nullish(),
+      // Location is required (user, 19 Nov 2026).
+      city: z.string().trim().min(2).max(100),
+      state: z.string().trim().min(2).max(100),
+      country: z.string().trim().min(2).max(100),
       address: z.string().trim().max(300).nullish(),
       postalCode: z.string().trim().max(20).nullish(),
       website: z.string().trim().max(200).nullish(),
       phone: z.string().trim().max(30).nullish(),
       expectedLearners: z.number().int().min(0).max(1000000).nullish(),
       adminPhone: z.string().trim().max(30).nullish(),
-    })
-    .optional(),
+    }),
   confirmDuplicate: z.boolean().optional(),
 });
 
