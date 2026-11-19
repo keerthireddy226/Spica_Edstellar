@@ -288,7 +288,7 @@ export function Roadmap() {
         </div>
         <div className="lg:col-span-2 flex flex-col gap-5 min-w-0">
           <ThisWeek j={journeyData} />
-          <FinalAssessmentCard compact />
+          {!journeyData.demo && <FinalAssessmentCard compact />}
           <GroupBoardCard />
         </div>
       </div>

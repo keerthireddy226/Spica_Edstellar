@@ -87,6 +87,7 @@ export interface Journey {
   }[];
   nextStep: NextStep | null;
   planSource?: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null; mocksPerTestType?: boolean };
+  demo?: { endsAt: string; practiceLeft: number; mocksLeft: number; mockUnlocked: boolean } | null;
 }
 
 export function getJourney(): Promise<Journey> {

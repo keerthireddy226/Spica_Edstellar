@@ -192,7 +192,8 @@ export function PathToGoal({ j }: { j: Journey }) {
             </li>
           );
         })}
-        {/* The last step: practice ends with the final assessment, the one test that gives a certificate. */}
+        {/* The last step: practice ends with the final assessment, the one test that gives a certificate (not in a 7-day demo). */}
+        {!j.demo && (
         <li className="relative">
           <span
             className={`absolute -left-6 top-0.5 h-5 w-5 rounded-full flex items-center justify-center ${cert ? "bg-success text-white" : "bg-surface border-2 border-navy text-navy-deep"}`}
@@ -213,6 +214,7 @@ export function PathToGoal({ j }: { j: Journey }) {
             </p>
           )}
         </li>
+        )}
       </ol>
       <p className="text-[11px] text-muted">{tr("A skill moves up a level when its question types pass 7 sets at 70% or more, or after a level check or a mock test.")}</p>
     </section>
@@ -334,9 +336,11 @@ export function Checkpoints({ j }: { j: Journey }) {
           <span className="flex items-center gap-1 text-accent">
             <Timer size={12} /> {tr("Mock test")}
           </span>
-          <span className="flex items-center gap-1 text-navy-deep">
-            <Award size={12} /> {tr("Final assessment")}
-          </span>
+          {!j.demo && (
+            <span className="flex items-center gap-1 text-navy-deep">
+              <Award size={12} /> {tr("Final assessment")}
+            </span>
+          )}
         </span>
       </div>
       <div className="overflow-x-auto pb-1">
@@ -395,7 +399,16 @@ export function Checkpoints({ j }: { j: Journey }) {
           {full ? tr("Show less") : tr("Show full plan ({{n}} more)", { n: hidden })}
         </button>
       )}
-      {j.planSource && (
+      {j.demo && (
+        <p className="text-xs text-muted">
+          {tr("Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.", {
+            d: new Date(j.demo.endsAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }),
+            p: j.demo.practiceLeft,
+            m: j.demo.mocksLeft,
+          })}
+        </p>
+      )}
+      {j.planSource && !j.demo && (
         <p className="text-xs text-muted">
           {j.planSource.kind === "program"
             ? tr("Dates set by your organization's program: {{name}}.", { name: j.planSource.name })
@@ -413,7 +426,7 @@ export function Checkpoints({ j }: { j: Journey }) {
               })}
         </p>
       )}
-      {!j.examDate && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, ending with your final assessment.")}</p>}
+      {!j.examDate && !j.demo && <p className="text-[11px] text-muted">{tr("Showing the next 8 weeks. Add your exam date and the plan counts down to it, ending with your final assessment.")}</p>}
       {/* Only when the monthly allowance is the reason: not for a program's own dates, or a plan
           that ends early on purpose (certified, or the final assessment comes first). */}
       {j.examDate &&

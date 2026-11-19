@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "ライセンスを付与するとメールで通知されます。追加された受講者には、English 4 Skills Essentialsの7日間デモ（練習モジュール、練習テスト2回、模擬テスト1回）が付与されます。",
  "Earlier gifts": "過去の付与",
  "You have {{left}} left to give.": "付与できる残りは{{left}}件です。",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "付与後、{{name}}のデモライセンスは{{n}}件、あなたの残りは{{left}}件になります。"
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "付与後、{{name}}のデモライセンスは{{n}}件、あなたの残りは{{left}}件になります。",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7日間のデモは{{d}}に終了します：練習テスト残り{{p}}回、模擬テスト残り{{m}}回。デモには最終評価と証明書は含まれません。"
 }

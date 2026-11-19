@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Saa sähköpostin, kun annat lisenssejä. Jokainen lisätty opiskelija saa 7 päivän demon English 4 Skills Essentialsista: Harjoitusmoduulit, 2 harjoituskoetta ja 1 harjoitustesti.",
  "Earlier gifts": "Aiemmat annot",
  "You have {{left}} left to give.": "Sinulla on {{left}} jäljellä annettavaksi.",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Tämän jälkeen organisaatiolla {{name}} on {{n}} demolisenssiä ja sinulla {{left}} jäljellä annettavaksi."
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Tämän jälkeen organisaatiolla {{name}} on {{n}} demolisenssiä ja sinulla {{left}} jäljellä annettavaksi.",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7 päivän demosi päättyy {{d}}: jäljellä {{p}} harjoituskoetta ja {{m}} harjoitustesti. Demossa ei ole loppuarviointia eikä todistusta."
 }

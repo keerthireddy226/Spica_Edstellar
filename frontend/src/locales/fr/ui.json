@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Il est prévenu par e-mail quand vous donnez des licences. Chaque apprenant qu'il ajoute reçoit une démo de 7 jours d'English 4 Skills Essentials : modules d'entraînement, 2 tests d'entraînement et 1 test blanc.",
  "Earlier gifts": "Attributions précédentes",
  "You have {{left}} left to give.": "Il vous en reste {{left}} à attribuer.",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Ensuite, {{name}} aura {{n}} licences de démo et il vous en restera {{left}} à attribuer."
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Ensuite, {{name}} aura {{n}} licences de démo et il vous en restera {{left}} à attribuer.",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Votre démo de 7 jours se termine le {{d}} : il vous reste {{p}} tests d'entraînement et {{m}} test blanc. La démo ne comprend ni évaluation finale ni certificat."
 }

@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "लाइसेंस देने पर उन्हें ईमेल से बताया जाता है। उनके जोड़े हर शिक्षार्थी को English 4 Skills Essentials का 7 दिन का डेमो मिलता है: प्रैक्टिस मॉड्यूल, 2 प्रैक्टिस टेस्ट और 1 मॉक टेस्ट।",
  "Earlier gifts": "पहले दिए गए",
  "You have {{left}} left to give.": "आपके पास देने के लिए {{left}} बाकी हैं।",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "इसके बाद {{name}} के पास {{n}} डेमो लाइसेंस होंगे और आपके पास देने के लिए {{left}} बचेंगे।"
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "इसके बाद {{name}} के पास {{n}} डेमो लाइसेंस होंगे और आपके पास देने के लिए {{left}} बचेंगे।",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "आपका 7 दिन का डेमो {{d}} को खत्म होगा: {{p}} प्रैक्टिस टेस्ट और {{m}} मॉक टेस्ट बाकी। डेमो में अंतिम मूल्यांकन या प्रमाणपत्र नहीं है।"
 }

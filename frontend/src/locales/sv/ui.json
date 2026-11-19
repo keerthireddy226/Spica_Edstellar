@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Får mejl när du ger licenser. Varje deltagare som läggs till får en demo på 7 dagar av English 4 Skills Essentials: Övningsmoduler, 2 övningstest och 1 provtest.",
  "Earlier gifts": "Tidigare tilldelningar",
  "You have {{left}} left to give.": "Du har {{left}} kvar att ge.",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Efteråt har {{name}} {{n}} demolicenser och du har {{left}} kvar att ge."
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Efteråt har {{name}} {{n}} demolicenser och du har {{left}} kvar att ge.",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Din demo på 7 dagar slutar {{d}}: {{p}} övningstest och {{m}} provtest kvar. Demon har inget slutprov och inget certifikat."
 }

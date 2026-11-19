@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "你发放许可证时，对方会收到邮件。其添加的每位学员都会获得 7 天的 English 4 Skills Essentials 体验：练习模块、2 次练习测试和 1 次模拟测试。",
  "Earlier gifts": "以往发放",
  "You have {{left}} left to give.": "你还有 {{left}} 个可发放。",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "发放后，{{name}} 将有 {{n}} 个体验许可证，你还剩 {{left}} 个可发放。"
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "发放后，{{name}} 将有 {{n}} 个体验许可证，你还剩 {{left}} 个可发放。",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "你的 7 天体验将于 {{d}} 结束：还剩 {{p}} 次练习测试和 {{m}} 次模拟测试。体验中不含最终评估和证书。"
 }

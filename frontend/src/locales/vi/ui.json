@@ -6274,5 +6274,6 @@
  "They are told by email when you give licences. Each learner they add gets a 7-day demo of English 4 Skills Essentials: Practice Modules, 2 practice tests and 1 mock test.": "Họ được báo qua email khi bạn cấp giấy phép. Mỗi học viên họ thêm sẽ có 7 ngày dùng thử English 4 Skills Essentials: Học phần luyện tập, 2 bài luyện tập và 1 bài thi thử.",
  "Earlier gifts": "Các lần cấp trước",
  "You have {{left}} left to give.": "Bạn còn {{left}} để cấp.",
- "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Sau đó, {{name}} sẽ có {{n}} giấy phép dùng thử và bạn còn {{left}} để cấp."
+ "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Sau đó, {{name}} sẽ có {{n}} giấy phép dùng thử và bạn còn {{left}} để cấp.",
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Bản dùng thử 7 ngày của bạn kết thúc ngày {{d}}: còn {{p}} bài luyện tập và {{m}} bài thi thử. Bản dùng thử không có bài đánh giá cuối cùng hay chứng chỉ."
 }

@@ -13,6 +13,7 @@ import { scheduleTests, type Slot } from "./testSchedule.js";
 import { learnerProgram } from "../programs/service.js";
 import { myTests, readiness } from "../assessment/service.js";
 import { learnerAccess } from "../licenses/service.js";
+import { demoState } from "../channelPartners/demoLicences.js";
 
 const SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
 const DAY_MS = 86_400_000;
@@ -81,6 +82,9 @@ export interface Journey {
   nextStep: NextStep | null;
   // Where the test plan comes from: the organization's program, or the plan's allowance.
   planSource: { kind: "program"; name: string } | { kind: "allowance"; practicePerMonth: number | null; mocksPerMonth: number | null; mocksPerTestType?: boolean };
+  // A Channel Partner 7-day demo: only its practice tests and mock, no final
+  // assessment or certificate.
+  demo: { endsAt: string; practiceLeft: number; mocksLeft: number; mockUnlocked: boolean } | null;
 }
 
 // The final assessment's place in the plan: a certificate already earned, an
@@ -321,6 +325,26 @@ export async function journey(userId: string): Promise<Journey> {
     c.done && c.kind !== "today" && c.kind !== "certificate" ? 0 : c.kind === "today" ? 1 : c.kind === "final" ? 4 : c.kind === "certificate" ? 5 : c.kind === "exam" ? 3 : 2;
   checkpoints.sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b));
 
+  // The 7-day demo plan: the practice tests left, then the mock, spread over
+  // the demo days; nothing about a final assessment or a certificate.
+  const demo = await demoState(userId);
+  if (demo) {
+    const ends = dateOnly(new Date(demo.endsAt));
+    const day = (n: number) => dateOnly(new Date(Date.now() + n * DAY_MS));
+    const keep = checkpoints.filter((c) => c.done || c.kind === "today" || c.kind === "level_check");
+    const plan: typeof checkpoints = [];
+    for (let i = 0; i < demo.practiceLeft; i++) plan.push({ date: day(i * 2) <= ends ? day(i * 2) : ends, kind: "practice_test", done: false });
+    if (demo.mocksLeft > 0) {
+      const after = demo.practiceLeft > 0 ? demo.practiceLeft * 2 : 0;
+      plan.push({ date: day(after) <= ends ? day(after) : ends, kind: "mock", done: false });
+    }
+    checkpoints.splice(0, checkpoints.length, ...keep, ...plan);
+    checkpoints.sort((a, b) => a.date.localeCompare(b.date) || order(a) - order(b));
+    for (let i = week.length - 1; i >= 0; i--) if (week[i].kind === "final" || week[i].kind === "final_choose" || week[i].kind === "mock") week.splice(i, 1);
+    const demoMock = plan.find((c) => c.kind === "mock");
+    if (demoMock) week.push({ id: "mock", kind: "mock", done: false, date: demoMock.date, href: "/mock-exams" });
+  }
+
   return {
     current,
     goal: target,
@@ -339,5 +363,6 @@ export async function journey(userId: string): Promise<Journey> {
     planSource: program?.upcoming.length
       ? { kind: "program", name: program.program.name }
       : { kind: "allowance", practicePerMonth: quota?.practicePerMonth ?? null, mocksPerMonth: quota?.mocksPerMonth ?? null, mocksPerTestType: quota?.mocksPerTestType ?? false },
+    demo: demo ? { endsAt: demo.endsAt, practiceLeft: demo.practiceLeft, mocksLeft: demo.mocksLeft, mockUnlocked: demo.mockUnlocked } : null,
   };
 }
