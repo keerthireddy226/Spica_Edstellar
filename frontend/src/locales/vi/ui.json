@@ -6275,5 +6275,15 @@
  "Earlier gifts": "Các lần cấp trước",
  "You have {{left}} left to give.": "Bạn còn {{left}} để cấp.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Sau đó, {{name}} sẽ có {{n}} giấy phép dùng thử và bạn còn {{left}} để cấp.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Bản dùng thử 7 ngày của bạn kết thúc ngày {{d}}: còn {{p}} bài luyện tập và {{m}} bài thi thử. Bản dùng thử không có bài đánh giá cuối cùng hay chứng chỉ."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Bản dùng thử 7 ngày của bạn kết thúc ngày {{d}}: còn {{p}} bài luyện tập và {{m}} bài thi thử. Bản dùng thử không có bài đánh giá cuối cùng hay chứng chỉ.",
+ "Paid plans": "Gói trả phí",
+ "Paid plans only": "Chỉ có trong gói trả phí",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach không có trong bản demo 7 ngày. Tính năng này có trong gói trả phí.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "Bản demo của bạn gồm Practice Modules, 2 bài kiểm tra luyện tập và 1 bài thi thử English 4 Skills Essentials.",
+ "See Spica plans": "Xem các gói Spica",
+ "Demo: {{n}} of 2 practice tests left": "Demo: còn {{n}}/2 bài kiểm tra luyện tập",
+ "Demo: {{n}} of 1 mock test left": "Demo: còn {{n}}/1 bài thi thử",
+ "Demo ends on {{date}}": "Bản demo kết thúc vào {{date}}",
+ "Mocks left in your demo": "Bài thi thử còn lại trong bản demo",
+ "No mocks left in your demo": "Không còn bài thi thử nào trong bản demo"
 }

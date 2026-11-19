@@ -6275,5 +6275,15 @@
  "Earlier gifts": "గతంలో ఇచ్చినవి",
  "You have {{left}} left to give.": "మీకు ఇవ్వడానికి {{left}} మిగిలాయి.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "దీని తర్వాత {{name}}కి {{n}} డెమో లైసెన్స్‌లు ఉంటాయి, మీకు ఇవ్వడానికి {{left}} మిగులుతాయి.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "మీ 7 రోజుల డెమో {{d}}న ముగుస్తుంది: {{p}} ప్రాక్టీస్ టెస్ట్‌లు మరియు {{m}} మాక్ టెస్ట్ మిగిలాయి. డెమోలో తుది అసెస్‌మెంట్ లేదా సర్టిఫికెట్ లేదు."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "మీ 7 రోజుల డెమో {{d}}న ముగుస్తుంది: {{p}} ప్రాక్టీస్ టెస్ట్‌లు మరియు {{m}} మాక్ టెస్ట్ మిగిలాయి. డెమోలో తుది అసెస్‌మెంట్ లేదా సర్టిఫికెట్ లేదు.",
+ "Paid plans": "చెల్లింపు ప్లాన్‌లు",
+ "Paid plans only": "చెల్లింపు ప్లాన్‌లలో మాత్రమే",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach 7 రోజుల డెమోలో భాగం కాదు. ఇది చెల్లింపు ప్లాన్‌తో వస్తుంది.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "మీ డెమోలో English 4 Skills Essentials లో Practice Modules, 2 ప్రాక్టీస్ టెస్ట్‌లు మరియు 1 మాక్ టెస్ట్ ఉన్నాయి.",
+ "See Spica plans": "Spica ప్లాన్‌లు చూడండి",
+ "Demo: {{n}} of 2 practice tests left": "డెమో: 2లో {{n}} ప్రాక్టీస్ టెస్ట్‌లు మిగిలి ఉన్నాయి",
+ "Demo: {{n}} of 1 mock test left": "డెమో: 1లో {{n}} మాక్ టెస్ట్ మిగిలి ఉంది",
+ "Demo ends on {{date}}": "డెమో {{date}}న ముగుస్తుంది",
+ "Mocks left in your demo": "మీ డెమోలో మిగిలిన మాక్‌లు",
+ "No mocks left in your demo": "మీ డెమోలో మాక్‌లు మిగలలేదు"
 }

@@ -6275,5 +6275,15 @@
  "Earlier gifts": "以往发放",
  "You have {{left}} left to give.": "你还有 {{left}} 个可发放。",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "发放后，{{name}} 将有 {{n}} 个体验许可证，你还剩 {{left}} 个可发放。",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "你的 7 天体验将于 {{d}} 结束：还剩 {{p}} 次练习测试和 {{m}} 次模拟测试。体验中不含最终评估和证书。"
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "你的 7 天体验将于 {{d}} 结束：还剩 {{p}} 次练习测试和 {{m}} 次模拟测试。体验中不含最终评估和证书。",
+ "Paid plans": "付费套餐",
+ "Paid plans only": "仅限付费套餐",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach 不包含在 7 天演示中，付费套餐提供此功能。",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "您的演示包含 English 4 Skills Essentials 的 Practice Modules、2 次练习测试和 1 次模拟测试。",
+ "See Spica plans": "查看 Spica 套餐",
+ "Demo: {{n}} of 2 practice tests left": "演示：练习测试剩余 {{n}}/2 次",
+ "Demo: {{n}} of 1 mock test left": "演示：模拟测试剩余 {{n}}/1 次",
+ "Demo ends on {{date}}": "演示于 {{date}} 结束",
+ "Mocks left in your demo": "演示中剩余的模拟测试",
+ "No mocks left in your demo": "演示中已无模拟测试"
 }

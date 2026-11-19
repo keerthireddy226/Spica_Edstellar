@@ -18,10 +18,63 @@ import {
 import { CoachQuestionCard } from "@/components/coach/CoachQuestionCard";
 import { AnswerFeedback } from "@/components/AnswerFeedback";
 import { ApiError } from "@/lib/api";
+import { Link } from "react-router-dom";
+import { Lock } from "lucide-react";
+import { ROUTES } from "@/constants/routes";
+import { useDemo } from "@/components/learner/useTestOnly";
+import { LicenseGate } from "@/components/licenses/LicenseGate";
 
 import { tr } from "@/i18n/tr";
-// A real, working conversation with Gemini — one ongoing session resumed each visit.
+// A Channel Partner 7-day demo doesn't include the AI Coach: the page says
+// it comes with a paid plan instead of opening a conversation.
 export function Tutor() {
+  const demo = useDemo();
+  if (demo === undefined) return null;
+  if (demo) return <CoachInPaidPlans />;
+  return (
+    <LicenseGate feature="coach">
+      <TutorChat />
+    </LicenseGate>
+  );
+}
+
+function CoachInPaidPlans() {
+  const { t } = useTranslation();
+  return (
+    <div className="max-w-2xl mx-auto bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
+      <div className="relative overflow-hidden flex items-center gap-4 px-6 py-5 text-white" style={{ background: HERO_GRADIENT }}>
+        <span className="relative h-14 w-14 rounded-2xl ring-2 ring-white/40 flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+          <Mascot variant="coach" size={48} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display font-bold text-xl">{t("nav.tutor")}</h1>
+          <p className="text-xs text-white/85 flex items-center gap-1.5">
+            <Lock size={12} /> {tr("Paid plans only")}
+          </p>
+        </div>
+      </div>
+      <div className="px-6 py-6 flex flex-col gap-4 text-sm text-ink">
+        <p>{tr("The AI Coach isn't part of the 7-day demo. It comes with a paid plan.")}</p>
+        <p className="text-muted">{tr("In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.")}</p>
+        <div className="flex flex-wrap gap-3">
+          <Link to={ROUTES.SPICA_PLANS}>
+            <Button>
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                {tr("See Spica plans")} <ArrowRight size={15} />
+              </span>
+            </Button>
+          </Link>
+          <Link to={ROUTES.PRACTICE_TESTS} className="self-center text-sm font-semibold text-navy-deep hover:underline">
+            {tr("Go to practice tests")}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// A real, working conversation with Gemini — one ongoing session resumed each visit.
+function TutorChat() {
   const { t } = useTranslation();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [turns, setTurns] = useState<CoachTurn[]>([]);

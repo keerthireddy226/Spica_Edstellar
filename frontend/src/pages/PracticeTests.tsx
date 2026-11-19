@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { getMyAccess, type DemoState } from "@/api/access";
 import { useBranding } from "@/components/AppShell/useBranding";
 import { ApiError, isTransientError, withRetry } from "@/lib/api";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -208,6 +209,9 @@ export interface OwnedStart {
   level?: string | null;
 }
 
+// The one test in a Channel Partner 7-day demo.
+const DEMO_TEST = "fourSkills";
+
 export function PracticeTests({ section = "practice", owned }: { section?: "practice" | "mock"; owned?: OwnedStart }) {
   const isMockSection = section === "mock" || !!owned;
   // Practice tests and mocks run on a computer; a phone sees why and where to practise instead.
@@ -277,7 +281,23 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // The learner's mock test in progress, if any (one at a time).
   const [openMock, setOpenMock] = useState<{ sessionId: string; testTypeId: string | null } | null>(null);
   // This month's tests against the learner's limits, and their program.
-  const [quota, setQuota] = useState<QuotaUsage | null>(null);
+  const [rawQuota, setQuota] = useState<QuotaUsage | null>(null);
+  // A Channel Partner 7-day demo: 2 practice tests and 1 mock in the 4 Skills
+  // test for the whole demo, shown instead of this month's counts.
+  const [demo, setDemo] = useState<DemoState | null>(null);
+  const quota: QuotaUsage | null =
+    demo && rawQuota
+      ? {
+          ...rawQuota,
+          practicePerMonth: 2,
+          practiceUsed: 2 - demo.practiceLeft,
+          mocksPerMonth: 1,
+          mocksUsed: 1 - demo.mocksLeft,
+          mocksPerTestType: false,
+          mocksUsedByTest: undefined,
+          resetsOn: demo.endsAt.slice(0, 10),
+        }
+      : rawQuota;
   const [myProgram, setMyProgram] = useState<MyProgram | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   function loadProducts() {
@@ -289,6 +309,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       .catch(() => setCatalogue([]));
     getQuota()
       .then((r) => setQuota(r.quota))
+      .catch(() => {});
+    getMyAccess()
+      .then((a) => setDemo(a.demo ?? null))
       .catch(() => {});
     getMyProgram()
       .then((r) => setMyProgram(r.program))
@@ -2101,7 +2124,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   { label: tr("Length"), value: tr("{{m}} min", { m: selectedType.durationMinutes }), icon: Clock },
                   { label: tr("Levels"), value: `${selectedType.cefrMin}-${selectedType.cefrMax}`, icon: Award },
                   {
-                    label: tr("Mocks left this month"),
+                    label: demo ? tr("Mocks left in your demo") : tr("Mocks left this month"),
                     value: mocksLeft === null ? tr("No limit") : mocksLeft,
                     icon: Timer,
                   },
@@ -2143,7 +2166,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             <span className="text-sm text-white/80 sm:max-w-56">{tr("You have another mock test in progress. Finish it first.")}</span>
           ) : mocksLeft === 0 && openMock?.testTypeId !== selectedProduct ? (
             <span className="text-sm text-white/80 sm:max-w-64">
-              {tr("You've used this month's mock tests. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
+              {demo
+                ? tr("Your demo includes 1 mock test, and you've taken it. Your report is in My reports.")
+                : tr("You've used this month's mock tests. More on {{date}}.", { date: formatShortDate(quota!.resetsOn) })}
             </span>
           ) : phone ? (
             <span className="text-sm text-white/80 flex items-center gap-1.5">
@@ -2169,7 +2194,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               used={mocksUsedIn(quota, selectedProduct)}
               limit={quota.mocksPerMonth}
               label={
-                quota.mocksPerMonth === null
+                demo
+                  ? tr("Demo: {{n}} of 1 mock test left", { n: demo.mocksLeft })
+                  : quota.mocksPerMonth === null
                   ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
                   : quota.mocksPerTestType
                     ? tr("Mock tests in this test this month: {{used}} of {{limit}}", { used: Math.min(mocksUsedIn(quota, selectedProduct), quota.mocksPerMonth), limit: quota.mocksPerMonth })
@@ -2199,7 +2226,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         {practiceLeft === 0 && (
           <p className="flex items-start gap-2 text-sm text-ink bg-warning/10 border border-warning/30 rounded-input px-4 py-2.5">
             <CalendarClock size={15} className="text-warning shrink-0 mt-0.5" />
-            {tr("You've used this month's practice tests. More on {{date}}. You can still finish a set you've started.", { date: formatShortDate(quota!.resetsOn) })}
+            {demo
+              ? tr("Your demo includes 2 practice tests, and you've used both. Take your mock test next.")
+              : tr("You've used this month's practice tests. More on {{date}}. You can still finish a set you've started.", { date: formatShortDate(quota!.resetsOn) })}
           </p>
         )}
 
@@ -2333,7 +2362,10 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
   // turn on (and ones coming soon) are hidden, not greyed out.
   const restricted = !!allowedProducts || testTypes.some((tt) => !tt.allowed);
   const visibleType = (tt: (typeof testTypes)[number]) =>
-    !restricted || (tt.status === "live" && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id)));
+    // A 7-day demo shows only its own test, English 4 Skills Essentials.
+    demo
+      ? tt.id === DEMO_TEST
+      : !restricted || (tt.status === "live" && tt.allowed && (!allowedProducts || allowedProducts.includes(tt.id)));
   const families = (catalogue ?? []).map((f) => ({ ...f, testTypes: f.testTypes.filter(visibleType) })).filter((f) => f.testTypes.length > 0);
   const live = testTypes.filter((tt) => tt.status === "live" && visibleType(tt));
   const lengths = live.map((tt) => tt.durationMinutes);
@@ -2379,6 +2411,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           phone={phone}
           families={families}
           quota={quota}
+          demo={!!demo}
           history={history}
           openMock={openMock}
           onStart={async (id) => {
@@ -2415,7 +2448,11 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           { label: tr("Full sets to take"), value: live.reduce((n, tt) => n + tt.setCount, 0), icon: ListChecks },
           {
             label: tr("Length"),
-            value: lengths.length ? tr("{{from}}-{{to}} min", { from: Math.min(...lengths), to: Math.max(...lengths) }) : "—",
+            value: !lengths.length
+              ? "—"
+              : Math.min(...lengths) === Math.max(...lengths)
+                ? tr("{{m}} min", { m: lengths[0] })
+                : tr("{{from}}-{{to}} min", { from: Math.min(...lengths), to: Math.max(...lengths) }),
             icon: Clock,
           },
           { label: tr("Scored by section"), value: tr("Instant"), icon: Award },
@@ -2441,7 +2478,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             used={quota.practiceUsed}
             limit={quota.practicePerMonth}
             label={
-              quota.practicePerMonth === null
+              demo
+                ? tr("Demo: {{n}} of 2 practice tests left", { n: demo.practiceLeft })
+                : quota.practicePerMonth === null
                 ? tr("Practice tests this month: {{used}} (no limit)", { used: quota.practiceUsed })
                 : tr("Practice tests this month: {{used}} of {{limit}}", { used: Math.min(quota.practiceUsed, quota.practicePerMonth), limit: quota.practicePerMonth })
             }
@@ -2451,14 +2490,20 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             used={quota.mocksPerTestType ? 0 : quota.mocksUsed}
             limit={quota.mocksPerTestType ? null : quota.mocksPerMonth}
             label={
-              quota.mocksPerMonth === null
+              demo
+                ? tr("Demo: {{n}} of 1 mock test left", { n: demo.mocksLeft })
+                : quota.mocksPerMonth === null
                 ? tr("Mock tests this month: {{used}} (no limit)", { used: quota.mocksUsed })
                 : quota.mocksPerTestType
                   ? tr("Mock tests: {{n}} a month in each test", { n: quota.mocksPerMonth })
                   : tr("Mock tests this month: {{used}} of {{limit}}", { used: Math.min(quota.mocksUsed, quota.mocksPerMonth), limit: quota.mocksPerMonth })
             }
           />
-          {(quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (
+          {demo ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted px-2">
+              <CalendarClock size={13} /> {tr("Demo ends on {{date}}", { date: formatShortDate(quota.resetsOn) })}
+            </span>
+          ) : (quota.practicePerMonth !== null || quota.mocksPerMonth !== null) && (
             <span className="inline-flex items-center gap-1.5 text-xs text-muted px-2">
               <CalendarClock size={13} /> {tr("Resets on {{date}}", { date: formatShortDate(quota.resetsOn) })}
             </span>

@@ -6275,5 +6275,15 @@
  "Earlier gifts": "過去の付与",
  "You have {{left}} left to give.": "付与できる残りは{{left}}件です。",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "付与後、{{name}}のデモライセンスは{{n}}件、あなたの残りは{{left}}件になります。",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7日間のデモは{{d}}に終了します：練習テスト残り{{p}}回、模擬テスト残り{{m}}回。デモには最終評価と証明書は含まれません。"
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7日間のデモは{{d}}に終了します：練習テスト残り{{p}}回、模擬テスト残り{{m}}回。デモには最終評価と証明書は含まれません。",
+ "Paid plans": "有料プラン",
+ "Paid plans only": "有料プランのみ",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach は 7 日間のデモには含まれません。有料プランでご利用いただけます。",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "デモには English 4 Skills Essentials の Practice Modules、練習テスト 2 回、模擬テスト 1 回が含まれます。",
+ "See Spica plans": "Spica のプランを見る",
+ "Demo: {{n}} of 2 practice tests left": "デモ：練習テスト残り {{n}} / 2 回",
+ "Demo: {{n}} of 1 mock test left": "デモ：模擬テスト残り {{n}} / 1 回",
+ "Demo ends on {{date}}": "デモ終了日：{{date}}",
+ "Mocks left in your demo": "デモで残っている模擬テスト",
+ "No mocks left in your demo": "デモの模擬テストは残っていません"
 }

@@ -3,7 +3,7 @@ import { ViewAsBanner } from "@/components/AppShell/ViewAsBanner";
 import { startTransition, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
-import { useTestOnly } from "@/components/learner/useTestOnly";
+import { useDemo, useTestOnly } from "@/components/learner/useTestOnly";
 import { Sidebar } from "@/components/AppShell/Sidebar";
 import { Header } from "@/components/AppShell/Header";
 import { TestFocusBar, TestFocusProvider, type TestFocus } from "@/components/AppShell/testFocus";
@@ -19,6 +19,12 @@ function hiddenForTestOnly(pathname: string): boolean {
   return pathname === ROUTES.PRACTICE_TESTS;
 }
 
+// A 7-day demo has no final assessment or certificate: a link or an old
+// bookmark to those pages opens My journey instead.
+function hiddenForDemo(pathname: string): boolean {
+  return pathname.startsWith(ROUTES.MY_TESTS) || pathname === ROUTES.MY_CERTIFICATES;
+}
+
 export function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   // Bumped by every sidebar click: the page is opened afresh at its main
@@ -28,6 +34,7 @@ export function AppLayout() {
   // tidying (?product=...) undoes the new link.
   const [navKey, setNavKey] = useState(0);
   const testOnly = useTestOnly();
+  const demo = useDemo();
   const { pathname } = useLocation();
   // A timed test in progress: no menu or header, only its own bar.
   const [focus, setFocus] = useState<TestFocus | null>(null);
@@ -50,7 +57,13 @@ export function AppLayout() {
             <DemoBanner />
           </div>
           <TestFocusProvider value={setFocus}>
-            {testOnly && hiddenForTestOnly(pathname) ? <Navigate to={ROUTES.MY_TESTS} replace /> : <Outlet key={navKey} />}
+            {testOnly && hiddenForTestOnly(pathname) ? (
+              <Navigate to={ROUTES.MY_TESTS} replace />
+            ) : demo && hiddenForDemo(pathname) ? (
+              <Navigate to={ROUTES.ROADMAP} replace />
+            ) : (
+              <Outlet key={navKey} />
+            )}
           </TestFocusProvider>
         </main>
       </div>

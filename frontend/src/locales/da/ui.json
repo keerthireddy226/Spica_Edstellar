@@ -6275,5 +6275,15 @@
  "Earlier gifts": "Tidligere tildelinger",
  "You have {{left}} left to give.": "Du har {{left}} tilbage at give.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Bagefter har {{name}} {{n}} demolicenser, og du har {{left}} tilbage at give.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Din 7-dages demo slutter {{d}}: {{p}} øvetests og {{m}} prøvetest tilbage. Demoen har ingen afsluttende test og intet certifikat."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Din 7-dages demo slutter {{d}}: {{p}} øvetests og {{m}} prøvetest tilbage. Demoen har ingen afsluttende test og intet certifikat.",
+ "Paid plans": "Betalte planer",
+ "Paid plans only": "Kun i betalte planer",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach er ikke en del af 7-dages-demoen. Den følger med en betalt plan.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "Din demo indeholder Practice Modules, 2 øvetests og 1 prøvetest i English 4 Skills Essentials.",
+ "See Spica plans": "Se Spica-planer",
+ "Demo: {{n}} of 2 practice tests left": "Demo: {{n}} af 2 øvetests tilbage",
+ "Demo: {{n}} of 1 mock test left": "Demo: {{n}} af 1 prøvetest tilbage",
+ "Demo ends on {{date}}": "Demoen slutter {{date}}",
+ "Mocks left in your demo": "Prøvetests tilbage i din demo",
+ "No mocks left in your demo": "Ingen prøvetests tilbage i din demo"
 }

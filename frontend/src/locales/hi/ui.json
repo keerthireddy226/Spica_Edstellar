@@ -6275,5 +6275,15 @@
  "Earlier gifts": "पहले दिए गए",
  "You have {{left}} left to give.": "आपके पास देने के लिए {{left}} बाकी हैं।",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "इसके बाद {{name}} के पास {{n}} डेमो लाइसेंस होंगे और आपके पास देने के लिए {{left}} बचेंगे।",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "आपका 7 दिन का डेमो {{d}} को खत्म होगा: {{p}} प्रैक्टिस टेस्ट और {{m}} मॉक टेस्ट बाकी। डेमो में अंतिम मूल्यांकन या प्रमाणपत्र नहीं है।"
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "आपका 7 दिन का डेमो {{d}} को खत्म होगा: {{p}} प्रैक्टिस टेस्ट और {{m}} मॉक टेस्ट बाकी। डेमो में अंतिम मूल्यांकन या प्रमाणपत्र नहीं है।",
+ "Paid plans": "सशुल्क प्लान",
+ "Paid plans only": "केवल सशुल्क प्लान में",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach 7-दिन के डेमो का हिस्सा नहीं है। यह सशुल्क प्लान के साथ मिलता है।",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "आपके डेमो में English 4 Skills Essentials के Practice Modules, 2 प्रैक्टिस टेस्ट और 1 मॉक टेस्ट हैं।",
+ "See Spica plans": "Spica प्लान देखें",
+ "Demo: {{n}} of 2 practice tests left": "डेमो: 2 में से {{n}} प्रैक्टिस टेस्ट बाकी",
+ "Demo: {{n}} of 1 mock test left": "डेमो: 1 में से {{n}} मॉक टेस्ट बाकी",
+ "Demo ends on {{date}}": "डेमो {{date}} को समाप्त होगा",
+ "Mocks left in your demo": "आपके डेमो में बचे मॉक",
+ "No mocks left in your demo": "आपके डेमो में कोई मॉक नहीं बचा"
 }

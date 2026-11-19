@@ -4,7 +4,7 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, BookOpen, ChevronDown, Headphones, Mic, PenLine, MessageCircle, ClipboardList, User, Map, BarChart3, Sparkles, Timer, FileText, Award, Tags, BadgeCheck } from "lucide-react";
-import { useHasCertificatesPage, useTestOnly } from "@/components/learner/useTestOnly";
+import { useDemo, useHasCertificatesPage, useTestOnly } from "@/components/learner/useTestOnly";
 import { useMyLicense } from "@/components/licenses/LicenseGate";
 import { ROUTES } from "@/constants/routes";
 import { useHasPlacement } from "@/hooks/useHasPlacement";
@@ -72,6 +72,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
   const hasPlacement = useHasPlacement();
   const testOnly = useTestOnly();
   const certificatesPage = useHasCertificatesPage();
+  const demo = useDemo();
   // The organization may have switched Modules off for its learners.
   const modulesOn = useModulesEnabled();
   // Greyed out only once the server says there is no placement yet, not while it is being checked.
@@ -188,15 +189,18 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             locked={locked}
             onClick={go}
           />
-          {/* The learner's real tests (final assessments); explains how to get one when they have none. */}
-          <NavEntry
-            to={ROUTES.MY_TESTS}
-            icon={Award}
-            label={tr("Assessment")}
-            isActive={location.pathname.startsWith(ROUTES.MY_TESTS)}
-            locked={false}
-            onClick={go}
-          />
+          {/* The learner's real tests (final assessments); explains how to get one when they have none.
+              A 7-day demo has no final assessment, so it isn't in the menu. */}
+          {!demo && (
+            <NavEntry
+              to={ROUTES.MY_TESTS}
+              icon={Award}
+              label={tr("Assessment")}
+              isActive={location.pathname.startsWith(ROUTES.MY_TESTS)}
+              locked={false}
+              onClick={go}
+            />
+          )}
           <NavEntry
             to={ROUTES.MY_REPORTS}
             icon={FileText}
@@ -206,17 +210,26 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             onClick={go}
           />
           {/* Full access and preparation include a final assessment, and its certificate is listed here. */}
-          {certificatesPage && (
+          {certificatesPage && !demo && (
             <NavEntry to={ROUTES.MY_CERTIFICATES} icon={BadgeCheck} label={tr("Certificates")} isActive={location.pathname === ROUTES.MY_CERTIFICATES} locked={false} onClick={go} />
           )}
-          <NavEntry
-            to={ROUTES.TUTOR}
-            icon={MessageCircle}
-            label={t("nav.tutor")}
-            isActive={location.pathname === ROUTES.TUTOR}
-            locked={locked}
-            onClick={go}
-          />
+          {demo ? (
+            // In a 7-day demo the AI Coach is shown, marked as part of a paid plan.
+            <Link to={ROUTES.TUTOR} onClick={go} className={navClasses(location.pathname === ROUTES.TUTOR)}>
+              <MessageCircle size={22} strokeWidth={1.8} />
+              <span className="flex-1">{t("nav.tutor")}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide rounded-pill bg-white/15 px-2 py-0.5">{tr("Paid plans")}</span>
+            </Link>
+          ) : (
+            <NavEntry
+              to={ROUTES.TUTOR}
+              icon={MessageCircle}
+              label={t("nav.tutor")}
+              isActive={location.pathname === ROUTES.TUTOR}
+              locked={locked}
+              onClick={go}
+            />
+          )}
           {myLicense?.individual && myLicense.status !== "active" && myLicense.status !== "grace" && (
             <NavEntry
               to={ROUTES.PLANS}

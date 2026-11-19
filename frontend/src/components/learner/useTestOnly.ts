@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMyAccess, isTestOnly, type MyAccess } from "@/api/access";
+import { getMyAccess, isTestOnly, type DemoState, type MyAccess } from "@/api/access";
 import { useAuth } from "@/hooks/useAuth";
 
 // What the signed-in learner owns, read once and shared by the menu, the page
@@ -35,4 +35,12 @@ export function useTestOnly(): boolean | undefined {
 export function useHasCertificatesPage(): boolean {
   const a = useAccess();
   return !!a && (!!a.full || a.prepTests.length > 0);
+}
+
+// A Channel Partner 7-day demo learner: no final assessment, certificate or
+// AI Coach, and only the 4 Skills test. null when not in a demo, undefined
+// while it loads.
+export function useDemo(): DemoState | null | undefined {
+  const a = useAccess();
+  return a === undefined ? undefined : (a?.demo ?? null);
 }

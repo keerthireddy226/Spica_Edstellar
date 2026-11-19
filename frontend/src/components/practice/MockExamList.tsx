@@ -26,6 +26,7 @@ const RULES: [LucideIcon, () => string][] = [
 export function MockExamList({
   families,
   quota,
+  demo,
   history,
   openMock,
   onStart,
@@ -41,6 +42,8 @@ export function MockExamList({
   phone?: boolean;
   families: CatalogueFamily[];
   quota: QuotaUsage | null;
+  // A 7-day demo: one mock for the whole demo, not a monthly count.
+  demo?: boolean;
   history: HistoryEntry[];
   openMock: { sessionId: string; testTypeId: string | null } | null;
   onStart: (testTypeId: string) => void;
@@ -65,7 +68,9 @@ export function MockExamList({
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3 lg:w-[420px]">
-            {quota?.mocksPerTestType && quota.mocksPerMonth !== null ? (
+            {demo ? (
+              <Fact value={`${left ?? 0}`} label={tr("Mocks left in your demo")} note={tr("of {{n}}", { n: 1 })} />
+            ) : quota?.mocksPerTestType && quota.mocksPerMonth !== null ? (
               <Fact value={`${quota.mocksPerMonth}`} label={tr("Mocks a month in each test")} />
             ) : (
               <Fact
@@ -80,7 +85,7 @@ export function MockExamList({
         </div>
         {quota && quota.mocksPerMonth !== null && (
           <p className="relative mt-4 text-xs text-white/70 flex items-center gap-1.5">
-            <CalendarClock size={13} /> {tr("New mocks on {{date}}", { date: formatShortDate(quota.resetsOn) })}
+            <CalendarClock size={13} /> {demo ? tr("Demo ends on {{date}}", { date: formatShortDate(quota.resetsOn) }) : tr("New mocks on {{date}}", { date: formatShortDate(quota.resetsOn) })}
           </p>
         )}
       </section>
@@ -134,7 +139,9 @@ export function MockExamList({
                     : openMock?.testTypeId && openMock.testTypeId !== tt.id
                       ? tr("Finish your other mock first")
                       : mocksLeftIn(quota, tt.id) === 0 && openMock?.testTypeId !== tt.id
-                        ? tr("No mocks left this month")
+                        ? demo
+                          ? tr("No mocks left in your demo")
+                          : tr("No mocks left this month")
                         : null
                 }
                 usedNote={

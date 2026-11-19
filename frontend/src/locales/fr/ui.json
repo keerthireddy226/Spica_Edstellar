@@ -6275,5 +6275,15 @@
  "Earlier gifts": "Attributions précédentes",
  "You have {{left}} left to give.": "Il vous en reste {{left}} à attribuer.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Ensuite, {{name}} aura {{n}} licences de démo et il vous en restera {{left}} à attribuer.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Votre démo de 7 jours se termine le {{d}} : il vous reste {{p}} tests d'entraînement et {{m}} test blanc. La démo ne comprend ni évaluation finale ni certificat."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Votre démo de 7 jours se termine le {{d}} : il vous reste {{p}} tests d'entraînement et {{m}} test blanc. La démo ne comprend ni évaluation finale ni certificat.",
+ "Paid plans": "Formules payantes",
+ "Paid plans only": "Formules payantes uniquement",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "L'AI Coach ne fait pas partie de la démo de 7 jours. Il est inclus dans une formule payante.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "Votre démo comprend les Practice Modules, 2 tests d'entraînement et 1 test blanc d'English 4 Skills Essentials.",
+ "See Spica plans": "Voir les formules Spica",
+ "Demo: {{n}} of 2 practice tests left": "Démo : {{n}} test(s) d'entraînement restant(s) sur 2",
+ "Demo: {{n}} of 1 mock test left": "Démo : {{n}} test blanc restant sur 1",
+ "Demo ends on {{date}}": "La démo se termine le {{date}}",
+ "Mocks left in your demo": "Tests blancs restants dans votre démo",
+ "No mocks left in your demo": "Plus de test blanc dans votre démo"
 }

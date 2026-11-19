@@ -283,7 +283,7 @@ function App() {
           <Route path="/my-tests" element={<KeepQueryRedirect to={ROUTES.MY_TESTS} />} />
           <Route path="/my-tests/take" element={<KeepQueryRedirect to={ROUTES.MY_TESTS_TAKE} />} />
           <Route path={ROUTES.MODULE_REPORT} element={<ModuleReportPage />} />
-          <Route path={ROUTES.TUTOR} element={<LicenseGate feature="coach"><Tutor /></LicenseGate>} />
+          <Route path={ROUTES.TUTOR} element={<Tutor />} />
           <Route path={ROUTES.PROFILE} element={<Profile />} />
           <Route path={ROUTES.PLANS} element={<Plans />} />
           <Route path={ROUTES.SPICA_PLANS} element={<SpicaPlans />} />

@@ -6275,5 +6275,15 @@
  "Earlier gifts": "Eerdere uitgiftes",
  "You have {{left}} left to give.": "Je hebt er nog {{left}} om te geven.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Daarna heeft {{name}} {{n}} demolicenties en heb jij er nog {{left}} om te geven.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Je demo van 7 dagen eindigt op {{d}}: nog {{p}} oefentoetsen en {{m}} proeftoets. De demo bevat geen eindtoets en geen certificaat."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "Je demo van 7 dagen eindigt op {{d}}: nog {{p}} oefentoetsen en {{m}} proeftoets. De demo bevat geen eindtoets en geen certificaat.",
+ "Paid plans": "Betaalde abonnementen",
+ "Paid plans only": "Alleen in betaalde abonnementen",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "De AI Coach hoort niet bij de demo van 7 dagen. Hij zit in een betaald abonnement.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "Je demo bevat Practice Modules, 2 oefentoetsen en 1 proeftoets van English 4 Skills Essentials.",
+ "See Spica plans": "Bekijk Spica-abonnementen",
+ "Demo: {{n}} of 2 practice tests left": "Demo: nog {{n}} van 2 oefentoetsen",
+ "Demo: {{n}} of 1 mock test left": "Demo: nog {{n}} van 1 proeftoets",
+ "Demo ends on {{date}}": "Demo eindigt op {{date}}",
+ "Mocks left in your demo": "Proeftoetsen over in je demo",
+ "No mocks left in your demo": "Geen proeftoetsen meer in je demo"
 }

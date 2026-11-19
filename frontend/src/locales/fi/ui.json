@@ -6275,5 +6275,15 @@
  "Earlier gifts": "Aiemmat annot",
  "You have {{left}} left to give.": "Sinulla on {{left}} jäljellä annettavaksi.",
  "After this, {{name}} will have {{n}} demo licences and you will have {{left}} left to give.": "Tämän jälkeen organisaatiolla {{name}} on {{n}} demolisenssiä ja sinulla {{left}} jäljellä annettavaksi.",
- "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7 päivän demosi päättyy {{d}}: jäljellä {{p}} harjoituskoetta ja {{m}} harjoitustesti. Demossa ei ole loppuarviointia eikä todistusta."
+ "Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.": "7 päivän demosi päättyy {{d}}: jäljellä {{p}} harjoituskoetta ja {{m}} harjoitustesti. Demossa ei ole loppuarviointia eikä todistusta.",
+ "Paid plans": "Maksulliset paketit",
+ "Paid plans only": "Vain maksullisissa paketeissa",
+ "The AI Coach isn't part of the 7-day demo. It comes with a paid plan.": "AI Coach ei kuulu 7 päivän demoon. Se sisältyy maksulliseen pakettiin.",
+ "In your demo you have Practice Modules, 2 practice tests and 1 mock test in English 4 Skills Essentials.": "Demossasi on Practice Modules, 2 harjoituskoetta ja 1 harjoitustesti kokeesta English 4 Skills Essentials.",
+ "See Spica plans": "Katso Spican paketit",
+ "Demo: {{n}} of 2 practice tests left": "Demo: {{n}}/2 harjoituskoetta jäljellä",
+ "Demo: {{n}} of 1 mock test left": "Demo: {{n}}/1 harjoitustesti jäljellä",
+ "Demo ends on {{date}}": "Demo päättyy {{date}}",
+ "Mocks left in your demo": "Harjoitustestejä jäljellä demossasi",
+ "No mocks left in your demo": "Demossasi ei ole harjoitustestejä jäljellä"
 }
