@@ -6,11 +6,14 @@ import { pool } from "../db.js";
 // anywhere, so those two don't apply to them.
 export const ORG_CONSOLE_ROLES = ["org_admin", "manager", "recruiter"];
 
-// Spica's own staff can see every organization's data, so two-step sign-in is
-// always required for them (launch plan 7.2). STAFF_MFA_OPTIONAL=1 turns that
-// off, for a local copy only.
+// Spica's own staff can see every organization's data. Two-step sign-in was
+// compulsory for them (launch plan 7.2, 13 Nov 2026); since 19 Nov it is optional
+// unless STAFF_MFA_REQUIRED=1 is set on the server.
 export const STAFF_ROLES = ["admin", "super_admin"];
-const staffMfaRequired = process.env.STAFF_MFA_OPTIONAL !== "1";
+// 19 Nov 2026: the user asked to remove the compulsory step ("Remove this").
+// Staff can still turn two-step sign-in on in their Profile; STAFF_MFA_REQUIRED=1
+// makes it compulsory again.
+const staffMfaRequired = process.env.STAFF_MFA_REQUIRED === "1";
 
 // Whether this person must use two-step sign-in: staff always; an
 // organization's console roles when the organization requires it.
