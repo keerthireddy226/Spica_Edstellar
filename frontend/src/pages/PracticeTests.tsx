@@ -2536,7 +2536,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   key={tt.id}
                   onClick={() => (enabled ? openProduct(tt.id) : notInPlan && prepPrices?.canBuy ? navigate(ROUTES.SPICA_PLANS) : undefined)}
                   disabled={!enabled && !(notInPlan && prepPrices?.canBuy)}
-                  className={`group relative text-left bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 overflow-hidden transition-all ${
+                  className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
                     enabled
                       ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
                       : "opacity-55 cursor-not-allowed"
@@ -2556,21 +2556,18 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   {/* Oversized, very faint echo of the card's own icon: a
                       decorative watermark, not another color block. */}
                   <Icon
-                    size={110}
+                    size={140}
                     strokeWidth={1.5}
                     className="absolute -right-6 -bottom-6 text-ink/[0.04] group-hover:text-ink/[0.07] transition-colors pointer-events-none"
                   />
-                  {/* Icon beside the name, so the card stays short. */}
-                  <div className={`relative flex items-start gap-3.5 ${enabled ? "" : "pr-24"}`}>
-                    <span
-                      className={`h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-md shrink-0 transition-transform group-hover:scale-110 ${testTypeColour(tt.id)}`}
-                    >
-                      <Icon size={22} strokeWidth={2} />
-                    </span>
-                    <div className="flex flex-col gap-1 min-w-0">
-                      <span className="font-display font-bold text-base text-ink leading-snug">{testTypeName(tt, t)}</span>
-                      <span className="text-sm text-muted leading-snug">{testTypeDescription(tt, t)}</span>
-                    </div>
+                  <span
+                    className={`relative h-16 w-16 rounded-2xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110 ${testTypeColour(tt.id)}`}
+                  >
+                    <Icon size={28} strokeWidth={2} />
+                  </span>
+                  <div className="relative flex flex-col gap-1.5">
+                    <span className="font-display font-bold text-lg text-ink leading-snug">{testTypeName(tt, t)}</span>
+                    <span className="text-sm text-muted leading-relaxed">{testTypeDescription(tt, t)}</span>
                   </div>
                   <div className="relative flex items-center gap-2 mt-auto">
                     <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
