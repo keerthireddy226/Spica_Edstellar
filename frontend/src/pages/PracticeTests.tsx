@@ -2101,6 +2101,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     return (
       <div className="w-full flex flex-col gap-6">
         <LearnerHero
+          compact
+          statsInline
           onBack={backToProducts}
           backLabel={t("practiceTests.backToProducts")}
           eyebrow={t("nav.practiceTests")}
@@ -2140,12 +2142,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         />
         {phone && <PhoneBlockNotice what={isMockSection ? "mock" : "tests"} />}
 
-        <button
-          onClick={() => setShowDemo(true)}
-          className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
-        >
-          <PlayCircle size={16} /> {tr("Watch the test demo")}
-        </button>
+        {isMockSection && (
+          <button
+            onClick={() => setShowDemo(true)}
+            className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
+          >
+            <PlayCircle size={16} /> {tr("Watch the test demo")}
+          </button>
+        )}
 
         {error && <p className="text-sm text-error">{error}</p>}
 
@@ -2208,14 +2212,18 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         {!isMockSection && (
         <>
 
-        {!isMockSection && <SkillLevelsPanel />}
-
         <div className="flex flex-col gap-1.5 -mb-2">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <span className="h-9 w-9 rounded-xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
               <BookOpenCheck size={18} />
             </span>
             <h2 className="font-display font-bold text-lg text-ink">{tr("Practice sets")}</h2>
+            <button
+              onClick={() => setShowDemo(true)}
+              className="ml-auto flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
+            >
+              <PlayCircle size={16} /> {tr("Watch the test demo")}
+            </button>
           </div>
           <p className="text-sm text-muted sm:ml-[46px]">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</p>
           <p className="text-sm text-muted flex items-start gap-1.5 sm:ml-[46px]">
@@ -2351,6 +2359,9 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             ))}
           </div>
         )}
+
+        {/* Your levels, after the sets. */}
+        <SkillLevelsPanel />
         </>
         )}
       </div>
@@ -2438,14 +2449,16 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
     <div className="w-full flex flex-col gap-6">
       {/* Kept short (stats as chips, cards side by side) so the tests show without scrolling far. */}
       <LearnerHero
+        compact
         statsInline
         eyebrow={tr("Practice at your own pace")}
         title={t("nav.practiceTests")}
         subtitle={tr("Full practice tests for each Spica test: pause, go back, and get a report with every right answer at the end.")}
         icon={ClipboardCheck}
         stats={[
-          { label: tr("Tests"), value: live.length, icon: Layers },
-          { label: tr("Full sets to take"), value: live.reduce((n, tt) => n + tt.setCount, 0), icon: ListChecks },
+          { label: live.length === 1 ? tr("Test") : tr("Tests"), value: live.length, icon: Layers },
+          // A 7-day demo has 2 sets of its one test.
+          { label: tr("Full sets to take"), value: demo ? 2 : live.reduce((n, tt) => n + tt.setCount, 0), icon: ListChecks },
           {
             label: tr("Length"),
             value: !lengths.length
@@ -2460,14 +2473,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       />
 
       {phone && <PhoneBlockNotice what="tests" />}
-
-      {/* Your plan beside your levels (each takes the full width when alone). */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 xl:has-[>div:empty]:grid-cols-1 gap-5 items-stretch xl:[&>*:only-child]:col-span-3">
-        <KeepGoingCard />
-        <div className="xl:col-span-2 min-w-0 [&>section]:h-full empty:hidden">
-          <SkillLevelsPanel />
-        </div>
-      </div>
 
       {programCard}
 
@@ -2532,7 +2537,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   key={tt.id}
                   onClick={() => (enabled ? openProduct(tt.id) : notInPlan && prepPrices?.canBuy ? navigate(ROUTES.SPICA_PLANS) : undefined)}
                   disabled={!enabled && !(notInPlan && prepPrices?.canBuy)}
-                  className={`group relative text-left bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 overflow-hidden transition-all ${
+                  className={`group relative text-left bg-surface border border-rule rounded-card p-5 flex flex-col gap-3 overflow-hidden transition-all ${
                     enabled
                       ? "cursor-pointer hover:border-rule-strong hover:shadow-[0_16px_32px_-16px_rgba(0,0,0,0.3)] hover:-translate-y-1"
                       : "opacity-55 cursor-not-allowed"
@@ -2552,18 +2557,21 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                   {/* Oversized, very faint echo of the card's own icon: a
                       decorative watermark, not another color block. */}
                   <Icon
-                    size={140}
+                    size={110}
                     strokeWidth={1.5}
                     className="absolute -right-6 -bottom-6 text-ink/[0.04] group-hover:text-ink/[0.07] transition-colors pointer-events-none"
                   />
-                  <span
-                    className={`relative h-16 w-16 rounded-2xl flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-110 ${testTypeColour(tt.id)}`}
-                  >
-                    <Icon size={28} strokeWidth={2} />
-                  </span>
-                  <div className="relative flex flex-col gap-1.5">
-                    <span className="font-display font-bold text-lg text-ink leading-snug">{testTypeName(tt, t)}</span>
-                    <span className="text-sm text-muted leading-relaxed">{testTypeDescription(tt, t)}</span>
+                  {/* Icon beside the name, so the card stays short. */}
+                  <div className={`relative flex items-start gap-3.5 ${enabled ? "" : "pr-24"}`}>
+                    <span
+                      className={`h-12 w-12 rounded-xl flex items-center justify-center text-white shadow-md shrink-0 transition-transform group-hover:scale-110 ${testTypeColour(tt.id)}`}
+                    >
+                      <Icon size={22} strokeWidth={2} />
+                    </span>
+                    <div className="flex flex-col gap-1 min-w-0">
+                      <span className="font-display font-bold text-base text-ink leading-snug">{testTypeName(tt, t)}</span>
+                      <span className="text-sm text-muted leading-snug">{testTypeDescription(tt, t)}</span>
+                    </div>
                   </div>
                   <div className="relative flex items-center gap-2 mt-auto">
                     <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted bg-paper-warm px-2.5 py-1 rounded-pill">
@@ -2582,6 +2590,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           </div>
         </section>
       ))}
+
+      {/* The tests come first; your plan and levels follow them. */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 xl:has-[>div:empty]:grid-cols-1 gap-5 items-stretch xl:[&>*:only-child]:col-span-3">
+        <KeepGoingCard />
+        <div className="xl:col-span-2 min-w-0 [&>section]:h-full empty:hidden">
+          <SkillLevelsPanel />
+        </div>
+      </div>
     </div>
   );
 }

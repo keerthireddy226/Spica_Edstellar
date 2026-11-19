@@ -78,6 +78,8 @@ export function MyReports() {
   return (
     <div className="w-full flex flex-col gap-6">
       <LearnerHero
+        compact
+        statsInline
         eyebrow={tr("Your results")}
         title={tr("My reports")}
         subtitle={
