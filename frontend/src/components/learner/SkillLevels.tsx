@@ -37,11 +37,11 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
   const view = stepShown && stepShown.href.split("?")[0] !== pathname ? stepShown : null;
 
   return (
-    <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
+    <section className="bg-surface border border-rule rounded-card shadow-sm px-5 py-4 flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display font-bold text-base text-ink flex items-center gap-2.5">
-          <span className="h-9 w-9 rounded-xl bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
-            <BarChart3 size={18} />
+          <span className="h-7 w-7 rounded-lg bg-navy/10 text-navy-deep flex items-center justify-center shrink-0">
+            <BarChart3 size={15} />
           </span>
           {title ?? tr("Your level in each module")}
         </h2>
@@ -60,7 +60,7 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
             <button
               key={skill}
               onClick={() => modulesOn && navigate(`${ROUTES.MODULES}?skill=${skill}`)}
-              className={`relative text-left rounded-input border px-3 py-2.5 flex flex-col gap-1.5 transition-all ${modulesOn ? "cursor-pointer hover:shadow-md" : "cursor-default"} ${
+              className={`relative text-left rounded-input border px-3 py-2 flex flex-col gap-1 transition-all ${modulesOn ? "cursor-pointer hover:shadow-md" : "cursor-default"} ${
                 next ? "border-accent bg-accent/5 ring-2 ring-accent/30" : "border-rule bg-paper-warm/50"
               }`}
             >
@@ -87,7 +87,7 @@ export function SkillLevelsPanel({ title }: { title?: string }) {
       </div>
 
       {view && (
-        <div className="rounded-input bg-accent/10 border border-accent/30 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="rounded-input bg-accent/10 border border-accent/30 px-4 py-2 flex flex-col sm:flex-row sm:items-center gap-3">
           <Sparkles size={18} className="text-accent shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">{tr("Recommended next")}</p>

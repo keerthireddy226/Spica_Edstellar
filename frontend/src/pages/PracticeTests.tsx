@@ -2142,14 +2142,12 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         />
         {phone && <PhoneBlockNotice what={isMockSection ? "mock" : "tests"} />}
 
-        {isMockSection && (
-          <button
-            onClick={() => setShowDemo(true)}
-            className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
-          >
-            <PlayCircle size={16} /> {tr("Watch the test demo")}
-          </button>
-        )}
+        <button
+          onClick={() => setShowDemo(true)}
+          className="self-start flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
+        >
+          <PlayCircle size={16} /> {tr("Watch the test demo")}
+        </button>
 
         {error && <p className="text-sm text-error">{error}</p>}
 
@@ -2212,18 +2210,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
         {!isMockSection && (
         <>
 
+        {!isMockSection && <SkillLevelsPanel />}
+
         <div className="flex flex-col gap-1.5 -mb-2">
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5">
             <span className="h-9 w-9 rounded-xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
               <BookOpenCheck size={18} />
             </span>
             <h2 className="font-display font-bold text-lg text-ink">{tr("Practice sets")}</h2>
-            <button
-              onClick={() => setShowDemo(true)}
-              className="ml-auto flex items-center gap-1.5 text-sm font-semibold text-navy-deep hover:underline underline-offset-4 cursor-pointer"
-            >
-              <PlayCircle size={16} /> {tr("Watch the test demo")}
-            </button>
           </div>
           <p className="text-sm text-muted sm:ml-[46px]">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</p>
           <p className="text-sm text-muted flex items-start gap-1.5 sm:ml-[46px]">
@@ -2359,9 +2353,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
             ))}
           </div>
         )}
-
-        {/* Your levels, after the sets. */}
-        <SkillLevelsPanel />
         </>
         )}
       </div>
@@ -2473,6 +2464,14 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
       />
 
       {phone && <PhoneBlockNotice what="tests" />}
+
+      {/* Your plan beside your levels (each takes the full width when alone). */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 xl:has-[>div:empty]:grid-cols-1 gap-5 items-stretch xl:[&>*:only-child]:col-span-3">
+        <KeepGoingCard />
+        <div className="xl:col-span-2 min-w-0 [&>section]:h-full empty:hidden">
+          <SkillLevelsPanel />
+        </div>
+      </div>
 
       {programCard}
 
@@ -2590,14 +2589,6 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           </div>
         </section>
       ))}
-
-      {/* The tests come first; your plan and levels follow them. */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 xl:has-[>div:empty]:grid-cols-1 gap-5 items-stretch xl:[&>*:only-child]:col-span-3">
-        <KeepGoingCard />
-        <div className="xl:col-span-2 min-w-0 [&>section]:h-full empty:hidden">
-          <SkillLevelsPanel />
-        </div>
-      </div>
     </div>
   );
 }
