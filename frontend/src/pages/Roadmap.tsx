@@ -279,20 +279,18 @@ export function Roadmap() {
         <DailyChallenge />
       </div>
 
+      {/* Two columns that both fill: the path and the skills on the left; this
+          week, the final assessment and the group board on the right. */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 items-start">
         <div className="lg:col-span-3 flex flex-col gap-5 min-w-0">
           <PathToGoal j={journeyData} />
+          <SkillProgress j={journeyData} />
         </div>
         <div className="lg:col-span-2 flex flex-col gap-5 min-w-0">
           <ThisWeek j={journeyData} />
           <FinalAssessmentCard compact />
+          <GroupBoardCard />
         </div>
-      </div>
-
-      {/* Without a group board (individual learners), the skills take the full width. */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start lg:[&>*:only-child]:col-span-2">
-        <SkillProgress j={journeyData} />
-        <GroupBoardCard />
       </div>
 
       <CoachModePromo />
