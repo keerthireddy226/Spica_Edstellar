@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "Demo: {{n}} af 1 prøvetest tilbage",
  "Demo ends on {{date}}": "Demoen slutter {{date}}",
  "Mocks left in your demo": "Prøvetests tilbage i din demo",
- "No mocks left in your demo": "Ingen prøvetests tilbage i din demo"
+ "No mocks left in your demo": "Ingen prøvetests tilbage i din demo",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Din demo har 2 øvesæt, begge åbne. Tag dem i den rækkefølge, du vil."
 }

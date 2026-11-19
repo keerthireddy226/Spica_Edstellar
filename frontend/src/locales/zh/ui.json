@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "演示：模拟测试剩余 {{n}}/1 次",
  "Demo ends on {{date}}": "演示于 {{date}} 结束",
  "Mocks left in your demo": "演示中剩余的模拟测试",
- "No mocks left in your demo": "演示中已无模拟测试"
+ "No mocks left in your demo": "演示中已无模拟测试",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "您的演示有 2 套练习题，均已开放，可按任意顺序完成。"
 }

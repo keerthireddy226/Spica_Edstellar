@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "Demo: nog {{n}} van 1 proeftoets",
  "Demo ends on {{date}}": "Demo eindigt op {{date}}",
  "Mocks left in your demo": "Proeftoetsen over in je demo",
- "No mocks left in your demo": "Geen proeftoetsen meer in je demo"
+ "No mocks left in your demo": "Geen proeftoetsen meer in je demo",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Je demo heeft 2 oefensets, allebei open. Maak ze in elke gewenste volgorde."
 }

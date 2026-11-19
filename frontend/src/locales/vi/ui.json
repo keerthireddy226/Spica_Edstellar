@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "Demo: còn {{n}}/1 bài thi thử",
  "Demo ends on {{date}}": "Bản demo kết thúc vào {{date}}",
  "Mocks left in your demo": "Bài thi thử còn lại trong bản demo",
- "No mocks left in your demo": "Không còn bài thi thử nào trong bản demo"
+ "No mocks left in your demo": "Không còn bài thi thử nào trong bản demo",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Bản demo của bạn có 2 bộ luyện tập, cả hai đều đã mở. Làm theo thứ tự bạn muốn."
 }

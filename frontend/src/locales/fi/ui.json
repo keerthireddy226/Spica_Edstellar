@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "Demo: {{n}}/1 harjoitustesti jäljellä",
  "Demo ends on {{date}}": "Demo päättyy {{date}}",
  "Mocks left in your demo": "Harjoitustestejä jäljellä demossasi",
- "No mocks left in your demo": "Demossasi ei ole harjoitustestejä jäljellä"
+ "No mocks left in your demo": "Demossasi ei ole harjoitustestejä jäljellä",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Demossasi on 2 harjoitussarjaa, molemmat avoinna. Tee ne haluamassasi järjestyksessä."
 }

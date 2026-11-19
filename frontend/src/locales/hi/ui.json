@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "डेमो: 1 में से {{n}} मॉक टेस्ट बाकी",
  "Demo ends on {{date}}": "डेमो {{date}} को समाप्त होगा",
  "Mocks left in your demo": "आपके डेमो में बचे मॉक",
- "No mocks left in your demo": "आपके डेमो में कोई मॉक नहीं बचा"
+ "No mocks left in your demo": "आपके डेमो में कोई मॉक नहीं बचा",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "आपके डेमो में 2 प्रैक्टिस सेट हैं, दोनों खुले हैं। इन्हें किसी भी क्रम में दें।"
 }

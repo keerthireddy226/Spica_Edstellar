@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "デモ：模擬テスト残り {{n}} / 1 回",
  "Demo ends on {{date}}": "デモ終了日：{{date}}",
  "Mocks left in your demo": "デモで残っている模擬テスト",
- "No mocks left in your demo": "デモの模擬テストは残っていません"
+ "No mocks left in your demo": "デモの模擬テストは残っていません",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "デモには練習セットが 2 つあり、どちらも開いています。好きな順に受けられます。"
 }

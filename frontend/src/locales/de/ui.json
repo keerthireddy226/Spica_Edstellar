@@ -6285,5 +6285,6 @@
  "Demo: {{n}} of 1 mock test left": "Demo: noch {{n}} von 1 Probetest",
  "Demo ends on {{date}}": "Demo endet am {{date}}",
  "Mocks left in your demo": "Verbleibende Probetests in Ihrer Demo",
- "No mocks left in your demo": "Keine Probetests mehr in Ihrer Demo"
+ "No mocks left in your demo": "Keine Probetests mehr in Ihrer Demo",
+ "Your demo has 2 practice sets, both open. Take them in any order.": "Ihre Demo hat 2 Übungssets, beide sind offen. Machen Sie sie in beliebiger Reihenfolge."
 }

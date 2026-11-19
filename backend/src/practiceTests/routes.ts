@@ -426,6 +426,13 @@ async function practiceSetLocked(userId: string, examId: string): Promise<boolea
   return r.rows.slice(0, Math.max(0, at)).some((prev) => !prev.completed);
 }
 
+// A Channel Partner 7-day demo has 2 practice tests: the test's first 2 sets.
+const DEMO_PRACTICE_SETS = 2;
+async function demoSetIds(testTypeId: string): Promise<string[]> {
+  const r = await pool.query(`SELECT id FROM exams WHERE is_active AND purpose = 'practice' AND test_type_id = $1 ORDER BY code LIMIT $2`, [testTypeId, DEMO_PRACTICE_SETS]);
+  return r.rows.map((x) => x.id as string);
+}
+
 practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const testType = await liveTestType(req.params.product as string);
@@ -480,12 +487,16 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
        ORDER BY e.code`,
       [testType.id, req.user!.id],
     );
+    // A Channel Partner 7-day demo: its first 2 sets only, both open (its 2
+    // practice tests), and no builder tests.
+    const inDemo = !!(await demoState(req.user!.id));
+    const rows = inDemo ? result.rows.slice(0, DEMO_PRACTICE_SETS) : result.rows;
     // Practice tests built in the assessment builder, after the sets.
-    const forms = await practiceForms(testType.id, req.user!.id);
+    const forms = inDemo ? [] : await practiceForms(testType.id, req.user!.id);
     res.json({
       exams: [
         // Sets open one at a time: each unlocks when the one before is completed.
-        ...result.rows.map((r, i) => ({
+        ...rows.map((r, i) => ({
           id: r.id,
           code: r.code,
           testId: r.test_id,
@@ -498,8 +509,8 @@ practiceTestsRouter.get("/:product/exams", requireAuth, async (req: AuthedReques
           last: r.last_result ? { ...r.last_result, attempts: r.attempts } : null,
           // Only Set 1 is open at first; each set unlocks once the one before
           // is completed (every question answered).
-          locked: result.rows.slice(0, i).some((prev) => !prev.completed),
-          lockedBy: i > 0 ? result.rows[i - 1].name : null,
+          locked: !inDemo && result.rows.slice(0, i).some((prev) => !prev.completed),
+          lockedBy: i > 0 && !inDemo ? result.rows[i - 1].name : null,
           source: "set",
         })),
         ...forms.map((f) => ({
@@ -585,8 +596,11 @@ practiceTestsRouter.post("/session", requireAuth, async (req: AuthedRequest, res
       if (narrowed && !canPrepare(narrowed, testTypeId)) return res.status(403).json({ error: "test_not_included", testTypeId });
     }
     // Practice sets open in order: the set before this one must be completed
-    // (this applies to resuming too).
-    if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
+    // (this applies to resuming too). A 7-day demo has its first 2 sets, both open.
+    const inDemo = !candidate && !!(await demoState(req.user!.id));
+    if (inDemo && mode === "practice") {
+      if (builtForm || !body.examId || !(await demoSetIds(testTypeId)).includes(body.examId)) return res.status(403).json({ error: "demo_set_not_included" });
+    } else if (mode === "practice" && body.examId && !builtForm && (await practiceSetLocked(req.user!.id, body.examId))) {
       return res.status(403).json({ error: "set_locked" });
     }
     if (!testTypeId || !(await liveTestType(testTypeId))) return res.status(404).json({ error: "unknown_product" });

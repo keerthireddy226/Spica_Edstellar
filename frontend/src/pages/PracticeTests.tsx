@@ -25,8 +25,7 @@ import {
   CalendarClock,
   Pause,
   Loader2,
-  Headphones,
-} from "lucide-react";
+  Headphones, LockOpen } from "lucide-react";
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { SkillLevelsPanel } from "@/components/learner/SkillLevels";
 import { KeepGoingCard } from "@/components/licenses/KeepGoingCard";
@@ -664,7 +663,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
               ? tr("Your demo includes 1 mock test, and you've taken it. Your report is in My reports.")
             : code === "demo_mock_locked"
               ? tr("The mock test opens after you finish a practice test.")
-            : code === "demo_no_real_test" || code === "demo_test_not_included"
+            : code === "demo_no_real_test" || code === "demo_test_not_included" || code === "demo_set_not_included"
               ? tr("Your demo includes English 4 Skills Essentials practice tests and one mock test only.")
             : code === "quota_reached"
               ? tr("You've reached this month's limit. It resets on {{date}}.", { date: quota ? formatShortDate(quota.resetsOn) : "" })
@@ -2220,7 +2219,8 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
           </div>
           <p className="text-sm text-muted sm:ml-[46px]">{tr("Pause any time and go back. Your report at the end shows every answer with the right one.")}</p>
           <p className="text-sm text-muted flex items-start gap-1.5 sm:ml-[46px]">
-            <Lock size={13} className="shrink-0 mt-[3px]" /> {tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
+            {demo ? <LockOpen size={13} className="shrink-0 mt-[3px]" /> : <Lock size={13} className="shrink-0 mt-[3px]" />}{" "}
+            {demo ? tr("Your demo has 2 practice sets, both open. Take them in any order.") : tr("Sets open one at a time: complete a set, answering every question, to unlock the next.")}
           </p>
         </div>
         {practiceLeft === 0 && (
