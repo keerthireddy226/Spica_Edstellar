@@ -2,7 +2,6 @@ import { pool } from "../db.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { levelSummary, weightedSkillMean } from "../placement/levels.js";
-import { snapshot } from "../reports/batchReport.js";
 import { qualitySettings } from "../quality/settings.js";
 import { bandForLevel, familyScoreScale, levelTestPassed } from "./modes.js";
 import { testTypeOfExam } from "../catalogue/service.js";
@@ -51,14 +50,9 @@ export function summarizeScores(raw: Awaited<ReturnType<typeof loadScoreRows>>, 
   const pooled = graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : null;
   const weighted = summary ? weightedSkillMean(summary.skillPercents, testTypeId) : null;
   const overall = weighted !== null ? Math.round(weighted) : pooled;
-  // The overall level is the Spica score's (the weighted mean of the skills'
-  // scores), as on the score report, so a high percentage never shows a low level.
-  const level = summary
-    ? {
-        ...summary,
-        cefrLevel: (snapshot(summary.skillLevels as never, summary.skillPercents as never, overall, summary.cefrLevel, testTypeId).level ?? summary.cefrLevel) as typeof summary.cefrLevel,
-      }
-    : null;
+  // The overall level is the Spica score's (the mean of the skills' scores),
+  // worked out in levelSummary: the one rule used everywhere.
+  const level = summary;
   return { rows, graded, rowCorrect, correctCount, pendingCount, failedCount, skippedCount, level, overall };
 }
 

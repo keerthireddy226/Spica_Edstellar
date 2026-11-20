@@ -19,20 +19,32 @@ describe("levelSummary", () => {
     expect(s.skillLevels.reading).toBe("B2");
   });
 
-  it("can't rank above the weakest skill tested", () => {
+  // One rule everywhere (19 Nov 2026): the overall level is the band of the
+  // mean of the skills' Spica scores, not capped at the weakest skill.
+  it("averages the skills' Spica scores for the overall level", () => {
     const strongReading = ["A1", "A2", "B1", "B2", "C1"].flatMap((l) => [row(l as "A1", true), row(l as "A1", true)]);
     const weakWriting = [row("A1", true, ["writing"]), row("A1", true, ["writing"]), row("A2", false, ["writing"]), row("A2", false, ["writing"]), row("B1", false, ["writing"]), row("B1", false, ["writing"])];
     const s = levelSummary([...strongReading, ...weakWriting])!;
+    // Reading C1 at 100% = 79; writing A1 at 33% = 23; mean 51 = B1.
+    expect(s.skillLevels.reading).toBe("C1");
     expect(s.skillLevels.writing).toBe("A1");
-    expect(s.cefrLevel).toBe("A1");
+    expect(s.cefrLevel).toBe("B1");
   });
 
-  it("ignores a skill with too few questions for the cap", () => {
+  it("gives Below A1 when no level is passed", () => {
+    const s = levelSummary([row("A1", false), row("A1", false), row("A2", false), row("A2", false)])!;
+    // 0% right used to show A1 (score 20); now Below A1 (score 10).
+    expect(s.skillLevels.reading).toBe("Pre-A1");
+    expect(s.cefrLevel).toBe("Pre-A1");
+  });
+
+  it("gives Below A1 when the first level tested is failed", () => {
     const strongReading = ["A1", "A2", "B1", "B2", "C1"].flatMap((l) => [row(l as "A1", true), row(l as "A1", true)]);
     const shortWriting = [row("A2", false, ["writing"]), row("A2", false, ["writing"])];
     const s = levelSummary([...strongReading, ...shortWriting])!;
-    expect(s.skillLevels.writing).toBe("A1");
-    expect(s.cefrLevel).not.toBe("A1");
+    expect(s.skillLevels.writing).toBe("Pre-A1");
+    // Reading 79, writing 10: mean 45 = B1.
+    expect(s.cefrLevel).toBe("B1");
   });
 
   it("is null when nothing could be scored", () => {

@@ -380,7 +380,8 @@ export async function candidateResultFor(sessionId: string, examId: string | nul
     const testTypeId = examId ? await testTypeOfExam(examId) : null;
     const weighted = summary ? weightedSkillMean(summary.skillPercents, testTypeId) : null;
     const overallPercent = weighted !== null ? Math.round(weighted) : graded.length ? Math.round((graded.filter(ok).length / graded.length) * 100) : null;
-    const level = summary && { ...summary, cefrLevel: snapshot(summary.skillLevels as never, summary.skillPercents as never, overallPercent, summary.cefrLevel, testTypeId).level ?? summary.cefrLevel };
+    // levelSummary's level is already the Spica score's (the skills' mean).
+    const level = summary;
     result = {
       kind: "exam",
       overallPercent,

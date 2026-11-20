@@ -1,13 +1,15 @@
 // CEFR levels from scored answers, shared by the placement test, mock
 // exams and recruitment results: per skill, then one headline level.
 import { isTrulyCorrect, type StoredMannerScores } from "./fluencySignals.js";
-import { assessSkillLevel, cefrRank, passThresholdForLevel, percentToCefr, type CefrLevel } from "./cefr.js";
+import { assessSkillLevel, CEFR_LEVELS, passThresholdForLevel, percentToCefr, type CefrLevel } from "./cefr.js";
 import type { SkillTag } from "./roadmapBuilder.js";
+import { BELOW_A1, levelOfScore, spicaScore } from "./spicaScale.js";
+
+// A skill's or test's reported level: a CEFR level, or Below A1 ("Pre-A1")
+// when not even A1 is passed.
+export type ReportedLevel = CefrLevel | typeof BELOW_A1;
 
 const ALL_SKILLS: SkillTag[] = ["listening", "speaking", "reading", "writing"];
-// A skill holds the headline level down only when it had this many scored
-// questions: 2 wrong answers in a short section don't decide a whole level.
-export const MIN_ITEMS_TO_CAP = 6;
 
 export interface ScoredAttemptRow {
   status: string;
@@ -43,7 +45,7 @@ export function rowIsCorrect(r: ScoredAttemptRow): boolean {
 // Per-skill percent/level, plus the same percents shaped for buildRoadmap's "weakest first" ranking.
 export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent: number) {
   const skillPercents = {} as Record<SkillTag, number | null>;
-  const skillLevels = {} as Record<SkillTag, { level: CefrLevel; cappedByGap: boolean } | null>;
+  const skillLevels = {} as Record<SkillTag, { level: ReportedLevel; cappedByGap: boolean } | null>;
   const roadmapSkillPercents = {} as Record<SkillTag, number>;
   for (const skill of ALL_SKILLS) {
     const relevant = graded.filter((r) => r.skills.includes(skill));
@@ -57,61 +59,52 @@ export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent
     // Highest CEFR level actually sustained, not just a flat percentage; falls back to percent only if no cefr_level tags exist yet.
     const assessed = assessSkillLevel(relevant.map((r) => ({ cefrLevel: r.cefr_level, correct: rowIsCorrect(r) })));
     skillPercents[skill] = percent;
-    skillLevels[skill] = { level: assessed.level ?? percentToCefr(percent), cappedByGap: assessed.cappedByGap };
+    // No level passed: Below A1 (owner decision 19 Nov 2026; it used to fall
+    // back to the percent table, so 0% right still showed A1 and the Below A1
+    // band could never appear). Questions with no CEFR tag at all still use
+    // the percent table.
+    const tagged = relevant.some((r) => r.cefr_level && CEFR_LEVELS.includes(r.cefr_level));
+    skillLevels[skill] = { level: assessed.level ?? (tagged ? BELOW_A1 : percentToCefr(percent)), cappedByGap: assessed.cappedByGap };
     roadmapSkillPercents[skill] = percent;
   }
   return { skillPercents, skillLevels, roadmapSkillPercents };
 }
 
-// Headline level: assessed across all skills from every question shown. A skip counts as wrong; grading failures are excluded. Can't outrank the weakest skill tested with at least MIN_ITEMS_TO_CAP questions (avoids a strong skill masking a failed one).
-export function computeHeadlineLevel(
-  graded: ScoredAttemptRow[],
-  allRows: ScoredAttemptRow[],
-  correctCount: number,
-  pendingCount: number,
-  skillLevels: Record<SkillTag, { level: CefrLevel; cappedByGap: boolean } | null>,
-) {
-  const gradedLevels = new Set(graded.map((r) => r.cefr_level));
-  const skippedAsWrong = allRows
-    .filter((r) => r.status === "pending" && gradedLevels.has(r.cefr_level))
-    .map((r) => ({ cefrLevel: r.cefr_level, correct: false }));
-  const answeredEvidence = graded.map((r) => ({ cefrLevel: r.cefr_level, correct: rowIsCorrect(r) }));
-  const overallAssessment = assessSkillLevel([...answeredEvidence, ...skippedAsWrong]);
-  // Fallback percentage (no level certified above) also counts skips as wrong, or a mostly-skipped test would look fine.
-  const overallPercentForLevel = Math.round((correctCount / (graded.length + pendingCount)) * 100);
-  const pooledCefrLevel: CefrLevel = overallAssessment.level ?? percentToCefr(overallPercentForLevel);
-
-  const testedSkillLevels = ALL_SKILLS.filter((skill) => graded.filter((r) => r.skills.includes(skill)).length >= MIN_ITEMS_TO_CAP)
-    .map((skill) => skillLevels[skill]?.level)
-    .filter((level): level is CefrLevel => level != null);
-  const weakestTestedSkillLevel =
-    testedSkillLevels.length > 0
-      ? testedSkillLevels.reduce((weakest, level) => (cefrRank(level) < cefrRank(weakest) ? level : weakest))
-      : null;
-  const cefrLevel: CefrLevel =
-    weakestTestedSkillLevel && cefrRank(weakestTestedSkillLevel) < cefrRank(pooledCefrLevel) ? weakestTestedSkillLevel : pooledCefrLevel;
-  // Once a weak skill has pulled the headline down below what the pooled walk found, that's the real, complete reason
-  // why — the gap caveat only makes sense when the pooled result stands as-is.
-  const cefrCappedByGap = cefrLevel === pooledCefrLevel && overallAssessment.cappedByGap;
-  return { cefrLevel, cefrCappedByGap };
+// The overall result from the skills (owner decision 19 Nov 2026: one rule
+// everywhere): each skill's Spica score from its level and share right, the
+// overall score their weighted mean, and the overall level that score's band.
+// A strong skill can lift the overall above a weak one, as IELTS averages its
+// bands; each skill's own level is always shown beside it.
+export function overallFromSkills(
+  skillLevels: Partial<Record<SkillTag, ReportedLevel | null>>,
+  skillPercents: Partial<Record<SkillTag, number | null>>,
+  fallbackPercent: number,
+): { score: number | null; level: ReportedLevel } {
+  const scores: Partial<Record<SkillTag, number>> = {};
+  for (const skill of ALL_SKILLS) {
+    const s = spicaScore(skillLevels[skill] ?? null, skillPercents[skill] ?? null);
+    if (s !== null) scores[skill] = s;
+  }
+  const mean = weightedSkillMean(scores, null);
+  if (mean === null) return { score: null, level: percentToCefr(fallbackPercent) };
+  const score = Math.round(mean);
+  return { score, level: levelOfScore(score) as ReportedLevel };
 }
 
 // One finished test's level, as the learner and the recruiter see it: a
 // headline CEFR level and one per skill tested. null when nothing could be
 // scored yet.
 export function levelSummary(rows: ScoredAttemptRow[]): {
-  cefrLevel: CefrLevel;
-  skillLevels: Partial<Record<SkillTag, CefrLevel>>;
+  cefrLevel: ReportedLevel;
+  skillLevels: Partial<Record<SkillTag, ReportedLevel>>;
   skillPercents: Partial<Record<SkillTag, number>>;
 } | null {
   const graded = rows.filter((r) => r.status === "scored");
   if (graded.length === 0) return null;
   const correctCount = graded.filter(rowIsCorrect).length;
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
   const overallPercent = Math.round((correctCount / graded.length) * 100);
   const { skillPercents, skillLevels } = computeSkillBreakdown(graded, overallPercent);
-  const { cefrLevel } = computeHeadlineLevel(graded, rows, correctCount, pendingCount, skillLevels);
-  const levels: Partial<Record<SkillTag, CefrLevel>> = {};
+  const levels: Partial<Record<SkillTag, ReportedLevel>> = {};
   const percents: Partial<Record<SkillTag, number>> = {};
   for (const skill of ALL_SKILLS) {
     const l = skillLevels[skill];
@@ -119,5 +112,6 @@ export function levelSummary(rows: ScoredAttemptRow[]): {
     if (l) levels[skill] = l.level;
     if (p !== null && p !== undefined) percents[skill] = p;
   }
+  const { level: cefrLevel } = overallFromSkills(levels, percents, overallPercent);
   return { cefrLevel, skillLevels: levels, skillPercents: percents };
 }

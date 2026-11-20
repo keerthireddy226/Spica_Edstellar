@@ -12,33 +12,14 @@ import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
 import { wordDiff, diffSummary } from "./wordDiff.js";
 import type { FeedbackReport } from "./feedbackReport.js";
+import { BANDS, levelOfScore, spicaScore } from "../placement/spicaScale.js";
 
 const SKILLS = ["speaking", "listening", "reading", "writing"] as const;
 type Skill = (typeof SKILLS)[number];
 
-// The Spica score's CEFR bands.
-export const BANDS = [
-  { level: "Pre-A1", min: 10, max: 19 },
-  { level: "A1", min: 20, max: 29 },
-  { level: "A2", min: 30, max: 39 },
-  { level: "B1", min: 40, max: 54 },
-  { level: "B2", min: 55, max: 69 },
-  { level: "C1", min: 70, max: 79 },
-  { level: "C2", min: 80, max: 90 },
-] as const;
+// The bands and the score formula live in placement/spicaScale.ts.
+export { BANDS, levelOfScore, spicaScore };
 const ORDER = BANDS.map((b) => b.level as string);
-
-// A skill's level sets its band; the share of its questions right places it within the band.
-export function spicaScore(level: string | null | undefined, percent: number | null | undefined): number | null {
-  const band = BANDS.find((b) => b.level === level);
-  if (!band) return null;
-  const p = Math.max(0, Math.min(100, percent ?? 50)) / 100;
-  return Math.round(band.min + (band.max - band.min) * p);
-}
-
-export function levelOfScore(score: number): string {
-  return (BANDS.find((b) => score >= b.min && score <= b.max) ?? (score < 10 ? BANDS[0] : BANDS[BANDS.length - 1])).level;
-}
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const pct = (x: number | null) => (x === null ? null : Math.max(0, Math.min(100, Math.round(x))));

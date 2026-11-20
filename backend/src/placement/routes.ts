@@ -15,7 +15,7 @@ import {
   stepLevel,
   type CefrLevel,
 } from "./cefr.js";
-import { computeHeadlineLevel, computeSkillBreakdown, rowIsCorrect, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
+import { computeSkillBreakdown, overallFromSkills, rowIsCorrect, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
 import { newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
@@ -483,7 +483,10 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
     const pooledPercent = Math.round((correctCount / graded.length) * 100);
     const { skillPercents, skillLevels, roadmapSkillPercents } = computeSkillBreakdown(graded, pooledPercent);
     const overallPercent = Math.round(weightedSkillMean(skillPercents, null) ?? pooledPercent);
-    const { cefrLevel, cefrCappedByGap } = computeHeadlineLevel(graded, rows, correctCount, pendingCount, skillLevels);
+    // The same overall rule as every other test: the band of the skills' mean Spica score.
+    const flatLevels = Object.fromEntries(Object.entries(skillLevels).map(([k, v]) => [k, v?.level ?? null]));
+    const { level: cefrLevel } = overallFromSkills(flatLevels, skillPercents, overallPercent);
+    const cefrCappedByGap = Object.values(skillLevels).some((v) => v?.cappedByGap);
 
     // Any flagged face check from this session (enrollment mismatch, repeated
     // environmental failures, a mid-test spoof) holds the result for review —
@@ -508,7 +511,8 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
 
     // Candidates get no learning plan; their result goes to the recruiter.
     const candidate = req.user!.role === "candidate";
-    const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, cefrLevel, roadmapSkillPercents);
+    // The study plan starts at A1 for a learner below A1.
+    const { goalLevel } = candidate ? { goalLevel: null } : await saveRoadmap(req.user!.id, (cefrLevel === "Pre-A1" ? "A1" : cefrLevel) as CefrLevel, roadmapSkillPercents);
     // The new plan's test dates go to the learner's calendar by email.
     if (!candidate && notificationEmailsEnabled()) emailTestDates(req.user!.id).catch((err) => console.error("placement /complete: test dates email failed:", err));
     if (candidate) {
