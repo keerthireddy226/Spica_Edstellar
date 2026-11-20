@@ -1,0 +1,18 @@
+# Weekly pull requests for library updates; security fixes are opened as soon
+# as GitHub learns of them (once Dependabot security updates are switched on
+# in the repository settings). Nothing merges or deploys without a person.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

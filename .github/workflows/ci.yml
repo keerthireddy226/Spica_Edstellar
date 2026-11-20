@@ -1,0 +1,63 @@
+# Checks every push and pull request to main: type checks, server tests on an
+# empty database (all migrations first), both builds, lint, and a security
+# audit of the libraries the app ships with. It does not deploy anything;
+# Vercel and Render still deploy from main on their own.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: spica
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://ci:ci@localhost:5432/spica
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Security audit (shipped libraries, high and critical)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Database migrations
+        run: npx node-pg-migrate up -m migrations
+        working-directory: backend
+      - name: Server build and type checks
+        run: npm run build --workspace=backend
+      - name: Server tests
+        run: npm test --workspace=backend
+      - name: Web app build and type checks
+        run: npm run build --workspace=frontend
+      - name: Lint
+        run: |
+          (cd backend && npx oxlint)
+          (cd frontend && npx oxlint)
