@@ -9,6 +9,7 @@ import { formatUsdCents, TIER_LABELS, type PlanTier } from "@/api/plans";
 import { trServer } from "@/i18n/serverText";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { PartnerCodeBox } from "@/components/partner/PartnerCodeBox";
 import { PageError, PageLoading } from "@/components/learner/PageStates";
 
 // Spica plans: every plan in one place, for individuals and for
@@ -304,6 +305,11 @@ export function SpicaPlans() {
       <div>
         <h1 className="font-display font-bold text-2xl text-ink">{tr("Spica plans")}</h1>
         <p className="text-sm text-muted mt-1">{tr("Every Spica plan in one place: practise, prove your level, and get a certificate anyone can check.")}</p>
+        {user?.role === "learner" && canBuy && (
+          <div className="mt-3">
+            <PartnerCodeBox />
+          </div>
+        )}
       </div>
       <div className="flex gap-1 border-b border-rule overflow-x-auto">
         {(

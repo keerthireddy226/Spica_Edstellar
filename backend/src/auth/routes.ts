@@ -1,3 +1,5 @@
+import { demoAfterPhase } from "../channelPartners/demoLicences.js";
+import { creditAffiliate } from "../channelPartners/partnerPrograms.js";
 import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -108,6 +110,8 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
     );
 
     await client.query("COMMIT");
+    // Credited to an Affiliate Partner when the code is valid and running.
+    if (body.referralCode) await creditAffiliate(userId, body.referralCode).catch((err) => console.error("affiliate credit failed:", err));
 
     // No session is created here on purpose — signup ends with "check your
     // email," not an automatic login. The learner logs in for real afterward.
@@ -158,6 +162,12 @@ authRouter.post("/login", loginLimiter, async (req, res, next) => {
     // super_admin), so this is a membership check, not an exact match.
     if (!body.allowedRoles.includes(user.role)) {
       return res.status(403).json({ error: "wrong_login_portal" });
+    }
+    // A partner demo learner: 7 days, then 3 days' grace to see results; after
+    // that sign-in is closed until the organisation gives a paid licence.
+    if (user.role === "learner") {
+      const after = await demoAfterPhase(user.id);
+      if (after?.phase === "closed") return res.status(403).json({ error: "demo_closed", endedAt: after.endedAt });
     }
 
     // Once an organization turns on "SSO only", its learners and Managers sign

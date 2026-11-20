@@ -5,6 +5,7 @@ import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatusPill, useStaffPermissions } from "@/components/staff/StaffKit";
 import { DetailModal } from "@/components/DetailModal";
 import { tr } from "@/i18n/tr";
+import { usePartnerMe } from "@/pages/partner/PartnerPrograms";
 
 // Paid orders (Channel Partners stage 5). The same screens serve the partner
 // portal (their own orders) and Spica staff (every order, with prices they can
@@ -98,6 +99,8 @@ interface Quote {
   licences: number;
   credits: number;
   education: boolean;
+  // Resellers: their discount off list price.
+  discountPercent?: number;
 }
 interface Product {
   id: string;
@@ -175,6 +178,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
   const [open, setOpen] = useState<string | null>(null);
   const [editing, setEditing] = useState<OrderDetail | "new" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const partnerMe = usePartnerMeOptional(mode === "partner");
   const perms = useStaffPermissions();
   const load = () => {
     const q = new URLSearchParams();
@@ -188,6 +192,8 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
   if (error) return <PageError message={tr("Could not load the orders.")} />;
   if (!rows) return <PageLoading />;
   const shown = mode === "partner" && status ? rows.filter((r) => r.status === status) : rows;
+  // A partner whose partnership has ended (or isn't signed) can't place orders.
+  const partnerReadOnly = mode === "partner" && (!partnerMe || partnerMe.partnership.readOnly || !partnerMe.agreement.signed);
   return (
     <div className="flex flex-col gap-4">
       {msg && (
@@ -204,7 +210,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
             </option>
           ))}
         </select>
-        {(mode === "partner" || perms.manageOrganizations) && (
+        {(mode === "partner" ? !partnerReadOnly : perms.manageOrganizations) && (
           <Button onClick={() => setEditing("new")}>
             <Plus size={16} /> {tr("New order")}
           </Button>
@@ -993,6 +999,7 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
 
         {quote && <Totals subtotal={quote.subtotal} taxRate={quote.taxRate} taxAmount={quote.taxAmount} total={quote.total} currency={quote.currency} />}
         {quote?.education && <p className="text-xs text-muted self-end">{tr("Includes 15% off Full access for universities and colleges.")}</p>}
+        {!!quote?.discountPercent && <p className="text-xs text-muted self-end">{tr("Your reseller price: {{n}}% off Spica's list price. You invoice your customer at your own price.", { n: quote.discountPercent })}</p>}
         {err && <Notice tone="error">{err}</Notice>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="secondary" onClick={onClose}>
@@ -1028,4 +1035,10 @@ export function StaffPartnerOrders() {
       <OrdersPanel mode="staff" />
     </div>
   );
+}
+
+// The partner's account, only on the partner side (staff never ask for it).
+function usePartnerMeOptional(enabled: boolean) {
+  const { me } = usePartnerMe(enabled);
+  return enabled ? me : null;
 }

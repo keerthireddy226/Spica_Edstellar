@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags, Handshake, Receipt, TrendingUp, Wallet } from "lucide-react";
+import { GraduationCap, LayoutDashboard, ShieldCheck, Building2, Users, User, Layers, UserCog, KeyRound, BarChart3, Gem, ScrollText, Settings, Plug, Briefcase, CreditCard, ScanFace, ServerCog, Lightbulb, ShieldAlert, UserSearch, Target, FileStack, Award, Coins, Scale, Tags, Handshake, Receipt, TrendingUp, Wallet, Megaphone, FileSignature } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useAuth, type Role } from "@/hooks/useAuth";
 import { useBranding } from "@/components/AppShell/useBranding";
@@ -9,18 +9,20 @@ import type { StaffPermissions } from "@/api/staff";
 import { getPendingReviewCount } from "@/api/proctoring";
 
 import { tr } from "@/i18n/tr";
+import type { PartnerType } from "@/api/channelPartners";
+import { usePartnerType } from "@/pages/partner/PartnerPrograms";
 // Four genuinely different nav sets, one per non-learner role — each sees
 // strictly less than the role above it: Super Admin manages every org and
 // every Admin; an Admin only sees organizations assigned to them; an Org
 // Admin only their one organization (every batch, every Manager); a Manager
 // only the batch(es) assigned to them, never the whole organization.
 // `product`: shown only when the organization bought that product.
-type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions | (keyof StaffPermissions)[]; product?: "skills" | "recruitment" };
+type NavItem = { to: string; icon: LucideIcon; label: string; permission?: keyof StaffPermissions | (keyof StaffPermissions)[]; product?: "skills" | "recruitment"; partnerTypes?: PartnerType[] };
 
 const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.SUPER_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
-  { to: ROUTES.SUPER_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners") },
+  { to: ROUTES.SUPER_CHANNEL_PARTNERS, icon: Handshake, label: tr("Partners") },
   { to: ROUTES.SUPER_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders") },
   { to: ROUTES.SUPER_PARTNER_REPORTS, icon: TrendingUp, label: tr("Partner reports") },
   { to: ROUTES.ADMIN_ADMINS, icon: ShieldCheck, label: tr("Admins") },
@@ -44,7 +46,7 @@ const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
 const ADMIN_CONSOLE_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.ADMIN_CONSOLE_DASHBOARD, icon: LayoutDashboard, label: tr("Dashboard") },
   { to: ROUTES.ADMIN_CONSOLE_ORGANIZATIONS, icon: Building2, label: tr("Organizations") },
-  { to: ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS, icon: Handshake, label: tr("Channel Partners"), permission: "manageOrganizations" },
+  { to: ROUTES.ADMIN_CONSOLE_CHANNEL_PARTNERS, icon: Handshake, label: tr("Partners"), permission: "manageOrganizations" },
   { to: ROUTES.ADMIN_CONSOLE_PARTNER_ORDERS, icon: Receipt, label: tr("Partner orders"), permission: ["manageOrganizations", "finance"] },
   { to: ROUTES.ADMIN_CONSOLE_PARTNER_REPORTS, icon: TrendingUp, label: tr("Partner reports"), permission: ["manageOrganizations", "finance"] },
   { to: ROUTES.ADMIN_CONSOLE_ADMINS, icon: ShieldCheck, label: tr("Admins"), permission: "manageAdmins" },
@@ -101,11 +103,15 @@ const MANAGER_NAV_ITEMS: { to: string; icon: LucideIcon; label: string }[] = [
   { to: ROUTES.MANAGER_PROFILE, icon: User, label: tr("Profile") },
 ];
 
+// Each partner type sees only its own pages (user, 19 Nov 2026).
 const PARTNER_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.PARTNER_DASHBOARD, icon: Handshake, label: tr("Partner dashboard") },
-  { to: ROUTES.PARTNER_ORGANISATIONS, icon: Building2, label: tr("Organisations") },
-  { to: ROUTES.PARTNER_ORDERS, icon: Receipt, label: tr("Orders") },
-  { to: ROUTES.PARTNER_COMMISSION, icon: Wallet, label: tr("Commission") },
+  { to: ROUTES.PARTNER_ORGANISATIONS, icon: Building2, label: tr("Organisations"), partnerTypes: ["reseller", "channel_partner"] },
+  { to: ROUTES.PARTNER_ORDERS, icon: Receipt, label: tr("Orders"), partnerTypes: ["reseller", "channel_partner"] },
+  { to: ROUTES.PARTNER_COMMISSION, icon: Wallet, label: tr("Commission"), partnerTypes: ["channel_partner"] },
+  { to: ROUTES.PARTNER_REFERRALS, icon: Megaphone, label: tr("Referrals"), partnerTypes: ["referral"] },
+  { to: ROUTES.PARTNER_EARNINGS, icon: Wallet, label: tr("Earnings"), partnerTypes: ["affiliate", "referral"] },
+  { to: ROUTES.PARTNER_AGREEMENT, icon: FileSignature, label: tr("Agreement") },
 ];
 
 const NAV_ITEMS_BY_ROLE: Partial<Record<Role, NavItem[]>> = {
@@ -151,6 +157,7 @@ function navClasses(isActive: boolean) {
 export function AdminSidebar({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate?: () => void }) {
   const location = useLocation();
   const { user } = useAuth();
+  const partnerType = usePartnerType(user?.role === "channel_partner");
   const perms = (user?.permissions ?? {}) as Partial<StaffPermissions>;
   const branding = useBranding();
   const products = branding?.products;
@@ -159,6 +166,7 @@ export function AdminSidebar({ open, onClose, onNavigate }: { open: boolean; onC
   // An Admin only sees pages their permissions allow; an organization only
   // the products it bought.
   const navItems = ((user && NAV_ITEMS_BY_ROLE[user.role]) ?? ADMIN_CONSOLE_NAV_ITEMS)
+    .filter((n) => !n.partnerTypes || (partnerType !== null && n.partnerTypes.includes(partnerType)))
     .filter((n) => (!n.permission || user?.role !== "admin" || (Array.isArray(n.permission) ? n.permission.some((k) => perms[k]) : perms[n.permission])) && (!n.product || !products || products.includes(n.product)))
     .map((n) => (admissions && n.to === ROUTES.ORG_ADMIN_RECRUITMENT ? { ...n, label: tr("Admissions") } : n));
   const integrityPath = navItems.find((n) => INTEGRITY_PATHS.has(n.to))?.to ?? null;

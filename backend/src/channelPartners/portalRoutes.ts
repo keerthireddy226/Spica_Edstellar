@@ -5,7 +5,8 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
-import { createPartnerOrganisation, giveDemoLicences, partnerBalance, partnerOrganisationDetail, partnerOrganisations, PartnerError } from "./organisations.js";
+import { createPartnerOrganisation, giveDemoLicences, GIFT_GRACE_DAYS, GIFT_VALID_DAYS, partnerBalance, partnerOrganisationDetail, partnerOrganisations, PartnerError } from "./organisations.js";
+import { activeOrganisations, bringsOrganisations, canAct, currentAgreement, currentPeriodStart, daysLeft, EXPIRING_DAYS, PARTNER_TYPE_LABEL, partnershipEnd, partnershipStatus, type PartnerType } from "./partnership.js";
 
 export const partnerPortalRouter = Router();
 
@@ -36,9 +37,27 @@ partnerPortalRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next
   try {
     const b = await partnerBalance(id);
     const p = b.partner;
+    const status = partnershipStatus(p);
+    const signed = await currentAgreement(p);
+    const type = p.partner_type as PartnerType;
     res.json({
-      partner: { id: p.id, fullName: p.full_name, email: p.email, code: p.code, ownLicenceEnabled: p.own_licence_enabled, commissionPercent: Number(p.commission_percent ?? 0) },
-      demo: { total: p.demo_licences, given: b.given, left: b.left, status: b.status, startsAt: p.demo_starts_at, endsAt: p.demo_ended_at ?? p.demo_ends_at },
+      partner: { id: p.id, fullName: p.full_name, email: p.email, code: p.code, ownLicenceEnabled: p.own_licence_enabled, commissionPercent: Number(p.commission_percent ?? 0), type, typeLabel: PARTNER_TYPE_LABEL[type] },
+      demo: { total: p.demo_licences, given: b.given, left: b.left, status: b.status, startsAt: p.demo_starts_at, endsAt: p.demo_ended_at ?? p.demo_ends_at, giftValidDays: GIFT_VALID_DAYS, giftGraceDays: GIFT_GRACE_DAYS },
+      partnership: {
+        status,
+        // Read-only once it has ended (by date or terminated): history stays visible.
+        readOnly: !canAct(status),
+        // The current 3-month period (after a renewal, the new one).
+        startsAt: await currentPeriodStart(p.id),
+        endsAt: partnershipEnd(p),
+        daysLeft: daysLeft(p),
+        expiringDays: EXPIRING_DAYS,
+        terminatedAt: p.terminated_at,
+        terminationReason: p.terminated_at ? p.termination_reason : null,
+      },
+      agreement: { signed: !!signed, signedAt: signed?.signed_at ?? null, signedName: signed?.signed_name ?? null, version: signed?.version ?? null },
+      minimums: bringsOrganisations(type) ? { organisations: p.min_organisations, current: await activeOrganisations(p.id), licencesPerOrg: p.min_licences_per_org } : null,
+      rates: { commissionPercent: Number(p.commission_percent ?? 0), discountPercent: Number(p.discount_percent ?? 0), referralFee: Number(p.referral_fee ?? 0), referralFeeCurrency: p.referral_fee_currency },
     });
   } catch (err) {
     next(err);
@@ -66,7 +85,8 @@ partnerPortalRouter.get("/organisations/:tenantId", requireAuth, async (req: Aut
   }
 });
 
-export const licencesSchema = z.object({ licences: z.number().int().min(1).max(100000), validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish() });
+// No "valid until" any more: every gift is valid 7 days, then 3 days' grace.
+export const licencesSchema = z.object({ licences: z.number().int().min(1).max(100000) });
 
 export const orgSchema = z.object({
   name: z.string().trim().min(2).max(160),
@@ -75,7 +95,6 @@ export const orgSchema = z.object({
   adminEmail: z.string().trim().toLowerCase().email(),
   demoLicences: z.number().int().min(0).max(100000),
   gstin: z.string().trim().max(20).regex(/^[0-9A-Za-z]*$/).optional(),
-  validUntil: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   details: z
     .object({
       // Location is required (user, 19 Nov 2026).
@@ -111,7 +130,7 @@ partnerPortalRouter.post("/organisations/:tenantId/licences", requireAuth, async
   const parsed = licencesSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "invalid_input" });
   try {
-    await giveDemoLicences({ partnerId: id, tenantId: req.params.tenantId as string, licences: parsed.data.licences, validUntil: parsed.data.validUntil ?? null, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
+    await giveDemoLicences({ partnerId: id, tenantId: req.params.tenantId as string, licences: parsed.data.licences, actor: { id: req.user!.id, role: req.user!.role, ip: req.ip ?? null } });
     res.json({ ok: true });
   } catch (err) {
     if (!sendPartnerError(err, res)) next(err);

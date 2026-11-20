@@ -16,6 +16,8 @@ export const signupSchema = z.object({
   acceptTerms: z.boolean().optional(),
   // Optional, unticked by default: marketing emails.
   marketingConsent: z.boolean().optional(),
+  // An Affiliate Partner's code, from a ?ref= link or typed in.
+  referralCode: z.string().trim().max(20).optional(),
 });
 
 // The Privacy Notice version people agree to (its "last updated" date).

@@ -9,16 +9,21 @@ import { recordAudit } from "../audit/service.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { demoStatus } from "./staffRoutes.js";
 import { orgDemoBalance } from "./demoLicences.js";
+import { assertPartnerCanAct } from "./partnership.js";
+
+// Demo licences given to an organisation are valid for 7 days from the day
+// they are given, then 3 days' grace; unused ones expire after that (user,
+// 19 Nov 2026). The partner no longer chooses a date.
+export const GIFT_VALID_DAYS = 7;
+export const GIFT_GRACE_DAYS = 3;
 
 // Public email providers: a shared domain says nothing about the organisation.
 const FREE_MAIL = new Set(["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "icloud.com", "proton.me", "protonmail.com", "rediffmail.com", "aol.com", "zoho.com"]);
 const ORG_INVITE_HOURS = 72;
 
-export class PartnerError extends Error {
-  constructor(public code: string, public status = 400, public extra: Record<string, unknown> = {}) {
-    super(code);
-  }
-}
+// In its own module so partnership.ts can use it without an import cycle.
+export { PartnerError } from "./errors.js";
+import { PartnerError } from "./errors.js";
 
 export async function partnerBalance(partnerId: string) {
   const p = (await pool.query(`SELECT * FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
@@ -44,17 +49,20 @@ export async function duplicateCheck(adminEmail: string): Promise<{ emailTaken: 
   return { emailTaken, sameDomainOrgs };
 }
 
-async function assertCanGive(partnerId: string, licences: number, validUntil?: string | null) {
+// Staff acting for a partner skip the agreement check, never the partnership
+// period or the type; the minimum licences per organisation binds the partner.
+async function assertCanGive(partnerId: string, licences: number, actor: { role: string }, newOrganisation = false) {
+  const staff = actor.role === "admin" || actor.role === "super_admin";
+  if (!staff) await assertPartnerCanAct(partnerId, "organisations");
   const b = await partnerBalance(partnerId);
   if (b.partner.deactivated_at) throw new PartnerError("partner_deactivated", 409);
-  if (b.status !== "active") throw new PartnerError("demo_window_not_open", 409);
+  if (!["reseller", "channel_partner"].includes(b.partner.partner_type)) throw new PartnerError("not_for_partner_type", 403);
+  if (b.status !== "active") throw new PartnerError("partnership_not_active", 409);
+  const min = Number(b.partner.min_licences_per_org ?? 1);
+  if (!staff && licences > 0 && licences < min) throw new PartnerError("below_min_licences", 400, { min });
+  // A new organisation needs at least the minimum, unless the partner has no demo licences at all.
+  if (!staff && newOrganisation && licences === 0 && b.left >= min) throw new PartnerError("below_min_licences", 400, { min });
   if (licences > b.left) throw new PartnerError("not_enough_licences", 409, { left: b.left });
-  // An optional "use by" date: from tomorrow, and not after the partner's demo window.
-  if (validUntil) {
-    const end = b.partner.demo_ended_at ?? b.partner.demo_ends_at;
-    const d = new Date(validUntil + "T23:59:59");
-    if (!(d.getTime() > Date.now()) || (end && d.getTime() > new Date(end).getTime() + 86400000)) throw new PartnerError("invalid_valid_until", 400, { max: end });
-  }
   return b;
 }
 
@@ -80,12 +88,11 @@ export async function createPartnerOrganisation(args: {
   adminEmail: string;
   demoLicences: number;
   gstin?: string | null;
-  validUntil?: string | null;
   details?: OrgDetails;
   // The partner confirmed after seeing the same-domain warning.
   confirmDuplicate?: boolean;
 }) {
-  const b = await assertCanGive(args.partnerId, args.demoLicences, args.validUntil);
+  const b = await assertCanGive(args.partnerId, args.demoLicences, args.actor, true);
   const x = args.details ?? {};
   if (!x.city?.trim() || !x.state?.trim() || !x.country?.trim()) throw new PartnerError("location_required", 400);
   const dup = await duplicateCheck(args.adminEmail);
@@ -108,7 +115,7 @@ export async function createPartnerOrganisation(args: {
       [tenantId, args.adminEmail.trim().toLowerCase(), await bcrypt.hash(randomUUID(), 12), parts[0], parts.slice(1).join(" "), args.actor.id, x.adminPhone?.trim() || null],
     );
     if (args.demoLicences > 0) {
-      await client.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, $5)`, [args.partnerId, tenantId, args.demoLicences, args.actor.id, args.validUntil || null]);
+      await client.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, current_date + $5::int)`, [args.partnerId, tenantId, args.demoLicences, args.actor.id, GIFT_VALID_DAYS]);
     }
     await client.query("COMMIT");
     const token = generateToken();
@@ -129,19 +136,19 @@ export async function createPartnerOrganisation(args: {
   }
 }
 
-export async function giveDemoLicences(args: { partnerId: string; tenantId: string; licences: number; validUntil?: string | null; actor: { id: string; role: string; ip?: string | null } }) {
-  const b = await assertCanGive(args.partnerId, args.licences, args.validUntil);
+export async function giveDemoLicences(args: { partnerId: string; tenantId: string; licences: number; actor: { id: string; role: string; ip?: string | null } }) {
+  const b = await assertCanGive(args.partnerId, args.licences, args.actor);
   const t = await pool.query(`SELECT name FROM tenants WHERE id = $1 AND channel_partner_id = $2`, [args.tenantId, args.partnerId]);
   if (!t.rowCount) throw new PartnerError("organisation_not_found", 404);
-  await pool.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, $5)`, [args.partnerId, args.tenantId, args.licences, args.actor.id, args.validUntil || null]);
+  const vu = (await pool.query(`INSERT INTO partner_allocations (partner_id, tenant_id, kind, licences, created_by, valid_until) VALUES ($1, $2, 'demo', $3, $4, current_date + $5::int) RETURNING valid_until`, [args.partnerId, args.tenantId, args.licences, args.actor.id, GIFT_VALID_DAYS])).rows[0].valid_until;
+  const d = (x: Date) => x.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const grace = new Date(new Date(vu).getTime() + GIFT_GRACE_DAYS * 86400000);
   for (const id of await orgAdminIds(args.tenantId)) {
     await notify({
       userId: id,
       kind: "partner_demo",
       title: `${args.licences} more demo licences`,
-      body: args.validUntil
-        ? `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically. Give them out by ${new Date(args.validUntil + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`
-        : `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically.`,
+      body: `Your organisation now has ${args.licences} more demo licences. New learners you add get a 7-day demo automatically. Add learners by ${d(new Date(vu))} (3 days' grace to ${d(grace)}); unused licences expire after that.`,
       link: "/orgadmin/dashboard",
       email: true,
     });
@@ -153,7 +160,7 @@ export async function giveDemoLicences(args: { partnerId: string; tenantId: stri
 export async function partnerOrganisations(partnerId: string) {
   const r = await pool.query(
     `SELECT t.id, t.name, t.category, t.created_at, t.deactivated_at, t.city, t.state, t.country, t.website, t.phone, t.expected_learner_count, t.address_line, t.postal_code, t.tax_id,
-       (SELECT coalesce(json_agg(json_build_object('licences', a.licences, 'validUntil', to_char(a.valid_until, 'YYYY-MM-DD'), 'givenAt', a.created_at) ORDER BY a.created_at), '[]') FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS allocations,
+       (SELECT coalesce(json_agg(json_build_object('licences', a.licences, 'validUntil', to_char(a.valid_until, 'YYYY-MM-DD'), 'graceUntil', to_char(a.valid_until + 3, 'YYYY-MM-DD'), 'givenAt', a.created_at) ORDER BY a.created_at), '[]') FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS allocations,
        (SELECT coalesce(sum(a.licences), 0)::int FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS demo_licences,
        (SELECT count(*)::int FROM users l WHERE l.tenant_id = t.id AND l.role = 'learner' AND l.deleted_at IS NULL) AS learners,
        (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL) AS demo_used,
@@ -183,7 +190,7 @@ export async function partnerOrganisations(partnerId: string) {
     createdAt: o.created_at,
     active: !o.deactivated_at,
     demoLicences: o.demo_licences,
-    allocations: o.allocations as { licences: number; validUntil: string | null; givenAt: string }[],
+    allocations: o.allocations as { licences: number; validUntil: string | null; graceUntil: string | null; givenAt: string }[],
     details: { city: o.city, state: o.state, country: o.country, website: o.website, phone: o.phone, expectedLearners: o.expected_learner_count, address: o.address_line, postalCode: o.postal_code, gstin: o.tax_id },
     learners: o.learners,
     // Usage of the demo licences: counts only, never scores.

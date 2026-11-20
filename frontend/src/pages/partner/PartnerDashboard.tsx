@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { ROUTES } from "@/constants/routes";
 import { OrganisationDetail, OrganisationsTable } from "@/pages/partner/PartnerOrganisations";
 import { money } from "@/pages/partner/PartnerOrders";
+import { AffiliateDashboard, reloadPartnerMe, ReferralDashboard, usePartnerMe, type PartnerMe } from "@/pages/partner/PartnerPrograms";
 
 // Channel Partner portal (stage 2): the partner's demo licences, the
 // organisations they brought, and adding organisations / giving licences.
@@ -32,20 +33,26 @@ export interface PartnerOrg {
   paidAssigned?: number;
   orders?: number;
   ordersConfirmed?: number;
-  allocations?: { licences: number; validUntil: string | null; givenAt: string }[];
+  allocations?: { licences: number; validUntil: string | null; graceUntil?: string | null; givenAt: string }[];
   details?: { city: string | null; state: string | null; country: string | null; website: string | null; phone: string | null; expectedLearners: number | null; address: string | null; postalCode: string | null; gstin: string | null };
   admin: { name: string; email: string; invitePending: boolean };
-}
-interface Me {
-  partner: { id: string; fullName: string; email: string; code: string; ownLicenceEnabled: boolean; commissionPercent?: number };
-  demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended"; startsAt: string | null; endsAt: string | null };
 }
 const cardLink = "block rounded-card transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-navy";
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
 
+// Each partner type gets its own dashboard (user, 19 Nov 2026).
 export function PartnerDashboard() {
-  const [me, setMe] = useState<Me | null>(null);
+  const { me, failed, reload } = usePartnerMe();
+  if (failed) return <PageError message={tr("Could not load your partner account.")} onRetry={reload} />;
+  if (!me) return <PageLoading />;
+  if (me.partner.type === "affiliate") return <AffiliateDashboard me={me} />;
+  if (me.partner.type === "referral") return <ReferralDashboard me={me} />;
+  return <OrganisationsDashboard me={me} />;
+}
+
+// Resellers and Channel Partners: organisations, demo licences and orders.
+function OrganisationsDashboard({ me }: { me: PartnerMe }) {
   const [orgs, setOrgs] = useState<PartnerOrg[] | null>(null);
   const [orders, setOrders] = useState<{ status: string; validUntil: string; commissionAmount: number; currency: string; licences: number; allocatedLicences: number; assignedLearners: number }[]>([]);
   const [failed, setFailed] = useState(false);
@@ -55,11 +62,9 @@ export function PartnerDashboard() {
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const load = () => {
     setFailed(false);
-    Promise.all([api<Me>("/partner/me"), api<{ organisations: PartnerOrg[] }>("/partner/organisations")])
-      .then(([m, o]) => {
-        setMe(m);
-        setOrgs(o.organisations);
-      })
+    reloadPartnerMe().catch(() => {});
+    api<{ organisations: PartnerOrg[] }>("/partner/organisations")
+      .then((o) => setOrgs(o.organisations))
       .catch(() => setFailed(true));
     api<{ orders: { status: string; validUntil: string; commissionAmount: number; currency: string; licences: number; allocatedLicences: number; assignedLearners: number }[] }>("/partner/orders")
       .then((r) => setOrders(r.orders))
@@ -67,10 +72,13 @@ export function PartnerDashboard() {
   };
   useEffect(load, []);
   if (failed) return <PageError message={tr("Could not load your partner account.")} onRetry={load} />;
-  if (!me || !orgs) return <PageLoading />;
+  if (!orgs) return <PageLoading />;
   const d = me.demo;
-  const open = d.status === "active";
-  const left = d.endsAt ? Math.max(0, Math.ceil((new Date(d.endsAt).getTime() - Date.now()) / 86400000)) : null;
+  // Acting needs the partnership running (not read-only); the gate already made them sign.
+  const open = d.status === "active" && !me.partnership.readOnly;
+  const reseller = me.partner.type === "reseller";
+  const minLicences = me.minimums?.licencesPerOrg ?? 1;
+  const left = me.partnership.daysLeft;
   const demoUsed = orgs.reduce((n, o) => n + o.demoUsed, 0);
   const demoStarted = orgs.reduce((n, o) => n + o.demoStarted, 0);
   const liveOrders = orders.filter((o) => o.status !== "cancelled");
@@ -88,9 +96,13 @@ export function PartnerDashboard() {
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
         title={tr("Welcome, {{name}}", { name: me.partner.fullName })}
-        subtitle={tr("Your partner code: {{code}}. Add universities, colleges and companies, and give them free demo licences to try Spica.", { code: me.partner.code })}
+        subtitle={
+          reseller
+            ? tr("Add your customers' organisations, give them demo licences, and buy licences at your reseller price to resell at your own price.")
+            : tr("Add universities, colleges and companies, give them free demo licences to try Spica, and place orders for them.")
+        }
         actions={
-          <Button onClick={() => setAdding(true)} disabled={!open || d.left === 0} className="flex items-center gap-1.5">
+          <Button onClick={() => setAdding(true)} disabled={!open} className="flex items-center gap-1.5">
             <Plus size={16} /> {tr("Add an organisation")}
           </Button>
         }
@@ -100,16 +112,14 @@ export function PartnerDashboard() {
           {notice.text}
         </Notice>
       )}
-      {!open && (
-        <Notice tone="error">
-          {d.status === "not_started" ? tr("Your demo licences aren't available yet. Spica will let you know when they are.") : tr("Your demo window has ended, so no more demo licences can be given. Contact Spica to extend it.")}
-        </Notice>
-      )}
+      <Notice tone="info">
+        {tr("Demo licences you give an organisation are valid for {{v}} days, then {{g}} days' grace; unused ones expire after that. Each learner's demo lasts 7 days, then 3 days to see results. Give at least {{m}} licences to each organisation.", { v: d.giftValidDays, g: d.giftGraceDays, m: minLicences })}
+      </Notice>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="ledger" palette="terracotta" index={0} icon={Gift} value={d.total} label={tr("Free demo licences")} sub={tr("Your allocation from Spica")} progress={1} />
         <StatCard variant="ledger" palette="terracotta" index={1} icon={KeyRound} value={d.left} label={tr("Left to give")} sub={tr("{{n}} given so far", { n: d.given })} progress={d.total ? d.left / d.total : 0} />
         <StatCard variant="ledger" palette="terracotta" index={2} icon={UserCheck} value={demoUsed} label={tr("Used by learners")} sub={tr("of {{n}} given to organisations · {{s}} started", { n: d.given, s: demoStarted })} progress={d.given ? demoUsed / d.given : 0} />
-        <StatCard variant="ledger" palette="terracotta" index={3} icon={CalendarClock} value={open ? tr("{{n}} days", { n: left ?? 0 }) : "—"} label={tr("Demo window")} sub={open ? tr("Until {{d}}", { d: day(d.endsAt) }) : d.status === "ended" ? tr("Ended {{d}}", { d: day(d.endsAt) }) : tr("Not started")} progress={open && left !== null ? Math.min(1, left / 90) : 0} />
+        <StatCard variant="ledger" palette="terracotta" index={3} icon={CalendarClock} value={open ? tr("{{n}} days", { n: left ?? 0 }) : "—"} label={tr("Partnership")} sub={me.partnership.startsAt ? tr("{{a}} to {{b}}", { a: day(me.partnership.startsAt), b: day(me.partnership.endsAt) }) : tr("Not started")} progress={open && left !== null ? Math.min(1, left / 90) : 0} />
         <Link to={ROUTES.PARTNER_ORGANISATIONS} aria-label={tr("See all organisations ({{n}})", { n: orgs.length })} className={cardLink}>
           <StatCard variant="ledger" palette="terracotta" index={4} icon={Building2} value={orgs.length} label={tr("Organisations")} sub={tr("{{n}} learners added", { n: orgs.reduce((n, o) => n + o.learners, 0) })} progress={0.4} />
         </Link>
@@ -125,7 +135,11 @@ export function PartnerDashboard() {
             progress={liveOrders.length ? confirmed.length / liveOrders.length : 0}
           />
         </Link>
-        <StatCard variant="ledger" palette="terracotta" index={6} icon={Coins} value={commission || "—"} label={tr("Commission")} sub={tr("On confirmed orders · {{n}}%", { n: me.partner.commissionPercent ?? 0 })} progress={0} />
+        {reseller ? (
+          <StatCard variant="ledger" palette="terracotta" index={6} icon={Coins} value={`${me.rates.discountPercent}%`} label={tr("Your discount")} sub={tr("Off Spica's list price on every order")} progress={0} />
+        ) : (
+          <StatCard variant="ledger" palette="terracotta" index={6} icon={Coins} value={commission || "—"} label={tr("Commission")} sub={tr("On confirmed orders · {{n}}%", { n: me.partner.commissionPercent ?? 0 })} progress={0} />
+        )}
         <StatCard variant="ledger" palette="terracotta" index={7} icon={ClipboardCheck} value={paidAssigned} label={tr("Paid licences assigned")} sub={tr("of {{a}} allocated · {{o}} on confirmed orders", { a: paidAllocated, o: paidOrdered })} progress={paidAllocated ? paidAssigned / paidAllocated : 0} />
       </div>
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
@@ -147,14 +161,14 @@ export function PartnerDashboard() {
       <p className="text-xs text-muted flex items-center gap-1.5">
         <Users size={13} /> {tr("You see learners' names and licence status only. Scores and reports stay with each organisation.")}{" "}
         <a href="/legal/privacy-channel-partners.html" target="_blank" rel="noreferrer" className="underline">
-          {tr("Privacy Notice for Channel Partners")}
+          {tr("Privacy Notice for Partners")}
         </a>
       </p>
       {adding && (
         <AddOrganisation
           left={d.left}
           endpoint="/partner/organisations"
-          windowEndsAt={d.endsAt}
+          minLicences={minLicences}
           onClose={() => setAdding(false)}
           onDone={(name, emailSent) => {
             setAdding(false);
@@ -168,7 +182,7 @@ export function PartnerDashboard() {
         <GiveLicences
           org={giving}
           left={d.left}
-          windowEndsAt={d.endsAt}
+          minLicences={minLicences}
           endpoint={`/partner/organisations/${giving.id}/licences`}
           onClose={() => setGiving(null)}
           onDone={(n) => {
@@ -186,8 +200,9 @@ const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text
 const label = "text-xs font-semibold text-muted uppercase tracking-wide";
 
 // Shared with the staff console (adding an organisation for a partner).
-export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone }: { left: number; endpoint: string; windowEndsAt?: string | null; onClose: () => void; onDone: (name: string, emailSent: boolean) => void }) {
-  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", gstin: "", demoLicences: String(Math.min(25, left)), validUntil: "" });
+// Demo licences given are valid 7 days, then 3 days' grace (no date to choose).
+export function AddOrganisation({ left, endpoint, minLicences = 1, onClose, onDone }: { left: number; endpoint: string; minLicences?: number; onClose: () => void; onDone: (name: string, emailSent: boolean) => void }) {
+  const [f, setF] = useState({ name: "", category: "university" as "university" | "company", adminFullName: "", adminEmail: "", gstin: "", demoLicences: String(Math.min(Math.max(25, minLicences), left)) });
   const [more, setMore] = useState(false);
   const [x, setX] = useState({ city: "", state: "", country: "India", address: "", postalCode: "", website: "", phone: "", expectedLearners: "", adminPhone: "" });
   const setD = (k: keyof typeof x) => (e: { target: { value: string } }) => setX({ ...x, [k]: e.target.value });
@@ -202,6 +217,7 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
     if (!/^\S+@\S+\.\S+$/.test(f.adminEmail.trim())) return setErr(tr("Enter a valid email address."));
     if (x.city.trim().length < 2 || x.state.trim().length < 2 || x.country.trim().length < 2) return setErr(tr("Enter the city, state and country."));
     if (n < 0 || n > left) return setErr(tr("You can give up to {{n}} licences.", { n: left }));
+    if (n > 0 && n < minLicences) return setErr(tr("Give at least {{n}} licences to each organisation.", { n: minLicences }));
     setBusy(true);
     try {
       const details = Object.fromEntries(
@@ -211,7 +227,7 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
       );
       const r = await api<{ emailSent: boolean }>(
         endpoint,
-        json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), ...(f.gstin ? { gstin: f.gstin } : {}), demoLicences: n, validUntil: f.validUntil || null, details, confirmDuplicate }),
+        json({ name: f.name.trim(), category: f.category, adminFullName: f.adminFullName.trim(), adminEmail: f.adminEmail.trim(), ...(f.gstin ? { gstin: f.gstin } : {}), demoLicences: n, details, confirmDuplicate }),
       );
       onDone(f.name.trim(), r.emailSent);
     } catch (e) {
@@ -226,11 +242,13 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
           ? tr("This admin email already has a Spica account. Use a different email.")
           : m.includes("not_enough_licences")
             ? tr("You don't have that many licences left.")
-            : m.includes("demo_window_not_open")
-              ? tr("Your demo window isn't open.")
-              : m.includes("invalid_valid_until")
-                ? tr("Choose a date from tomorrow up to the end of your demo window.")
-                : tr("Could not add the organisation. Try again."),
+            : m.includes("partnership_not_active") || m.includes("demo_window_not_open")
+              ? tr("Your partnership isn't running, so you can't add organisations.")
+              : m.includes("below_min_licences")
+                ? tr("Give at least {{n}} licences to each organisation.", { n: minLicences })
+                : m.includes("agreement_not_signed")
+                  ? tr("Sign your partnership agreement first.")
+                  : tr("Could not add the organisation. Try again."),
       );
       setBusy(false);
     }
@@ -277,9 +295,8 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Demo licences to give")}</span>
             <input className={input} type="number" min={0} max={left} value={f.demoLicences} onChange={(e) => setF({ ...f, demoLicences: e.target.value })} />
-            <span className="text-xs text-muted">{tr("{{n}} left. Each learner gets 7 days from when the licence is assigned.", { n: left })}</span>
+            <span className="text-xs text-muted">{tr("{{n}} left; at least {{m}}. Valid 7 days from today, then 3 days' grace. Each learner gets 7 days.", { n: left, m: minLicences })}</span>
           </label>
-          <ValidUntil value={f.validUntil} onChange={(v) => setF({ ...f, validUntil: v })} windowEndsAt={windowEndsAt} />
         </div>
         <button type="button" className="self-start text-sm font-semibold text-navy cursor-pointer" onClick={() => setMore(!more)}>
           {more ? "− " : "+ "}
@@ -337,20 +354,20 @@ export function AddOrganisation({ left, endpoint, windowEndsAt, onClose, onDone 
   );
 }
 
-export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDone }: { org: PartnerOrg; left: number; endpoint: string; windowEndsAt?: string | null; onClose: () => void; onDone: (n: number) => void }) {
-  const [n, setN] = useState(String(Math.min(10, left)));
-  const [validUntil, setValidUntil] = useState("");
+export function GiveLicences({ org, left, endpoint, minLicences = 1, onClose, onDone }: { org: PartnerOrg; left: number; endpoint: string; minLicences?: number; onClose: () => void; onDone: (n: number) => void }) {
+  const [n, setN] = useState(String(Math.min(Math.max(10, minLicences), left)));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const submit = async () => {
     const v = Math.round(Number(n) || 0);
-    if (v < 1 || v > left) return setErr(tr("You can give between 1 and {{n}} licences.", { n: left }));
+    if (v < minLicences || v > left) return setErr(tr("You can give between {{a}} and {{n}} licences.", { a: minLicences, n: left }));
     setBusy(true);
     try {
-      await api(endpoint, json({ licences: v, validUntil: validUntil || null }));
+      await api(endpoint, json({ licences: v }));
       onDone(v);
     } catch (e) {
-      setErr(String((e as Error).message ?? "").includes("invalid_valid_until") ? tr("Choose a date from tomorrow up to the end of your demo window.") : tr("Could not give the licences. Try again."));
+      const m = String((e as Error).message ?? "");
+      setErr(m.includes("below_min_licences") ? tr("Give at least {{n}} licences to each organisation.", { n: minLicences }) : m.includes("partnership_not_active") ? tr("Your partnership isn't running, so you can't give licences.") : tr("Could not give the licences. Try again."));
       setBusy(false);
     }
   };
@@ -399,7 +416,7 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
               <ul className="flex flex-col gap-0.5 max-h-28 overflow-y-auto">
                 {(org.allocations ?? []).map((a, i) => (
                   <li key={i} className="text-muted">
-                    {a.validUntil ? tr("{{n}} given {{g}} · valid until {{d}}", { n: a.licences, g: day(a.givenAt), d: day(a.validUntil) }) : tr("{{n}} given {{g}}", { n: a.licences, g: day(a.givenAt) })}
+                    {a.validUntil ? tr("{{n}} given {{g}} · use by {{d}}, grace to {{e}}", { n: a.licences, g: day(a.givenAt), d: day(a.validUntil), e: day(a.graceUntil ?? a.validUntil) }) : tr("{{n}} given {{g}}", { n: a.licences, g: day(a.givenAt) })}
                   </li>
                 ))}
               </ul>
@@ -413,15 +430,18 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
             <span className={label}>{tr("Licences to add")}</span>
             <input className={input} type="number" min={1} max={left} value={n} onChange={(e) => setN(e.target.value)} />
             <span className="flex flex-wrap gap-2 mt-1">
-              {[5, 10, 25, 50, 100].filter((q) => q <= left).map((q) => (
+              {[5, 10, 25, 50, 100].filter((q) => q <= left && q >= minLicences).map((q) => (
                 <button key={q} type="button" className={`px-3 py-1 rounded-pill border text-xs font-semibold cursor-pointer ${add === q ? "bg-navy text-white border-navy" : "border-rule text-ink"}`} onClick={() => setN(String(q))}>
                   {q}
                 </button>
               ))}
             </span>
-            <span className="text-xs text-muted">{tr("You have {{left}} left to give.", { left })}</span>
+            <span className="text-xs text-muted">{tr("You have {{left}} left to give; at least {{m}} at a time.", { left, m: minLicences })}</span>
           </label>
-          <ValidUntil value={validUntil} onChange={setValidUntil} windowEndsAt={windowEndsAt} />
+          <div className="flex flex-col gap-1 text-sm">
+            <span className={label}>{tr("How long they last")}</span>
+            <p>{tr("Valid for 7 days from today, then 3 days' grace. Licences not given to learners by then expire.")}</p>
+          </div>
         </div>
 
         {add > 0 && add <= left && (
@@ -438,21 +458,5 @@ export function GiveLicences({ org, left, endpoint, windowEndsAt, onClose, onDon
         </div>
       </div>
     </DetailModal>
-  );
-}
-
-// Optional "give them out by" date for demo licences given to an organisation:
-// from tomorrow, at the latest the end of the partner's demo window.
-function ValidUntil({ value, onChange, windowEndsAt }: { value: string; onChange: (v: string) => void; windowEndsAt?: string | null }) {
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const max = windowEndsAt ? new Date(windowEndsAt).toISOString().slice(0, 10) : undefined;
-  return (
-    <label className="flex flex-col gap-1">
-      <span className={label}>{tr("Valid until (optional)")}</span>
-      <input className={input} type="date" min={tomorrow} max={max} value={value} onChange={(e) => onChange(e.target.value)} />
-      <span className="text-xs text-muted">
-        {windowEndsAt ? tr("Learners must get them by this date. Empty: until your demo window ends on {{d}}.", { d: day(windowEndsAt) }) : tr("Learners must get them by this date.")}
-      </span>
-    </label>
   );
 }

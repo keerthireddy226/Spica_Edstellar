@@ -34,8 +34,15 @@ async function order(orderId: string) {
   return o;
 }
 
-// Org Admins of every organisation on the order.
+// The Reseller behind an order, if it is one: Resellers are billed themselves.
+async function resellerOf(orderId: string) {
+  return (await pool.query(`SELECT cp.* FROM partner_orders o JOIN channel_partners cp ON cp.id = o.partner_id WHERE o.id = $1 AND cp.partner_type = 'reseller'`, [orderId])).rows[0] as Record<string, any> | undefined;
+}
+
+// Org Admins of every organisation on the order (the Reseller for its orders).
 async function orderOrgAdmins(orderId: string): Promise<string[]> {
+  const reseller = await resellerOf(orderId);
+  if (reseller) return [reseller.user_id];
   const t = await pool.query(`SELECT tenant_id FROM partner_order_organisations WHERE order_id = $1`, [orderId]);
   const ids: string[] = [];
   for (const r of t.rows) ids.push(...(await orgAdminIds(r.tenant_id)));
@@ -59,6 +66,8 @@ async function tellOrganisations(o: { id: string; order_number: string }, billTo
 export async function suggestedBillTo(orderId: string): Promise<BillTo> {
   const o = await order(orderId);
   if (o.bill_to) return o.bill_to;
+  const reseller = await resellerOf(orderId);
+  if (reseller) return { name: reseller.full_name, attention: null, address: null, email: reseller.email, gstin: o.gstin ?? null, country: o.in_india ? "IN" : null };
   const t = (
     await pool.query(
       `SELECT t.name, t.tax_id, u.email, u.first_name, u.last_name FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id
@@ -165,7 +174,8 @@ export async function orderDocument(orderId: string, kind: "proforma" | "invoice
   if (!o) return null;
   let allowed = viewer.staffOk;
   if (!allowed && viewer.role === "channel_partner") allowed = !!(await pool.query(`SELECT 1 FROM channel_partners WHERE id = $1 AND user_id = $2`, [o.partner_id, viewer.id])).rowCount;
-  if (!allowed && viewer.role === "org_admin" && viewer.tenantId) allowed = !!(await pool.query(`SELECT 1 FROM partner_order_organisations WHERE order_id = $1 AND tenant_id = $2`, [orderId, viewer.tenantId])).rowCount;
+  if (!allowed && viewer.role === "org_admin" && viewer.tenantId && !(await resellerOf(orderId)))
+    allowed = !!(await pool.query(`SELECT 1 FROM partner_order_organisations WHERE order_id = $1 AND tenant_id = $2`, [orderId, viewer.tenantId])).rowCount;
   if (!allowed) return null;
   const number = kind === "proforma" ? o.proforma_number : o.invoice_number;
   if (!number) return { available: false as const };

@@ -18,6 +18,30 @@ import { ASSESSMENT_BANDS } from "../recruitment/service.js";
 import { PAYMENT_CONFIG } from "../payments/providers.js";
 import { PartnerError } from "./organisations.js";
 import { allocationSummary } from "./allocations.js";
+import { assertPartnerCanAct, bringsOrganisations } from "./partnership.js";
+
+// A Reseller buys at list price less its discount (set by Spica staff).
+export async function partnerDiscount(partnerId: string | null): Promise<number> {
+  if (!partnerId) return 0;
+  const p = (await pool.query(`SELECT partner_type, discount_percent FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
+  return p?.partner_type === "reseller" ? Number(p.discount_percent ?? 0) : 0;
+}
+
+// Partner rules before an order is saved: the partnership is running and
+// signed, the type places orders, and every organisation gets at least the
+// minimum licences (Full access licences across the order).
+async function partnerOrderRules(partnerId: string, input: OrderInput, actor: Actor) {
+  if (!isStaff(actor)) {
+    const p = await assertPartnerCanAct(partnerId, "organisations");
+    const min = Number(p.min_licences_per_org ?? 1);
+    const licences = input.lines.filter((l) => l.kind === "full_access").reduce((n, l) => n + l.quantity, 0);
+    const orgs = new Set(input.organisationIds).size;
+    if (licences > 0 && licences < min * orgs) throw new PartnerError("below_min_licences", 400, { min, organisations: orgs });
+    return;
+  }
+  const p = (await pool.query(`SELECT partner_type FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
+  if (p && !bringsOrganisations(p.partner_type)) throw new PartnerError("not_for_partner_type", 403);
+}
 
 export const ORDER_STATUSES = ["draft", "submitted", "proforma_sent", "payment_received", "confirmed", "allocated", "active", "expired", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -54,7 +78,8 @@ const band = (bands: readonly { minQuantity: number; unitPriceCents: number }[],
 // USD cents to the order currency's minor unit (INR rounded to whole rupees).
 const toCurrency = (usdCents: number, currency: "INR" | "USD") => (currency === "INR" ? Math.round((usdCents * PAYMENT_CONFIG.inrPerUsd) / 100) * 100 : usdCents);
 
-export async function quoteOrder(input: OrderInput, opts: { allowOverride: boolean }) {
+export async function quoteOrder(input: OrderInput, opts: { allowOverride: boolean; discountPercent?: number }) {
+  const discount = Math.min(90, Math.max(0, opts.discountPercent ?? 0));
   const currency: "INR" | "USD" = input.inIndia ? "INR" : "USD";
   if (!input.lines.length) throw new PartnerError("no_lines");
   const cats = input.organisationIds.length
@@ -82,15 +107,16 @@ export async function quoteOrder(input: OrderInput, opts: { allowOverride: boole
         ? toCurrency(Math.round((band(VOLUME_BANDS, l.quantity) * (100 - (education ? EDUCATION_DISCOUNT_PERCENT : 0))) / 100), currency)
         : creditUnit;
     const override = opts.allowOverride && l.unitAmount != null && l.unitAmount >= 0 && l.unitAmount !== listUnit;
-    const unit = override ? Math.round(l.unitAmount!) : listUnit;
+    // Reseller price: list less the reseller's discount (an override wins).
+    const unit = override ? Math.round(l.unitAmount!) : discount ? Math.round((listUnit * (100 - discount)) / 100) : listUnit;
     const amount = l.kind === "full_access" ? unit * l.quantity * input.licenceMonths : unit * (l.credits ?? 0);
-    return { kind: l.kind, productId: l.productId ?? null, name: l.name, level: l.level ?? null, quantity: l.quantity, credits: l.credits, unitAmount: unit, listUnitAmount: listUnit, amount, priceOverridden: override };
+    return { kind: l.kind, productId: l.productId ?? null, name: l.name, level: l.level ?? null, quantity: l.quantity, credits: l.credits, unitAmount: unit, listUnitAmount: listUnit, amount, priceOverridden: override, discountPercent: override ? 0 : discount };
   });
   const subtotal = lines.reduce((n, l) => n + l.amount, 0);
   const taxRate = input.inIndia ? PAYMENT_CONFIG.gstRate : 0;
   const taxAmount = Math.round((subtotal * taxRate) / 100);
   const licences = lines.filter((l) => l.kind === "full_access").reduce((n, l) => n + l.quantity, 0);
-  return { currency, lines, subtotal, taxRate, taxAmount, total: subtotal + taxAmount, licences, credits: totalCredits, education };
+  return { currency, lines, subtotal, taxRate, taxAmount, total: subtotal + taxAmount, licences, credits: totalCredits, education, discountPercent: discount };
 }
 
 function checkInput(input: OrderInput, actor: Actor) {
@@ -138,7 +164,9 @@ async function writeOrder(client: { query: typeof pool.query }, orderId: string,
 
 async function commissionFor(partnerId: string | null) {
   if (!partnerId) return 0;
-  return Number((await pool.query(`SELECT commission_percent FROM channel_partners WHERE id = $1`, [partnerId])).rows[0]?.commission_percent ?? 0);
+  const p = (await pool.query(`SELECT partner_type, commission_percent FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
+  // Resellers earn their margin, not a commission.
+  return p?.partner_type === "reseller" ? 0 : Number(p?.commission_percent ?? 0);
 }
 
 export async function createOrder(args: { actor: Actor; partnerId: string | null; input: OrderInput; submit: boolean }) {
@@ -147,9 +175,10 @@ export async function createOrder(args: { actor: Actor; partnerId: string | null
     const p = (await pool.query(`SELECT deactivated_at FROM channel_partners WHERE id = $1`, [args.partnerId])).rows[0];
     if (!p) throw new PartnerError("partner_not_found", 404);
     if (p.deactivated_at) throw new PartnerError("partner_deactivated", 409);
+    await partnerOrderRules(args.partnerId, args.input, args.actor);
   }
   await checkOrganisations(args.partnerId, args.input.organisationIds);
-  const q = await quoteOrder(args.input, { allowOverride: isStaff(args.actor) });
+  const q = await quoteOrder(args.input, { allowOverride: isStaff(args.actor), discountPercent: await partnerDiscount(args.partnerId) });
   const commission = await commissionFor(args.partnerId);
   const client = await pool.connect();
   let orderId: string, number: string;
@@ -181,8 +210,9 @@ export async function updateOrder(args: { actor: Actor; orderId: string; partner
   const o = await loadOrder(args.orderId, args.partnerId);
   if (!(isStaff(args.actor) ? STAFF_EDITABLE : ["draft"]).includes(o.status)) throw new PartnerError("order_locked", 409);
   checkInput(args.input, args.actor);
+  if (o.partner_id) await partnerOrderRules(o.partner_id, args.input, args.actor);
   await checkOrganisations(o.partner_id, args.input.organisationIds);
-  const q = await quoteOrder(args.input, { allowOverride: isStaff(args.actor) });
+  const q = await quoteOrder(args.input, { allowOverride: isStaff(args.actor), discountPercent: await partnerDiscount(o.partner_id) });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -241,6 +271,8 @@ export async function changeStatus(args: {
   const move = (NEXT[o.status] ?? []).find((m) => m.to === args.to && m.who.includes(who));
   if (!move) throw new PartnerError("status_change_not_allowed", 409, { status: o.status });
   if (args.to === "cancelled" && staff && !args.note?.trim()) throw new PartnerError("reason_required");
+  // A partner submits only while the partnership runs and the agreement is signed.
+  if (who === "partner" && args.to === "submitted" && o.partner_id) await assertPartnerCanAct(o.partner_id, "organisations");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

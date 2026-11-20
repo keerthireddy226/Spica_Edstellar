@@ -13,6 +13,8 @@ import { tr } from "@/i18n/tr";
 // test / a real test — never scores) and orders.
 interface Me {
   demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended"; endsAt: string | null };
+  partnership: { readOnly: boolean };
+  minimums: { licencesPerOrg: number } | null;
 }
 interface Detail {
   organisation: PartnerOrg;
@@ -246,7 +248,10 @@ export function PartnerOrganisations() {
   useEffect(load, []);
   if (failed) return <PageError message={tr("Could not load your organisations.")} onRetry={load} />;
   if (!me || !orgs) return <PageLoading />;
-  const canGive = me.demo.status === "active" && me.demo.left > 0;
+  // Adding organisations needs the partnership running; giving demo licences also needs some left.
+  const running = me.demo.status === "active" && !me.partnership.readOnly;
+  const canGive = running && me.demo.left > 0;
+  const minLicences = me.minimums?.licencesPerOrg ?? 1;
   const shown = orgs.filter((o) => !q.trim() || `${o.name} ${o.admin.name} ${o.admin.email}`.toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -254,7 +259,7 @@ export function PartnerOrganisations() {
         title={tr("Organisations")}
         subtitle={tr("Every university, college and company you onboarded. Open one to see its admin, learners and orders.")}
         actions={
-          <Button onClick={() => setAdding(true)} disabled={!canGive} className="flex items-center gap-1.5">
+          <Button onClick={() => setAdding(true)} disabled={!running} className="flex items-center gap-1.5">
             <Plus size={16} /> {tr("Add an organisation")}
           </Button>
         }
@@ -289,7 +294,7 @@ export function PartnerOrganisations() {
         <AddOrganisation
           left={me.demo.left}
           endpoint="/partner/organisations"
-          windowEndsAt={me.demo.endsAt}
+          minLicences={minLicences}
           onClose={() => setAdding(false)}
           onDone={(name, emailSent) => {
             setAdding(false);
@@ -302,7 +307,7 @@ export function PartnerOrganisations() {
         <GiveLicences
           org={giving}
           left={me.demo.left}
-          windowEndsAt={me.demo.endsAt}
+          minLicences={minLicences}
           endpoint={`/partner/organisations/${giving.id}/licences`}
           onClose={() => setGiving(null)}
           onDone={(n) => {

@@ -8,7 +8,7 @@ import { requirePermission, staffPermissions, requireStaff, isSuperAdmin } from 
 import { createPaymentLink, orderDocument, recordPayment, sendProforma, suggestedBillTo } from "./financeOrders.js";
 import { allocateOrder, changeOrderEnd } from "./allocations.js";
 import { commissionRows, markCommissionPaid, partnerPerformance } from "./reports.js";
-import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
+import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, partnerDiscount, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
 import { sendPartnerError } from "./portalRoutes.js";
 
 export const orderInputSchema = z.object({
@@ -64,9 +64,10 @@ partnerOrdersRouter.get("/products", async (req: AuthedRequest, res, next) => {
   orderProducts().then((products) => res.json({ products }), next);
 });
 partnerOrdersRouter.post("/quote", async (req: AuthedRequest, res, next) => {
-  if (!(await myPartnerId(req, res))) return;
+  const pid = await myPartnerId(req, res);
+  if (!pid) return;
   try {
-    res.json(await quoteOrder(orderInputSchema.parse(req.body) as OrderInput, { allowOverride: false }));
+    res.json(await quoteOrder(orderInputSchema.parse(req.body) as OrderInput, { allowOverride: false, discountPercent: await partnerDiscount(pid) }));
   } catch (err) {
     fail(err, res, next);
   }
@@ -137,7 +138,8 @@ staffOrdersRouter.get("/organisations", async (req: AuthedRequest, res, next) =>
 staffOrdersRouter.post("/quote", async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
-    res.json(await quoteOrder(orderInputSchema.parse(req.body) as OrderInput, { allowOverride: true }));
+    const pid = typeof req.body?.partnerId === "string" && /^[0-9a-f-]{36}$/.test(req.body.partnerId) ? req.body.partnerId : null;
+    res.json(await quoteOrder(orderInputSchema.parse(req.body) as OrderInput, { allowOverride: true, discountPercent: await partnerDiscount(pid) }));
   } catch (err) {
     fail(err, res, next);
   }
@@ -289,7 +291,10 @@ orgOrdersRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
          (SELECT coalesce(sum(a.credits), 0)::int FROM partner_order_allocations a WHERE a.order_id = o.id AND a.tenant_id = x.tenant_id) AS my_credits,
          (SELECT max(a.grace_ends_at) FROM partner_order_allocations a WHERE a.order_id = o.id AND a.tenant_id = x.tenant_id) AS my_grace_ends
        FROM partner_order_organisations x JOIN partner_orders o ON o.id = x.order_id
-       WHERE x.tenant_id = $1 AND o.status <> 'draft' ORDER BY o.created_at DESC`,
+       WHERE x.tenant_id = $1 AND o.status <> 'draft'
+         -- A Reseller buys and invoices its customers itself: they never see its order with Spica.
+         AND NOT EXISTS (SELECT 1 FROM channel_partners cp WHERE cp.id = o.partner_id AND cp.partner_type = 'reseller')
+       ORDER BY o.created_at DESC`,
       [req.user!.tenantId],
     );
     res.json({

@@ -155,7 +155,7 @@ export function useAuthState() {
   // Deliberately doesn't set auth state — signup ends with "check your email,"
   // not an automatic login (the backend doesn't create a session either).
   const signup = useCallback(
-    async (email: string, password: string, firstName: string, lastName: string, extra: { acceptTerms?: boolean; marketingConsent?: boolean } = {}) => {
+    async (email: string, password: string, firstName: string, lastName: string, extra: { acceptTerms?: boolean; marketingConsent?: boolean; referralCode?: string } = {}) => {
       await api<{ email: string }>("/auth/signup", {
         method: "POST",
         body: JSON.stringify({ email, password, firstName, lastName, acceptPrivacy: true, adultConfirmed: true, ...extra }),

@@ -1,44 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
 import { OrdersPanel } from "@/pages/partner/PartnerOrders";
-import { CalendarClock, Gift, Handshake, KeyRound, Mail, Plus, Power, Building2, History, Receipt } from "lucide-react";
+import { CalendarClock, Gift, Handshake, KeyRound, Mail, Plus, Power, Building2, History, Receipt, FileSignature, Coins, Megaphone } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { Badge, DetailModal, InfoGrid, ModalEmpty, ModalSection } from "@/components/DetailModal";
 import {
+  bringsOrganisations,
   createChannelPartner,
   deactivatePartner,
-  endDemo,
-  extendDemo,
   getChannelPartner,
   listChannelPartners,
+  markEarningPaid,
+  partnerEarnings,
+  partnerLeads,
+  PARTNER_TYPES,
   reactivatePartner,
+  renewPartnership,
   resendPartnerInvite,
-  startDemo,
+  startPartnership,
+  terminatePartnership,
   updateChannelPartner,
+  updatePartnerLead,
+  voidEarning,
   type ChannelPartner,
   type ChannelPartnerDetail,
+  type EarningsResponse,
+  type PartnerLead,
+  type PartnerType,
 } from "@/api/channelPartners";
+import { fmtDay, leadStatusLabel, minorMoney, PartnershipPill, typeBlurb, typeLabel } from "@/components/partner/partnerUi";
 import { tr } from "@/i18n/tr";
+import { api } from "@/lib/api";
 import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/PartnerDashboard";
 
-// Channel Partners (stage 1): register partners, their code, commission and
-// free demo allocation, and the demo window. Partners can't sign themselves up.
+// Partners (19 Nov 2026): Resellers, Channel Partners, Affiliates and Referral
+// Partners. Spica registers them (they can't sign themselves up), fixes their
+// minimums and rates, and runs the 3-month partnership: start, renew (blocked
+// below the organisation minimum unless a reason is given) and terminate.
 const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
-const dateInput = (d: Date) => d.toISOString().slice(0, 10);
-const plusMonths = (n: number) => {
-  const d = new Date();
-  d.setMonth(d.getMonth() + n);
-  return d;
-};
-const endOfDayIso = (v: string) => new Date(`${v}T23:59:59`).toISOString();
-const daysLeft = (s: string | null) => (s ? Math.ceil((new Date(s).getTime() - Date.now()) / 86400000) : null);
-
-function DemoPill({ p }: { p: ChannelPartner }) {
-  if (p.demoStatus === "not_started") return <StatusPill tone="muted">{tr("Demo not started")}</StatusPill>;
-  if (p.demoStatus === "ended") return <StatusPill tone="error">{tr("Demo ended")}</StatusPill>;
-  const d = daysLeft(p.demoEndsAt);
-  return <StatusPill tone={d !== null && d <= 14 ? "warning" : "success"}>{tr("Demo active · {{n}} days left", { n: d ?? 0 })}</StatusPill>;
-}
+const rateText = (p: ChannelPartner) =>
+  p.partnerType === "reseller"
+    ? tr("{{n}}% discount", { n: p.discountPercent })
+    : p.partnerType === "referral"
+      ? tr("{{fee}} per referral", { fee: minorMoney(p.referralFee, p.referralFeeCurrency) })
+      : tr("{{n}}% commission", { n: p.commissionPercent });
 
 const actionLabel = (a: string) =>
   ({
@@ -46,9 +51,16 @@ const actionLabel = (a: string) =>
     "channel_partner.updated": tr("Details changed"),
     "channel_partner.own_licence_on": tr("Own demo licence switched on"),
     "channel_partner.own_licence_off": tr("Own demo licence switched off"),
-    "channel_partner.demo_started": tr("Demo licences made available"),
-    "channel_partner.demo_extended": tr("Demo window changed"),
-    "channel_partner.demo_ended": tr("Demo window ended"),
+    "channel_partner.demo_started": tr("Partnership started"),
+    "channel_partner.demo_extended": tr("Partnership end changed"),
+    "channel_partner.demo_ended": tr("Partnership ended"),
+    "channel_partner.renewed": tr("Partnership renewed"),
+    "channel_partner.terminated": tr("Partnership terminated"),
+    "channel_partner.agreement_signed": tr("Agreement signed"),
+    "channel_partner.lead_submitted": tr("Referral submitted"),
+    "channel_partner.lead_updated": tr("Referral updated"),
+    "channel_partner.earning_paid": tr("Earning paid"),
+    "channel_partner.earning_voided": tr("Earning cancelled"),
     "channel_partner.deactivated": tr("Partner deactivated"),
     "channel_partner.reactivated": tr("Partner reactivated"),
     "channel_partner.invite_resent": tr("Invitation sent again"),
@@ -60,6 +72,7 @@ export function ChannelPartners() {
   const [rows, setRows] = useState<ChannelPartner[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [q, setQ] = useState("");
+  const [typeFilter, setTypeFilter] = useState<PartnerType | "all">("all");
   const [creating, setCreating] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -72,20 +85,21 @@ export function ChannelPartners() {
   useEffect(load, []);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return (rows ?? []).filter((p) => !s || `${p.fullName} ${p.email} ${p.code}`.toLowerCase().includes(s));
-  }, [rows, q]);
-  if (failed) return <PageError message={tr("Could not load Channel Partners.")} onRetry={load} />;
+    return (rows ?? []).filter((p) => (typeFilter === "all" || p.partnerType === typeFilter) && (!s || `${p.fullName} ${p.email} ${p.code}`.toLowerCase().includes(s)));
+  }, [rows, q, typeFilter]);
+  if (failed) return <PageError message={tr("Could not load partners.")} onRetry={load} />;
   if (!rows) return <PageLoading />;
   const active = rows.filter((p) => p.active);
   const totalDemo = active.reduce((n, p) => n + p.demoLicences, 0);
-  const runningDemos = active.filter((p) => p.demoStatus === "active").length;
+  const running = active.filter((p) => p.status === "active" || p.status === "expiring").length;
+  const unsigned = active.filter((p) => (p.status === "active" || p.status === "expiring") && !p.agreement).length;
   const orgs = rows.reduce((n, p) => n + p.organisations, 0);
 
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
-        title={tr("Channel Partners")}
-        subtitle={tr("Partners who bring universities, colleges and companies to Spica. Register a partner, set their free demo licences and window, and track what they bring.")}
+        title={tr("Partners")}
+        subtitle={tr("Resellers, Channel Partners, Affiliates and Referral Partners. Register a partner, fix their minimums and rates, and run their 3-month partnership.")}
         actions={
           <Button onClick={() => setCreating(true)} className="flex items-center gap-1.5">
             <Plus size={16} /> {tr("Register a partner")}
@@ -100,24 +114,35 @@ export function ChannelPartners() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="ledger" palette="terracotta" index={0} icon={Handshake} value={active.length} label={tr("Active partners")} sub={tr("{{n}} registered in total", { n: rows.length })} progress={rows.length ? active.length / rows.length : 0} />
         <StatCard variant="ledger" palette="terracotta" index={1} icon={Gift} value={totalDemo} label={tr("Free demo licences")} sub={tr("Across active partners")} progress={0.5} />
-        <StatCard variant="ledger" palette="terracotta" index={2} icon={CalendarClock} value={runningDemos} label={tr("Demo windows open")} sub={tr("Licences available to give out")} progress={active.length ? runningDemos / active.length : 0} />
+        <StatCard variant="ledger" palette="terracotta" index={2} icon={CalendarClock} value={running} label={tr("Partnerships running")} sub={unsigned ? tr("{{n}} not signed yet", { n: unsigned }) : tr("All agreements signed")} progress={active.length ? running / active.length : 0} />
         <StatCard variant="ledger" palette="terracotta" index={3} icon={Building2} value={orgs} label={tr("Organisations brought")} sub={tr("By all partners")} progress={0.3} />
       </div>
 
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
         <div className="p-4 border-b border-rule flex flex-wrap gap-3 items-center">
           <SearchBox value={q} onChange={setQ} placeholder={tr("Search by name, email or code")} />
+          <div className="flex flex-wrap gap-1.5">
+            {(["all", ...PARTNER_TYPES] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold border cursor-pointer ${typeFilter === t ? "bg-navy text-white border-navy" : "border-rule text-muted hover:text-ink"}`}
+              >
+                {t === "all" ? tr("All types") : typeLabel(t)} ({t === "all" ? rows.length : rows.filter((p) => p.partnerType === t).length})
+              </button>
+            ))}
+          </div>
         </div>
         {shown.length === 0 ? (
           <div className="p-6">
-            <EmptyNote>{rows.length ? tr("No partner matches your search.") : tr("No Channel Partners yet. Register the first one.")}</EmptyNote>
+            <EmptyNote>{rows.length ? tr("No partner matches your search.") : tr("No partners yet. Register the first one.")}</EmptyNote>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-warm text-xs text-muted uppercase tracking-wide">
                 <tr>
-                  {[tr("Partner"), tr("Code"), tr("Demo licences"), tr("Demo window"), tr("Own licence"), tr("Commission"), tr("Organisations"), tr("Status")].map((h) => (
+                  {[tr("Partner"), tr("Type"), tr("Code"), tr("Partnership"), tr("Agreement"), tr("Rate"), tr("Organisations"), tr("Account")].map((h) => (
                     <th key={h} className="text-left font-semibold px-4 py-2.5 whitespace-nowrap">
                       {h}
                     </th>
@@ -131,15 +156,23 @@ export function ChannelPartners() {
                       <p className="font-semibold text-ink">{p.fullName}</p>
                       <p className="text-xs text-muted">{p.email}</p>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap">{typeLabel(p.partnerType)}</td>
                     <td className="px-4 py-3 font-mono text-xs">{p.code}</td>
-                    <td className="px-4 py-3">{tr("{{given}} of {{total}} given", { given: p.demoLicencesGiven, total: p.demoLicences })}</td>
                     <td className="px-4 py-3">
-                      <DemoPill p={p} />
-                      {p.demoEndsAt && <p className="text-xs text-muted mt-1">{tr("Until {{d}}", { d: day(p.demoEndedAt ?? p.demoEndsAt) })}</p>}
+                      <PartnershipPill status={p.status} endsAt={p.endsAt} />
+                      {p.startsAt && <p className="text-xs text-muted mt-1 whitespace-nowrap">{`${fmtDay(p.startsAt)} – ${fmtDay(p.endsAt)}`}</p>}
                     </td>
-                    <td className="px-4 py-3">{p.ownLicenceEnabled ? <StatusPill tone="success">{tr("On")}</StatusPill> : <StatusPill tone="muted">{tr("Off")}</StatusPill>}</td>
-                    <td className="px-4 py-3">{p.commissionPercent}%</td>
-                    <td className="px-4 py-3">{p.organisations}</td>
+                    <td className="px-4 py-3">{p.agreement ? <StatusPill tone="success">{tr("Signed {{d}}", { d: fmtDay(p.agreement.signedAt) })}</StatusPill> : <StatusPill tone="warning">{tr("Not signed")}</StatusPill>}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">{rateText(p)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {bringsOrganisations(p.partnerType) ? (
+                        <span className={p.activeOrganisations < p.minOrganisations ? "text-error font-semibold" : ""}>{tr("{{n}} of {{min}}", { n: p.activeOrganisations, min: p.minOrganisations })}</span>
+                      ) : p.partnerType === "referral" ? (
+                        tr("{{n}} referrals", { n: p.leads })
+                      ) : (
+                        tr("{{n}} sign-ups", { n: p.referredPeople })
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {!p.active ? <StatusPill tone="error">{tr("Deactivated")}</StatusPill> : p.invitePending ? <StatusPill tone="warning">{tr("Invite pending")}</StatusPill> : <StatusPill tone="success">{tr("Active")}</StatusPill>}
                     </td>
@@ -170,10 +203,26 @@ const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text
 const label = "text-xs font-semibold text-muted uppercase tracking-wide";
 
 function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated: (code: string, emailSent: boolean) => void }) {
-  const [f, setF] = useState({ fullName: "", email: "", commissionPercent: "0", demoLicences: "250", startDemoNow: true, demoEndsAt: dateInput(plusMonths(3)), ownLicenceEnabled: false, notes: "" });
+  const [f, setF] = useState({
+    partnerType: "channel_partner" as PartnerType,
+    fullName: "",
+    email: "",
+    commissionPercent: "0",
+    demoLicences: "250",
+    startDemoNow: true,
+    ownLicenceEnabled: false,
+    notes: "",
+    minOrganisations: "10",
+    minLicencesPerOrg: "1",
+    discountPercent: "0",
+    referralFee: "0",
+    referralFeeCurrency: "INR" as "INR" | "USD",
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value });
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value });
+  const t = f.partnerType;
+  const orgType = bringsOrganisations(t);
   const submit = async () => {
     setErr(null);
     if (f.fullName.trim().length < 2) return setErr(tr("Enter the partner's full name."));
@@ -181,25 +230,45 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
     setBusy(true);
     try {
       const r = await createChannelPartner({
+        partnerType: t,
         fullName: f.fullName.trim(),
         email: f.email.trim(),
         commissionPercent: Number(f.commissionPercent) || 0,
-        demoLicences: Math.max(0, Math.round(Number(f.demoLicences) || 0)),
+        demoLicences: orgType ? Math.max(0, Math.round(Number(f.demoLicences) || 0)) : 0,
         startDemoNow: f.startDemoNow,
-        demoEndsAt: f.startDemoNow ? endOfDayIso(f.demoEndsAt) : undefined,
-        ownLicenceEnabled: f.ownLicenceEnabled,
+        ownLicenceEnabled: orgType && f.ownLicenceEnabled,
         notes: f.notes.trim() || undefined,
+        minOrganisations: Math.max(0, Math.round(Number(f.minOrganisations) || 0)),
+        minLicencesPerOrg: Math.max(1, Math.round(Number(f.minLicencesPerOrg) || 1)),
+        discountPercent: Math.min(90, Math.max(0, Number(f.discountPercent) || 0)),
+        referralFee: Math.max(0, Math.round((Number(f.referralFee) || 0) * 100)),
+        referralFeeCurrency: f.referralFeeCurrency,
       });
       onCreated(r.code, r.emailSent);
     } catch (e) {
       const m = String((e as Error).message ?? "");
-      setErr(m.includes("email_already_registered") ? tr("This email already has a Spica account. Use a different email.") : m.includes("demo_end_in_past") ? tr("The demo end date must be in the future.") : tr("Could not register the partner. Try again."));
+      setErr(m.includes("email_already_registered") ? tr("This email already has a Spica account. Use a different email.") : tr("Could not register the partner. Try again."));
       setBusy(false);
     }
   };
   return (
-    <DetailModal title={tr("Register a Channel Partner")} subtitle={tr("The partner gets an email to set their password. Spica creates their unique code.")} icon={Handshake} onClose={onClose}>
+    <DetailModal title={tr("Register a partner")} subtitle={tr("The partner gets an email to set their password and signs the partnership agreement at first sign-in. Spica creates their unique code.")} icon={Handshake} onClose={onClose}>
       <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <span className={label}>{tr("Partner type")}</span>
+          <div className="grid sm:grid-cols-2 gap-2">
+            {PARTNER_TYPES.map((x) => (
+              <label key={x} className={`flex items-start gap-2.5 rounded-input border p-3 cursor-pointer ${t === x ? "border-navy bg-navy/5" : "border-rule"}`}>
+                <input type="radio" name="ptype" className="mt-1 accent-navy" checked={t === x} onChange={() => setF({ ...f, partnerType: x })} />
+                <span className="text-sm">
+                  <b>{typeLabel(x)}</b>
+                  <br />
+                  <span className="text-muted">{typeBlurb(x)}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Full name")}</span>
@@ -209,38 +278,70 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
             <span className={label}>{tr("Email")}</span>
             <input className={input} type="email" value={f.email} onChange={set("email")} placeholder="name@company.com" />
           </label>
-          <label className="flex flex-col gap-1">
-            <span className={label}>{tr("Free demo licences")}</span>
-            <input className={input} type="number" min={0} value={f.demoLicences} onChange={set("demoLicences")} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={label}>{tr("Commission (%)")}</span>
-            <input className={input} type="number" min={0} max={100} step="0.5" value={f.commissionPercent} onChange={set("commissionPercent")} />
-            <span className="text-xs text-muted">{tr("For paid orders later. Leave at 0 until decided.")}</span>
-          </label>
+          {orgType && (
+            <>
+              <label className="flex flex-col gap-1">
+                <span className={label}>{tr("Minimum organisations")}</span>
+                <input className={input} type="number" min={0} value={f.minOrganisations} onChange={set("minOrganisations")} />
+                <span className="text-xs text-muted">{tr("To onboard in each 3-month period. Renewal is blocked below it unless you give a reason.")}</span>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={label}>{tr("Minimum licences per organisation")}</span>
+                <input className={input} type="number" min={1} value={f.minLicencesPerOrg} onChange={set("minLicencesPerOrg")} />
+                <span className="text-xs text-muted">{tr("The partner can't give or order fewer for one organisation.")}</span>
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className={label}>{tr("Free demo licences")}</span>
+                <input className={input} type="number" min={0} value={f.demoLicences} onChange={set("demoLicences")} />
+              </label>
+            </>
+          )}
+          {(t === "channel_partner" || t === "affiliate") && (
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Commission (%)")}</span>
+              <input className={input} type="number" min={0} max={100} step="0.5" value={f.commissionPercent} onChange={set("commissionPercent")} />
+              <span className="text-xs text-muted">{t === "affiliate" ? tr("Of each paid purchase (before tax) made through their link or code.") : tr("Of each confirmed paid order (before tax). Leave at 0 until decided.")}</span>
+            </label>
+          )}
+          {t === "reseller" && (
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Reseller discount (%)")}</span>
+              <input className={input} type="number" min={0} max={90} step="0.5" value={f.discountPercent} onChange={set("discountPercent")} />
+              <span className="text-xs text-muted">{tr("Off Spica's list price. The reseller sets its own selling price.")}</span>
+            </label>
+          )}
+          {t === "referral" && (
+            <label className="flex flex-col gap-1">
+              <span className={label}>{tr("Referral fee")}</span>
+              <span className="flex gap-2">
+                <select className={`${input} !w-24`} value={f.referralFeeCurrency} onChange={set("referralFeeCurrency")}>
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                </select>
+                <input className={input} type="number" min={0} step="1" value={f.referralFee} onChange={set("referralFee")} />
+              </span>
+              <span className="text-xs text-muted">{tr("Paid once per referred organisation, at its first paid purchase.")}</span>
+            </label>
+          )}
         </div>
         <label className="flex items-start gap-2.5 rounded-input border border-rule p-3 cursor-pointer">
           <input type="checkbox" className="mt-0.5 accent-navy" checked={f.startDemoNow} onChange={set("startDemoNow")} />
           <span className="text-sm">
-            <b>{tr("Make the demo licences available now")}</b>
+            <b>{tr("Start the partnership today")}</b>
             <br />
-            <span className="text-muted">{tr("The demo window starts today. The partner gives out licences until the end date (3 months by default).")}</span>
+            <span className="text-muted">{tr("The partnership lasts 3 months from today. You can renew it for another 3 months.")}</span>
           </span>
         </label>
-        {f.startDemoNow && (
-          <label className="flex flex-col gap-1 max-w-xs">
-            <span className={label}>{tr("Demo window ends")}</span>
-            <input className={input} type="date" min={dateInput(new Date(Date.now() + 86400000))} value={f.demoEndsAt} onChange={set("demoEndsAt")} />
+        {orgType && (
+          <label className="flex items-start gap-2.5 rounded-input border border-rule p-3 cursor-pointer">
+            <input type="checkbox" className="mt-0.5 accent-navy" checked={f.ownLicenceEnabled} onChange={set("ownLicenceEnabled")} />
+            <span className="text-sm">
+              <b>{tr("Give the partner one demo licence of their own")}</b>
+              <br />
+              <span className="text-muted">{tr("For showing Spica in meetings. Separate from the free demo licences. No certificate.")}</span>
+            </span>
           </label>
         )}
-        <label className="flex items-start gap-2.5 rounded-input border border-rule p-3 cursor-pointer">
-          <input type="checkbox" className="mt-0.5 accent-navy" checked={f.ownLicenceEnabled} onChange={set("ownLicenceEnabled")} />
-          <span className="text-sm">
-            <b>{tr("Give the partner one demo licence of their own")}</b>
-            <br />
-            <span className="text-muted">{tr("For showing Spica in meetings. Separate from the free demo licences. No official certificate.")}</span>
-          </span>
-        </label>
         <label className="flex flex-col gap-1">
           <span className={label}>{tr("Notes (only Spica staff see these)")}</span>
           <textarea className={input} rows={2} value={f.notes} onChange={set("notes")} />
@@ -267,16 +368,15 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
   const [ask, setAsk] = useState<{ text: string; label: string; go: () => void } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
-  const [edit, setEdit] = useState<{ fullName: string; demoLicences: string; commissionPercent: string; notes: string } | null>(null);
-  const [endDate, setEndDate] = useState("");
+  const [edit, setEdit] = useState<{ fullName: string; demoLicences: string; commissionPercent: string; notes: string; minOrganisations: string; minLicencesPerOrg: string; discountPercent: string; referralFee: string } | null>(null);
+  const [renewing, setRenewing] = useState(false);
+  const [reason, setReason] = useState("");
+  const [terminating, setTerminating] = useState(false);
   const [adding, setAdding] = useState(false);
   const [giving, setGiving] = useState<PartnerOrg | null>(null);
   const load = () =>
     getChannelPartner(id)
-      .then((r) => {
-        setD(r);
-        setEndDate(dateInput(r.partner.demoEndsAt ? new Date(r.partner.demoEndsAt) : plusMonths(3)));
-      })
+      .then((r) => setD(r))
       .catch(() => setFailed(true));
   useEffect(() => {
     load();
@@ -290,41 +390,64 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
       setMsg({ tone: "success", text: ok });
       await load();
       onChanged();
-    } catch {
-      setMsg({ tone: "error", text: tr("That didn't work. Try again.") });
+    } catch (e) {
+      const m = String((e as Error).message ?? "");
+      setMsg({
+        tone: "error",
+        text: m.includes("minimum_not_met")
+          ? tr("Below the organisation minimum: give a reason of at least 10 characters to renew anyway.")
+          : m.includes("partnership_terminated")
+            ? tr("This partnership was terminated and can't be renewed.")
+            : tr("That didn't work. Try again."),
+      });
     } finally {
       setBusy(false);
     }
   };
-  if (failed) return <DetailModal title={tr("Channel Partner")} onClose={onClose}><ModalEmpty>{tr("Could not load this partner.")}</ModalEmpty></DetailModal>;
-  if (!d) return <DetailModal title={tr("Channel Partner")} onClose={onClose}><ModalEmpty>{tr("Loading…")}</ModalEmpty></DetailModal>;
+  if (failed) return <DetailModal title={tr("Partner")} onClose={onClose}><ModalEmpty>{tr("Could not load this partner.")}</ModalEmpty></DetailModal>;
+  if (!d) return <DetailModal title={tr("Partner")} onClose={onClose}><ModalEmpty>{tr("Loading…")}</ModalEmpty></DetailModal>;
   const p = d.partner;
+  const orgType = bringsOrganisations(p.partnerType);
+  const running = p.status === "active" || p.status === "expiring";
+  const belowMin = orgType && p.activeOrganisations < p.minOrganisations;
   const initials = p.fullName.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
     <DetailModal
       title={p.fullName}
-      subtitle={`${p.email} · ${p.code}`}
+      subtitle={`${typeLabel(p.partnerType)} · ${p.email} · ${p.code}`}
       initials={initials}
       onClose={onClose}
       badges={
         <>
-          <Badge tone={p.demoStatus === "active" ? "good" : p.demoStatus === "ended" ? "bad" : "neutral"}>
-            {p.demoStatus === "active" ? tr("Demo active") : p.demoStatus === "ended" ? tr("Demo ended") : tr("Demo not started")}
-          </Badge>
+          <Badge tone={p.status === "active" ? "good" : p.status === "expiring" ? "warn" : p.status === "not_started" ? "neutral" : "bad"}>{typeLabel(p.partnerType)}</Badge>
+          <Badge tone={p.agreement ? "good" : "warn"}>{p.agreement ? tr("Agreement signed") : tr("Agreement not signed")}</Badge>
           <Badge tone={!p.active ? "bad" : p.invitePending ? "warn" : "good"}>{!p.active ? tr("Deactivated") : p.invitePending ? tr("Invite pending") : tr("Active")}</Badge>
         </>
       }
       stats={[
-        { label: tr("Demo licences"), value: tr("{{given}} of {{total}}", { given: p.demoLicencesGiven, total: p.demoLicences }), hint: tr("Given out") },
-        { label: tr("Demo window"), value: p.demoStatus === "not_started" ? tr("Not started") : day(p.demoEndedAt ?? p.demoEndsAt), hint: p.demoStatus === "active" ? tr("Ends") : p.demoStatus === "ended" ? tr("Ended") : undefined },
-        { label: tr("Organisations"), value: p.organisations },
-        { label: tr("Learners on a demo"), value: d.organisations.reduce((n, o) => n + o.demoUsed, 0), hint: tr("{{n}} started a test", { n: d.organisations.reduce((n, o) => n + o.demoStarted, 0) }) },
-        { label: tr("Commission"), value: `${p.commissionPercent}%` },
+        { label: tr("Partnership"), value: p.status === "not_started" ? tr("Not started") : fmtDay(p.endsAt), hint: p.status === "expired" || p.status === "terminated" ? tr("Ended · read-only") : tr("Ends") },
+        ...(orgType
+          ? [
+              { label: tr("Organisations"), value: tr("{{n}} of {{min}}", { n: p.activeOrganisations, min: p.minOrganisations }), hint: belowMin ? tr("Below minimum") : tr("Minimum met") },
+              { label: tr("Demo licences"), value: tr("{{given}} of {{total}}", { given: p.demoLicencesGiven, total: p.demoLicences }), hint: tr("Given out") },
+              { label: tr("Learners on a demo"), value: d.organisations.reduce((n, o) => n + o.demoUsed, 0), hint: tr("{{n}} started a test", { n: d.organisations.reduce((n, o) => n + o.demoStarted, 0) }) },
+            ]
+          : p.partnerType === "referral"
+            ? [{ label: tr("Referrals"), value: p.leads }]
+            : [{ label: tr("Sign-ups with their code"), value: p.referredPeople }]),
+        { label: tr("Rate"), value: rateText(p) },
       ]}
       tabs={[
         { key: "overview", label: tr("Overview") },
-        { key: "orgs", label: tr("Organisations"), count: d.organisations.length },
-        { key: "orders", label: tr("Orders") },
+        ...(orgType
+          ? [
+              { key: "orgs", label: tr("Organisations"), count: d.organisations.length },
+              { key: "orders", label: tr("Orders") },
+            ]
+          : []),
+        ...(p.partnerType === "referral" ? [{ key: "leads", label: tr("Referrals"), count: p.leads }] : []),
+        ...(p.partnerType === "referral" || p.partnerType === "affiliate" ? [{ key: "earnings", label: tr("Earnings") }] : []),
+        { key: "agreement", label: tr("Agreement and renewals"), count: d.agreements.length },
         { key: "history", label: tr("History"), count: d.history.length },
       ]}
       tab={tab}
@@ -343,7 +466,21 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
               icon={Handshake}
               action={
                 !edit && (
-                  <button className="text-sm font-semibold text-navy cursor-pointer" onClick={() => setEdit({ fullName: p.fullName, demoLicences: String(p.demoLicences), commissionPercent: String(p.commissionPercent), notes: p.notes ?? "" })}>
+                  <button
+                    className="text-sm font-semibold text-navy cursor-pointer"
+                    onClick={() =>
+                      setEdit({
+                        fullName: p.fullName,
+                        demoLicences: String(p.demoLicences),
+                        commissionPercent: String(p.commissionPercent),
+                        notes: p.notes ?? "",
+                        minOrganisations: String(p.minOrganisations),
+                        minLicencesPerOrg: String(p.minLicencesPerOrg),
+                        discountPercent: String(p.discountPercent),
+                        referralFee: String(p.referralFee / 100),
+                      })
+                    }
+                  >
                     {tr("Edit")}
                   </button>
                 )
@@ -356,14 +493,40 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                       <span className={label}>{tr("Full name")}</span>
                       <input className={input} value={edit.fullName} onChange={(e) => setEdit({ ...edit, fullName: e.target.value })} />
                     </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={label}>{tr("Free demo licences")}</span>
-                      <input className={input} type="number" min={0} value={edit.demoLicences} onChange={(e) => setEdit({ ...edit, demoLicences: e.target.value })} />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className={label}>{tr("Commission (%)")}</span>
-                      <input className={input} type="number" min={0} max={100} step="0.5" value={edit.commissionPercent} onChange={(e) => setEdit({ ...edit, commissionPercent: e.target.value })} />
-                    </label>
+                    {orgType && (
+                      <>
+                        <label className="flex flex-col gap-1">
+                          <span className={label}>{tr("Free demo licences")}</span>
+                          <input className={input} type="number" min={0} value={edit.demoLicences} onChange={(e) => setEdit({ ...edit, demoLicences: e.target.value })} />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className={label}>{tr("Minimum organisations")}</span>
+                          <input className={input} type="number" min={0} value={edit.minOrganisations} onChange={(e) => setEdit({ ...edit, minOrganisations: e.target.value })} />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className={label}>{tr("Minimum licences per organisation")}</span>
+                          <input className={input} type="number" min={1} value={edit.minLicencesPerOrg} onChange={(e) => setEdit({ ...edit, minLicencesPerOrg: e.target.value })} />
+                        </label>
+                      </>
+                    )}
+                    {(p.partnerType === "channel_partner" || p.partnerType === "affiliate") && (
+                      <label className="flex flex-col gap-1">
+                        <span className={label}>{tr("Commission (%)")}</span>
+                        <input className={input} type="number" min={0} max={100} step="0.5" value={edit.commissionPercent} onChange={(e) => setEdit({ ...edit, commissionPercent: e.target.value })} />
+                      </label>
+                    )}
+                    {p.partnerType === "reseller" && (
+                      <label className="flex flex-col gap-1">
+                        <span className={label}>{tr("Reseller discount (%)")}</span>
+                        <input className={input} type="number" min={0} max={90} step="0.5" value={edit.discountPercent} onChange={(e) => setEdit({ ...edit, discountPercent: e.target.value })} />
+                      </label>
+                    )}
+                    {p.partnerType === "referral" && (
+                      <label className="flex flex-col gap-1">
+                        <span className={label}>{tr("Referral fee ({{c}})", { c: p.referralFeeCurrency })}</span>
+                        <input className={input} type="number" min={0} value={edit.referralFee} onChange={(e) => setEdit({ ...edit, referralFee: e.target.value })} />
+                      </label>
+                    )}
                   </div>
                   <label className="flex flex-col gap-1">
                     <span className={label}>{tr("Notes (only Spica staff see these)")}</span>
@@ -377,7 +540,16 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                       disabled={busy}
                       onClick={() =>
                         run(async () => {
-                          await updateChannelPartner(p.id, { fullName: edit.fullName.trim(), demoLicences: Math.max(0, Math.round(Number(edit.demoLicences) || 0)), commissionPercent: Number(edit.commissionPercent) || 0, notes: edit.notes.trim() || null });
+                          await updateChannelPartner(p.id, {
+                            fullName: edit.fullName.trim(),
+                            notes: edit.notes.trim() || null,
+                            ...(orgType
+                              ? { demoLicences: Math.max(0, Math.round(Number(edit.demoLicences) || 0)), minOrganisations: Math.max(0, Math.round(Number(edit.minOrganisations) || 0)), minLicencesPerOrg: Math.max(1, Math.round(Number(edit.minLicencesPerOrg) || 1)) }
+                              : {}),
+                            ...(p.partnerType === "channel_partner" || p.partnerType === "affiliate" ? { commissionPercent: Number(edit.commissionPercent) || 0 } : {}),
+                            ...(p.partnerType === "reseller" ? { discountPercent: Math.min(90, Math.max(0, Number(edit.discountPercent) || 0)) } : {}),
+                            ...(p.partnerType === "referral" ? { referralFee: Math.max(0, Math.round((Number(edit.referralFee) || 0) * 100)) } : {}),
+                          });
                           setEdit(null);
                         }, tr("Saved."))
                       }
@@ -390,10 +562,17 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                 <InfoGrid
                   columns={3}
                   items={[
+                    [tr("Partner type"), typeLabel(p.partnerType)],
                     [tr("Partner code"), <span className="font-mono">{p.code}</span>],
                     [tr("Email"), p.email],
-                    [tr("Commission"), `${p.commissionPercent}%`],
-                    [tr("Free demo licences"), p.demoLicences],
+                    [tr("Rate"), rateText(p)],
+                    ...(orgType
+                      ? ([
+                          [tr("Minimum organisations"), p.minOrganisations],
+                          [tr("Minimum licences per organisation"), p.minLicencesPerOrg],
+                          [tr("Free demo licences"), p.demoLicences],
+                        ] as [string, React.ReactNode][])
+                      : []),
                     [tr("Registered"), `${day(p.createdAt)}${p.createdBy ? ` · ${p.createdBy}` : ""}`],
                     [tr("Last sign-in"), p.lastSignIn ? day(p.lastSignIn) : tr("Not yet")],
                     [tr("Notes"), p.notes || "—"],
@@ -402,50 +581,100 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
               )}
             </ModalSection>
 
-            <ModalSection title={tr("Demo window")} icon={CalendarClock}>
+            <ModalSection title={tr("Partnership")} icon={CalendarClock}>
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <PartnershipPill status={p.status} endsAt={p.endsAt} />
+                {p.startsAt && <span>{tr("{{a}} to {{b}}", { a: fmtDay(p.startsAt), b: fmtDay(p.endsAt) })}</span>}
+                {p.agreement ? (
+                  <StatusPill tone="success">{tr("Agreement signed by {{n}} on {{d}}", { n: p.agreement.signedName, d: fmtDay(p.agreement.signedAt) })}</StatusPill>
+                ) : (
+                  <StatusPill tone="warning">{tr("Agreement for this period not signed: the partner can't act yet")}</StatusPill>
+                )}
+              </div>
               <p className="text-sm text-muted">
-                {p.demoStatus === "not_started"
-                  ? tr("The demo licences aren't available yet. Making them available starts the window today.")
-                  : p.demoStatus === "active"
-                    ? tr("The partner can give out demo licences until {{d}}. Each learner then has 7 days.", { d: day(p.demoEndsAt) })
-                    : tr("The demo window ended on {{d}}. Set a new end date to open it again.", { d: day(p.demoEndedAt ?? p.demoEndsAt) })}
+                {p.status === "not_started"
+                  ? tr("Not started. Starting it runs the partnership for 3 months from today.")
+                  : p.status === "terminated"
+                    ? tr("Terminated on {{d}}. Reason: {{r}}. The partner's portal is read-only.", { d: fmtDay(p.terminatedAt), r: p.terminationReason ?? "—" })
+                    : p.status === "expired"
+                      ? tr("Ended on {{d}}. The partner's portal is read-only until you renew.", { d: fmtDay(p.endsAt) })
+                      : orgType
+                        ? tr("Renewing adds 3 months. It needs {{min}} organisations; this partner has {{n}}.", { min: p.minOrganisations, n: p.activeOrganisations })
+                        : tr("Renewing adds 3 months. The partner signs the agreement again for the new period.")}
               </p>
-              <div className="flex flex-wrap items-end gap-3">
-                <label className="flex flex-col gap-1">
-                  <span className={label}>{p.demoStatus === "not_started" ? tr("Window ends") : tr("New end date")}</span>
-                  <input className={input} type="date" min={dateInput(new Date(Date.now() + 86400000))} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </label>
-                {p.demoStatus === "not_started" && (
-                  <Button disabled={busy || !p.active} onClick={() => run(() => startDemo(p.id, endOfDayIso(endDate)), tr("Demo licences are now available."))}>
-                    {tr("Make demo licences available")}
+              <div className="flex flex-wrap items-start gap-2">
+                {p.status === "not_started" && (
+                  <Button disabled={busy || !p.active} onClick={() => run(() => startPartnership(p.id), tr("Partnership started."))}>
+                    {tr("Start the partnership")}
                   </Button>
                 )}
-                {p.demoStatus === "active" && (
-                  <>
-                    <Button disabled={busy} onClick={() => run(() => extendDemo(p.id, endOfDayIso(endDate)), tr("Demo window changed."))}>
-                      {tr("Change end date")}
-                    </Button>
-                    <Button variant="secondary" disabled={busy} onClick={() => setAsk({ text: tr("End the demo window now? The partner can't give out more demo licences."), label: tr("End now"), go: () => run(() => endDemo(p.id), tr("Demo window ended.")) })}>
-                      {tr("End now")}
-                    </Button>
-                  </>
+                {(running || p.status === "expired") && !renewing && (
+                  <Button disabled={busy || !p.active} onClick={() => (belowMin ? setRenewing(true) : run(() => renewPartnership(p.id), tr("Renewed for 3 months. The partner must sign the agreement again.")))}>
+                    {tr("Renew for 3 months")}
+                  </Button>
                 )}
-                {p.demoStatus === "ended" && (
-                  <Button disabled={busy || !p.active} onClick={() => run(() => extendDemo(p.id, endOfDayIso(endDate)), tr("Demo window opened again."))}>
-                    {tr("Extend the window")}
+                {(running || p.status === "expired") && !terminating && (
+                  <Button variant="secondary" disabled={busy} onClick={() => setTerminating(true)}>
+                    {tr("Terminate")}
                   </Button>
                 )}
               </div>
+              {renewing && (
+                <div className="flex flex-col gap-2 rounded-input border border-warning/50 bg-warning/10 p-3">
+                  <p className="text-sm">{tr("This partner has {{n}} of {{min}} organisations. To renew anyway, write why. The reason is recorded.", { n: p.activeOrganisations, min: p.minOrganisations })}</p>
+                  <textarea className={input} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="secondary" onClick={() => setRenewing(false)}>
+                      {tr("Cancel")}
+                    </Button>
+                    <Button
+                      disabled={busy || reason.trim().length < 10}
+                      onClick={() =>
+                        run(async () => {
+                          await renewPartnership(p.id, reason.trim());
+                          setRenewing(false);
+                          setReason("");
+                        }, tr("Renewed for 3 months with your reason recorded. The partner must sign the agreement again."))
+                      }
+                    >
+                      {tr("Renew below minimum")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {terminating && (
+                <div className="flex flex-col gap-2 rounded-input border border-error/40 bg-error/5 p-3">
+                  <p className="text-sm">{tr("Terminating ends the partnership now. The partner's portal becomes read-only and they are emailed the reason. Organisations and learners keep what they have.")}</p>
+                  <textarea className={input} rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tr("Reason (sent to the partner)")} />
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="secondary" onClick={() => setTerminating(false)}>
+                      {tr("Cancel")}
+                    </Button>
+                    <Button
+                      disabled={busy || reason.trim().length < 5}
+                      onClick={() =>
+                        run(async () => {
+                          await terminatePartnership(p.id, reason.trim());
+                          setTerminating(false);
+                          setReason("");
+                        }, tr("Partnership terminated."))
+                      }
+                    >
+                      {tr("Terminate partnership")}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </ModalSection>
 
-            <ModalSection title={tr("Partner's own demo licence")} icon={KeyRound}>
+            {orgType && <ModalSection title={tr("Partner's own demo licence")} icon={KeyRound}>
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input type="checkbox" className="mt-0.5 accent-navy" checked={p.ownLicenceEnabled} disabled={busy} onChange={(e) => run(() => updateChannelPartner(p.id, { ownLicenceEnabled: e.target.checked }), e.target.checked ? tr("Own demo licence switched on.") : tr("Own demo licence switched off."))} />
                 <span className="text-sm">
-                  {tr("One demo licence for the partner to show Spica in meetings. Separate from the free demo licences; no official certificate (a sample certificate is shown).")}
+                  {tr("One demo licence for the partner to show Spica in meetings. Separate from the free demo licences; no certificate (a sample certificate is shown).")}
                 </span>
               </label>
-            </ModalSection>
+            </ModalSection>}
 
             <ModalSection title={tr("Account")} icon={Power}>
               <div className="flex flex-wrap gap-2">
@@ -493,7 +722,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
             title={tr("Organisations brought by this partner")}
             icon={Building2}
             action={
-              <Button onClick={() => setAdding(true)} disabled={p.demoStatus !== "active" || !p.active} className="!px-3 !py-1.5 flex items-center gap-1">
+              <Button onClick={() => setAdding(true)} disabled={!running || !p.active} className="!px-3 !py-1.5 flex items-center gap-1">
                 <Plus size={14} /> {tr("Add for this partner")}
               </Button>
             }
@@ -514,7 +743,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                         <br />
                         {tr("{{s}} started · {{p}} practice tests and {{m}} mock tests finished", { s: o.demoStarted, p: o.practiceDone, m: o.mocksDone })}
                       </span>
-                      <button className="text-sm font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={p.demoStatus !== "active"} onClick={() => setGiving(o)}>
+                      <button className="text-sm font-semibold text-navy cursor-pointer disabled:opacity-40" disabled={!running} onClick={() => setGiving(o)}>
                         {tr("Give licences")}
                       </button>
                     </span>
@@ -522,14 +751,53 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                 ))}
               </ul>
             )}
-            {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} windowEndsAt={p.demoEndedAt ?? p.demoEndsAt} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
-            {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} windowEndsAt={p.demoEndedAt ?? p.demoEndsAt} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
+            {adding && <AddOrganisation left={p.demoLicences - p.demoLicencesGiven} minLicences={1} endpoint={`/admin/channel-partners/${p.id}/organisations`} onClose={() => setAdding(false)} onDone={(name) => { setAdding(false); setMsg({ tone: "success", text: tr("{{name}} added for this partner.", { name }) }); load(); onChanged(); }} />}
+            {giving && <GiveLicences org={giving} left={p.demoLicences - p.demoLicencesGiven} minLicences={1} endpoint={`/admin/channel-partners/${p.id}/organisations/${giving.id}/licences`} onClose={() => setGiving(null)} onDone={(n) => { setMsg({ tone: "success", text: tr("{{n}} demo licences given to {{name}}.", { n, name: giving.name }) }); setGiving(null); load(); onChanged(); }} />}
           </ModalSection>
         )}
         {tab === "orders" && (
           <ModalSection title={tr("Orders from this partner")} icon={Receipt}>
             <OrdersPanel mode="staff" partnerId={p.id} />
           </ModalSection>
+        )}
+        {tab === "leads" && <StaffLeads partnerId={p.id} onChanged={load} />}
+        {tab === "earnings" && <StaffEarnings partnerId={p.id} />}
+        {tab === "agreement" && (
+          <>
+            <ModalSection title={tr("Signed agreements")} icon={FileSignature}>
+              {d.agreements.length === 0 ? (
+                <ModalEmpty>{tr("Not signed yet. The partner signs in the portal at first sign-in and after each renewal.")}</ModalEmpty>
+              ) : (
+                <ul className="flex flex-col gap-2 text-sm">
+                  {d.agreements.map((a, i) => (
+                    <li key={i} className="flex flex-wrap justify-between gap-2 border-b border-rule pb-2">
+                      <span>
+                        <b>{a.signedName}</b> <span className="text-muted">({a.signedEmail}) · {tr("version {{v}}", { v: a.version })}</span>
+                        <br />
+                        <span className="text-muted">{tr("For {{a}} to {{b}}", { a: fmtDay(a.periodStart), b: fmtDay(a.periodEnd) })}{a.ip ? ` · IP ${a.ip}` : ""}</span>
+                      </span>
+                      <span className="text-muted whitespace-nowrap">{new Date(a.signedAt).toLocaleString()}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </ModalSection>
+            <ModalSection title={tr("Renewals")} icon={CalendarClock}>
+              {d.renewals.length === 0 ? (
+                <ModalEmpty>{tr("Not renewed yet.")}</ModalEmpty>
+              ) : (
+                <ul className="flex flex-col gap-2 text-sm">
+                  {d.renewals.map((x, i) => (
+                    <li key={i} className="border-b border-rule pb-2">
+                      <b>{tr("{{a}} → {{b}}", { a: fmtDay(x.previousEnd), b: fmtDay(x.newEnd) })}</b>
+                      <span className="text-muted"> · {tr("{{n}} of {{min}} organisations", { n: x.organisations, min: x.minOrganisations })}{x.by ? ` · ${x.by}` : ""} · {fmtDay(x.at)}</span>
+                      {x.overrideReason && <p className="text-navy-deep">{tr("Renewed below minimum: {{r}}", { r: x.overrideReason })}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </ModalSection>
+          </>
         )}
         {tab === "history" && (
           <ModalSection title={tr("History")} icon={History}>
@@ -548,5 +816,160 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
         )}
       </div>
     </DetailModal>
+  );
+}
+
+// Referral Partner leads: Spica follows each one up, marks it won and links
+// the organisation; the fee is earned at that organisation's first paid purchase.
+function StaffLeads({ partnerId, onChanged }: { partnerId: string; onChanged: () => void }) {
+  const [leads, setLeads] = useState<PartnerLead[] | null>(null);
+  const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
+  const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const load = () => partnerLeads(partnerId).then((r) => setLeads(r.leads)).catch(() => setLeads([]));
+  useEffect(() => {
+    load();
+    api<{ organisations: { id: string; name: string }[] }>("/admin/partner-orders/organisations").then((r) => setOrgs(r.organisations)).catch(() => setOrgs([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partnerId]);
+  const save = async (l: PartnerLead, b: Parameters<typeof updatePartnerLead>[1]) => {
+    setMsg(null);
+    try {
+      await updatePartnerLead(l.id, b);
+      setMsg({ tone: "success", text: tr("Saved.") });
+      load();
+      onChanged();
+    } catch (e) {
+      const m = String((e as Error).message ?? "");
+      setMsg({ tone: "error", text: m.includes("organisation_required") ? tr("Link the organisation before marking it won.") : m.includes("organisation_already_linked") ? tr("That organisation is already linked to another referral.") : tr("That didn't work. Try again.") });
+    }
+  };
+  if (!leads) return <ModalEmpty>{tr("Loading…")}</ModalEmpty>;
+  return (
+    <ModalSection title={tr("Referrals from this partner")} icon={Megaphone}>
+      {msg && (
+        <Notice tone={msg.tone} onClose={() => setMsg(null)}>
+          {msg.text}
+        </Notice>
+      )}
+      {leads.length === 0 ? (
+        <ModalEmpty>{tr("No referrals yet.")}</ModalEmpty>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {leads.map((l) => (
+            <li key={l.id} className="border border-rule rounded-input p-3 text-sm flex flex-col gap-2">
+              <div className="flex flex-wrap justify-between gap-2">
+                <span>
+                  <b>{l.organisationName}</b> <span className="text-muted">· {l.category === "university" ? tr("University or college") : tr("Company")} · {l.country}</span>
+                  <br />
+                  <span className="text-muted">
+                    {l.contactName} · {l.contactEmail}
+                    {l.contactPhone ? ` · ${l.contactPhone}` : ""}
+                    {l.expectedLearners ? ` · ${tr("{{n}} learners expected", { n: l.expectedLearners })}` : ""}
+                  </span>
+                  {l.notes && <p className="text-muted">{l.notes}</p>}
+                </span>
+                <span className="text-muted whitespace-nowrap">{fmtDay(l.createdAt)}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select className={`${input} !w-auto`} value={l.status} onChange={(e) => save(l, { status: e.target.value as PartnerLead["status"] })}>
+                  {(["submitted", "contacted", "won", "lost", "duplicate"] as const).map((s) => (
+                    <option key={s} value={s}>
+                      {leadStatusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+                <select className={`${input} !w-auto max-w-xs`} value={l.tenantId ?? ""} onChange={(e) => save(l, { tenantId: e.target.value || null })}>
+                  <option value="">{tr("Organisation it became…")}</option>
+                  {orgs.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+                <input className={`${input} !w-auto flex-1 min-w-40`} defaultValue={l.staffNote ?? ""} placeholder={tr("Note (Spica only)")} onBlur={(e) => e.target.value !== (l.staffNote ?? "") && save(l, { staffNote: e.target.value || null })} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </ModalSection>
+  );
+}
+
+// What an Affiliate or Referral Partner has earned; Finance marks it paid.
+function StaffEarnings({ partnerId }: { partnerId: string }) {
+  const [d, setD] = useState<EarningsResponse | null>(null);
+  const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [paying, setPaying] = useState<{ id: string; ref: string; void?: boolean } | null>(null);
+  const load = () => partnerEarnings(partnerId).then(setD).catch(() => setD({ earnings: [], totals: {} }));
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [partnerId]);
+  if (!d) return <ModalEmpty>{tr("Loading…")}</ModalEmpty>;
+  const act = async () => {
+    if (!paying) return;
+    try {
+      if (paying.void) await voidEarning(paying.id, paying.ref);
+      else await markEarningPaid(paying.id, paying.ref);
+      setPaying(null);
+      setMsg({ tone: "success", text: tr("Saved.") });
+      load();
+    } catch (e) {
+      setMsg({ tone: "error", text: String((e as Error).message ?? "").includes("forbidden") ? tr("Only staff with the Finance permission can do this.") : tr("That didn't work. Try again.") });
+    }
+  };
+  return (
+    <ModalSection title={tr("Earnings")} icon={Coins}>
+      {msg && (
+        <Notice tone={msg.tone} onClose={() => setMsg(null)}>
+          {msg.text}
+        </Notice>
+      )}
+      <div className="flex flex-wrap gap-3 text-sm">
+        {Object.entries(d.totals).map(([c, t]) => (
+          <span key={c} className="rounded-input bg-paper-warm px-3 py-2">
+            {tr("{{e}} earned · {{p}} paid · {{o}} to pay", { e: minorMoney(t.earned, c), p: minorMoney(t.paid, c), o: minorMoney(t.earned - t.paid, c) })}
+          </span>
+        ))}
+      </div>
+      {d.earnings.length === 0 ? (
+        <ModalEmpty>{tr("Nothing earned yet.")}</ModalEmpty>
+      ) : (
+        <ul className="flex flex-col gap-2 text-sm">
+          {d.earnings.map((e) => (
+            <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-rule pb-2">
+              <span>
+                <b>{e.description}</b>
+                <span className="text-muted"> · {fmtDay(e.earnedAt)}{e.rate != null ? ` · ${e.rate}% ${tr("of")} ${minorMoney(e.baseAmount, e.currency)}` : ""}</span>
+                {e.status === "paid" && <span className="text-muted"> · {tr("Paid {{d}}, ref {{r}}", { d: fmtDay(e.paidAt), r: e.paidReference ?? "" })}</span>}
+                {e.status === "void" && <span className="text-muted"> · {tr("Cancelled: {{r}}", { r: e.voidReason ?? "" })}</span>}
+              </span>
+              <span className="flex items-center gap-2">
+                <b>{minorMoney(e.amount, e.currency)}</b>
+                {e.status === "earned" && (
+                  <>
+                    <button className="text-sm font-semibold text-navy cursor-pointer" onClick={() => setPaying({ id: e.id, ref: "" })}>
+                      {tr("Mark paid")}
+                    </button>
+                    <button className="text-sm text-muted cursor-pointer" onClick={() => setPaying({ id: e.id, ref: "", void: true })}>
+                      {tr("Cancel")}
+                    </button>
+                  </>
+                )}
+              </span>
+              {paying?.id === e.id && (
+                <span className="flex w-full gap-2">
+                  <input className={input} value={paying.ref} onChange={(x) => setPaying({ ...paying, ref: x.target.value })} placeholder={paying.void ? tr("Why it is cancelled") : tr("Payment reference")} />
+                  <Button disabled={paying.ref.trim().length < 2} onClick={act}>
+                    {tr("Save")}
+                  </Button>
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </ModalSection>
   );
 }

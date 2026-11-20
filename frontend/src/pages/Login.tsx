@@ -106,6 +106,8 @@ export function Login({ allowedRoles }: { allowedRoles: Role[] }) {
         setError(t("auth.login.errorWrongPortal"));
       } else if (err instanceof Error && err.message === "already_logged_in") {
         setError(t("auth.login.errorAlreadyLoggedIn"));
+      } else if (err instanceof Error && err.message === "demo_closed") {
+        setError(tr("Your 7-day demo and its 3 days to see results have ended. Ask your organisation's admin for a paid licence to sign in again."));
       } else if (err instanceof Error && err.message === "organization_deactivated") {
         setError(t("auth.login.errorOrganizationDeactivated"));
       } else if (err instanceof Error && err.message === "sso_required") {

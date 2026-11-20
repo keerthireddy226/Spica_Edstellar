@@ -62,6 +62,7 @@ import { StaffBilling } from "@/pages/staff/StaffBilling";
 import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
+import { PartnerAgreement, PartnerEarnings, PartnerGate, PartnerReferrals } from "@/pages/partner/PartnerPrograms";
 import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
 import { OrderDocument } from "@/pages/OrderDocument";
 import { PartnerOrganisations } from "@/pages/partner/PartnerOrganisations";
@@ -296,11 +297,17 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
-          <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
-          <Route path={ROUTES.PARTNER_ORGANISATIONS} element={<PartnerOrganisations />} />
-          <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
-          <Route path={ROUTES.PARTNER_COMMISSION} element={<PartnerCommission />} />
+          {/* The partnership bar, agreement gate and notices around every partner page. */}
+          <Route element={<PartnerGate />}>
+            <Route path={ROUTES.PARTNER_DASHBOARD} element={<PartnerDashboard />} />
+            <Route path={ROUTES.PARTNER_AGREEMENT} element={<PartnerAgreement />} />
+            <Route path={ROUTES.PARTNER_PROFILE} element={<AdminProfile />} />
+            <Route path={ROUTES.PARTNER_ORGANISATIONS} element={<PartnerOrganisations />} />
+            <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
+            <Route path={ROUTES.PARTNER_COMMISSION} element={<PartnerCommission />} />
+            <Route path={ROUTES.PARTNER_EARNINGS} element={<PartnerEarnings />} />
+            <Route path={ROUTES.PARTNER_REFERRALS} element={<PartnerReferrals />} />
+          </Route>
         </Route>
         {/* Super Admin's own console — every organization, manages other Admins. */}
         <Route

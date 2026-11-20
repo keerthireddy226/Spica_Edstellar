@@ -13,6 +13,10 @@ import { demoStatus } from "./staffRoutes.js";
 
 export const DEMO_PRODUCT = "partner_demo";
 export const DEMO_DAYS = 7;
+// After a learner's 7 days: 3 days to sign in, see results and move to a paid
+// licence, without practising; after that sign-in is closed until a paid
+// licence is given (user, 19 Nov 2026).
+export const DEMO_GRACE_DAYS = 3;
 export const DEMO_PRACTICE_TESTS = 2;
 export const DEMO_MOCKS = 1;
 
@@ -72,6 +76,26 @@ export async function demoEnded(userId: string): Promise<boolean> {
   return !!r.rowCount;
 }
 
+// Where a demo learner stands after their 7 days: "grace" for 3 days (sign in,
+// see results, move to paid; no practice), then "closed" (no sign-in until a
+// paid licence). Null when the learner has no ended demo, or has a paid
+// licence or another access running.
+export async function demoAfterPhase(userId: string): Promise<{ phase: "grace" | "closed"; endedAt: string; graceUntil: string } | null> {
+  const r = await pool.query(
+    `SELECT e.ends_at FROM entitlements e WHERE e.user_id = $1 AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND e.ends_at <= now()
+       -- Only learners who never had anything but the demo: a paid licence or
+       -- purchase, even one that has since ended, keeps sign-in open (results, certificates).
+       AND NOT EXISTS (SELECT 1 FROM entitlements x WHERE x.user_id = $1 AND x.revoked_at IS NULL AND x.source IS DISTINCT FROM 'partner_demo')
+       AND NOT EXISTS (SELECT 1 FROM license_assignments a WHERE a.user_id = $1 AND a.reclaimed_at IS NULL)
+     ORDER BY e.ends_at DESC LIMIT 1`,
+    [userId],
+  );
+  if (!r.rowCount) return null;
+  const ended = new Date(r.rows[0].ends_at);
+  const graceUntil = new Date(ended.getTime() + DEMO_GRACE_DAYS * 86400000);
+  return { phase: graceUntil.getTime() > Date.now() ? "grace" : "closed", endedAt: ended.toISOString(), graceUntil: graceUntil.toISOString() };
+}
+
 // Whether a new practice test / mock may start under the demo (null = yes).
 export function demoBlock(d: DemoState, mode: string, testTypeId: string | null): string | null {
   if (mode === "certified" || mode === "sample") return "demo_no_real_test";
@@ -119,7 +143,8 @@ export async function orgDemoBalance(tenantId: string) {
   const p = (await pool.query(`SELECT * FROM channel_partners WHERE id = $1`, [t.channel_partner_id])).rows[0];
   const gifts = (
     await pool.query(
-      `SELECT licences, created_at, (valid_until IS NOT NULL AND valid_until < current_date) AS expired, to_char(valid_until, 'YYYY-MM-DD') AS vu
+      // A gift can be used until its date plus 3 days' grace; then the rest expires.
+      `SELECT licences, created_at, (valid_until IS NOT NULL AND valid_until + 3 < current_date) AS expired, to_char(valid_until + 3, 'YYYY-MM-DD') AS vu
        FROM partner_allocations WHERE tenant_id = $1 AND kind = 'demo' ORDER BY valid_until NULLS LAST, created_at`,
       [tenantId],
     )
@@ -134,8 +159,11 @@ export async function orgDemoBalance(tenantId: string) {
     )
   ).rows;
   const used = uses.length;
-  const { left, expired, useBy } = splitDemoUse(gifts, uses.map((u) => ({ at: new Date(u.created_at).getTime(), day: u.day as string })));
-  return { partnerId: p.id as string, windowOpen: demoStatus(p) === "active" && !p.deactivated_at, windowEndsAt: (p.demo_ended_at ?? p.demo_ends_at) as Date | null, given, used, left, expired, useBy };
+  const { left, expired, useBy: graceUntil } = splitDemoUse(gifts, uses.map((u) => ({ at: new Date(u.created_at).getTime(), day: u.day as string })));
+  // splitDemoUse works on the last usable day (date + grace); the "use by" date shown is 3 days earlier.
+  const useBy = graceUntil ? new Date(new Date(graceUntil + "T00:00:00Z").getTime() - 3 * 86400000).toISOString().slice(0, 10) : null;
+  const inGrace = !!useBy && useBy < new Date().toISOString().slice(0, 10);
+  return { partnerId: p.id as string, windowOpen: demoStatus(p) === "active" && !p.deactivated_at, windowEndsAt: (p.demo_ended_at ?? p.demo_ends_at) as Date | null, given, used, left, expired, useBy, graceUntil, inGrace };
 }
 
 export class DemoError extends Error {}
@@ -203,7 +231,7 @@ orgDemoRouter.get("/", requireAuth, async (req: AuthedRequest, res, next) => {
     );
     res.json({
       partnerOrganisation: true,
-      demo: { given: b.given, used: b.used, left: b.left, expired: b.expired, useBy: b.useBy, windowOpen: b.windowOpen, windowEndsAt: b.windowEndsAt, days: DEMO_DAYS },
+      demo: { given: b.given, used: b.used, left: b.left, expired: b.expired, useBy: b.useBy, graceUntil: b.graceUntil, inGrace: b.inGrace, graceDays: DEMO_GRACE_DAYS, windowOpen: b.windowOpen, windowEndsAt: b.windowEndsAt, days: DEMO_DAYS },
       upgrade: await (async () => {
         const [ids, p] = await Promise.all([demoLearnersToUpgrade(req.user!.tenantId!), partnerOrderPool(req.user!.tenantId!)]);
         return { demoLearners: ids.length, paidLicencesFree: Math.floor(p.freeMonths / p.licenceMonths), licenceMonths: p.licenceMonths };

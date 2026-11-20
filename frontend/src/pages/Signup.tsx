@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { PrivacyNoticeModal } from "@/pages/PrivacyNoticeDoc";
 import { passwordErrorText } from "@/lib/passwordErrors";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
@@ -15,6 +15,9 @@ export function Signup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, signup } = useAuth();
+  // An Affiliate Partner's link (?ref=CODE) fills the partner code; it can be typed too.
+  const [params] = useSearchParams();
+  const [partnerCode, setPartnerCode] = useState(() => (params.get("ref") ?? "").toUpperCase().slice(0, 20));
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -58,7 +61,7 @@ export function Signup() {
     }
     setSubmitting(true);
     try {
-      await signup(email, password, firstName, lastName, { acceptTerms: legal?.termsVersion ? terms : undefined, marketingConsent: marketing });
+      await signup(email, password, firstName, lastName, { acceptTerms: legal?.termsVersion ? terms : undefined, marketingConsent: marketing, referralCode: partnerCode.trim() || undefined });
       setSubmittedEmail(email);
     } catch (err) {
       setError(
@@ -155,6 +158,17 @@ export function Signup() {
         </label>
         <TermsCheckbox legal={legal} checked={terms} onChange={setTerms} />
         <MarketingCheckbox checked={marketing} onChange={setMarketing} />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted">{tr("Partner code (optional)")}</span>
+          <input
+            className="w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-navy"
+            value={partnerCode}
+            maxLength={20}
+            onChange={(e) => setPartnerCode(e.target.value.toUpperCase())}
+            placeholder="AF-XXXXXX"
+          />
+          <span className="text-xs text-muted">{tr("If a Spica partner sent you, their code is shared with them only as a count of sign-ups and purchases, never your name or results.")}</span>
+        </label>
         {error && <p className="text-sm text-error">{error}</p>}
         <Button type="submit" className="mt-1 w-full" disabled={submitting}>
           {submitting ? t("auth.signup.submitting") : t("auth.signup.submit")}

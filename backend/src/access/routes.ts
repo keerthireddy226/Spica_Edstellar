@@ -6,7 +6,7 @@ import { requireStaff } from "../admin/staff.js";
 import { includeFinalAssessment } from "../assessment/service.js";
 import { accessCache } from "../licenses/accessCache.js";
 import { accessOf, allowedItemTypes } from "./entitlements.js";
-import { demoEnded, demoState } from "../channelPartners/demoLicences.js";
+import { demoAfterPhase, demoEnded, demoState, DEMO_GRACE_DAYS } from "../channelPartners/demoLicences.js";
 
 // What a learner owns (for the app's menus, home page and locks), the product
 // list, and Spica staff's tools: prices, and granting a product by hand.
@@ -16,7 +16,9 @@ accessRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const a = await accessOf(req.user!.id);
     const demo = await demoState(req.user!.id);
-    res.json({ ...a, itemTypes: await allowedItemTypes(a), demo, demoEnded: !demo && (await demoEnded(req.user!.id)) });
+    // After the 7 days: "grace" (3 days, results only) then "closed" (sign-in ends).
+    const demoAfter = demo ? null : await demoAfterPhase(req.user!.id);
+    res.json({ ...a, itemTypes: await allowedItemTypes(a), demo, demoEnded: !demo && (await demoEnded(req.user!.id)), demoAfter, demoGraceDays: DEMO_GRACE_DAYS });
   } catch (err) {
     next(err);
   }

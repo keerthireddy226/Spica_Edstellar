@@ -30,6 +30,9 @@ export interface MyAccess {
   // A Channel Partner demo licence (7 days, 4 Skills, 2 practice tests, 1 mock).
   demo?: DemoState | null;
   demoEnded?: boolean;
+  // After the 7 days: "grace" (3 days: sign in, see results, no practice), then "closed".
+  demoAfter?: { phase: "grace" | "closed"; endedAt: string; graceUntil: string } | null;
+  demoGraceDays?: number;
 }
 
 export interface DemoState {
