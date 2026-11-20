@@ -285,7 +285,7 @@
     "resultsSummary": "{{correct}} van {{graded}} automatisch beoordeelde antwoorden zijn goed. {{pending}} antwoorden wachten nog op beoordeling.",
     "done": "Klaar",
     "yourLevel": "Je geschatte niveau: {{level}}",
-    "levelDisclaimer": "Dit is onze eigen, op het ERK afgestemde inschatting op basis van je toets, geen officiële score.",
+    "levelDisclaimer": "Dit is je Spica-score.",
     "pendingNote": "{{pending}} van je antwoorden moeten nog worden beoordeeld voordat ze meetellen voor je niveau.",
     "goToRoadmap": "Naar je leertraject",
     "notEnoughAnswered": "Te weinig beantwoord",

@@ -72,6 +72,8 @@ function wordCount(text: string): number {
 }
 
 interface AnswerInputControlProps {
+  // Bigger record button and text (Practice Modules on a computer screen).
+  large?: boolean;
   item: TestItem;
   answerText: string;
   onAnswerTextChange: (value: string) => void;
@@ -98,6 +100,7 @@ export function AnswerInputControl({
   playing,
   stopIconSize = 20,
   textareaRows = 5,
+  large = false,
 }: AnswerInputControlProps) {
   const { t } = useTranslation();
   const prep = usePrepCountdown(item);
@@ -149,16 +152,16 @@ export function AnswerInputControl({
         <button
           onClick={onToggleRecord}
           disabled={playing || (needsAudioFirst && !hasPlayed) || (prep.left > 0 && !recording)}
-          className={`h-14 w-14 rounded-full flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed ${
+          className={`${large ? "h-20 w-20" : "h-14 w-14"} rounded-full flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed ${
             recording ? "bg-error text-white" : "bg-navy text-lime btn-shine"
           }`}
         >
-          {recording ? <Square size={stopIconSize} /> : <Mic size={22} />}
+          {recording ? <Square size={large ? stopIconSize + 6 : stopIconSize} /> : <Mic size={large ? 30 : 22} />}
         </button>
 
         {recording ? (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-error">{t("placementTest.stopRecording")}</span>
+            <span className={`${large ? "text-base" : "text-sm"} font-semibold text-error`}>{t("placementTest.stopRecording")}</span>
             <span className="flex items-center gap-1">
               {[0, 1, 2, 3, 4].map((i) => (
                 <span
@@ -170,7 +173,7 @@ export function AnswerInputControl({
             </span>
           </div>
         ) : (
-          <span className="text-sm font-medium text-muted">
+          <span className={`${large ? "text-base" : "text-sm"} font-medium text-muted`}>
             {audioBlobUrl ? t("placementTest.recordAgain") : t("placementTest.record")}
           </span>
         )}

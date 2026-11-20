@@ -301,7 +301,7 @@
     "resultsSummary": "{{correct}} of {{graded}} auto-graded answers correct. {{pending}} responses are still awaiting review.",
     "done": "Done",
     "yourLevel": "Your estimated level: {{level}}",
-    "levelDisclaimer": "This is our own CEFR-aligned estimate from your assessment, not an official score.",
+    "levelDisclaimer": "This is your Spica score.",
     "pendingNote": "{{pending}} of your answers still need review before they count toward your level.",
     "goToRoadmap": "Go to your Roadmap",
     "notEnoughAnswered": "Not enough answered",

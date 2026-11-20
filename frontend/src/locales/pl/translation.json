@@ -285,7 +285,7 @@
     "resultsSummary": "Poprawne odpowiedzi: {{correct}} z {{graded}} ocenionych automatycznie. {{pending}} odpowiedzi czeka jeszcze na sprawdzenie.",
     "done": "Gotowe",
     "yourLevel": "Twój szacowany poziom: {{level}}",
-    "levelDisclaimer": "To nasza własna ocena zgodna z ESOKJ na podstawie testu, a nie oficjalny wynik.",
+    "levelDisclaimer": "To jest Twój wynik Spica.",
     "pendingNote": "{{pending}} Twoich odpowiedzi musi jeszcze zostać sprawdzonych, zanim zostaną wliczone do poziomu.",
     "goToRoadmap": "Przejdź do planu nauki",
     "notEnoughAnswered": "Za mało odpowiedzi",

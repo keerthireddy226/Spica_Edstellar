@@ -51,7 +51,7 @@ export function AppLayout() {
           <ViewAsBanner />
           {focus ? <TestFocusBar focus={focus} /> : <Header onMenuClick={() => setDrawerOpen(true)} />}
         </div>
-        <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
+        <main className="app-surface page-scroll flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
           <div className={focus ? "hidden" : "print:hidden"}>
             <LicenseBanner />
             <DemoBanner />

@@ -107,7 +107,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
+        <nav className="nav-scroll flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
           {testOnly ? (
             // Bought only a test: just the test, its reports and certificate,
             // Spica plans and Profile. The learning pages are hidden, not locked.

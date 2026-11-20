@@ -1,27 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { CURRENCIES, type Currency, money } from "@/lib/prices";
+import { type Currency, money } from "@/lib/prices";
 import { app } from "@/lib/site";
 import { TESTS } from "@/lib/tests";
 
-// Individual plans with a currency switch. Prices come from lib/prices.ts.
+// Individual plans, in US dollars. Prices come from lib/prices.ts.
 export function IndividualPlans() {
-  const [c, setC] = useState<Currency>("INR");
+  // One price list in US dollars for everyone, India included (20 Nov 2026).
+  const c: Currency = "USD";
   const tests = TESTS.filter((t) => t.id !== "level");
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, margin: "8px 0 24px" }}>
         <p className="muted" style={{ margin: 0 }}>
-          Prices before tax. GST is added in India.
+          Prices in US dollars, before tax. In India, 18% GST is added.
         </p>
-        <div className="tabs" role="group" aria-label="Currency">
-          {CURRENCIES.map((x) => (
-            <button key={x} type="button" aria-pressed={x === c} onClick={() => setC(x)}>
-              {x}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="grid g3">

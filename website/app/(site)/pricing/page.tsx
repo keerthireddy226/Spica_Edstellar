@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 const FAQ: [string, string][] = [
-  ["Which currencies can I pay in?", "INR, USD, EUR, GBP, AED and SGD. Other countries pay in US dollars."],
-  ["How do I pay?", "By card or UPI in India, and by card elsewhere. Organisations on Business and Enterprise can also pay by invoice and purchase order."],
-  ["Is tax included?", "Prices are before tax. GST is added in India, and other taxes as the law requires."],
+  ["Which currency are prices in?", "US dollars, for everyone, India included. In India, 18% GST is added."],
+  ["How do I pay?", "By card, in US dollars, in every country. Organisations on Business and Enterprise can also pay by invoice and purchase order."],
+  ["Is tax included?", "Prices are before tax. In India, 18% GST is added; elsewhere, other taxes as the law requires."],
   ["Can I cancel a monthly subscription?", "Yes, at any time in Plans. You keep Full access to the end of the month you paid for and are not charged again."],
   ["Can I get a refund?", "A purchase you have not started using can be refunded within 14 days. Time already used and months not yet used are not refunded; the monthly subscription is the flexible option. A test that a fault on our side stopped can be taken again or refunded. Full rules are in the Terms."],
   ["Do unused credits come back?", "Yes. Credits for invitations that expire unused, and for tests stopped before the first question, go back to your balance."],
@@ -60,9 +60,9 @@ export default function PricingPage() {
           <div className="grid g4 goals">
             {[
               ["I want to know my level", "A free placement test gives your level for each skill, plus practice every week.", "Free", app.signUp, "Start free"],
-              ["I need a certificate soon", "Take one real test with a score report and a certificate anyone can check.", `from ${money("assessment:placement", "INR")} / ${money("assessment:placement", "USD")}`, "#individuals", "See single tests"],
-              ["I want to pass one test", "30 days of practice and mock tests for that test, then the real test.", `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, "#individuals", "See preparation"],
-              ["I want to improve overall", "Every main test, unlimited practice tests, mock tests and a final assessment.", `${money("full", "INR")} / ${money("full", "USD")} a month`, "#individuals", "See Full access"],
+              ["I need a certificate soon", "Take one real test with a score report and a certificate anyone can check.", `from ${money("assessment:placement", "USD")}`, "#individuals", "See single tests"],
+              ["I want to pass one test", "30 days of practice and mock tests for that test, then the real test.", `from ${money("prep:placement", "USD")}`, "#individuals", "See preparation"],
+              ["I want to improve overall", "Every main test, unlimited practice tests, mock tests and a final assessment.", `${money("full", "USD")} a month`, "#individuals", "See Full access"],
             ].map(([h, d, price, href, cta]) => (
               <a className="card goal" href={href} key={h} data-reveal>
                 <h3>{h}</h3>
@@ -97,7 +97,7 @@ export default function PricingPage() {
                     ["Mock tests under real conditions", "1 a month", "2 a month, for that test", "2 a month in each test"],
                     ["Score reports", "Summary", "Full", "Full"],
                     ["Real test with a certificate", false, "That test", "One final assessment"],
-                    ["Price", "Free", `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, `${money("full", "INR")} / ${money("full", "USD")} a month`],
+                    ["Price", "Free", `from ${money("prep:placement", "USD")}`, `${money("full", "USD")} a month`],
                   ] as [string, string | boolean, string | boolean, string | boolean][]
                 ).map(([row, ...cells]) => (
                   <tr key={row}>

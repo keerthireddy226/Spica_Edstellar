@@ -42,8 +42,8 @@ export default function CertificatePolicyPage() {
           title: "How long it is valid",
           body: (
             <p>
-              A certificate is valid for 12 months. You can keep it valid for 12 more months ({money("certExtend", "INR")} / {money("certExtend", "USD")}
-              ) or make it valid for life ({money("certLifetime", "INR")} / {money("certLifetime", "USD")}).
+              A certificate is valid for 12 months. You can keep it valid for 12 more months ({money("certExtend", "USD")}
+              ) or make it valid for life ({money("certLifetime", "USD")}).
             </p>
           ),
         },

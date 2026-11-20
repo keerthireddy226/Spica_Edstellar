@@ -112,7 +112,7 @@ export default async function LevelPage({ params }: { params: Promise<{ level: s
               <div>
                 <dt>Price</dt>
                 <dd>
-                  {money("level", "INR")} / {money("level", "USD")}
+                  {money("level", "USD")}
                 </dd>
               </div>
             </dl>

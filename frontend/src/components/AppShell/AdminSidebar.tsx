@@ -195,7 +195,7 @@ export function AdminSidebar({ open, onClose, onNavigate }: { open: boolean; onC
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
+        <nav className="nav-scroll flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
           {navItems.map(({ to, icon: Icon, label }) => (
             <Link
               key={to}

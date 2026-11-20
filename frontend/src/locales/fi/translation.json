@@ -285,7 +285,7 @@
     "resultsSummary": "Vastasit oikein {{correct}}/{{graded}} automaattisesti arvioituun kysymykseen. {{pending}} vastausta odottaa vielä arviointia.",
     "done": "Valmis",
     "yourLevel": "Arvioitu tasosi: {{level}}",
-    "levelDisclaimer": "Tämä on oma CEFR-pohjainen arviomme testin perusteella, ei virallinen tulos.",
+    "levelDisclaimer": "Tämä on Spica-pistemääräsi.",
     "pendingNote": "{{pending}} vastaustasi pitää vielä arvioida, ennen kuin ne lasketaan tasoosi.",
     "goToRoadmap": "Siirry opintosuunnitelmaan",
     "notEnoughAnswered": "Liian vähän vastauksia",

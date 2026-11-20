@@ -122,9 +122,21 @@ partnerCodeRouter.get("/partner-code", requireAuth, async (req: AuthedRequest, r
 
 // ---------- Earnings ----------
 
+// How long a referral stays the Referral Partner's: its organisation's first
+// paid purchase within this many days of the referral earns the fee, whatever
+// the partnership dates (owner, 20 Nov 2026: about 6 months).
+export const REFERRAL_WINDOW_DAYS = 183;
+
+// An invoice refunded in full by credit notes.
+const FULLY_REFUNDED = (inv: string) => `(SELECT coalesce(sum(cn.amount), 0) FROM credit_notes cn WHERE cn.invoice_id = ${inv}.id) >= ${inv}.total`;
+
 // Affiliates: a % of each paid purchase (before tax) by a person credited to
 // them, made after they were credited and inside the partnership period.
-// Referral Partners: the fixed fee once, at a won lead's first paid licence purchase.
+// Referral Partners: the fixed fee once, at a won lead's first paid purchase
+// (licences or credits, bought directly or through a partner order) within
+// REFERRAL_WINDOW_DAYS of the referral. A purchase refunded in full earns
+// nothing: an unpaid earning from it is voided, and staff are told about a
+// paid one so they can recover it.
 export async function syncEarnings(partnerId?: string) {
   await pool.query(
     `INSERT INTO partner_earnings (partner_id, kind, source_type, source_id, description, base_amount, rate, amount, currency, earned_at)
@@ -137,28 +149,67 @@ export async function syncEarnings(partnerId?: string) {
      LEFT JOIN products pr ON pr.id = o.product_id
      WHERE o.status = 'paid' AND o.paid_at IS NOT NULL AND o.paid_at >= u.referred_at
        AND o.paid_at >= p.demo_starts_at AND o.paid_at <= coalesce(p.demo_ended_at, p.demo_ends_at)
+       AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = o.id AND ${FULLY_REFUNDED("i")})
        AND ($1::uuid IS NULL OR p.id = $1)
      ON CONFLICT (kind, source_type, source_id) DO NOTHING`,
     [partnerId ?? null],
   );
   await pool.query(
     `INSERT INTO partner_earnings (partner_id, kind, source_type, source_id, lead_id, description, base_amount, rate, amount, currency, earned_at)
-     SELECT p.id, 'referral_fee', 'license_purchase', lp.id, l.id, 'Referral: ' || l.organisation_name,
-       lp.quantity * lp.unit_price_cents, NULL, p.referral_fee, p.referral_fee_currency, lp.purchased_at
+     SELECT p.id, 'referral_fee', fp.source_type, fp.id, l.id, 'Referral: ' || l.organisation_name,
+       fp.base, NULL, p.referral_fee, p.referral_fee_currency, fp.at
      FROM partner_leads l
-     JOIN channel_partners p ON p.id = l.partner_id AND p.partner_type = 'referral'
+     JOIN channel_partners p ON p.id = l.partner_id AND p.partner_type = 'referral' AND p.deactivated_at IS NULL
      JOIN LATERAL (
-       SELECT x.* FROM license_purchases x WHERE x.tenant_id = l.tenant_id AND x.source = 'purchase' AND x.unit_price_cents > 0 AND x.purchased_at >= l.created_at
-       ORDER BY x.purchased_at LIMIT 1
-     ) lp ON true
+       SELECT f.* FROM (
+         SELECT 'license_purchase' AS source_type, x.id, x.purchased_at AS at, (x.quantity * x.unit_price_cents)::int AS base
+         FROM license_purchases x
+         WHERE x.tenant_id = l.tenant_id AND x.source = 'purchase' AND x.unit_price_cents > 0
+           AND NOT EXISTS (SELECT 1 FROM invoices i WHERE i.invoice_number = x.reference AND ${FULLY_REFUNDED("i")})
+         UNION ALL
+         SELECT 'credit_purchase', c.id, c.created_at, 0
+         FROM recruitment_credit_events c
+         WHERE c.tenant_id = l.tenant_id AND c.reason = 'purchase' AND c.delta > 0
+       ) f
+       WHERE f.at >= l.created_at AND f.at <= l.created_at + make_interval(days => ${REFERRAL_WINDOW_DAYS})
+       ORDER BY f.at LIMIT 1
+     ) fp ON true
      WHERE l.status = 'won' AND l.tenant_id IS NOT NULL
-       AND lp.purchased_at >= p.demo_starts_at AND lp.purchased_at <= coalesce(p.demo_ended_at, p.demo_ends_at)
-       AND NOT EXISTS (SELECT 1 FROM partner_earnings e WHERE e.lead_id = l.id AND e.kind = 'referral_fee')
+       -- One fee per referral; a fee voided only because its purchase was refunded doesn't count.
+       AND NOT EXISTS (SELECT 1 FROM partner_earnings e WHERE e.lead_id = l.id AND e.kind = 'referral_fee' AND NOT (e.status = 'void' AND e.void_reason = '${REFUND_VOID}'))
        AND ($1::uuid IS NULL OR p.id = $1)
      ON CONFLICT (kind, source_type, source_id) DO NOTHING`,
     [partnerId ?? null],
   );
+  // Clawback: earnings whose purchase was refunded in full.
+  const refunded = `(
+      (e.source_type = 'payment_order' AND EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = e.source_id AND ${FULLY_REFUNDED("i")}))
+      OR (e.source_type = 'license_purchase' AND EXISTS (SELECT 1 FROM license_purchases x JOIN invoices i ON i.invoice_number = x.reference WHERE x.id = e.source_id AND ${FULLY_REFUNDED("i")}))
+    )`;
+  await pool.query(`UPDATE partner_earnings e SET status = 'void', void_reason = '${REFUND_VOID}' WHERE e.status = 'earned' AND ${refunded} AND ($1::uuid IS NULL OR e.partner_id = $1)`, [partnerId ?? null]);
+  const paidBack = await pool.query(
+    `SELECT e.id, e.amount, e.currency, e.description, p.full_name, p.created_by FROM partner_earnings e JOIN channel_partners p ON p.id = e.partner_id
+     WHERE e.status = 'paid' AND ${refunded} AND ($1::uuid IS NULL OR e.partner_id = $1)`,
+    [partnerId ?? null],
+  );
+  if (paidBack.rowCount) {
+    const supers = (await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows.map((r) => r.id as string);
+    for (const e of paidBack.rows) {
+      for (const id of new Set([...supers, ...(e.created_by ? [e.created_by as string] : [])])) {
+        await notify({
+          userId: id,
+          kind: "partner_order",
+          title: `Refunded purchase: ${e.full_name} was already paid`,
+          body: `${e.description}: the purchase was refunded in full after ${e.full_name} was paid ${(e.amount / 100).toFixed(2)} ${e.currency}. Recover it or deduct it from the next payout.`,
+          link: "/admin/channel-partners",
+          dedupeKey: `earning-refund:${e.id}:${id}`,
+        }).catch(() => {});
+      }
+    }
+  }
 }
+// The void reason the clawback writes (and recognises).
+const REFUND_VOID = "Purchase refunded";
 
 const earningRow = (e: Record<string, any>) => ({
   id: e.id,
@@ -415,10 +466,19 @@ partnerProgramRouter.post("/leads", requireAuth, async (req: AuthedRequest, res,
     const b = parsed.data;
     // Already a Spica customer, or already introduced by someone?
     const domain = b.contactEmail.split("@")[1];
+    // Also by company email domain (not for public mail like gmail.com): a
+    // second contact at an organisation already referred, or already a Spica
+    // organisation, is the same organisation (owner, 20 Nov 2026).
+    const companyDomain = domain && !PUBLIC_MAIL.has(domain.toLowerCase()) ? domain.toLowerCase() : null;
     const dup = await pool.query(
-      `SELECT 1 FROM partner_leads WHERE (lower(contact_email) = $1 OR lower(organisation_name) = lower($2)) AND status IN ('submitted', 'contacted', 'won')
-       UNION ALL SELECT 1 FROM users WHERE lower(email) = $1 LIMIT 1`,
-      [b.contactEmail, b.organisationName],
+      `SELECT 1 FROM partner_leads
+       WHERE (lower(contact_email) = $1 OR lower(organisation_name) = lower($2) OR ($3::text IS NOT NULL AND split_part(lower(contact_email), '@', 2) = $3))
+         AND status IN ('submitted', 'contacted', 'won')
+       UNION ALL SELECT 1 FROM users WHERE lower(email) = $1
+       UNION ALL SELECT 1 FROM users u JOIN tenants t ON t.id = u.tenant_id
+         WHERE $3::text IS NOT NULL AND t.type = 'cohort' AND u.deleted_at IS NULL AND split_part(lower(u.email), '@', 2) = $3
+       LIMIT 1`,
+      [b.contactEmail, b.organisationName, companyDomain],
     );
     const r = await pool.query(
       `INSERT INTO partner_leads (partner_id, organisation_name, category, contact_name, contact_email, contact_phone, country, expected_learners, notes, status)

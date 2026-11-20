@@ -43,7 +43,8 @@ export function StaffDashboard() {
     audit: sup ? ROUTES.SUPER_AUDIT : ROUTES.ADMIN_CONSOLE_AUDIT,
     reviews: sup ? ROUTES.ADMIN_REVIEW : ROUTES.ADMIN_CONSOLE_REVIEWS,
   };
-  const revenue = data.revenue[0];
+  // USD first: the site sells in USD only since 20 Nov 2026 (older rows may be in other currencies).
+  const revenue = data.revenue.find((r) => r.currency === "USD") ?? data.revenue[0];
   const owed = data.outstanding[0];
   const attentionLink: Record<string, string> = {
     at_risk: r.orgs,

@@ -1,5 +1,7 @@
 // Individual prices from the Spica price list (live, 16 Nov 2026). Update
 // here whenever the price list in Spica (staff: Plans & pricing) changes.
+// The site shows USD only: one price list for everyone, India included
+// (owner, 20 Nov 2026); the other columns are kept for reference.
 
 export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD"] as const;
 export type Currency = (typeof CURRENCIES)[number];

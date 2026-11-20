@@ -299,7 +299,7 @@
     "resultsSummary": "{{correct}} réponses correctes sur {{graded}} notées automatiquement. {{pending}} réponses sont encore en attente de révision.",
     "done": "Terminé",
     "yourLevel": "Votre niveau estimé : {{level}}",
-    "levelDisclaimer": "Il s'agit de notre propre estimation alignée sur le CECR à partir de votre évaluation, pas d'un score officiel.",
+    "levelDisclaimer": "Ceci est votre score Spica.",
     "pendingNote": "{{pending}} de vos réponses doivent encore être révisées avant de compter pour votre niveau.",
     "goToRoadmap": "Aller à votre feuille de route",
     "notEnoughAnswered": "Pas assez de réponses",

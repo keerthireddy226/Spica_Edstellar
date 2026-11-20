@@ -177,8 +177,8 @@ export function agreementText(p: Record<string, any>) {
     ],
     referral: [
       "The Referral Partner introduces organisations by submitting their details in the partner portal, with the contact person's agreement to be contacted by Edstellar.",
-      `When a referred organisation that Edstellar accepts as new completes its first paid purchase during the partnership period, the Referral Partner earns a fixed referral fee of ${money(Number(p.referral_fee ?? 0), p.referral_fee_currency ?? "USD")}. One fee per organisation.`,
-      "Edstellar decides whether an introduction is new (not already a customer or an active lead). The Referral Partner does not sell, price or invoice anything.",
+      `When a referred organisation that Edstellar accepts as new completes its first paid purchase (licences or credits, bought directly or through a partner) within 6 months of the referral, the Referral Partner earns a fixed referral fee of ${money(Number(p.referral_fee ?? 0), p.referral_fee_currency ?? "USD")}. One fee per organisation. A purchase refunded in full earns no fee; a fee already paid on it is recovered.`,
+      "Edstellar decides whether an introduction is new (not already a customer or an active lead, including another contact at the same company email domain). The Referral Partner does not sell, price or invoice anything.",
     ],
   };
   const sections: { h: string; items: string[] }[] = [

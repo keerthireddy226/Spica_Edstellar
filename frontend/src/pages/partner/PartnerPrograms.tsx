@@ -591,7 +591,7 @@ function ReferOrganisation({ onClose, onDone }: { onClose: () => void; onDone: (
     }
   };
   return (
-    <DetailModal title={tr("Refer an organisation")} subtitle={tr("Spica contacts them. You earn the referral fee when they become a customer and make their first paid purchase.")} icon={Megaphone} onClose={onClose}>
+    <DetailModal title={tr("Refer an organisation")} subtitle={tr("Spica contacts them. You earn the referral fee when they become a customer and make their first paid purchase within 6 months of your referral.")} icon={Megaphone} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">

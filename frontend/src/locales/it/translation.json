@@ -285,7 +285,7 @@
     "resultsSummary": "{{correct}} risposte corrette su {{graded}} valutate automaticamente. {{pending}} risposte sono ancora in attesa di revisione.",
     "done": "Fatto",
     "yourLevel": "Il tuo livello stimato: {{level}}",
-    "levelDisclaimer": "Questa è una nostra stima allineata al QCER basata sul test, non un punteggio ufficiale.",
+    "levelDisclaimer": "Questo è il tuo punteggio Spica.",
     "pendingNote": "{{pending}} delle tue risposte devono ancora essere revisionate prima di contare per il tuo livello.",
     "goToRoadmap": "Vai al tuo percorso",
     "notEnoughAnswered": "Risposte insufficienti",

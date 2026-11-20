@@ -200,13 +200,13 @@ export default async function SolutionPage({ params }: { params: Promise<{ slug:
                   <b>Free:</b> placement test, weekly practice, 2 practice tests and 1 mock test a month
                 </li>
                 <li>
-                  <b>Full access:</b> {money("full", "INR")} / {money("full", "USD")} a month
+                  <b>Full access:</b> {money("full", "USD")} a month
                 </li>
                 <li>
-                  <b>Preparation + test:</b> from {money("prep:placement", "INR")} / {money("prep:placement", "USD")}
+                  <b>Preparation + test:</b> from {money("prep:placement", "USD")}
                 </li>
                 <li>
-                  <b>Real test only:</b> from {money("assessment:placement", "INR")} / {money("assessment:placement", "USD")}
+                  <b>Real test only:</b> from {money("assessment:placement", "USD")}
                 </li>
               </ul>
             ) : (

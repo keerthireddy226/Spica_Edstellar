@@ -47,7 +47,7 @@ export function TestFacts({ t }: { t: TestInfo }) {
         </div>
         <div>
           <small>{isLevel ? "Level test" : "Real test"}</small>
-          <b>{money(t.priceKey, "INR")}</b>
+          <b>{money(t.priceKey, "USD")}</b>
           <small>{money(t.priceKey, "USD")}</small>
         </div>
         <div>
@@ -85,7 +85,7 @@ export function PriceMock() {
           </span>
         </div>
         <div className="vprice">
-          {money("full", "INR")} <small>a month · {money("full", "USD")}</small>
+          {money("full", "USD")} <small>a month</small>
         </div>
         <ul className="vlist">
           <li>

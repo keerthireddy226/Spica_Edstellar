@@ -19,10 +19,20 @@ const STEPS: [string, string][] = [
   ["Get your certificate", "With a QR code, a public check page and Add to LinkedIn."],
 ];
 
-export function Journey() {
+// Certify only: no placement test, plan or practice (owner, 20 Nov 2026).
+const DIRECT_STEPS: [string, string][] = [
+  ["Sign up", "Create an account and agree to the Privacy Notice. No placement test or study plan needed."],
+  ["Buy the test", "One real test for the test you need, or a Level test for one level. Organisations send an invitation instead."],
+  ["Free sample and checks", "See the format first, then a quick device check and identity check."],
+  ["Take the proctored test", "The same real test as after preparation, online, with camera, ID and face checks, or a manual check by a person."],
+  ["Get your score report", "Your Spica score and CEFR level, overall and for each skill."],
+  ["Get your certificate", "With a QR code, a public check page and Add to LinkedIn."],
+];
+
+export function Journey({ direct = false }: { direct?: boolean }) {
   return (
     <ol className="h-journey">
-      {STEPS.map(([h, d], i) => (
+      {(direct ? DIRECT_STEPS : STEPS).map(([h, d], i) => (
         <li key={h} data-reveal style={{ ["--i" as string]: i }}>
           <span className="h-journey-num">{i + 1}</span>
           <b>{h}</b>
@@ -146,10 +156,10 @@ export function WhyCompare() {
 // Ways to a result: a direct certificate, preparation then certificate, Full access, or a level test.
 export function Routes() {
   const R = [
-    { tag: "Certificate now", title: "Take the real test", price: `from ${money("assessment:placement", "INR")} / ${money("assessment:placement", "USD")}`, text: "Already confident? Take one proctored test now and get your score report and certificate. A free sample first.", cert: true },
-    { tag: "Prepare, then certify", title: "Preparation + real test", price: `from ${money("prep:placement", "INR")} / ${money("prep:placement", "USD")}`, text: "30 days of practice and mock tests for one test, then the real test with a certificate.", cert: true, featured: true },
-    { tag: "Everything", title: "Full access", price: `${money("full", "INR")} / ${money("full", "USD")} a month`, text: "Every test, unlimited practice tests, 2 mock tests a month in each test, and one final assessment with a certificate.", cert: true },
-    { tag: "One level", title: "Level test (A1–C2)", price: `${money("level", "INR")} / ${money("level", "USD")}`, text: "Check one level at a time: a passed or not-passed result with a score report.", cert: false },
+    { tag: "Certify only, no preparation", title: "Take the real test", price: `from ${money("assessment:placement", "USD")}`, text: "Already know your English? Skip the preparation: a free sample, then one proctored test, your score report and a certificate anyone can check.", cert: true },
+    { tag: "Prepare, then certify", title: "Preparation + real test", price: `from ${money("prep:placement", "USD")}`, text: "30 days of practice and mock tests for one test, then the real test with a certificate.", cert: true, featured: true },
+    { tag: "Everything", title: "Full access", price: `${money("full", "USD")} a month`, text: "Every test, unlimited practice tests, 2 mock tests a month in each test, and one final assessment with a certificate.", cert: true },
+    { tag: "One level", title: "Level test (A1–C2)", price: `${money("level", "USD")}`, text: "Check one level at a time: a passed or not-passed result with a score report, and a level certificate when passed.", cert: false },
   ];
   return (
     <div className="h-routes">

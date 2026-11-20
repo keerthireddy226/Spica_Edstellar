@@ -285,7 +285,7 @@
     "resultsSummary": "Bạn trả lời đúng {{correct}}/{{graded}} câu được chấm tự động. Còn {{pending}} câu trả lời đang chờ chấm.",
     "done": "Xong",
     "yourLevel": "Trình độ ước tính của bạn: {{level}}",
-    "levelDisclaimer": "Đây là đánh giá theo khung CEFR của chúng tôi dựa trên bài kiểm tra, không phải điểm chính thức.",
+    "levelDisclaimer": "Đây là điểm Spica của bạn.",
     "pendingNote": "Còn {{pending}} câu trả lời cần được chấm trước khi tính vào trình độ của bạn.",
     "goToRoadmap": "Xem lộ trình học",
     "notEnoughAnswered": "Chưa trả lời đủ",

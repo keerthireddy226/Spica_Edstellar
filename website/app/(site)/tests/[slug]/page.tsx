@@ -152,18 +152,18 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             <h3>Ways to take it</h3>
             <ul className="ticks">
               <li>
-                <b>{isLevel ? "Level test" : "Real test only"}:</b> {money(t.priceKey, "INR")} / {money(t.priceKey, "USD")}
+                <b>{isLevel ? "Level test" : "Real test only"}:</b> {money(t.priceKey, "USD")}
                 {isLevel ? ", for one level from A1 to C2, with a level certificate when you pass." : ", with a score report and certificate. A free sample first."}
               </li>
               {t.prepKey && (
                 <li>
-                  <b>Preparation + test:</b> {money(t.prepKey, "INR")} / {money(t.prepKey, "USD")}. 30 days of practice for this test, mock tests, then
+                  <b>Preparation + test:</b> {money(t.prepKey, "USD")}. 30 days of practice for this test, mock tests, then
                   the real test.
                 </li>
               )}
               {!isLevel && (
                 <li>
-                  <b>Full access:</b> {money("full", "INR")} / {money("full", "USD")} a month: every test, and one final assessment with a certificate.
+                  <b>Full access:</b> {money("full", "USD")} a month: every test, and one final assessment with a certificate.
                 </li>
               )}
               <li>
@@ -351,7 +351,7 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             {t.prepKey ? (
               <div className="card path featured" data-reveal>
                 <span className="path-tag">
-                  {money(t.prepKey, "INR")} / {money(t.prepKey, "USD")}
+                  {money(t.prepKey, "USD")}
                 </span>
                 <h3>Prepare</h3>
                 <p className="muted">30 days of practice for {t.name}, mock tests under real conditions, then the real test with a score report and certificate.</p>
@@ -362,7 +362,7 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             ) : (
               <div className="card path featured" data-reveal>
                 <span className="path-tag">
-                  {money("full", "INR")} / {money("full", "USD")} a month
+                  {money("full", "USD")} a month
                 </span>
                 <h3>Prepare</h3>
                 <p className="muted">Full access: practice for every test, mock tests under real conditions and a final assessment with a certificate.</p>
@@ -373,7 +373,7 @@ export default async function TestPage({ params }: { params: Promise<{ slug: str
             )}
             <div className="card path" data-reveal>
               <span className="path-tag">
-                {money(t.priceKey, "INR")} / {money(t.priceKey, "USD")}
+                {money(t.priceKey, "USD")}
               </span>
               <h3>{isLevel ? "Confirm your level" : "Take the real test"}</h3>
               <p className="muted">

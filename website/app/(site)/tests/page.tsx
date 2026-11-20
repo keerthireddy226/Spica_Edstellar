@@ -174,7 +174,7 @@ export default function TestsPage() {
                       <ListChecks size={15} aria-hidden="true" /> {t.questions} questions
                     </span>
                     <span className="tcard-price">
-                      {money(t.priceKey, "INR")} <small>/ {money(t.priceKey, "USD")}</small>
+                      {money(t.priceKey, "USD")}
                     </span>
                   </div>
                   <span className="tcard-more">
@@ -248,7 +248,7 @@ export default function TestsPage() {
                     </td>
                     <td>{t.skills.join(", ")}</td>
                     <td>
-                      {money(t.priceKey, "INR")} / {money(t.priceKey, "USD")}
+                      {money(t.priceKey, "USD")}
                     </td>
                   </tr>
                 ))}

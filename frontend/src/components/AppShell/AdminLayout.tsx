@@ -39,7 +39,7 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
           <ViewAsBanner />
         </div>
         <Header onMenuClick={() => setDrawerOpen(true)} />
-        <main className="app-surface flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:px-8 print:py-6">
+        <main className="app-surface page-scroll flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:px-8 print:py-6">
           <Outlet key={navKey} />
         </main>
       </div>

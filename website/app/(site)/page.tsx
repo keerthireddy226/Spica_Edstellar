@@ -60,7 +60,7 @@ export default function Home() {
             </h1>
             <p className="h-lead">
               Spica gives every person a reliable English level in all four skills, a plan to improve it, and a proctored test that ends in a
-              certificate anyone can check.
+              certificate anyone can check. Already confident? Skip the preparation and get certified directly.
             </p>
             <div className="h-ctas">
               <a className="h-btn primary" href="#demo">
@@ -134,6 +134,11 @@ export default function Home() {
             <p>Spica is not only for practice. Take the real test today, prepare for it first, or check one level at a time.</p>
           </div>
           <Routes />
+          <div className="h-head" data-reveal style={{ marginTop: 44 }}>
+            <span className="h-kicker">The direct path</span>
+            <h3 className="h-sub">Certify only, no preparation: six steps from sign-up to certificate</h3>
+          </div>
+          <Journey direct />
           <div className="h-head" data-reveal style={{ marginTop: 44 }}>
             <span className="h-kicker">The full path</span>
             <h3 className="h-sub">With preparation: six steps from first level check to certificate</h3>
@@ -449,7 +454,7 @@ export default function Home() {
               <h3>Full access</h3>
               <p>All tests, unlimited practice, mock tests and a final assessment with a certificate.</p>
               <b>
-                {money("full", "INR")} / {money("full", "USD")} <em>a month</em>
+                {money("full", "USD")} <em>a month</em>
               </b>
             </div>
             <div className="h-price" data-reveal>

@@ -299,7 +299,7 @@
     "resultsSummary": "{{correct}} de {{graded}} respuestas calificadas automáticamente son correctas. {{pending}} respuestas siguen en revisión.",
     "done": "Listo",
     "yourLevel": "Tu nivel estimado: {{level}}",
-    "levelDisclaimer": "Esta es nuestra propia estimación alineada al MCER a partir de tu evaluación, no una puntuación oficial.",
+    "levelDisclaimer": "Esta es tu puntuación Spica.",
     "pendingNote": "{{pending}} de tus respuestas todavía necesitan revisión antes de contar para tu nivel.",
     "goToRoadmap": "Ir a tu Plan de Estudio",
     "notEnoughAnswered": "No hay suficientes respuestas",

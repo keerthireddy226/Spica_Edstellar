@@ -343,3 +343,18 @@ html:lang(zh) {
     animation: none;
   }
 }
+
+/* Scrollbars (user, 20 Nov 2026: "the scroll bar is not looking nice").
+   The side menus get a thin, light bar that blends into the coloured menu,
+   with no arrow buttons; the page itself gets a thin, soft bar. */
+.nav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+.nav-scroll:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.55) transparent;
+}
+.page-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-muted-soft) transparent;
+}

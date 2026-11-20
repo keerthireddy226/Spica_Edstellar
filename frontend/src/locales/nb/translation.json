@@ -285,7 +285,7 @@
     "resultsSummary": "Du svarte riktig på {{correct}} av {{graded}} automatisk vurderte spørsmål. {{pending}} svar venter fortsatt på vurdering.",
     "done": "Ferdig",
     "yourLevel": "Ditt anslåtte nivå: {{level}}",
-    "levelDisclaimer": "Dette er vår egen CEFR-baserte vurdering fra testen, ikke et offisielt resultat.",
+    "levelDisclaimer": "Dette er Spica-poengsummen din.",
     "pendingNote": "{{pending}} av svarene dine må fortsatt vurderes før de teller med i nivået ditt.",
     "goToRoadmap": "Gå til læringsplanen",
     "notEnoughAnswered": "For få svar",

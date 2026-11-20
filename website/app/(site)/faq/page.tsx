@@ -41,7 +41,7 @@ const GROUPS: { title: string; items: [string, React.ReactNode][] }[] = [
   {
     title: "Prices and payment",
     items: [
-      ["Which currencies can I pay in?", "INR, USD, EUR, GBP, AED and SGD. Other countries pay in US dollars."],
+      ["Which currency are prices in?", "US dollars, for everyone, India included. In India, 18% GST is added."],
       ["Can I cancel a monthly subscription?", "Yes, at any time in Plans. You keep Full access to the end of the month you paid for and are not charged again."],
       ["Can I get a refund?", <>A purchase you have not started using can be refunded within 14 days. See <Link href="/legal/refunds">Refunds and cancellation</Link>.</>],
     ],

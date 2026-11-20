@@ -285,7 +285,7 @@
     "resultsSummary": "Du svarade rätt på {{correct}} av {{graded}} automatiskt bedömda frågor. {{pending}} svar väntar fortfarande på bedömning.",
     "done": "Klar",
     "yourLevel": "Din uppskattade nivå: {{level}}",
-    "levelDisclaimer": "Det här är vår egen CEFR-baserade bedömning utifrån testet, inte ett officiellt resultat.",
+    "levelDisclaimer": "Det här är ditt Spica-resultat.",
     "pendingNote": "{{pending}} av dina svar måste fortfarande bedömas innan de räknas in i din nivå.",
     "goToRoadmap": "Gå till din studieplan",
     "notEnoughAnswered": "För få svar",

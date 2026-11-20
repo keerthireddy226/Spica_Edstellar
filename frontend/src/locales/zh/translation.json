@@ -285,7 +285,7 @@
     "resultsSummary": "在 {{graded}} 道自动评分的题目中，你答对了 {{correct}} 道。还有 {{pending}} 个回答等待评分。",
     "done": "完成",
     "yourLevel": "你的预估等级：{{level}}",
-    "levelDisclaimer": "这是我们根据测试做出的 CEFR 对标评估，并非官方成绩。",
+    "levelDisclaimer": "这是您的 Spica 分数。",
     "pendingNote": "你还有 {{pending}} 个回答需要评分后才会计入等级。",
     "goToRoadmap": "查看学习计划",
     "notEnoughAnswered": "作答数量不足",

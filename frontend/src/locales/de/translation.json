@@ -285,7 +285,7 @@
     "resultsSummary": "{{correct}} von {{graded}} automatisch bewerteten Antworten sind richtig. {{pending}} Antworten warten noch auf Prüfung.",
     "done": "Fertig",
     "yourLevel": "Dein geschätztes Niveau: {{level}}",
-    "levelDisclaimer": "Dies ist unsere eigene, am GER orientierte Einschätzung aus deinem Test – kein offizielles Ergebnis.",
+    "levelDisclaimer": "Das ist dein Spica-Score.",
     "pendingNote": "{{pending}} deiner Antworten müssen noch geprüft werden, bevor sie für dein Niveau zählen.",
     "goToRoadmap": "Zu deinem Lernplan",
     "notEnoughAnswered": "Zu wenige Antworten",

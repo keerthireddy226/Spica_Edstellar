@@ -285,7 +285,7 @@
     "resultsSummary": "自動採点された{{graded}}問中{{correct}}問正解しました。{{pending}}件の回答はまだ採点待ちです。",
     "done": "完了",
     "yourLevel": "推定レベル：{{level}}",
-    "levelDisclaimer": "これはテストに基づく当社独自のCEFR準拠の評価であり、公式スコアではありません。",
+    "levelDisclaimer": "これはあなたのSpicaスコアです。",
     "pendingNote": "{{pending}}件の回答は、レベルに反映される前に採点が必要です。",
     "goToRoadmap": "学習プランへ",
     "notEnoughAnswered": "回答数が不足しています",

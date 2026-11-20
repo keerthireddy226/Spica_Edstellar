@@ -1714,7 +1714,8 @@ function ModulesPage() {
   const TypeIcon = ITEM_TYPE_ICON[current.itemTypeId] ?? Headphones;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-3">
+    // Wider on a computer screen, with larger text (user: "very small and clumsy", 20 Nov 2026).
+    <div className="max-w-2xl lg:max-w-4xl mx-auto w-full flex flex-col gap-3">
       {/* Height follows the actual content, between a floor (so a one-line
           item doesn't look like a tiny stub) and a ceiling (so the card
           never forces the footer off-screen) — a single fixed number can't
@@ -1741,27 +1742,27 @@ function ModulesPage() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <ProgressRing percent={progressPct} size={48} strokeWidth={4} colorClass={SKILL_RING_COLOR[primarySkill]}>
-                  <span className={`h-8 w-8 rounded-xl flex items-center justify-center ${SKILL_TINT_CLASSES[primarySkill]}`}>
-                    <TypeIcon size={16} strokeWidth={2} />
+                <ProgressRing percent={progressPct} size={small ? 48 : 60} strokeWidth={4} colorClass={SKILL_RING_COLOR[primarySkill]}>
+                  <span className={`${small ? "h-8 w-8" : "h-10 w-10"} rounded-xl flex items-center justify-center ${SKILL_TINT_CLASSES[primarySkill]}`}>
+                    <TypeIcon size={small ? 16 : 20} strokeWidth={2} />
                   </span>
                 </ProgressRing>
-                <div className="flex flex-col">
-                  <span className="font-display font-bold text-sm text-ink leading-tight">{meta?.name}</span>
-                  <span className="text-[11px] text-muted">
+                <div className="flex flex-col gap-0.5">
+                  <span className={`font-display font-bold text-ink leading-tight ${small ? "text-sm" : "text-xl"}`}>{meta?.name}</span>
+                  <span className={`text-muted ${small ? "text-[11px]" : "text-sm"}`}>
                     {[context?.unitName, context?.setName].filter(Boolean).join(" · ")}
                   </span>
-                  {context?.tests?.length && !small ? <span className="text-[11px] text-muted">{tr("Tests: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
+                  {context?.tests?.length && !small ? <span className="text-sm text-muted">{tr("Tests: {{tests}}", { tests: testsLine(context.tests) })}</span> : null}
                 </div>
               </div>
               <span className="flex flex-wrap items-center justify-end gap-1.5">
-                {needsAudioFirst && !hasPlayed && (
+                {needsAudioFirst && !hasPlayed && small && (
                   <span className="flex items-center gap-1 text-xs font-bold leading-5 px-3 py-0.5 rounded-pill border border-navy/30 bg-navy/10 text-navy-deep" role="status">
                     {playing ? <Headphones size={14} /> : <Volume2 size={14} />}
                     {playing ? tr("Listening… the timer starts after the recording") : tr("Press Play when you are ready. The timer starts after the recording.")}
                   </span>
                 )}
-                <span className="text-xs font-bold text-ink bg-surface border border-navy/30 rounded-pill px-2.5 py-0.5 leading-5">
+                <span className={`font-bold text-ink bg-surface border border-navy/30 rounded-pill leading-5 ${small ? "text-xs px-2.5 py-0.5" : "text-sm px-3.5 py-1"}`}>
                   {context?.check ? tr("Question {{n}} · up to {{max}}", { n: index + 1, max: shownTotal }) : tr("Question {{n}} of {{total}}", { n: index + 1, total: items.length })}
                 </span>
               {remainingSeconds !== null ? (
@@ -1830,8 +1831,8 @@ function ModulesPage() {
                 <Lightbulb size={16} />
               </span>
               <div className="flex flex-col">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{tr("How this works")}</span>
-                <p className="text-sm text-ink leading-relaxed">{current.instructionText}</p>
+                <span className={`font-semibold uppercase tracking-wide text-muted ${small ? "text-[11px]" : "text-xs"}`}>{tr("How this works")}</span>
+                <p className={`text-ink leading-relaxed ${small ? "text-sm" : "text-base"}`}>{current.instructionText}</p>
               </div>
             </div>
           )}
@@ -1863,16 +1864,19 @@ function ModulesPage() {
             <button
               onClick={handlePlay}
               disabled={playing || recording || hasPlayed}
-              className={`h-14 w-14 rounded-full bg-${primarySkill} text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed`}
+              className={`${small ? "h-14 w-14" : "h-20 w-20"} rounded-full bg-${primarySkill} text-lime btn-shine flex items-center justify-center shadow-[0_8px_18px_-8px_rgba(0,0,0,0.3)] transition-transform hover:scale-105 disabled:opacity-60 disabled:hover:scale-100 cursor-pointer disabled:cursor-not-allowed`}
             >
-              <Volume2 size={22} />
+              <Volume2 size={small ? 22 : 30} />
             </button>
             {playing ? (
-              <span className="flex items-center gap-2 text-sm font-bold text-navy-deep" role="status" aria-live="polite">
-                <PlayingBars /> {t("placementTest.playing")}
+              <span className="flex flex-col items-center gap-1 text-center" role="status" aria-live="polite">
+                <span className={`flex items-center gap-2 font-bold text-navy-deep ${small ? "text-sm" : "text-base"}`}>
+                  <PlayingBars /> {t("placementTest.playing")}
+                </span>
+                {!small && remainingSeconds === null && <span className="text-sm text-muted">{tr("Listening… the timer starts after the recording")}</span>}
               </span>
             ) : (
-              <span className="text-sm font-medium text-muted text-center">
+              <span className={`font-medium text-muted text-center max-w-xs ${small ? "text-sm" : "text-base"}`}>
                 {hasPlayed ? tr("This recording has been played.") : tr("Press Play when you are ready. The recording plays once.")}
               </span>
             )}
@@ -1889,6 +1893,7 @@ function ModulesPage() {
             playing={playing}
             stopIconSize={18}
             textareaRows={4}
+            large={!small}
           />
         </div>
       ) : getPassageAndQuestion(current) ? (
@@ -1914,6 +1919,7 @@ function ModulesPage() {
             playing={playing}
             stopIconSize={18}
             textareaRows={4}
+            large={!small}
           />
         </>
       ) : (
@@ -1936,6 +1942,7 @@ function ModulesPage() {
             playing={playing}
             stopIconSize={18}
             textareaRows={4}
+            large={!small}
           />
         </>
       )}
