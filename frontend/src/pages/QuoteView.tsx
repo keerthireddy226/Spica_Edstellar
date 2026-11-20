@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Printer } from "lucide-react";
 import { getProforma, formatAmount, type Proforma } from "@/api/payments";
 import { countryName } from "@/constants/demographics";
+import { appLocale } from "@/lib/locale";
 
 // Proforma invoice for paying by bank transfer. Becomes a real invoice once
 // Edstellar records the payment.
@@ -19,7 +20,7 @@ export function QuoteView() {
   if (!q) return <p className="p-10 text-sm text-muted">Loading…</p>;
   const money = (n: number) => formatAmount(n, q.currency);
   const b = q.billTo;
-  const date = (d: string) => new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  const date = (d: string) => new Date(d).toLocaleDateString(appLocale(), { year: "numeric", month: "long", day: "numeric" });
 
   return (
     <div className="min-h-screen bg-paper py-10 px-4 print:p-0 print:bg-white">

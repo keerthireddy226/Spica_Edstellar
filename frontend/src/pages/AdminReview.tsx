@@ -10,6 +10,7 @@ import { getPendingReviewPlacements, getReviewHistory, reviewPlacement, type Pen
 import { ROUTES } from "@/constants/routes";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const ADMIN_ROLES = ["admin", "super_admin"];
 
 export function AdminReview() {
@@ -92,7 +93,7 @@ export function AdminReview() {
                     {p.org_name ? ` · ${p.org_name}` : tr(" · Individual learner")}
                   </p>
                   <p className="text-xs text-muted mt-0.5">
-                    {new Date(p.taken_at).toLocaleString()} &middot; {p.cefr_level} &middot; {p.overall_percent}%
+                    {new Date(p.taken_at).toLocaleString(appLocale())} &middot; {p.cefr_level} &middot; {p.overall_percent}%
                     {p.test_code && <> &middot; {p.test_code}</>}
                   </p>
                 </div>
@@ -106,7 +107,7 @@ export function AdminReview() {
                   <div key={i} className="flex items-center gap-3 text-xs bg-paper-warm rounded-input px-3 py-2">
                     <span className="font-mono uppercase text-error font-semibold">{c.decision}</span>
                     {c.similarityScore !== null && <span className="text-muted">{tr("similarity {{toFixed}}", { toFixed: Number(c.similarityScore).toFixed(2) })}</span>}
-                    <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString()}</span>
+                    <span className="text-muted">{new Date(c.createdAt).toLocaleTimeString(appLocale())}</span>
                     {c.sampleUri && (
                       <a href={c.sampleUri} target="_blank" rel="noreferrer" className="text-navy-deep font-semibold hover:underline ml-auto">
                         {tr("view photo")}

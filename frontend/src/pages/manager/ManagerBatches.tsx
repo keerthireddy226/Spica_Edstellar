@@ -13,10 +13,11 @@ import { getManagerBatches, managerCreateBatch, type ManagerBatch } from "@/api/
 import { getManagerLicenseOverview, type BatchBudget, type ManagerPool } from "@/api/licenses";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 type Status = ManagerBatch["status"];
 
 function fmt(d: string) {
-  return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return new Date(d).toLocaleDateString(appLocale(), { month: "short", day: "numeric", year: "numeric" });
 }
 
 const fieldClass = "w-full rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";

@@ -8,6 +8,7 @@ import { auditExportPath, getAuditLog, type AuditEntry, type AuditFilters } from
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 const ACTION_GROUPS: [string, string][] = [
   ["", tr("All activity")],
   ["test.", tr("Tests started and finished")],
@@ -158,7 +159,7 @@ export function OrgAdminAudit() {
                 {entries.map((e) => (
                   <tr key={`${e.source}-${e.id}`} className="border-b border-rule last:border-0 align-top">
                     <td className="px-4 py-3 text-muted whitespace-nowrap tabular-nums">
-                      {new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                      {new Date(e.createdAt).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" })}
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-ink">{e.actorLabel ?? tr("System")}</p>

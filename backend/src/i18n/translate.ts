@@ -54,6 +54,23 @@ function fill(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, n) => vars[n] ?? "");
 }
 
+// Dates written into English sentences ("20 Nov 2026", "5 December 2026") are
+// shown in the reader's language when the sentence is translated.
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+const DATE_RE = /^(\d{1,2}) (Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) (\d{4})$/;
+export function localizeDate(lang: string, value: string): string {
+  const m = value.trim().match(DATE_RE);
+  if (!m) return value;
+  const month = MONTHS.indexOf(m[2].slice(0, 3).toLowerCase());
+  const d = new Date(Date.UTC(Number(m[3]), month, Number(m[1])));
+  if (Number.isNaN(d.getTime())) return value;
+  try {
+    return d.toLocaleDateString(lang === "zh" ? "zh-CN" : lang, { day: "numeric", month: m[2].length > 3 ? "long" : "short", year: "numeric", timeZone: "UTC" });
+  } catch {
+    return value;
+  }
+}
+
 export function translateServerText(lang: string | null | undefined, text: string, depth = 0): string {
   const dict = lang ? DICTS[lang] : undefined;
   if (!dict || !text) return text;
@@ -67,7 +84,8 @@ export function translateServerText(lang: string | null | undefined, text: strin
     if (!m) continue;
     const vars: Record<string, string> = {};
     p.names.forEach((n, i) => {
-      vars[n] = translateServerText(lang, m[i + 1], depth + 1);
+      const value = m[i + 1];
+      vars[n] = DATE_RE.test(value.trim()) ? localizeDate(lang!, value) : translateServerText(lang, value, depth + 1);
     });
     return fill(dict[p.key] ?? p.key, vars);
   }

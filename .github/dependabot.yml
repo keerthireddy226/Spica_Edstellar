@@ -9,6 +9,12 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Major versions change how a library works and need planned work, so
+    # Dependabot suggests only minor and patch updates. Security problems are
+    # still caught on every push by the npm audit step in CI.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: [minor, patch]

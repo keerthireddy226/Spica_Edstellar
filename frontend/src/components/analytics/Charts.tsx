@@ -3,6 +3,7 @@ import type { Bucket } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 export function Card({ title, subtitle, children, actions }: { title: string; subtitle?: string; children: ReactNode; actions?: ReactNode }) {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4 break-inside-avoid">
@@ -86,7 +87,7 @@ export function WeeklyBars({ data, valueLabel }: { data: { week: string; value: 
       <div className="flex gap-1.5">
         {data.map((d) => (
           <span key={d.week} className="flex-1 text-center text-[10px] text-muted">
-            {new Date(d.week).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+            {new Date(d.week).toLocaleDateString(appLocale(), { day: "numeric", month: "short" })}
           </span>
         ))}
       </div>

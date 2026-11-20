@@ -11,6 +11,7 @@ import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatCard } from 
 import { tr } from "@/i18n/tr";
 import { ROUTES } from "@/constants/routes";
 import { money } from "./PartnerOrders";
+import { appLocale } from "@/lib/locale";
 
 const post = (body: unknown): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
@@ -43,7 +44,7 @@ interface PaymentsResponse {
   paid: PaymentRow[];
 }
 
-const day = (s: string | null) => (s ? new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (s: string | null) => (s ? new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 const METHOD: Record<string, string> = { bank: tr("Bank transfer"), stripe: tr("Card (online)"), other: tr("Other") };
 const doc = (id: string, kind: "proforma" | "invoice") => `/order-document/${id}/${kind}`;
 const sumBy = (rows: PaymentRow[], f: (r: PaymentRow) => number) => {

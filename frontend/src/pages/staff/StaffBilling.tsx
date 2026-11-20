@@ -11,6 +11,7 @@ import { trServer } from "@/i18n/serverText";
 import { commercialApi } from "@/api/admin";
 import { ApiError } from "@/lib/api";
 import { Button } from "@/components/Button";
+import { appLocale } from "@/lib/locale";
 type F = "unpaid" | "overdue" | "paid" | "individual" | "all";
 
 // Orders also include products individuals bought (Full access, preparation, a test).
@@ -125,7 +126,7 @@ export function StaffBilling() {
                 <div className="flex gap-1.5">
                   {monthly.map((m) => (
                     <span key={m.month} className="flex-1 text-center text-[10px] text-muted">
-                      {new Date(`${m.month}-01`).toLocaleDateString(undefined, { month: "short" })}
+                      {new Date(`${m.month}-01`).toLocaleDateString(appLocale(), { month: "short" })}
                     </span>
                   ))}
                 </div>

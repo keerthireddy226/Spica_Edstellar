@@ -13,6 +13,7 @@ import type { ActivityKind } from "@/api/admin";
 import { tr } from "@/i18n/tr";
 import { OrgDemoPanel } from "@/components/OrgDemoPanel";
 import { OrgOrdersPanel } from "@/components/OrgOrdersPanel";
+import { appLocale } from "@/lib/locale";
 const SESSION_TYPE_LABEL: Record<string, string> = {
   practice: tr("Practice"),
   mocktest: tr("Mock Test"),
@@ -84,7 +85,7 @@ function RecentActivity({ data }: { data: OrgAdminOverview["activityFeed"] }) {
                   <Icon size={15} strokeWidth={1.8} />
                 </span>
                 <span className="text-ink flex-1 min-w-0">{activitySentence(item)}</span>
-                <span className="text-muted text-xs shrink-0 tabular-nums" title={new Date(item.occurredAt).toLocaleString()}>
+                <span className="text-muted text-xs shrink-0 tabular-nums" title={new Date(item.occurredAt).toLocaleString(appLocale())}>
                   {timeAgo(item.occurredAt)}
                 </span>
               </li>

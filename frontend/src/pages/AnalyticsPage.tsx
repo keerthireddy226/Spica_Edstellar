@@ -19,6 +19,7 @@ import {
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 // One analytics page for every console; the server decides the scope by role.
 export function AnalyticsPage() {
   const { user } = useAuth();
@@ -83,7 +84,7 @@ export function AnalyticsPage() {
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">{tr("Analytics")}</h1>
           <p className="text-sm text-muted mt-1">
-            {overview?.scope ? trServer(overview.scope) : tr("Loading…")} {tr("· generated")}{" "}{new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+            {overview?.scope ? trServer(overview.scope) : tr("Loading…")} {tr("· generated")}{" "}{new Date().toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" })}
           </p>
         </div>
         <div className="flex items-center gap-2 print:hidden">

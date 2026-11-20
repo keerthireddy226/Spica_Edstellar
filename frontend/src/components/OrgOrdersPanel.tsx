@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FileText, Receipt } from "lucide-react";
 import { api } from "@/lib/api";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // Org Admin: the paid orders a Channel Partner (or Spica) placed for this
 // organisation, with the proforma, payment link and tax invoice. Hidden when
@@ -31,8 +32,8 @@ const STATUS: Record<string, string> = {
   expired: tr("Ended"),
   cancelled: tr("Cancelled"),
 };
-const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", { style: "currency", currency }).format(minor / 100);
-const day = (s: string) => new Date(s + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : appLocale(), { style: "currency", currency }).format(minor / 100);
+const day = (s: string) => new Date(s + "T00:00:00").toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 
 export function OrgOrdersPanel() {
   const [orders, setOrders] = useState<Order[] | null>(null);
@@ -60,7 +61,7 @@ export function OrgOrdersPanel() {
               {o.allocated.licences + o.allocated.credits > 0 && (
                 <span className="text-success font-semibold">
                   {tr("Yours: {{l}} licences and {{c}} credits, in your pool", { l: o.allocated.licences, c: o.allocated.credits })}
-                  {o.allocated.graceEndsAt && new Date(o.allocated.graceEndsAt) > new Date() ? ` · ${tr("licences start counting on {{d}}", { d: new Date(o.allocated.graceEndsAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) })}` : ""}
+                  {o.allocated.graceEndsAt && new Date(o.allocated.graceEndsAt) > new Date() ? ` · ${tr("licences start counting on {{d}}", { d: new Date(o.allocated.graceEndsAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short" }) })}` : ""}
                 </span>
               )}
             </span>

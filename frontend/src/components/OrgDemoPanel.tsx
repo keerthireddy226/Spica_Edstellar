@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Gift } from "lucide-react";
 import { api } from "@/lib/api";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // Org Admin of a Channel Partner's organisation: the demo licences, and which
 // learners have one. New learners get one automatically while any are left;
@@ -12,7 +13,7 @@ interface Data {
   learners?: { id: string; name: string; email: string; demoEndsAt: string | null; status: "none" | "active" | "ended"; started: boolean; paid?: boolean }[];
   upgrade?: { demoLearners: number; paidLicencesFree: number; licenceMonths: number };
 }
-const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "—");
+const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short" }) : "—");
 
 export function OrgDemoPanel() {
   const [d, setD] = useState<Data | null>(null);

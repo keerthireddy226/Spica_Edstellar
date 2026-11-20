@@ -6,12 +6,13 @@ import { getOrgAdminActivityDetail, type OrgAdminDetail, type OrgAdminOnboardedM
 
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function categoryLabel(category: string | null): string {
   return category === "university" ? tr("University") : tr("Organization");
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 // An Org Admin's own detail view — reachable from the Org Admins list or

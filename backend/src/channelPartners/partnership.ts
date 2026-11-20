@@ -155,7 +155,7 @@ export async function assertPartnerCanAct(partnerId: string, need?: "organisatio
 }
 
 const fmt = (d: Date | string | null) => (d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "[start date]");
-const money = (minor: number, currency: string) => `${currency} ${(minor / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+const money = (minor: number, currency: string) => `${currency} ${(minor / 100).toLocaleString(currency === "INR" ? "en-IN" : "en-US", { maximumFractionDigits: 2 })}`;
 
 // The partnership agreement, filled in for this partner. The partner signs it
 // in the app; the same text is the lawyer's draft (Legal Documents, folder 3).

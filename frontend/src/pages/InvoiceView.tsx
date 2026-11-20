@@ -4,6 +4,7 @@ import { Printer } from "lucide-react";
 import { getInvoice, formatAmount, type Invoice } from "@/api/payments";
 import { countryName } from "@/constants/demographics";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // The credit and discount lines (saved on invoices since they were added; older ones show none).
 type InvoiceLines = Invoice & { creditAmount?: number; discountAmount?: number; discountReason?: "level_retake" | "next_level" | null };
@@ -55,7 +56,7 @@ export function InvoiceView() {
           <div className="text-right">
             <p className="text-xs uppercase tracking-wide text-[#666]">{invoice.taxAmount > 0 ? tr("Tax invoice") : tr("Invoice")}</p>
             <p className="font-mono font-semibold">{invoice.invoiceNumber}</p>
-            <p className="text-sm">{new Date(invoice.issuedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</p>
+            <p className="text-sm">{new Date(invoice.issuedAt).toLocaleDateString(appLocale(), { year: "numeric", month: "long", day: "numeric" })}</p>
             <p className="text-xs mt-1 inline-block px-2 py-0.5 rounded-pill bg-[#e6f4ea] text-[#1e7a3c] font-semibold">{tr("PAID")}</p>
           </div>
         </div>
@@ -129,7 +130,7 @@ export function InvoiceView() {
             {invoice.creditNotes.map((c) => (
               <div key={c.creditNoteNumber} className="flex justify-between gap-4">
                 <span>
-                  <span className="font-mono">{c.creditNoteNumber}</span> · {new Date(c.issuedAt).toLocaleDateString()} · {c.reason}
+                  <span className="font-mono">{c.creditNoteNumber}</span> · {new Date(c.issuedAt).toLocaleDateString(appLocale())} · {c.reason}
                   {c.licensesRemoved ? ` · ${tr("{{n}} licenses removed", { n: c.licensesRemoved })}` : ""}
                 </span>
                 <span>−{money(c.amount)}</span>

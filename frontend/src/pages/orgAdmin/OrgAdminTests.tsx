@@ -8,13 +8,14 @@ import { getOrgTests, giveTests, requestCredits, withdrawTest, type GivenStatus,
 import { ApiError } from "@/lib/api";
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 
 // Tests & credits: give learners a real test (strictly proctored, with a
 // certificate), a level test (certificate on a pass), or preparation for one test, paid with the
 // organization's credits. Full access stays on the Licenses page. Programs
 // with a final assessment give theirs here automatically.
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(document.documentElement.lang || undefined, { day: "numeric", month: "short", year: "numeric" });
+const day = (iso: string) => new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 
 const STATUS: Record<GivenStatus, { label: () => string; cls: string }> = {
   waiting: { label: () => tr("Not started"), cls: "text-navy-deep" },

@@ -20,6 +20,7 @@ import { tr } from "@/i18n/tr";
 import { bankLabel } from "@/lib/questionBank";
 import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { BuilderPanel, LibraryPanel } from "@/pages/staff/AssessmentBuilder";
+import { appLocale } from "@/lib/locale";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 
@@ -147,7 +148,7 @@ function JobsPanel({ jobs, names, testTypes }: { jobs: GenerationJob[]; names: R
                 </span>
               </div>
               <div className="text-xs text-muted">
-                {new Date(j.createdAt).toLocaleString()} · {j.createdBy ?? ""}
+                {new Date(j.createdAt).toLocaleString(appLocale())} · {j.createdBy ?? ""}
               </div>
               {j.status === "failed" && j.error && <div className="text-xs text-error">{aiErrorText(j.error)}</div>}
               {j.status === "done" && (

@@ -317,7 +317,7 @@ export async function changeStatus(args: {
 // Payment received: Super Admins and that Admin, to confirm. Each Spica step:
 // the partner.
 async function notifyOrder(o: { id: string; order_number: string; partner_id: string | null; total: number; currency: string }, to: OrderStatus, actor: Actor) {
-  const money = `${o.currency} ${(o.total / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const money = `${o.currency} ${(o.total / 100).toLocaleString(o.currency === "INR" ? "en-IN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const p = o.partner_id ? (await pool.query(`SELECT user_id, full_name, created_by FROM channel_partners WHERE id = $1`, [o.partner_id])).rows[0] : null;
   if (to === "submitted" || to === "payment_received") {
     const staff = await pool.query(

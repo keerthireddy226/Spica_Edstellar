@@ -4,6 +4,7 @@ import type { LearnerAccess } from "@/api/licenses";
 import type { PlanTier } from "@/api/plans";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 // Edstellar staff consoles (Super Admin and Admin).
 
 export interface StaffPermissions {
@@ -238,7 +239,7 @@ export interface OrgLearnerRow {
 export const getStaffOrgLearners = () => api<{ learners: OrgLearnerRow[] }>("/admin/console/learners");
 
 export function money(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(amount / 100);
+  return new Intl.NumberFormat(appLocale(), { style: "currency", currency, maximumFractionDigits: 0 }).format(amount / 100);
 }
 
 export function ago(iso: string | null | undefined): string {
@@ -249,19 +250,19 @@ export function ago(iso: string | null | undefined): string {
   if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
   if (days < 30) return days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days });
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 }
 
 export function shortDate(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+  return iso ? new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—";
 }
 
 // Date and time of an event, e.g. "9 Oct 2026, 2:35 pm" (in the reader's locale).
 export function dateTime(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+  return iso ? new Date(iso).toLocaleString(appLocale(), { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
 }
 
 // Time of day only, e.g. "2:35 pm".
 export function timeOfDay(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "";
+  return iso ? new Date(iso).toLocaleTimeString(appLocale(), { hour: "numeric", minute: "2-digit" }) : "";
 }

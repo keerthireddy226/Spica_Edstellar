@@ -11,6 +11,7 @@ import { SKILL_RING_COLOR } from "@/lib/skillTints";
 import type { SkillTag } from "@/api/testSession";
 import { CEFR_MEANING } from "@/lib/cefrMeaning";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // Today's practice and the level now (from the old Overview page, now on
 // Progress): the level and what it means, the practice set left unfinished,
@@ -93,7 +94,7 @@ export function EnglishLevelCard({ level, currentLevel }: { level: NonNullable<D
         {level.testedAt && (
           <p className="text-xs text-muted mt-1">
             {tr("Placement test on {{date}}: {{level}}. Updated by your practice since.", {
-              date: new Date(level.testedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }),
+              date: new Date(level.testedAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }),
               level: level.cefr,
             })}
           </p>

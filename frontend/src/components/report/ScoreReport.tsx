@@ -8,6 +8,7 @@ import { tr } from "@/i18n/tr";
 import { subBandLabel } from "@/lib/subBand";
 import { StrengthsSummary, rankSkills, type PartMark, type SkillMark } from "@/components/report/StrengthsSummary";
 import { isIncomplete } from "@/components/recruitment/resultMarks";
+import { appLocale } from "@/lib/locale";
 
 // The Spica score's bands (10-90, Spica's own scale aligned to CEFR).
 export const BANDS = [
@@ -162,7 +163,7 @@ export function FinalResultWaiting({ status, waiting }: { status: string; waitin
 export function ScoreReport({ score, about, analysis, viewer = "learner", hiring }: { score: ScoreReportData; about: ReportAbout | null | undefined; analysis: string; viewer?: "learner" | "org"; hiring?: string }) {
   const org = viewer === "org";
   if (!score.overall) return null;
-  const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—";
+  const date = score.completedAt ? new Date(score.completedAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—";
   const test = about?.testTypeName ? (about.familyName ? tr("{{family}}-style {{test}}", { family: about.familyName, test: about.testTypeName }) : about.testTypeName) : null;
   // A level test is a real attempt too, but a pass or not-passed check with no
   // certificate; real tests (final assessment, a passed level test, a recruitment test) certify.

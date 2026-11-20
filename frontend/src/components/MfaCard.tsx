@@ -6,6 +6,7 @@ import { mfaApi, type MfaStatus } from "@/api/admin";
 import { downloadText } from "@/lib/csv";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function RecoveryCodes({ codes, onDone }: { codes: string[]; onDone: () => void }) {
   return (
     <div className="flex flex-col gap-3">
@@ -82,8 +83,8 @@ export function MfaCard({ onEnabled }: { onEnabled?: () => void }) {
           <p className="text-sm text-muted">
             {status.enabled
               ? status.recoveryCodesLeft === 1
-                ? tr("On since {{date}}. 1 recovery code left.", { date: new Date(status.enabledAt!).toLocaleDateString() })
-                : tr("On since {{date}}. {{n}} recovery codes left.", { date: new Date(status.enabledAt!).toLocaleDateString(), n: status.recoveryCodesLeft })
+                ? tr("On since {{date}}. 1 recovery code left.", { date: new Date(status.enabledAt!).toLocaleDateString(appLocale()) })
+                : tr("On since {{date}}. {{n}} recovery codes left.", { date: new Date(status.enabledAt!).toLocaleDateString(appLocale()), n: status.recoveryCodesLeft })
               : tr("Ask for a code from an authenticator app (Google Authenticator, Microsoft Authenticator, 1Password…) when you sign in.")}
             {status.requiredByOrganization ? tr(" Your organization requires it.") : status.required ? tr(" It is required for Spica staff accounts.") : null}
           </p>

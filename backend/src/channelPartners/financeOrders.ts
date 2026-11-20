@@ -25,7 +25,7 @@ export interface BillTo {
 }
 type Actor = { id: string | null; role: string; ip?: string | null };
 
-const money = (minor: number, currency: string) => `${currency} ${(minor / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const money = (minor: number, currency: string) => `${currency} ${(minor / 100).toLocaleString(currency === "INR" ? "en-IN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const docLink = (orderId: string, kind: "proforma" | "invoice") => `${PAYMENT_CONFIG.frontendUrl}/order-document/${orderId}/${kind}`;
 
 async function order(orderId: string) {

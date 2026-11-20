@@ -9,6 +9,7 @@ import { Button } from "@/components/Button";
 import { EmptyNote, PageError, PageHeader, PageLoading, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { tr } from "@/i18n/tr";
 import { fmtDay, minorMoney } from "@/components/partner/partnerUi";
+import { appLocale } from "@/lib/locale";
 
 type Money = Record<string, number>;
 interface TrackRecord {
@@ -24,7 +25,7 @@ interface TrackRecord {
 
 const moneyText = (m: Money) => (Object.keys(m).length ? Object.entries(m).map(([c, n]) => minorMoney(n, c)).join(" + ") : minorMoney(0, "USD"));
 const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 100)}%` : "—");
-const monthLabel = (m: string) => new Date(m + "-01T00:00:00").toLocaleDateString(undefined, { month: "long", year: "numeric" });
+const monthLabel = (m: string) => new Date(m + "-01T00:00:00").toLocaleDateString(appLocale(), { month: "long", year: "numeric" });
 const VIA: Record<string, string> = { link: tr("Your link"), code: tr("Typed your code at sign-up"), plans: tr("Typed your code on the Plans page") };
 const card = "bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3";
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted";

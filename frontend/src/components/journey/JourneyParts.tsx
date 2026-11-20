@@ -29,6 +29,7 @@ import { ROUTES } from "@/constants/routes";
 import { useReadiness } from "@/components/learner/useReadiness";
 import { usePrepPrices } from "@/components/plans/usePrepPrices";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 const ICONS: Record<SkillTag, typeof Headphones> = { listening: Headphones, speaking: Mic, reading: BookOpen, writing: PenLine };
 
@@ -402,7 +403,7 @@ export function Checkpoints({ j }: { j: Journey }) {
       {j.demo && (
         <p className="text-xs text-muted">
           {tr("Your 7-day demo ends on {{d}}: {{p}} practice tests and {{m}} mock test left. There's no final assessment or certificate in the demo.", {
-            d: new Date(j.demo.endsAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }),
+            d: new Date(j.demo.endsAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short" }),
             p: j.demo.practiceLeft,
             m: j.demo.mocksLeft,
           })}

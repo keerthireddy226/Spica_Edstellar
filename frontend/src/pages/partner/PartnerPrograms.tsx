@@ -11,6 +11,7 @@ import { tr } from "@/i18n/tr";
 import { ROUTES } from "@/constants/routes";
 import type { EarningsResponse, PartnerLead, PartnerType, PartnershipStatus } from "@/api/channelPartners";
 import { fmtDay, leadStatusLabel, minorMoney, PartnershipPill, typeBlurb, typeLabel } from "@/components/partner/partnerUi";
+import { appLocale } from "@/lib/locale";
 
 // The partner portal around every page (user, 19 Nov 2026): the partnership
 // bar (always visible: type, status, dates, minimums, agreement), the
@@ -236,7 +237,7 @@ export function PartnerAgreement() {
     <div className="flex flex-col gap-5 w-full max-w-3xl">
       <PageHeader title={a.title} subtitle={tr("Version {{v}} · for {{a}} to {{b}}", { v: a.version, a: fmtDay(a.periodStart), b: fmtDay(a.periodEnd) })} />
       {canSign && <Notice tone="info">{tr("Read and sign your partnership agreement to start using the partner portal. You sign again each time the partnership is renewed.")}</Notice>}
-      {d.signed && <Notice tone="success">{tr("Signed by {{n}} on {{d}} (version {{v}}).", { n: d.signed.signedName, d: new Date(d.signed.signedAt).toLocaleString(), v: d.signed.version })}</Notice>}
+      {d.signed && <Notice tone="success">{tr("Signed by {{n}} on {{d}} (version {{v}}).", { n: d.signed.signedName, d: new Date(d.signed.signedAt).toLocaleString(appLocale()), v: d.signed.version })}</Notice>}
       <article className="bg-surface border border-rule rounded-card p-6 flex flex-col gap-4 text-sm leading-relaxed">
         {a.sections.map((s) => (
           <section key={s.h} className="flex flex-col gap-1.5">

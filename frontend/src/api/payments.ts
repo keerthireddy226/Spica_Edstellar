@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { appLocale } from "@/lib/locale";
 
 export interface Quote {
   kind: "org_licenses" | "individual_plan";
@@ -151,7 +152,7 @@ export function getInvoice(id: string): Promise<Invoice> {
 
 // Amounts are in minor units (cents / paise).
 export function formatAmount(minor: number, currency: string): string {
-  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : undefined, {
+  return new Intl.NumberFormat(currency === "INR" ? "en-IN" : appLocale(), {
     style: "currency",
     currency,
     maximumFractionDigits: minor % 100 === 0 ? 0 : 2,

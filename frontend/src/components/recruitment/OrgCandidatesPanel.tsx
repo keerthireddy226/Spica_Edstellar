@@ -4,6 +4,7 @@ import type { OrgBatch, OrgCandidate } from "@/api/recruitment";
 import { ROUTES } from "@/constants/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 const STATUS: Record<string, () => string> = {
   invited: () => tr("Invited"),
@@ -107,7 +108,7 @@ export function OrgCandidatesPanel({
             </p>
             <p className="text-xs text-muted">
               {tr("Created {{d}}", {
-                d: new Date(batch.createdAt).toLocaleDateString(undefined, {
+                d: new Date(batch.createdAt).toLocaleDateString(appLocale(), {
                   dateStyle: "medium",
                 }),
               })}{" "}

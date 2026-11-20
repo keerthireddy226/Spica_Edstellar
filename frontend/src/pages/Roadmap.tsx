@@ -17,6 +17,7 @@ import { PageError, PageLoading } from "@/components/learner/PageStates";
 import { WORD_BANK, IDIOM_BANK, WORD_CHALLENGES } from "@/data/dailyContent";
 import { useAuth } from "@/hooks/useAuth";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // "My journey" (the Roadmap page): progress to the goal, the levels still to
 // reach, this week's tasks and the checkpoints up to the exam, plus the
@@ -248,7 +249,7 @@ export function Roadmap() {
         <h2 className="font-display font-bold text-xl text-ink">{t("roadmap.notReadyTitle")}</h2>
         <p className="text-sm text-muted max-w-sm">
           {notReady?.scheduledFor
-            ? t("roadmap.notReadyBodyScheduled", { date: new Date(notReady.scheduledFor).toLocaleDateString() })
+            ? t("roadmap.notReadyBodyScheduled", { date: new Date(notReady.scheduledFor).toLocaleDateString(appLocale()) })
             : t("roadmap.notReadyBody")}
         </p>
         <Button onClick={() => navigate(ROUTES.PLACEMENT)}>{t("roadmap.takeTestNow")}</Button>

@@ -13,6 +13,7 @@ import { getOrgLicenseOverview } from "@/api/licenses";
 import { PlanLimitHint, PlanLockNote, refreshPlan, useHasFeature } from "@/components/plans/usePlan";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function CreateBatchModal({ onClose, onCreated, unreserved }: { onClose: () => void; onCreated: () => void; unreserved: number | null }) {
   const [fixedLicenses, setFixedLicenses] = useState("");
   const allotmentsAllowed = useHasFeature("batch_allotments") !== false;
@@ -187,12 +188,12 @@ export function OrgAdminBatches() {
               {b.durationMonths && (
                 <p className="text-xs text-white/70">
                   {b.durationMonths === 1 ? tr("1 month") : tr("{{n}} months", { n: b.durationMonths })}
-                  {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }) : ""}
+                  {b.startDate ? tr(" · starts {{toLocaleDateString}}", { toLocaleDateString: new Date(b.startDate).toLocaleDateString(appLocale(), { month: "short", day: "numeric", year: "numeric" }) }) : ""}
                   {b.endDate
                     ? " · " +
                       (b.status === "active"
-                        ? tr("ends {{date}}", { date: new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) })
-                        : tr("ended {{date}}", { date: new Date(b.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) }))
+                        ? tr("ends {{date}}", { date: new Date(b.endDate).toLocaleDateString(appLocale(), { month: "short", day: "numeric", year: "numeric" }) })
+                        : tr("ended {{date}}", { date: new Date(b.endDate).toLocaleDateString(appLocale(), { month: "short", day: "numeric", year: "numeric" }) }))
                     : ""}
                 </p>
               )}

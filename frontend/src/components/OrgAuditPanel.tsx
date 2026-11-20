@@ -5,6 +5,7 @@ import { downloadCsv } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
 import { AUDIT_VERBS, auditDetailParts } from "@/lib/auditVerbs";
+import { appLocale } from "@/lib/locale";
 // A candidate with no name is shown by their invitation's placeholder address.
 const isPlaceholder = (label: string | null | undefined) => !!label && label.endsWith("@candidate.spica.invalid");
 
@@ -72,8 +73,8 @@ export function OrgAuditPanel({ tenantId }: { tenantId: string }) {
         <div className="border border-rule rounded-input px-4 py-2 flex flex-col">
           {entries.length === 0 && <p className="text-sm text-muted py-1">{tr("Nothing recorded yet.")}</p>}
           {entries.map((e, i) => {
-            const day = new Date(e.createdAt).toLocaleDateString(undefined, { dateStyle: "medium" });
-            const newDay = i === 0 || new Date(entries[i - 1].createdAt).toLocaleDateString(undefined, { dateStyle: "medium" }) !== day;
+            const day = new Date(e.createdAt).toLocaleDateString(appLocale(), { dateStyle: "medium" });
+            const newDay = i === 0 || new Date(entries[i - 1].createdAt).toLocaleDateString(appLocale(), { dateStyle: "medium" }) !== day;
             const { line, facts } = describe(e);
             return (
               <div key={`${e.source}-${e.id}`}>
@@ -83,7 +84,7 @@ export function OrgAuditPanel({ tenantId }: { tenantId: string }) {
                     <span className="text-sm text-ink">{line}</span>
                     {facts && <span className="text-xs text-muted">{facts}</span>}
                   </span>
-                  <span className="text-xs text-muted shrink-0 tabular-nums">{new Date(e.createdAt).toLocaleTimeString(undefined, { timeStyle: "short" })}</span>
+                  <span className="text-xs text-muted shrink-0 tabular-nums">{new Date(e.createdAt).toLocaleTimeString(appLocale(), { timeStyle: "short" })}</span>
                 </div>
               </div>
             );

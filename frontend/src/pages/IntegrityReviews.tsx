@@ -33,6 +33,7 @@ import { useSearchParams } from "react-router-dom";
 import { useBranding } from "@/components/AppShell/useBranding";
 import { tr } from "@/i18n/tr";
 import { reasonText } from "@/components/proctoring/integrityText";
+import { appLocale } from "@/lib/locale";
 
 const EVENT_TEXT: Record<string, () => string> = {
   tab_hidden: () => tr("Left the test tab"),
@@ -378,7 +379,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
                   <figure key={m.id} className={`rounded-card border ${issue ? "border-error/60" : "border-rule"} bg-surface p-1.5`}>
                     <MediaView id={m.id} kind="image" className="w-full aspect-[4/3]" />
                     <figcaption className="flex items-center justify-between text-[11px] mt-1 px-0.5">
-                      <span className="text-muted">{new Date(m.created_at).toLocaleTimeString()}</span>
+                      <span className="text-muted">{new Date(m.created_at).toLocaleTimeString(appLocale())}</span>
                       {issue ? <span className="text-error font-semibold">{issue}</span> : direction && <span className="text-navy-deep font-semibold">{direction}</span>}
                     </figcaption>
                   </figure>
@@ -407,7 +408,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
                   {screenShots.map((m) => (
                     <figure key={m.id} className="rounded-card border border-rule bg-surface p-1.5">
                       <MediaView id={m.id} kind="image" className="w-full aspect-video" />
-                      <figcaption className="text-[11px] text-muted mt-1 px-0.5">{new Date(m.created_at).toLocaleTimeString()}</figcaption>
+                      <figcaption className="text-[11px] text-muted mt-1 px-0.5">{new Date(m.created_at).toLocaleTimeString(appLocale())}</figcaption>
                     </figure>
                   ))}
                 </div>
@@ -423,7 +424,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
               <div className="flex flex-col gap-3">
                 {clips.map((c) => (
                   <div key={c.id} className="flex flex-col gap-1">
-                    <span className="text-xs font-mono text-muted">{new Date(c.created_at).toLocaleTimeString()}</span>
+                    <span className="text-xs font-mono text-muted">{new Date(c.created_at).toLocaleTimeString(appLocale())}</span>
                     <MediaView id={c.id} kind="audio" />
                   </div>
                 ))}
@@ -440,7 +441,7 @@ function ReviewDetail({ sessionId, onClose, onDecided }: { sessionId: string; on
           ) : (
             events.map((e, i) => (
               <div key={i} className="flex items-center gap-3 text-sm py-1.5 border-b border-rule last:border-0">
-                <span className="text-xs font-mono text-muted w-20 shrink-0">{new Date(e.at).toLocaleTimeString()}</span>
+                <span className="text-xs font-mono text-muted w-20 shrink-0">{new Date(e.at).toLocaleTimeString(appLocale())}</span>
                 <span className={`h-2 w-2 rounded-full shrink-0 ${e.severity === "high" ? "bg-error" : e.severity === "warn" ? "bg-warning" : "bg-rule"}`} />
                 <span className="text-ink">{(EVENT_TEXT[e.type] ?? (() => e.type))()}</span>
                 {e.detail && typeof e.detail.message === "string" && <span className="text-xs text-muted truncate">“{e.detail.message}”</span>}

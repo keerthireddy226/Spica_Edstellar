@@ -10,6 +10,7 @@ import { FinalResultWaiting, ScoreReport } from "@/components/report/ScoreReport
 import { SkillLevelCompare } from "@/components/report/SkillLevelCompare";
 import { Confetti } from "@/components/Confetti";
 import { useAuth } from "@/hooks/useAuth";
+import { appLocale } from "@/lib/locale";
 
 const ERROR_TYPE: Record<string, () => string> = {
   spelling: () => tr("Spelling"),
@@ -662,7 +663,7 @@ function AboutLine({ about }: { about: ReportAbout }) {
       <span className="text-sm text-muted">
         {[
           about.setName,
-          about.completedAt ? new Date(about.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : null,
+          about.completedAt ? new Date(about.completedAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : null,
           about.testCode ? tr("Test ID {{code}}", { code: about.testCode }) : null,
         ]
           .filter(Boolean)

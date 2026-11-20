@@ -8,8 +8,9 @@ import { planErrorMessage, sendEnterpriseInquiry } from "@/api/plans";
 import { developersApi, type ApiKeyInfo, type WebhookInfo } from "@/api/developers";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
-const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : tr("never"));
+const when = (d: string | null) => (d ? new Date(d).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" }) : tr("never"));
 
 function ApiKeys() {
   const [keys, setKeys] = useState<ApiKeyInfo[]>([]);

@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { Printer } from "lucide-react";
 import { api } from "@/lib/api";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // The proforma invoice or the final tax invoice for a Channel Partner order
 // (stage 6). White and print-friendly: "Print" saves it as a PDF.
@@ -30,8 +31,8 @@ interface Doc {
   payment: { method: string; reference: string | null; amount: number; receivedOn: string } | null;
 }
 
-const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", { style: "currency", currency }).format(minor / 100);
-const date = (s: string) => new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : appLocale(), { style: "currency", currency }).format(minor / 100);
+const date = (s: string) => new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(appLocale(), { year: "numeric", month: "long", day: "numeric" });
 
 export function OrderDocument() {
   const { orderId, kind } = useParams();

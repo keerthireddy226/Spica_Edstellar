@@ -6,8 +6,9 @@ import { tr } from "@/i18n/tr";
 import { useAuth } from "@/hooks/useAuth";
 import { DetailModal } from "@/components/DetailModal";
 import { Button } from "@/components/Button";
+import { appLocale } from "@/lib/locale";
 
-const fmt = (s: string) => new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const fmt = (s: string) => new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 
 // Pop-ups for demo learners (user, 19 Nov 2026): what the demo includes, at
 // first sign-in; the 3-day grace once per sign-in; and, if a session is still

@@ -121,7 +121,7 @@ export async function markCommissionPaid(args: { orderIds: string[]; reference: 
     const p = (await pool.query(`SELECT user_id FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
     const totals = new Map<string, number>();
     for (const o of orders) totals.set(o.currency, (totals.get(o.currency) ?? 0) + o.commission_amount);
-    const money = [...totals].map(([c, v]) => `${c} ${(v / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`).join(" + ");
+    const money = [...totals].map(([c, v]) => `${c} ${(v / 100).toLocaleString(c === "INR" ? "en-IN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`).join(" + ");
     if (p) {
       await notify({
         userId: p.user_id,

@@ -7,6 +7,7 @@ import { DetailModal } from "@/components/DetailModal";
 import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/PartnerDashboard";
 import { money } from "@/pages/partner/PartnerOrders";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // Channel Partner portal: every organisation the partner onboarded, and one
 // organisation's admin, learners (licence and whether they finished the mock
@@ -23,7 +24,7 @@ interface Detail {
   orders: { id: string; orderNumber: string; status: string; total: number; currency: string; validUntil: string; licences: number }[];
 }
 
-const day = (s: string | null) => (s ? new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (s: string | null) => (s ? new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm focus:outline-none focus:border-navy";
 const ORDER_STATUS: Record<string, string> = {
   draft: tr("Draft"),

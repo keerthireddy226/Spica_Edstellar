@@ -118,6 +118,7 @@ import { useTestHold } from "@/hooks/useTestHold";
 import { TestHoldOverlay, TestHoldWarning } from "@/components/TestHoldOverlay";
 import { useNoCopyPaste } from "@/hooks/useNoCopyPaste";
 import { NO_DECLARATIONS, TestDeclarations, declarationsDone } from "@/components/pretest/TestDeclarations";
+import { appLocale } from "@/lib/locale";
 // Fallback reading time for a two-phase item with no server-set duration.
 const DEFAULT_TWO_PHASE_READ_SECONDS = 30;
 
@@ -2282,7 +2283,7 @@ export function PracticeTests({ section = "practice", owned }: { section?: "prac
                       </>
                     ) : null}
                     <div className="flex-1 min-w-0 text-[11px] text-muted leading-snug">
-                      {exam.last.level || exam.last.percent !== null ? tr("Last taken {{date}}", { date: new Date(exam.last.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) }) : tr("Taken {{date}}, nothing answered to score", { date: new Date(exam.last.completedAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }) })}
+                      {exam.last.level || exam.last.percent !== null ? tr("Last taken {{date}}", { date: new Date(exam.last.completedAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short" }) }) : tr("Taken {{date}}, nothing answered to score", { date: new Date(exam.last.completedAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short" }) })}
                       {exam.last.attempts > 1 ? ` · ${tr("{{n}} attempts", { n: exam.last.attempts })}` : ""}
                     </div>
                     <button

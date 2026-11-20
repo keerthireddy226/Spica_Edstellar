@@ -9,6 +9,7 @@ import { ROUTES } from "@/constants/routes";
 import { useReadiness } from "@/components/learner/useReadiness";
 
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 interface ProgressData {
   totals: { sessions: number; questions: number; minutes: number; streak: number; xp: number; accuracy: number | null };
   skills: { skill: string; minutes: number; accuracy: number | null; answered: number }[];
@@ -65,7 +66,7 @@ function CertificateCard() {
               {c.level}
               {c.score !== null && <span className="text-base font-semibold text-muted"> · {tr("Spica score {{score}}", { score: c.score })}</span>}
             </p>
-            <p className="text-xs text-muted">{c.validUntil ? tr("Valid until {{date}}", { date: new Date(c.validUntil).toLocaleDateString() }) : tr("Valid for life")}</p>
+            <p className="text-xs text-muted">{c.validUntil ? tr("Valid until {{date}}", { date: new Date(c.validUntil).toLocaleDateString(appLocale()) }) : tr("Valid for life")}</p>
           </div>
           <Link to={`/certificate/${c.code}`} className="text-sm font-semibold text-navy-deep hover:underline">
             {tr("Open certificate")}
@@ -179,7 +180,7 @@ export function ProgressExtras({
               <div className="min-w-0">
                 <p className="text-ink font-medium">{TYPE[r.type] ?? r.type}</p>
                 <p className="text-xs text-muted">
-                  {new Date(r.completedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                  {new Date(r.completedAt).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" })}
                 </p>
               </div>
               <span className="text-xs text-muted shrink-0">
@@ -209,7 +210,7 @@ export function ProgressExtras({
               <span className="h-12 w-12 rounded-2xl flex items-center justify-center font-display font-bold text-white" style={{ background: "var(--color-navy)" }}>
                 {p.level}
               </span>
-              <span className="text-[11px] text-muted">{new Date(p.takenAt).toLocaleDateString(undefined, { day: "numeric", month: "short" })}</span>
+              <span className="text-[11px] text-muted">{new Date(p.takenAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short" })}</span>
               <span className="text-[11px] text-ink">{p.percent}%</span>
             </div>
           ))}
@@ -234,7 +235,7 @@ export function ProgressExtras({
                   return (
                     <span
                       key={day.day}
-                      title={`${new Date(day.day).toLocaleDateString()}: ${day.sessions === 1 ? tr("1 session, {{m}} min", { m: day.minutes }) : tr("{{n}} sessions, {{m}} min", { n: day.sessions, m: day.minutes })}`}
+                      title={`${new Date(day.day).toLocaleDateString(appLocale())}: ${day.sessions === 1 ? tr("1 session, {{m}} min", { m: day.minutes }) : tr("{{n}} sessions, {{m}} min", { n: day.sessions, m: day.minutes })}`}
                       className="block w-full aspect-square rounded-[4px]"
                       style={{ background: level === 0 ? "var(--color-rule)" : `color-mix(in srgb, var(--color-accent) ${25 + level * 18}%, var(--color-surface))` }}
                     />
@@ -307,7 +308,7 @@ export function ProgressExtras({
                       <p className={`text-sm font-semibold leading-tight ${earned ? "text-ink" : "text-muted"}`}>{trServer(a.title)}</p>
                       <p className="text-[11px] text-muted leading-snug line-clamp-2">
                         {earned
-                          ? tr("Earned {{date}}", { date: new Date(a.unlockedAt!).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) })
+                          ? tr("Earned {{date}}", { date: new Date(a.unlockedAt!).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) })
                           : trServer(a.description)}
                       </p>
                     </div>

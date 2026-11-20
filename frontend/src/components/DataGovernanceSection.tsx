@@ -7,6 +7,7 @@ import { governanceApi, type DataGovernance } from "@/api/developers";
 import { downloadCsv } from "@/api/analytics";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const MONTHS = [3, 6, 12, 24, 36];
 // Recordings are kept at most 12 months (3 months unless the organization chooses longer).
 const RECORDING_MONTHS = [6, 12];
@@ -67,8 +68,8 @@ export function DataGovernanceSection() {
             <p className="text-xs text-muted">
               {dpaCurrent
                 ? data.dpa.acceptedBy
-                  ? tr("Accepted by {{name}} on {{date}}.", { name: data.dpa.acceptedBy, date: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
-                  : tr("Accepted by your organization on {{date}}.", { date: new Date(data.dpa.acceptedAt!).toLocaleDateString() })
+                  ? tr("Accepted by {{name}} on {{date}}.", { name: data.dpa.acceptedBy, date: new Date(data.dpa.acceptedAt!).toLocaleDateString(appLocale()) })
+                  : tr("Accepted by your organization on {{date}}.", { date: new Date(data.dpa.acceptedAt!).toLocaleDateString(appLocale()) })
                 : data.dpa.acceptedVersion
                   ? tr("You accepted version {{acceptedVersion}}; a newer version needs accepting.", { acceptedVersion: data.dpa.acceptedVersion })
                   : tr("Not accepted yet.")}
@@ -135,7 +136,7 @@ export function DataGovernanceSection() {
                   onClick={() => downloadCsv(`/org-admin/data-exports/${e.id}/download`, "spica-export.json")}
                   className="flex items-center gap-1.5 text-sm font-semibold text-navy hover:underline cursor-pointer"
                 >
-                  <Download size={14} /> {tr("Download export of {{toLocaleDateString}}", { toLocaleDateString: new Date(e.completedAt!).toLocaleDateString() })} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} {tr("KB)")}</button>
+                  <Download size={14} /> {tr("Download export of {{toLocaleDateString}}", { toLocaleDateString: new Date(e.completedAt!).toLocaleDateString(appLocale()) })} ({Math.max(1, Math.round((e.sizeBytes ?? 0) / 1024))} {tr("KB)")}</button>
               ))}
             {data.exports[0]?.status === "queued" && <span className="text-xs text-muted">{tr("Preparing export…")}</span>}
           </div>

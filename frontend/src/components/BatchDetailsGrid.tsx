@@ -1,8 +1,9 @@
 import { EXAM_FOCUS_LABEL, type ExamFocus } from "@/api/details";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 function Item({ label, value }: { label: string; value: React.ReactNode }) {

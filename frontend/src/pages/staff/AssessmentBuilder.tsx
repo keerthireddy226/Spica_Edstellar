@@ -35,6 +35,7 @@ import {
 import { ChecksView, DOMAIN_LABEL, ItemView, LEVELS, aiErrorText } from "@/components/staff/contentShared";
 import { tr } from "@/i18n/tr";
 import { bankLabel } from "@/lib/questionBank";
+import { appLocale } from "@/lib/locale";
 
 const inputClass = "rounded-input border border-rule bg-paper px-3 py-2 text-sm text-ink focus:border-navy focus:outline-none";
 const DOMAINS = ["general", "banking", "bpo", "it", "insurance", "healthcare"];
@@ -320,7 +321,7 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
         <EmptyNote>{tr("No questions match these filters.")}</EmptyNote>
       ) : (
         <>
-          <p className="text-xs text-muted">{tr("{{total}} questions", { total: data.total.toLocaleString() })}</p>
+          <p className="text-xs text-muted">{tr("{{total}} questions", { total: data.total.toLocaleString(appLocale()) })}</p>
           <LibraryTable items={data.items} onOpen={setOpen} />
           <div className="flex items-center gap-3 justify-end text-sm">
             <Button variant="secondary" disabled={page === 0} onClick={() => setPage((p) => p - 1)} className="!py-1.5">

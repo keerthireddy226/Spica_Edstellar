@@ -6,6 +6,7 @@ import type { AuditEntry } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
 import { trServer } from "@/i18n/serverText";
+import { appLocale } from "@/lib/locale";
 
 // Functions, so each line is translated in the language chosen now, not the
 // one loaded when this file was first imported.
@@ -120,8 +121,8 @@ export function ManagerActivity() {
               return (
                 <tr key={`${e.source}-${e.id}`} className="border-b border-rule last:border-0 align-top hover:bg-paper-warm/40 transition-colors">
                   <td className="px-5 py-3 whitespace-nowrap">
-                    <p className="text-ink">{when.toLocaleDateString(undefined, { dateStyle: "medium" })}</p>
-                    <p className="text-xs text-muted">{when.toLocaleTimeString(undefined, { timeStyle: "short" })}</p>
+                    <p className="text-ink">{when.toLocaleDateString(appLocale(), { dateStyle: "medium" })}</p>
+                    <p className="text-xs text-muted">{when.toLocaleTimeString(appLocale(), { timeStyle: "short" })}</p>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2.5 min-w-0">

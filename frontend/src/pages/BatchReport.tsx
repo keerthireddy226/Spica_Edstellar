@@ -19,6 +19,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
 import { CertifiedCell } from "@/components/CertifiedCell";
+import { appLocale } from "@/lib/locale";
 
 // The Batch report: what a batch did in a period, where its learners started
 // and are now, who reached the goal and who needs attention. Org Admins and
@@ -43,7 +44,7 @@ const SKILL_COLOUR: Record<ReportSkill, string> = {
 };
 
 // Dates in the app's language (set on <html lang> when it changes).
-const locale = () => document.documentElement.lang || undefined;
+const locale = () => appLocale();
 const day = (iso: string | null | undefined) =>
   iso ? new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString(locale(), { day: "numeric", month: "short", year: "numeric" }) : "—";
 const shortDay = (iso: string) => new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString(locale(), { day: "numeric", month: "short" });

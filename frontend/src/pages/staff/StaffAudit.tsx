@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { EmptyNote, Notice, PageHeader, SelectFilter, useStaffPermissions } from "@/components/staff/StaffKit";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const GROUPS: [string, string][] = [
   ["", tr("All activity")],
   ["organization.", tr("Organizations")],
@@ -128,7 +129,7 @@ export function StaffAudit() {
             <tbody>
               {entries.map((e) => (
                 <tr key={e.id} className="border-b border-rule last:border-0 align-top">
-                  <td className="px-4 py-3 text-muted whitespace-nowrap">{new Date(e.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</td>
+                  <td className="px-4 py-3 text-muted whitespace-nowrap">{new Date(e.createdAt).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" })}</td>
                   <td className="px-4 py-3">
                     <p className="text-ink">{e.actorLabel ?? tr("System")}</p>
                     {e.actorRole && <p className="text-xs text-muted">{roleLabel(e.actorRole)}</p>}
@@ -180,7 +181,7 @@ function PrivacyRequests() {
       .then((r) => setRows(r.requests))
       .catch(() => setFailed(true));
   }, []);
-  const when = (d: string | null) => (d ? new Date(d).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—");
+  const when = (d: string | null) => (d ? new Date(d).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" }) : "—");
   return (
     <section className="flex flex-col gap-3 mt-4">
       <PageHeader title={tr("Privacy requests")} subtitle={tr("Every data download, deletion, correction, objection and consent withdrawal, and when it was completed.")} />

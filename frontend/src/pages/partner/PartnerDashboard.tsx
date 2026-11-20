@@ -10,6 +10,7 @@ import { ROUTES } from "@/constants/routes";
 import { OrganisationDetail, OrganisationsTable } from "@/pages/partner/PartnerOrganisations";
 import { money } from "@/pages/partner/PartnerOrders";
 import { AffiliateDashboard, reloadPartnerMe, ReferralDashboard, usePartnerMe, type PartnerMe } from "@/pages/partner/PartnerPrograms";
+import { appLocale } from "@/lib/locale";
 
 // Channel Partner portal (stage 2): the partner's demo licences, the
 // organisations they brought, and adding organisations / giving licences.
@@ -44,7 +45,7 @@ export interface PartnerOrg {
 }
 const cardLink = "block rounded-card transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-navy";
 const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 
 // Each partner type gets its own dashboard (user, 19 Nov 2026).
 export function PartnerDashboard() {

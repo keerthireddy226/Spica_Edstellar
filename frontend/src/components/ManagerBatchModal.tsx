@@ -25,8 +25,9 @@ import { certificateByLearner, managerCertificates, managerRevokeCertificate, ty
 import type { CertifiedSummary } from "@/components/CertifiedCell";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function fmt(d: string) {
-  return new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(d).toLocaleDateString(appLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 const pill = "flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-rule text-sm font-semibold text-ink hover:bg-paper-warm transition-colors cursor-pointer disabled:opacity-50";

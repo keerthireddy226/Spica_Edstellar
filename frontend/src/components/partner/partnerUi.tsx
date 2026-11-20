@@ -1,6 +1,7 @@
 import { StatusPill } from "@/components/staff/StaffKit";
 import { tr } from "@/i18n/tr";
 import type { PartnerType, PartnershipStatus } from "@/api/channelPartners";
+import { appLocale } from "@/lib/locale";
 
 // Shared words for the four partner types (user, 19 Nov 2026).
 export const typeLabel = (t: PartnerType) =>
@@ -14,10 +15,10 @@ export const typeBlurb = (t: PartnerType) =>
     referral: tr("Introduces organisations to Spica; earns a fixed fee when one completes its first paid purchase."),
   })[t] ?? "";
 
-export const fmtDay = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+export const fmtDay = (s: string | null | undefined) => (s ? new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 
 export const minorMoney = (minor: number, currency: string) =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: currency === "INR" ? 0 : 2 }).format(minor / 100);
+  new Intl.NumberFormat(appLocale(), { style: "currency", currency, maximumFractionDigits: currency === "INR" ? 0 : 2 }).format(minor / 100);
 
 export function statusLabel(s: PartnershipStatus) {
   return {

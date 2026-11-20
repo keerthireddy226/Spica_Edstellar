@@ -24,6 +24,7 @@ import { tr } from "@/i18n/tr";
 import { useAuth } from "@/hooks/useAuth";
 import { bankLabel } from "@/lib/questionBank";
 import { EmptyNote, FilterPills, Notice, PageHeader, Panel as KitPanel, Tabs } from "@/components/staff/StaffKit";
+import { appLocale } from "@/lib/locale";
 
 // Assessment quality (Spica staff): appeals, pass marks and other settings,
 // the question pool, the speaking fairness study and the technical report.
@@ -37,7 +38,7 @@ const TESTS = [
   ["placement", "English Placement"],
 ] as const;
 
-const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(document.documentElement.lang || undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 const input = "rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink";
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted";
 const td = "px-3 py-2 border-t border-rule";

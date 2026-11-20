@@ -15,12 +15,13 @@ import { tr } from "@/i18n/tr";
 import { PageError, SectionLoading } from "@/components/learner/PageStates";
 import { useTestOnly } from "@/components/learner/useTestOnly";
 import { ConfirmActionModal } from "@/components/ConfirmActionModal";
+import { appLocale } from "@/lib/locale";
 
 // Assessment (once "My tests"): the real assessment attempts the learner owns. Each opens by the
 // unlock rule (after a mock test or in the last 7 days for preparation; after
 // the free sample for assessment only), and shows its result and certificate.
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(document.documentElement.lang || undefined, { day: "numeric", month: "short", year: "numeric" });
+const day = (iso: string) => new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 
 const STATUS: Record<AttemptStatus, { label: () => string; cls: string }> = {
   in_progress: { label: () => tr("In progress"), cls: "text-navy-deep" },

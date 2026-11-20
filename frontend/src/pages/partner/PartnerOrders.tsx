@@ -6,6 +6,7 @@ import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatusPill, useS
 import { DetailModal } from "@/components/DetailModal";
 import { tr } from "@/i18n/tr";
 import { usePartnerMe } from "@/pages/partner/PartnerPrograms";
+import { appLocale } from "@/lib/locale";
 
 // Paid orders (Channel Partners stage 5). The same screens serve the partner
 // portal (their own orders) and Spica staff (every order, with prices they can
@@ -123,7 +124,7 @@ const post = (body: unknown, method = "POST"): RequestInit => ({ method, headers
 const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm focus:outline-none focus:border-navy";
 const label = "text-xs font-semibold text-muted uppercase tracking-wide";
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
-const day = (s: string) => new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const day = (s: string) => new Date(s.length === 10 ? s + "T00:00:00" : s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const plus = (days: number, months = 0) => {
   const d = new Date();
@@ -131,7 +132,7 @@ const plus = (days: number, months = 0) => {
   d.setDate(d.getDate() + days);
   return iso(d);
 };
-export const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en-US", { style: "currency", currency }).format(minor / 100);
+export const money = (minor: number, currency: string) => new Intl.NumberFormat(currency === "INR" ? "en-IN" : appLocale(), { style: "currency", currency }).format(minor / 100);
 
 const STATUS_LABEL: Record<Status, string> = {
   draft: tr("Draft"),
@@ -388,7 +389,7 @@ function OrderModal({ mode, orderId, resellerCanAllocate = false, onClose, onCha
             <ul className="mt-1 flex flex-col gap-1">
               {d.history.map((h, i) => (
                 <li key={i} className="text-muted">
-                  {new Date(h.at).toLocaleString()} · <b className="text-ink">{h.from === h.to ? tr("Order changed") : STATUS_LABEL[h.to]}</b>
+                  {new Date(h.at).toLocaleString(appLocale())} · <b className="text-ink">{h.from === h.to ? tr("Order changed") : STATUS_LABEL[h.to]}</b>
                   {h.by ? ` · ${h.by.name || h.by.email}${h.by.role === "channel_partner" ? ` (${tr("Partner")})` : ""}` : ""}
                   {h.note ? ` · ${h.note}` : ""}
                 </li>

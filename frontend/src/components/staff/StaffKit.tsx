@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { StaffPermissions } from "@/api/staff";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 // Small building blocks shared by the Super Admin and Admin consoles.
 
 const ALL: StaffPermissions = {
@@ -309,7 +310,7 @@ export function WeeklyBars({ data }: { data: { week: string; signups: number; ac
       <div className="flex gap-2">
         {data.map((d) => (
           <span key={d.week} className="flex-1 text-center text-[10px] text-muted">
-            {new Date(d.week).toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+            {new Date(d.week).toLocaleDateString(appLocale(), { day: "numeric", month: "short" })}
           </span>
         ))}
       </div>

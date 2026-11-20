@@ -21,6 +21,7 @@ import { ManagerPreferencesCard } from "@/components/ManagerPreferencesCard";
 import { PayoutDetailsCard } from "@/components/partner/PayoutDetailsCard";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const ROLE_LABEL: Record<string, string> = {
   admin: tr("Admin"),
   super_admin: tr("Super Admin"),
@@ -32,12 +33,12 @@ const ROLE_LABEL: Record<string, string> = {
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { year: "numeric", month: "long", day: "numeric" });
 }
 
 function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return tr("First login");
-  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return new Date(iso).toLocaleString(appLocale(), { dateStyle: "medium", timeStyle: "short" });
 }
 
 function SectionCard({ title, icon, color, children }: { title: string; icon: LucideIcon; color: string; children: React.ReactNode }) {

@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 export type AccessStatus = "active" | "grace" | "expired" | "none";
 
 export interface LearnerAccess {
@@ -198,12 +199,12 @@ export const LICENSE_ERROR_TEXT: Record<string, string> = {
 };
 
 export function formatMoney(cents: number, currency = "USD"): string {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(cents / 100);
+  return new Intl.NumberFormat(appLocale(), { style: "currency", currency, maximumFractionDigits: 0 }).format(cents / 100);
 }
 
 export function formatShortDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 export type LicenseRequestKind = "increase_allotment" | "decrease_allotment" | "unassign_learner" | "learner_extension";

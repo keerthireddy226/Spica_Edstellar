@@ -30,6 +30,7 @@ import {
 } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 type ManagerStatus = "active" | "pending" | "deactivated";
 const statusOf = (m: OrgManager): ManagerStatus => (!m.active ? "deactivated" : !m.hasLoggedIn ? "pending" : "active");
 
@@ -40,7 +41,7 @@ function relative(iso: string | null | undefined): string {
   const hours = Math.round(mins / 60);
   if (hours < 24) return tr("{{hours}} h ago", { hours: hours });
   const days = Math.round(hours / 24);
-  return days < 30 ? (days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days })) : new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return days < 30 ? (days === 1 ? tr("1 day ago") : tr("{{n}} days ago", { n: days })) : new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short" });
 }
 
 function ActionButton({
@@ -551,7 +552,7 @@ export function OrgAdminManagers() {
                   <div className="flex items-center justify-between gap-3 flex-wrap text-xs text-white/80">
                     <span>
                       {status === "pending" ? tr("Hasn't signed in yet") : tr("Last active {{relative}}", { relative: relative(m.lastLoginAt) })}
-                      {" · "}{tr("Added")}{" "}{new Date(m.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                      {" · "}{tr("Added")}{" "}{new Date(m.createdAt).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" })}
                       {m.invitedByName ? tr(" by {{name}}", { name: m.invitedByName }) : ""}
                     </span>
                     {(m.pendingRequests ?? 0) > 0 && (

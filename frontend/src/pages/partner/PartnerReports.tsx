@@ -6,6 +6,7 @@ import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatusPill, useS
 import { DetailModal } from "@/components/DetailModal";
 import { money } from "@/pages/partner/PartnerOrders";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
 // Channel Partners stage 9: partner performance and commission (staff), and
 // the partner's own commission page.
@@ -49,7 +50,7 @@ interface CommissionRow {
 }
 
 const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm focus:outline-none focus:border-navy";
-const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 const sums = (m: Record<string, number>) => Object.entries(m).filter(([, v]) => Number(v) !== 0).map(([c, v]) => money(Number(v), c)).join(" + ") || "—";
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const PERIODS = [

@@ -5,8 +5,9 @@ import { useReadiness } from "@/components/learner/useReadiness";
 import { getPriceList } from "@/api/payments";
 import { ROUTES } from "@/constants/routes";
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(document.documentElement.lang || undefined, { day: "numeric", month: "short", year: "numeric" });
+const day = (iso: string) => new Date(iso).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" });
 const linkBtn = "inline-flex items-center gap-2 px-4 py-2 rounded-pill text-sm font-semibold";
 
 // My journey's last step: practice leads to the final assessment, the only

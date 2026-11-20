@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { appLocale } from "@/lib/locale";
 
 export type Level = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export type SkillName = "listening" | "speaking" | "reading" | "writing";
@@ -58,7 +59,7 @@ export const CALENDAR_FILE_URL = "/api/roadmap/calendar.ics";
 // A calendar day ("2026-10-15") in the reader's format, without shifting it a day by timezone.
 export function formatDay(day: string | null, long = false): string {
   if (!day) return "—";
-  return new Date(`${day.slice(0, 10)}T00:00:00`).toLocaleDateString(undefined, { year: "numeric", month: long ? "long" : "short", day: "numeric" });
+  return new Date(`${day.slice(0, 10)}T00:00:00`).toLocaleDateString(appLocale(), { year: "numeric", month: long ? "long" : "short", day: "numeric" });
 }
 
 // Printed final assessment certificates to post (Spica staff).

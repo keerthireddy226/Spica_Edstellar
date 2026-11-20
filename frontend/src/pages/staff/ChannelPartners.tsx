@@ -34,6 +34,7 @@ import { fmtDay, leadStatusLabel, minorMoney, PartnershipPill, typeBlurb, typeLa
 import { tr } from "@/i18n/tr";
 import { api } from "@/lib/api";
 import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/PartnerDashboard";
+import { appLocale } from "@/lib/locale";
 
 // A Reseller's discount is at most 50% (owner, 20 Nov 2026): the box never holds more.
 const MAX_DISCOUNT = 50;
@@ -66,7 +67,7 @@ function LengthPicker({ value, onChange }: { value: LengthValue; onChange: (v: L
 // Partners. Spica registers them (they can't sign themselves up), fixes their
 // minimums and rates, and runs the 3-month partnership: start, renew (blocked
 // below the organisation minimum unless a reason is given) and terminate.
-const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const day = (s: string | null) => (s ? new Date(s).toLocaleDateString(appLocale(), { day: "numeric", month: "short", year: "numeric" }) : "—");
 const rateText = (p: ChannelPartner) =>
   p.partnerType === "reseller"
     ? tr("{{n}}% discount", { n: p.discountPercent })
@@ -820,7 +821,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                         <br />
                         <span className="text-muted">{tr("For {{a}} to {{b}}", { a: fmtDay(a.periodStart), b: fmtDay(a.periodEnd) })}{a.ip ? ` · IP ${a.ip}` : ""}</span>
                       </span>
-                      <span className="text-muted whitespace-nowrap">{new Date(a.signedAt).toLocaleString()}</span>
+                      <span className="text-muted whitespace-nowrap">{new Date(a.signedAt).toLocaleString(appLocale())}</span>
                     </li>
                   ))}
                 </ul>
@@ -852,7 +853,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                     <b>{actionLabel(h.action)}</b>
                     {h.by ? <span className="text-muted"> · {h.by}</span> : null}
                   </span>
-                  <span className="text-muted whitespace-nowrap">{new Date(h.at).toLocaleString()}</span>
+                  <span className="text-muted whitespace-nowrap">{new Date(h.at).toLocaleString(appLocale())}</span>
                 </li>
               ))}
             </ul>

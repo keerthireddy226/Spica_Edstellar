@@ -14,6 +14,7 @@ import {
 } from "@/api/notifications";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 const FOLLOW_UP: EngagementStatus[] = ["not_started", "inactive", "slow"];
 const ORDER: EngagementStatus[] = ["not_started", "inactive", "slow", "on_track", "achieved"];
 
@@ -285,7 +286,7 @@ export function FollowUpPanel({ hideTitle = false }: { hideTitle?: boolean } = {
                     <button
                       onClick={() => setReminding([l])}
                       disabled={!!l.canRemindAt}
-                      title={l.canRemindAt ? tr("Reminded recently — available {{toLocaleString}}", { toLocaleString: new Date(l.canRemindAt).toLocaleString() }) : tr("Send reminder")}
+                      title={l.canRemindAt ? tr("Reminded recently — available {{toLocaleString}}", { toLocaleString: new Date(l.canRemindAt).toLocaleString(appLocale()) }) : tr("Send reminder")}
                       className="text-xs font-semibold text-navy hover:underline cursor-pointer disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
                     >
                       {l.canRemindAt ? tr("Reminded") : tr("Remind")}

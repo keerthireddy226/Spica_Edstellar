@@ -13,13 +13,14 @@ import { certificateByLearner, orgCertificates, revokeCertificate, type Certific
 import { getBatchDetail, getOrgLearnerDetail, updateBatch, updateOrgLearnerDetails, type OrgBatchDetail, type OrgBatchLearner } from "@/api/orgAdmin";
 
 import { tr } from "@/i18n/tr";
+import { appLocale } from "@/lib/locale";
 function initials(firstName: string | null, lastName: string | null, email: string): string {
   const fromName = `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase();
   return fromName || email.slice(0, 2).toUpperCase();
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString(appLocale(), { year: "numeric", month: "short", day: "numeric" });
 }
 
 // Reachable by clicking any batch card on the Org Admin's Batches page —
