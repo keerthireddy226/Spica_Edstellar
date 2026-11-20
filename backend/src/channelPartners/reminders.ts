@@ -40,8 +40,8 @@ export async function runPartnerDemoAlerts(now = Date.now()): Promise<number> {
         : {
             title: `Your Spica partnership ends on ${shortDate(ends)}`,
             body: orgType
-              ? "After that your portal becomes read-only. Renewal for another 3 months needs your minimum number of organisations. Give your remaining demo licences before then."
-              : "After that your portal becomes read-only. Talk to Spica about renewing for another 3 months.",
+              ? "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then."
+              : "After that your portal becomes read-only. Talk to Spica about renewing.",
           };
     if (await notify({ userId: p.user_id, kind: "partner_demo", ...partnerCopy, link: "/partner/dashboard", dedupeKey: key, email: true })) sent++;
 
@@ -49,7 +49,7 @@ export async function runPartnerDemoAlerts(now = Date.now()): Promise<number> {
       const staffCopy =
         stage === "ended"
           ? { title: `${p.full_name}: partnership ended`, body: "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue." }
-          : { title: `${p.full_name}: partnership ends on ${shortDate(ends)}`, body: "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason." };
+          : { title: `${p.full_name}: partnership ends on ${shortDate(ends)}`, body: "Renew it from Partners. Below the organisation minimum, renewal needs a written reason." };
       if (await notify({ userId: p.created_by, kind: "partner_demo", ...staffCopy, link: STAFF_LINK[p.staff_role], dedupeKey: `${key}:staff`, email: true })) sent++;
     }
 
@@ -91,5 +91,83 @@ export async function runPartnerDemoAlerts(now = Date.now()): Promise<number> {
   }
   // Affiliate and referral earnings from the day's payments.
   await syncEarnings().catch((err) => console.error("partner earnings sync failed:", err));
+  sent += await referralAndPayoutReminders().catch((err) => {
+    console.error("partner referral/payout reminders failed:", err);
+    return 0;
+  });
+  return sent;
+}
+
+// Staff: a referral still "Submitted" after 3 and 10 days, and an organisation
+// that may be a referral that signed up by itself. Partner: money is waiting
+// but there are no payout details (once a week). (Owner, 20 Nov 2026.)
+async function referralAndPayoutReminders(): Promise<number> {
+  let sent = 0;
+  const supers = (await pool.query(`SELECT id FROM users WHERE role = 'super_admin' AND deleted_at IS NULL`)).rows.map((r) => r.id as string);
+  const staffFor = async (createdBy: string | null) => {
+    const ok = createdBy ? (await pool.query(`SELECT id, role FROM users WHERE id = $1 AND deleted_at IS NULL`, [createdBy])).rows[0] : null;
+    return ok ? [{ id: ok.id as string, link: STAFF_LINK[ok.role] ?? "/admin/channel-partners" }] : supers.map((id) => ({ id, link: STAFF_LINK.super_admin }));
+  };
+
+  const stale = await pool.query(
+    `SELECT l.id, l.organisation_name, l.created_at, p.full_name, p.created_by FROM partner_leads l JOIN channel_partners p ON p.id = l.partner_id
+     WHERE l.status = 'submitted' AND l.created_at < now() - interval '3 days'`,
+  );
+  for (const l of stale.rows) {
+    const days = Math.floor((Date.now() - new Date(l.created_at).getTime()) / DAY);
+    const stage = days >= 10 ? "10d" : "3d";
+    for (const s of await staffFor(l.created_by)) {
+      const r = await notify({
+        userId: s.id,
+        kind: "partner_demo",
+        title: `Referral waiting: ${l.organisation_name}`,
+        body: `${l.full_name} referred ${l.organisation_name} ${days} days ago and nobody has contacted them yet. Contact them and update the referral.`,
+        link: s.link,
+        dedupeKey: `lead-stale:${l.id}:${stage}:${s.id}`,
+        email: true,
+      });
+      if (r) sent++;
+    }
+  }
+
+  const { leadMatches } = await import("./partnerPrograms.js");
+  for (const m of await leadMatches()) {
+    for (const s of await staffFor(m.created_by)) {
+      const r = await notify({
+        userId: s.id,
+        kind: "partner_demo",
+        title: `Possible match for a referral: ${m.tenant_name}`,
+        body: `${m.tenant_name} looks like ${m.organisation_name}, referred by ${m.full_name}. If it is, mark the referral won and link the organisation.`,
+        link: s.link,
+        dedupeKey: `lead-match:${m.lead_id}:${m.tenant_id}:${s.id}`,
+      });
+      if (r) sent++;
+    }
+  }
+
+  const week = (() => {
+    const d = new Date();
+    const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return `${d.getUTCFullYear()}-${Math.ceil(((d.getTime() - start.getTime()) / DAY + start.getUTCDay() + 1) / 7)}`;
+  })();
+  const owed = await pool.query(
+    `SELECT p.id, p.user_id FROM channel_partners p
+     WHERE p.deactivated_at IS NULL AND p.partner_type IN ('channel_partner', 'affiliate', 'referral')
+       AND NOT EXISTS (SELECT 1 FROM partner_payout_details d WHERE d.partner_id = p.id)
+       AND (EXISTS (SELECT 1 FROM partner_earnings e WHERE e.partner_id = p.id AND e.status = 'earned')
+         OR EXISTS (SELECT 1 FROM partner_orders o WHERE o.partner_id = p.id AND o.commission_amount > 0 AND o.commission_paid_at IS NULL AND o.status IN ('confirmed', 'allocated', 'active', 'expired')))`,
+  );
+  for (const p of owed.rows) {
+    const r = await notify({
+      userId: p.user_id,
+      kind: "partner_demo",
+      title: "Add your payout details",
+      body: "Spica has money waiting for you. Add your bank or PayPal details in your Profile so Spica can pay you.",
+      link: "/partner/profile",
+      dedupeKey: `payout-details:${p.id}:${week}`,
+      email: true,
+    });
+    if (r) sent++;
+  }
   return sent;
 }

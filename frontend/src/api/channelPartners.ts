@@ -8,6 +8,8 @@ export const PARTNER_TYPES: PartnerType[] = ["reseller", "channel_partner", "aff
 export const bringsOrganisations = (t: PartnerType) => t === "reseller" || t === "channel_partner";
 
 export interface ChannelPartner {
+  // The partnership length chosen for this partner (months); renewals use it by default.
+  partnershipMonths?: number;
   id: string;
   fullName: string;
   email: string;
@@ -59,7 +61,12 @@ export interface PartnerLead {
   country: string;
   expectedLearners: number | null;
   notes: string | null;
-  status: "submitted" | "contacted" | "won" | "lost" | "duplicate";
+  status: "submitted" | "contacted" | "won" | "lost" | "duplicate" | "withdrawn";
+  // A short reason from Spica the partner can see; when it was won.
+  partnerReason?: string | null;
+  wonAt?: string | null;
+  // Staff only: organisations that may be this referral, signed up by itself.
+  possibleMatches?: { tenantId: string; name: string }[];
   createdAt: string;
   updatedAt: string;
   tenantId?: string | null;
@@ -114,14 +121,19 @@ export const createChannelPartner = (b: {
   startDemoNow: boolean;
   ownLicenceEnabled: boolean;
   notes?: string;
+  partnershipMonths?: number;
+  endsOn?: string;
 } & PartnerTerms) => api<{ id: string; code: string; emailSent: boolean }>("/admin/channel-partners", json(b));
 export const updateChannelPartner = (id: string, b: Partial<Pick<ChannelPartner, "fullName" | "commissionPercent" | "demoLicences" | "ownLicenceEnabled" | "notes"> & PartnerTerms>) =>
   api<{ id: string }>(`/admin/channel-partners/${id}`, { ...json(b), method: "PATCH" });
-export const startPartnership = (id: string) => api(`/admin/channel-partners/${id}/demo/start`, json({}));
-export const renewPartnership = (id: string, overrideReason?: string) => api<{ endsAt: string; override: boolean }>(`/admin/channel-partners/${id}/renew`, json(overrideReason ? { overrideReason } : {}));
+// How long a partnership (or a renewal) runs: months, or a chosen end date.
+export type PartnershipLength = { months?: number; endsOn?: string };
+export const startPartnership = (id: string, length: PartnershipLength = {}) => api(`/admin/channel-partners/${id}/demo/start`, json(length));
+export const renewPartnership = (id: string, overrideReason?: string, length: PartnershipLength = {}) =>
+  api<{ endsAt: string; override: boolean }>(`/admin/channel-partners/${id}/renew`, json({ ...(overrideReason ? { overrideReason } : {}), ...length }));
 export const terminatePartnership = (id: string, reason: string) => api(`/admin/channel-partners/${id}/terminate`, json({ reason }));
 export const partnerLeads = (id: string) => api<{ leads: PartnerLead[] }>(`/admin/channel-partners/${id}/leads`);
-export const updatePartnerLead = (leadId: string, b: { status?: PartnerLead["status"]; tenantId?: string | null; staffNote?: string | null }) =>
+export const updatePartnerLead = (leadId: string, b: { status?: PartnerLead["status"]; tenantId?: string | null; staffNote?: string | null; partnerReason?: string | null }) =>
   api(`/admin/partner-leads/${leadId}`, { ...json(b), method: "PATCH" });
 export const partnerEarnings = (id: string) => api<EarningsResponse>(`/admin/channel-partners/${id}/earnings`);
 export const markEarningPaid = (earningId: string, reference: string) => api(`/admin/partner-earnings/${earningId}/paid`, json({ reference }));

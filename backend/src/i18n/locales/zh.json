@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "接下来的 {{days}} 天里，你仍可登录查看报告，但不能练习。之后需要付费许可证才能登录。请向你所在组织的管理员申请完整权限。",
  "{{name}} allocated order {{order}}": "{{name}} 已分配订单 {{order}}",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} 已将订单 {{order}} 分配给其组织。",
- "The order's history shows each organisation's share.": "订单历史记录显示每个组织的份额。"
+ "The order's history shows each organisation's share.": "订单历史记录显示每个组织的份额。",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "之后您的门户将变为只读。续约需要达到最低组织数量。请在此之前分配剩余的演示许可证。",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "之后您的门户将变为只读。请与 Spica 商谈续约。",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "请在“合作伙伴”中续约。低于最低组织数量时，续约需填写书面理由。",
+ "Referral waiting: {{org}}": "推荐待处理：{{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} 在 {{days}} 天前推荐了 {{org}}，至今无人联系。",
+ "Contact them and update the referral.": "请联系对方并更新推荐。",
+ "Possible match for a referral: {{org}}": "可能匹配的推荐：{{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} 看起来就是 {{partner}} 推荐的 {{org}}。",
+ "If it is, mark the referral won and link the organisation.": "如果是，请将推荐标记为成交并关联该组织。",
+ "Add your payout details": "请添加您的收款信息",
+ "Spica has money waiting for you.": "Spica 有待付给您的款项。",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "请在个人资料中添加银行或 PayPal 信息，以便 Spica 付款。",
+ "{{partner}} withdrew a referral": "{{partner}} 撤回了一条推荐",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} 撤回了对 {{org}} 的推荐。",
+ "Refunded purchase: {{partner}} was already paid": "已退款的购买：{{partner}} 已收到付款",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}：在向 {{partner}} 支付 {{amount}} {{currency}} 后，该购买已全额退款。",
+ "Recover it or deduct it from the next payout.": "请追回或从下次付款中扣除。"
 }

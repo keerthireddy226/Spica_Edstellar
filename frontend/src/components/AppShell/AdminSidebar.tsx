@@ -112,7 +112,8 @@ const PARTNER_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.PARTNER_PAYMENTS, icon: CreditCard, label: tr("Payments"), partnerTypes: ["reseller"] },
   { to: ROUTES.PARTNER_COMMISSION, icon: Wallet, label: tr("Commission"), partnerTypes: ["channel_partner"] },
   { to: ROUTES.PARTNER_REFERRALS, icon: Megaphone, label: tr("Referrals"), partnerTypes: ["referral"] },
-  { to: ROUTES.PARTNER_TRACK_RECORD, icon: TrendingUp, label: tr("Track record"), partnerTypes: ["affiliate"] },
+  { to: ROUTES.PARTNER_TRACK_RECORD, icon: TrendingUp, label: tr("Track record"), partnerTypes: ["affiliate", "referral"] },
+  { to: ROUTES.PARTNER_MARKETING, icon: Megaphone, label: tr("Marketing kit"), partnerTypes: ["affiliate"] },
   { to: ROUTES.PARTNER_EARNINGS, icon: Wallet, label: tr("Earnings"), partnerTypes: ["affiliate", "referral"] },
   { to: ROUTES.PARTNER_AGREEMENT, icon: FileSignature, label: tr("Agreement") },
 ];

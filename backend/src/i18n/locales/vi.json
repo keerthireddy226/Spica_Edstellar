@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Trong {{days}} ngày tới, bạn vẫn có thể đăng nhập và xem báo cáo, nhưng không thể luyện tập. Sau đó bạn cần giấy phép trả phí để đăng nhập. Hãy hỏi quản trị viên tổ chức của bạn về quyền truy cập đầy đủ.",
  "{{name}} allocated order {{order}}": "{{name}} đã phân bổ đơn hàng {{order}}",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} đã phân bổ đơn hàng {{order}} cho các tổ chức của mình.",
- "The order's history shows each organisation's share.": "Lịch sử đơn hàng cho thấy phần của từng tổ chức."
+ "The order's history shows each organisation's share.": "Lịch sử đơn hàng cho thấy phần của từng tổ chức.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "Sau đó cổng của bạn chỉ còn chế độ xem. Gia hạn cần đủ số tổ chức tối thiểu. Hãy cấp hết giấy phép demo còn lại trước thời điểm đó.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "Sau đó cổng của bạn chỉ còn chế độ xem. Hãy trao đổi với Spica về việc gia hạn.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Gia hạn tại mục Đối tác. Dưới số tổ chức tối thiểu, gia hạn cần lý do bằng văn bản.",
+ "Referral waiting: {{org}}": "Giới thiệu đang chờ: {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} đã giới thiệu {{org}} {{days}} ngày trước và chưa ai liên hệ.",
+ "Contact them and update the referral.": "Hãy liên hệ và cập nhật giới thiệu.",
+ "Possible match for a referral: {{org}}": "Có thể trùng với một giới thiệu: {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} trông giống {{org}}, do {{partner}} giới thiệu.",
+ "If it is, mark the referral won and link the organisation.": "Nếu đúng, hãy đánh dấu giới thiệu thành công và liên kết tổ chức.",
+ "Add your payout details": "Thêm thông tin nhận tiền",
+ "Spica has money waiting for you.": "Spica có tiền đang chờ trả cho bạn.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Hãy thêm thông tin ngân hàng hoặc PayPal trong hồ sơ để Spica có thể trả tiền.",
+ "{{partner}} withdrew a referral": "{{partner}} đã rút một giới thiệu",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} đã rút giới thiệu {{org}}.",
+ "Refunded purchase: {{partner}} was already paid": "Giao dịch đã hoàn tiền: {{partner}} đã được trả",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}: giao dịch đã được hoàn tiền toàn bộ sau khi {{partner}} nhận {{amount}} {{currency}}.",
+ "Recover it or deduct it from the next payout.": "Hãy thu hồi hoặc trừ vào lần chi trả tiếp theo."
 }

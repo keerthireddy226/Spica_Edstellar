@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De komende {{days}} dagen kun je nog inloggen en je rapporten bekijken, maar niet oefenen. Daarna heb je een betaalde licentie nodig om in te loggen. Vraag de beheerder van je organisatie om volledige toegang.",
  "{{name}} allocated order {{order}}": "{{name}} heeft bestelling {{order}} toegewezen",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} heeft bestelling {{order}} aan zijn organisaties toegewezen.",
- "The order's history shows each organisation's share.": "De geschiedenis van de bestelling toont het deel van elke organisatie."
+ "The order's history shows each organisation's share.": "De geschiedenis van de bestelling toont het deel van elke organisatie.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "Daarna wordt je portaal alleen-lezen. Voor verlenging heb je je minimumaantal organisaties nodig. Geef je resterende demolicenties daarvoor weg.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "Daarna wordt je portaal alleen-lezen. Praat met Spica over verlenging.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Verleng het via Partners. Onder het minimumaantal organisaties is voor verlenging een schriftelijke reden nodig.",
+ "Referral waiting: {{org}}": "Verwijzing wacht: {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} verwees {{org}} {{days}} dagen geleden door en nog niemand heeft contact opgenomen.",
+ "Contact them and update the referral.": "Neem contact op en werk de verwijzing bij.",
+ "Possible match for a referral: {{org}}": "Mogelijke match voor een verwijzing: {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} lijkt op {{org}}, doorverwezen door {{partner}}.",
+ "If it is, mark the referral won and link the organisation.": "Als dat zo is, markeer de verwijzing als gewonnen en koppel de organisatie.",
+ "Add your payout details": "Vul je uitbetalingsgegevens in",
+ "Spica has money waiting for you.": "Spica heeft geld voor je klaarstaan.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Vul je bank- of PayPal-gegevens in je profiel in zodat Spica je kan betalen.",
+ "{{partner}} withdrew a referral": "{{partner}} heeft een verwijzing ingetrokken",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} heeft de verwijzing van {{org}} ingetrokken.",
+ "Refunded purchase: {{partner}} was already paid": "Terugbetaalde aankoop: {{partner}} is al betaald",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}: de aankoop is volledig terugbetaald nadat {{partner}} {{amount}} {{currency}} kreeg.",
+ "Recover it or deduct it from the next payout.": "Vorder het terug of trek het af van de volgende uitbetaling."
 }

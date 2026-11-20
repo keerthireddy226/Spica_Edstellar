@@ -18,6 +18,7 @@ import { HandoverCard } from "@/components/HandoverCard";
 import { MfaCard } from "@/components/MfaCard";
 import { MyRecentActions, RoleSummary, WorkDetailsCard } from "@/components/profile/ProfileExtras";
 import { ManagerPreferencesCard } from "@/components/ManagerPreferencesCard";
+import { PayoutDetailsCard } from "@/components/partner/PayoutDetailsCard";
 
 import { tr } from "@/i18n/tr";
 const ROLE_LABEL: Record<string, string> = {
@@ -469,6 +470,7 @@ export function AdminProfile() {
               {role === "manager" && <ManagerPreferencesCard />}
             </div>
           </div>
+          {role === "channel_partner" && <PayoutDetailsCard />}
         </>
       )}
 

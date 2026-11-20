@@ -99,6 +99,15 @@ export async function commissionRows(f: { partnerId?: string | null; unpaidOnly?
 
 // Finance pays a partner's commission on one or more orders.
 export async function markCommissionPaid(args: { orderIds: string[]; reference: string; actor: { id: string; role: string; ip?: string | null } }) {
+  // Spica pays only partners who have filled in their payout details.
+  const missing = (
+    await pool.query(
+      `SELECT DISTINCT o.partner_id FROM partner_orders o WHERE o.id = ANY($1::uuid[]) AND o.partner_id IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM partner_payout_details d WHERE d.partner_id = o.partner_id)`,
+      [args.orderIds],
+    )
+  ).rowCount;
+  if (missing) throw new PartnerError("payout_details_missing", 409);
   const r = await pool.query(
     `UPDATE partner_orders SET commission_paid_at = now(), commission_paid_reference = $2, commission_paid_by = $3
      WHERE id = ANY($1::uuid[]) AND partner_id IS NOT NULL AND status = ANY($4::text[]) AND commission_paid_at IS NULL AND commission_amount > 0

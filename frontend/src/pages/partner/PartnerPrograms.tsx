@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, StatCard, StatusPill } from "@/components/staff/StaffKit";
 import { DetailModal } from "@/components/DetailModal";
+import { PayoutReminder } from "@/components/partner/PayoutDetailsCard";
 import { tr } from "@/i18n/tr";
 import { ROUTES } from "@/constants/routes";
 import type { EarningsResponse, PartnerLead, PartnerType, PartnershipStatus } from "@/api/channelPartners";
@@ -114,6 +115,7 @@ export function PartnershipBar({ me }: { me: PartnerMe }) {
         : tr("{{n}}% commission", { n: me.rates.commissionPercent });
   return (
     <div className="flex flex-col gap-2">
+      <PayoutReminder />
       <div className="bg-surface border border-rule rounded-card px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <span className="font-semibold">{typeLabel(me.partner.type)}</span>
         <span className="font-mono text-xs text-muted">{me.partner.code}</span>
@@ -449,7 +451,18 @@ export function ReferralDashboard({ me }: { me: PartnerMe }) {
   const [earn, setEarn] = useState<EarningsResponse | null>(null);
   const [failed, setFailed] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<PartnerLead | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const withdraw = async (l: PartnerLead) => {
+    if (!window.confirm(tr("Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.", { org: l.organisationName }))) return;
+    try {
+      await api(`/partner/leads/${l.id}/withdraw`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      setNotice(tr("Referral withdrawn."));
+    } catch {
+      setNotice(tr("Spica has already decided this referral, so it can't be withdrawn."));
+    }
+    load();
+  };
   const load = () => {
     api<{ leads: PartnerLead[] }>("/partner/leads").then((r) => setLeads(r.leads)).catch(() => setFailed(true));
     api<EarningsResponse>("/partner/earnings").then(setEarn).catch(() => setEarn({ earnings: [], totals: {} }));
@@ -480,8 +493,19 @@ export function ReferralDashboard({ me }: { me: PartnerMe }) {
         <StatCard variant="ledger" palette="terracotta" index={2} icon={Coins} value={totalsText(earn.totals, "earned")} label={tr("Earned")} sub={tr("{{fee}} per first paid purchase", { fee: minorMoney(me.rates.referralFee, me.rates.referralFeeCurrency) })} progress={0.5} />
         <StatCard variant="ledger" palette="terracotta" index={3} icon={Coins} value={totalsText(earn.totals, "due")} label={tr("To be paid")} sub={tr("Paid so far: {{p}}", { p: totalsText(earn.totals, "paid") })} progress={0} />
       </div>
-      <LeadsTable leads={leads} />
+      <LeadsTable leads={leads} readOnly={me.partnership.readOnly} onEdit={setEditing} onWithdraw={withdraw} />
       <p className="text-xs text-muted">{tr("Only refer people who agreed to be contacted by Edstellar. You see the status of each referral, not the organisation's account, scores or reports.")}</p>
+      {editing && (
+        <ReferOrganisation
+          existing={editing}
+          onClose={() => setEditing(null)}
+          onDone={() => {
+            setEditing(null);
+            setNotice(tr("Referral updated."));
+            load();
+          }}
+        />
+      )}
       {adding && (
         <ReferOrganisation
           onClose={() => setAdding(false)}
@@ -496,7 +520,7 @@ export function ReferralDashboard({ me }: { me: PartnerMe }) {
   );
 }
 
-function LeadsTable({ leads }: { leads: PartnerLead[] }) {
+function LeadsTable({ leads, readOnly, onEdit, onWithdraw }: { leads: PartnerLead[]; readOnly: boolean; onEdit: (l: PartnerLead) => void; onWithdraw: (l: PartnerLead) => void }) {
   return (
     <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
       <div className="p-4 border-b border-rule flex items-center gap-2">
@@ -512,7 +536,7 @@ function LeadsTable({ leads }: { leads: PartnerLead[] }) {
           <table className="w-full text-sm">
             <thead className="bg-paper-warm text-xs text-muted uppercase tracking-wide">
               <tr>
-                {[tr("Organisation"), tr("Contact"), tr("Country"), tr("Sent"), tr("Status")].map((h) => (
+                {[tr("Organisation"), tr("Contact"), tr("Country"), tr("Sent"), tr("Status"), ""].map((h) => (
                   <th key={h} className="text-left font-semibold px-4 py-2.5 whitespace-nowrap">
                     {h}
                   </th>
@@ -533,7 +557,20 @@ function LeadsTable({ leads }: { leads: PartnerLead[] }) {
                   <td className="px-4 py-2.5">{l.country}</td>
                   <td className="px-4 py-2.5 whitespace-nowrap">{fmtDay(l.createdAt)}</td>
                   <td className="px-4 py-2.5">
-                    <StatusPill tone={l.status === "won" ? "success" : l.status === "lost" || l.status === "duplicate" ? "muted" : "navy"}>{leadStatusLabel(l.status)}</StatusPill>
+                    <StatusPill tone={l.status === "won" ? "success" : l.status === "lost" || l.status === "duplicate" || l.status === "withdrawn" ? "muted" : "navy"}>{leadStatusLabel(l.status)}</StatusPill>
+                    {l.partnerReason && <p className="text-xs text-muted mt-1 max-w-xs">{l.partnerReason}</p>}
+                  </td>
+                  <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                    {!readOnly && l.status === "submitted" && (
+                      <button className="text-sm font-semibold text-navy cursor-pointer mr-3" onClick={() => onEdit(l)}>
+                        {tr("Edit")}
+                      </button>
+                    )}
+                    {!readOnly && (l.status === "submitted" || l.status === "contacted") && (
+                      <button className="text-sm font-semibold text-muted hover:text-error cursor-pointer" onClick={() => onWithdraw(l)}>
+                        {tr("Withdraw")}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -551,9 +588,14 @@ export function PartnerReferrals() {
   return <ReferralDashboard me={me} />;
 }
 
-function ReferOrganisation({ onClose, onDone }: { onClose: () => void; onDone: (duplicate: boolean) => void }) {
-  const [f, setF] = useState({ organisationName: "", category: "company" as "company" | "university", contactName: "", contactEmail: "", contactPhone: "", country: "India", expectedLearners: "", notes: "" });
-  const [agreed, setAgreed] = useState(false);
+// A new referral, or (existing) changing one Spica hasn't contacted yet.
+function ReferOrganisation({ existing, onClose, onDone }: { existing?: PartnerLead; onClose: () => void; onDone: (duplicate: boolean) => void }) {
+  const [f, setF] = useState(
+    existing
+      ? { organisationName: existing.organisationName, category: existing.category, contactName: existing.contactName, contactEmail: existing.contactEmail, contactPhone: existing.contactPhone ?? "", country: existing.country, expectedLearners: existing.expectedLearners == null ? "" : String(existing.expectedLearners), notes: existing.notes ?? "" }
+      : { organisationName: "", category: "company" as "company" | "university", contactName: "", contactEmail: "", contactPhone: "", country: "India", expectedLearners: "", notes: "" },
+  );
+  const [agreed, setAgreed] = useState(!!existing);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const input = "w-full rounded-input border border-rule bg-surface px-3 py-2 text-sm focus:outline-none focus:border-navy";
@@ -568,8 +610,8 @@ function ReferOrganisation({ onClose, onDone }: { onClose: () => void; onDone: (
     if (!agreed) return setErr(tr("Confirm the contact agreed to be contacted by Edstellar."));
     setBusy(true);
     try {
-      const r = await api<{ lead: PartnerLead }>("/partner/leads", {
-        method: "POST",
+      const r = await api<{ lead: PartnerLead }>(existing ? `/partner/leads/${existing.id}` : "/partner/leads", {
+        method: existing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           organisationName: f.organisationName.trim(),
@@ -586,12 +628,12 @@ function ReferOrganisation({ onClose, onDone }: { onClose: () => void; onDone: (
       onDone(r.lead.status === "duplicate");
     } catch (e) {
       const m = String((e as Error).message ?? "");
-      setErr(m.includes("partnership_not_active") ? tr("Your partnership has ended, so you can't send referrals.") : m.includes("agreement_not_signed") ? tr("Sign your partnership agreement first.") : tr("Could not send the referral. Try again."));
+      setErr(m.includes("lead_locked") ? tr("Spica has already contacted them, so this referral can't be changed.") : m.includes("partnership_not_active") ? tr("Your partnership has ended, so you can't send referrals.") : m.includes("agreement_not_signed") ? tr("Sign your partnership agreement first.") : tr("Could not send the referral. Try again."));
       setBusy(false);
     }
   };
   return (
-    <DetailModal title={tr("Refer an organisation")} subtitle={tr("Spica contacts them. You earn the referral fee when they become a customer and make their first paid purchase within 6 months of your referral.")} icon={Megaphone} onClose={onClose}>
+    <DetailModal title={existing ? tr("Change the referral") : tr("Refer an organisation")} subtitle={tr("Spica contacts them. You earn the referral fee when they become a customer and make their first paid purchase within 6 months of your referral.")} icon={Megaphone} onClose={onClose}>
       <div className="flex flex-col gap-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="flex flex-col gap-1">

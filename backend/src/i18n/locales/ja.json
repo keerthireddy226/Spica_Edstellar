@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "今後{{days}}日間はサインインしてレポートを確認できますが、練習はできません。その後のサインインには有料ライセンスが必要です。フルアクセスについては組織の管理者にお問い合わせください。",
  "{{name}} allocated order {{order}}": "{{name}}が注文{{order}}を割り当てました",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}}が注文{{order}}を自社の組織に割り当てました。",
- "The order's history shows each organisation's share.": "注文の履歴に各組織の割り当て分が表示されます。"
+ "The order's history shows each organisation's share.": "注文の履歴に各組織の割り当て分が表示されます。",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "その後、ポータルは閲覧のみになります。更新には最低組織数が必要です。それまでに残りのデモライセンスを付与してください。",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "その後、ポータルは閲覧のみになります。更新についてSpicaにご相談ください。",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "「パートナー」から更新してください。最低組織数を下回る場合、更新には理由の記入が必要です。",
+ "Referral waiting: {{org}}": "紹介が未対応です：{{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}}が{{days}}日前に{{org}}を紹介しましたが、まだ誰も連絡していません。",
+ "Contact them and update the referral.": "連絡を取り、紹介を更新してください。",
+ "Possible match for a referral: {{org}}": "紹介と一致する可能性：{{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}}は{{partner}}が紹介した{{org}}のようです。",
+ "If it is, mark the referral won and link the organisation.": "該当する場合は、紹介を成約にして組織を関連付けてください。",
+ "Add your payout details": "支払い情報を追加してください",
+ "Spica has money waiting for you.": "Spicaにお支払い待ちのお金があります。",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Spicaが支払えるよう、プロフィールに銀行またはPayPalの情報を追加してください。",
+ "{{partner}} withdrew a referral": "{{partner}}が紹介を取り下げました",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}}が{{org}}の紹介を取り下げました。",
+ "Refunded purchase: {{partner}} was already paid": "返金された購入：{{partner}}にはすでに支払済み",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}：{{partner}}に{{amount}} {{currency}}を支払った後、購入が全額返金されました。",
+ "Recover it or deduct it from the next payout.": "回収するか、次回の支払いから差し引いてください。"
 }

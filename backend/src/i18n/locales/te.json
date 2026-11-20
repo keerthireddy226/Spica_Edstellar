@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "తదుపరి {{days}} రోజులు మీరు ఇంకా సైన్ ఇన్ చేసి మీ రిపోర్ట్‌లు చూడవచ్చు, కానీ సాధన చేయలేరు. ఆ తర్వాత సైన్ ఇన్ చేయడానికి చెల్లింపు లైసెన్స్ కావాలి. పూర్తి యాక్సెస్ కోసం మీ సంస్థ అడ్మిన్‌ను అడగండి.",
  "{{name}} allocated order {{order}}": "{{name}} ఆర్డర్ {{order}}ని కేటాయించారు",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} ఆర్డర్ {{order}}ని తమ సంస్థలకు కేటాయించారు.",
- "The order's history shows each organisation's share.": "ఆర్డర్ చరిత్రలో ప్రతి సంస్థ వాటా కనిపిస్తుంది."
+ "The order's history shows each organisation's share.": "ఆర్డర్ చరిత్రలో ప్రతి సంస్థ వాటా కనిపిస్తుంది.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "ఆ తర్వాత మీ పోర్టల్ చదవడానికి మాత్రమే అవుతుంది. పునరుద్ధరణకు మీ కనీస సంస్థల సంఖ్య కావాలి. అంతకు ముందే మిగిలిన డెమో లైసెన్స్‌లు ఇవ్వండి.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "ఆ తర్వాత మీ పోర్టల్ చదవడానికి మాత్రమే అవుతుంది. పునరుద్ధరణ గురించి Spicaతో మాట్లాడండి.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Partners నుండి దాన్ని పునరుద్ధరించండి. కనీస సంస్థల కంటే తక్కువైతే పునరుద్ధరణకు లిఖిత కారణం కావాలి.",
+ "Referral waiting: {{org}}": "రెఫరల్ వేచి ఉంది: {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} {{days}} రోజుల క్రితం {{org}}ని రెఫర్ చేశారు, ఇంకా ఎవరూ సంప్రదించలేదు.",
+ "Contact them and update the referral.": "వారిని సంప్రదించి రెఫరల్ అప్‌డేట్ చేయండి.",
+ "Possible match for a referral: {{org}}": "ఒక రెఫరల్‌కు సాధ్యమైన సరిపోలిక: {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} {{org}}లా కనిపిస్తోంది, దీన్ని {{partner}} రెఫర్ చేశారు.",
+ "If it is, mark the referral won and link the organisation.": "అలా అయితే, రెఫరల్‌ను గెలిచినట్లు గుర్తించి సంస్థను లింక్ చేయండి.",
+ "Add your payout details": "మీ చెల్లింపు వివరాలు జోడించండి",
+ "Spica has money waiting for you.": "Spica వద్ద మీకోసం డబ్బు ఉంది.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Spica మీకు చెల్లించేలా మీ ప్రొఫైల్‌లో బ్యాంక్ లేదా PayPal వివరాలు జోడించండి.",
+ "{{partner}} withdrew a referral": "{{partner}} ఒక రెఫరల్‌ను ఉపసంహరించారు",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} {{org}} రెఫరల్‌ను ఉపసంహరించారు.",
+ "Refunded purchase: {{partner}} was already paid": "రీఫండ్ అయిన కొనుగోలు: {{partner}}కు ఇప్పటికే చెల్లించారు",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}: {{partner}}కు {{amount}} {{currency}} చెల్లించిన తర్వాత కొనుగోలు పూర్తిగా రీఫండ్ అయింది.",
+ "Recover it or deduct it from the next payout.": "దాన్ని తిరిగి వసూలు చేయండి లేదా తదుపరి చెల్లింపు నుండి తగ్గించండి."
 }

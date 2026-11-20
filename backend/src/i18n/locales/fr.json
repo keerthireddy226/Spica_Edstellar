@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Pendant les {{days}} prochains jours, vous pouvez encore vous connecter et consulter vos rapports, mais pas vous entraîner. Ensuite, il vous faudra une licence payante pour vous connecter. Demandez un accès complet à l'administrateur de votre organisation.",
  "{{name}} allocated order {{order}}": "{{name}} a attribué la commande {{order}}",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} a attribué la commande {{order}} à ses organisations.",
- "The order's history shows each organisation's share.": "L'historique de la commande indique la part de chaque organisation."
+ "The order's history shows each organisation's share.": "L'historique de la commande indique la part de chaque organisation.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "Ensuite, votre portail passe en lecture seule. Le renouvellement nécessite votre nombre minimum d'organisations. Donnez vos licences de démo restantes avant.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "Ensuite, votre portail passe en lecture seule. Parlez à Spica d'un renouvellement.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Renouvelez-le depuis Partenaires. Sous le minimum d'organisations, le renouvellement nécessite un motif écrit.",
+ "Referral waiting: {{org}}": "Recommandation en attente : {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} a recommandé {{org}} il y a {{days}} jours et personne ne l'a encore contactée.",
+ "Contact them and update the referral.": "Contactez-les et mettez à jour la recommandation.",
+ "Possible match for a referral: {{org}}": "Correspondance possible pour une recommandation : {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} ressemble à {{org}}, recommandée par {{partner}}.",
+ "If it is, mark the referral won and link the organisation.": "Si c'est le cas, marquez la recommandation comme gagnée et associez l'organisation.",
+ "Add your payout details": "Ajoutez vos coordonnées de paiement",
+ "Spica has money waiting for you.": "Spica a de l'argent pour vous.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Ajoutez vos coordonnées bancaires ou PayPal dans votre profil pour que Spica puisse vous payer.",
+ "{{partner}} withdrew a referral": "{{partner}} a retiré une recommandation",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} a retiré la recommandation de {{org}}.",
+ "Refunded purchase: {{partner}} was already paid": "Achat remboursé : {{partner}} a déjà été payé",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}} : l'achat a été intégralement remboursé après que {{partner}} a reçu {{amount}} {{currency}}.",
+ "Recover it or deduct it from the next payout.": "Récupérez-le ou déduisez-le du prochain versement."
 }

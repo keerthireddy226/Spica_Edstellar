@@ -42,4 +42,4 @@ export function PartnershipPill({ status, endsAt }: { status: PartnershipStatus;
 }
 
 export const leadStatusLabel = (s: string) =>
-  ({ submitted: tr("Submitted"), contacted: tr("Contacted"), won: tr("Won"), lost: tr("Lost"), duplicate: tr("Already known") })[s] ?? s;
+  ({ submitted: tr("Submitted"), contacted: tr("Contacted"), won: tr("Won"), lost: tr("Lost"), duplicate: tr("Already known"), withdrawn: tr("Withdrawn") })[s] ?? s;

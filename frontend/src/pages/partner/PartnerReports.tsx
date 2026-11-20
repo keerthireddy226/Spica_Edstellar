@@ -282,8 +282,8 @@ function PayCommission({ orderIds, onClose, onDone }: { orderIds: string[]; onCl
     try {
       const r = await api<{ paid: number }>("/admin/partner-reports/commission/paid", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orderIds, reference: ref.trim() }) });
       onDone(r.paid);
-    } catch {
-      setErr(tr("That didn't work. Try again."));
+    } catch (e) {
+      setErr(String((e as Error)?.message ?? "").includes("payout_details_missing") ? tr("This partner hasn't added payout details yet, so they can't be paid. They're reminded to add them in their Profile.") : tr("That didn't work. Try again."));
       setBusy(false);
     }
   };

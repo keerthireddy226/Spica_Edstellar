@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De kommande {{days}} dagarna kan du fortfarande logga in och se dina rapporter, men inte öva. Därefter behöver du en betald licens för att logga in. Be administratören i din organisation om full åtkomst.",
  "{{name}} allocated order {{order}}": "{{name}} har fördelat order {{order}}",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} har fördelat order {{order}} till sina organisationer.",
- "The order's history shows each organisation's share.": "Orderns historik visar varje organisations andel."
+ "The order's history shows each organisation's share.": "Orderns historik visar varje organisations andel.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "Därefter blir din portal skrivskyddad. Förnyelse kräver ditt minsta antal organisationer. Dela ut dina återstående demolicenser innan dess.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "Därefter blir din portal skrivskyddad. Prata med Spica om förnyelse.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Förnya det under Partner. Under minsta antalet organisationer kräver förnyelse en skriftlig motivering.",
+ "Referral waiting: {{org}}": "Hänvisning väntar: {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} hänvisade {{org}} för {{days}} dagar sedan och ingen har kontaktat dem än.",
+ "Contact them and update the referral.": "Kontakta dem och uppdatera hänvisningen.",
+ "Possible match for a referral: {{org}}": "Möjlig matchning för en hänvisning: {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} liknar {{org}}, hänvisad av {{partner}}.",
+ "If it is, mark the referral won and link the organisation.": "Om det stämmer, markera hänvisningen som vunnen och koppla organisationen.",
+ "Add your payout details": "Lägg till dina utbetalningsuppgifter",
+ "Spica has money waiting for you.": "Spica har pengar till dig.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Lägg till dina bank- eller PayPal-uppgifter i din profil så att Spica kan betala dig.",
+ "{{partner}} withdrew a referral": "{{partner}} drog tillbaka en hänvisning",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} drog tillbaka hänvisningen av {{org}}.",
+ "Refunded purchase: {{partner}} was already paid": "Återbetalt köp: {{partner}} har redan fått betalt",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}: köpet återbetalades helt efter att {{partner}} fick {{amount}} {{currency}}.",
+ "Recover it or deduct it from the next payout.": "Kräv tillbaka det eller dra av det från nästa utbetalning."
 }

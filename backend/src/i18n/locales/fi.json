@@ -467,5 +467,22 @@
  "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Seuraavien {{days}} päivän ajan voit vielä kirjautua ja katsoa raporttejasi, mutta et harjoitella. Sen jälkeen tarvitset kirjautumiseen maksullisen lisenssin. Pyydä organisaatiosi ylläpitäjältä täyttä käyttöoikeutta.",
  "{{name}} allocated order {{order}}": "{{name}} jakoi tilauksen {{order}}",
  "{{name}} allocated order {{order}} to its organisations.": "{{name}} jakoi tilauksen {{order}} organisaatioilleen.",
- "The order's history shows each organisation's share.": "Tilauksen historiasta näkyy kunkin organisaation osuus."
+ "The order's history shows each organisation's share.": "Tilauksen historiasta näkyy kunkin organisaation osuus.",
+ "After that your portal becomes read-only. Renewal needs your minimum number of organisations. Give your remaining demo licences before then.": "Sen jälkeen portaalisi on vain luku -tilassa. Jatkaminen vaatii vähimmäismäärän organisaatioita. Jaa jäljellä olevat demolisenssit sitä ennen.",
+ "After that your portal becomes read-only. Talk to Spica about renewing.": "Sen jälkeen portaalisi on vain luku -tilassa. Keskustele Spican kanssa jatkamisesta.",
+ "Renew it from Partners. Below the organisation minimum, renewal needs a written reason.": "Jatka sitä Kumppanit-sivulta. Organisaatioiden vähimmäismäärän alittuessa jatkaminen vaatii kirjallisen perustelun.",
+ "Referral waiting: {{org}}": "Suositus odottaa: {{org}}",
+ "{{partner}} referred {{org}} {{days}} days ago and nobody has contacted them yet.": "{{partner}} suositteli organisaatiota {{org}} {{days}} päivää sitten, eikä kukaan ole vielä ottanut yhteyttä.",
+ "Contact them and update the referral.": "Ota yhteyttä ja päivitä suositus.",
+ "Possible match for a referral: {{org}}": "Mahdollinen osuma suositukselle: {{org}}",
+ "{{tenant}} looks like {{org}}, referred by {{partner}}.": "{{tenant}} näyttää olevan {{org}}, jota {{partner}} suositteli.",
+ "If it is, mark the referral won and link the organisation.": "Jos on, merkitse suositus voitetuksi ja yhdistä organisaatio.",
+ "Add your payout details": "Lisää maksutietosi",
+ "Spica has money waiting for you.": "Spicalla on sinulle rahaa.",
+ "Add your bank or PayPal details in your Profile so Spica can pay you.": "Lisää pankki- tai PayPal-tietosi profiiliin, jotta Spica voi maksaa sinulle.",
+ "{{partner}} withdrew a referral": "{{partner}} perui suosituksen",
+ "{{partner}} withdrew the referral of {{org}}.": "{{partner}} perui suosituksen {{org}}.",
+ "Refunded purchase: {{partner}} was already paid": "Hyvitetty osto: {{partner}} on jo saanut maksun",
+ "{{what}}: the purchase was refunded in full after {{partner}} was paid {{amount}} {{currency}}.": "{{what}}: osto hyvitettiin kokonaan sen jälkeen, kun {{partner}} sai {{amount}} {{currency}}.",
+ "Recover it or deduct it from the next payout.": "Peri se takaisin tai vähennä se seuraavasta maksusta."
 }

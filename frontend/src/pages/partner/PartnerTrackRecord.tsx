@@ -29,15 +29,28 @@ const VIA: Record<string, string> = { link: tr("Your link"), code: tr("Typed you
 const card = "bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-3";
 const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted";
 
+// A Referral Partner's track record (owner, 20 Nov 2026).
+interface ReferralRecord {
+  kind: "referral";
+  referral: { total: number; open: number; contacted: number; won: number; lost: number; duplicate: number; withdrawn: number; winRate: number | null; avgDaysToWin: number | null; earned: Money; paid: Money };
+  months: { month: string; referrals: number; won: number; earned: Money }[];
+  payouts: TrackRecord["payouts"];
+}
+
 export function PartnerTrackRecord() {
-  const [d, setD] = useState<TrackRecord | null>(null);
+  const [d, setD] = useState<TrackRecord | ReferralRecord | null>(null);
   const [failed, setFailed] = useState(false);
-  const load = () => api<TrackRecord>("/partner/track-record").then(setD).catch(() => setFailed(true));
+  const load = () => api<TrackRecord | ReferralRecord>("/partner/track-record").then(setD).catch(() => setFailed(true));
   useEffect(() => {
     load();
   }, []);
   if (failed) return <PageError message={tr("Could not load your track record.")} onRetry={load} />;
   if (!d) return <PageLoading />;
+  if ("kind" in d && d.kind === "referral") return <ReferralTrackRecord d={d} />;
+  return <AffiliateTrackRecord d={d as TrackRecord} />;
+}
+
+function AffiliateTrackRecord({ d }: { d: TrackRecord }) {
   const f = d.funnel;
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -221,6 +234,105 @@ function Sources({ d }: { d: TrackRecord }) {
         </div>
       )}
       <p className="text-xs text-muted">{tr("People who typed your code instead of using a link are counted in Sign-ups above, not here.")}</p>
+    </section>
+  );
+}
+
+function ReferralTrackRecord({ d }: { d: ReferralRecord }) {
+  const r = d.referral;
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <PageHeader title={tr("Track record")} subtitle={tr("How your referrals are doing: how many became customers, how fast, and what you earned.")} />
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard variant="ledger" palette="terracotta" index={0} icon={UserPlus} value={r.total} label={tr("Referrals")} sub={tr("{{n}} being followed up", { n: r.open })} progress={r.total ? r.open / r.total : 0} />
+        <StatCard variant="ledger" palette="terracotta" index={1} icon={ShoppingCart} value={r.won} label={tr("Became customers")} sub={r.winRate === null ? tr("No decided referrals yet") : tr("{{p}}% of decided referrals won", { p: r.winRate })} progress={r.winRate === null ? 0 : r.winRate / 100} />
+        <StatCard variant="ledger" palette="terracotta" index={2} icon={MousePointerClick} value={r.avgDaysToWin === null ? "—" : tr("{{n}} days", { n: r.avgDaysToWin })} label={tr("Average time to win")} sub={tr("From your referral to becoming a customer")} progress={0.5} />
+        <StatCard variant="ledger" palette="terracotta" index={3} icon={Coins} value={moneyText(r.earned)} label={tr("Earned")} sub={tr("Paid so far: {{p}}", { p: moneyText(r.paid) })} progress={0.5} />
+      </div>
+      <section className={card}>
+        <h2 className="font-display font-bold text-lg text-ink">{tr("Where your referrals are")}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {[
+            [tr("Sent"), r.total],
+            [tr("Contacted by Spica"), r.contacted],
+            [tr("Won"), r.won],
+            [tr("Lost"), r.lost],
+            [tr("Already known"), r.duplicate],
+            [tr("Withdrawn"), r.withdrawn],
+          ].map(([k, v]) => (
+            <div key={String(k)} className="rounded-input bg-paper-warm/70 px-3 py-2">
+              <p className="text-xs text-muted">{k}</p>
+              <p className="text-xl font-bold text-ink">{v}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className={card}>
+        <h2 className="font-display font-bold text-lg text-ink">{tr("Month by month")}</h2>
+        {d.months.length === 0 ? (
+          <EmptyNote>{tr("Nothing yet. Refer an organisation to get started.")}</EmptyNote>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead className="bg-paper-warm/60">
+                <tr>
+                  {[tr("Month"), tr("Referrals"), tr("Won"), tr("Earned")].map((h) => (
+                    <th key={h} className={th}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {d.months.map((m) => (
+                  <tr key={m.month} className="border-t border-rule">
+                    <td className="px-3 py-2 font-semibold">{monthLabel(m.month)}</td>
+                    <td className="px-3 py-2">{m.referrals}</td>
+                    <td className="px-3 py-2">{m.won}</td>
+                    <td className="px-3 py-2">{Object.keys(m.earned).length ? moneyText(m.earned) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      <Payouts payouts={d.payouts} />
+    </div>
+  );
+}
+
+function Payouts({ payouts }: { payouts: TrackRecord["payouts"] }) {
+  return (
+    <section className={card}>
+      <h2 className="font-display font-bold text-lg text-ink">{tr("Payouts from Spica")}</h2>
+      {payouts.length === 0 ? (
+        <EmptyNote>{tr("No payouts yet. Spica pays your earnings with a payment reference; each payout appears here.")}</EmptyNote>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
+            <thead className="bg-paper-warm/60">
+              <tr>
+                {[tr("Paid on"), tr("Reference"), tr("Amount"), tr("Earnings")].map((h) => (
+                  <th key={h} className={th}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {payouts.map((x, i) => (
+                <tr key={i} className="border-t border-rule">
+                  <td className="px-3 py-2">{fmtDay(x.paidAt)}</td>
+                  <td className="px-3 py-2 text-muted">{x.reference || "—"}</td>
+                  <td className="px-3 py-2 font-semibold">{moneyText(x.amounts)}</td>
+                  <td className="px-3 py-2">{x.items}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

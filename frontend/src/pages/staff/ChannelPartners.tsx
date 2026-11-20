@@ -28,6 +28,7 @@ import {
   type EarningsResponse,
   type PartnerLead,
   type PartnerType,
+  type PartnershipLength,
 } from "@/api/channelPartners";
 import { fmtDay, leadStatusLabel, minorMoney, PartnershipPill, typeBlurb, typeLabel } from "@/components/partner/partnerUi";
 import { tr } from "@/i18n/tr";
@@ -37,6 +38,28 @@ import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/
 // A Reseller's discount is at most 50% (owner, 20 Nov 2026): the box never holds more.
 const MAX_DISCOUNT = 50;
 const capDiscount = (v: string) => (Number(v) > MAX_DISCOUNT ? String(MAX_DISCOUNT) : Number(v) < 0 ? "0" : v);
+
+// Partnership length (owner, 20 Nov 2026): Spica picks it per partner,
+// 1, 3, 6 or 12 months, or a chosen end date; 3 months by default.
+type LengthValue = { months: string; endsOn: string };
+const lengthBody = (v: LengthValue): PartnershipLength => (v.months === "custom" ? (v.endsOn ? { endsOn: v.endsOn } : {}) : { months: Number(v.months) });
+function LengthPicker({ value, onChange }: { value: LengthValue; onChange: (v: LengthValue) => void }) {
+  const field = "rounded-input border border-rule bg-surface px-3 py-2 text-sm";
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  return (
+    <label className="flex flex-wrap items-center gap-2 text-sm">
+      <span className="text-xs font-semibold text-muted uppercase tracking-wide">{tr("Partnership length")}</span>
+      <select className={field} value={value.months} onChange={(e) => onChange({ ...value, months: e.target.value })}>
+        <option value="1">{tr("1 month")}</option>
+        <option value="3">{tr("3 months")}</option>
+        <option value="6">{tr("6 months")}</option>
+        <option value="12">{tr("12 months")}</option>
+        <option value="custom">{tr("Choose an end date")}</option>
+      </select>
+      {value.months === "custom" && <input className={field} type="date" min={tomorrow} value={value.endsOn} onChange={(e) => onChange({ ...value, endsOn: e.target.value })} />}
+    </label>
+  );
+}
 
 
 // Partners (19 Nov 2026): Resellers, Channel Partners, Affiliates and Referral
@@ -105,7 +128,7 @@ export function ChannelPartners() {
     <div className="flex flex-col gap-6 w-full">
       <PageHeader
         title={tr("Partners")}
-        subtitle={tr("Resellers, Channel Partners, Affiliates and Referral Partners. Register a partner, fix their minimums and rates, and run their 3-month partnership.")}
+        subtitle={tr("Resellers, Channel Partners, Affiliates and Referral Partners. Register a partner, fix their minimums and rates, and run their partnership.")}
         actions={
           <Button onClick={() => setCreating(true)} className="flex items-center gap-1.5">
             <Plus size={16} /> {tr("Register a partner")}
@@ -223,6 +246,7 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
     discountPercent: "0",
     referralFee: "0",
     referralFeeCurrency: "USD" as "INR" | "USD",
+    length: { months: "3", endsOn: "" } as LengthValue,
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -242,6 +266,7 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
         commissionPercent: Number(f.commissionPercent) || 0,
         demoLicences: orgType ? Math.max(0, Math.round(Number(f.demoLicences) || 0)) : 0,
         startDemoNow: f.startDemoNow,
+        ...lengthBody(f.length),
         ownLicenceEnabled: orgType && f.ownLicenceEnabled,
         notes: f.notes.trim() || undefined,
         minOrganisations: Math.max(0, Math.round(Number(f.minOrganisations) || 0)),
@@ -289,12 +314,12 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
               <label className="flex flex-col gap-1">
                 <span className={label}>{tr("Minimum organisations")}</span>
                 <input className={input} type="number" min={0} value={f.minOrganisations} onChange={set("minOrganisations")} />
-                <span className="text-xs text-muted">{tr("To onboard in each 3-month period. Renewal is blocked below it unless you give a reason.")}</span>
+                <span className="text-xs text-muted">{tr("To onboard in each partnership period. Renewal is blocked below it unless you give a reason.")}</span>
               </label>
               <label className="flex flex-col gap-1">
                 <span className={label}>{tr("Minimum licences per organisation")}</span>
                 <input className={input} type="number" min={1} value={f.minLicencesPerOrg} onChange={set("minLicencesPerOrg")} />
-                <span className="text-xs text-muted">{tr("The partner can't give or order fewer for one organisation.")}</span>
+                <span className="text-xs text-muted">{tr("The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.")}</span>
               </label>
               <label className="flex flex-col gap-1">
                 <span className={label}>{tr("Free demo licences")}</span>
@@ -332,9 +357,10 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
           <span className="text-sm">
             <b>{tr("Start the partnership today")}</b>
             <br />
-            <span className="text-muted">{tr("The partnership lasts 3 months from today. You can renew it for another 3 months.")}</span>
+            <span className="text-muted">{tr("It runs from today for the length you choose. You can renew it later.")}</span>
           </span>
         </label>
+        <LengthPicker value={f.length} onChange={(length) => setF({ ...f, length })} />
         {orgType && (
           <label className="flex items-start gap-2.5 rounded-input border border-rule p-3 cursor-pointer">
             <input type="checkbox" className="mt-0.5 accent-navy" checked={f.ownLicenceEnabled} onChange={set("ownLicenceEnabled")} />
@@ -373,6 +399,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [edit, setEdit] = useState<{ fullName: string; demoLicences: string; commissionPercent: string; notes: string; minOrganisations: string; minLicencesPerOrg: string; discountPercent: string; referralFee: string } | null>(null);
   const [renewing, setRenewing] = useState(false);
+  const [len, setLen] = useState<LengthValue>({ months: "", endsOn: "" });
   const [reason, setReason] = useState("");
   const [terminating, setTerminating] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -410,6 +437,8 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
   if (failed) return <DetailModal title={tr("Partner")} onClose={onClose}><ModalEmpty>{tr("Could not load this partner.")}</ModalEmpty></DetailModal>;
   if (!d) return <DetailModal title={tr("Partner")} onClose={onClose}><ModalEmpty>{tr("Loading…")}</ModalEmpty></DetailModal>;
   const p = d.partner;
+  // The picker starts at this partner's usual length.
+  const lenValue: LengthValue = len.months ? len : { months: String(p.partnershipMonths ?? 3), endsOn: "" };
   const orgType = bringsOrganisations(p.partnerType);
   const running = p.status === "active" || p.status === "expiring";
   const belowMin = orgType && p.activeOrganisations < p.minOrganisations;
@@ -586,6 +615,11 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
               )}
             </ModalSection>
 
+            {p.partnerType === "channel_partner" && (
+              <ModalSection title={tr("Payout details")} icon={Coins}>
+                <PayoutDetailsBox partnerId={p.id} />
+              </ModalSection>
+            )}
             <ModalSection title={tr("Partnership")} icon={CalendarClock}>
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 <PartnershipPill status={p.status} endsAt={p.endsAt} />
@@ -598,24 +632,25 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
               </div>
               <p className="text-sm text-muted">
                 {p.status === "not_started"
-                  ? tr("Not started. Starting it runs the partnership for 3 months from today.")
+                  ? tr("Not started. Starting it runs the partnership from today for the length you choose.")
                   : p.status === "terminated"
                     ? tr("Terminated on {{d}}. Reason: {{r}}. The partner's portal is read-only.", { d: fmtDay(p.terminatedAt), r: p.terminationReason ?? "—" })
                     : p.status === "expired"
                       ? tr("Ended on {{d}}. The partner's portal is read-only until you renew.", { d: fmtDay(p.endsAt) })
                       : orgType
-                        ? tr("Renewing adds 3 months. It needs {{min}} organisations; this partner has {{n}}.", { min: p.minOrganisations, n: p.activeOrganisations })
-                        : tr("Renewing adds 3 months. The partner signs the agreement again for the new period.")}
+                        ? tr("Renewing extends it by the length you choose. It needs {{min}} organisations; this partner has {{n}}.", { min: p.minOrganisations, n: p.activeOrganisations })
+                        : tr("Renewing extends it by the length you choose. The partner signs the agreement again for the new period.")}
               </p>
+              {(p.status === "not_started" || running || p.status === "expired") && <LengthPicker value={lenValue} onChange={setLen} />}
               <div className="flex flex-wrap items-start gap-2">
                 {p.status === "not_started" && (
-                  <Button disabled={busy || !p.active} onClick={() => run(() => startPartnership(p.id), tr("Partnership started."))}>
+                  <Button disabled={busy || !p.active} onClick={() => run(() => startPartnership(p.id, lengthBody(lenValue)), tr("Partnership started."))}>
                     {tr("Start the partnership")}
                   </Button>
                 )}
                 {(running || p.status === "expired") && !renewing && (
-                  <Button disabled={busy || !p.active} onClick={() => (belowMin ? setRenewing(true) : run(() => renewPartnership(p.id), tr("Renewed for 3 months. The partner must sign the agreement again.")))}>
-                    {tr("Renew for 3 months")}
+                  <Button disabled={busy || !p.active} onClick={() => (belowMin ? setRenewing(true) : run(() => renewPartnership(p.id, undefined, lengthBody(lenValue)), tr("Renewed. The partner must sign the agreement again.")))}>
+                    {tr("Renew")}
                   </Button>
                 )}
                 {(running || p.status === "expired") && !terminating && (
@@ -636,10 +671,10 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                       disabled={busy || reason.trim().length < 10}
                       onClick={() =>
                         run(async () => {
-                          await renewPartnership(p.id, reason.trim());
+                          await renewPartnership(p.id, reason.trim(), lengthBody(lenValue));
                           setRenewing(false);
                           setReason("");
-                        }, tr("Renewed for 3 months with your reason recorded. The partner must sign the agreement again."))
+                        }, tr("Renewed with your reason recorded. The partner must sign the agreement again."))
                       }
                     >
                       {tr("Renew below minimum")}
@@ -880,8 +915,8 @@ function StaffLeads({ partnerId, onChanged }: { partnerId: string; onChanged: ()
                 <span className="text-muted whitespace-nowrap">{fmtDay(l.createdAt)}</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <select className={`${input} !w-auto`} value={l.status} onChange={(e) => save(l, { status: e.target.value as PartnerLead["status"] })}>
-                  {(["submitted", "contacted", "won", "lost", "duplicate"] as const).map((s) => (
+                <select className={`${input} !w-auto`} value={l.status} disabled={l.status === "withdrawn"} onChange={(e) => save(l, { status: e.target.value as PartnerLead["status"] })}>
+                  {(l.status === "withdrawn" ? (["withdrawn"] as const) : (["submitted", "contacted", "won", "lost", "duplicate"] as const)).map((s) => (
                     <option key={s} value={s}>
                       {leadStatusLabel(s)}
                     </option>
@@ -897,6 +932,21 @@ function StaffLeads({ partnerId, onChanged }: { partnerId: string; onChanged: ()
                 </select>
                 <input className={`${input} !w-auto flex-1 min-w-40`} defaultValue={l.staffNote ?? ""} placeholder={tr("Note (Spica only)")} onBlur={(e) => e.target.value !== (l.staffNote ?? "") && save(l, { staffNote: e.target.value || null })} />
               </div>
+              <input
+                className={input}
+                defaultValue={l.partnerReason ?? ""}
+                maxLength={500}
+                placeholder={tr("Reason the partner sees (for example why it was lost)")}
+                onBlur={(e) => e.target.value !== (l.partnerReason ?? "") && save(l, { partnerReason: e.target.value || null })}
+              />
+              {(l.possibleMatches ?? []).map((m) => (
+                <div key={m.tenantId} className="flex flex-wrap items-center justify-between gap-2 rounded-input bg-warning/10 border border-warning/30 px-3 py-2">
+                  <span>{tr("Possible match: {{name}} signed up by itself and looks like this referral.", { name: m.name })}</span>
+                  <Button className="!px-3 !py-1.5" onClick={() => save(l, { status: "won", tenantId: m.tenantId })}>
+                    {tr("Link and mark won")}
+                  </Button>
+                </div>
+              ))}
             </li>
           ))}
         </ul>
@@ -977,6 +1027,62 @@ function StaffAffiliatePeople({ partnerId }: { partnerId: string }) {
   );
 }
 
+// Where Spica sends this partner's money (Finance only). Without details the
+// partner can't be paid; they are reminded weekly to add them in their Profile.
+interface PayoutDetails {
+  method: "bank" | "paypal";
+  accountName: string | null;
+  accountNumber: string | null;
+  bankName: string | null;
+  bankCode: string | null;
+  bankCountry: string | null;
+  paypalEmail: string | null;
+  pan: string | null;
+  gstin: string | null;
+  updatedAt: string;
+}
+function PayoutDetailsBox({ partnerId }: { partnerId: string }) {
+  const [d, setD] = useState<{ details: PayoutDetails | null } | "forbidden" | null>(null);
+  useEffect(() => {
+    api<{ details: PayoutDetails | null }>(`/admin/channel-partners/${partnerId}/payout-details`)
+      .then(setD)
+      .catch(() => setD("forbidden"));
+  }, [partnerId]);
+  if (!d) return null;
+  if (d === "forbidden") return <p className="text-xs text-muted">{tr("Only staff with the Finance permission can see payout details.")}</p>;
+  const x = d.details;
+  if (!x) return <Notice tone="error">{tr("No payout details yet. Spica can't pay this partner until they add them in their Profile.")}</Notice>;
+  const rows: [string, string | null][] =
+    x.method === "bank"
+      ? [
+          [tr("Paid by"), tr("Bank transfer")],
+          [tr("Account name"), x.accountName],
+          [tr("Account number"), x.accountNumber],
+          [tr("Bank"), [x.bankName, x.bankCountry].filter(Boolean).join(", ") || null],
+          [tr("IFSC or SWIFT code"), x.bankCode],
+        ]
+      : [
+          [tr("Paid by"), "PayPal"],
+          [tr("PayPal email"), x.paypalEmail],
+        ];
+  if (x.pan) rows.push([tr("PAN"), x.pan]);
+  if (x.gstin) rows.push([tr("GSTIN"), x.gstin]);
+  return (
+    <div className="rounded-input border border-rule bg-paper-warm/60 p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-1">{tr("Payout details")}</p>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-muted">{k}</dt>
+            <dd className="font-mono">{v || "—"}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="text-xs text-muted mt-1">{tr("Updated {{d}}", { d: fmtDay(x.updatedAt) })}</p>
+    </div>
+  );
+}
+
 function StaffEarnings({ partnerId }: { partnerId: string }) {
   const [d, setD] = useState<EarningsResponse | null>(null);
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -996,11 +1102,13 @@ function StaffEarnings({ partnerId }: { partnerId: string }) {
       setMsg({ tone: "success", text: tr("Saved.") });
       load();
     } catch (e) {
-      setMsg({ tone: "error", text: String((e as Error).message ?? "").includes("forbidden") ? tr("Only staff with the Finance permission can do this.") : tr("That didn't work. Try again.") });
+      const m = String((e as Error).message ?? "");
+      setMsg({ tone: "error", text: m.includes("payout_details_missing") ? tr("This partner hasn't added payout details yet, so they can't be paid. They're reminded to add them in their Profile.") : m.includes("forbidden") ? tr("Only staff with the Finance permission can do this.") : tr("That didn't work. Try again.") });
     }
   };
   return (
     <ModalSection title={tr("Earnings")} icon={Coins}>
+      <PayoutDetailsBox partnerId={partnerId} />
       {msg && (
         <Notice tone={msg.tone} onClose={() => setMsg(null)}>
           {msg.text}

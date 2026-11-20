@@ -20,7 +20,7 @@ import { licencesSchema, orgSchema, sendPartnerError } from "./portalRoutes.js";
 import { notify } from "../notifications/service.js";
 import {
   activeOrganisations, bringsOrganisations, ORG_LICENCES_SQL, CODE_PREFIX, PARTNER_TYPE_LABEL, PERIOD_START_SQL, PARTNER_TYPES, PARTNERSHIP_MONTHS,
-  partnershipEnd, partnershipStatus, renewalBlock, renewedEnd, type PartnerType,
+  endOfDay, partnershipEnd, partnershipStatus, renewalBlock, renewedEnd, type PartnerType,
 } from "./partnership.js";
 
 export const channelPartnerStaffRouter = Router();
@@ -114,6 +114,7 @@ function shape(r: Record<string, any>) {
     discountPercent: Number(r.discount_percent ?? 0),
     referralFee: Number(r.referral_fee ?? 0),
     referralFeeCurrency: r.referral_fee_currency,
+    partnershipMonths: Number(r.partnership_months ?? 3),
     agreement: r.agreement ?? null,
     lastSignedAt: r.last_signed_at ?? null,
     leads: r.leads ?? 0,
@@ -186,8 +187,11 @@ const createSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
   commissionPercent: z.number().min(0).max(100).default(0),
   demoLicences: z.number().int().min(0).max(100000).default(250),
-  // Start the 3-month partnership now (the licences become available today).
+  // Start the partnership now (the licences become available today).
   startDemoNow: z.boolean().default(true),
+  // How long it lasts: months (3 by default), or a chosen end date (owner, 20 Nov 2026).
+  partnershipMonths: z.number().int().min(1).max(24).default(PARTNERSHIP_MONTHS),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   ownLicenceEnabled: z.boolean().default(false),
   notes: z.string().max(2000).optional(),
   minOrganisations: termsSchema.minOrganisations.default(10),
@@ -203,8 +207,9 @@ channelPartnerStaffRouter.post("/channel-partners", requireAuth, async (req: Aut
   if (!parsed.success) return res.status(400).json({ error: "invalid_input", issues: parsed.error.issues });
   const b = parsed.data;
   const now = new Date();
-  // The partnership is always 3 months; Spica renews it for another 3.
-  const endsAt = b.startDemoNow ? addMonths(now, DEFAULT_DEMO_MONTHS) : null;
+  // The length Spica chose for this partner (or a chosen end date).
+  if (b.endsOn && endOfDay(b.endsOn) <= now) return res.status(400).json({ error: "invalid_end_date" });
+  const endsAt = b.startDemoNow ? (b.endsOn ? endOfDay(b.endsOn) : addMonths(now, b.partnershipMonths)) : null;
   const orgType = bringsOrganisations(b.partnerType);
   // Only Resellers and Channel Partners bring organisations, give demo
   // licences and have organisation minimums; only Resellers get a discount.
@@ -225,10 +230,10 @@ channelPartnerStaffRouter.post("/channel-partners", requireAuth, async (req: Aut
         row = (
           await client.query(
             `INSERT INTO channel_partners (user_id, full_name, email, code, commission_percent, demo_licences, demo_starts_at, demo_ends_at, own_licence_enabled, notes, created_by,
-               partner_type, min_organisations, min_licences_per_org, discount_percent, referral_fee, referral_fee_currency)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING *`,
+               partner_type, min_organisations, min_licences_per_org, discount_percent, referral_fee, referral_fee_currency, partnership_months)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING *`,
             [user.rows[0].id, b.fullName, b.email, newPartnerCode(b.partnerType), b.partnerType === "reseller" ? 0 : b.commissionPercent, demoLicences, b.startDemoNow ? now : null, endsAt, orgType && b.ownLicenceEnabled, b.notes ?? null, req.user!.id,
-             b.partnerType, orgType ? b.minOrganisations : 0, b.minLicencesPerOrg, b.partnerType === "reseller" ? b.discountPercent : 0, b.partnerType === "referral" ? b.referralFee : 0, b.referralFeeCurrency],
+             b.partnerType, orgType ? b.minOrganisations : 0, b.minLicencesPerOrg, b.partnerType === "reseller" ? b.discountPercent : 0, b.partnerType === "referral" ? b.referralFee : 0, b.referralFeeCurrency, b.partnershipMonths],
           )
         ).rows[0];
       } catch (err: any) {
@@ -308,7 +313,11 @@ channelPartnerStaffRouter.patch("/channel-partners/:id", requireAuth, async (req
   }
 });
 
-const windowSchema = z.object({ endsAt: z.string().datetime().optional() });
+const windowSchema = z.object({
+  endsAt: z.string().datetime().optional(),
+  months: z.number().int().min(1).max(24).optional(),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 
 // Start the 3-month partnership (and the demo licences) today.
 channelPartnerStaffRouter.post("/channel-partners/:id/demo/start", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -321,8 +330,10 @@ channelPartnerStaffRouter.post("/channel-partners/:id/demo/start", requireAuth, 
     if (demoStatus(p as any) === "active") return res.status(409).json({ error: "demo_already_active" });
     const now = new Date();
     if (p.terminated_at) return res.status(409).json({ error: "partnership_terminated" });
-    const endsAt = addMonths(now, DEFAULT_DEMO_MONTHS);
-    await pool.query(`UPDATE channel_partners SET demo_starts_at = $2, demo_ends_at = $3, demo_ended_at = NULL, updated_at = now() WHERE id = $1`, [p.id, now, endsAt]);
+    const months = parsed.data.months ?? Number(p.partnership_months ?? DEFAULT_DEMO_MONTHS);
+    if (parsed.data.endsOn && endOfDay(parsed.data.endsOn) <= now) return res.status(400).json({ error: "invalid_end_date" });
+    const endsAt = parsed.data.endsOn ? endOfDay(parsed.data.endsOn) : addMonths(now, months);
+    await pool.query(`UPDATE channel_partners SET demo_starts_at = $2, demo_ends_at = $3, demo_ended_at = NULL, partnership_months = $4, updated_at = now() WHERE id = $1`, [p.id, now, endsAt, months]);
     await audit(req, "channel_partner.demo_started", p as any, { endsAt });
     res.json({ id: p.id, demoStartsAt: now, demoEndsAt: endsAt });
   } catch (err) {
@@ -333,7 +344,12 @@ channelPartnerStaffRouter.post("/channel-partners/:id/demo/start", requireAuth, 
 // Renew for another 3 months (from the current end, or from today if it has
 // ended). Resellers and Channel Partners below their organisation minimum can
 // only be renewed with a written reason. The partner signs the agreement again.
-const renewSchema = z.object({ overrideReason: z.string().trim().max(1000).optional() });
+const renewSchema = z.object({
+  overrideReason: z.string().trim().max(1000).optional(),
+  // How long the renewal is: months (the partner's usual length by default) or a chosen end date.
+  months: z.number().int().min(1).max(24).optional(),
+  endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 channelPartnerStaffRouter.post("/channel-partners/:id/renew", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   const parsed = renewSchema.safeParse(req.body ?? {});
@@ -346,7 +362,10 @@ channelPartnerStaffRouter.post("/channel-partners/:id/renew", requireAuth, async
     const block = renewalBlock({ status, type: p.partner_type, organisations, minOrganisations: p.min_organisations, overrideReason: parsed.data.overrideReason });
     if (block) return res.status(409).json({ error: block, organisations, minOrganisations: p.min_organisations });
     const previousEnd = partnershipEnd(p as any);
-    const newEnd = renewedEnd(previousEnd);
+    const months = parsed.data.months ?? Number(p.partnership_months ?? PARTNERSHIP_MONTHS);
+    const newEnd = parsed.data.endsOn ? endOfDay(parsed.data.endsOn) : renewedEnd(previousEnd, new Date(), months);
+    if (newEnd <= new Date() || (previousEnd && newEnd <= previousEnd && previousEnd > new Date())) return res.status(400).json({ error: "invalid_end_date" });
+    if (parsed.data.months) await pool.query(`UPDATE channel_partners SET partnership_months = $2 WHERE id = $1`, [p.id, months]);
     const override = bringsOrganisations(p.partner_type) && organisations < p.min_organisations ? parsed.data.overrideReason!.trim() : null;
     await pool.query(`UPDATE channel_partners SET demo_ends_at = $2, demo_ended_at = NULL, updated_at = now() WHERE id = $1`, [p.id, newEnd]);
     await pool.query(

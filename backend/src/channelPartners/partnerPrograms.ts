@@ -18,6 +18,7 @@ import { recordAudit } from "../audit/service.js";
 import { notify } from "../notifications/service.js";
 import { PAYMENT_CONFIG } from "../payments/providers.js";
 import { PartnerError } from "./organisations.js";
+import { hasPayoutDetails } from "./payouts.js";
 import { sendPartnerError } from "./portalRoutes.js";
 import { AGREEMENT_VERSION, agreementText, assertPartnerCanAct, canAct, currentAgreement, currentPeriodStart, partnershipStatus } from "./partnership.js";
 
@@ -323,6 +324,10 @@ partnerProgramRouter.get("/affiliate", requireAuth, async (req: AuthedRequest, r
 partnerProgramRouter.get("/track-record", requireAuth, async (req: AuthedRequest, res, next) => {
   const p = await myPartner(req, res);
   if (!p) return;
+  if (p.partner_type === "referral") {
+    referralTrackRecord(p.id).then((r) => res.json(r), next);
+    return;
+  }
   if (p.partner_type !== "affiliate") return res.status(403).json({ error: "not_for_partner_type" });
   try {
     const people = (
@@ -404,6 +409,55 @@ partnerProgramRouter.get("/track-record", requireAuth, async (req: AuthedRequest
   }
 });
 
+// A Referral Partner's track record (owner, 20 Nov 2026): how many referrals,
+// how far they got, the win rate and time to win, month by month, and payouts.
+async function referralTrackRecord(partnerId: string) {
+  const leads = (await pool.query(`SELECT status, created_at, won_at FROM partner_leads WHERE partner_id = $1`, [partnerId])).rows;
+  const earnings = (await pool.query(`SELECT amount, currency, status, earned_at, paid_at, paid_reference FROM partner_earnings WHERE partner_id = $1 AND status <> 'void'`, [partnerId])).rows;
+  const count = (st: string[]) => leads.filter((l) => st.includes(l.status)).length;
+  const won = leads.filter((l) => l.status === "won");
+  const decided = count(["won", "lost"]);
+  const days = won.filter((l) => l.won_at).map((l) => (new Date(l.won_at).getTime() - new Date(l.created_at).getTime()) / 86400000);
+  const add = (m: Record<string, number>, c: string, n: number) => ((m[c] = (m[c] ?? 0) + n), m);
+  const month = (d: Date | string) => new Date(d).toISOString().slice(0, 7);
+  const months = new Map<string, { month: string; referrals: number; won: number; earned: Record<string, number> }>();
+  const at = (m: string) => months.get(m) ?? (months.set(m, { month: m, referrals: 0, won: 0, earned: {} }), months.get(m)!);
+  for (const l of leads) at(month(l.created_at)).referrals++;
+  for (const l of won) if (l.won_at) at(month(l.won_at)).won++;
+  for (const e of earnings) add(at(month(e.earned_at)).earned, e.currency, e.amount);
+  const payouts = new Map<string, { paidAt: string; reference: string | null; amounts: Record<string, number>; items: number }>();
+  for (const e of earnings.filter((x) => x.status === "paid" && x.paid_at)) {
+    const key = `${new Date(e.paid_at).toISOString().slice(0, 10)}|${e.paid_reference ?? ""}`;
+    const row = payouts.get(key) ?? (payouts.set(key, { paidAt: e.paid_at, reference: e.paid_reference, amounts: {}, items: 0 }), payouts.get(key)!);
+    add(row.amounts, e.currency, e.amount);
+    row.items++;
+  }
+  const earned: Record<string, number> = {};
+  const paid: Record<string, number> = {};
+  for (const e of earnings) {
+    add(earned, e.currency, e.amount);
+    if (e.status === "paid") add(paid, e.currency, e.amount);
+  }
+  return {
+    kind: "referral",
+    referral: {
+      total: leads.length,
+      open: count(["submitted", "contacted"]),
+      contacted: count(["contacted", "won", "lost"]),
+      won: won.length,
+      lost: count(["lost"]),
+      duplicate: count(["duplicate"]),
+      withdrawn: count(["withdrawn"]),
+      winRate: decided ? Math.round((won.length / decided) * 100) : null,
+      avgDaysToWin: days.length ? Math.round(days.reduce((a, b) => a + b, 0) / days.length) : null,
+      earned,
+      paid,
+    },
+    months: [...months.values()].sort((a, b) => b.month.localeCompare(a.month)),
+    payouts: [...payouts.values()].sort((a, b) => String(b.paidAt).localeCompare(String(a.paidAt))),
+  };
+}
+
 partnerProgramRouter.get("/earnings", requireAuth, async (req: AuthedRequest, res, next) => {
   const p = await myPartner(req, res);
   if (!p) return;
@@ -425,11 +479,42 @@ const leadRow = (l: Record<string, any>, staff = false) => ({
   expectedLearners: l.expected_learners,
   notes: l.notes,
   status: l.status,
+  // A short reason from Spica the partner can see (for example why it was lost).
+  partnerReason: l.partner_reason ?? null,
+  wonAt: l.won_at ?? null,
   createdAt: l.created_at,
   updatedAt: l.updated_at,
   // Which organisation it became and Spica's notes stay with Spica.
   ...(staff ? { tenantId: l.tenant_id, tenantName: l.tenant_name ?? null, staffNote: l.staff_note, partnerId: l.partner_id, partnerName: l.partner_name ?? null } : {}),
 });
+
+// Organisations that may be a referral that signed up by itself (owner, 20
+// Nov 2026): open referrals not linked yet, and organisations added since
+// (a day before) with the same name, one name containing the other, or the
+// same company email domain (public mail ignored). Staff confirm the match.
+export async function leadMatches(opts: { partnerId?: string | null; leadId?: string | null } = {}) {
+  return (
+    await pool.query(
+      `SELECT l.id AS lead_id, l.organisation_name, l.partner_id, p.full_name, p.created_by, t.id AS tenant_id, t.name AS tenant_name
+       FROM partner_leads l
+       JOIN channel_partners p ON p.id = l.partner_id
+       JOIN tenants t ON t.type = 'cohort' AND t.deactivated_at IS NULL AND t.created_at >= l.created_at - interval '1 day'
+       WHERE l.status IN ('submitted', 'contacted') AND l.tenant_id IS NULL
+         AND NOT EXISTS (SELECT 1 FROM partner_leads x WHERE x.tenant_id = t.id)
+         AND (
+           lower(t.name) = lower(l.organisation_name)
+           OR (length(l.organisation_name) >= 5 AND length(t.name) >= 5
+               AND (strpos(lower(t.name), lower(l.organisation_name)) > 0 OR strpos(lower(l.organisation_name), lower(t.name)) > 0))
+           OR (split_part(lower(l.contact_email), '@', 2) <> ALL($3::text[]) AND (
+                EXISTS (SELECT 1 FROM users u WHERE u.tenant_id = t.id AND u.deleted_at IS NULL AND split_part(lower(u.email), '@', 2) = split_part(lower(l.contact_email), '@', 2))
+                OR split_part(lower(coalesce(t.billing_contact_email, '')), '@', 2) = split_part(lower(l.contact_email), '@', 2)))
+         )
+         AND ($1::uuid IS NULL OR l.partner_id = $1) AND ($2::uuid IS NULL OR l.id = $2)
+       ORDER BY l.created_at, t.created_at`,
+      [opts.partnerId ?? null, opts.leadId ?? null, [...PUBLIC_MAIL]],
+    )
+  ).rows as { lead_id: string; organisation_name: string; partner_id: string; full_name: string; created_by: string | null; tenant_id: string; tenant_name: string }[];
+}
 
 partnerProgramRouter.get("/leads", requireAuth, async (req: AuthedRequest, res, next) => {
   const p = await myPartner(req, res);
@@ -495,6 +580,48 @@ partnerProgramRouter.post("/leads", requireAuth, async (req: AuthedRequest, res,
   }
 });
 
+// The partner changes a referral Spica hasn't contacted yet, or withdraws one
+// that isn't decided yet (owner, 20 Nov 2026).
+partnerProgramRouter.put("/leads/:leadId", requireAuth, async (req: AuthedRequest, res, next) => {
+  const p = await myPartner(req, res);
+  if (!p) return;
+  const parsed = leadSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.issues.some((i) => i.path[0] === "contactAgreed") ? "contact_agreement_required" : "invalid_input" });
+  try {
+    await assertPartnerCanAct(p.id, "referral");
+    const b = parsed.data;
+    const r = await pool.query(
+      `UPDATE partner_leads SET organisation_name = $3, category = $4, contact_name = $5, contact_email = $6, contact_phone = $7, country = $8, expected_learners = $9, notes = $10, updated_at = now()
+       WHERE id = $1 AND partner_id = $2 AND status = 'submitted' RETURNING *`,
+      [req.params.leadId, p.id, b.organisationName, b.category, b.contactName, b.contactEmail, b.contactPhone || null, b.country, b.expectedLearners ?? null, b.notes || null],
+    );
+    if (!r.rowCount) return res.status(409).json({ error: "lead_locked" });
+    await recordAudit({ tenantId: null, actorId: req.user!.id, actorRole: req.user!.role, action: "channel_partner.lead_edited", targetType: "channel_partner", targetId: p.id, targetLabel: p.full_name, details: { lead: b.organisationName }, ip: req.ip ?? null });
+    res.json({ lead: leadRow(r.rows[0]) });
+  } catch (err) {
+    if (!sendPartnerError(err, res)) next(err);
+  }
+});
+partnerProgramRouter.post("/leads/:leadId/withdraw", requireAuth, async (req: AuthedRequest, res, next) => {
+  const p = await myPartner(req, res);
+  if (!p) return;
+  try {
+    await assertPartnerCanAct(p.id, "referral");
+    const r = await pool.query(
+      `UPDATE partner_leads SET status = 'withdrawn', updated_at = now() WHERE id = $1 AND partner_id = $2 AND status IN ('submitted', 'contacted') RETURNING organisation_name`,
+      [req.params.leadId, p.id],
+    );
+    if (!r.rowCount) return res.status(409).json({ error: "lead_locked" });
+    await recordAudit({ tenantId: null, actorId: req.user!.id, actorRole: req.user!.role, action: "channel_partner.lead_withdrawn", targetType: "channel_partner", targetId: p.id, targetLabel: p.full_name, details: { lead: r.rows[0].organisation_name }, ip: req.ip ?? null });
+    if (p.created_by) {
+      await notify({ userId: p.created_by, kind: "partner_demo", title: `${p.full_name} withdrew a referral`, body: `${p.full_name} withdrew the referral of ${r.rows[0].organisation_name}.`, link: "/admin/channel-partners" }).catch(() => {});
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    if (!sendPartnerError(err, res)) next(err);
+  }
+});
+
 // ---------- Spica staff ----------
 
 // The people credited to an Affiliate, for Spica staff to check its work:
@@ -543,7 +670,14 @@ staffPartnerProgramRouter.get("/channel-partners/:id/leads", requireAuth, async 
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;
   try {
     const r = await pool.query(`SELECT l.*, t.name AS tenant_name FROM partner_leads l LEFT JOIN tenants t ON t.id = l.tenant_id WHERE l.partner_id = $1 ORDER BY l.created_at DESC`, [req.params.id]);
-    res.json({ leads: r.rows.map((l) => leadRow(l, true)) });
+    // Organisations that may be an open referral that signed up by itself.
+    const matches = await leadMatches({ partnerId: req.params.id as string });
+    res.json({
+      leads: r.rows.map((l) => ({
+        ...leadRow(l, true),
+        possibleMatches: matches.filter((m) => m.lead_id === l.id).map((m) => ({ tenantId: m.tenant_id, name: m.tenant_name })),
+      })),
+    });
   } catch (err) {
     next(err);
   }
@@ -553,6 +687,8 @@ const leadUpdate = z.object({
   status: z.enum(["submitted", "contacted", "won", "lost", "duplicate"]).optional(),
   tenantId: z.string().uuid().nullable().optional(),
   staffNote: z.string().trim().max(2000).nullable().optional(),
+  // The reason the partner sees (for example why it was lost).
+  partnerReason: z.string().trim().max(500).nullable().optional(),
 });
 
 staffPartnerProgramRouter.patch("/partner-leads/:leadId", requireAuth, async (req: AuthedRequest, res, next) => {
@@ -566,12 +702,21 @@ staffPartnerProgramRouter.patch("/partner-leads/:leadId", requireAuth, async (re
     if (b.status === "won" && !(b.tenantId ?? l.tenant_id)) return res.status(400).json({ error: "organisation_required" });
     if (b.tenantId && !(await pool.query(`SELECT 1 FROM tenants WHERE id = $1`, [b.tenantId])).rowCount) return res.status(404).json({ error: "organisation_not_found" });
     await pool.query(
-      `UPDATE partner_leads SET status = coalesce($2, status), tenant_id = CASE WHEN $3::boolean THEN $4::uuid ELSE tenant_id END, staff_note = CASE WHEN $5::boolean THEN $6 ELSE staff_note END, updated_at = now() WHERE id = $1`,
-      [l.id, b.status ?? null, b.tenantId !== undefined, b.tenantId ?? null, b.staffNote !== undefined, b.staffNote ?? null],
+      `UPDATE partner_leads SET status = coalesce($2, status), tenant_id = CASE WHEN $3::boolean THEN $4::uuid ELSE tenant_id END, staff_note = CASE WHEN $5::boolean THEN $6 ELSE staff_note END,
+         partner_reason = CASE WHEN $7::boolean THEN $8 ELSE partner_reason END,
+         won_at = CASE WHEN $2 = 'won' AND status <> 'won' THEN now() WHEN $2 IS NOT NULL AND $2 <> 'won' THEN NULL ELSE won_at END, updated_at = now() WHERE id = $1`,
+      [l.id, b.status ?? null, b.tenantId !== undefined, b.tenantId ?? null, b.staffNote !== undefined, b.staffNote ?? null, b.partnerReason !== undefined, b.partnerReason || null],
     );
     await recordAudit({ tenantId: null, actorId: req.user!.id, actorRole: req.user!.role, action: "channel_partner.lead_updated", targetType: "channel_partner", targetId: l.partner_id, targetLabel: l.full_name, details: { lead: l.organisation_name, from: l.status, to: b.status ?? l.status }, ip: req.ip ?? null });
     if (b.status && b.status !== l.status) {
-      await notify({ userId: l.user_id, kind: "partner_demo", title: `Referral ${l.organisation_name}: ${b.status}`, body: `Spica updated your referral of ${l.organisation_name} to "${b.status}".`, link: "/partner/referrals" }).catch(() => {});
+      const reason = b.partnerReason !== undefined ? b.partnerReason : l.partner_reason;
+      await notify({
+        userId: l.user_id,
+        kind: "partner_demo",
+        title: `Referral ${l.organisation_name}: ${b.status}`,
+        body: `Spica updated your referral of ${l.organisation_name} to "${b.status}".${reason ? ` Reason: ${reason}` : ""}`,
+        link: "/partner/referrals",
+      }).catch(() => {});
     }
     await syncEarnings(l.partner_id);
     res.json({ ok: true });
@@ -600,6 +745,9 @@ staffPartnerProgramRouter.post("/partner-earnings/:id/paid", requireAuth, async 
   const parsed = z.object({ reference: z.string().trim().min(2).max(200) }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "reference_required" });
   try {
+    // Spica pays only partners who have filled in their payout details.
+    const owner = (await pool.query(`SELECT partner_id FROM partner_earnings WHERE id = $1`, [req.params.id])).rows[0];
+    if (owner && !(await hasPayoutDetails(owner.partner_id))) return res.status(409).json({ error: "payout_details_missing" });
     const r = await pool.query(`UPDATE partner_earnings SET status = 'paid', paid_at = now(), paid_reference = $2 WHERE id = $1 AND status = 'earned' RETURNING partner_id, amount, currency`, [req.params.id, parsed.data.reference]);
     if (!r.rowCount) return res.status(409).json({ error: "not_payable" });
     await recordAudit({ tenantId: null, actorId: req.user!.id, actorRole: req.user!.role, action: "channel_partner.earning_paid", targetType: "channel_partner", targetId: r.rows[0].partner_id, details: { earning: req.params.id, amount: r.rows[0].amount, currency: r.rows[0].currency, reference: parsed.data.reference }, ip: req.ip ?? null });

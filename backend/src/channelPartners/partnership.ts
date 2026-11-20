@@ -1,7 +1,8 @@
 // Partner types and the partnership period (user, 19 Nov 2026).
 // Four types share the channel_partner login: Reseller, Channel Partner,
-// Affiliate and Referral Partner. Every partnership lasts 3 months
-// (demo_starts_at → demo_ends_at); Spica renews it for another 3 months, and
+// Affiliate and Referral Partner. A partnership lasts the length Spica chose
+// for that partner (partnership_months, 3 by default; or a chosen end date)
+// (demo_starts_at → demo_ends_at); Spica renews it for a length it picks, and
 // renewal is blocked until a Reseller / Channel Partner has its minimum number
 // of organisations, unless an Admin overrides it with a reason. When it ends
 // (by date or terminated early) the portal is read-only. The partner signs the
@@ -81,9 +82,14 @@ export function renewalBlock(args: { status: PartnershipStatus; type: string; or
   return null;
 }
 
-export function renewedEnd(currentEnd: Date | null, now = new Date()): Date {
+export function renewedEnd(currentEnd: Date | null, now = new Date(), months = PARTNERSHIP_MONTHS): Date {
   const from = currentEnd && currentEnd > now ? currentEnd : now;
-  return addMonths(from, PARTNERSHIP_MONTHS);
+  return addMonths(from, months);
+}
+
+// A chosen end date ("YYYY-MM-DD"): the end of that day in India.
+export function endOfDay(day: string): Date {
+  return new Date(`${day}T23:59:59+05:30`);
 }
 
 export const AGREEMENT_VERSION = "2026-11-20";
@@ -192,8 +198,8 @@ export function agreementText(p: Record<string, any>) {
     {
       h: "2. Duration, expiry and renewal",
       items: [
-        `The partnership runs for 3 months, from ${fmt(p.period_start ?? p.demo_starts_at)} to ${fmt(p.demo_ends_at)}.`,
-        "Edstellar may renew it for another 3 months. Each renewal needs this agreement to be signed again for the new period.",
+        `The partnership runs from ${fmt(p.period_start ?? p.demo_starts_at)} to ${fmt(p.demo_ends_at)}.`,
+        "Edstellar may renew it for a further period of its choosing. Each renewal needs this agreement to be signed again for the new period.",
         orgs
           ? `Renewal needs at least ${p.min_organisations ?? 10} organisations onboarded through the partner portal. Edstellar may renew below this minimum only for a recorded reason.`
           : "Renewal depends on the partner's activity and conduct during the period.",
