@@ -345,6 +345,42 @@ export async function regradeBrowserTranscriptAnswers(sessionId: string): Promis
   return r.rows.length;
 }
 
+// Safety net (owner request 20 Nov 2026): a spoken answer in a practice test
+// or mock whose grading fell back to the browser's transcript
+// (Gemini didn't answer at the end of the test either) is graded again from
+// its recording in the background. If Gemini still doesn't answer, the earlier
+// score is put back unchanged. A practice or mock result is then saved again
+// (settleResults). Real tests and recruitment tests are left as issued; the
+// placement check's level is set when it finishes (its end-of-test re-grade,
+// regradeBrowserTranscriptAnswers, covers it).
+export async function regradeBrowserTranscriptLater(attemptId: string): Promise<boolean> {
+  const before = (
+    await pool.query(
+      `SELECT content_score, manner_scores, status, model_version, reason FROM scores
+       WHERE attempt_id = $1 AND status = 'scored' AND manner_scores->'gemini' IS NULL AND model_version NOT IN ($2, $3)`,
+      [attemptId, NO_SPEECH_VERSION, NO_ANSWER_VERSION],
+    )
+  ).rows[0];
+  if (!before) return false;
+  await pool.query(`UPDATE scores SET status = 'pending', updated_at = now() WHERE attempt_id = $1 AND status = 'scored'`, [attemptId]);
+  try {
+    await gradeSpeakingAttempt(attemptId, { final: false });
+  } catch (err) {
+    await pool.query(
+      `UPDATE scores SET content_score = $2, manner_scores = $3, status = $4, model_version = $5, reason = $6, updated_at = now() WHERE attempt_id = $1 AND status = 'pending'`,
+      [attemptId, before.content_score, before.manner_scores ? JSON.stringify(before.manner_scores) : null, before.status, before.model_version, before.reason],
+    );
+    throw err;
+  }
+  // A saved practice or mock result counts the new grade once it is saved again.
+  await pool.query(
+    `UPDATE sessions s SET result = s.result || '{"unscored": 1}'::jsonb FROM attempts a
+     WHERE a.id = $1 AND s.id = a.session_id AND s.result IS NOT NULL AND s.delivery_mode IN ('practice', 'mock')`,
+    [attemptId],
+  );
+  return true;
+}
+
 // An answer can be left ungraded or failed: a recording still waiting after
 // every background try, or an AI grading that timed out or hit the model's
 // daily limit. Each one gets a round of background tries once a day for 30
@@ -360,6 +396,21 @@ export async function sweepStuckSpeaking(): Promise<number> {
   let queued = 0;
   for (const { id } of r.rows) {
     if (await enqueue("grading.speaking.retry", { attemptId: id }, { dedupeKey: `grading.speaking.retry:${id}:${day}`, maxAttempts: 3 })) queued++;
+  }
+  // Practice and mock answers graded from the browser's transcript in the
+  // last 7 days (see regradeBrowserTranscriptLater).
+  const browser = await pool.query(
+    `SELECT a.id FROM attempts a JOIN scores sc ON sc.attempt_id = a.id JOIN sessions s ON s.id = a.session_id
+       JOIN items i ON i.id = a.item_id JOIN item_types it ON it.id = i.item_type_id
+     WHERE a.submitted_at BETWEEN now() - interval '7 days' AND now() - interval '10 minutes'
+       AND it.input_method = 'mic' AND a.response_uri IS NOT NULL
+       AND sc.status = 'scored' AND sc.manner_scores->'gemini' IS NULL AND sc.model_version NOT IN ($1, $2)
+       AND s.delivery_mode IN ('practice', 'mock')
+     LIMIT 200`,
+    [NO_SPEECH_VERSION, NO_ANSWER_VERSION],
+  );
+  for (const { id } of browser.rows) {
+    if (await enqueue("grading.speaking.regrade-browser", { attemptId: id }, { dedupeKey: `grading.speaking.regrade-browser:${id}:${day}`, maxAttempts: 3 })) queued++;
   }
   return queued;
 }

@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "撤回对 {{org}} 的推荐？Spica 将停止跟进，且不产生推荐费。",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "每个帖子都已带上您的链接，并带有标记，方便业绩记录显示访客来源。帖子为英文，与 Spica 的考试一致。",
  "{{p}}% of decided referrals won": "已定结果的推荐中 {{p}}% 成交",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "每个组织应累计达到的总数（演示与付费合计），可分任意次数发放。只有达到该总数的组织才计入最低要求。"
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "每个组织应累计达到的总数（演示与付费合计），可分任意次数发放。只有达到该总数的组织才计入最低要求。",
+ "Skip to content": "跳到正文",
+ "Test for your final assessment": "最终评估的考试"
 }

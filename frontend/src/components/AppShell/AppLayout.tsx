@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/AppShell/Sidebar";
 import { Header } from "@/components/AppShell/Header";
 import { TestFocusBar, TestFocusProvider, type TestFocus } from "@/components/AppShell/testFocus";
 import { DemoBanner } from "@/components/DemoBanner";
+import { tr } from "@/i18n/tr";
 
 // The learning pages someone who bought only a test doesn't have: a link or
 // an old bookmark to one of them opens Assessment instead.
@@ -42,6 +43,9 @@ export function AppLayout() {
   return (
     // Printed (a report's "Download PDF"): only the page itself, at full length.
     <div className="flex h-screen bg-paper overflow-hidden print:block print:h-auto print:overflow-visible print:bg-white">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-2 focus:left-2 focus:bg-surface focus:text-ink focus:px-4 focus:py-2 focus:rounded-input focus:shadow-lg focus:font-semibold print:hidden">
+        {tr("Skip to content")}
+      </a>
       <div className={focus ? "hidden" : "contents print:hidden"}>
         <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => startTransition(() => setNavKey((k) => k + 1))} />
       </div>
@@ -51,7 +55,7 @@ export function AppLayout() {
           <ViewAsBanner />
           {focus ? <TestFocusBar focus={focus} /> : <Header onMenuClick={() => setDrawerOpen(true)} />}
         </div>
-        <main className="app-surface page-scroll flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
+        <main id="main" tabIndex={-1} className="focus:outline-none app-surface page-scroll flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:p-0">
           <div className={focus ? "hidden" : "print:hidden"}>
             <LicenseBanner />
             <DemoBanner />

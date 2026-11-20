@@ -235,7 +235,7 @@ export function LibraryPanel({ itemTypeNames }: { itemTypeNames: Record<string, 
       <div className="flex flex-wrap gap-2 items-end">
         <label className="flex items-center gap-1.5 border border-rule rounded-input px-2 bg-paper">
           <Search size={14} className="text-muted" />
-          <input value={q} onChange={(e) => (setPage(0), setQ(e.target.value))} placeholder={tr("Search text or topic")} className="py-2 text-sm bg-transparent focus:outline-none w-48" />
+          <input value={q} onChange={(e) => (setPage(0), setQ(e.target.value))} placeholder={tr("Search text or topic")} className="py-2 text-sm bg-transparent focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/40 rounded-input w-48" />
         </label>
         <select value={f.testTypeId ?? ""} onChange={(e) => pickTest(e.target.value || undefined)} className={`${inputClass} cursor-pointer`}>
           <option value="">{tr("Any test")}</option>

@@ -389,7 +389,7 @@ export function ManagerLearners() {
           {learners && learners.length > 0 && shown.length === 0 && <div className="px-5 py-10 text-center text-sm text-muted">{tr("No learners match your search.")}</div>}
 
           {shown.length > 0 && (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto relative">
               <table className="w-full text-sm min-w-[1100px]">
                 <thead>
                   <tr className="border-b border-rule bg-paper-warm text-left text-[11px] font-semibold uppercase tracking-wide text-muted whitespace-nowrap">

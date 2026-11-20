@@ -356,6 +356,7 @@ export function Checkpoints({ j }: { j: Journey }) {
                 <button
                   disabled={!link}
                   onClick={() => link && navigate(link)}
+                  aria-label={`${label(c)}, ${formatShortDate(c.date)}`}
                   className={`relative z-10 h-8 w-8 rounded-full flex items-center justify-center ${link ? "cursor-pointer hover:scale-110 transition-transform" : "cursor-default"} ${
                     c.kind === "certificate" && c.done
                       ? "bg-success text-white ring-4 ring-success/15"

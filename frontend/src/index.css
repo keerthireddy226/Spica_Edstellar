@@ -11,10 +11,10 @@
      rather than another UI heading. */
   --font-logo: "Playfair Display", serif;
 
-  --color-navy: #c97c5c; /* clay (primary in light mode) — sidebar, main buttons, active states */
+  --color-navy: #a95f43; /* clay (primary in light mode) — sidebar, main buttons, active states; deepened 20 Nov 2026 so white text on it meets WCAG AA (4.8:1) */
   --color-navy-soft: #dda084; /* lighter clay — active states, hero gradient */
-  --color-navy-deep: #a8613f; /* deeper clay */
-  --color-sidebar: #c97c5c; /* sidebar panel fill — same clay as navy in light mode */
+  --color-navy-deep: #8f4d34; /* deeper clay (hover, text on light backgrounds) */
+  --color-sidebar: #a95f43; /* sidebar panel fill — same clay as navy in light mode */
 
   --color-lime: #fdfbf6; /* warm cream — text on the sidebar */
   --color-lime-soft: #f0e8dc;
@@ -28,14 +28,14 @@
 
   --color-rule: rgba(46, 36, 25, 0.08);
   --color-rule-strong: rgba(46, 36, 25, 0.16);
-  --color-muted: #8a7c68;
-  --color-muted-soft: rgba(138, 124, 104, 0.7);
+  --color-muted: #6b5f4f; /* helper text; darker since 20 Nov 2026 for WCAG AA contrast (4.9:1 on paper) */
+  --color-muted-soft: rgba(107, 95, 79, 0.75);
 
-  --color-accent: #6e9660; /* moss (secondary pop accent in light mode) — CTAs, badges */
+  --color-accent: #4a6d3f; /* moss, deepened 20 Nov 2026 for text contrast (secondary pop accent in light mode) — CTAs, badges */
   --color-accent-soft: #e3ead9;
-  --color-success: #6e9660; /* moss for correct/success states */
-  --color-warning: #e0aa52; /* wheat / amber (tertiary) — rewards, streak */
-  --color-error: #c15c4a; /* muted brick red */
+  --color-success: #4a6d3f; /* moss for correct/success states */
+  --color-warning: #8a5a12; /* amber, deepened 20 Nov 2026 so warning text meets WCAG AA (5:1) */
+  --color-error: #b4523f; /* muted brick red (5:1 with white) */
   /* The "Spica by Edstellar" wordmark's own two colors: a deep teal
      primary paired with a dark espresso accent — the classic warm-clay
      pairing (cool contrast + a dark warm neutral), rather than another

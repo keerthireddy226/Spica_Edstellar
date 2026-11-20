@@ -1,0 +1,954 @@
+{
+ "model": "gemini-3.5-flash-lite",
+ "createdAt": "2026-11-20T12:11:07.999Z",
+ "cases": [
+  {
+   "itemId": "0873df26-944d-40dd-8400-869062450beb",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "text": "The flowers smell lovely."
+   },
+   "answerSet": {
+    "exact": "The flowers smell lovely."
+   },
+   "variant": "key",
+   "response": "The flowers smell lovely.",
+   "baseline": 1
+  },
+  {
+   "itemId": "0873df26-944d-40dd-8400-869062450beb",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "text": "The flowers smell lovely."
+   },
+   "answerSet": {
+    "exact": "The flowers smell lovely."
+   },
+   "variant": "partial",
+   "response": "The flowers lovely.",
+   "baseline": 0.8
+  },
+  {
+   "itemId": "0873df26-944d-40dd-8400-869062450beb",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "text": "The flowers smell lovely."
+   },
+   "answerSet": {
+    "exact": "The flowers smell lovely."
+   },
+   "variant": "off-topic",
+   "response": "I don't know the answer.",
+   "baseline": 0
+  },
+  {
+   "itemId": "04029075-8d99-43df-a72b-8342bd7ce4b3",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "text": "The tickets were cheaper than we expected."
+   },
+   "answerSet": {
+    "exact": "The tickets were cheaper than we expected."
+   },
+   "variant": "key",
+   "response": "The tickets were cheaper than we expected.",
+   "baseline": 1
+  },
+  {
+   "itemId": "04029075-8d99-43df-a72b-8342bd7ce4b3",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "text": "The tickets were cheaper than we expected."
+   },
+   "answerSet": {
+    "exact": "The tickets were cheaper than we expected."
+   },
+   "variant": "partial",
+   "response": "The tickets cheaper than expected.",
+   "baseline": 0.7
+  },
+  {
+   "itemId": "04029075-8d99-43df-a72b-8342bd7ce4b3",
+   "itemTypeId": "repeats",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "text": "The tickets were cheaper than we expected."
+   },
+   "answerSet": {
+    "exact": "The tickets were cheaper than we expected."
+   },
+   "variant": "off-topic",
+   "response": "I don't know the answer.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0588bb28-15a1-4ea7-9937-d2fb9103671c",
+   "itemTypeId": "repeats",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "text": "The new swimming pool opens at the end of summer."
+   },
+   "answerSet": {
+    "exact": "The new swimming pool opens at the end of summer."
+   },
+   "variant": "key",
+   "response": "The new swimming pool opens at the end of summer.",
+   "baseline": 1
+  },
+  {
+   "itemId": "0588bb28-15a1-4ea7-9937-d2fb9103671c",
+   "itemTypeId": "repeats",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "text": "The new swimming pool opens at the end of summer."
+   },
+   "answerSet": {
+    "exact": "The new swimming pool opens at the end of summer."
+   },
+   "variant": "partial",
+   "response": "The new pool opens the end summer.",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "0588bb28-15a1-4ea7-9937-d2fb9103671c",
+   "itemTypeId": "repeats",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "text": "The new swimming pool opens at the end of summer."
+   },
+   "answerSet": {
+    "exact": "The new swimming pool opens at the end of summer."
+   },
+   "variant": "off-topic",
+   "response": "I don't know the answer.",
+   "baseline": 0
+  },
+  {
+   "itemId": "01e1e13f-84d0-4ce2-bce1-356e0040417b",
+   "itemTypeId": "repeats",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "text": "The town's charm lies in its narrow, winding streets."
+   },
+   "answerSet": {
+    "exact": "The town's charm lies in its narrow, winding streets."
+   },
+   "variant": "key",
+   "response": "The town's charm lies in its narrow, winding streets.",
+   "baseline": 1
+  },
+  {
+   "itemId": "01e1e13f-84d0-4ce2-bce1-356e0040417b",
+   "itemTypeId": "repeats",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "text": "The town's charm lies in its narrow, winding streets."
+   },
+   "answerSet": {
+    "exact": "The town's charm lies in its narrow, winding streets."
+   },
+   "variant": "partial",
+   "response": "The town's lies in narrow, winding",
+   "baseline": 0
+  },
+  {
+   "itemId": "01e1e13f-84d0-4ce2-bce1-356e0040417b",
+   "itemTypeId": "repeats",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "text": "The town's charm lies in its narrow, winding streets."
+   },
+   "answerSet": {
+    "exact": "The town's charm lies in its narrow, winding streets."
+   },
+   "variant": "off-topic",
+   "response": "I don't know the answer.",
+   "baseline": 0
+  },
+  {
+   "itemId": "07f7479e-5d08-4417-aeba-42300cee701c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "a blue cap",
+     "He",
+     "wears"
+    ]
+   },
+   "answerSet": {
+    "correct": "He wears a blue cap."
+   },
+   "variant": "key",
+   "response": "He wears a blue cap.",
+   "baseline": 1
+  },
+  {
+   "itemId": "07f7479e-5d08-4417-aeba-42300cee701c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "a blue cap",
+     "He",
+     "wears"
+    ]
+   },
+   "answerSet": {
+    "correct": "He wears a blue cap."
+   },
+   "variant": "partial",
+   "response": "wears He a blue cap",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "07f7479e-5d08-4417-aeba-42300cee701c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "a blue cap",
+     "He",
+     "wears"
+    ]
+   },
+   "answerSet": {
+    "correct": "He wears a blue cap."
+   },
+   "variant": "off-topic",
+   "response": "Sorry, I didn't hear it.",
+   "baseline": 0
+  },
+  {
+   "itemId": "01fb4669-da02-4d51-b82d-c20f4d8da510",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "full",
+     "on Saturday night",
+     "the restaurant was"
+    ]
+   },
+   "answerSet": {
+    "correct": "The restaurant was full on Saturday night.",
+    "alternates": [
+     "On Saturday night the restaurant was full."
+    ]
+   },
+   "variant": "key",
+   "response": "The restaurant was full on Saturday night.",
+   "baseline": 1
+  },
+  {
+   "itemId": "01fb4669-da02-4d51-b82d-c20f4d8da510",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "full",
+     "on Saturday night",
+     "the restaurant was"
+    ]
+   },
+   "answerSet": {
+    "correct": "The restaurant was full on Saturday night.",
+    "alternates": [
+     "On Saturday night the restaurant was full."
+    ]
+   },
+   "variant": "partial",
+   "response": "the restaurant was on Saturday night full",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "01fb4669-da02-4d51-b82d-c20f4d8da510",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "full",
+     "on Saturday night",
+     "the restaurant was"
+    ]
+   },
+   "answerSet": {
+    "correct": "The restaurant was full on Saturday night.",
+    "alternates": [
+     "On Saturday night the restaurant was full."
+    ]
+   },
+   "variant": "off-topic",
+   "response": "Sorry, I didn't hear it.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0202445d-9839-4d8d-8b6a-afea294e0fce",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "to lead the project",
+     "She",
+     "volunteered"
+    ]
+   },
+   "answerSet": {
+    "correct": "She volunteered to lead the project."
+   },
+   "variant": "key",
+   "response": "She volunteered to lead the project.",
+   "baseline": 1
+  },
+  {
+   "itemId": "0202445d-9839-4d8d-8b6a-afea294e0fce",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "to lead the project",
+     "She",
+     "volunteered"
+    ]
+   },
+   "answerSet": {
+    "correct": "She volunteered to lead the project."
+   },
+   "variant": "partial",
+   "response": "volunteered She to lead the project",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "0202445d-9839-4d8d-8b6a-afea294e0fce",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "to lead the project",
+     "She",
+     "volunteered"
+    ]
+   },
+   "answerSet": {
+    "correct": "She volunteered to lead the project."
+   },
+   "variant": "off-topic",
+   "response": "Sorry, I didn't hear it.",
+   "baseline": 0
+  },
+  {
+   "itemId": "072eaf7d-0678-4037-a9f1-892c5af84ffb",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "for next Monday",
+     "has been rescheduled",
+     "the lecture"
+    ]
+   },
+   "answerSet": {
+    "correct": "The lecture has been rescheduled for next Monday.",
+    "alternates": []
+   },
+   "variant": "key",
+   "response": "The lecture has been rescheduled for next Monday.",
+   "baseline": 1
+  },
+  {
+   "itemId": "072eaf7d-0678-4037-a9f1-892c5af84ffb",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "for next Monday",
+     "has been rescheduled",
+     "the lecture"
+    ]
+   },
+   "answerSet": {
+    "correct": "The lecture has been rescheduled for next Monday.",
+    "alternates": []
+   },
+   "variant": "partial",
+   "response": "the lecture has been rescheduled for next Monday",
+   "baseline": 1
+  },
+  {
+   "itemId": "072eaf7d-0678-4037-a9f1-892c5af84ffb",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "B2",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "for next Monday",
+     "has been rescheduled",
+     "the lecture"
+    ]
+   },
+   "answerSet": {
+    "correct": "The lecture has been rescheduled for next Monday.",
+    "alternates": []
+   },
+   "variant": "off-topic",
+   "response": "Sorry, I didn't hear it.",
+   "baseline": 0
+  },
+  {
+   "itemId": "04586bba-145e-4b63-bde0-ec52ec68cb5c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "only after considerable pressure",
+     "did the executives",
+     "agree to",
+     "the independent review"
+    ]
+   },
+   "answerSet": {
+    "correct": "Only after considerable pressure did the executives agree to the independent review.",
+    "alternates": []
+   },
+   "variant": "key",
+   "response": "Only after considerable pressure did the executives agree to the independent review.",
+   "baseline": 1
+  },
+  {
+   "itemId": "04586bba-145e-4b63-bde0-ec52ec68cb5c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "only after considerable pressure",
+     "did the executives",
+     "agree to",
+     "the independent review"
+    ]
+   },
+   "answerSet": {
+    "correct": "Only after considerable pressure did the executives agree to the independent review.",
+    "alternates": []
+   },
+   "variant": "partial",
+   "response": "the independent review agree to did the executives only after considerable pressure",
+   "baseline": 0
+  },
+  {
+   "itemId": "04586bba-145e-4b63-bde0-ec52ec68cb5c",
+   "itemTypeId": "sentence_builds",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "groups": [
+     "only after considerable pressure",
+     "did the executives",
+     "agree to",
+     "the independent review"
+    ]
+   },
+   "answerSet": {
+    "correct": "Only after considerable pressure did the executives agree to the independent review.",
+    "alternates": []
+   },
+   "variant": "off-topic",
+   "response": "Sorry, I didn't hear it.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0103f95a-ce86-456e-b87a-e86686ba3b9b",
+   "itemTypeId": "conversations",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Is the shop far? B: No, it is very near.",
+    "question": "Is the shop far or near?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "near",
+     "very near",
+     "it is near",
+     "it's very near",
+     "close"
+    ]
+   },
+   "variant": "key",
+   "response": "near",
+   "baseline": 1
+  },
+  {
+   "itemId": "0103f95a-ce86-456e-b87a-e86686ba3b9b",
+   "itemTypeId": "conversations",
+   "cefrLevel": "A1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Is the shop far? B: No, it is very near.",
+    "question": "Is the shop far or near?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "near",
+     "very near",
+     "it is near",
+     "it's very near",
+     "close"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "My favourite colour is blue.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0209790e-8267-410e-99c4-f6a1751c0d37",
+   "itemTypeId": "conversations",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: What will you cook for the guests? B: Probably a big vegetable curry.",
+    "question": "What will B probably cook?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "a vegetable curry",
+     "vegetable curry",
+     "a big vegetable curry",
+     "curry"
+    ]
+   },
+   "variant": "key",
+   "response": "a vegetable curry",
+   "baseline": 1
+  },
+  {
+   "itemId": "0209790e-8267-410e-99c4-f6a1751c0d37",
+   "itemTypeId": "conversations",
+   "cefrLevel": "A2",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: What will you cook for the guests? B: Probably a big vegetable curry.",
+    "question": "What will B probably cook?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "a vegetable curry",
+     "vegetable curry",
+     "a big vegetable curry",
+     "curry"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "My favourite colour is blue.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0194cc1f-c7f7-477b-9986-62a94f3b683b",
+   "itemTypeId": "conversations",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: What are you planning to do in the summer holidays? B: I'm going to work in a cafe and save for a trip.",
+    "question": "What is B saving for?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "a trip",
+     "for a trip",
+     "travelling",
+     "a holiday"
+    ]
+   },
+   "variant": "key",
+   "response": "a trip",
+   "baseline": 1
+  },
+  {
+   "itemId": "0194cc1f-c7f7-477b-9986-62a94f3b683b",
+   "itemTypeId": "conversations",
+   "cefrLevel": "B1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: What are you planning to do in the summer holidays? B: I'm going to work in a cafe and save for a trip.",
+    "question": "What is B saving for?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "a trip",
+     "for a trip",
+     "travelling",
+     "a holiday"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "My favourite colour is blue.",
+   "baseline": 0
+  },
+  {
+   "itemId": "01a8ae4a-5f42-454e-98ed-72d8265af666",
+   "itemTypeId": "conversations",
+   "cefrLevel": "B2",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Revenue slipped this quarter. B: By how much? A: About nine percent.",
+    "question": "By how much did revenue slip?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "nine percent",
+     "9%"
+    ]
+   },
+   "variant": "key",
+   "response": "nine percent",
+   "baseline": 1
+  },
+  {
+   "itemId": "01a8ae4a-5f42-454e-98ed-72d8265af666",
+   "itemTypeId": "conversations",
+   "cefrLevel": "B2",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Revenue slipped this quarter. B: By how much? A: About nine percent.",
+    "question": "By how much did revenue slip?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "nine percent",
+     "9%"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "My favourite colour is blue.",
+   "baseline": 0
+  },
+  {
+   "itemId": "01796e19-b044-4af3-94dd-cfc4f311064f",
+   "itemTypeId": "conversations",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Did the volunteers get any recognition? B: The mayor thanked them publicly at the town hall ceremony.",
+    "question": "Who thanked the volunteers?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "the mayor",
+     "mayor"
+    ]
+   },
+   "variant": "key",
+   "response": "the mayor",
+   "baseline": 1
+  },
+  {
+   "itemId": "01796e19-b044-4af3-94dd-cfc4f311064f",
+   "itemTypeId": "conversations",
+   "cefrLevel": "C1",
+   "minWords": null,
+   "content": {
+    "dialogue": "A: Did the volunteers get any recognition? B: The mayor thanked them publicly at the town hall ceremony.",
+    "question": "Who thanked the volunteers?"
+   },
+   "answerSet": {
+    "acceptable_answers": [
+     "the mayor",
+     "mayor"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "My favourite colour is blue.",
+   "baseline": 0
+  },
+  {
+   "itemId": "013617fe-bf88-470c-93ca-7d7b261fd17d",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A1",
+   "minWords": 15,
+   "content": {
+    "passage": "Pia goes to the library on Tuesdays. She takes home two books and one film."
+   },
+   "answerSet": {
+    "key_points": [
+     "Pia goes to the library on Tuesdays",
+     "she takes home two books and a film"
+    ]
+   },
+   "variant": "key",
+   "response": "Pia goes to the library on Tuesdays. She takes home two books and one film.",
+   "baseline": 1
+  },
+  {
+   "itemId": "013617fe-bf88-470c-93ca-7d7b261fd17d",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A1",
+   "minWords": 15,
+   "content": {
+    "passage": "Pia goes to the library on Tuesdays. She takes home two books and one film."
+   },
+   "answerSet": {
+    "key_points": [
+     "Pia goes to the library on Tuesdays",
+     "she takes home two books and a film"
+    ]
+   },
+   "variant": "partial",
+   "response": "Pia goes to the library on Tuesdays.",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "013617fe-bf88-470c-93ca-7d7b261fd17d",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A1",
+   "minWords": 15,
+   "content": {
+    "passage": "Pia goes to the library on Tuesdays. She takes home two books and one film."
+   },
+   "answerSet": {
+    "key_points": [
+     "Pia goes to the library on Tuesdays",
+     "she takes home two books and a film"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "The weather is nice today.",
+   "baseline": 0
+  },
+  {
+   "itemId": "0885ef56-81fd-46e4-8976-5d3c76b4ac33",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A2",
+   "minWords": 15,
+   "content": {
+    "passage": "Grace volunteers at an animal shelter every weekend. She walks the dogs and helps clean their cages."
+   },
+   "answerSet": null,
+   "variant": "key",
+   "response": "Grace volunteers at an animal shelter every weekend. She walks the dogs and helps clean their cages.",
+   "baseline": 1
+  },
+  {
+   "itemId": "0885ef56-81fd-46e4-8976-5d3c76b4ac33",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A2",
+   "minWords": 15,
+   "content": {
+    "passage": "Grace volunteers at an animal shelter every weekend. She walks the dogs and helps clean their cages."
+   },
+   "answerSet": null,
+   "variant": "partial",
+   "response": "Grace volunteers at an animal shelter every weekend.",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "0885ef56-81fd-46e4-8976-5d3c76b4ac33",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "A2",
+   "minWords": 15,
+   "content": {
+    "passage": "Grace volunteers at an animal shelter every weekend. She walks the dogs and helps clean their cages."
+   },
+   "answerSet": null,
+   "variant": "off-topic",
+   "response": "The weather is nice today.",
+   "baseline": 0
+  },
+  {
+   "itemId": "025a8d1b-8b4f-40dd-a5b3-c3eee8277eae",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B1",
+   "minWords": 15,
+   "content": {
+    "passage": "When Marta's flight was cancelled, she went to the airline desk. They booked her on a later flight and gave her a voucher for lunch."
+   },
+   "answerSet": {
+    "key_points": [
+     "Marta's flight was cancelled",
+     "she went to the airline desk",
+     "she got a later flight and a lunch voucher"
+    ]
+   },
+   "variant": "key",
+   "response": "When Marta's flight was cancelled, she went to the airline desk. They booked her on a later flight and gave her a voucher for lunch.",
+   "baseline": 1
+  },
+  {
+   "itemId": "025a8d1b-8b4f-40dd-a5b3-c3eee8277eae",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B1",
+   "minWords": 15,
+   "content": {
+    "passage": "When Marta's flight was cancelled, she went to the airline desk. They booked her on a later flight and gave her a voucher for lunch."
+   },
+   "answerSet": {
+    "key_points": [
+     "Marta's flight was cancelled",
+     "she went to the airline desk",
+     "she got a later flight and a lunch voucher"
+    ]
+   },
+   "variant": "partial",
+   "response": "When Marta's flight was cancelled, she went to the airline desk.",
+   "baseline": 0.5
+  },
+  {
+   "itemId": "025a8d1b-8b4f-40dd-a5b3-c3eee8277eae",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B1",
+   "minWords": 15,
+   "content": {
+    "passage": "When Marta's flight was cancelled, she went to the airline desk. They booked her on a later flight and gave her a voucher for lunch."
+   },
+   "answerSet": {
+    "key_points": [
+     "Marta's flight was cancelled",
+     "she went to the airline desk",
+     "she got a later flight and a lunch voucher"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "The weather is nice today.",
+   "baseline": 0
+  },
+  {
+   "itemId": "010fe14c-b1e2-4dd8-bca7-8d7ab86c1238",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B2",
+   "minWords": 15,
+   "content": {
+    "passage": "The study concluded that remote employees reported higher satisfaction, but also felt more disconnected from their teams."
+   },
+   "answerSet": {
+    "key_points": [
+     "remote employees had higher satisfaction",
+     "felt more disconnected from teams"
+    ]
+   },
+   "variant": "key",
+   "response": "The study concluded that remote employees reported higher satisfaction, but also felt more disconnected from their teams.",
+   "baseline": 1
+  },
+  {
+   "itemId": "010fe14c-b1e2-4dd8-bca7-8d7ab86c1238",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B2",
+   "minWords": 15,
+   "content": {
+    "passage": "The study concluded that remote employees reported higher satisfaction, but also felt more disconnected from their teams."
+   },
+   "answerSet": {
+    "key_points": [
+     "remote employees had higher satisfaction",
+     "felt more disconnected from teams"
+    ]
+   },
+   "variant": "partial",
+   "response": "The study concluded that remote employees reported higher satisfaction, but also felt more disconnected from their teams.",
+   "baseline": 1
+  },
+  {
+   "itemId": "010fe14c-b1e2-4dd8-bca7-8d7ab86c1238",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "B2",
+   "minWords": 15,
+   "content": {
+    "passage": "The study concluded that remote employees reported higher satisfaction, but also felt more disconnected from their teams."
+   },
+   "answerSet": {
+    "key_points": [
+     "remote employees had higher satisfaction",
+     "felt more disconnected from teams"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "The weather is nice today.",
+   "baseline": 0
+  },
+  {
+   "itemId": "044a7fb5-72a0-42ad-99b5-a3f5ba340aeb",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "C1",
+   "minWords": 15,
+   "content": {
+    "passage": "The family-owned vineyard had used traditional methods for generations. When the climate became hotter, the younger generation experimented with new grape varieties, preserving the business's viability."
+   },
+   "answerSet": {
+    "key_points": [
+     "the vineyard used traditional methods",
+     "the climate got hotter",
+     "new grape varieties kept the business viable"
+    ]
+   },
+   "variant": "key",
+   "response": "The family-owned vineyard had used traditional methods for generations. When the climate became hotter, the younger generation experimented with new grape varieties, preserving the business's viability.",
+   "baseline": 1
+  },
+  {
+   "itemId": "044a7fb5-72a0-42ad-99b5-a3f5ba340aeb",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "C1",
+   "minWords": 15,
+   "content": {
+    "passage": "The family-owned vineyard had used traditional methods for generations. When the climate became hotter, the younger generation experimented with new grape varieties, preserving the business's viability."
+   },
+   "answerSet": {
+    "key_points": [
+     "the vineyard used traditional methods",
+     "the climate got hotter",
+     "new grape varieties kept the business viable"
+    ]
+   },
+   "variant": "partial",
+   "response": "The family-owned vineyard had used traditional methods for generations.",
+   "baseline": 0.2
+  },
+  {
+   "itemId": "044a7fb5-72a0-42ad-99b5-a3f5ba340aeb",
+   "itemTypeId": "passage_reconstruction",
+   "cefrLevel": "C1",
+   "minWords": 15,
+   "content": {
+    "passage": "The family-owned vineyard had used traditional methods for generations. When the climate became hotter, the younger generation experimented with new grape varieties, preserving the business's viability."
+   },
+   "answerSet": {
+    "key_points": [
+     "the vineyard used traditional methods",
+     "the climate got hotter",
+     "new grape varieties kept the business viable"
+    ]
+   },
+   "variant": "off-topic",
+   "response": "The weather is nice today.",
+   "baseline": 0
+  }
+ ]
+}

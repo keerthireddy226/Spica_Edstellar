@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "¿Retirar la recomendación de {{org}}? Spica deja de seguirla y no genera comisión.",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "Tu enlace ya está en cada publicación, etiquetado para que tu historial muestre de dónde vino la gente. Las publicaciones están en inglés, como los exámenes de Spica.",
  "{{p}}% of decided referrals won": "{{p}} % de las recomendaciones decididas ganadas",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "El total que debe alcanzar cada organización (demo y de pago juntas), en cualquier cantidad. Solo cuentan para el mínimo las organizaciones que llegan a ese total."
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "El total que debe alcanzar cada organización (demo y de pago juntas), en cualquier cantidad. Solo cuentan para el mínimo las organizaciones que llegan a ese total.",
+ "Skip to content": "Saltar al contenido",
+ "Test for your final assessment": "Prueba para tu evaluación final"
 }

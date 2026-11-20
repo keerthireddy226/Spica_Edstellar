@@ -60,23 +60,28 @@ export interface SkillLevelAssessment {
 // A single question isn't enough evidence; below this, a level is treated as untested, not pass/fail.
 const MIN_LEVEL_SAMPLE = 2;
 
-export function assessSkillLevel(gradedItems: { cefrLevel: string | null; correct: boolean }[]): SkillLevelAssessment {
-  const byLevel = new Map<CefrLevel, { correct: number; total: number }>();
+// Each item can carry a weight (a question that counts for several skills
+// counts 1/n towards each, see levels.ts); the minimum sample is still counted
+// in questions.
+export function assessSkillLevel(gradedItems: { cefrLevel: string | null; correct: boolean; weight?: number }[]): SkillLevelAssessment {
+  const byLevel = new Map<CefrLevel, { correct: number; total: number; count: number }>();
   for (const item of gradedItems) {
     if (!item.cefrLevel || !CEFR_LEVELS.includes(item.cefrLevel as CefrLevel)) continue;
     const level = item.cefrLevel as CefrLevel;
-    const entry = byLevel.get(level) ?? { correct: 0, total: 0 };
-    entry.total += 1;
-    if (item.correct) entry.correct += 1;
+    const entry = byLevel.get(level) ?? { correct: 0, total: 0, count: 0 };
+    const w = item.weight ?? 1;
+    entry.count += 1;
+    entry.total += w;
+    if (item.correct) entry.correct += w;
     byLevel.set(level, entry);
   }
   if (byLevel.size === 0) return { level: null, cappedByGap: false };
 
-  const hasEnoughEvidence = (level: CefrLevel) => (byLevel.get(level)?.total ?? 0) >= MIN_LEVEL_SAMPLE;
+  const hasEnoughEvidence = (level: CefrLevel) => (byLevel.get(level)?.count ?? 0) >= MIN_LEVEL_SAMPLE;
 
   let highestPassed: CefrLevel | null = null;
   // The level just below, as tested: each level is judged together with it.
-  let below: { correct: number; total: number } | null = null;
+  let below: { correct: number; total: number; count: number } | null = null;
   let sawFirstTestedLevel = false;
   for (const level of CEFR_LEVELS) {
     if (!hasEnoughEvidence(level)) {

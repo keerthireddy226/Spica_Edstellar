@@ -22,7 +22,7 @@ const MODULE_SKILL_ICONS: Record<SkillTag, LucideIcon> = {
 function navClasses(isActive: boolean) {
   return [
     "flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium transition-colors",
-    isActive ? "bg-navy-soft text-lime" : "text-lime/60 hover:bg-white/5 hover:text-lime/90",
+    isActive ? "bg-black/20 text-lime font-semibold" : "text-lime hover:bg-black/10",
   ].join(" ");
 }
 
@@ -149,7 +149,7 @@ export function Sidebar({ open, onClose, onNavigate }: { open: boolean; onClose:
             <>
               <button
                 onClick={() => setModulesExpanded((v) => !v)}
-                className="flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-lime/60 hover:bg-white/5 hover:text-lime/90 transition-colors cursor-pointer"
+                className="flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium text-lime hover:bg-black/10 transition-colors cursor-pointer"
               >
                 <BookOpen size={22} strokeWidth={1.8} />
                 <span className="flex-1 text-left">{t("nav.modules")}</span>

@@ -38,12 +38,30 @@ export function weightedSkillMean(values: Partial<Record<string, number | null>>
   return skills.reduce((sum, s) => sum + (values[s] as number) * w[s], 0);
 }
 
+// How results are worked out. Version 2 (owner decision 20 Nov 2026): a
+// question that counts for several skills (Repeats: listening and speaking;
+// Dictation: listening and writing) counts 1/n towards each, so one answer
+// weighs the same in total as a single-skill question. Results saved before it
+// keep version 1 (every question counts fully for each of its skills), so a
+// saved result, its report and its certificate never disagree.
+export const SCORING_VERSION = 2;
+export interface ScoringOptions {
+  splitWeights?: boolean;
+}
+export const scoringOptions = (version: unknown): ScoringOptions => ({ splitWeights: Number(version) >= 2 });
+
+function skillWeight(r: ScoredAttemptRow, opts: ScoringOptions): number {
+  if (!opts.splitWeights) return 1;
+  const n = r.skills.filter((s) => (ALL_SKILLS as string[]).includes(s)).length;
+  return n > 1 ? 1 / n : 1;
+}
+
 export function rowIsCorrect(r: ScoredAttemptRow): boolean {
   return isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
 }
 
 // Per-skill percent/level, plus the same percents shaped for buildRoadmap's "weakest first" ranking.
-export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent: number) {
+export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent: number, opts: ScoringOptions = {}) {
   const skillPercents = {} as Record<SkillTag, number | null>;
   const skillLevels = {} as Record<SkillTag, { level: ReportedLevel; cappedByGap: boolean } | null>;
   const roadmapSkillPercents = {} as Record<SkillTag, number>;
@@ -55,9 +73,11 @@ export function computeSkillBreakdown(graded: ScoredAttemptRow[], overallPercent
       roadmapSkillPercents[skill] = overallPercent;
       continue;
     }
-    const percent = Math.round((relevant.filter(rowIsCorrect).length / relevant.length) * 100);
+    const totalWeight = relevant.reduce((sum, r) => sum + skillWeight(r, opts), 0);
+    const rightWeight = relevant.filter(rowIsCorrect).reduce((sum, r) => sum + skillWeight(r, opts), 0);
+    const percent = Math.round((rightWeight / totalWeight) * 100);
     // Highest CEFR level actually sustained, not just a flat percentage; falls back to percent only if no cefr_level tags exist yet.
-    const assessed = assessSkillLevel(relevant.map((r) => ({ cefrLevel: r.cefr_level, correct: rowIsCorrect(r) })));
+    const assessed = assessSkillLevel(relevant.map((r) => ({ cefrLevel: r.cefr_level, correct: rowIsCorrect(r), weight: skillWeight(r, opts) })));
     skillPercents[skill] = percent;
     // No level passed: Below A1 (owner decision 19 Nov 2026; it used to fall
     // back to the percent table, so 0% right still showed A1 and the Below A1
@@ -94,7 +114,7 @@ export function overallFromSkills(
 // One finished test's level, as the learner and the recruiter see it: a
 // headline CEFR level and one per skill tested. null when nothing could be
 // scored yet.
-export function levelSummary(rows: ScoredAttemptRow[]): {
+export function levelSummary(rows: ScoredAttemptRow[], opts: ScoringOptions = {}): {
   cefrLevel: ReportedLevel;
   skillLevels: Partial<Record<SkillTag, ReportedLevel>>;
   skillPercents: Partial<Record<SkillTag, number>>;
@@ -103,7 +123,7 @@ export function levelSummary(rows: ScoredAttemptRow[]): {
   if (graded.length === 0) return null;
   const correctCount = graded.filter(rowIsCorrect).length;
   const overallPercent = Math.round((correctCount / graded.length) * 100);
-  const { skillPercents, skillLevels } = computeSkillBreakdown(graded, overallPercent);
+  const { skillPercents, skillLevels } = computeSkillBreakdown(graded, overallPercent, opts);
   const levels: Partial<Record<SkillTag, ReportedLevel>> = {};
   const percents: Partial<Record<SkillTag, number>> = {};
   for (const skill of ALL_SKILLS) {

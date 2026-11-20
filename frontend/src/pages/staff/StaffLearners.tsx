@@ -214,7 +214,7 @@ function OrgLearnersTab({ canView }: { canView: boolean }) {
       {shown.length === 0 ? (
         <EmptyNote>{tr("No learners match.")}</EmptyNote>
       ) : (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto relative">
           <table className="w-full text-sm min-w-[860px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">
@@ -370,7 +370,7 @@ function IndividualsTab({ canInvite, canView }: { canInvite: boolean; canView: b
       {shown.length === 0 ? (
         <EmptyNote>{tr("No individual learners match.")}</EmptyNote>
       ) : (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto relative">
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-rule text-left text-xs font-semibold uppercase tracking-wide text-muted">

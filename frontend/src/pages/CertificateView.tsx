@@ -53,6 +53,8 @@ const INK = "#1d2b3a";
 const NAVY = "#1f3a5f";
 const MUTED = "#5b6b7c";
 const GOLD = "#b8893b";
+// Small gold text needs a deeper shade to be readable (WCAG AA, 5:1).
+const GOLD_TEXT = "#8a6420";
 
 // Public: the certificate itself (printable, or saved as a PDF) and the page
 // anyone checks it on, by its code or QR code. An organization's learners'
@@ -242,7 +244,7 @@ export function CertificateView() {
 
               {/* Title and name. */}
               <div className="flex flex-col items-center text-center mt-3">
-                <p className="text-[12px] tracking-[0.45em] uppercase" style={{ color: GOLD }}>
+                <p className="text-[12px] tracking-[0.45em] uppercase" style={{ color: GOLD_TEXT }}>
                   {tr("Certificate")}
                 </p>
                 <h1 className="font-display font-bold text-[40px] leading-tight" style={{ color: NAVY }}>

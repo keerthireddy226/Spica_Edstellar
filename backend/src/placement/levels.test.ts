@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { levelSummary, skillWeights, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
+import { levelSummary, scoringOptions, skillWeights, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
 
 // A typed answer at a CEFR level, right (score 1) or wrong (score 0).
 function row(level: "A1" | "A2" | "B1" | "B2" | "C1", correct: boolean, skills = ["reading"]): ScoredAttemptRow {
@@ -65,5 +65,30 @@ describe("skill weights", () => {
 
   it("is null with no skill scored", () => {
     expect(weightedSkillMean({ reading: null }, null)).toBeNull();
+  });
+});
+
+// Owner decision 20 Nov 2026: a question that counts for several skills
+// counts 1/n towards each (scoring version 2); older results keep version 1.
+describe("split weights for multi-skill questions", () => {
+  // Listening: 2 single-skill questions right, 2 Dictation (listening + writing) wrong.
+  const rows = [
+    row("B1", true, ["listening"]),
+    row("B1", true, ["listening"]),
+    row("B1", false, ["listening", "writing"]),
+    row("B1", false, ["listening", "writing"]),
+  ];
+  it("counts every question fully in version 1", () => {
+    expect(levelSummary(rows, scoringOptions(1))!.skillPercents.listening).toBe(50);
+  });
+  it("counts a two-skill question as half for each skill in version 2", () => {
+    // right 2 of a total weight of 3 (1 + 1 + 0.5 + 0.5)
+    expect(levelSummary(rows, scoringOptions(2))!.skillPercents.listening).toBe(67);
+    // writing has only the two Dictation answers: still 0%
+    expect(levelSummary(rows, scoringOptions(2))!.skillPercents.writing).toBe(0);
+  });
+  it("keeps version 1 when no version is saved", () => {
+    expect(scoringOptions(undefined).splitWeights).toBe(false);
+    expect(scoringOptions("2").splitWeights).toBe(true);
   });
 });

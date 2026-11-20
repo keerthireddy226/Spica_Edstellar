@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Children, isValidElement, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Minus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,7 +44,10 @@ function Card({ eyebrow, title, price, highlight, children, action }: { eyebrow:
       <span className={`text-[11px] font-semibold uppercase tracking-wide text-muted ${highlight ? "pr-28" : ""}`}>{eyebrow}</span>
       <h3 className="font-display font-bold text-lg text-ink">{title}</h3>
       {price && <div className="font-display font-bold text-2xl text-ink tabular-nums">{price}</div>}
-      <ul className="flex flex-col gap-1.5">{children}</ul>
+      {/* A list holds only list items: other children (a note, a price line) get their own item. */}
+      <ul className="flex flex-col gap-1.5">
+        {Children.map(children, (child) => (isValidElement(child) && (child.type === Item || child.type === "li") ? child : child ? <li className="list-none">{child}</li> : null))}
+      </ul>
       {action && <div className="mt-auto pt-1">{action}</div>}
     </div>
   );

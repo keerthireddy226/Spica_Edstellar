@@ -175,7 +175,7 @@ export function OrgAdminLearners() {
       )}
 
       {view === "all" && learners && learners.length > 0 && (
-        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto">
+        <div className="bg-surface border border-rule rounded-card shadow-sm overflow-x-auto relative">
           <table className="w-full text-sm min-w-[980px]">
             <thead>
               <tr className="border-b border-rule bg-paper-warm/50 text-left text-xs font-semibold uppercase tracking-wide text-muted">

@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "Træk henvisningen af {{org}} tilbage? Spica stopper opfølgningen, og den giver intet honorar.",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "Dit link er allerede i hvert opslag, mærket så dit resultat viser, hvor folk kom fra. Opslagene er på engelsk ligesom Spicas tests.",
  "{{p}}% of decided referrals won": "{{p}} % af afgjorte henvisninger vundet",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Det samlede antal, hver organisation skal nå (demo og betalte tilsammen), i vilkårlige mængder. Kun organisationer med dette antal tæller med i minimummet."
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Det samlede antal, hver organisation skal nå (demo og betalte tilsammen), i vilkårlige mængder. Kun organisationer med dette antal tæller med i minimummet.",
+ "Skip to content": "Gå til indhold",
+ "Test for your final assessment": "Test til din afsluttende prøve"
 }

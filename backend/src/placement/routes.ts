@@ -15,7 +15,7 @@ import {
   stepLevel,
   type CefrLevel,
 } from "./cefr.js";
-import { computeSkillBreakdown, overallFromSkills, rowIsCorrect, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
+import { computeSkillBreakdown, overallFromSkills, rowIsCorrect, SCORING_VERSION, scoringOptions, weightedSkillMean, type ScoredAttemptRow } from "./levels.js";
 import { newTestCode } from "../lib/testCode.js";
 import { auditTestCompleted, auditTestStarted } from "../audit/testEvents.js";
 import { withAudioUrls } from "../voice/itemAudio.js";
@@ -481,7 +481,7 @@ placementRouter.post("/session/:sessionId/complete", requireAuth, async (req: Au
 
     // The overall percentage counts each skill the same, not each question.
     const pooledPercent = Math.round((correctCount / graded.length) * 100);
-    const { skillPercents, skillLevels, roadmapSkillPercents } = computeSkillBreakdown(graded, pooledPercent);
+    const { skillPercents, skillLevels, roadmapSkillPercents } = computeSkillBreakdown(graded, pooledPercent, scoringOptions(SCORING_VERSION));
     const overallPercent = Math.round(weightedSkillMean(skillPercents, null) ?? pooledPercent);
     // The same overall rule as every other test: the band of the skills' mean Spica score.
     const flatLevels = Object.fromEntries(Object.entries(skillLevels).map(([k, v]) => [k, v?.level ?? null]));

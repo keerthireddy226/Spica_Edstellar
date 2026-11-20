@@ -64,10 +64,10 @@ export function NotificationBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label={tr("Notifications")}
         className="relative p-1.5 rounded-input text-muted hover:bg-paper-warm hover:text-ink transition-colors cursor-pointer"
       >
-        <Bell size={22} />
+        <Bell size={22} aria-hidden="true" />
+        <span className="sr-only">{tr("Notifications")}</span>
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-error text-white text-[10px] font-bold flex items-center justify-center">
             {unread > 9 ? "9+" : unread}

@@ -8,7 +8,7 @@ import { currentLevels, type LevelReading, type LevelSource } from "../learner/c
 import { pool } from "../db.js";
 import { dateOnly } from "../lib/dateOnly.js";
 import { learnerAccessMap } from "../licenses/service.js";
-import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { levelSummary, scoringOptions, weightedSkillMean } from "../placement/levels.js";
 import { goalStatus, INACTIVE_DAYS, type MockPoint } from "../programs/monitoring.js";
 import { IN_PLAN } from "../programs/service.js";
 import { BANDS, levelOfScore, scoreReport, spicaScore } from "./scoreReport.js";
@@ -101,7 +101,7 @@ async function fillResults(sessions: { id: string; result: Record<string, any> |
     )
   ).rows.map((r) => (r.status === "pending" && !r.response_text && !r.response_uri ? { ...r, status: "scored", content_score: 0 } : r));
   for (const x of sessions) {
-    const summary = levelSummary(rows.filter((r) => r.session_id === x.id) as never);
+    const summary = levelSummary(rows.filter((r) => r.session_id === x.id) as never, scoringOptions(x.result?.scoring));
     if (!summary) continue;
     const percents = Object.values(summary.skillPercents) as number[];
     const add = {

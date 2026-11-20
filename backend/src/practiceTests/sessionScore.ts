@@ -1,7 +1,7 @@
 import { pool } from "../db.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
-import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { levelSummary, scoringOptions, weightedSkillMean, type ScoringOptions } from "../placement/levels.js";
 import { qualitySettings } from "../quality/settings.js";
 import { bandForLevel, familyScoreScale, levelTestPassed } from "./modes.js";
 import { testTypeOfExam } from "../catalogue/service.js";
@@ -28,7 +28,7 @@ export async function loadScoreRows(sessionId: string) {
 // The result figures from a session's answers. The overall percentage is the
 // skills' percentages weighted by the test (each skill the same, except the
 // English Writing test), so no skill counts more just for having more questions.
-export function summarizeScores(raw: Awaited<ReturnType<typeof loadScoreRows>>, testTypeId?: string | null) {
+export function summarizeScores(raw: Awaited<ReturnType<typeof loadScoreRows>>, testTypeId?: string | null, opts: ScoringOptions = {}) {
   // A question left blank (skipped, or never reached) counts as wrong in
   // every figure: the percentage, the skill levels and the sections. It used
   // to be left out, so 2 right answers out of 42 questions showed as 100%.
@@ -46,7 +46,7 @@ export function summarizeScores(raw: Awaited<ReturnType<typeof loadScoreRows>>, 
   const pendingCount = rows.filter((r) => r.status === "pending").length;
   const failedCount = rows.filter((r) => r.status === "failed").length;
   // The same CEFR level logic as the placement test, from each question's level.
-  const summary = levelSummary(rows);
+  const summary = levelSummary(rows, opts);
   const pooled = graded.length > 0 ? Math.round((correctCount / graded.length) * 100) : null;
   const weighted = summary ? weightedSkillMean(summary.skillPercents, testTypeId) : null;
   const overall = weighted !== null ? Math.round(weighted) : pooled;
@@ -99,7 +99,7 @@ export async function settledResult(levelTest: string | null, s: ReturnType<type
 // results were settled.
 export async function settleResults(): Promise<number> {
   const r = await pool.query(
-    `SELECT s.id, s.delivery_mode, s.composition FROM sessions s
+    `SELECT s.id, s.delivery_mode, s.composition, s.result->>'scoring' AS scoring FROM sessions s
      WHERE s.completed_at IS NOT NULL
        AND ((s.result ? 'unscored' AND s.completed_at > now() - interval '${SETTLE_DAYS} days')
          OR (s.delivery_mode = 'certified' AND s.composition->>'levelTest' IS NOT NULL
@@ -111,10 +111,10 @@ export async function settleResults(): Promise<number> {
      ORDER BY s.completed_at LIMIT 200`,
   );
   let settled = 0;
-  for (const { id, delivery_mode, composition } of r.rows) {
+  for (const { id, delivery_mode, composition, scoring } of r.rows) {
     const c = (composition ?? {}) as Record<string, unknown>;
     const testTypeId = (c.testTypeId as string | undefined) ?? (c.examId ? await testTypeOfExam(c.examId as string) : null);
-    const s = summarizeScores(await loadScoreRows(id), testTypeId);
+    const s = summarizeScores(await loadScoreRows(id), testTypeId, scoringOptions(scoring));
     // The score range as /complete works it out: mocks and real tests in the exam's format.
     const scale = (delivery_mode === "mock" || delivery_mode === "certified") && !c.shortForm ? await familyScoreScale(testTypeId) : null;
     const result = await settledResult((c.levelTest as string | undefined) ?? null, s, scale);

@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "{{org}}の紹介を取り下げますか？Spicaは対応を停止し、報酬は発生しません。",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "各投稿にはあなたのリンクが入っており、タグ付けされているので実績で流入元がわかります。投稿はSpicaの試験と同じく英語です。",
  "{{p}}% of decided referrals won": "結果の出た紹介のうち{{p}}%が成約",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "各組織が到達すべき合計（デモと有料の合計）。何回に分けてもかまいません。この合計に達した組織だけが最低数にカウントされます。"
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "各組織が到達すべき合計（デモと有料の合計）。何回に分けてもかまいません。この合計に達した組織だけが最低数にカウントされます。",
+ "Skip to content": "本文へスキップ",
+ "Test for your final assessment": "最終評価のテスト"
 }

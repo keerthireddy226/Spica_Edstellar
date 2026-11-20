@@ -149,7 +149,7 @@ function usePendingReviewCount(enabled: boolean, pathname: string): number {
 function navClasses(isActive: boolean) {
   return [
     "flex items-center gap-3 rounded-input px-3 py-2.5 text-sm font-medium transition-colors",
-    isActive ? "bg-navy-soft text-lime" : "text-lime/60 hover:bg-white/5 hover:text-lime/90",
+    isActive ? "bg-black/20 text-lime font-semibold" : "text-lime hover:bg-black/10",
   ].join(" ");
 }
 

@@ -18,12 +18,19 @@ City's bias-audit rule for hiring tools apply.
 | Silent recordings | When Gemini hears no speech and the browser heard none either, the answer scores 0 (`no-speech-v1`) like an empty answer, instead of waiting for a grade forever. On 2026-10-16 the 10 answers stuck since 7-15 Oct were all silent and now score 0. |
 | Past spelling failures | `scripts/regradeSpellingVariants.ts` lists typed answers marked down only for a spelling variant; `--apply` raises their scores. On 2026-10-16 it found one (an internal test account); not applied. |
 
+## Added 20 November 2026
+
+| Change | Where |
+|---|---|
+| A question that counts for several skills (Repeats, Dictation, Read Aloud) counts 1/n towards each skill, so one answer weighs the same in total as a single-skill question. Results saved before this keep the old rule (`result.scoring` 1 or missing); new results are version 2, so a saved result, its report and its certificate always agree. | `placement/levels.ts` (`SCORING_VERSION`, `scoringOptions`), `placement/cefr.ts` (weights in the level walk; the 2-question minimum still counts questions) |
+| Answers graded on the browser's transcript at the end of a test are already graded again from the recording (`regradeBrowserTranscriptAnswers`, since 5 Nov, in the placement check and every practice test, mock and real test). New safety net: a practice or mock answer still on the browser transcript is re-graded in the background within 7 days; the old score is put back if Gemini doesn't answer, and the result is saved again. Live check on 20 Nov: 0 of 982 graded spoken answers were left on the browser transcript. | `attemptGrading.ts` (`regradeBrowserTranscriptLater`), job `grading.speaking.regrade-browser` |
+| Model check set: answers to 20 practice questions (key, damaged and off-topic versions) graded once as a baseline, re-graded every Monday; Super Admins are told if the mean score moves more than 0.10, more than 1 in 10 answers change between right and wrong, or more than 1 in 5 can't be graded. Run `npx tsx scripts/modelCheck.ts` before any model or prompt change; `--baseline` makes a new baseline. | `quality/modelCheck.ts`, `quality/model-check-baseline.json`, job `quality.model-check` |
+
 ## Left, in order of importance
 
 | Item | Why it matters | What it needs |
 |---|---|---|
 | Calibration across real accents | Without it, "no accent bias" can't be claimed, and the bias audits hiring customers need can't be written. A synthetic check (generated voices) is all there is today. | About 20+ speakers across accent groups (Indian regions, Filipino, Nigerian, Arabic, Spanish, US, UK), each answering the same speaking items; two trained raters give each a CEFR level blind. Then compare machine and human levels per group and repeat on every model change. |
-| Placement test and practice modules still grade on the spot | They wait up to 25 s for Gemini; a slower reply is graded on the browser's transcript, which is the accent-biased path. The adaptive placement test needs a verdict before choosing the next question, so it can't simply wait in the background. | Keep the on-the-spot verdict for choosing the next question, then re-grade the answer in the background with Gemini before the final level is worked out. |
 | Human review of a disputed speaking score (recruitment) | A candidate or recruiter has no way to challenge a machine score; hiring rules expect a human route. | "Ask for a human review" on the candidate report; a reviewer listens to the recordings and can override the score, recorded in the audit log. |
 | Check background grading on a real test | No real test has gone through the background job yet. | One practice test with speaking answers; check every answer is graded. |
 | Wording on the website and in sales material | Until calibration is done, only "Speaking is scored on how clearly you're understood, not on your accent" is accurate. | Marketing to use that line, not "eliminates bias". |

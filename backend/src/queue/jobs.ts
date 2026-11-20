@@ -16,7 +16,8 @@ import { runVoiceCheck } from "../proctoring/voiceCheck.js";
 import { analyzeSession } from "../proctoring/analyze.js";
 import { runRecruitmentLifecycle } from "../recruitment/service.js";
 import { sendIntegrityDigests } from "../proctoring/alerts.js";
-import { gradeSpeakingAttempt, sweepStuckSpeaking } from "../attemptGrading.js";
+import { gradeSpeakingAttempt, regradeBrowserTranscriptLater, sweepStuckSpeaking } from "../attemptGrading.js";
+import { weeklyModelCheck } from "../quality/modelCheck.js";
 import { settleResults } from "../practiceTests/sessionScore.js";
 import { finishOverdueTimedTests } from "../practiceTests/complete.js";
 import { runProgramsDaily } from "../programs/service.js";
@@ -46,6 +47,9 @@ export function registerJobs() {
     // A result (or level test) waiting on this answer can now be saved again.
     await settleResults();
   });
+  registerHandler("grading.speaking.regrade-browser", async (p) => {
+    if (await regradeBrowserTranscriptLater(p.attemptId)) await settleResults();
+  });
   // The feedback report after a test; waits (retries) while recorded answers are still being graded.
   registerHandler("report.build", async (p, job) => {
     if (!(await reportReady(p.sessionId)) && job.attempts < 4) throw new Error("report: answers still being graded, will retry");
@@ -60,6 +64,10 @@ export function registerJobs() {
   every(5, "assessment.certificates", async () => {
     const n = await issueDueResultCertificates();
     if (n > 0) console.log(`result certificates: ${n} issued`);
+  });
+  // Mondays: re-grade the model check set and tell Super Admins if scores moved.
+  every(1440, "quality.model-check", async () => {
+    await weeklyModelCheck();
   });
   every(60, "quality.appeal-escalation", async () => {
     const n = await escalateStaleAppeals();

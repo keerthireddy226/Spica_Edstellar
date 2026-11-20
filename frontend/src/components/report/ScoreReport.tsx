@@ -391,7 +391,8 @@ export function ScoreReport({ score, about, analysis, viewer = "learner", hiring
                   {SKILL_NAME[s.skill]()}
                   {s.skill === best && <StrongestPill />}
                 </h3>
-                <span className="font-display font-bold text-xl tabular-nums" style={{ color: SKILL_COLOR[s.skill] }}>
+                <span className="font-display font-bold text-xl tabular-nums text-ink flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-full shrink-0" style={{ background: SKILL_COLOR[s.skill] }} aria-hidden="true" />
                   {s.level} · {s.score}
                 </span>
               </div>

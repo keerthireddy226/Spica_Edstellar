@@ -9,7 +9,7 @@ export function Button({ variant = "primary", className = "", ...props }: Button
     "rounded-pill text-sm font-semibold px-5 py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed";
   const variantClass =
     variant === "primary"
-      ? "bg-navy text-lime hover:bg-navy-soft btn-shine"
+      ? "bg-navy text-lime hover:bg-navy-deep btn-shine"
       : "bg-surface text-ink border border-rule hover:border-rule-strong";
 
   return <button className={`${base} ${variantClass} ${className}`} {...props} />;

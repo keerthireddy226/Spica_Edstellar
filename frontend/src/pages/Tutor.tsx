@@ -366,7 +366,7 @@ function TutorChat() {
               }}
               disabled={loading || sending || !sessionId}
               placeholder={t("tutor.inputPlaceholder")}
-              className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none disabled:cursor-not-allowed py-1.5"
+              className="flex-1 bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/40 rounded-input disabled:cursor-not-allowed py-1.5"
             />
             <Button onClick={handleSend} disabled={loading || sending || !sessionId || !text.trim()} aria-label={tr("Send")} className="shrink-0 !rounded-full !px-3 !py-2">
               <Send size={16} strokeWidth={2.2} />

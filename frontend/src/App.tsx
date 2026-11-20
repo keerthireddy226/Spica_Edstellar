@@ -98,6 +98,7 @@ import { AdminLayout } from "@/components/AppShell/AdminLayout";
 import { Certificates } from "@/pages/Certificates";
 import { Reconnecting } from "@/components/Reconnecting";
 import { CandidateSignedOut, candidateLink } from "@/components/CandidateSignedOut";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 // Unmatched path: logged-in goes to their landing page, logged-out to learner login.
 function DefaultRedirect() {
@@ -116,6 +117,7 @@ function KeepQueryRedirect({ to }: { to: string }) {
 
 function App() {
   const auth = useAuthState();
+  useDocumentTitle();
 
   return (
     <AuthContext.Provider value={auth}>

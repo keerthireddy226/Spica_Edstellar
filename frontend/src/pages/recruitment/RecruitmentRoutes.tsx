@@ -52,9 +52,9 @@ const DECISION_TEXT: Record<NonNullable<AssessmentReport["decision"]>, () => str
 
 // The light palette, whatever the app's theme: the report is a white document.
 const LIGHT = {
-  "--color-navy": "#c97c5c", "--color-navy-deep": "#a8613f", "--color-ink": "#2e2419", "--color-paper": "#f3ebd8", "--color-paper-warm": "#efe4cc",
-  "--color-surface": "#ffffff", "--color-rule": "rgba(46,36,25,0.08)", "--color-rule-strong": "rgba(46,36,25,0.16)", "--color-muted": "#8a7c68",
-  "--color-success": "#6e9660", "--color-warning": "#e0aa52", "--color-error": "#c15c4a",
+  "--color-navy": "#a95f43", "--color-navy-deep": "#8f4d34", "--color-ink": "#2e2419", "--color-paper": "#f3ebd8", "--color-paper-warm": "#efe4cc",
+  "--color-surface": "#ffffff", "--color-rule": "rgba(46,36,25,0.08)", "--color-rule-strong": "rgba(46,36,25,0.16)", "--color-muted": "#6b5f4f",
+  "--color-success": "#4a6d3f", "--color-warning": "#8a5a12", "--color-error": "#b4523f",
   "--color-listening": "#6e9660", "--color-speaking": "#d9713d", "--color-reading": "#e0aa52", "--color-writing": "#d98f72",
 } as CSSProperties;
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];

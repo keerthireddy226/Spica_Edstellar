@@ -5,6 +5,7 @@ import { useAuth, type Role } from "@/hooks/useAuth";
 import { LANDING_ROUTE_BY_ROLE, LOGIN_ROUTE_BY_ROLE } from "@/constants/routes";
 import { AdminSidebar } from "@/components/AppShell/AdminSidebar";
 import { Header } from "@/components/AppShell/Header";
+import { tr } from "@/i18n/tr";
 
 // Shared shell for every non-learner console (Super Admin, Admin, Org
 // Admin, Manager) — takes which role(s) this particular route group is
@@ -31,6 +32,9 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
   return (
     // Printed (Print / PDF): the page alone, at full length.
     <div className="flex h-screen bg-paper overflow-hidden print:block print:h-auto print:overflow-visible">
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-2 focus:left-2 focus:bg-surface focus:text-ink focus:px-4 focus:py-2 focus:rounded-input focus:shadow-lg focus:font-semibold print:hidden">
+        {tr("Skip to content")}
+      </a>
       {/* The sidebar (aside) and header are hidden in print by index.css. */}
       <AdminSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} onNavigate={() => startTransition(() => setNavKey((k) => k + 1))} />
 
@@ -39,7 +43,7 @@ export function AdminLayout({ allowedRoles }: { allowedRoles: Role[] }) {
           <ViewAsBanner />
         </div>
         <Header onMenuClick={() => setDrawerOpen(true)} />
-        <main className="app-surface page-scroll flex-1 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:px-8 print:py-6">
+        <main id="main" tabIndex={-1} className="focus:outline-none app-surface page-scroll flex-1 min-w-0 overflow-y-auto px-4 sm:px-6 py-6 print:overflow-visible print:px-8 print:py-6">
           <Outlet key={navKey} />
         </main>
       </div>

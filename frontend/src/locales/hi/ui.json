@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "{{org}} का रेफ़रल वापस लें? Spica इसका फ़ॉलो-अप बंद कर देगा, और इस पर कोई शुल्क नहीं मिलेगा।",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "आपका लिंक हर पोस्ट में पहले से है, टैग के साथ ताकि आपका ट्रैक रिकॉर्ड दिखाए कि लोग कहाँ से आए। पोस्ट अंग्रेज़ी में हैं, जैसे Spica के टेस्ट।",
  "{{p}}% of decided referrals won": "तय रेफ़रल में से {{p}}% जीते",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "हर संगठन को कुल इतने लाइसेंस तक पहुँचना चाहिए (डेमो और भुगतान वाले मिलाकर), कितने भी हिस्सों में। केवल इस कुल तक पहुँचे संगठन न्यूनतम में गिने जाते हैं।"
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "हर संगठन को कुल इतने लाइसेंस तक पहुँचना चाहिए (डेमो और भुगतान वाले मिलाकर), कितने भी हिस्सों में। केवल इस कुल तक पहुँचे संगठन न्यूनतम में गिने जाते हैं।",
+ "Skip to content": "सामग्री पर जाएँ",
+ "Test for your final assessment": "आपके अंतिम मूल्यांकन का टेस्ट"
 }

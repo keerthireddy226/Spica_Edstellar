@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "Rút giới thiệu {{org}}? Spica ngừng theo dõi và không có phí giới thiệu.",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "Liên kết của bạn đã có trong mỗi bài, được gắn thẻ để thành tích cho biết người xem đến từ đâu. Bài đăng bằng tiếng Anh, giống bài thi của Spica.",
  "{{p}}% of decided referrals won": "{{p}}% giới thiệu đã có kết quả là thành công",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Tổng số mỗi tổ chức cần đạt (demo và trả phí cộng lại), cấp bao nhiêu mỗi lần cũng được. Chỉ tổ chức đạt tổng này mới được tính vào mức tối thiểu."
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Tổng số mỗi tổ chức cần đạt (demo và trả phí cộng lại), cấp bao nhiêu mỗi lần cũng được. Chỉ tổ chức đạt tổng này mới được tính vào mức tối thiểu.",
+ "Skip to content": "Chuyển đến nội dung",
+ "Test for your final assessment": "Bài thi cho bài đánh giá cuối của bạn"
 }

@@ -156,7 +156,7 @@ function ChooseTest({ t, onChosen }: { t: OwnedTest; onChosen: () => void }) {
         {tr("Choose the test for your final assessment. It opens after a mock test of that test, or in the last 7 days of your access. You can't change it later.")}
       </p>
       <div className="flex items-center gap-2 flex-wrap">
-        <select value={testTypeId} onChange={(e) => setTestTypeId(e.target.value)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink cursor-pointer">
+        <select aria-label={tr("Test for your final assessment")} value={testTypeId} onChange={(e) => setTestTypeId(e.target.value)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm text-ink cursor-pointer">
           {t.choices.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}

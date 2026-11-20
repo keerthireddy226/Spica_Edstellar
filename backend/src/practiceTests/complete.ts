@@ -14,6 +14,7 @@ import { ongoingPauseSeconds, type MockComposition } from "./modes.js";
 import { enqueue } from "../queue/queue.js";
 import { bandForLevel, familyScoreScale, isTimed, type DeliveryMode } from "./modes.js";
 import { levelTestOutcome, loadScoreRows, summarizeScores, unscoredCount } from "./sessionScore.js";
+import { SCORING_VERSION, scoringOptions } from "../placement/levels.js";
 
 // Finishes one of the user's tests and works out its result. onResult gets
 // the learner's result as soon as it's worked out (the /complete response);
@@ -100,7 +101,7 @@ export async function completeSession(
   // pending" response instead of failing the whole request.
   try {
     const testTypeId = (composition.testTypeId as string | undefined) ?? (composition.examId ? await testTypeOfExam(composition.examId) : null);
-    const scored = summarizeScores(await loadScoreRows(sessionId), testTypeId);
+    const scored = summarizeScores(await loadScoreRows(sessionId), testTypeId, scoringOptions(SCORING_VERSION));
     const { rows, graded, rowCorrect, correctCount, pendingCount, failedCount, skippedCount, level, overall } = scored;
 
     const partLabels = [...new Set(rows.map((r) => r.part_label))];
@@ -122,6 +123,7 @@ export async function completeSession(
         sessionId,
         JSON.stringify({
           cefrLevel: level?.cefrLevel ?? null,
+          scoring: SCORING_VERSION,
           skillLevels: level?.skillLevels ?? null,
           // Each skill's share right, for its Spica score in batch reports.
           skillPercents: level?.skillPercents ?? null,

@@ -6,7 +6,7 @@
 import QRCode from "qrcode";
 import { pool } from "../db.js";
 import { APP_URL } from "../auth/mailer.js";
-import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { levelSummary, scoringOptions, weightedSkillMean } from "../placement/levels.js";
 import { testTypeOfExam } from "../catalogue/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
@@ -97,7 +97,7 @@ const scoreOf = (r: Row) => (r.status === "scored" && r.content_score !== null ?
 export async function scoreReport(sessionId: string, stored: FeedbackReport | null): Promise<ScoreReport | null> {
   const s = (
     await pool.query(
-      `SELECT s.user_id, s.test_code, s.completed_at, s.composition, s.program_id,
+      `SELECT s.user_id, s.test_code, s.completed_at, s.composition, s.program_id, s.result->>'scoring' AS scoring,
          coalesce(nullif(concat_ws(' ', u.first_name, u.last_name), ''), u.email) AS name, u.participant_id, pp.goal_level
        FROM sessions s JOIN users u ON u.id = s.user_id LEFT JOIN participant_profiles pp ON pp.user_id = s.user_id WHERE s.id = $1`,
       [sessionId],
@@ -117,7 +117,7 @@ export async function scoreReport(sessionId: string, stored: FeedbackReport | nu
   // Questions left blank count as wrong, as in the result saved when the test finished.
   const rows = raw.map((r) => (r.status === "pending" && !answered(r) ? { ...r, status: "scored", content_score: 0 } : r));
 
-  const summary = levelSummary(rows as never);
+  const summary = levelSummary(rows as never, scoringOptions(s.scoring));
   const goalRaw: string | null = stored?.target?.level ?? (s.goal_level && s.goal_level !== "unsure" ? s.goal_level : null);
   const goal = goalRaw && ORDER.includes(goalRaw) ? goalRaw : null;
 

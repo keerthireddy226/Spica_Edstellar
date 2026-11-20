@@ -12,7 +12,7 @@ import { notify, orgAdminIds } from "../notifications/service.js";
 import { emitEvent } from "../webhooks/service.js";
 import { isTrulyCorrect } from "../placement/fluencySignals.js";
 import { passThresholdForLevel } from "../placement/cefr.js";
-import { levelSummary, weightedSkillMean } from "../placement/levels.js";
+import { levelSummary, scoringOptions, weightedSkillMean } from "../placement/levels.js";
 import { testTypeOfExam } from "../catalogue/service.js";
 import { snapshot } from "../reports/batchReport.js";
 import { recordAudit } from "../audit/service.js";
@@ -373,7 +373,8 @@ export async function candidateResultFor(sessionId: string, examId: string | nul
     const graded = rows.filter((r) => r.status === "scored");
     const ok = (r: (typeof rows)[number]) => isTrulyCorrect(Number(r.content_score), r.cefr_level, r.input_method, r.manner_scores, passThresholdForLevel);
     const labels = [...new Set(rows.map((r) => r.part_label).filter(Boolean))];
-    const summary = levelSummary(rows);
+    const scoring = (await pool.query(`SELECT result->>'scoring' AS scoring FROM sessions WHERE id = $1`, [sessionId])).rows[0]?.scoring;
+    const summary = levelSummary(rows, scoringOptions(scoring));
     // As on the candidate's own result: the overall percentage is the skills'
     // weighted mean, and the level is the Spica score's, so the report and the
     // test never show different figures.

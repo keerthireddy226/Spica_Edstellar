@@ -6735,5 +6735,7 @@
  "Withdraw the referral of {{org}}? Spica stops following it up, and it earns no fee.": "Perutaanko suositus {{org}}? Spica lopettaa sen seurannan, eikä siitä makseta palkkiota.",
  "Your link is already in each post, tagged so your Track record shows where people came from. The posts are in English, like Spica's tests.": "Linkkisi on jo jokaisessa julkaisussa, merkittynä, jotta tuloksesi näyttävät, mistä ihmiset tulivat. Julkaisut ovat englanniksi kuten Spican testit.",
  "{{p}}% of decided referrals won": "{{p}} % ratkaistuista suosituksista voitettu",
- "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Kokonaismäärä, joka jokaisen organisaation pitäisi saavuttaa (demo ja maksetut yhteensä), missä erissä tahansa. Vain tämän saavuttaneet lasketaan vähimmäismäärään."
+ "The total each organisation should reach (demo and paid together), in any amounts. Only organisations at this total count towards the minimum.": "Kokonaismäärä, joka jokaisen organisaation pitäisi saavuttaa (demo ja maksetut yhteensä), missä erissä tahansa. Vain tämän saavuttaneet lasketaan vähimmäismäärään.",
+ "Skip to content": "Siirry sisältöön",
+ "Test for your final assessment": "Loppuarvioinnin testi"
 }
