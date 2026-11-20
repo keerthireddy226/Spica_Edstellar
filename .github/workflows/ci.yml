@@ -38,7 +38,7 @@ jobs:
       DATABASE_URL: postgres://ci:ci@localhost:5432/spica
       NODE_ENV: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           lfs: false
       - uses: actions/setup-node@v4
