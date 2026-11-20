@@ -71,9 +71,9 @@ paymentsRouter.get("/quote", requireAuth, async (req: AuthedRequest, res, next) 
 paymentsRouter.get("/products", requireAuth, async (req: AuthedRequest, res, next) => {
   try {
     const buyer = await resolveBuyer(req.user!);
-    const asked = typeof req.query.currency === "string" ? req.query.currency : null;
-    const currency = (CURRENCIES as readonly string[]).includes(asked ?? "") ? (asked as Currency) : currencyFor(buyer?.billingCountry);
-    res.json({ currency, currencies: CURRENCIES, canBuy: buyer?.kind === "individual_plan", testMode: testModeEnabled(), products: await priceList(currency) });
+    // USD for everyone (owner decision, 20 Nov 2026).
+    const currency: Currency = currencyFor(buyer?.billingCountry);
+    res.json({ currency, currencies: [currency], canBuy: buyer?.kind === "individual_plan", testMode: testModeEnabled(), products: await priceList(currency) });
   } catch (err) {
     next(err);
   }

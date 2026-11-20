@@ -4,6 +4,7 @@
 // commission rate (0 until the business decides) and a free demo allocation,
 // open / extend / end the demo window, and switch on one demo licence for the
 // partner's own demonstrations. The partner portal is stage 2.
+import { MAX_RESELLER_DISCOUNT } from "./orders.js";
 import { Router } from "express";
 import { randomUUID, randomInt } from "node:crypto";
 import bcrypt from "bcrypt";
@@ -18,7 +19,7 @@ import { createPartnerOrganisation, giveDemoLicences, partnerOrganisations } fro
 import { licencesSchema, orgSchema, sendPartnerError } from "./portalRoutes.js";
 import { notify } from "../notifications/service.js";
 import {
-  activeOrganisations, bringsOrganisations, CODE_PREFIX, PARTNER_TYPE_LABEL, PERIOD_START_SQL, PARTNER_TYPES, PARTNERSHIP_MONTHS,
+  activeOrganisations, bringsOrganisations, ORG_LICENCES_SQL, CODE_PREFIX, PARTNER_TYPE_LABEL, PERIOD_START_SQL, PARTNER_TYPES, PARTNERSHIP_MONTHS,
   partnershipEnd, partnershipStatus, renewalBlock, renewedEnd, type PartnerType,
 } from "./partnership.js";
 
@@ -73,7 +74,9 @@ const SELECT = `
   SELECT cp.*, u.deleted_at AS user_deleted_at,
     (SELECT max(s.created_at) FROM auth_sessions s WHERE s.user_id = cp.user_id) AS last_sign_in,
     (SELECT count(*)::int FROM tenants t WHERE t.channel_partner_id = cp.id) AS organisations,
-    (SELECT count(*)::int FROM tenants t WHERE t.channel_partner_id = cp.id AND t.deactivated_at IS NULL) AS active_organisations,
+    (SELECT count(*)::int FROM tenants t WHERE t.channel_partner_id = cp.id AND t.deactivated_at IS NULL) AS added_organisations,
+    -- Counting towards the minimum: active and at the licence minimum in total.
+    (SELECT count(*)::int FROM tenants t WHERE t.channel_partner_id = cp.id AND t.deactivated_at IS NULL AND ${ORG_LICENCES_SQL("t")} >= greatest(cp.min_licences_per_org, 1)) AS active_organisations,
     (SELECT json_build_object('signedAt', a.signed_at, 'signedName', a.signed_name, 'version', a.version, 'periodEnd', a.period_end) FROM partner_agreements a
        WHERE a.partner_id = cp.id AND a.period_end IS NOT DISTINCT FROM cp.demo_ends_at ORDER BY a.signed_at DESC LIMIT 1) AS agreement,
     (SELECT max(a.signed_at) FROM partner_agreements a WHERE a.partner_id = cp.id) AS last_signed_at,
@@ -107,6 +110,7 @@ function shape(r: Record<string, any>) {
     minOrganisations: r.min_organisations,
     minLicencesPerOrg: r.min_licences_per_org,
     activeOrganisations: r.active_organisations ?? 0,
+    addedOrganisations: r.added_organisations ?? 0,
     discountPercent: Number(r.discount_percent ?? 0),
     referralFee: Number(r.referral_fee ?? 0),
     referralFeeCurrency: r.referral_fee_currency,
@@ -171,7 +175,8 @@ channelPartnerStaffRouter.get("/channel-partners/:id", requireAuth, async (req: 
 const termsSchema = {
   minOrganisations: z.number().int().min(0).max(10000),
   minLicencesPerOrg: z.number().int().min(1).max(100000),
-  discountPercent: z.number().min(0).max(90),
+  // A Reseller's discount is at most 50% (owner, 20 Nov 2026).
+  discountPercent: z.number().min(0).max(MAX_RESELLER_DISCOUNT),
   referralFee: z.number().int().min(0).max(100000000),
   referralFeeCurrency: z.enum(["INR", "USD"]),
 };
@@ -189,7 +194,7 @@ const createSchema = z.object({
   minLicencesPerOrg: termsSchema.minLicencesPerOrg.default(1),
   discountPercent: termsSchema.discountPercent.default(0),
   referralFee: termsSchema.referralFee.default(0),
-  referralFeeCurrency: termsSchema.referralFeeCurrency.default("INR"),
+  referralFeeCurrency: termsSchema.referralFeeCurrency.default("USD"),
 });
 
 channelPartnerStaffRouter.post("/channel-partners", requireAuth, async (req: AuthedRequest, res, next) => {

@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "Partnerstwo się zakończyło, a portal partnera jest tylko do odczytu. Przedłuż je w sekcji Partnerzy, jeśli ma trwać dalej.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: partnerstwo kończy się {{shortDate}}",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "Przedłuż je w sekcji Partnerzy o kolejne 3 miesiące. Poniżej minimalnej liczby organizacji przedłużenie wymaga pisemnego powodu.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Przez najbliższe {{days}} dni możesz się jeszcze logować i przeglądać raporty, ale nie ćwiczyć. Potem do logowania potrzebna będzie płatna licencja. Poproś administratora swojej organizacji o pełny dostęp."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Przez najbliższe {{days}} dni możesz się jeszcze logować i przeglądać raporty, ale nie ćwiczyć. Potem do logowania potrzebna będzie płatna licencja. Poproś administratora swojej organizacji o pełny dostęp.",
+ "{{name}} allocated order {{order}}": "{{name}} przydzielił zamówienie {{order}}",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} przydzielił zamówienie {{order}} swoim organizacjom.",
+ "The order's history shows each organisation's share.": "Historia zamówienia pokazuje udział każdej organizacji."
 }

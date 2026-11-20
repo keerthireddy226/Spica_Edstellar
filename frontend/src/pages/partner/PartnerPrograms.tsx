@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { AlertTriangle, CalendarClock, Coins, Copy, FileSignature, Link2, Megaphone, Plus, ShoppingCart, UserPlus } from "lucide-react";
+import { AlertTriangle, CalendarClock, Coins, Copy, FileSignature, Link2, Megaphone, MousePointerClick, Plus, ShoppingCart, UserPlus } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/Button";
@@ -21,7 +21,8 @@ export interface PartnerMe {
   demo: { total: number; given: number; left: number; status: "not_started" | "active" | "ended"; startsAt: string | null; endsAt: string | null; giftValidDays: number; giftGraceDays: number };
   partnership: { status: PartnershipStatus; readOnly: boolean; startsAt: string | null; endsAt: string | null; daysLeft: number | null; expiringDays: number; terminatedAt: string | null; terminationReason: string | null };
   agreement: { signed: boolean; signedAt: string | null; signedName: string | null; version: string | null };
-  minimums: { organisations: number; current: number; licencesPerOrg: number } | null;
+  // current = organisations at the licence minimum (they count); added = all active ones.
+  minimums: { organisations: number; current: number; added?: number; licencesPerOrg: number } | null;
   rates: { commissionPercent: number; discountPercent: number; referralFee: number; referralFeeCurrency: string };
 }
 
@@ -126,7 +127,7 @@ export function PartnershipBar({ me }: { me: PartnerMe }) {
             {tr("Organisations: {{n}} of {{min}} needed", { n: m.current, min: m.organisations })}
           </span>
         )}
-        {m && <span className="text-muted">{tr("At least {{n}} licences per organisation", { n: m.licencesPerOrg })}</span>}
+        {m && <span className="text-muted">{tr("Each counts once it has {{n}} licences in total", { n: m.licencesPerOrg })}{m.added != null && m.added > m.current ? ` · ${tr("{{k}} added still below", { k: m.added - m.current })}` : ""}</span>}
         <span className="text-muted">{rate}</span>
         <Link to={AGREEMENT_PATH} className="ml-auto flex items-center gap-1.5 font-semibold text-navy">
           <FileSignature size={14} />
@@ -292,7 +293,9 @@ interface AffiliateResponse extends EarningsResponse {
   code: string;
   link: string;
   ratePercent: number;
+  clicks?: { total: number; last30: number };
   signups: number;
+  linkSignups?: number;
   buyers: number;
 }
 
@@ -337,8 +340,9 @@ export function AffiliateDashboard({ me }: { me: PartnerMe }) {
   return (
     <div className="flex flex-col gap-6 w-full">
       <PageHeader title={tr("Welcome, {{name}}", { name: me.partner.fullName })} subtitle={typeBlurb("affiliate")} />
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard variant="ledger" palette="terracotta" index={0} icon={UserPlus} value={d.signups} label={tr("Sign-ups with your code")} sub={tr("People credited to you")} progress={0.5} />
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+        <StatCard variant="ledger" palette="terracotta" index={0} icon={MousePointerClick} value={d.clicks?.total ?? 0} label={tr("Link clicks")} sub={tr("{{n}} in the last 30 days", { n: d.clicks?.last30 ?? 0 })} progress={0.5} />
+        <StatCard variant="ledger" palette="terracotta" index={0} icon={UserPlus} value={d.signups} label={tr("Sign-ups with your code")} sub={tr("{{n}} through your link, the rest typed your code", { n: d.linkSignups ?? 0 })} progress={d.clicks?.total ? Math.min(1, (d.linkSignups ?? 0) / d.clicks.total) : 0.5} />
         <StatCard variant="ledger" palette="terracotta" index={1} icon={ShoppingCart} value={d.buyers} label={tr("Bought something")} sub={tr("Paid purchases")} progress={d.signups ? d.buyers / d.signups : 0} />
         <StatCard variant="ledger" palette="terracotta" index={2} icon={Coins} value={totalsText(d.totals, "earned")} label={tr("Earned")} sub={tr("{{n}}% of each paid purchase, before tax", { n: d.ratePercent })} progress={0.5} />
         <StatCard variant="ledger" palette="terracotta" index={3} icon={Coins} value={totalsText(d.totals, "due")} label={tr("To be paid")} sub={tr("Paid so far: {{p}}", { p: totalsText(d.totals, "paid") })} progress={0} />

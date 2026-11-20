@@ -7,7 +7,9 @@
 //    Spica marks as won makes its first paid purchase.
 // Earnings are worked out from the payment records by syncEarnings (on page
 // load and daily), so no payment path needs to know about partners.
+import { createHash } from "node:crypto";
 import { Router, type Response } from "express";
+import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
@@ -22,6 +24,8 @@ import { AGREEMENT_VERSION, agreementText, assertPartnerCanAct, canAct, currentA
 export const partnerProgramRouter = Router();
 export const staffPartnerProgramRouter = Router();
 export const partnerCodeRouter = Router();
+// Public: a visit to an Affiliate's link (no sign-in).
+export const partnerLinkRouter = Router();
 
 async function myPartner(req: AuthedRequest, res: Response): Promise<any | null> {
   if (req.user?.role !== "channel_partner") {
@@ -49,12 +53,46 @@ export async function affiliateForCode(code: string | null | undefined): Promise
   return p.id;
 }
 
-// Credit a person to an affiliate, once (the first code wins).
-export async function creditAffiliate(userId: string, code: string | null | undefined): Promise<boolean> {
+// Credit a person to an affiliate, once (the first code wins). `via`: the
+// link, the code typed at sign-up, or the code typed on the Plans page.
+export async function creditAffiliate(userId: string, code: string | null | undefined, via: "link" | "code" | "plans" = "code", src?: string | null): Promise<boolean> {
   const partnerId = await affiliateForCode(code);
   if (!partnerId) return false;
-  const r = await pool.query(`UPDATE users SET referred_by_partner_id = $2, referred_at = now() WHERE id = $1 AND referred_by_partner_id IS NULL`, [userId, partnerId]);
+  // The link's source tag (?src=youtube), kept only when they came through the link.
+  const tag = via === "link" && src && /^[A-Za-z0-9_-]{1,40}$/.test(src) ? src.toLowerCase() : null;
+  const r = await pool.query(`UPDATE users SET referred_by_partner_id = $2, referred_at = now(), referred_via = $3, referred_src = $4 WHERE id = $1 AND referred_by_partner_id IS NULL`, [userId, partnerId, via, tag]);
   return !!r.rowCount;
+}
+
+// ---------- Link clicks (owner, 20 Nov 2026) ----------
+// The sign-up page reports a visit that came through an Affiliate's link.
+// One count per visitor per day; the visitor is a one-way hash of the network
+// address and browser, so no personal data is stored. Always answers 204.
+const clickLimiter = rateLimit({ windowMs: 60_000, limit: 30, standardHeaders: true, legacyHeaders: false, handler: (_req, res) => res.status(204).end() });
+partnerLinkRouter.post("/click", clickLimiter, async (req, res) => {
+  try {
+    const parsed = z.object({ code: z.string().trim().max(20), src: z.string().trim().max(40).regex(/^[A-Za-z0-9_-]*$/).optional() }).safeParse(req.body ?? {});
+    if (parsed.success) {
+      const partnerId = await affiliateForCode(parsed.data.code);
+      if (partnerId) {
+        const visitor = createHash("sha256").update(`${req.ip ?? ""}|${req.headers["user-agent"] ?? ""}|${partnerId}`).digest("hex").slice(0, 32);
+        await pool.query(`INSERT INTO partner_link_clicks (partner_id, visitor, src) VALUES ($1, $2, $3) ON CONFLICT (partner_id, visitor, clicked_on) DO NOTHING`, [partnerId, visitor, parsed.data.src?.toLowerCase() || null]);
+      }
+    }
+  } catch (err) {
+    console.error("partner click failed:", err);
+  }
+  res.status(204).end();
+});
+
+async function clickCounts(partnerId: string) {
+  const r = (
+    await pool.query(
+      `SELECT count(*)::int AS total, count(*) FILTER (WHERE clicked_on > current_date - 30)::int AS last30 FROM partner_link_clicks WHERE partner_id = $1`,
+      [partnerId],
+    )
+  ).rows[0];
+  return { total: r.total as number, last30: r.last30 as number };
 }
 
 // A signed-in individual learner enters a partner code (e.g. on the plans page).
@@ -66,7 +104,7 @@ partnerCodeRouter.post("/partner-code", requireAuth, async (req: AuthedRequest, 
     const u = (await pool.query(`SELECT u.referred_by_partner_id, t.type FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1`, [req.user!.id])).rows[0];
     if (!u || !String(u.type).startsWith("individual")) return res.status(403).json({ error: "individuals_only" });
     if (u.referred_by_partner_id) return res.status(409).json({ error: "code_already_used" });
-    if (!(await creditAffiliate(req.user!.id, parsed.data.code))) return res.status(404).json({ error: "invalid_code" });
+    if (!(await creditAffiliate(req.user!.id, parsed.data.code, "plans"))) return res.status(404).json({ error: "invalid_code" });
     res.json({ ok: true });
   } catch (err) {
     next(err);
@@ -205,7 +243,7 @@ partnerProgramRouter.get("/affiliate", requireAuth, async (req: AuthedRequest, r
   try {
     const people = (
       await pool.query(
-        `SELECT count(*)::int AS signups,
+        `SELECT count(*)::int AS signups, count(*) FILTER (WHERE u.referred_via = 'link')::int AS link_signups,
            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM payment_orders o WHERE o.buyer_id = u.id AND o.status = 'paid'))::int AS buyers
          FROM users u WHERE u.referred_by_partner_id = $1`,
         [p.id],
@@ -216,9 +254,99 @@ partnerProgramRouter.get("/affiliate", requireAuth, async (req: AuthedRequest, r
       code: p.code,
       link: `${PAYMENT_CONFIG.frontendUrl}/signup?ref=${encodeURIComponent(p.code)}`,
       ratePercent: Number(p.commission_percent),
+      clicks: await clickCounts(p.id),
       signups: people.signups,
+      linkSignups: people.link_signups,
       buyers: people.buyers,
       ...e,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------- An Affiliate's track record (owner, 20 Nov 2026) ----------
+// Everything about its results, never who the people are: the funnel, month
+// by month, by link source, an anonymous list of the people it brought, and
+// Spica's payouts.
+partnerProgramRouter.get("/track-record", requireAuth, async (req: AuthedRequest, res, next) => {
+  const p = await myPartner(req, res);
+  if (!p) return;
+  if (p.partner_type !== "affiliate") return res.status(403).json({ error: "not_for_partner_type" });
+  try {
+    const people = (
+      await pool.query(
+        `SELECT u.referred_at, u.referred_via, u.referred_src, u.created_at,
+           (SELECT coalesce(json_agg(json_build_object('what', coalesce(pr.name, CASE o.kind WHEN 'individual_plan' THEN 'Full access' ELSE 'Spica purchase' END), 'paidAt', o.paid_at, 'amount', o.subtotal, 'currency', o.currency,
+               'earned', (SELECT e.amount FROM partner_earnings e WHERE e.partner_id = $1 AND e.source_type = 'payment_order' AND e.source_id = o.id AND e.status <> 'void')) ORDER BY o.paid_at), '[]')
+            FROM payment_orders o LEFT JOIN products pr ON pr.id = o.product_id WHERE o.buyer_id = u.id AND o.status = 'paid') AS purchases
+         FROM users u WHERE u.referred_by_partner_id = $1 ORDER BY coalesce(u.referred_at, u.created_at)`,
+        [p.id],
+      )
+    ).rows;
+    const clicks = (await pool.query(`SELECT clicked_on, src FROM partner_link_clicks WHERE partner_id = $1`, [p.id])).rows;
+    const earnings = (await pool.query(`SELECT amount, currency, status, earned_at, paid_at, paid_reference FROM partner_earnings WHERE partner_id = $1 AND status <> 'void'`, [p.id])).rows;
+    const month = (d: Date | string) => new Date(d).toISOString().slice(0, 7);
+    const add = (m: Record<string, number>, c: string, n: number) => ((m[c] = (m[c] ?? 0) + n), m);
+
+    // Month by month (only months with something in them).
+    const months = new Map<string, { month: string; clicks: number; signups: number; buyers: Set<number>; earned: Record<string, number> }>();
+    const at = (m: string) => months.get(m) ?? (months.set(m, { month: m, clicks: 0, signups: 0, buyers: new Set(), earned: {} }), months.get(m)!);
+    for (const c of clicks) at(month(c.clicked_on)).clicks++;
+    people.forEach((u, i) => {
+      at(month(u.referred_at ?? u.created_at)).signups++;
+      for (const b of u.purchases) at(month(b.paidAt)).buyers.add(i);
+    });
+    for (const e of earnings) add(at(month(e.earned_at)).earned, e.currency, e.amount);
+
+    // By link source: clicks and sign-ups per ?src= tag ("" = the plain link).
+    const sources = new Map<string, { src: string; clicks: number; signups: number; buyers: number }>();
+    const bySrc = (s: string | null) => sources.get(s ?? "") ?? (sources.set(s ?? "", { src: s ?? "", clicks: 0, signups: 0, buyers: 0 }), sources.get(s ?? "")!);
+    for (const c of clicks) bySrc(c.src).clicks++;
+    for (const u of people.filter((x) => x.referred_via === "link")) {
+      const s = bySrc(u.referred_src);
+      s.signups++;
+      if (u.purchases.length) s.buyers++;
+    }
+
+    // Payouts: Spica's payments, grouped by reference and day.
+    const payouts = new Map<string, { paidAt: string; reference: string | null; amounts: Record<string, number>; items: number }>();
+    for (const e of earnings.filter((x) => x.status === "paid" && x.paid_at)) {
+      const key = `${new Date(e.paid_at).toISOString().slice(0, 10)}|${e.paid_reference ?? ""}`;
+      const row = payouts.get(key) ?? (payouts.set(key, { paidAt: e.paid_at, reference: e.paid_reference, amounts: {}, items: 0 }), payouts.get(key)!);
+      add(row.amounts, e.currency, e.amount);
+      row.items++;
+    }
+
+    const earned: Record<string, number> = {};
+    const paid: Record<string, number> = {};
+    for (const e of earnings) {
+      add(earned, e.currency, e.amount);
+      if (e.status === "paid") add(paid, e.currency, e.amount);
+    }
+    res.json({
+      code: p.code,
+      link: `${PAYMENT_CONFIG.frontendUrl}/signup?ref=${encodeURIComponent(p.code)}`,
+      ratePercent: Number(p.commission_percent),
+      funnel: {
+        clicks: clicks.length,
+        signups: people.length,
+        linkSignups: people.filter((u) => u.referred_via === "link").length,
+        buyers: people.filter((u) => u.purchases.length > 0).length,
+        earned,
+        paid,
+      },
+      months: [...months.values()].sort((a, b) => b.month.localeCompare(a.month)).map((m) => ({ month: m.month, clicks: m.clicks, signups: m.signups, buyers: m.buyers.size, earned: m.earned })),
+      sources: [...sources.values()].sort((a, b) => b.clicks + b.signups - (a.clicks + a.signups)),
+      // Numbered in the order they joined; no name, email or anything that identifies them.
+      people: people.map((u, i) => ({
+        number: i + 1,
+        joinedAt: u.referred_at ?? u.created_at,
+        via: u.referred_via,
+        src: u.referred_src,
+        purchases: (u.purchases as { what: string; paidAt: string; amount: number; currency: string; earned: number | null }[]).map((b) => ({ what: b.what, paidAt: b.paidAt, amount: b.amount, currency: b.currency, earned: b.earned ?? 0 })),
+      })).reverse(),
+      payouts: [...payouts.values()].sort((a, b) => String(b.paidAt).localeCompare(String(a.paidAt))),
     });
   } catch (err) {
     next(err);
@@ -308,6 +436,48 @@ partnerProgramRouter.post("/leads", requireAuth, async (req: AuthedRequest, res,
 });
 
 // ---------- Spica staff ----------
+
+// The people credited to an Affiliate, for Spica staff to check its work:
+// who, when, how (link / code / Plans page), what they bought and what it
+// earned. A shared company email domain is flagged as a possible self-referral.
+const PUBLIC_MAIL = new Set(["gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com", "icloud.com", "rediffmail.com", "proton.me", "protonmail.com", "aol.com", "zoho.com"]);
+staffPartnerProgramRouter.get("/channel-partners/:id/referred", requireAuth, async (req: AuthedRequest, res, next) => {
+  if (!(await requirePermission(req, res, "manageOrganizations"))) return;
+  try {
+    const p = (await pool.query(`SELECT id, email, partner_type FROM channel_partners WHERE id = $1`, [req.params.id])).rows[0];
+    if (!p) return res.status(404).json({ error: "partner_not_found" });
+    const r = await pool.query(
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.created_at, u.referred_at, u.referred_via, u.deleted_at,
+         (SELECT count(*)::int FROM payment_orders o WHERE o.buyer_id = u.id AND o.status = 'paid') AS purchases,
+         (SELECT coalesce(json_object_agg(x.currency, x.amount), '{}') FROM (SELECT o.currency, sum(o.subtotal)::int AS amount FROM payment_orders o WHERE o.buyer_id = u.id AND o.status = 'paid' GROUP BY o.currency) x) AS spent,
+         (SELECT coalesce(json_object_agg(x.currency, x.amount), '{}') FROM (SELECT e.currency, sum(e.amount)::int AS amount FROM partner_earnings e JOIN payment_orders o ON o.id = e.source_id
+             WHERE e.partner_id = $1 AND e.source_type = 'payment_order' AND e.status <> 'void' AND o.buyer_id = u.id GROUP BY e.currency) x) AS earned
+       FROM users u WHERE u.referred_by_partner_id = $1 ORDER BY u.referred_at DESC NULLS LAST`,
+      [p.id],
+    );
+    const domain = (e: string) => String(e).split("@")[1]?.toLowerCase() ?? "";
+    const own = domain(p.email);
+    res.json({
+      clicks: await clickCounts(p.id),
+      people: r.rows.map((u) => ({
+        id: u.id,
+        name: [u.first_name, u.last_name].filter(Boolean).join(" "),
+        email: u.email,
+        signedUpAt: u.created_at,
+        creditedAt: u.referred_at,
+        via: u.referred_via,
+        deleted: !!u.deleted_at,
+        purchases: u.purchases,
+        spent: u.spent,
+        earned: u.earned,
+        // Same address, or the same company domain, as the Affiliate.
+        possibleSelfReferral: String(u.email).toLowerCase() === String(p.email).toLowerCase() || (!!own && !PUBLIC_MAIL.has(own) && domain(u.email) === own),
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 staffPartnerProgramRouter.get("/channel-partners/:id/leads", requireAuth, async (req: AuthedRequest, res, next) => {
   if (!(await requirePermission(req, res, "manageOrganizations"))) return;

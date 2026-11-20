@@ -363,12 +363,12 @@ export type SwitchQuote =
   | { free: false; productId: string; amount: number; currency: string; taxLabel: string | null; taxRate: number; taxAmount: number; total: number };
 
 // What switching this preparation to that test costs. GST is added for sales
-// billed in India in INR, as for any product.
+// billed in India, as for any product.
 export async function switchQuote(userId: string, entitlementId: string, testTypeId: string): Promise<SwitchQuote> {
   const s = await switchPlan(userId, entitlementId, testTypeId);
   if (s.charge.outcome === "org") throw new AttemptError("switch_needs_org");
   if (s.charge.outcome === "free") return { free: true };
-  const taxRate = s.billingCountry === "IN" && s.charge.currency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
+  const taxRate = s.billingCountry === "IN" ? PAYMENT_CONFIG.gstRate : 0;
   const taxAmount = Math.round((s.charge.amount * taxRate) / 100);
   return {
     free: false,

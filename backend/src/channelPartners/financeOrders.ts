@@ -180,7 +180,7 @@ export async function orderDocument(orderId: string, kind: "proforma" | "invoice
   const number = kind === "proforma" ? o.proforma_number : o.invoice_number;
   if (!number) return { available: false as const };
   const lines = await pool.query(
-    `SELECT l.kind, l.level, l.quantity, l.credits, l.unit_amount, l.amount, p.name FROM partner_order_lines l LEFT JOIN products p ON p.id = l.product_id WHERE l.order_id = $1
+    `SELECT l.kind, l.level, l.quantity, l.credits, l.unit_amount, l.amount, l.list_unit_amount, l.discount_percent, p.name FROM partner_order_lines l LEFT JOIN products p ON p.id = l.product_id WHERE l.order_id = $1
      ORDER BY CASE l.kind WHEN 'full_access' THEN 0 WHEN 'product' THEN 1 ELSE 2 END, p.name`,
     [orderId],
   );
@@ -200,7 +200,7 @@ export async function orderDocument(orderId: string, kind: "proforma" | "invoice
     currency: o.currency,
     validUntil: o.valid_until_text,
     licenceMonths: o.licence_months,
-    lines: lines.rows.map((l) => ({ kind: l.kind, name: l.name, level: l.level, quantity: l.quantity, credits: l.credits, unitAmount: l.unit_amount, amount: l.amount })),
+    lines: lines.rows.map((l) => ({ kind: l.kind, name: l.name, level: l.level, quantity: l.quantity, credits: l.credits, unitAmount: l.unit_amount, amount: l.amount, listUnitAmount: l.list_unit_amount, discountPercent: Number(l.discount_percent ?? 0) })),
     subtotal: o.subtotal,
     taxRate: Number(o.tax_rate),
     taxAmount: o.tax_amount,
@@ -208,4 +208,58 @@ export async function orderDocument(orderId: string, kind: "proforma" | "invoice
     paymentLinkUrl: kind === "proforma" && o.status === "proforma_sent" ? o.payment_link_url : null,
     payment: o.invoice_number ? { method: o.payment_method, reference: o.payment_reference, amount: o.payment_amount, receivedOn: o.paid_on } : null,
   };
+}
+
+// ---- A Reseller's Payments page (it is billed for its own orders) ----
+
+// Everything the Reseller owes or has paid: orders waiting for a proforma,
+// proformas to pay (with how to pay), and payments with their tax invoices.
+export async function resellerPayments(partnerId: string) {
+  const r = await pool.query(
+    `SELECT o.id, o.order_number, o.status, o.currency, o.subtotal, o.tax_rate, o.tax_amount, o.total, to_char(o.valid_until, 'YYYY-MM-DD') AS valid_until,
+       o.proforma_number, o.proforma_sent_at, o.payment_link_url, o.payment_method, o.payment_reference, o.payment_amount,
+       to_char(o.payment_received_on, 'YYYY-MM-DD') AS payment_received_on, o.invoice_number, o.invoice_issued_at, o.created_at,
+       (SELECT max(e.created_at) FROM partner_order_events e WHERE e.order_id = o.id AND e.note = 'Payment link created') AS link_created_at
+     FROM partner_orders o WHERE o.partner_id = $1 AND o.status NOT IN ('draft', 'cancelled') ORDER BY o.created_at DESC`,
+    [partnerId],
+  );
+  const linkLive = (at: Date | null) => !!at && Date.now() - new Date(at).getTime() < 23 * 3600 * 1000;
+  const row = (o: Record<string, any>) => ({
+    id: o.id,
+    orderNumber: o.order_number,
+    status: o.status,
+    currency: o.currency,
+    subtotal: o.subtotal,
+    taxRate: Number(o.tax_rate),
+    taxAmount: o.tax_amount,
+    total: o.total,
+    validUntil: o.valid_until,
+    proformaNumber: o.proforma_number,
+    proformaSentAt: o.proforma_sent_at,
+    paymentLinkUrl: o.status === "proforma_sent" && linkLive(o.link_created_at) ? o.payment_link_url : null,
+    paymentMethod: o.payment_method,
+    paymentReference: o.payment_reference,
+    paymentAmount: o.payment_amount,
+    paymentReceivedOn: o.payment_received_on,
+    invoiceNumber: o.invoice_number,
+    invoiceIssuedAt: o.invoice_issued_at,
+    submittedAt: o.created_at,
+  });
+  return {
+    bankDetails: process.env.SELLER_BANK_DETAILS ?? "",
+    onlinePayment: stripeEnabled(),
+    waiting: r.rows.filter((o) => o.status === "submitted").map(row),
+    toPay: r.rows.filter((o) => o.status === "proforma_sent").map(row),
+    paid: r.rows.filter((o) => o.payment_received_on || o.invoice_number).map(row),
+  };
+}
+
+// The Reseller pays online itself: reuse a link made in the last 23 hours,
+// else make a new one (Stripe links work for 24 hours).
+export async function resellerPaymentLink(args: { orderId: string; partnerId: string; actor: Actor }) {
+  const o = await order(args.orderId);
+  if (o.partner_id !== args.partnerId) throw new PartnerError("order_not_found", 404);
+  const at = (await pool.query(`SELECT max(created_at) AS at FROM partner_order_events WHERE order_id = $1 AND note = 'Payment link created'`, [o.id])).rows[0]?.at;
+  if (o.status === "proforma_sent" && o.payment_link_url && at && Date.now() - new Date(at).getTime() < 23 * 3600 * 1000) return { url: o.payment_link_url as string };
+  return createPaymentLink(args);
 }

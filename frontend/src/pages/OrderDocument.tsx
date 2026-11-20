@@ -21,7 +21,7 @@ interface Doc {
   currency: string;
   validUntil: string;
   licenceMonths: number;
-  lines: { kind: string; name: string | null; level: string | null; quantity: number; credits: number | null; unitAmount: number; amount: number }[];
+  lines: { kind: string; name: string | null; level: string | null; quantity: number; credits: number | null; unitAmount: number; amount: number; listUnitAmount?: number | null; discountPercent?: number }[];
   subtotal: number;
   taxRate: number;
   taxAmount: number;
@@ -48,6 +48,9 @@ export function OrderDocument() {
   if (!doc.available) return <p className="p-10 text-sm text-muted">{kind === "invoice" ? tr("The invoice is issued when the payment is received.") : tr("The proforma invoice hasn't been sent yet.")}</p>;
   const m = (n: number) => money(n, doc.currency);
   const proforma = doc.kind === "proforma";
+  // A Reseller's order: Spica's list price and the discount, before the subtotal.
+  const listTotal = doc.lines.reduce((n, l) => n + (l.discountPercent && l.listUnitAmount != null ? l.listUnitAmount * (l.kind === "full_access" ? l.quantity * doc.licenceMonths : (l.credits ?? l.quantity)) : l.amount), 0);
+  const discountPct = doc.lines.find((l) => l.discountPercent)?.discountPercent ?? 0;
   return (
     <div className="min-h-screen bg-white py-10 px-4 print:p-0">
       <div className="max-w-3xl mx-auto mb-4 flex justify-between items-center gap-3 print:hidden">
@@ -83,7 +86,7 @@ export function OrderDocument() {
           </div>
           <div className="text-sm">
             <p className="text-xs uppercase tracking-wide text-[#666] mb-1">{tr("Organisations")}</p>
-            <p>{doc.organisations.join(", ")}</p>
+            <p>{doc.organisations.length ? doc.organisations.join(", ") : tr("Chosen when the licences are allocated")}</p>
             <p className="mt-2">{tr("Licences must be assigned by {{d}}. Each licence lasts {{n}} months from when it starts.", { d: date(doc.validUntil), n: doc.licenceMonths })}</p>
           </div>
         </div>
@@ -107,13 +110,29 @@ export function OrderDocument() {
                       : `${l.name}${l.level ? ` · ${l.level}` : ""} (${tr("{{n}} learners", { n: l.quantity })})`}
                 </td>
                 <td className="py-3 text-right">{l.kind === "full_access" ? tr("{{n}} learner-months", { n: l.quantity * doc.licenceMonths }) : tr("{{n}} credits", { n: l.credits ?? l.quantity })}</td>
-                <td className="py-3 text-right">{m(l.unitAmount)}</td>
+                <td className="py-3 text-right">
+                  {!!l.discountPercent && l.listUnitAmount != null && <s className="text-[#888] mr-1.5">{m(l.listUnitAmount)}</s>}
+                  {m(l.unitAmount)}
+                  {!!l.discountPercent && <span className="block text-xs text-[#666]">{tr("{{n}}% off", { n: l.discountPercent })}</span>}
+                </td>
                 <td className="py-3 text-right">{m(l.amount)}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <div className="ml-auto w-72 flex flex-col gap-1.5 text-sm">
+          {listTotal > doc.subtotal && discountPct > 0 && (
+            <>
+              <div className="flex justify-between">
+                <span>{tr("List price")}</span>
+                <span>{m(listTotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{tr("Reseller discount ({{n}}%)", { n: discountPct })}</span>
+                <span>−{m(listTotal - doc.subtotal)}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between">
             <span>{tr("Subtotal")}</span>
             <span>{m(doc.subtotal)}</span>

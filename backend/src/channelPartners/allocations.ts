@@ -5,6 +5,9 @@
 //    Org Admin assigns them as usual; a learner assigned during the grace gets
 //    access at once and their clock starts when the grace ends.
 //  - Credits go into the organisation's credit ledger.
+//  - Spica staff allocate any order. A Reseller allocates its own orders too
+//    (it bought the licences); Spica staff are told and see it in the order's
+//    history and the audit log.
 //  - No refunds: unused licences can go to anyone else in the organisation
 //    until the order ends, and a licence taken back from a learner who hasn't
 //    started returns to the pool (licenses/service.ts reclaimMonths).
@@ -29,19 +32,28 @@ export async function allocationSummary(orderId: string) {
       [orderId],
     )
   ).rows[0];
+  // A Reseller splits its licences as it likes unless Spica set a cap; other
+  // orders default to an even share per organisation.
+  const reseller = o.partner_id ? (await pool.query(`SELECT 1 FROM channel_partners WHERE id = $1 AND partner_type = 'reseller'`, [o.partner_id])).rowCount : 0;
+  const resellerId = reseller ? (o.partner_id as string) : null;
   const orgs = await pool.query(
     `SELECT t.id, t.name,
        coalesce((SELECT sum(a.licences) FROM partner_order_allocations a WHERE a.order_id = $1 AND a.tenant_id = t.id), 0)::int AS licences,
        coalesce((SELECT sum(a.credits) FROM partner_order_allocations a WHERE a.order_id = $1 AND a.tenant_id = t.id), 0)::int AS credits,
        (SELECT max(a.grace_ends_at) FROM partner_order_allocations a WHERE a.order_id = $1 AND a.tenant_id = t.id) AS grace_ends_at,
        (SELECT count(DISTINCT la.user_id)::int FROM license_assignments la JOIN license_purchases p ON p.id = la.purchase_id
-          WHERE p.partner_order_id = $1 AND p.tenant_id = t.id AND la.reclaimed_at IS NULL) AS assigned
-     FROM partner_order_organisations x JOIN tenants t ON t.id = x.tenant_id WHERE x.order_id = $1 ORDER BY t.name`,
-    [orderId],
+          WHERE p.partner_order_id = $1 AND p.tenant_id = t.id AND la.reclaimed_at IS NULL) AS assigned,
+       EXISTS (SELECT 1 FROM partner_order_organisations x WHERE x.order_id = $1 AND x.tenant_id = t.id) AS on_order
+     FROM tenants t
+     WHERE t.id IN (SELECT x.tenant_id FROM partner_order_organisations x WHERE x.order_id = $1)
+        -- A Reseller can allocate to any of its organisations, also ones added after the order.
+        OR ($2::uuid IS NOT NULL AND t.channel_partner_id = $2 AND t.deactivated_at IS NULL AND t.type = 'cohort')
+     ORDER BY t.name`,
+    [orderId, resellerId],
   );
   const allocatedLicences = orgs.rows.reduce((n, r) => n + r.licences, 0);
   const allocatedCredits = orgs.rows.reduce((n, r) => n + r.credits, 0);
-  const cap = o.per_org_cap ?? (totals.licences ? Math.ceil(totals.licences / Math.max(1, orgs.rowCount ?? 1)) : 0);
+  const cap = o.per_org_cap ?? (reseller ? totals.licences : totals.licences ? Math.ceil(totals.licences / Math.max(1, orgs.rowCount ?? 1)) : 0);
   return {
     order: o,
     licences: totals.licences,
@@ -49,11 +61,13 @@ export async function allocationSummary(orderId: string) {
     allocatedLicences,
     allocatedCredits,
     perOrgCap: cap,
-    organisations: orgs.rows.map((r) => ({ id: r.id, name: r.name, licences: r.licences, credits: r.credits, graceEndsAt: r.grace_ends_at, assigned: r.assigned })),
+    maxOrganisations: Number(o.max_organisations ?? 10),
+    reseller: !!reseller,
+    organisations: orgs.rows.map((r) => ({ id: r.id, name: r.name, licences: r.licences, credits: r.credits, graceEndsAt: r.grace_ends_at, assigned: r.assigned, onOrder: r.on_order })),
   };
 }
 
-export async function allocateOrder(args: { orderId: string; actor: Actor; items: { tenantId: string; licences: number; credits: number }[]; upgradeDemo?: boolean }) {
+export async function allocateOrder(args: { orderId: string; actor: Actor; items: { tenantId: string; licences: number; credits: number }[]; upgradeDemo?: boolean; partnerId?: string }) {
   const items = args.items.filter((i) => i.licences > 0 || i.credits > 0);
   if (!items.length) throw new PartnerError("nothing_to_allocate");
   const client = await pool.connect();
@@ -62,7 +76,7 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
   try {
     await client.query("BEGIN");
     o = (await client.query(`SELECT *, valid_until < current_date AS ended, to_char(valid_until, 'YYYY-MM-DD') AS vu FROM partner_orders WHERE id = $1 FOR UPDATE`, [args.orderId])).rows[0];
-    if (!o) throw new PartnerError("order_not_found", 404);
+    if (!o || (args.partnerId && o.partner_id !== args.partnerId)) throw new PartnerError("order_not_found", 404);
     if (!["confirmed", "allocated", "active"].includes(o.status)) throw new PartnerError("order_not_confirmed", 409, { status: o.status });
     if (o.ended) throw new PartnerError("order_ended", 409);
     const s = await allocationSummary(o.id);
@@ -76,6 +90,11 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
       addL += i.licences;
       addC += i.credits;
     }
+    // A Reseller's organisations not yet on the order join it, up to its maximum.
+    const joining = [...new Set(items.map((i) => i.tenantId))].filter((id) => !byOrg.get(id)!.onOrder);
+    const onOrder = s.organisations.filter((x) => x.onOrder).length;
+    if (joining.length && onOrder + joining.length > s.maxOrganisations) throw new PartnerError("too_many_organisations", 409, { max: s.maxOrganisations });
+    for (const id of joining) await client.query(`INSERT INTO partner_order_organisations (order_id, tenant_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [o.id, id]);
     if (s.allocatedLicences + addL > s.licences) throw new PartnerError("over_order_licences", 409, { left: s.licences - s.allocatedLicences });
     if (s.allocatedCredits + addC > s.credits) throw new PartnerError("over_order_credits", 409, { left: s.credits - s.allocatedCredits });
     // Price per learner-month, in USD cents for the licence pool's records.
@@ -138,9 +157,24 @@ export async function allocateOrder(args: { orderId: string; actor: Actor; items
     }
   }
   if (o.partner_id) {
-    const p = (await pool.query(`SELECT user_id FROM channel_partners WHERE id = $1`, [o.partner_id])).rows[0];
+    const p = (await pool.query(`SELECT user_id, full_name, created_by FROM channel_partners WHERE id = $1`, [o.partner_id])).rows[0];
     if (p && p.user_id !== args.actor.id) {
       await notify({ userId: p.user_id, kind: "partner_order", title: `Order ${o.order_number}: licences allocated`, body: `Spica has allocated order ${o.order_number} to its organisations. Their admins can now assign the licences.`, link: "/partner/orders", email: true });
+    }
+    // A Reseller allocated its own order: Super Admins and the Admin who looks
+    // after the partner can follow it (in-app; the order's history has the detail).
+    if (p && p.user_id === args.actor.id) {
+      const staff = await pool.query(`SELECT id, role FROM users WHERE deleted_at IS NULL AND (role = 'super_admin' OR (role = 'admin' AND id = $1))`, [p.created_by ?? null]);
+      for (const s of staff.rows) {
+        await notify({
+          userId: s.id,
+          kind: "partner_order",
+          title: `${p.full_name} allocated order ${o.order_number}`,
+          // Whole sentences so they translate; the order's history lists each organisation's share.
+          body: `${p.full_name} allocated order ${o.order_number} to its organisations. The order's history shows each organisation's share.`,
+          link: s.role === "super_admin" ? "/superadmin/partner-orders" : "/admin/partner-orders",
+        });
+      }
     }
   }
 }

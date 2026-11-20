@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "Quan hệ đối tác đã kết thúc và cổng của đối tác ở chế độ chỉ xem. Hãy gia hạn ở trang Đối tác nếu cần tiếp tục.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: quan hệ đối tác kết thúc vào {{shortDate}}",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "Gia hạn thêm 3 tháng ở trang Đối tác. Dưới số tổ chức tối thiểu, việc gia hạn cần lý do bằng văn bản.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Trong {{days}} ngày tới, bạn vẫn có thể đăng nhập và xem báo cáo, nhưng không thể luyện tập. Sau đó bạn cần giấy phép trả phí để đăng nhập. Hãy hỏi quản trị viên tổ chức của bạn về quyền truy cập đầy đủ."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Trong {{days}} ngày tới, bạn vẫn có thể đăng nhập và xem báo cáo, nhưng không thể luyện tập. Sau đó bạn cần giấy phép trả phí để đăng nhập. Hãy hỏi quản trị viên tổ chức của bạn về quyền truy cập đầy đủ.",
+ "{{name}} allocated order {{order}}": "{{name}} đã phân bổ đơn hàng {{order}}",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} đã phân bổ đơn hàng {{order}} cho các tổ chức của mình.",
+ "The order's history shows each organisation's share.": "Lịch sử đơn hàng cho thấy phần của từng tổ chức."
 }

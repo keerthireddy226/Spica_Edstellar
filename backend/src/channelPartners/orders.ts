@@ -5,8 +5,8 @@
 //    for universities and colleges), for the order's licence length.
 //  - A test product (preparation, real test, level test, practice pack) and
 //    plain recruitment / admissions credits: paid in credits (credit bands).
-// India pays in INR with 18% GST; organisations abroad pay in USD with no
-// Indian GST (export of services). Commission = partner's rate x subtotal.
+// Every order is in USD (owner decision, 20 Nov 2026). India adds 18% GST;
+// organisations abroad pay no Indian GST (export of services). Commission = partner's rate x subtotal.
 // Statuses: draft -> submitted -> proforma_sent -> payment_received ->
 // confirmed -> allocated -> active -> expired, or cancelled. Allocation and
 // the clocks running are stage 7; Finance's proforma and invoices stage 6.
@@ -20,7 +20,9 @@ import { PartnerError } from "./organisations.js";
 import { allocationSummary } from "./allocations.js";
 import { assertPartnerCanAct, bringsOrganisations } from "./partnership.js";
 
-// A Reseller buys at list price less its discount (set by Spica staff).
+// A Reseller buys at list price less its discount (set by Spica staff, at most
+// MAX_RESELLER_DISCOUNT per cent).
+export const MAX_RESELLER_DISCOUNT = 50;
 export async function partnerDiscount(partnerId: string | null): Promise<number> {
   if (!partnerId) return 0;
   const p = (await pool.query(`SELECT partner_type, discount_percent FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
@@ -32,11 +34,9 @@ export async function partnerDiscount(partnerId: string | null): Promise<number>
 // minimum licences (Full access licences across the order).
 async function partnerOrderRules(partnerId: string, input: OrderInput, actor: Actor) {
   if (!isStaff(actor)) {
-    const p = await assertPartnerCanAct(partnerId, "organisations");
-    const min = Number(p.min_licences_per_org ?? 1);
-    const licences = input.lines.filter((l) => l.kind === "full_access").reduce((n, l) => n + l.quantity, 0);
-    const orgs = new Set(input.organisationIds).size;
-    if (licences > 0 && licences < min * orgs) throw new PartnerError("below_min_licences", 400, { min, organisations: orgs });
+    // Any amount per order: the minimum licences per organisation is a total
+    // to reach across gifts and orders (owner, 20 Nov 2026).
+    await assertPartnerCanAct(partnerId, "organisations");
     return;
   }
   const p = (await pool.query(`SELECT partner_type FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
@@ -79,8 +79,9 @@ const band = (bands: readonly { minQuantity: number; unitPriceCents: number }[],
 const toCurrency = (usdCents: number, currency: "INR" | "USD") => (currency === "INR" ? Math.round((usdCents * PAYMENT_CONFIG.inrPerUsd) / 100) * 100 : usdCents);
 
 export async function quoteOrder(input: OrderInput, opts: { allowOverride: boolean; discountPercent?: number }) {
-  const discount = Math.min(90, Math.max(0, opts.discountPercent ?? 0));
-  const currency: "INR" | "USD" = input.inIndia ? "INR" : "USD";
+  const discount = Math.min(MAX_RESELLER_DISCOUNT, Math.max(0, opts.discountPercent ?? 0));
+  // USD for everyone (owner decision, 20 Nov 2026); India still pays GST.
+  const currency: "INR" | "USD" = "USD";
   if (!input.lines.length) throw new PartnerError("no_lines");
   const cats = input.organisationIds.length
     ? (await pool.query(`SELECT category FROM tenants WHERE id = ANY($1::uuid[])`, [input.organisationIds])).rows.map((r) => r.category)
@@ -119,13 +120,29 @@ export async function quoteOrder(input: OrderInput, opts: { allowOverride: boole
   return { currency, lines, subtotal, taxRate, taxAmount, total: subtotal + taxAmount, licences, credits: totalCredits, education, discountPercent: discount };
 }
 
-function checkInput(input: OrderInput, actor: Actor) {
+// A partner's order ends when its partnership ends: the date Spica set when it
+// onboarded (or last renewed) the partner. The partner can't choose it
+// (owner, 20 Nov 2026); Spica staff still can.
+async function partnerOrderEnd(partnerId: string): Promise<string> {
+  const r = (await pool.query(`SELECT to_char(coalesce(demo_ended_at, demo_ends_at) AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD') AS d FROM channel_partners WHERE id = $1`, [partnerId])).rows[0];
+  if (!r?.d) throw new PartnerError("partnership_not_active", 409);
+  return r.d;
+}
+
+// A Reseller may buy first and choose organisations when it allocates
+// (owner, 20 Nov 2026); everyone else names them on the order.
+async function isReseller(partnerId: string | null): Promise<boolean> {
+  if (!partnerId) return false;
+  return !!(await pool.query(`SELECT 1 FROM channel_partners WHERE id = $1 AND partner_type = 'reseller'`, [partnerId])).rowCount;
+}
+
+function checkInput(input: OrderInput, actor: Actor, organisationsOptional = false) {
   const staff = isStaff(actor);
   const days = Math.round((new Date(input.validUntil + "T23:59:59Z").getTime() - Date.now()) / DAY);
-  // Partners choose 2 weeks to 6 months; Spica can set any date up to 2 years.
-  if (staff ? days < 1 || days > 731 : days < 13 || days > 186) throw new PartnerError("invalid_validity");
+  // Spica can set any date up to 2 years; a partner's is its partnership end.
+  if (staff ? days < 1 || days > 731 : days < 0) throw new PartnerError("invalid_validity");
   const max = input.maxOrganisations ?? 10;
-  if (!input.organisationIds.length) throw new PartnerError("no_organisations");
+  if (!input.organisationIds.length && !organisationsOptional) throw new PartnerError("no_organisations");
   if (input.organisationIds.length > max) throw new PartnerError("too_many_organisations", 400, { max });
   if (!staff && input.perOrgCap != null) throw new PartnerError("forbidden", 403);
   if (!staff && input.maxOrganisations != null && input.maxOrganisations > 10) throw new PartnerError("forbidden", 403);
@@ -154,8 +171,8 @@ async function writeOrder(client: { query: typeof pool.query }, orderId: string,
   await client.query(`DELETE FROM partner_order_lines WHERE order_id = $1`, [orderId]);
   for (const l of q.lines) {
     await client.query(
-      `INSERT INTO partner_order_lines (order_id, kind, product_id, level, quantity, credits, unit_amount, amount, price_overridden) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [orderId, l.kind, l.productId, l.level, l.quantity, l.credits, l.unitAmount, l.amount, l.priceOverridden],
+      `INSERT INTO partner_order_lines (order_id, kind, product_id, level, quantity, credits, unit_amount, amount, price_overridden, list_unit_amount, discount_percent) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [orderId, l.kind, l.productId, l.level, l.quantity, l.credits, l.unitAmount, l.amount, l.priceOverridden, l.listUnitAmount, l.discountPercent],
     );
   }
   await client.query(`DELETE FROM partner_order_organisations WHERE order_id = $1`, [orderId]);
@@ -170,7 +187,8 @@ async function commissionFor(partnerId: string | null) {
 }
 
 export async function createOrder(args: { actor: Actor; partnerId: string | null; input: OrderInput; submit: boolean }) {
-  checkInput(args.input, args.actor);
+  if (!isStaff(args.actor) && args.partnerId) args = { ...args, input: { ...args.input, validUntil: await partnerOrderEnd(args.partnerId) } };
+  checkInput(args.input, args.actor, await isReseller(args.partnerId));
   if (args.partnerId) {
     const p = (await pool.query(`SELECT deactivated_at FROM channel_partners WHERE id = $1`, [args.partnerId])).rows[0];
     if (!p) throw new PartnerError("partner_not_found", 404);
@@ -209,7 +227,8 @@ const STAFF_EDITABLE: OrderStatus[] = ["draft", "submitted", "proforma_sent", "p
 export async function updateOrder(args: { actor: Actor; orderId: string; partnerId: string | null; input: OrderInput }) {
   const o = await loadOrder(args.orderId, args.partnerId);
   if (!(isStaff(args.actor) ? STAFF_EDITABLE : ["draft"]).includes(o.status)) throw new PartnerError("order_locked", 409);
-  checkInput(args.input, args.actor);
+  if (!isStaff(args.actor) && o.partner_id) args = { ...args, input: { ...args.input, validUntil: await partnerOrderEnd(o.partner_id) } };
+  checkInput(args.input, args.actor, await isReseller(o.partner_id));
   if (o.partner_id) await partnerOrderRules(o.partner_id, args.input, args.actor);
   await checkOrganisations(o.partner_id, args.input.organisationIds);
   const q = await quoteOrder(args.input, { allowOverride: isStaff(args.actor), discountPercent: await partnerDiscount(o.partner_id) });
@@ -398,12 +417,14 @@ export async function getOrder(orderId: string, partnerId: string | null) {
     [orderId],
   );
   const licences = row.licences;
+  const reseller = o.partner_id ? (await pool.query(`SELECT 1 FROM channel_partners WHERE id = $1 AND partner_type = 'reseller'`, [o.partner_id])).rowCount : 0;
   const orgCount = Math.max(1, orgs.rowCount ?? 1);
   return {
     order: row,
-    // The cap per organisation: Spica's number, or total licences / organisations.
-    effectivePerOrgCap: row.perOrgCap ?? (licences ? Math.ceil(licences / orgCount) : null),
-    lines: lines.rows.map((l) => ({ kind: l.kind, productId: l.product_id, name: l.kind === "full_access" ? "Full access" : l.kind === "credits" ? "Credits" : l.product_name, level: l.level, quantity: l.quantity, credits: l.credits, unitAmount: l.unit_amount, amount: l.amount, priceOverridden: l.price_overridden })),
+    // The cap per organisation: Spica's number, or total licences / organisations
+    // (a Reseller splits its own order as it likes: the whole order).
+    effectivePerOrgCap: row.perOrgCap ?? (licences ? (reseller ? licences : Math.ceil(licences / orgCount)) : null),
+    lines: lines.rows.map((l) => ({ kind: l.kind, productId: l.product_id, name: l.kind === "full_access" ? "Full access" : l.kind === "credits" ? "Credits" : l.product_name, level: l.level, quantity: l.quantity, credits: l.credits, unitAmount: l.unit_amount, amount: l.amount, priceOverridden: l.price_overridden, listUnitAmount: l.list_unit_amount, discountPercent: Number(l.discount_percent ?? 0) })),
     organisations: orgs.rows.map((t) => ({ id: t.id, name: t.name, category: t.category })),
     history: events.rows.map((e) => ({ from: e.from_status, to: e.to_status, note: e.note, at: e.created_at, by: e.email ? { name: [e.first_name, e.last_name].filter(Boolean).join(" "), email: e.email, role: e.role } : null })),
     nextSteps: NEXT[row.status] ?? [],

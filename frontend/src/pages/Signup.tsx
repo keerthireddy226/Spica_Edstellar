@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { PrivacyNoticeModal } from "@/pages/PrivacyNoticeDoc";
 import { passwordErrorText } from "@/lib/passwordErrors";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
@@ -17,7 +17,20 @@ export function Signup() {
   const { user, signup } = useAuth();
   // An Affiliate Partner's link (?ref=CODE) fills the partner code; it can be typed too.
   const [params] = useSearchParams();
-  const [partnerCode, setPartnerCode] = useState(() => (params.get("ref") ?? "").toUpperCase().slice(0, 20));
+  const refFromLink = (params.get("ref") ?? "").toUpperCase().slice(0, 20);
+  const [partnerCode, setPartnerCode] = useState(() => refFromLink);
+  // Count the visit for the Affiliate (once per browser session per code; no personal data).
+  useEffect(() => {
+    if (!refFromLink) return;
+    try {
+      const key = `spica-ref-click-${refFromLink}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* storage blocked: still count; the server keeps one per visitor per day */
+    }
+    fetch("/api/partner-link/click", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: refFromLink, src: params.get("src") ?? undefined }) }).catch(() => {});
+  }, [refFromLink]);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,7 +74,7 @@ export function Signup() {
     }
     setSubmitting(true);
     try {
-      await signup(email, password, firstName, lastName, { acceptTerms: legal?.termsVersion ? terms : undefined, marketingConsent: marketing, referralCode: partnerCode.trim() || undefined });
+      await signup(email, password, firstName, lastName, { acceptTerms: legal?.termsVersion ? terms : undefined, marketingConsent: marketing, referralCode: partnerCode.trim() || undefined, referralSource: partnerCode.trim() && partnerCode.trim().toUpperCase() === refFromLink ? "link" : "code", referralSrc: params.get("src") ?? undefined });
       setSubmittedEmail(email);
     } catch (err) {
       setError(

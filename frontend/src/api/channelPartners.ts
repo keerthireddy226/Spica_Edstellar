@@ -37,7 +37,9 @@ export interface ChannelPartner {
   terminationReason: string | null;
   minOrganisations: number;
   minLicencesPerOrg: number;
+  // Organisations at the licence minimum (they count); addedOrganisations = all active ones.
   activeOrganisations: number;
+  addedOrganisations?: number;
   discountPercent: number;
   referralFee: number;
   referralFeeCurrency: "INR" | "USD";

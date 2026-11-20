@@ -63,6 +63,8 @@ import { StaffAudit } from "@/pages/staff/StaffAudit";
 import { ChannelPartners } from "@/pages/staff/ChannelPartners";
 import { PartnerDashboard } from "@/pages/partner/PartnerDashboard";
 import { PartnerAgreement, PartnerEarnings, PartnerGate, PartnerReferrals } from "@/pages/partner/PartnerPrograms";
+import { PartnerPayments } from "@/pages/partner/PartnerPayments";
+import { PartnerTrackRecord } from "@/pages/partner/PartnerTrackRecord";
 import { PartnerOrders, StaffPartnerOrders } from "@/pages/partner/PartnerOrders";
 import { OrderDocument } from "@/pages/OrderDocument";
 import { PartnerOrganisations } from "@/pages/partner/PartnerOrganisations";
@@ -306,6 +308,8 @@ function App() {
             <Route path={ROUTES.PARTNER_ORDERS} element={<PartnerOrders />} />
             <Route path={ROUTES.PARTNER_COMMISSION} element={<PartnerCommission />} />
             <Route path={ROUTES.PARTNER_EARNINGS} element={<PartnerEarnings />} />
+            <Route path={ROUTES.PARTNER_PAYMENTS} element={<PartnerPayments />} />
+            <Route path={ROUTES.PARTNER_TRACK_RECORD} element={<PartnerTrackRecord />} />
             <Route path={ROUTES.PARTNER_REFERRALS} element={<PartnerReferrals />} />
           </Route>
         </Route>

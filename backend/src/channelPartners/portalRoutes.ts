@@ -6,7 +6,7 @@ import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { createPartnerOrganisation, giveDemoLicences, GIFT_GRACE_DAYS, GIFT_VALID_DAYS, partnerBalance, partnerOrganisationDetail, partnerOrganisations, PartnerError } from "./organisations.js";
-import { activeOrganisations, bringsOrganisations, canAct, currentAgreement, currentPeriodStart, daysLeft, EXPIRING_DAYS, PARTNER_TYPE_LABEL, partnershipEnd, partnershipStatus, type PartnerType } from "./partnership.js";
+import { activeOrganisations, addedOrganisations, bringsOrganisations, canAct, currentAgreement, currentPeriodStart, daysLeft, EXPIRING_DAYS, PARTNER_TYPE_LABEL, partnershipEnd, partnershipStatus, type PartnerType } from "./partnership.js";
 
 export const partnerPortalRouter = Router();
 
@@ -56,7 +56,8 @@ partnerPortalRouter.get("/me", requireAuth, async (req: AuthedRequest, res, next
         terminationReason: p.terminated_at ? p.termination_reason : null,
       },
       agreement: { signed: !!signed, signedAt: signed?.signed_at ?? null, signedName: signed?.signed_name ?? null, version: signed?.version ?? null },
-      minimums: bringsOrganisations(type) ? { organisations: p.min_organisations, current: await activeOrganisations(p.id), licencesPerOrg: p.min_licences_per_org } : null,
+      // current = organisations that reached the licence minimum (they count); added = all active ones.
+      minimums: bringsOrganisations(type) ? { organisations: p.min_organisations, current: await activeOrganisations(p.id), added: await addedOrganisations(p.id), licencesPerOrg: p.min_licences_per_org } : null,
       rates: { commissionPercent: Number(p.commission_percent ?? 0), discountPercent: Number(p.discount_percent ?? 0), referralFee: Number(p.referral_fee ?? 0), referralFeeCurrency: p.referral_fee_currency },
     });
   } catch (err) {

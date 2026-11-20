@@ -6,7 +6,8 @@ import { tr } from "@/i18n/tr";
 
 // Spica staff: each product's prices in every currency, whether it's on
 // sale, and giving a product to a learner by hand (support, pilots).
-const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD"] as const;
+// USD only: everyone pays in USD, India included (owner decision, 20 Nov 2026).
+const CURRENCIES = ["USD"] as const;
 type Prices = Record<string, Partial<Record<(typeof CURRENCIES)[number], number>>>;
 
 const inputClass = "rounded-input border border-rule bg-surface px-2.5 py-1.5 text-sm text-ink w-24 tabular-nums";
@@ -86,10 +87,10 @@ export function ProductsPanel() {
     <section className="bg-surface border border-rule rounded-card shadow-sm p-5 flex flex-col gap-4">
       <div>
         <h2 className="font-display font-bold text-lg text-ink">{tr("Products and prices")}</h2>
-        <p className="text-sm text-muted">{tr("What individuals can buy on their Plans page, in each currency (whole amounts, e.g. 4999 = ₹4,999). Learners outside these currencies pay in USD.")}</p>
+        <p className="text-sm text-muted">{tr("What individuals can buy on their Plans page, in USD (whole amounts, e.g. 49 = $49). Everyone pays in USD, India included; Indian buyers have 18% GST added.")}</p>
       </div>
       <div className="overflow-x-auto border border-rule rounded-xl">
-        <table className="w-full text-sm min-w-[900px]">
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="bg-paper-warm/60 text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
               <th className="px-3 py-2">{tr("Product")}</th>

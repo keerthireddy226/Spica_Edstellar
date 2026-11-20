@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { OrdersPanel } from "@/pages/partner/PartnerOrders";
+import { MinimumCell } from "@/pages/partner/PartnerOrganisations";
 import { CalendarClock, Gift, Handshake, KeyRound, Mail, Plus, Power, Building2, History, Receipt, FileSignature, Coins, Megaphone } from "lucide-react";
 import { Button } from "@/components/Button";
 import { EmptyNote, Notice, PageError, PageHeader, PageLoading, SearchBox, StatCard, StatusPill } from "@/components/staff/StaffKit";
@@ -32,6 +33,11 @@ import { fmtDay, leadStatusLabel, minorMoney, PartnershipPill, typeBlurb, typeLa
 import { tr } from "@/i18n/tr";
 import { api } from "@/lib/api";
 import { AddOrganisation, GiveLicences, type PartnerOrg } from "@/pages/partner/PartnerDashboard";
+
+// A Reseller's discount is at most 50% (owner, 20 Nov 2026): the box never holds more.
+const MAX_DISCOUNT = 50;
+const capDiscount = (v: string) => (Number(v) > MAX_DISCOUNT ? String(MAX_DISCOUNT) : Number(v) < 0 ? "0" : v);
+
 
 // Partners (19 Nov 2026): Resellers, Channel Partners, Affiliates and Referral
 // Partners. Spica registers them (they can't sign themselves up), fixes their
@@ -216,7 +222,7 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
     minLicencesPerOrg: "1",
     discountPercent: "0",
     referralFee: "0",
-    referralFeeCurrency: "INR" as "INR" | "USD",
+    referralFeeCurrency: "USD" as "INR" | "USD",
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -240,7 +246,7 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
         notes: f.notes.trim() || undefined,
         minOrganisations: Math.max(0, Math.round(Number(f.minOrganisations) || 0)),
         minLicencesPerOrg: Math.max(1, Math.round(Number(f.minLicencesPerOrg) || 1)),
-        discountPercent: Math.min(90, Math.max(0, Number(f.discountPercent) || 0)),
+        discountPercent: Math.min(MAX_DISCOUNT, Math.max(0, Number(f.discountPercent) || 0)),
         referralFee: Math.max(0, Math.round((Number(f.referralFee) || 0) * 100)),
         referralFeeCurrency: f.referralFeeCurrency,
       });
@@ -306,18 +312,15 @@ function CreatePartner({ onClose, onCreated }: { onClose: () => void; onCreated:
           {t === "reseller" && (
             <label className="flex flex-col gap-1">
               <span className={label}>{tr("Reseller discount (%)")}</span>
-              <input className={input} type="number" min={0} max={90} step="0.5" value={f.discountPercent} onChange={set("discountPercent")} />
-              <span className="text-xs text-muted">{tr("Off Spica's list price. The reseller sets its own selling price.")}</span>
+              <input className={input} type="number" min={0} max={MAX_DISCOUNT} step="0.5" value={f.discountPercent} onChange={(e) => setF({ ...f, discountPercent: capDiscount(e.target.value) })} />
+              <span className="text-xs text-muted">{tr("Up to 50% off Spica's list price. The reseller sets its own selling price.")}</span>
             </label>
           )}
           {t === "referral" && (
             <label className="flex flex-col gap-1">
               <span className={label}>{tr("Referral fee")}</span>
               <span className="flex gap-2">
-                <select className={`${input} !w-24`} value={f.referralFeeCurrency} onChange={set("referralFeeCurrency")}>
-                  <option value="INR">INR</option>
-                  <option value="USD">USD</option>
-                </select>
+                <span className="self-center text-sm font-semibold text-ink">USD</span>
                 <input className={input} type="number" min={0} step="1" value={f.referralFee} onChange={set("referralFee")} />
               </span>
               <span className="text-xs text-muted">{tr("Paid once per referred organisation, at its first paid purchase.")}</span>
@@ -428,7 +431,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
         { label: tr("Partnership"), value: p.status === "not_started" ? tr("Not started") : fmtDay(p.endsAt), hint: p.status === "expired" || p.status === "terminated" ? tr("Ended · read-only") : tr("Ends") },
         ...(orgType
           ? [
-              { label: tr("Organisations"), value: tr("{{n}} of {{min}}", { n: p.activeOrganisations, min: p.minOrganisations }), hint: belowMin ? tr("Below minimum") : tr("Minimum met") },
+              { label: tr("Organisations"), value: tr("{{n}} of {{min}}", { n: p.activeOrganisations, min: p.minOrganisations }), hint: (belowMin ? tr("Below minimum") : tr("Minimum met")) + ` · ${tr("{{k}} added; counted at {{m}} licences", { k: p.addedOrganisations ?? p.activeOrganisations, m: p.minLicencesPerOrg })}` },
               { label: tr("Demo licences"), value: tr("{{given}} of {{total}}", { given: p.demoLicencesGiven, total: p.demoLicences }), hint: tr("Given out") },
               { label: tr("Learners on a demo"), value: d.organisations.reduce((n, o) => n + o.demoUsed, 0), hint: tr("{{n}} started a test", { n: d.organisations.reduce((n, o) => n + o.demoStarted, 0) }) },
             ]
@@ -446,6 +449,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
             ]
           : []),
         ...(p.partnerType === "referral" ? [{ key: "leads", label: tr("Referrals"), count: p.leads }] : []),
+        ...(p.partnerType === "affiliate" ? [{ key: "people", label: tr("People credited"), count: p.referredPeople }] : []),
         ...(p.partnerType === "referral" || p.partnerType === "affiliate" ? [{ key: "earnings", label: tr("Earnings") }] : []),
         { key: "agreement", label: tr("Agreement and renewals"), count: d.agreements.length },
         { key: "history", label: tr("History"), count: d.history.length },
@@ -518,7 +522,8 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                     {p.partnerType === "reseller" && (
                       <label className="flex flex-col gap-1">
                         <span className={label}>{tr("Reseller discount (%)")}</span>
-                        <input className={input} type="number" min={0} max={90} step="0.5" value={edit.discountPercent} onChange={(e) => setEdit({ ...edit, discountPercent: e.target.value })} />
+                        <input className={input} type="number" min={0} max={MAX_DISCOUNT} step="0.5" value={edit.discountPercent} onChange={(e) => setEdit({ ...edit, discountPercent: capDiscount(e.target.value) })} />
+                        <span className="text-xs text-muted">{tr("Up to 50% off Spica's list price. The reseller sets its own selling price.")}</span>
                       </label>
                     )}
                     {p.partnerType === "referral" && (
@@ -547,7 +552,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                               ? { demoLicences: Math.max(0, Math.round(Number(edit.demoLicences) || 0)), minOrganisations: Math.max(0, Math.round(Number(edit.minOrganisations) || 0)), minLicencesPerOrg: Math.max(1, Math.round(Number(edit.minLicencesPerOrg) || 1)) }
                               : {}),
                             ...(p.partnerType === "channel_partner" || p.partnerType === "affiliate" ? { commissionPercent: Number(edit.commissionPercent) || 0 } : {}),
-                            ...(p.partnerType === "reseller" ? { discountPercent: Math.min(90, Math.max(0, Number(edit.discountPercent) || 0)) } : {}),
+                            ...(p.partnerType === "reseller" ? { discountPercent: Math.min(MAX_DISCOUNT, Math.max(0, Number(edit.discountPercent) || 0)) } : {}),
                             ...(p.partnerType === "referral" ? { referralFee: Math.max(0, Math.round((Number(edit.referralFee) || 0) * 100)) } : {}),
                           });
                           setEdit(null);
@@ -738,6 +743,9 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
                       <span className="text-muted"> · {o.admin.name} ({o.admin.email}){o.admin.invitePending ? ` · ${tr("Invite pending")}` : ""}</span>
                     </span>
                     <span className="flex items-center gap-3">
+                      <span className="text-center">
+                        <MinimumCell o={o} />
+                      </span>
                       <span className="text-muted">
                         {tr("{{used}} of {{n}} demo licences used · {{l}} learners", { used: o.demoUsed, n: o.demoLicences, l: o.learners })}
                         <br />
@@ -761,6 +769,7 @@ function PartnerDetail({ id, onClose, onChanged }: { id: string; onClose: () => 
           </ModalSection>
         )}
         {tab === "leads" && <StaffLeads partnerId={p.id} onChanged={load} />}
+        {tab === "people" && <StaffAffiliatePeople partnerId={p.id} />}
         {tab === "earnings" && <StaffEarnings partnerId={p.id} />}
         {tab === "agreement" && (
           <>
@@ -897,6 +906,77 @@ function StaffLeads({ partnerId, onChanged }: { partnerId: string; onChanged: ()
 }
 
 // What an Affiliate or Referral Partner has earned; Finance marks it paid.
+// An Affiliate's track record for Spica staff (owner, 20 Nov 2026): link
+// clicks and every person credited to it, how, and what they bought.
+interface AffiliatePerson {
+  id: string;
+  name: string;
+  email: string;
+  signedUpAt: string;
+  creditedAt: string | null;
+  via: "link" | "code" | "plans" | null;
+  deleted: boolean;
+  purchases: number;
+  spent: Record<string, number>;
+  earned: Record<string, number>;
+  possibleSelfReferral: boolean;
+}
+const VIA: Record<string, string> = { link: tr("Their link"), code: tr("Code typed at sign-up"), plans: tr("Code typed on the Plans page") };
+const moneyMap = (m: Record<string, number>) => (Object.keys(m).length ? Object.entries(m).map(([c, n]) => minorMoney(n, c)).join(" + ") : "—");
+function StaffAffiliatePeople({ partnerId }: { partnerId: string }) {
+  const [d, setD] = useState<{ clicks: { total: number; last30: number }; people: AffiliatePerson[] } | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    api<{ clicks: { total: number; last30: number }; people: AffiliatePerson[] }>(`/admin/channel-partners/${partnerId}/referred`).then(setD).catch(() => setFailed(true));
+  }, [partnerId]);
+  if (failed) return <Notice tone="error">{tr("Could not load the people credited to this partner.")}</Notice>;
+  if (!d) return <ModalEmpty>{tr("Loading…")}</ModalEmpty>;
+  const buyers = d.people.filter((x) => x.purchases > 0).length;
+  const flagged = d.people.filter((x) => x.possibleSelfReferral).length;
+  return (
+    <ModalSection title={tr("People credited")} icon={Megaphone}>
+      <p className="text-sm">
+        {tr("{{c}} link clicks ({{c30}} in the last 30 days) · {{s}} sign-ups · {{b}} bought something", { c: d.clicks.total, c30: d.clicks.last30, s: d.people.length, b: buyers })}
+      </p>
+      {flagged > 0 && <Notice tone="error">{tr("{{n}} of these share the partner's own email address or company domain. Check them before paying earnings.", { n: flagged })}</Notice>}
+      {d.people.length === 0 ? (
+        <ModalEmpty>{tr("Nobody has signed up with this partner's link or code yet.")}</ModalEmpty>
+      ) : (
+        <div className="overflow-x-auto border border-rule rounded-input">
+          <table className="w-full text-sm min-w-[720px]">
+            <thead className="bg-paper-warm/60 text-left text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <tr>
+                {[tr("Person"), tr("Credited"), tr("How"), tr("Purchases"), tr("Spent (before tax)"), tr("Partner earned")].map((h) => (
+                  <th key={h} className="px-3 py-2">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {d.people.map((x) => (
+                <tr key={x.id} className="border-t border-rule">
+                  <td className="px-3 py-2">
+                    <p className="font-semibold">{x.name || "—"}</p>
+                    <p className="text-xs text-muted">{x.email}</p>
+                    {x.possibleSelfReferral && <StatusPill tone="error">{tr("Possible self-referral")}</StatusPill>}
+                    {x.deleted && <StatusPill tone="muted">{tr("Account deleted")}</StatusPill>}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">{fmtDay(x.creditedAt ?? x.signedUpAt)}</td>
+                  <td className="px-3 py-2">{x.via ? VIA[x.via] : "—"}</td>
+                  <td className="px-3 py-2">{x.purchases}</td>
+                  <td className="px-3 py-2 whitespace-nowrap">{moneyMap(x.spent)}</td>
+                  <td className="px-3 py-2 whitespace-nowrap">{moneyMap(x.earned)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </ModalSection>
+  );
+}
+
 function StaffEarnings({ partnerId }: { partnerId: string }) {
   const [d, setD] = useState<EarningsResponse | null>(null);
   const [msg, setMsg] = useState<{ tone: "success" | "error"; text: string } | null>(null);

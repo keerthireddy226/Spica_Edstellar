@@ -1,7 +1,7 @@
 // Buying a product online: Full access, preparation + assessment for one test,
 // an assessment, or a level test. Each product has a price per currency;
-// India pays in INR (GST added), a few other markets in their own currency,
-// everyone else in USD. Upgrading to Full access credits the unused part of
+// Every buyer pays in USD (owner decision, 20 Nov 2026), India included;
+// Indian buyers still have 18% GST added. Upgrading to Full access credits the unused part of
 // a preparation purchase, once.
 import { pool } from "../db.js";
 import { PAYMENT_CONFIG, chooseProvider, razorpayEnabled, stripeEnabled, testModeEnabled, type ProviderName } from "./providers.js";
@@ -11,17 +11,12 @@ import { switchQuote } from "../assessment/service.js";
 export const CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD"] as const;
 export type Currency = (typeof CURRENCIES)[number];
 
-const EURO_COUNTRIES = new Set(["AT", "BE", "CY", "DE", "EE", "ES", "FI", "FR", "GR", "HR", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PT", "SI", "SK"]);
-
-// The currency a country pays in by default.
-export function currencyFor(country: string | null | undefined): Currency {
-  const c = (country ?? "").toUpperCase();
-  if (c === "IN") return "INR";
-  if (c === "GB") return "GBP";
-  if (c === "AE") return "AED";
-  if (c === "SG") return "SGD";
-  if (EURO_COUNTRIES.has(c)) return "EUR";
-  return "USD";
+// The currency every buyer pays in: USD for the whole site, India included
+// (owner decision, 20 Nov 2026). The other currencies stay in the price
+// tables for older orders but are no longer offered.
+export const SITE_CURRENCY: Currency = "USD";
+export function currencyFor(_country?: string | null): Currency {
+  return SITE_CURRENCY;
 }
 
 // INR goes through Razorpay where it's set up; every other currency through Stripe.
@@ -142,7 +137,8 @@ export async function upgradeCredit(userId: string, currency: Currency, cap: num
 // preparation counts towards it.
 export async function planQuote(buyer: Buyer, months: number, opts: { currency?: string } = {}): Promise<Quote> {
   if (!INDIVIDUAL_PLAN_MONTHS.includes(months as 1)) throw new PaymentError("invalid_quantity");
-  let currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
+  void opts.currency;
+  let currency: Currency = SITE_CURRENCY;
   let provider = providerFor(currency);
   if (!provider) {
     // No provider takes this currency: the older INR/USD choice.
@@ -171,8 +167,8 @@ export async function planQuote(buyer: Buyer, months: number, opts: { currency?:
   }
   unitAmount = Number(unitAmount);
   const gross = unitAmount * months;
-  // GST applies to sales billed in India.
-  const taxRate = buyer.billingCountry === "IN" && currency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
+  // GST applies to sales billed in India, whatever the currency.
+  const taxRate = buyer.billingCountry === "IN" ? PAYMENT_CONFIG.gstRate : 0;
   const { credit, sources } = await upgradeCredit(buyer.userId, currency, gross);
   const subtotal = gross - credit;
   const taxAmount = Math.round((subtotal * taxRate) / 100);
@@ -232,7 +228,7 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
     if (!c || (p.kind !== "cert_print" && c.valid_until === null)) throw new PaymentError("invalid_quantity");
   }
   if ((p.kind === "level" || p.kind === "pack") && !["A1", "A2", "B1", "B2", "C1", "C2"].includes(opts.level ?? "")) throw new PaymentError("invalid_quantity");
-  const currency: Currency = CURRENCIES.includes(opts.currency as Currency) ? (opts.currency as Currency) : currencyFor(buyer.billingCountry);
+  const currency: Currency = SITE_CURRENCY;
   const priced = (await pool.query(`SELECT amount FROM product_prices WHERE product_id = $1 AND currency = $2`, [productId, currency])).rows[0];
   // No price in this currency: USD.
   const finalCurrency: Currency = priced ? currency : "USD";
@@ -244,8 +240,8 @@ export async function productQuote(buyer: Buyer, productId: string, opts: { curr
   const off = p.kind === "level" ? levelDiscountOf(opts.level!, await levelResults(buyer.userId)) : null;
   const discount = off ? Math.round((price * off.percent) / 100) : 0;
   const subtotal = price - discount;
-  // GST applies to sales billed in India.
-  const taxRate = buyer.billingCountry === "IN" && finalCurrency === "INR" ? PAYMENT_CONFIG.gstRate : 0;
+  // GST applies to sales billed in India, whatever the currency.
+  const taxRate = buyer.billingCountry === "IN" ? PAYMENT_CONFIG.gstRate : 0;
   const taxAmount = Math.round((subtotal * taxRate) / 100);
   return {
     productId: p.id,

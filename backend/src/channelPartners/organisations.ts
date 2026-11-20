@@ -9,7 +9,7 @@ import { recordAudit } from "../audit/service.js";
 import { notify, orgAdminIds } from "../notifications/service.js";
 import { demoStatus } from "./staffRoutes.js";
 import { orgDemoBalance } from "./demoLicences.js";
-import { assertPartnerCanAct } from "./partnership.js";
+import { ORG_LICENCES_SQL, assertPartnerCanAct } from "./partnership.js";
 
 // Demo licences given to an organisation are valid for 7 days from the day
 // they are given, then 3 days' grace; unused ones expire after that (user,
@@ -58,10 +58,9 @@ async function assertCanGive(partnerId: string, licences: number, actor: { role:
   if (b.partner.deactivated_at) throw new PartnerError("partner_deactivated", 409);
   if (!["reseller", "channel_partner"].includes(b.partner.partner_type)) throw new PartnerError("not_for_partner_type", 403);
   if (b.status !== "active") throw new PartnerError("partnership_not_active", 409);
-  const min = Number(b.partner.min_licences_per_org ?? 1);
-  if (!staff && licences > 0 && licences < min) throw new PartnerError("below_min_licences", 400, { min });
-  // A new organisation needs at least the minimum, unless the partner has no demo licences at all.
-  if (!staff && newOrganisation && licences === 0 && b.left >= min) throw new PartnerError("below_min_licences", 400, { min });
+  // Any amount at a time: the minimum licences per organisation is a total to
+  // reach (shown per organisation), not a minimum per gift (owner, 20 Nov 2026).
+  void newOrganisation;
   if (licences > b.left) throw new PartnerError("not_enough_licences", 409, { left: b.left });
   return b;
 }
@@ -162,6 +161,9 @@ export async function partnerOrganisations(partnerId: string) {
     `SELECT t.id, t.name, t.category, t.created_at, t.deactivated_at, t.city, t.state, t.country, t.website, t.phone, t.expected_learner_count, t.address_line, t.postal_code, t.tax_id,
        (SELECT coalesce(json_agg(json_build_object('licences', a.licences, 'validUntil', to_char(a.valid_until, 'YYYY-MM-DD'), 'graceUntil', to_char(a.valid_until + 3, 'YYYY-MM-DD'), 'givenAt', a.created_at) ORDER BY a.created_at), '[]') FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS allocations,
        (SELECT coalesce(sum(a.licences), 0)::int FROM partner_allocations a WHERE a.tenant_id = t.id AND a.kind = 'demo') AS demo_licences,
+       ${ORG_LICENCES_SQL("t")} AS licences_total,
+       (SELECT coalesce(sum(a.licences), 0)::int FROM partner_order_allocations a JOIN partner_orders o ON o.id = a.order_id WHERE a.tenant_id = t.id AND o.status <> 'cancelled') AS paid_licences,
+       (SELECT greatest(cp.min_licences_per_org, 1) FROM channel_partners cp WHERE cp.id = t.channel_partner_id) AS min_licences,
        (SELECT count(*)::int FROM users l WHERE l.tenant_id = t.id AND l.role = 'learner' AND l.deleted_at IS NULL) AS learners,
        (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL) AS demo_used,
        (SELECT count(*)::int FROM entitlements e WHERE e.tenant_id = t.id AND e.source = 'partner_demo' AND e.revoked_at IS NULL AND e.ends_at > now()) AS demo_active,
@@ -190,6 +192,11 @@ export async function partnerOrganisations(partnerId: string) {
     createdAt: o.created_at,
     active: !o.deactivated_at,
     demoLicences: o.demo_licences,
+    // Progress to the minimum licences per organisation (demo + paid, in total).
+    paidLicences: o.paid_licences,
+    licencesTotal: o.licences_total,
+    minLicences: o.min_licences,
+    meetsMinimum: o.licences_total >= o.min_licences,
     allocations: o.allocations as { licences: number; validUntil: string | null; graceUntil: string | null; givenAt: string }[],
     details: { city: o.city, state: o.state, country: o.country, website: o.website, phone: o.phone, expectedLearners: o.expected_learner_count, address: o.address_line, postalCode: o.postal_code, gstin: o.tax_id },
     learners: o.learners,

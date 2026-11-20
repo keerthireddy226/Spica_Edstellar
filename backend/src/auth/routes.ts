@@ -111,7 +111,7 @@ authRouter.post("/signup", signupLimiter, async (req, res, next) => {
 
     await client.query("COMMIT");
     // Credited to an Affiliate Partner when the code is valid and running.
-    if (body.referralCode) await creditAffiliate(userId, body.referralCode).catch((err) => console.error("affiliate credit failed:", err));
+    if (body.referralCode) await creditAffiliate(userId, body.referralCode, body.referralSource ?? "code", body.referralSrc).catch((err) => console.error("affiliate credit failed:", err));
 
     // No session is created here on purpose — signup ends with "check your
     // email," not an automatic login. The learner logs in for real afterward.

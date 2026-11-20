@@ -18,6 +18,10 @@ export const signupSchema = z.object({
   marketingConsent: z.boolean().optional(),
   // An Affiliate Partner's code, from a ?ref= link or typed in.
   referralCode: z.string().trim().max(20).optional(),
+  // How the code got there: from the Affiliate's link, or typed.
+  referralSource: z.enum(["link", "code"]).optional(),
+  // The link's ?src= tag (youtube, whatsapp…), when they came through the link.
+  referralSrc: z.string().trim().max(40).optional(),
 });
 
 // The Privacy Notice version people agree to (its "last updated" date).

@@ -120,15 +120,15 @@ export async function resolveBuyer(user: { id: string; role: string; tenantId: s
   return null;
 }
 
-// `byInvoice`: paid by bank transfer, so no card provider is needed; India is
-// still invoiced in INR.
+// `byInvoice`: paid by bank transfer, so no card provider is needed. Invoices
+// are in USD too, India included (with GST).
 export function quote(buyer: Buyer, quantity: number, opts: { byInvoice?: boolean } = {}): Quote {
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) throw new PaymentError("invalid_quantity");
   if (buyer.kind === "individual_plan" && !INDIVIDUAL_PLAN_MONTHS.includes(quantity as 1)) {
     throw new PaymentError("invalid_quantity");
   }
   const choice = opts.byInvoice
-    ? { provider: "invoice" as const, currency: (buyer.billingCountry === "IN" ? "INR" : "USD") as "INR" | "USD" }
+    ? { provider: "invoice" as const, currency: "USD" as "INR" | "USD" }
     : chooseProvider(buyer.billingCountry);
   if (!choice) throw new PaymentError("no_provider");
   const toCurrency = (usdCents: number) =>

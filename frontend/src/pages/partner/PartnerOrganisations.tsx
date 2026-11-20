@@ -38,13 +38,25 @@ const ORDER_STATUS: Record<string, string> = {
 };
 const YesNo = ({ yes }: { yes: boolean }) => (yes ? <Check size={16} className="text-success" aria-label={tr("Yes")} /> : <Minus size={16} className="text-muted" aria-label={tr("No")} />);
 
+// Progress to the minimum licences per organisation: demo + paid in total.
+// Only organisations that reach it count towards the partner's minimum.
+export function MinimumCell({ o }: { o: PartnerOrg }) {
+  if (o.licencesTotal == null || o.minLicences == null) return <span className="text-muted">—</span>;
+  return (
+    <>
+      <p className="font-semibold">{tr("{{h}} of {{m}}", { h: o.licencesTotal, m: o.minLicences })}</p>
+      {o.meetsMinimum ? <StatusPill tone="success">{tr("Minimum met")}</StatusPill> : <StatusPill tone="warning">{tr("{{k}} more to count", { k: o.minLicences - o.licencesTotal })}</StatusPill>}
+    </>
+  );
+}
+
 export function OrganisationsTable({ orgs, onOpen, onGive, canGive }: { orgs: PartnerOrg[]; onOpen: (o: PartnerOrg) => void; onGive: (o: PartnerOrg) => void; canGive: boolean }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-paper-warm text-xs text-muted uppercase tracking-wide">
           <tr>
-            {[tr("Organisation"), tr("Admin"), tr("Demo licences"), tr("Paid licences in use"), tr("Learners"), tr("Orders"), tr("Added"), ""].map((h, i) => (
+            {[tr("Organisation"), tr("Admin"), tr("Licences (minimum)"), tr("Demo licences"), tr("Paid licences in use"), tr("Learners"), tr("Orders"), tr("Added"), ""].map((h, i) => (
               <th key={i} className="text-left font-semibold px-4 py-2.5 whitespace-nowrap">
                 {h}
               </th>
@@ -62,6 +74,9 @@ export function OrganisationsTable({ orgs, onOpen, onGive, canGive }: { orgs: Pa
                 <p>{o.admin.name || "—"}</p>
                 <p className="text-xs text-muted">{o.admin.email}</p>
                 {o.admin.invitePending && <StatusPill tone="warning">{tr("Invite pending")}</StatusPill>}
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                <MinimumCell o={o} />
               </td>
               <td className="px-4 py-3">
                 <p>{tr("{{used}} of {{n}} used", { used: o.demoUsed, n: o.demoLicences })}</p>
@@ -113,6 +128,11 @@ export function OrganisationDetail({ org, canGive, onGive, onClose }: { org: Par
               ) : (
                 <p className="text-muted">—</p>
               )}
+            </div>
+            <div className="border border-rule rounded-input p-3">
+              <p className="text-xs text-muted uppercase tracking-wide font-semibold">{tr("Licences (minimum)")}</p>
+              <MinimumCell o={org} />
+              <p className="text-muted mt-1">{tr("{{d}} demo + {{p}} paid. Only organisations that reach the minimum count towards your minimum number of organisations.", { d: org.demoLicences, p: org.paidLicences ?? 0 })}</p>
             </div>
             <div className="border border-rule rounded-input p-3">
               <p className="text-xs text-muted uppercase tracking-wide font-semibold">{tr("Demo licences")}</p>
@@ -271,7 +291,12 @@ export function PartnerOrganisations() {
       )}
       <div className="bg-surface border border-rule rounded-card shadow-sm overflow-hidden">
         <div className="p-4 border-b border-rule flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display font-bold text-lg">{orgs.length === 1 ? tr("1 organisation") : tr("{{n}} organisations", { n: orgs.length })}</h2>
+          <div>
+            <h2 className="font-display font-bold text-lg">{orgs.length === 1 ? tr("1 organisation") : tr("{{n}} organisations", { n: orgs.length })}</h2>
+            {orgs.length > 0 && orgs[0].minLicences != null && (
+              <p className="text-xs text-muted">{tr("{{a}} of {{n}} have reached {{m}} licences and count towards your minimum.", { a: orgs.filter((o) => o.active && o.meetsMinimum).length, n: orgs.filter((o) => o.active).length, m: orgs[0].minLicences })}</p>
+            )}
+          </div>
           <label className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
             <input className={`${input} !pl-8 w-64`} placeholder={tr("Search by organisation or admin")} value={q} onChange={(e) => setQ(e.target.value)} />

@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "Het partnerschap is afgelopen en het portaal van de partner is alleen-lezen. Verleng het via Partners als het moet doorlopen.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: partnerschap loopt af op {{shortDate}}",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "Verleng het via Partners met 3 maanden. Onder het minimumaantal organisaties vraagt verlenging een schriftelijke reden.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De komende {{days}} dagen kun je nog inloggen en je rapporten bekijken, maar niet oefenen. Daarna heb je een betaalde licentie nodig om in te loggen. Vraag de beheerder van je organisatie om volledige toegang."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De komende {{days}} dagen kun je nog inloggen en je rapporten bekijken, maar niet oefenen. Daarna heb je een betaalde licentie nodig om in te loggen. Vraag de beheerder van je organisatie om volledige toegang.",
+ "{{name}} allocated order {{order}}": "{{name}} heeft bestelling {{order}} toegewezen",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} heeft bestelling {{order}} aan zijn organisaties toegewezen.",
+ "The order's history shows each organisation's share.": "De geschiedenis van de bestelling toont het deel van elke organisatie."
 }

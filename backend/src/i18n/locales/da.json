@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "Partnerskabet er afsluttet, og partnerens portal er skrivebeskyttet. Forlæng det under Partnere, hvis det skal fortsætte.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: partnerskabet slutter {{shortDate}}",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "Forlæng det under Partnere med yderligere 3 måneder. Under minimum antal organisationer kræver forlængelse en skriftlig grund.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De næste {{days}} dage kan du stadig logge ind og se dine rapporter, men ikke øve. Derefter skal du have en betalt licens for at logge ind. Bed din organisations administrator om fuld adgang."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "De næste {{days}} dage kan du stadig logge ind og se dine rapporter, men ikke øve. Derefter skal du have en betalt licens for at logge ind. Bed din organisations administrator om fuld adgang.",
+ "{{name}} allocated order {{order}}": "{{name}} har fordelt ordre {{order}}",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} har fordelt ordre {{order}} til sine organisationer.",
+ "The order's history shows each organisation's share.": "Ordrens historik viser hver organisations andel."
 }

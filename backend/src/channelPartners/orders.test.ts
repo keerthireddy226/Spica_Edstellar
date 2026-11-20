@@ -5,9 +5,9 @@ import { quoteOrder } from "./orders.js";
 // Prices for a partner order come from the normal price list (no database
 // writes; reads products and organisation categories only).
 describe("quoteOrder", () => {
-  it("prices Full access per learner-month and adds 18% GST in India", async () => {
+  it("prices Full access per learner-month and adds 18% GST in India, in USD like everyone", async () => {
     const q = await quoteOrder({ organisationIds: [], lines: [{ kind: "full_access", quantity: 100 }], inIndia: true, validUntil: "2099-01-01", licenceMonths: 3 }, { allowOverride: false });
-    expect(q.currency).toBe("INR");
+    expect(q.currency).toBe("USD");
     expect(q.lines[0].amount).toBe(q.lines[0].unitAmount * 100 * 3);
     expect(q.taxRate).toBe(18);
     expect(q.total).toBe(q.subtotal + Math.round(q.subtotal * 0.18));

@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "భాగస్వామ్యం ముగిసింది, పార్ట్‌నర్ పోర్టల్ చదవడానికి మాత్రమే. కొనసాగాలంటే పార్ట్‌నర్లు పేజీ నుండి పునరుద్ధరించండి.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: భాగస్వామ్యం {{shortDate}}న ముగుస్తుంది",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "పార్ట్‌నర్లు పేజీ నుండి మరో 3 నెలలకు పునరుద్ధరించండి. కనీస సంస్థల కంటే తక్కువైతే పునరుద్ధరణకు రాతపూర్వక కారణం కావాలి.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "తదుపరి {{days}} రోజులు మీరు ఇంకా సైన్ ఇన్ చేసి మీ రిపోర్ట్‌లు చూడవచ్చు, కానీ సాధన చేయలేరు. ఆ తర్వాత సైన్ ఇన్ చేయడానికి చెల్లింపు లైసెన్స్ కావాలి. పూర్తి యాక్సెస్ కోసం మీ సంస్థ అడ్మిన్‌ను అడగండి."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "తదుపరి {{days}} రోజులు మీరు ఇంకా సైన్ ఇన్ చేసి మీ రిపోర్ట్‌లు చూడవచ్చు, కానీ సాధన చేయలేరు. ఆ తర్వాత సైన్ ఇన్ చేయడానికి చెల్లింపు లైసెన్స్ కావాలి. పూర్తి యాక్సెస్ కోసం మీ సంస్థ అడ్మిన్‌ను అడగండి.",
+ "{{name}} allocated order {{order}}": "{{name}} ఆర్డర్ {{order}}ని కేటాయించారు",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} ఆర్డర్ {{order}}ని తమ సంస్థలకు కేటాయించారు.",
+ "The order's history shows each organisation's share.": "ఆర్డర్ చరిత్రలో ప్రతి సంస్థ వాటా కనిపిస్తుంది."
 }

@@ -21,6 +21,11 @@ export interface PartnerOrg {
   createdAt: string;
   active: boolean;
   demoLicences: number;
+  // Progress to the minimum licences per organisation (demo + paid, in total).
+  paidLicences?: number;
+  licencesTotal?: number;
+  minLicences?: number;
+  meetsMinimum?: boolean;
   learners: number;
   demoUsed: number;
   // Not used yet and still valid; unused past their "valid until" date.
@@ -113,7 +118,7 @@ function OrganisationsDashboard({ me }: { me: PartnerMe }) {
         </Notice>
       )}
       <Notice tone="info">
-        {tr("Demo licences you give an organisation are valid for {{v}} days, then {{g}} days' grace; unused ones expire after that. Each learner's demo lasts 7 days, then 3 days to see results. Give at least {{m}} licences to each organisation.", { v: d.giftValidDays, g: d.giftGraceDays, m: minLicences })}
+        {tr("Demo licences you give an organisation are valid for {{v}} days, then {{g}} days' grace; unused ones expire after that. Each learner's demo lasts 7 days, then 3 days to see results. Give any amount at a time; each organisation should reach {{m}} licences in total (demo and paid) to count towards your minimum.", { v: d.giftValidDays, g: d.giftGraceDays, m: minLicences })}
       </Notice>
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard variant="ledger" palette="terracotta" index={0} icon={Gift} value={d.total} label={tr("Free demo licences")} sub={tr("Your allocation from Spica")} progress={1} />
@@ -217,7 +222,6 @@ export function AddOrganisation({ left, endpoint, minLicences = 1, onClose, onDo
     if (!/^\S+@\S+\.\S+$/.test(f.adminEmail.trim())) return setErr(tr("Enter a valid email address."));
     if (x.city.trim().length < 2 || x.state.trim().length < 2 || x.country.trim().length < 2) return setErr(tr("Enter the city, state and country."));
     if (n < 0 || n > left) return setErr(tr("You can give up to {{n}} licences.", { n: left }));
-    if (n > 0 && n < minLicences) return setErr(tr("Give at least {{n}} licences to each organisation.", { n: minLicences }));
     setBusy(true);
     try {
       const details = Object.fromEntries(
@@ -295,7 +299,7 @@ export function AddOrganisation({ left, endpoint, minLicences = 1, onClose, onDo
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Demo licences to give")}</span>
             <input className={input} type="number" min={0} max={left} value={f.demoLicences} onChange={(e) => setF({ ...f, demoLicences: e.target.value })} />
-            <span className="text-xs text-muted">{tr("{{n}} left; at least {{m}}. Valid 7 days from today, then 3 days' grace. Each learner gets 7 days.", { n: left, m: minLicences })}</span>
+            <span className="text-xs text-muted">{tr("{{n}} left, any amount. Valid 7 days from today, then 3 days' grace. Each learner gets 7 days. The organisation should reach {{m}} licences in total.", { n: left, m: minLicences })}</span>
           </label>
         </div>
         <button type="button" className="self-start text-sm font-semibold text-navy cursor-pointer" onClick={() => setMore(!more)}>
@@ -355,12 +359,12 @@ export function AddOrganisation({ left, endpoint, minLicences = 1, onClose, onDo
 }
 
 export function GiveLicences({ org, left, endpoint, minLicences = 1, onClose, onDone }: { org: PartnerOrg; left: number; endpoint: string; minLicences?: number; onClose: () => void; onDone: (n: number) => void }) {
-  const [n, setN] = useState(String(Math.min(Math.max(10, minLicences), left)));
+  const [n, setN] = useState(String(Math.min(10, left)));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const submit = async () => {
     const v = Math.round(Number(n) || 0);
-    if (v < minLicences || v > left) return setErr(tr("You can give between {{a}} and {{n}} licences.", { a: minLicences, n: left }));
+    if (v < 1 || v > left) return setErr(tr("You can give between {{a}} and {{n}} licences.", { a: 1, n: left }));
     setBusy(true);
     try {
       await api(endpoint, json({ licences: v }));
@@ -430,13 +434,16 @@ export function GiveLicences({ org, left, endpoint, minLicences = 1, onClose, on
             <span className={label}>{tr("Licences to add")}</span>
             <input className={input} type="number" min={1} max={left} value={n} onChange={(e) => setN(e.target.value)} />
             <span className="flex flex-wrap gap-2 mt-1">
-              {[5, 10, 25, 50, 100].filter((q) => q <= left && q >= minLicences).map((q) => (
+              {[1, 5, 10, 25, 50].filter((q) => q <= left).map((q) => (
                 <button key={q} type="button" className={`px-3 py-1 rounded-pill border text-xs font-semibold cursor-pointer ${add === q ? "bg-navy text-white border-navy" : "border-rule text-ink"}`} onClick={() => setN(String(q))}>
                   {q}
                 </button>
               ))}
             </span>
-            <span className="text-xs text-muted">{tr("You have {{left}} left to give; at least {{m}} at a time.", { left, m: minLicences })}</span>
+            <span className="text-xs text-muted">
+              {tr("You have {{left}} left to give, any amount at a time.", { left })}{" "}
+              {org.licencesTotal != null && tr("{{org}} has {{h}} of the {{m}} licences it should reach.", { org: org.name, h: org.licencesTotal, m: org.minLicences ?? minLicences })}
+            </span>
           </label>
           <div className="flex flex-col gap-1 text-sm">
             <span className={label}>{tr("How long they last")}</span>

@@ -59,7 +59,10 @@ interface Allocation {
   allocatedLicences: number;
   allocatedCredits: number;
   perOrgCap: number;
-  organisations: { id: string; name: string; licences: number; credits: number; graceEndsAt: string | null; assigned: number }[];
+  maxOrganisations?: number;
+  // A Reseller's order lists all its organisations; onOrder = already named on it.
+  reseller?: boolean;
+  organisations: { id: string; name: string; licences: number; credits: number; graceEndsAt: string | null; assigned: number; onOrder?: boolean }[];
 }
 interface BillTo {
   name: string;
@@ -79,7 +82,13 @@ interface Line {
   unitAmount: number | null;
   amount?: number;
   priceOverridden?: boolean;
+  // Spica's list price and the Reseller discount applied (0 for everyone else).
+  listUnitAmount?: number | null;
+  discountPercent?: number;
 }
+// A line at list price, when it has a Reseller discount (else its amount).
+const listAmountOf = (l: Line, months: number) =>
+  l.discountPercent && l.listUnitAmount != null ? l.listUnitAmount * (l.kind === "full_access" ? l.quantity * months : (l.credits ?? 0)) : (l.amount ?? 0);
 interface OrderDetail {
   order: OrderRow;
   effectivePerOrgCap: number | null;
@@ -211,7 +220,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
           ))}
         </select>
         {(mode === "partner" ? !partnerReadOnly : perms.manageOrganizations) && (
-          <Button onClick={() => setEditing("new")}>
+          <Button onClick={() => setEditing("new")} className="flex items-center gap-1.5 whitespace-nowrap">
             <Plus size={16} /> {tr("New order")}
           </Button>
         )}
@@ -255,6 +264,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
         <OrderModal
           mode={mode}
           orderId={open}
+          resellerCanAllocate={mode === "partner" && partnerMe?.partner.type === "reseller" && !partnerReadOnly}
           onClose={() => setOpen(null)}
           onChanged={load}
           onEdit={(d) => {
@@ -281,7 +291,7 @@ export function OrdersPanel({ mode, partnerId }: { mode: Mode; partnerId?: strin
   );
 }
 
-function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode; orderId: string; onClose: () => void; onChanged: () => void; onEdit: (d: OrderDetail) => void }) {
+function OrderModal({ mode, orderId, resellerCanAllocate = false, onClose, onChanged, onEdit }: { mode: Mode; orderId: string; resellerCanAllocate?: boolean; onClose: () => void; onChanged: () => void; onEdit: (d: OrderDetail) => void }) {
   const [d, setD] = useState<OrderDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -332,17 +342,17 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
         <div className="flex flex-col gap-4 text-sm">
           <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1">
             {o.partner && <p><b>{tr("Partner")}:</b> {o.partner.name} ({o.partner.code})</p>}
-            <p><b>{tr("Organisations")}:</b> {d.organisations.map((x) => x.name).join(", ")}</p>
+            <p><b>{tr("Organisations")}:</b> {d.organisations.length ? d.organisations.map((x) => x.name).join(", ") : <span className="text-muted">{tr("Chosen when the licences are allocated")}</span>}</p>
             <p><b>{tr("Order ends")}:</b> {day(o.validUntil)}</p>
             <p><b>{tr("Each licence lasts")}:</b> {o.licenceMonths === 1 ? tr("1 month from when it starts") : tr("{{n}} months from when it starts", { n: o.licenceMonths })}</p>
             <p><b>{tr("Organisations allowed")}:</b> {o.maxOrganisations}</p>
             {d.effectivePerOrgCap != null && <p><b>{tr("Licences per organisation")}:</b> {tr("up to {{n}}", { n: d.effectivePerOrgCap })}</p>}
-            <p><b>{tr("Billing")}:</b> {o.inIndia ? tr("India (INR, GST 18%)") : tr("Outside India (USD, no Indian GST)")}</p>
+            <p><b>{tr("Billing")}:</b> {o.inIndia ? (o.currency === "INR" ? tr("India (INR, GST 18%)") : tr("India (USD, GST 18%)")) : tr("Outside India (USD, no Indian GST)")}</p>
             {o.gstin && <p><b>GSTIN:</b> {o.gstin}</p>}
           </div>
           <LinesTable lines={d.lines} currency={o.currency} months={o.licenceMonths} />
-          <Totals subtotal={o.subtotal} taxRate={o.taxRate} taxAmount={o.taxAmount} total={o.total} currency={o.currency} />
-          {o.partner && <p className="text-muted">{tr("Commission: {{p}}% · {{a}}", { p: o.commissionPercent, a: money(o.commissionAmount, o.currency) })}</p>}
+          <Totals subtotal={o.subtotal} taxRate={o.taxRate} taxAmount={o.taxAmount} total={o.total} currency={o.currency} lines={d.lines} months={o.licenceMonths} />
+          {o.partner && o.commissionPercent > 0 && <p className="text-muted">{tr("Commission: {{p}}% · {{a}}", { p: o.commissionPercent, a: money(o.commissionAmount, o.currency) })}</p>}
           {o.notes && <p className="text-muted whitespace-pre-line">{o.notes}</p>}
           {o.cancelReason && <Notice tone="error">{tr("Cancelled: {{r}}", { r: o.cancelReason })}</Notice>}
           {(o.proformaNumber || o.invoiceNumber || o.paymentLinkUrl) && (
@@ -370,7 +380,7 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
               )}
             </div>
           )}
-          {d.allocation && <AllocationSection orderId={o.id} status={o.status} validUntil={o.validUntil} a={d.allocation} canManage={canManage} onChanged={() => { load(); onChanged(); }} />}
+          {d.allocation && <AllocationSection orderId={o.id} status={o.status} validUntil={o.validUntil} a={d.allocation} canManage={canManage} canAllocate={canManage || resellerCanAllocate} allocatePath={`${base(mode)}/${o.id}/allocate`} reseller={resellerCanAllocate} onChanged={() => { load(); onChanged(); }} />}
           {finance === "proforma" && <ProformaForm orderId={o.id} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
           {finance === "payment" && <PaymentForm order={o} onCancel={() => setFinance(null)} onDone={() => { setFinance(null); load(); onChanged(); }} />}
           <div>
@@ -379,7 +389,7 @@ function OrderModal({ mode, orderId, onClose, onChanged, onEdit }: { mode: Mode;
               {d.history.map((h, i) => (
                 <li key={i} className="text-muted">
                   {new Date(h.at).toLocaleString()} · <b className="text-ink">{h.from === h.to ? tr("Order changed") : STATUS_LABEL[h.to]}</b>
-                  {h.by ? ` · ${h.by.name || h.by.email}` : ""}
+                  {h.by ? ` · ${h.by.name || h.by.email}${h.by.role === "channel_partner" ? ` (${tr("Partner")})` : ""}` : ""}
                   {h.note ? ` · ${h.note}` : ""}
                 </li>
               ))}
@@ -468,10 +478,15 @@ function LinesTable({ lines, currency, months }: { lines: Line[]; currency: stri
                   : tr("{{n}} learners · {{c}} credits", { n: l.quantity, c: l.credits ?? 0 })}
             </td>
             <td className="px-3 py-2 whitespace-nowrap">
+              {!!l.discountPercent && l.listUnitAmount != null && <s className="text-muted mr-1.5">{money(l.listUnitAmount, currency)}</s>}
               {money(l.unitAmount ?? 0, currency)} {l.kind === "full_access" ? tr("per learner-month") : tr("per credit")}
+              {!!l.discountPercent && <span className="text-success font-semibold"> · {tr("{{n}}% off", { n: l.discountPercent })}</span>}
               {l.priceOverridden && <span className="text-warning"> · {tr("special price")}</span>}
             </td>
-            <td className="px-3 py-2 whitespace-nowrap">{money(l.amount ?? 0, currency)}</td>
+            <td className="px-3 py-2 whitespace-nowrap">
+              {!!l.discountPercent && <s className="text-muted mr-1.5">{money(listAmountOf(l, months), currency)}</s>}
+              {money(l.amount ?? 0, currency)}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -479,9 +494,22 @@ function LinesTable({ lines, currency, months }: { lines: Line[]; currency: stri
   );
 }
 
-function Totals({ subtotal, taxRate, taxAmount, total, currency }: { subtotal: number; taxRate: number; taxAmount: number; total: number; currency: string }) {
+function Totals({ subtotal, taxRate, taxAmount, total, currency, lines, months }: { subtotal: number; taxRate: number; taxAmount: number; total: number; currency: string; lines?: Line[]; months?: number }) {
+  // A Reseller's order: Spica's list price, then the discount, then the subtotal.
+  const list = lines ? lines.reduce((n, l) => n + listAmountOf(l, months ?? 1), 0) : subtotal;
+  const pct = lines?.find((l) => l.discountPercent)?.discountPercent ?? 0;
   return (
     <div className="self-end text-right flex flex-col gap-0.5">
+      {list > subtotal && pct > 0 && (
+        <>
+          <span className="text-muted">
+            {tr("List price")}: {money(list, currency)}
+          </span>
+          <span className="text-success font-semibold">
+            {tr("Reseller discount ({{n}}%)", { n: pct })}: −{money(list - subtotal, currency)}
+          </span>
+        </>
+      )}
       <span>
         {tr("Subtotal")}: {money(subtotal, currency)}
       </span>
@@ -494,8 +522,9 @@ function Totals({ subtotal, taxRate, taxAmount, total, currency }: { subtotal: n
 }
 
 // Allocation (stage 7): each organisation's share of a confirmed order. Spica
-// allocates; everyone sees what each organisation has and has assigned.
-function AllocationSection({ orderId, status, validUntil, a, canManage, onChanged }: { orderId: string; status: Status; validUntil: string; a: Allocation; canManage: boolean; onChanged: () => void }) {
+// staff allocate any order; a Reseller allocates its own (it bought them), and
+// Spica sees that in the history. Only staff change the order's end date.
+function AllocationSection({ orderId, status, validUntil, a, canManage, canAllocate, allocatePath, reseller, onChanged }: { orderId: string; status: Status; validUntil: string; a: Allocation; canManage: boolean; canAllocate: boolean; allocatePath: string; reseller: boolean; onChanged: () => void }) {
   const leftL = a.licences - a.allocatedLicences;
   const leftC = a.credits - a.allocatedCredits;
   const open = ["confirmed", "allocated", "active"].includes(status);
@@ -505,10 +534,14 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const startForm = () => {
-    const n = a.organisations.length || 1;
+    // A Reseller's suggestion goes to the organisations already on the order (none: all zero).
+    const targets = a.reseller ? a.organisations.filter((o) => o.onOrder) : a.organisations;
+    const n = targets.length || 1;
     setForm(
       Object.fromEntries(
-        a.organisations.map((o, i) => {
+        a.organisations.map((o) => {
+          const i = targets.indexOf(o);
+          if (i < 0) return [o.id, { licences: "0", credits: "0" }];
           const l = Math.max(0, Math.min(a.perOrgCap - o.licences, Math.floor(leftL / n) + (i < leftL % n ? 1 : 0)));
           const c = Math.floor(leftC / n) + (i < leftC % n ? 1 : 0);
           return [o.id, { licences: String(l), credits: String(c) }];
@@ -522,12 +555,12 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
     setBusy(true);
     setErr(null);
     try {
-      await api(`/admin/partner-orders/${orderId}/allocate`, post({ items, upgradeDemo }));
+      await api(allocatePath, post({ items, upgradeDemo }));
       setForm(null);
       onChanged();
     } catch (e) {
       const m = String((e as Error)?.message ?? "");
-      setErr(m.includes("over_org_cap") ? tr("One organisation would get more than its cap of {{n}} licences.", { n: a.perOrgCap }) : m.includes("over_order") ? tr("That's more than the order has left.") : m.includes("nothing_to_allocate") ? tr("Enter at least one licence or credit.") : m.includes("order_ended") ? tr("The order has ended. Change its end date first.") : errText(e));
+      setErr(m.includes("over_org_cap") ? tr("One organisation would get more than its cap of {{n}} licences.", { n: a.perOrgCap }) : m.includes("over_order") ? tr("That's more than the order has left.") : m.includes("too_many_organisations") ? tr("That's more organisations than this order allows ({{n}}).", { n: a.maxOrganisations ?? 10 }) : m.includes("nothing_to_allocate") ? tr("Enter at least one licence or credit.") : m.includes("order_ended") ? tr("The order has ended. Change its end date first.") : errText(e));
     } finally {
       setBusy(false);
     }
@@ -586,6 +619,7 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
           ))}
         </tbody>
       </table>
+      {reseller && !form && open && (leftL > 0 || leftC > 0) && <p className="text-xs text-muted">{tr("You bought these licences: split them between your organisations. Spica can see each allocation.")}</p>}
       {form && <p className="text-xs text-muted">{tr("Adding now: licences on top of what each organisation already has. Each organisation gets {{d}} setup days before the licences start counting.", { d: 3 })}</p>}
       {form && (
         <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -594,7 +628,7 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
         </label>
       )}
       {err && <Notice tone="error">{err}</Notice>}
-      {canManage && (
+      {canAllocate && (
         <div className="flex flex-wrap justify-end gap-2">
           {end !== null ? (
             <>
@@ -617,9 +651,11 @@ function AllocationSection({ orderId, status, validUntil, a, canManage, onChange
             </>
           ) : (
             <>
-              <Button variant="secondary" onClick={() => setEnd(validUntil)}>
-                {status === "expired" ? tr("Reopen with a new end date") : tr("Change the order end date")}
-              </Button>
+              {canManage && (
+                <Button variant="secondary" onClick={() => setEnd(validUntil)}>
+                  {status === "expired" ? tr("Reopen with a new end date") : tr("Change the order end date")}
+                </Button>
+              )}
               {open && (leftL > 0 || leftC > 0) && <Button onClick={startForm}>{a.allocatedLicences + a.allocatedCredits ? tr("Allocate the rest") : tr("Allocate to organisations")}</Button>}
             </>
           )}
@@ -762,7 +798,12 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
   const staff = mode === "staff";
   const ex = existing?.order;
   const [partnerId, setPartnerId] = useState<string>(ex?.partner?.id ?? fixedPartnerId ?? "");
-  const [partners, setPartners] = useState<{ id: string; fullName: string; code: string; active: boolean }[]>([]);
+  const [partners, setPartners] = useState<{ id: string; fullName: string; code: string; active: boolean; endsAt?: string | null; partnerType?: string }[]>([]);
+  // A partner's orders end with its partnership (set by Spica); the partner can't change it.
+  const partnerMe = usePartnerMeOptional(!staff);
+  const partnershipEnd = partnerMe?.partnership.endsAt ? new Date(partnerMe.partnership.endsAt).toISOString().slice(0, 10) : null;
+  // A Reseller may buy first and choose organisations when it allocates.
+  const reseller = staff ? partners.find((p) => p.id === partnerId)?.partnerType === "reseller" : partnerMe?.partner.type === "reseller";
   const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [chosen, setChosen] = useState<string[]>(existing?.organisations.map((o) => o.id) ?? []);
@@ -781,14 +822,23 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
 
   useEffect(() => {
     api<{ products: Product[] }>(`${base(mode)}/products`).then((r) => setProducts(r.products)).catch(() => {});
-    if (staff) api<{ partners: { id: string; fullName: string; code: string; active: boolean }[] }>("/admin/channel-partners").then((r) => setPartners(r.partners.filter((p) => p.active))).catch(() => {});
+    if (staff) api<{ partners: { id: string; fullName: string; code: string; active: boolean; endsAt?: string | null; partnerType?: string }[] }>("/admin/channel-partners").then((r) => setPartners(r.partners.filter((p) => p.active))).catch(() => {});
   }, []);
   useEffect(() => {
     const url = staff ? `/admin/partner-orders/organisations${partnerId ? `?partnerId=${partnerId}` : ""}` : "/partner/organisations";
     api<{ organisations: { id: string; name: string }[] }>(url).then((r) => setOrgs(r.organisations)).catch(() => setOrgs([]));
   }, [partnerId]);
 
-  const validUntil = validity === "custom" ? customDate : VALIDITY.find((v) => v.key === validity)!.date();
+  // Staff ordering for a partner start from that partner's partnership end; they can change it.
+  useEffect(() => {
+    if (!staff || ex) return;
+    const end = partners.find((p) => p.id === partnerId)?.endsAt;
+    if (end) {
+      setValidity("custom");
+      setCustomDate(new Date(end).toISOString().slice(0, 10));
+    }
+  }, [partnerId, partners]);
+  const validUntil = !staff && partnershipEnd ? partnershipEnd : validity === "custom" ? customDate : VALIDITY.find((v) => v.key === validity)!.date();
   const body = useMemo(
     () => ({
       ...(staff ? { partnerId: partnerId || null } : {}),
@@ -805,18 +855,18 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
     [partnerId, chosen, lines, inIndia, gstin, maxOrgs, cap, validUntil, months, notes],
   );
   useEffect(() => {
-    if (!chosen.length || !lines.length || lines.some((l) => l.kind === "product" && !l.productId)) return setQuote(null);
+    if ((!chosen.length && !reseller) || !lines.length || lines.some((l) => l.kind === "product" && !l.productId)) return setQuote(null);
     const t = setTimeout(() => {
       api<Quote>(`${base(mode)}/quote`, post(body))
         .then(setQuote)
         .catch(() => setQuote(null));
     }, 300);
     return () => clearTimeout(t);
-  }, [body]);
+  }, [body, reseller]);
 
   const setLine = (i: number, p: Partial<Line>) => setLines(lines.map((l, j) => (j === i ? { ...l, ...p } : l)));
   const save = async (submit: boolean) => {
-    if (!chosen.length) return setErr(ERRORS.no_organisations);
+    if (!chosen.length && !reseller) return setErr(ERRORS.no_organisations);
     if (chosen.length > Number(maxOrgs)) return setErr(ERRORS.too_many_organisations);
     if (lines.some((l) => l.kind === "product" && !l.productId)) return setErr(tr("Choose the product on each line."));
     if (lines.some((l) => l.kind === "product" && products.find((p) => p.id === l.productId)?.kind === "level" && !l.level)) return setErr(ERRORS.level_required);
@@ -838,7 +888,7 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
   };
 
   return (
-    <DetailModal title={ex ? tr("Change order {{n}}", { n: ex.orderNumber }) : tr("New order")} subtitle={tr("Normal Spica prices. Each licence starts when it's assigned to a learner.")} icon={Receipt} onClose={onClose} wide>
+    <DetailModal title={ex ? tr("Change order {{n}}", { n: ex.orderNumber }) : tr("New order")} subtitle={quote?.discountPercent ? tr("Your reseller prices: {{n}}% off Spica's list price. Each licence starts when it's assigned to a learner.", { n: quote.discountPercent }) : tr("Normal Spica prices. Each licence starts when it's assigned to a learner.")} icon={Receipt} onClose={onClose} wide>
       <div className="flex flex-col gap-4 text-sm">
         {staff && !ex && !fixedPartnerId && (
           <label className="flex flex-col gap-1">
@@ -862,8 +912,13 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
         )}
         <div className="flex flex-col gap-1">
           <span className={label}>{tr("Organisations ({{n}} of up to {{max}})", { n: chosen.length, max: maxOrgs })}</span>
+          {reseller && (
+            <p className="text-xs text-muted">
+              {tr("Optional: you can buy now and choose organisations when you allocate the licences, including organisations you add later. Licences must be allocated and assigned by {{d}}; unused licences expire.", { d: day(partnershipEnd ?? (validity === "custom" ? customDate : plus(0, 3))) })}
+            </p>
+          )}
           {orgs.length === 0 ? (
-            <p className="text-muted">{tr("No organisations yet. Add an organisation first.")}</p>
+            <p className="text-muted">{reseller ? tr("No organisations yet. You can still order and add organisations later.") : tr("No organisations yet. Add an organisation first.")}</p>
           ) : (
             <div className="max-h-40 overflow-y-auto border border-rule rounded-input p-2 grid sm:grid-cols-2 gap-1">
               {orgs.map((o) => (
@@ -894,7 +949,7 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
                   <option value="full_access">{tr("Full access (licences)")}</option>
                   {products.map((x) => (
                     <option key={x.id} value={x.id}>
-                      {x.name} ({tr("{{n}} credits", { n: x.credits })})
+                      {x.name} ({x.credits === 1 ? tr("1 credit") : tr("{{n}} credits", { n: x.credits })})
                     </option>
                   ))}
                   <option value="credits">{tr("Recruitment or admissions credits")}</option>
@@ -925,7 +980,14 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
                     />
                   </label>
                 )}
-                <span className="ml-auto text-right whitespace-nowrap">{q ? money(q.amount ?? 0, quote!.currency) : ""}</span>
+                <span className="ml-auto text-right whitespace-nowrap">
+                  {q && !!q.discountPercent && (
+                    <span className="block text-xs text-muted">
+                      <s>{money(listAmountOf(q, months), quote!.currency)}</s> · <span className="text-success font-semibold">{tr("{{n}}% off", { n: q.discountPercent })}</span>
+                    </span>
+                  )}
+                  {q ? money(q.amount ?? 0, quote!.currency) : ""}
+                </span>
                 {lines.length > 1 && (
                   <button aria-label={tr("Remove")} className="text-muted hover:text-error cursor-pointer p-1" onClick={() => setLines(lines.filter((_, j) => j !== i))}>
                     <Trash2 size={16} />
@@ -952,6 +1014,11 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
           </label>
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Order ends (licences must be assigned by then)")}</span>
+            {!staff ? (
+              <span className="text-sm py-2">
+                <b>{day(validUntil)}</b> <span className="text-muted">· {tr("the end of your partnership, set by Spica")}</span>
+              </span>
+            ) : (
             <div className="flex gap-2">
               <select className={`${input} !w-auto`} value={validity} onChange={(e) => setValidity(e.target.value)}>
                 {VALIDITY.map((v) => (
@@ -967,11 +1034,12 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
                 <span className="self-center text-muted">{day(validUntil)}</span>
               )}
             </div>
+            )}
           </label>
           <label className="flex flex-col gap-1">
             <span className={label}>{tr("Billing")}</span>
             <select className={input} value={inIndia ? "in" : "abroad"} onChange={(e) => setInIndia(e.target.value === "in")}>
-              <option value="in">{tr("India (INR, GST 18%)")}</option>
+              <option value="in">{tr("India (USD, GST 18%)")}</option>
               <option value="abroad">{tr("Outside India (USD, no Indian GST)")}</option>
             </select>
           </label>
@@ -997,7 +1065,7 @@ function OrderForm({ mode, existing, fixedPartnerId, onClose, onDone }: { mode: 
           <textarea className={input} rows={2} maxLength={2000} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </label>
 
-        {quote && <Totals subtotal={quote.subtotal} taxRate={quote.taxRate} taxAmount={quote.taxAmount} total={quote.total} currency={quote.currency} />}
+        {quote && <Totals subtotal={quote.subtotal} taxRate={quote.taxRate} taxAmount={quote.taxAmount} total={quote.total} currency={quote.currency} lines={quote.lines} months={months} />}
         {quote?.education && <p className="text-xs text-muted self-end">{tr("Includes 15% off Full access for universities and colleges.")}</p>}
         {!!quote?.discountPercent && <p className="text-xs text-muted self-end">{tr("Your reseller price: {{n}}% off Spica's list price. You invoice your customer at your own price.", { n: quote.discountPercent })}</p>}
         {err && <Notice tone="error">{err}</Notice>}

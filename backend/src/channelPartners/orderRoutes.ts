@@ -5,14 +5,16 @@ import { z } from "zod";
 import { pool } from "../db.js";
 import { requireAuth, type AuthedRequest } from "../auth/middleware.js";
 import { requirePermission, staffPermissions, requireStaff, isSuperAdmin } from "../admin/staff.js";
-import { createPaymentLink, orderDocument, recordPayment, sendProforma, suggestedBillTo } from "./financeOrders.js";
+import { createPaymentLink, orderDocument, recordPayment, resellerPaymentLink, resellerPayments, sendProforma, suggestedBillTo } from "./financeOrders.js";
 import { allocateOrder, changeOrderEnd } from "./allocations.js";
 import { commissionRows, markCommissionPaid, partnerPerformance } from "./reports.js";
 import { changeStatus, createOrder, getOrder, listOrders, orderProducts, ORDER_STATUSES, partnerDiscount, quoteOrder, updateOrder, type OrderInput } from "./orders.js";
 import { sendPartnerError } from "./portalRoutes.js";
+import { assertPartnerCanAct } from "./partnership.js";
 
 export const orderInputSchema = z.object({
-  organisationIds: z.array(z.string().uuid()).min(1).max(500),
+  // Empty only for a Reseller (checked in orders.ts).
+  organisationIds: z.array(z.string().uuid()).max(500),
   lines: z
     .array(
       z.object({
@@ -348,6 +350,48 @@ partnerOrdersRouter.get("/commission/list", async (req: AuthedRequest, res, next
   const id = await myPartnerId(req, res);
   if (!id) return;
   commissionRows({ partnerId: id }).then((rows) => res.json({ rows }), next);
+});
+
+// A Reseller splits its own confirmed order between its organisations (it
+// bought the licences). Channel Partners' orders are allocated by Spica.
+partnerOrdersRouter.post("/:orderId/allocate", async (req: AuthedRequest, res, next) => {
+  const id = await myPartnerId(req, res);
+  if (!id) return;
+  try {
+    const p = await assertPartnerCanAct(id);
+    if (p.partner_type !== "reseller") return res.status(403).json({ error: "not_for_partner_type" });
+    const b = allocateSchema.parse(req.body);
+    await allocateOrder({ orderId: req.params.orderId as string, actor: actorOf(req), items: b.items, upgradeDemo: b.upgradeDemo === true, partnerId: id });
+    res.json({ ok: true });
+  } catch (err) {
+    fail(err, res, next);
+  }
+});
+
+// A Reseller's Payments page: what to pay, how, and what it has paid.
+async function myReseller(req: AuthedRequest, res: Response): Promise<string | null> {
+  const id = await myPartnerId(req, res);
+  if (!id) return null;
+  const t = (await pool.query(`SELECT partner_type FROM channel_partners WHERE id = $1`, [id])).rows[0]?.partner_type;
+  if (t !== "reseller") {
+    res.status(403).json({ error: "not_for_partner_type" });
+    return null;
+  }
+  return id;
+}
+partnerOrdersRouter.get("/payments", async (req: AuthedRequest, res, next) => {
+  const id = await myReseller(req, res);
+  if (!id) return;
+  resellerPayments(id).then((r) => res.json(r), next);
+});
+partnerOrdersRouter.post("/:orderId/pay-online", async (req: AuthedRequest, res, next) => {
+  const id = await myReseller(req, res);
+  if (!id) return;
+  try {
+    res.json(await resellerPaymentLink({ orderId: req.params.orderId as string, partnerId: id, actor: actorOf(req) }));
+  } catch (err) {
+    fail(err, res, next);
+  }
 });
 
 partnerOrdersRouter.get("/:orderId", async (req: AuthedRequest, res, next) => {

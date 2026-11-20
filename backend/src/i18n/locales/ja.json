@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "パートナーシップが終了し、パートナーのポータルは閲覧のみです。継続する場合はパートナー画面から更新してください。",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}：パートナーシップは{{shortDate}}に終了",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "パートナー画面からさらに3か月更新してください。最低組織数を下回る場合、更新には書面の理由が必要です。",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "今後{{days}}日間はサインインしてレポートを確認できますが、練習はできません。その後のサインインには有料ライセンスが必要です。フルアクセスについては組織の管理者にお問い合わせください。"
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "今後{{days}}日間はサインインしてレポートを確認できますが、練習はできません。その後のサインインには有料ライセンスが必要です。フルアクセスについては組織の管理者にお問い合わせください。",
+ "{{name}} allocated order {{order}}": "{{name}}が注文{{order}}を割り当てました",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}}が注文{{order}}を自社の組織に割り当てました。",
+ "The order's history shows each organisation's share.": "注文の履歴に各組織の割り当て分が表示されます。"
 }

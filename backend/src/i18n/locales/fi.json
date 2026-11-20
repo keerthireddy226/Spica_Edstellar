@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "Kumppanuus on päättynyt, ja kumppanin portaali on vain luku -tilassa. Uusi se Kumppanit-osiossa, jos sen on määrä jatkua.",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}: kumppanuus päättyy {{shortDate}}",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "Uusi se Kumppanit-osiossa toisella 3 kuukaudella. Alle organisaatioiden vähimmäismäärän uusiminen vaatii kirjallisen perustelun.",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Seuraavien {{days}} päivän ajan voit vielä kirjautua ja katsoa raporttejasi, mutta et harjoitella. Sen jälkeen tarvitset kirjautumiseen maksullisen lisenssin. Pyydä organisaatiosi ylläpitäjältä täyttä käyttöoikeutta."
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "Seuraavien {{days}} päivän ajan voit vielä kirjautua ja katsoa raporttejasi, mutta et harjoitella. Sen jälkeen tarvitset kirjautumiseen maksullisen lisenssin. Pyydä organisaatiosi ylläpitäjältä täyttä käyttöoikeutta.",
+ "{{name}} allocated order {{order}}": "{{name}} jakoi tilauksen {{order}}",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} jakoi tilauksen {{order}} organisaatioilleen.",
+ "The order's history shows each organisation's share.": "Tilauksen historiasta näkyy kunkin organisaation osuus."
 }

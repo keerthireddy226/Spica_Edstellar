@@ -195,6 +195,7 @@ export function ProductShop() {
           <h2 className="font-display font-bold text-xl text-ink">{tr("Or buy just one test")}</h2>
           <p className="text-sm text-muted">{tr("Prepare for one test, take a real test for a certificate, or prove a level.")}</p>
         </div>
+        {data.currencies.length > 1 && (
         <label className="flex items-center gap-2 text-sm text-ink">
           {tr("Currency")}
           <select
@@ -209,6 +210,7 @@ export function ProductShop() {
             ))}
           </select>
         </label>
+        )}
       </div>
       {GROUPS.map((g) => {
         const items = data.products.filter((p) => p.kind === g.kind);

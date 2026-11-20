@@ -464,5 +464,8 @@
  "The partnership has ended and the partner's portal is read-only. Renew it from Partners if it should continue.": "合作已结束，合作伙伴门户为只读。如需继续，请在“合作伙伴”页面续期。",
  "{{full_name}}: partnership ends on {{shortDate}}": "{{full_name}}：合作将于 {{shortDate}} 结束",
  "Renew it from Partners for another 3 months. Below the organisation minimum, renewal needs a written reason.": "请在“合作伙伴”页面再续期 3 个月。低于最少组织数时，续期需要书面原因。",
- "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "接下来的 {{days}} 天里，你仍可登录查看报告，但不能练习。之后需要付费许可证才能登录。请向你所在组织的管理员申请完整权限。"
+ "For the next {{days}} days you can still sign in and see your reports, but not practise. After that you need a paid licence to sign in. Ask your organisation's admin about full access.": "接下来的 {{days}} 天里，你仍可登录查看报告，但不能练习。之后需要付费许可证才能登录。请向你所在组织的管理员申请完整权限。",
+ "{{name}} allocated order {{order}}": "{{name}} 已分配订单 {{order}}",
+ "{{name}} allocated order {{order}} to its organisations.": "{{name}} 已将订单 {{order}} 分配给其组织。",
+ "The order's history shows each organisation's share.": "订单历史记录显示每个组织的份额。"
 }

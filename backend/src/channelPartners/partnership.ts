@@ -86,7 +86,7 @@ export function renewedEnd(currentEnd: Date | null, now = new Date()): Date {
   return addMonths(from, PARTNERSHIP_MONTHS);
 }
 
-export const AGREEMENT_VERSION = "2026-11-19";
+export const AGREEMENT_VERSION = "2026-11-20";
 
 // The agreement covers one partnership period: signed for the current period
 // when the signature's period end matches the partnership's end.
@@ -107,7 +107,29 @@ export async function currentPeriodStart(partnerId: string): Promise<Date | null
   return r.rows[0]?.s ?? null;
 }
 
+// All licences an organisation has had from its partner: demo licences given
+// plus paid licences allocated from orders (not cancelled). `t` is the tenants alias.
+export const ORG_LICENCES_SQL = (t: string) => `(
+  (SELECT coalesce(sum(a.licences), 0) FROM partner_allocations a WHERE a.tenant_id = ${t}.id AND a.kind = 'demo')
+  + (SELECT coalesce(sum(a.licences), 0) FROM partner_order_allocations a JOIN partner_orders o ON o.id = a.order_id WHERE a.tenant_id = ${t}.id AND o.status <> 'cancelled')
+)::int`;
+
+// Organisations that count towards the partner's minimum: active ones that
+// have reached the minimum licences per organisation in total (owner, 20 Nov
+// 2026). Licences can be given in any amounts; only the total matters.
 export async function activeOrganisations(partnerId: string): Promise<number> {
+  return Number(
+    (
+      await pool.query(
+        `SELECT count(*) AS n FROM tenants t JOIN channel_partners cp ON cp.id = t.channel_partner_id
+         WHERE t.channel_partner_id = $1 AND t.deactivated_at IS NULL AND ${ORG_LICENCES_SQL("t")} >= greatest(cp.min_licences_per_org, 1)`,
+        [partnerId],
+      )
+    ).rows[0].n,
+  );
+}
+// Every active organisation the partner added, whether it has reached the minimum or not.
+export async function addedOrganisations(partnerId: string): Promise<number> {
   return Number((await pool.query(`SELECT count(*) AS n FROM tenants WHERE channel_partner_id = $1 AND deactivated_at IS NULL`, [partnerId])).rows[0].n);
 }
 
@@ -155,7 +177,7 @@ export function agreementText(p: Record<string, any>) {
     ],
     referral: [
       "The Referral Partner introduces organisations by submitting their details in the partner portal, with the contact person's agreement to be contacted by Edstellar.",
-      `When a referred organisation that Edstellar accepts as new completes its first paid purchase during the partnership period, the Referral Partner earns a fixed referral fee of ${money(Number(p.referral_fee ?? 0), p.referral_fee_currency ?? "INR")}. One fee per organisation.`,
+      `When a referred organisation that Edstellar accepts as new completes its first paid purchase during the partnership period, the Referral Partner earns a fixed referral fee of ${money(Number(p.referral_fee ?? 0), p.referral_fee_currency ?? "USD")}. One fee per organisation.`,
       "Edstellar decides whether an introduction is new (not already a customer or an active lead). The Referral Partner does not sell, price or invoice anything.",
     ],
   };
@@ -183,7 +205,8 @@ export function agreementText(p: Record<string, any>) {
       items: orgs
         ? [
             `The ${label} must onboard at least ${p.min_organisations ?? 10} organisations during each partnership period.`,
-            `Each organisation must receive at least ${p.min_licences_per_org ?? 1} licences per gift or order. The portal does not accept fewer.`,
+            `Each organisation should reach at least ${p.min_licences_per_org ?? 1} licences in total (demo and paid licences together). Licences can be given in any amounts at a time.`,
+            `Only organisations that have reached ${p.min_licences_per_org ?? 1} licences count towards the minimum number of organisations.`,
             "Only Edstellar staff can change these minimums.",
           ]
         : ["No organisation minimum applies to this partner type."],

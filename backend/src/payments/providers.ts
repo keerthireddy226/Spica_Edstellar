@@ -38,15 +38,13 @@ export function testModeEnabled(): boolean {
   return !stripeEnabled() && !razorpayEnabled();
 }
 
-// India pays in INR via Razorpay (UPI, Indian cards, GST invoice); everyone
-// else in USD via Stripe. Falls back to whichever provider is configured.
-export function chooseProvider(billingCountry: string | null): { provider: ProviderName; currency: "INR" | "USD" } | null {
-  const india = billingCountry === "IN";
-  if (india && razorpayEnabled()) return { provider: "razorpay", currency: "INR" };
-  if (!india && stripeEnabled()) return { provider: "stripe", currency: "USD" };
-  if (stripeEnabled()) return { provider: "stripe", currency: india ? "INR" : "USD" };
-  if (razorpayEnabled()) return { provider: "razorpay", currency: india ? "INR" : "USD" };
-  if (testModeEnabled()) return { provider: "test", currency: india ? "INR" : "USD" };
+// Everyone pays in USD by card through Stripe, India included (owner
+// decision, 20 Nov 2026); Indian buyers still get GST on top. Razorpay is
+// only a fallback when Stripe isn't set up.
+export function chooseProvider(_billingCountry: string | null): { provider: ProviderName; currency: "INR" | "USD" } | null {
+  if (stripeEnabled()) return { provider: "stripe", currency: "USD" };
+  if (razorpayEnabled()) return { provider: "razorpay", currency: "USD" };
+  if (testModeEnabled()) return { provider: "test", currency: "USD" };
   return null;
 }
 

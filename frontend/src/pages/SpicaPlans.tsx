@@ -103,7 +103,7 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="font-display font-bold text-xl text-ink">{tr("For individuals")}</h2>
-        <label className="flex items-center gap-2 text-sm text-ink">
+        {list.currencies.length > 1 && <label className="flex items-center gap-2 text-sm text-ink">
           {tr("Currency")}
           <select value={list.currency} onChange={(e) => setCurrency(e.target.value as ShopCurrency)} className="rounded-input border border-rule bg-surface px-3 py-2 text-sm cursor-pointer">
             {list.currencies.map((c) => (
@@ -112,7 +112,7 @@ function Individuals({ canBuy }: { canBuy: boolean }) {
               </option>
             ))}
           </select>
-        </label>
+        </label>}
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         <Card eyebrow={tr("Start free")} title={tr("Free")} price={formatAmount(0, list.currency)}>
