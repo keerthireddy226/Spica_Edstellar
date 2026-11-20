@@ -21,7 +21,7 @@
   "description": "Spica_Edstellar backend",
   "type": "module",
   "dependencies": {
-    "@google/genai": "^2.23.0",
+    "@google/genai": "^3.4.0",
     "@node-saml/node-saml": "^5.2.0",
     "@simplewebauthn/server": "^14.0.3",
     "@types/qrcode": "^1.5.5",
